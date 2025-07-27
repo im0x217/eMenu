@@ -1,233 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Manage Products</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: https://scontent.fmji4-1.fna.fbcdn.net https://via.placeholder.com;">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg" style="background-color: #FDB518;">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">عودة</a>
-        </div>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: https://scontent.fmji4-1.fna.fbcdn.net https://via.placeholder.com;"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      #loading-spinner {
+        display: none;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg" style="background-color: #fdb518">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">عودة</a>
+      </div>
     </nav>
+
+    <div id="loading-spinner">
+      <div
+        class="spinner-border text-warning"
+        role="status"
+        style="width: 4rem; height: 4rem"
+      >
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
 
     <!-- Login Form -->
     <div class="container my-5" id="login-container">
-        <h2 class="mb-4 text-center">تسجيل الدخول</h2>
-        <form id="login-form" class="mb-4" style="max-width: 400px; margin:auto;">
-            <div class="mb-3">
-                <label for="username" class="form-label">اسم المستخدم</label>
-                <input type="text" class="form-control" id="username" required />
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">كلمة السر</label>
-                <input type="password" class="form-control" id="password" required />
-            </div>
-            <button type="submit" class="btn btn-primary w-100">دخول</button>
-            <div id="login-error" class="text-danger mt-2" style="display:none;">Invalid credentials</div>
-        </form>
+      <h2 class="mb-4 text-center">تسجيل الدخول</h2>
+      <form id="login-form" class="mb-4" style="max-width: 400px; margin: auto">
+        <div class="mb-3">
+          <label for="username" class="form-label">اسم المستخدم</label>
+          <input type="text" class="form-control" id="username" required />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">كلمة السر</label>
+          <input type="password" class="form-control" id="password" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-100">دخول</button>
+        <div id="login-error" class="text-danger mt-2" style="display: none">
+          Invalid credentials
+        </div>
+      </form>
     </div>
 
-    <!-- Admin Panel (hidden until login) -->
-    <div class="container my-5" id="admin-container" style="display:none;">
-        <h2 class="mb-4 text-center">ادارة الاصناف</h2>
-
-        <!-- Add a category selector to your form -->
-        <form id="product-form" class="mb-4">
-            <div class="mb-3">
-                <label for="productCategory" class="form-label">الصنف</label>
-                <select class="form-select" id="productCategory" required>
-                    <option value=""></option>
-                    <option value="الشرقي">الشرقي</option>
-                    <option value="الغربي">الغربي</option>
-                    <option value="تورتات">تورتات</option>
-                    <option value="عصائر">عصائر</option>
-                    <option value="شكلاطة">شكلاطة</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="productName" class="form-label">اسم المنتج</label>
-                <input type="text" class="form-control" id="productName" required />
-            </div>
-            <div class="mb-3">
-                <label for="productDesc" class="form-label">وصف المنتج</label>
-                <textarea class="form-control" id="productDesc"></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="productPrice" class="form-label">سعر المنتج</label>
-                <input type="number" class="form-control" id="productPrice" min="0" step="0.01" required />
-            </div>
-            <div class="mb-3">
-                <label for="productImgUpload" class="form-label">صورة المنتج</label>
-                <input type="file" class="form-control" id="productImgUpload" accept="image/*" required />
-            </div>
-            <button type="submit" class="btn btn-primary">اضافة المنتج</button>
-        </form>
-
-        <h3 class="mb-4"> المنتجات الحالية</h3>
-        <div id="product-list" class="row row-cols-1 row-cols-md-3 g-4"></div>
+    <div class="container my-5" id="admin-container" style="display: none">
+      <h2 class="mb-4 text-center">ادارة الاصناف</h2>
+      <form id="product-form" class="mb-4">
+        <div class="mb-3">
+          <label for="productCategory" class="form-label">الصنف</label>
+          <select class="form-select" id="productCategory" required>
+            <option value=""></option>
+            <option value="الشرقي">الشرقي</option>
+            <option value="الغربي">الغربي</option>
+            <option value="تورتات">تورتات</option>
+            <option value="عصائر">عصائر</option>
+            <option value="شكلاطة">شكلاطة</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="productName" class="form-label">اسم المنتج</label>
+          <input type="text" class="form-control" id="productName" required />
+        </div>
+        <div class="mb-3">
+          <label for="productDesc" class="form-label">وصف المنتج</label>
+          <textarea class="form-control" id="productDesc"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="productPrice" class="form-label">سعر المنتج</label>
+          <input
+            type="number"
+            class="form-control"
+            id="productPrice"
+            min="0"
+            step="0.01"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="productImgUpload" class="form-label">صورة المنتج</label>
+          <input
+            type="file"
+            class="form-control"
+            id="productImgUpload"
+            accept="image/*"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">اضافة المنتج</button>
+      </form>
+      <div id="product-list" class="row row-cols-1 row-cols-md-3 g-4"></div>
+      <div
+        id="admin-error"
+        class="text-danger mt-2"
+        style="display: none"
+      ></div>
     </div>
 
     <script>
-        // Load products from server
-        let products = {
-            "الشرقي": [],
-            "الغربي": [],
-            "تورتات": [],
-            "عصائر": [],
-            "شكلاطة": []
-        };
+      // State variables
+      let products = null;
+      let currentCategory = "الشرقي";
+      let uploadedImgDataUrl = "";
+      let editIndex = null;
+      let productsLoaded = false;
 
-        let currentCategory = "الشرقي";
-        let uploadedImgDataUrl = "";
-        let editIndex = null;
+      function showSpinner(show) {
+        document.getElementById("loading-spinner").style.display = show
+          ? "block"
+          : "none";
+      }
 
-        function ensureAllCategories() {
-            const allCategories = ["الشرقي", "الغربي", "تورتات", "عصائر", "شكلاطة"];
-            for (const cat of allCategories) {
-                if (!products[cat]) products[cat] = [];
-            }
+      function ensureAllCategories() {
+        const allCategories = ["الشرقي", "الغربي", "تورتات", "عصائر", "شكلاطة"];
+        for (const cat of allCategories) {
+          if (!products[cat]) products[cat] = [];
         }
+      }
 
-        async function loadProducts() {
-            try {
-                const res = await fetch('/api/products');
-                if (res.ok) {
-                    products = await res.json();
-                }
-            } catch (e) {
-                // If server not available, keep empty
-            }
+      async function loadProducts() {
+        showSpinner(true);
+        try {
+          const res = await fetch("/api/products");
+          if (res.ok) {
+            products = await res.json();
+            productsLoaded = true;
             ensureAllCategories();
-            renderProducts();
+            document
+              .getElementById("product-form")
+              .querySelectorAll("input, select, textarea, button")
+              .forEach((el) => (el.disabled = false));
+            document.getElementById("admin-error").style.display = "none";
+          } else {
+            throw new Error("Failed to load products");
+          }
+        } catch (e) {
+          productsLoaded = false;
+          products = {
+            الشرقي: [],
+            الغربي: [],
+            تورتات: [],
+            عصائر: [],
+            شكلاطة: [],
+          };
+          document
+            .getElementById("product-form")
+            .querySelectorAll("input, select, textarea, button")
+            .forEach((el) => (el.disabled = true));
+          document.getElementById("admin-error").textContent =
+            "خطأ: تعذر تحميل المنتجات من الخادم. الرجاء المحاولة لاحقاً.";
+          document.getElementById("admin-error").style.display = "";
         }
+        renderProducts();
+        showSpinner(false);
+      }
 
-        async function saveProducts() {
-            await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(products)
-            });
+      async function saveProducts(showLoad = false) {
+        if (!productsLoaded) {
+          alert("لا يمكن الحفظ لأن المنتجات لم يتم تحميلها من الخادم.");
+          return false;
         }
+        if (showLoad) showSpinner(true);
+        const response = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(products),
+        });
+        if (showLoad) showSpinner(false);
+        return response.ok;
+      }
 
-        function renderProducts() {
-            currentCategory = document.getElementById("productCategory").value || "الشرقي";
-            const productList = document.getElementById("product-list");
-            productList.innerHTML = '';
-            (products[currentCategory] || []).forEach((product, index) => {
-                const productCard = `
+      function renderProducts() {
+        currentCategory =
+          document.getElementById("productCategory").value || "الشرقي";
+        const productList = document.getElementById("product-list");
+        productList.innerHTML = "";
+        (products[currentCategory] || []).forEach((product, index) => {
+          const productCard = `
                     <div class="col">
                         <div class="card h-100 shadow-sm" style="max-width: 150px; margin: auto;">
-                            <img src="${product.img}" class="card-img-top" alt="${product.name}" style="height: 80px; object-fit: cover;">
+                            <img src="${
+                              product.img
+                            }" class="card-img-top" alt="${
+            product.name
+          }" style="height: 80px; object-fit: cover;">
                             <div class="card-body p-2">
-                                <h6 class="card-title mb-1" style="font-size: 0.95rem;">${product.name}</h6>
-                                <p class="card-text" style="font-size: 0.85rem;">${product.desc}</p>
-                                <p class="card-text text-primary" style="font-size: 0.95rem;">${product.price ? product.price + " د.ل" : ""}</p>
+                                <h6 class="card-title mb-1" style="font-size: 0.95rem;">${
+                                  product.name
+                                }</h6>
+                                <p class="card-text" style="font-size: 0.85rem;">${
+                                  product.desc
+                                }</p>
+                                <p class="card-text text-primary" style="font-size: 0.95rem;">${
+                                  product.price ? product.price + " د.ل" : ""
+                                }</p>
                                 <button class="btn btn-danger btn-sm" onclick="deleteProduct(${index})">Delete</button>
                                 <button class="btn btn-warning btn-sm" onclick="startEditProduct(${index})">Edit</button>
                             </div>
                         </div>
                     </div>
                 `;
-                productList.innerHTML += productCard;
-            });
-        }
+          productList.innerHTML += productCard;
+        });
+      }
 
-        document.getElementById("productCategory").addEventListener("change", renderProducts);
+      document
+        .getElementById("productCategory")
+        .addEventListener("change", renderProducts);
 
-        document.getElementById("productImgUpload").addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImgDataUrl = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                uploadedImgDataUrl = "";
-            }
+      document
+        .getElementById("productImgUpload")
+        .addEventListener("change", function (event) {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              uploadedImgDataUrl = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          } else {
+            uploadedImgDataUrl = "";
+          }
         });
 
-        document.getElementById("product-form").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const category = document.getElementById("productCategory").value;
-            const name = document.getElementById("productName").value;
-            const desc = document.getElementById("productDesc").value;
-            const price = document.getElementById("productPrice").value;
-            const img = uploadedImgDataUrl;
+      document
+        .getElementById("product-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+          if (!productsLoaded) {
+            alert("لا يمكن الحفظ لأن المنتجات لم يتم تحميلها من الخادم.");
+            return;
+          }
+          const category = document.getElementById("productCategory").value;
+          const name = document.getElementById("productName").value;
+          const desc = document.getElementById("productDesc").value;
+          const price = document.getElementById("productPrice").value;
+          const img = uploadedImgDataUrl;
 
-            if (!category) {
-                alert("Please select a valid category.");
-                return;
-            }
-            if (!products[category]) products[category] = [];
-            if (!img) return;
+          if (!category) {
+            alert("Please select a valid category.");
+            return;
+          }
+          if (!products[category]) products[category] = [];
+          if (!img) return;
 
-            if (editIndex !== null) {
-                products[category][editIndex] = { name, desc, img, price };
-                editIndex = null;
-            } else {
-                products[category].push({ name, desc, img, price });
-            }
-            await saveProducts();
-            renderProducts();
+          // Optimistic UI: update locally first
+          if (editIndex !== null) {
+            products[category][editIndex] = { name, desc, img, price };
+            editIndex = null;
+          } else {
+            products[category].push({ name, desc, img, price });
+          }
+          renderProducts();
+
+          // Save to server
+          showSpinner(true);
+          const ok = await saveProducts();
+          showSpinner(false);
+          if (!ok) {
+            alert("حدث خطأ أثناء حفظ المنتج. الرجاء إعادة المحاولة.");
+            // Optionally reload products from server here to revert
+            await loadProducts();
+          } else {
             this.reset();
             uploadedImgDataUrl = "";
             document.getElementById("productCategory").value = category;
+          }
         });
 
-        async function deleteProduct(index) {
-            products[currentCategory].splice(index, 1);
-            await saveProducts();
-            renderProducts();
+      async function deleteProduct(index) {
+        if (!productsLoaded) {
+          alert("لا يمكن الحذف لأن المنتجات لم يتم تحميلها من الخادم.");
+          return;
         }
+        // Optimistic UI
+        products[currentCategory].splice(index, 1);
+        renderProducts();
 
-        function startEditProduct(index) {
-            const product = products[currentCategory][index];
-            document.getElementById("productName").value = product.name;
-            document.getElementById("productDesc").value = product.desc;
-            document.getElementById("productPrice").value = product.price || "";
-            document.getElementById("productCategory").value = currentCategory;
-            uploadedImgDataUrl = product.img;
-            editIndex = index;
+        showSpinner(true);
+        const ok = await saveProducts();
+        showSpinner(false);
+        if (!ok) {
+          alert("حدث خطأ أثناء حذف المنتج. الرجاء إعادة المحاولة.");
+          await loadProducts();
         }
+      }
 
-        // Authentication logic
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            if (res.ok) {
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('admin-container').style.display = '';
-                loadProducts();
-            } else {
-                document.getElementById('login-error').style.display = '';
-            }
+      function startEditProduct(index) {
+        const product = products[currentCategory][index];
+        document.getElementById("productName").value = product.name;
+        document.getElementById("productDesc").value = product.desc;
+        document.getElementById("productPrice").value = product.price || "";
+        document.getElementById("productCategory").value = currentCategory;
+        uploadedImgDataUrl = product.img;
+        editIndex = index;
+      }
+
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+          showSpinner(true);
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          showSpinner(false);
+          if (res.ok) {
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("admin-container").style.display = "";
+            loadProducts();
+          } else {
+            document.getElementById("login-error").style.display = "";
+          }
         });
 
-        // Check if already logged in (try a protected request)
-        async function checkAuth() {
-            const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-            if (res.ok) {
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('admin-container').style.display = '';
-                loadProducts();
-            }
+      async function checkAuth() {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+        if (res.ok) {
+          document.getElementById("login-container").style.display = "none";
+          document.getElementById("admin-container").style.display = "";
+          loadProducts();
         }
-        checkAuth();
-
-        // Initial load from server
-        loadProducts();
+      }
+      checkAuth();
     </script>
-</body>
+  </body>
 </html>
