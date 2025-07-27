@@ -44,7 +44,6 @@
       </div>
     </div>
 
-    <!-- Login Form -->
     <div class="container my-5" id="login-container">
       <h2 class="mb-4 text-center">تسجيل الدخول</h2>
       <form id="login-form" class="mb-4" style="max-width: 400px; margin: auto">
@@ -63,7 +62,6 @@
       </form>
     </div>
 
-    <!-- Admin Panel (hidden until login) -->
     <div class="container my-5" id="admin-container" style="display: none">
       <h2 class="mb-4 text-center">إدارة المنتجات</h2>
       <form id="product-form" class="mb-4">
@@ -117,7 +115,7 @@
           إلغاء التعديل
         </button>
       </form>
-      <div id="product-list" class="row row-cols-1 row-cols-md-3 g-4"></div>
+      <div id="product-list" class="row row-cols-2 row-cols-md-3 g-4"></div>
       <div
         id="admin-error"
         class="text-danger mt-2"
@@ -268,7 +266,6 @@
           showSpinner(true);
 
           if (editProductId) {
-            // Edit
             const res = await fetch("/api/products/" + editProductId, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -286,7 +283,6 @@
               alert("خطأ أثناء تعديل المنتج.");
             }
           } else {
-            // Add
             const res = await fetch("/api/products", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -305,7 +301,6 @@
           showSpinner(false);
         });
 
-      // Authentication logic
       document
         .getElementById("login-form")
         .addEventListener("submit", async function (e) {
@@ -328,7 +323,6 @@
           }
         });
 
-      // On page load, check if already authenticated
       async function checkAuth() {
         const res = await fetch("/api/products", { method: "GET" });
         if (res.ok) {
