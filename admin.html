@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - Manage Products</title>
+    <title>إدارة المنتجات</title>
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: https://scontent.fmji4-1.fna.fbcdn.net https://via.placeholder.com;"
@@ -58,13 +58,14 @@
         </div>
         <button type="submit" class="btn btn-primary w-100">دخول</button>
         <div id="login-error" class="text-danger mt-2" style="display: none">
-          Invalid credentials
+          بيانات الدخول خاطئة
         </div>
       </form>
     </div>
 
+    <!-- Admin Panel (hidden until login) -->
     <div class="container my-5" id="admin-container" style="display: none">
-      <h2 class="mb-4 text-center">ادارة الاصناف</h2>
+      <h2 class="mb-4 text-center">إدارة المنتجات</h2>
       <form id="product-form" class="mb-4">
         <div class="mb-3">
           <label for="productCategory" class="form-label">الصنف</label>
@@ -106,7 +107,15 @@
             required
           />
         </div>
-        <button type="submit" class="btn btn-primary">اضافة المنتج</button>
+        <button type="submit" class="btn btn-primary">إضافة المنتج</button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="cancelEditBtn"
+          style="display: none"
+        >
+          إلغاء التعديل
+        </button>
       </form>
       <div id="product-list" class="row row-cols-1 row-cols-md-3 g-4"></div>
       <div
@@ -117,12 +126,9 @@
     </div>
 
     <script>
-      // State variables
-      let products = null;
-      let currentCategory = "الشرقي";
+      let products = [];
       let uploadedImgDataUrl = "";
-      let editIndex = null;
-      let productsLoaded = false;
+      let editProductId = null;
 
       function showSpinner(show) {
         document.getElementById("loading-spinner").style.display = show
@@ -130,79 +136,39 @@
           : "none";
       }
 
-      function ensureAllCategories() {
-        const allCategories = ["الشرقي", "الغربي", "تورتات", "عصائر", "شكلاطة"];
-        for (const cat of allCategories) {
-          if (!products[cat]) products[cat] = [];
-        }
-      }
-
-      async function loadProducts() {
+      async function fetchProducts(category = null) {
         showSpinner(true);
         try {
-          const res = await fetch("/api/products");
-          if (res.ok) {
-            products = await res.json();
-            productsLoaded = true;
-            ensureAllCategories();
-            document
-              .getElementById("product-form")
-              .querySelectorAll("input, select, textarea, button")
-              .forEach((el) => (el.disabled = false));
-            document.getElementById("admin-error").style.display = "none";
-          } else {
-            throw new Error("Failed to load products");
-          }
+          let url = "/api/products";
+          if (category) url += "?category=" + encodeURIComponent(category);
+          const res = await fetch(url);
+          products = await res.json();
         } catch (e) {
-          productsLoaded = false;
-          products = {
-            الشرقي: [],
-            الغربي: [],
-            تورتات: [],
-            عصائر: [],
-            شكلاطة: [],
-          };
-          document
-            .getElementById("product-form")
-            .querySelectorAll("input, select, textarea, button")
-            .forEach((el) => (el.disabled = true));
           document.getElementById("admin-error").textContent =
-            "خطأ: تعذر تحميل المنتجات من الخادم. الرجاء المحاولة لاحقاً.";
+            "خطأ في تحميل المنتجات.";
           document.getElementById("admin-error").style.display = "";
+          products = [];
         }
         renderProducts();
         showSpinner(false);
       }
 
-      async function saveProducts(showLoad = false) {
-        if (!productsLoaded) {
-          alert("لا يمكن الحفظ لأن المنتجات لم يتم تحميلها من الخادم.");
-          return false;
-        }
-        if (showLoad) showSpinner(true);
-        const response = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(products),
-        });
-        if (showLoad) showSpinner(false);
-        return response.ok;
-      }
-
       function renderProducts() {
-        currentCategory =
+        const category =
           document.getElementById("productCategory").value || "الشرقي";
         const productList = document.getElementById("product-list");
         productList.innerHTML = "";
-        (products[currentCategory] || []).forEach((product, index) => {
-          const productCard = `
+        products
+          .filter((p) => p.category === category)
+          .forEach((product) => {
+            const productCard = `
                     <div class="col">
-                        <div class="card h-100 shadow-sm" style="max-width: 150px; margin: auto;">
+                        <div class="card h-100 shadow-sm" style="max-width: 180px; margin: auto;">
                             <img src="${
                               product.img
                             }" class="card-img-top" alt="${
-            product.name
-          }" style="height: 80px; object-fit: cover;">
+              product.name
+            }" style="height: 80px; object-fit: cover;">
                             <div class="card-body p-2">
                                 <h6 class="card-title mb-1" style="font-size: 0.95rem;">${
                                   product.name
@@ -213,19 +179,59 @@
                                 <p class="card-text text-primary" style="font-size: 0.95rem;">${
                                   product.price ? product.price + " د.ل" : ""
                                 }</p>
-                                <button class="btn btn-danger btn-sm" onclick="deleteProduct(${index})">Delete</button>
-                                <button class="btn btn-warning btn-sm" onclick="startEditProduct(${index})">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${
+                                  product._id
+                                }')">حذف</button>
+                                <button class="btn btn-warning btn-sm" onclick="startEditProduct('${
+                                  product._id
+                                }')">تعديل</button>
                             </div>
                         </div>
                     </div>
                 `;
-          productList.innerHTML += productCard;
-        });
+            productList.innerHTML += productCard;
+          });
       }
+
+      window.deleteProduct = async function (id) {
+        if (!confirm("هل تريد حذف المنتج؟")) return;
+        showSpinner(true);
+        const res = await fetch("/api/products/" + id, { method: "DELETE" });
+        if (res.ok) {
+          products = products.filter((p) => p._id !== id);
+          renderProducts();
+        } else {
+          alert("خطأ أثناء الحذف.");
+        }
+        showSpinner(false);
+      };
+
+      window.startEditProduct = function (id) {
+        const product = products.find((p) => p._id === id);
+        if (!product) return;
+        editProductId = id;
+        document.getElementById("productName").value = product.name;
+        document.getElementById("productDesc").value = product.desc;
+        document.getElementById("productPrice").value = product.price || "";
+        document.getElementById("productCategory").value = product.category;
+        uploadedImgDataUrl = product.img;
+        document.getElementById("cancelEditBtn").style.display = "";
+      };
+
+      document
+        .getElementById("cancelEditBtn")
+        .addEventListener("click", function () {
+          editProductId = null;
+          document.getElementById("product-form").reset();
+          uploadedImgDataUrl = "";
+          this.style.display = "none";
+        });
 
       document
         .getElementById("productCategory")
-        .addEventListener("change", renderProducts);
+        .addEventListener("change", function () {
+          fetchProducts(this.value);
+        });
 
       document
         .getElementById("productImgUpload")
@@ -246,75 +252,60 @@
         .getElementById("product-form")
         .addEventListener("submit", async function (event) {
           event.preventDefault();
-          if (!productsLoaded) {
-            alert("لا يمكن الحفظ لأن المنتجات لم يتم تحميلها من الخادم.");
-            return;
-          }
           const category = document.getElementById("productCategory").value;
           const name = document.getElementById("productName").value;
           const desc = document.getElementById("productDesc").value;
           const price = document.getElementById("productPrice").value;
           const img = uploadedImgDataUrl;
 
-          if (!category) {
-            alert("Please select a valid category.");
+          if (!category || !name || !img) {
+            alert("يرجى تعبئة جميع الحقول المطلوبة.");
             return;
           }
-          if (!products[category]) products[category] = [];
-          if (!img) return;
 
-          // Optimistic UI: update locally first
-          if (editIndex !== null) {
-            products[category][editIndex] = { name, desc, img, price };
-            editIndex = null;
-          } else {
-            products[category].push({ name, desc, img, price });
-          }
-          renderProducts();
+          const productData = { name, desc, price, img, category };
 
-          // Save to server
           showSpinner(true);
-          const ok = await saveProducts();
-          showSpinner(false);
-          if (!ok) {
-            alert("حدث خطأ أثناء حفظ المنتج. الرجاء إعادة المحاولة.");
-            // Optionally reload products from server here to revert
-            await loadProducts();
+
+          if (editProductId) {
+            // Edit
+            const res = await fetch("/api/products/" + editProductId, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(productData),
+            });
+            if (res.ok) {
+              const i = products.findIndex((p) => p._id === editProductId);
+              if (i >= 0) products[i] = { ...productData, _id: editProductId };
+              renderProducts();
+              editProductId = null;
+              document.getElementById("cancelEditBtn").style.display = "none";
+              this.reset();
+              uploadedImgDataUrl = "";
+            } else {
+              alert("خطأ أثناء تعديل المنتج.");
+            }
           } else {
-            this.reset();
-            uploadedImgDataUrl = "";
-            document.getElementById("productCategory").value = category;
+            // Add
+            const res = await fetch("/api/products", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(productData),
+            });
+            if (res.ok) {
+              const newProduct = await res.json();
+              products.push({ ...productData, _id: newProduct.id });
+              renderProducts();
+              this.reset();
+              uploadedImgDataUrl = "";
+            } else {
+              alert("خطأ أثناء إضافة المنتج.");
+            }
           }
+          showSpinner(false);
         });
 
-      async function deleteProduct(index) {
-        if (!productsLoaded) {
-          alert("لا يمكن الحذف لأن المنتجات لم يتم تحميلها من الخادم.");
-          return;
-        }
-        // Optimistic UI
-        products[currentCategory].splice(index, 1);
-        renderProducts();
-
-        showSpinner(true);
-        const ok = await saveProducts();
-        showSpinner(false);
-        if (!ok) {
-          alert("حدث خطأ أثناء حذف المنتج. الرجاء إعادة المحاولة.");
-          await loadProducts();
-        }
-      }
-
-      function startEditProduct(index) {
-        const product = products[currentCategory][index];
-        document.getElementById("productName").value = product.name;
-        document.getElementById("productDesc").value = product.desc;
-        document.getElementById("productPrice").value = product.price || "";
-        document.getElementById("productCategory").value = currentCategory;
-        uploadedImgDataUrl = product.img;
-        editIndex = index;
-      }
-
+      // Authentication logic
       document
         .getElementById("login-form")
         .addEventListener("submit", async function (e) {
@@ -331,22 +322,19 @@
           if (res.ok) {
             document.getElementById("login-container").style.display = "none";
             document.getElementById("admin-container").style.display = "";
-            loadProducts();
+            fetchProducts();
           } else {
             document.getElementById("login-error").style.display = "";
           }
         });
 
+      // On page load, check if already authenticated
       async function checkAuth() {
-        const res = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
-        });
+        const res = await fetch("/api/products", { method: "GET" });
         if (res.ok) {
           document.getElementById("login-container").style.display = "none";
           document.getElementById("admin-container").style.display = "";
-          loadProducts();
+          fetchProducts();
         }
       }
       checkAuth();
