@@ -11,37 +11,37 @@
 <body>
     <nav class="navbar navbar-expand-lg" style="background-color: #FDB518;">
         <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">Back to Home</a>
+            <a class="navbar-brand" href="index.html">عودة</a>
         </div>
     </nav>
 
     <!-- Login Form -->
     <div class="container my-5" id="login-container">
-        <h2 class="mb-4 text-center">Admin Login</h2>
+        <h2 class="mb-4 text-center">تسجيل الدخول</h2>
         <form id="login-form" class="mb-4" style="max-width: 400px; margin:auto;">
             <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
+                <label for="username" class="form-label">اسم المستخدم</label>
                 <input type="text" class="form-control" id="username" required />
             </div>
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
+                <label for="password" class="form-label">كلمة السر</label>
                 <input type="password" class="form-control" id="password" required />
             </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <button type="submit" class="btn btn-primary w-100">دخول</button>
             <div id="login-error" class="text-danger mt-2" style="display:none;">Invalid credentials</div>
         </form>
     </div>
 
     <!-- Admin Panel (hidden until login) -->
     <div class="container my-5" id="admin-container" style="display:none;">
-        <h2 class="mb-4 text-center">Manage Products</h2>
+        <h2 class="mb-4 text-center">ادارة الاصناف</h2>
 
         <!-- Add a category selector to your form -->
         <form id="product-form" class="mb-4">
             <div class="mb-3">
-                <label for="productCategory" class="form-label">Category</label>
+                <label for="productCategory" class="form-label">الصنف</label>
                 <select class="form-select" id="productCategory" required>
-                    <option value="">Choose category</option>
+                    <option value=""></option>
                     <option value="الشرقي">الشرقي</option>
                     <option value="الغربي">الغربي</option>
                     <option value="تورتات">تورتات</option>
@@ -50,25 +50,25 @@
                 </select>
             </div>
             <div class="mb-3">
-                <label for="productName" class="form-label">Product Name</label>
+                <label for="productName" class="form-label">اسم المنتج</label>
                 <input type="text" class="form-control" id="productName" required />
             </div>
             <div class="mb-3">
-                <label for="productDesc" class="form-label">Product Description</label>
-                <textarea class="form-control" id="productDesc" required></textarea>
+                <label for="productDesc" class="form-label">وصف المنتج</label>
+                <textarea class="form-control" id="productDesc"></textarea>
             </div>
             <div class="mb-3">
-                <label for="productPrice" class="form-label">Product Price</label>
+                <label for="productPrice" class="form-label">سعر المنتج</label>
                 <input type="number" class="form-control" id="productPrice" min="0" step="0.01" required />
             </div>
             <div class="mb-3">
-                <label for="productImgUpload" class="form-label">Product Image</label>
+                <label for="productImgUpload" class="form-label">صورة المنتج</label>
                 <input type="file" class="form-control" id="productImgUpload" accept="image/*" required />
             </div>
-            <button type="submit" class="btn btn-primary">Add Product</button>
+            <button type="submit" class="btn btn-primary">اضافة المنتج</button>
         </form>
 
-        <h3 class="mb-4">Current Products</h3>
+        <h3 class="mb-4"> المنتجات الحالية</h3>
         <div id="product-list" class="row row-cols-1 row-cols-md-3 g-4"></div>
     </div>
 
