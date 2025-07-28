@@ -100,30 +100,42 @@
         let products = res.ok ? await res.json() : [];
         products.forEach((product) => {
           html += `<div class="col">
-          <div class="card h-100 shadow-sm" style="max-width:170px; margin:auto;">
-            <img src="${product.img}" class="card-img-top" alt="${
+    <div class="card h-100 shadow-sm" style="max-width:170px; margin:auto;">
+      <img src="${product.img}" class="card-img-top" alt="${
             product.name
           }" loading="lazy">
-            <div class="card-body p-2">
-              <h6 class="card-title mb-1" style="font-size:0.95rem;">${
-                product.name
-              }</h6>
-              <p class="card-text" style="font-size:0.85rem;">${
-                product.desc || ""
-              }</p>
-              <p class="card-text text-primary" style="font-size:0.95rem;">
-                السعر: ${
-                  product.price_regular ? product.price_regular + " د.ل" : ""
-                }
-                
-              </p>
-              <p class="card-text text-primary" style="font-size:0.95rem;">${
-                product.price_bulk ? product.price_bulk + " د.ل" : ""
-              }
-                </p>
-            </div>
-          </div>
-        </div>`;
+      <div class="card-body p-2">
+        <h6 class="card-title mb-1" style="font-size:0.95rem;">${
+          product.name
+        }</h6>
+        <p class="card-text" style="font-size:0.85rem;">${
+          product.desc || ""
+        }</p>
+        <p class="card-text text-primary" style="font-size:0.95rem;">
+          السعر: ${
+            product.price_regular !== undefined &&
+            product.price_regular !== null &&
+            product.price_regular !== ""
+              ? product.price_regular + " د.ل"
+              : product.price !== undefined &&
+                product.price !== null &&
+                product.price !== ""
+              ? product.price + " د.ل"
+              : ""
+          }
+        </p>
+        ${
+          product.price_bulk !== undefined &&
+          product.price_bulk !== null &&
+          product.price_bulk !== ""
+            ? `<p class="card-text text-primary bulk-price" style="font-size:0.95rem;">
+                سعر الجملة: ${product.price_bulk} د.ل
+              </p>`
+            : ""
+        }
+      </div>
+    </div>
+  </div>`;
         });
         html += `</div>`;
         document.getElementById("main-content").innerHTML = html;
