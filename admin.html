@@ -38,6 +38,7 @@
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
+    <!-- ...above unchanged... -->
     <div class="container my-5" id="login-container">
       <h2 class="mb-4 text-center">تسجيل الدخول</h2>
       <form id="login-form" class="mb-4" style="max-width: 400px; margin: auto">
@@ -77,14 +78,15 @@
           <label for="productDesc" class="form-label">وصف المنتج</label>
           <textarea class="form-control" id="productDesc"></textarea>
         </div>
-        <div class="mb-3">
-  <label for="productPriceRegular" class="form-label">سعر عادي</label>
-  <input type="number" class="form-control" id="productPriceRegular" min="0" step="0.01" required />
-</div>
-<div class="mb-3">
-  <label for="productPriceBulk" class="form-label">سعر جملة</label>
-  <input type="number" class="form-control" id="productPriceBulk" min="0" step="0.01" required />
-</div>
+        <div class="row">
+          <div class="col-6 mb-3">
+            <label for="productPriceRegular" class="form-label">سعر عادي</label>
+            <input type="number" class="form-control" id="productPriceRegular" min="0" step="0.01" />
+          </div>
+          <div class="col-6 mb-3">
+            <label for="productPriceBulk" class="form-label">سعر جملة</label>
+            <input type="number" class="form-control" id="productPriceBulk" min="0" step="0.01" />
+          </div>
         </div>
         <div class="mb-3">
           <label for="productImgUpload" class="form-label">صورة المنتج</label>
@@ -93,7 +95,6 @@
             class="form-control"
             id="productImgUpload"
             accept="image/*"
-            required
           />
         </div>
         <button type="submit" class="btn btn-primary">إضافة المنتج</button>
@@ -113,229 +114,236 @@
         style="display: none"
       ></div>
     </div>
+    <style>
+      /* ...existing styles... */
+      .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+      }
+      .price-regular {
+        color: #007bff;
+        font-weight: bold;
+        font-size: 1.05rem;
+        text-align: left;
+      }
+      .price-bulk {
+        color: #d2691e;
+        font-weight: bold;
+        font-size: 1.05rem;
+        text-align: right;
+      }
+    </style>
     <script>
-      let products = [];
-      let uploadedImgDataUrl = "";
-      let editProductId = null;
-
-      function showSpinner(show) {
-        document.getElementById("loading-spinner").style.display = show
-          ? "block"
-          : "none";
-      }
-
-      async function fetchProducts(category = null) {
-        showSpinner(true);
-        try {
-          let url = "/api/products";
-          if (category) url += "?category=" + encodeURIComponent(category);
-          const res = await fetch(url);
-          products = res.ok ? await res.json() : [];
-        } catch (e) {
-          document.getElementById("admin-error").textContent =
-            "خطأ في تحميل المنتجات.";
-          document.getElementById("admin-error").style.display = "";
-          products = [];
-        }
-        renderProducts();
-        showSpinner(false);
-      }
-
+      // ... existing js ...
       function renderProducts() {
         const category =
           document.getElementById("productCategory").value || "الشرقي";
         const productList = document.getElementById("product-list");
         productList.innerHTML = "";
         products.forEach((product) => {
+          const price_regular = 
+            (product.price_regular !== undefined && product.price_regular !== null && product.price_regular !== "")
+              ? product.price_regular + " د.ل"
+              : (product.price !== undefined && product.price !== null && product.price !== "")
+              ? product.price + " د.ل"
+              : "";
+          const price_bulk = 
+            (product.price_bulk !== undefined && product.price_bulk !== null && product.price_bulk !== "")
+              ? product.price_bulk + " د.ل"
+              : "";
           const productCard = `
           <div class="col">
-            <div class="card h-100 shadow-sm" style="max-width:180px; margin:auto;">
-              <img src="${product.img}" class="card-img-top" alt="${
-            product.name
-          }" style="height:80px; object-fit:cover;">
-              <div class="card-body p-2">
-                <h6 class="card-title mb-1" style="font-size:0.95rem;">${
-                  product.name
-                }</h6>
-                <p class="card-text" style="font-size:0.85rem;">${
-                  product.desc || ""
-                }</p>
-                <p class="card-text text-primary" style="font-size:0.95rem;">
-  ${
-    (product.price_regular !== undefined && product.price_regular !== null && product.price_regular !== "")
-      ? product.price_regular + " د.ل"
-      : (product.price !== undefined && product.price !== null && product.price !== "")
-        ? product.price + " د.ل"
-        : ""
-  }
-</p>
-<p class="card-text text-primary" style="font-size:0.95rem;">
-  ${
-    (product.price_bulk !== undefined && product.price_bulk !== null && product.price_bulk !== "")
-      ? product.price_bulk + " د.ل"
-      : ""
-  }
-</p>
-                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${
-                  product._id
-                }')">حذف</button>
-                <button class="btn btn-warning btn-sm" onclick="startEditProduct('${
-                  product._id
-                }')">تعديل</button>
+            <div class="card h-100 shadow-sm d-flex flex-column" style="max-width:180px; margin:auto;">
+              <img src="${product.img}" class="card-img-top" alt="${product.name}" style="height:80px; object-fit:cover;">
+              <div class="card-body p-2 d-flex flex-column">
+                <h6 class="card-title mb-1" style="font-size:0.95rem;">${product.name}</h6>
+                <p class="card-text" style="font-size:0.85rem;">${product.desc || ""}</p>
+                <div class="mt-auto price-row">
+                  <span class="price-regular">${price_regular}</span>
+                  <span class="price-bulk">${price_bulk}</span>
+                </div>
+                <div class="mt-2 d-flex flex-row justify-content-between">
+                  <button class="btn btn-danger btn-sm" onclick="deleteProduct('${product._id}')">حذف</button>
+                  <button class="btn btn-warning btn-sm" onclick="startEditProduct('${product._id}')">تعديل</button>
+                </div>
               </div>
             </div>
           </div>
-        `;
+          `;
           productList.innerHTML += productCard;
         });
       }
+    </script>
+  </body>
+</html>
 
-      window.deleteProduct = async function (id) {
-        if (!confirm("هل تريد حذف المنتج؟")) return;
-        showSpinner(true);
-        const res = await fetch("/api/products/" + id, { method: "DELETE" });
+  window.deleteProduct = async function (id) {
+    if (!confirm("هل تريد حذف المنتج؟")) return;
+    showSpinner(true);
+    const res = await fetch("/api/products/" + id, { method: "DELETE" });
+    if (res.ok) {
+      products = products.filter((p) => p._id !== id);
+      renderProducts();
+    } else {
+      alert("خطأ أثناء الحذف.");
+    }
+    showSpinner(false);
+  };
+
+  window.startEditProduct = function (id) {
+    const product = products.find((p) => p._id === id);
+    if (!product) return;
+    editProductId = id;
+    document.getElementById("productName").value = product.name;
+    document.getElementById("productDesc").value = product.desc;
+    // Fix: Set the input values for prices, fallback to legacy price
+    document.getElementById('productPriceRegular').value =
+      (product.price_regular !== undefined && product.price_regular !== null && product.price_regular !== "")
+        ? product.price_regular
+        : (product.price !== undefined && product.price !== null && product.price !== "")
+        ? product.price
+        : "";
+    document.getElementById('productPriceBulk').value =
+      (product.price_bulk !== undefined && product.price_bulk !== null && product.price_bulk !== "")
+        ? product.price_bulk
+        : "";
+    document.getElementById("productCategory").value = product.category;
+    uploadedImgDataUrl = product.img;
+    document.getElementById("cancelEditBtn").style.display = "";
+  };
+
+  document
+    .getElementById("cancelEditBtn")
+    .addEventListener("click", function () {
+      editProductId = null;
+      document.getElementById("product-form").reset();
+      uploadedImgDataUrl = "";
+      this.style.display = "none";
+    });
+
+  document
+    .getElementById("productCategory")
+    .addEventListener("change", function () {
+      fetchProducts(this.value);
+    });
+
+  document
+    .getElementById("productImgUpload")
+    .addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          uploadedImgDataUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        uploadedImgDataUrl = "";
+      }
+    });
+
+  document
+    .getElementById("product-form")
+    .addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const category = document.getElementById("productCategory").value;
+      const name = document.getElementById("productName").value;
+      const desc = document.getElementById("productDesc").value;
+      const price_regular = document.getElementById('productPriceRegular').value;
+      const price_bulk = document.getElementById('productPriceBulk').value;
+      const img = uploadedImgDataUrl;
+
+      // Fix: Allow at least one price (regular or legacy). Remove required from inputs if present.
+      if (!category || !name || !img || (price_regular === "" && price_bulk === "")) {
+        alert("يرجى تعبئة جميع الحقول المطلوبة.");
+        return;
+      }
+
+      // If only price_regular is present, send it. If only price (legacy), send price.
+      // The backend will handle one of them.
+      const productData = {
+        name,
+        category,
+        desc,
+        img,
+        price_regular: price_regular !== "" ? price_regular : undefined,
+        price_bulk: price_bulk !== "" ? price_bulk : undefined,
+      };
+
+      showSpinner(true);
+
+      if (editProductId) {
+        const res = await fetch("/api/products/" + editProductId, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
         if (res.ok) {
-          products = products.filter((p) => p._id !== id);
+          const i = products.findIndex((p) => p._id === editProductId);
+          if (i >= 0) products[i] = { ...productData, _id: editProductId };
           renderProducts();
-        } else {
-          alert("خطأ أثناء الحذف.");
-        }
-        showSpinner(false);
-      };
-
-      window.startEditProduct = function (id) {
-        const product = products.find((p) => p._id === id);
-        if (!product) return;
-        editProductId = id;
-        document.getElementById("productName").value = product.name;
-        document.getElementById("productDesc").value = product.desc;
-        price_regular = document.getElementById('productPriceRegular').value;
-        price_bulk = document.getElementById('productPriceBulk').value;
-        document.getElementById("productCategory").value = product.category;
-        uploadedImgDataUrl = product.img;
-        document.getElementById("cancelEditBtn").style.display = "";
-      };
-
-      document
-        .getElementById("cancelEditBtn")
-        .addEventListener("click", function () {
           editProductId = null;
-          document.getElementById("product-form").reset();
+          document.getElementById("cancelEditBtn").style.display = "none";
+          this.reset();
           uploadedImgDataUrl = "";
-          this.style.display = "none";
-        });
-
-      document
-        .getElementById("productCategory")
-        .addEventListener("change", function () {
-          fetchProducts(this.value);
-        });
-
-      document
-        .getElementById("productImgUpload")
-        .addEventListener("change", function (event) {
-          const file = event.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              uploadedImgDataUrl = e.target.result;
-            };
-            reader.readAsDataURL(file);
-          } else {
-            uploadedImgDataUrl = "";
-          }
-        });
-
-      document
-        .getElementById("product-form")
-        .addEventListener("submit", async function (event) {
-          event.preventDefault();
-          const category = document.getElementById("productCategory").value;
-          const name = document.getElementById("productName").value;
-          const desc = document.getElementById("productDesc").value;
-          const price_regular = document.getElementById('productPriceRegular').value;
-          const price_bulk = document.getElementById('productPriceBulk').value;
-          const img = uploadedImgDataUrl;
-
-          if (!category || !name || !img) {
-            alert("يرجى تعبئة جميع الحقول المطلوبة.");
-            return;
-          }
-
-          const productData = { name, category, price_regular, price_bulk, img, desc };
-
-          showSpinner(true);
-
-          if (editProductId) {
-            const res = await fetch("/api/products/" + editProductId, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(productData),
-            });
-            if (res.ok) {
-              const i = products.findIndex((p) => p._id === editProductId);
-              if (i >= 0) products[i] = { ...productData, _id: editProductId };
-              renderProducts();
-              editProductId = null;
-              document.getElementById("cancelEditBtn").style.display = "none";
-              this.reset();
-              uploadedImgDataUrl = "";
-            } else {
-              alert("خطأ أثناء تعديل المنتج.");
-            }
-          } else {
-            const res = await fetch("/api/products", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(productData),
-            });
-            if (res.ok) {
-              const newProduct = await res.json();
-              products.push({ ...productData, _id: newProduct.id });
-              renderProducts();
-              this.reset();
-              uploadedImgDataUrl = "";
-            } else {
-              alert("خطأ أثناء إضافة المنتج.");
-            }
-          }
-          showSpinner(false);
-        });
-
-      document
-        .getElementById("login-form")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-          const username = document.getElementById("username").value;
-          const password = document.getElementById("password").value;
-          showSpinner(true);
-          const res = await fetch("/api/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-          });
-          showSpinner(false);
-          if (res.ok) {
-            document.getElementById("login-container").style.display = "none";
-            document.getElementById("admin-container").style.display = "";
-            fetchProducts();
-          } else {
-            document.getElementById("login-error").style.display = "";
-          }
-        });
-
-      async function checkAuth() {
-        const res = await fetch("/api/admin-check");
-        if (res.ok) {
-          document.getElementById("login-container").style.display = "none";
-          document.getElementById("admin-container").style.display = "";
-          fetchProducts();
         } else {
-          document.getElementById("login-container").style.display = "";
-          document.getElementById("admin-container").style.display = "none";
+          alert("خطأ أثناء تعديل المنتج.");
+        }
+      } else {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
+        if (res.ok) {
+          const newProduct = await res.json();
+          products.push({ ...productData, _id: newProduct.id });
+          renderProducts();
+          this.reset();
+          uploadedImgDataUrl = "";
+        } else {
+          alert("خطأ أثناء إضافة المنتج.");
         }
       }
-      checkAuth();
-    </script>
+      showSpinner(false);
+    });
+
+  document
+    .getElementById("login-form")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      showSpinner(true);
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      showSpinner(false);
+      if (res.ok) {
+        document.getElementById("login-container").style.display = "none";
+        document.getElementById("admin-container").style.display = "";
+        fetchProducts();
+      } else {
+        document.getElementById("login-error").style.display = "";
+      }
+    });
+
+  async function checkAuth() {
+    const res = await fetch("/api/admin-check");
+    if (res.ok) {
+      document.getElementById("login-container").style.display = "none";
+      document.getElementById("admin-container").style.display = "";
+      fetchProducts();
+    } else {
+      document.getElementById("login-container").style.display = "";
+      document.getElementById("admin-container").style.display = "none";
+    }
+  }
+  checkAuth();
+</script>
   </body>
 </html>

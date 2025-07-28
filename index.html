@@ -1,3 +1,4 @@
+```html name=index.html
 <!DOCTYPE html>
 <html lang="ar">
   <head>
@@ -18,13 +19,32 @@
         height: 80px;
         object-fit: cover;
       }
-      footer {
-        font-size: 0.95rem;
+      .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
       }
-      .bulk-price {
+      .price-regular {
+        color: #007bff;
+        font-weight: bold;
+        font-size: 1.05rem;
+        text-align: left;
+      }
+      .bulk-price,
+      .price-bulk {
         display: none;
         color: #d2691e;
         font-weight: bold;
+        font-size: 1.05rem;
+        text-align: right;
+      }
+      .show-bulk .bulk-price,
+      .show-bulk .price-bulk {
+        display: inline;
+      }
+      footer {
+        font-size: 0.95rem;
       }
       #bulk-btn[disabled] {
         opacity: 0.6;
@@ -99,20 +119,7 @@
         );
         let products = res.ok ? await res.json() : [];
         products.forEach((product) => {
-          html += `<div class="col">
-    <div class="card h-100 shadow-sm" style="max-width:170px; margin:auto;">
-      <img src="${product.img}" class="card-img-top" alt="${
-            product.name
-          }" loading="lazy">
-      <div class="card-body p-2">
-        <h6 class="card-title mb-1" style="font-size:0.95rem;">${
-          product.name
-        }</h6>
-        <p class="card-text" style="font-size:0.85rem;">${
-          product.desc || ""
-        }</p>
-        <p class="card-text text-primary" style="font-size:0.95rem;">
-          السعر: ${
+          const price_regular =
             product.price_regular !== undefined &&
             product.price_regular !== null &&
             product.price_regular !== ""
@@ -121,21 +128,34 @@
                 product.price !== null &&
                 product.price !== ""
               ? product.price + " د.ل"
-              : ""
-          }
-        </p>
-        ${
-          product.price_bulk !== undefined &&
-          product.price_bulk !== null &&
-          product.price_bulk !== ""
-            ? `<p class="card-text text-primary bulk-price" style="font-size:0.95rem;">
-                سعر الجملة: ${product.price_bulk} د.ل
-              </p>`
-            : ""
-        }
-      </div>
-    </div>
-  </div>`;
+              : "";
+          const price_bulk =
+            product.price_bulk !== undefined &&
+            product.price_bulk !== null &&
+            product.price_bulk !== ""
+              ? product.price_bulk + " د.ل"
+              : "";
+          html += `<div class="col">
+            <div class="card h-100 shadow-sm d-flex flex-column${
+              showBulk ? " show-bulk" : ""
+            }" style="max-width:170px; margin:auto;">
+              <img src="${product.img}" class="card-img-top" alt="${
+            product.name
+          }" loading="lazy">
+              <div class="card-body p-2 d-flex flex-column">
+                <h6 class="card-title mb-1" style="font-size:0.95rem;">${
+                  product.name
+                }</h6>
+                <p class="card-text" style="font-size:0.85rem;">${
+                  product.desc || ""
+                }</p>
+                <div class="mt-auto price-row">
+                  <span class="price-regular">${price_regular}</span>
+                  <span class="price-bulk bulk-price">${price_bulk}</span>
+                </div>
+              </div>
+            </div>
+          </div>`;
         });
         html += `</div>`;
         document.getElementById("main-content").innerHTML = html;
@@ -143,9 +163,13 @@
       }
 
       function updateBulkPriceDisplay() {
-        const bulkSpans = document.querySelectorAll(".bulk-price");
-        bulkSpans.forEach((span) => {
-          span.style.display = showBulk ? "" : "none";
+        // Add or remove "show-bulk" class to all cards for bulk price visibility
+        document.querySelectorAll(".card").forEach((card) => {
+          if (showBulk) {
+            card.classList.add("show-bulk");
+          } else {
+            card.classList.remove("show-bulk");
+          }
         });
         document.getElementById("bulk-btn").disabled = showBulk;
       }
@@ -164,3 +188,4 @@
     </script>
   </body>
 </html>
+```

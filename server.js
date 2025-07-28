@@ -39,15 +39,23 @@ MongoClient.connect(MONGO_URI).then((client) => {
     res.json({ ok: true });
   });
 
-  // Optimized GET: support category filtering and limit fields
+  // Optimized GET: support category filtering and limit fields, always include price_regular, price_bulk, and price
   app.get("/api/products", async (req, res) => {
     try {
       const category = req.query.category;
       const query = category ? { category } : {};
-      // Only send needed fields
+      // Only send needed fields, always include all price fields for fallback
       const products = await productsCollection
         .find(query, {
-          projection: { name: 1, desc: 1, price: 1, img: 1, category: 1 },
+          projection: {
+            name: 1,
+            desc: 1,
+            price: 1,
+            price_regular: 1,
+            price_bulk: 1,
+            img: 1,
+            category: 1,
+          },
         })
         .toArray();
       res.json(products);
@@ -56,47 +64,49 @@ MongoClient.connect(MONGO_URI).then((client) => {
     }
   });
 
+  // Allow creating a product with at least price_regular or legacy price
   app.post("/api/products", checkAdmin, async (req, res) => {
-    const { name, desc, price_regular, price_bulk, img, category } = req.body;
+    const { name, desc, price_regular, price_bulk, img, category, price } =
+      req.body;
     if (
       !name ||
       !category ||
       !img ||
-      price_regular === undefined ||
-      price_bulk === undefined
+      (price_regular === undefined && price === undefined)
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    await db.collection("products").insertOne({
+    await productsCollection.insertOne({
       name,
       desc,
       price_regular,
       price_bulk,
+      price,
       img,
       category,
     });
     res.json({ success: true });
   });
 
+  // Allow updating a product with at least price_regular or legacy price
   app.put("/api/products/:id", checkAdmin, async (req, res) => {
-    const { name, desc, price_regular, price_bulk, img, category } = req.body;
+    const { name, desc, price_regular, price_bulk, img, category, price } =
+      req.body;
     if (
       !name ||
       !category ||
       !img ||
-      price_regular === undefined ||
-      price_bulk === undefined
+      (price_regular === undefined && price === undefined)
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    await db
-      .collection("products")
-      .updateOne(
-        { _id: new ObjectId(req.params.id) },
-        { $set: { name, desc, price_regular, price_bulk, img, category } }
-      );
+    await productsCollection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { name, desc, price_regular, price_bulk, price, img, category } }
+    );
     res.json({ success: true });
   });
+
   app.delete("/api/products/:id", checkAdmin, async (req, res) => {
     try {
       await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
