@@ -312,11 +312,14 @@
         });
 
       async function checkAuth() {
-        const res = await fetch("/api/products", { method: "GET" });
+        const res = await fetch("/api/admin-check");
         if (res.ok) {
           document.getElementById("login-container").style.display = "none";
           document.getElementById("admin-container").style.display = "";
           fetchProducts();
+        } else {
+          document.getElementById("login-container").style.display = "";
+          document.getElementById("admin-container").style.display = "none";
         }
       }
       checkAuth();
