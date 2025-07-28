@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const app = express();
 
-const MONGO_URL = process.env.MONGO_URL || "mongodb://localhost:27017";
+const MONGO_URL = process.env.MONGO_URL;
 const DB_NAME = process.env.DB_NAME || "emenu";
 const PORT = process.env.PORT || 3000;
 
