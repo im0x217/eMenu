@@ -161,8 +161,13 @@
                   product.desc || ""
                 }</p>
                 <p class="card-text text-primary" style="font-size:0.95rem;">${
-                  product.price ? product.price + " د.ل" : ""
-                }</p>
+                  product.price_regular ? product.price_regular + " د.ل" : ""
+                }<span class="bulk-price">${
+                  product.price_bulk
+                    ? " | الجملة: " + product.price_bulk + " د.ل"
+                    : ""
+                }</span>
+                </p>
                 <button class="btn btn-danger btn-sm" onclick="deleteProduct('${
                   product._id
                 }')">حذف</button>
@@ -241,7 +246,7 @@
           const name = document.getElementById("productName").value;
           const desc = document.getElementById("productDesc").value;
           const price_regular = parseFloat(document.getElementById('productPriceRegular').value);
-          const price_bulk = parseFloat(document.getElementById('productPriceBulk').value);
+          const sprice_bulk = parseFloat(document.getElementById('productPriceBulk').value);
           const img = uploadedImgDataUrl;
 
           if (!category || !name || !img) {
@@ -249,7 +254,7 @@
             return;
           }
 
-          const productData = { name, desc, price, img, category };
+          const productData = { name, category, price_regular, price_bulk, img, desc };
 
           showSpinner(true);
 
