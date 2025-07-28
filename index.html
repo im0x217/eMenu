@@ -115,12 +115,12 @@
                 السعر: ${
                   product.price_regular ? product.price_regular + " د.ل" : ""
                 }
-                <span class="bulk-price">${
-                  product.price_bulk
-                    ? " | الجملة: " + product.price_bulk + " د.ل"
-                    : ""
-                }</span>
+                
               </p>
+              <p class="card-text text-primary" style="font-size:0.95rem;">${
+                product.price_bulk ? product.price_bulk + " د.ل" : ""
+              }
+                </p>
             </div>
           </div>
         </div>`;
