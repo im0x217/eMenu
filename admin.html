@@ -240,7 +240,8 @@
           const category = document.getElementById("productCategory").value;
           const name = document.getElementById("productName").value;
           const desc = document.getElementById("productDesc").value;
-          const price = document.getElementById("productPrice").value;
+          const price_regular = parseFloat(document.getElementById('productPriceRegular').value);
+          const price_bulk = parseFloat(document.getElementById('productPriceBulk').value);
           const img = uploadedImgDataUrl;
 
           if (!category || !name || !img) {
