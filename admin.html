@@ -21,6 +21,24 @@
         top: 50%;
         z-index: 1000;
       }
+      .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+      }
+      .price-regular {
+        color: #007bff;
+        font-weight: bold;
+        font-size: 1.05rem;
+        text-align: left;
+      }
+      .price-bulk {
+        color: #d2691e;
+        font-weight: bold;
+        font-size: 1.05rem;
+        text-align: right;
+      }
     </style>
   </head>
   <body>
@@ -38,7 +56,6 @@
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <!-- ...above unchanged... -->
     <div class="container my-5" id="login-container">
       <h2 class="mb-4 text-center">تسجيل الدخول</h2>
       <form id="login-form" class="mb-4" style="max-width: 400px; margin: auto">
@@ -126,29 +143,35 @@
         style="display: none"
       ></div>
     </div>
-    <style>
-      /* ...existing styles... */
-      .price-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
-      }
-      .price-regular {
-        color: #007bff;
-        font-weight: bold;
-        font-size: 1.05rem;
-        text-align: left;
-      }
-      .price-bulk {
-        color: #d2691e;
-        font-weight: bold;
-        font-size: 1.05rem;
-        text-align: right;
-      }
-    </style>
     <script>
-      // ... existing js ...
+      // --- FUNCTIONS FIRST! ---
+      function showSpinner(show) {
+        document.getElementById("loading-spinner").style.display = show
+          ? "block"
+          : "none";
+      }
+
+      let products = [];
+      let uploadedImgDataUrl = "";
+      let editProductId = null;
+
+      async function fetchProducts(category = null) {
+        showSpinner(true);
+        try {
+          let url = "/api/products";
+          if (category) url += "?category=" + encodeURIComponent(category);
+          const res = await fetch(url);
+          products = res.ok ? await res.json() : [];
+        } catch (e) {
+          document.getElementById("admin-error").textContent =
+            "خطأ في تحميل المنتجات.";
+          document.getElementById("admin-error").style.display = "";
+          products = [];
+        }
+        renderProducts();
+        showSpinner(false);
+      }
+
       function renderProducts() {
         const category =
           document.getElementById("productCategory").value || "الشرقي";
@@ -204,6 +227,7 @@
         });
       }
 
+      // --- EVENT HANDLERS ---
       window.deleteProduct = async function (id) {
         if (!confirm("هل تريد حذف المنتج؟")) return;
         showSpinner(true);
@@ -223,7 +247,6 @@
         editProductId = id;
         document.getElementById("productName").value = product.name;
         document.getElementById("productDesc").value = product.desc;
-        // Fix: Set the input values for prices, fallback to legacy price
         document.getElementById("productPriceRegular").value =
           product.price_regular !== undefined &&
           product.price_regular !== null &&
@@ -288,7 +311,6 @@
           const price_bulk = document.getElementById("productPriceBulk").value;
           const img = uploadedImgDataUrl;
 
-          // Fix: Allow at least one price (regular or legacy). Remove required from inputs if present.
           if (
             !category ||
             !name ||
@@ -299,8 +321,6 @@
             return;
           }
 
-          // If only price_regular is present, send it. If only price (legacy), send price.
-          // The backend will handle one of them.
           const productData = {
             name,
             category,
@@ -381,6 +401,7 @@
           document.getElementById("admin-container").style.display = "none";
         }
       }
+      // --- INIT ---
       checkAuth();
     </script>
   </body>
