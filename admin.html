@@ -201,8 +201,8 @@
         editProductId = id;
         document.getElementById("productName").value = product.name;
         document.getElementById("productDesc").value = product.desc;
-        price_regular = parseFloat(document.getElementById('productPriceRegular').value);
-        price_bulk = parseFloat(document.getElementById('productPriceBulk').value);
+        price_regular = document.getElementById('productPriceRegular').value;
+        price_bulk = document.getElementById('productPriceBulk').value;
         document.getElementById("productCategory").value = product.category;
         uploadedImgDataUrl = product.img;
         document.getElementById("cancelEditBtn").style.display = "";
@@ -245,8 +245,8 @@
           const category = document.getElementById("productCategory").value;
           const name = document.getElementById("productName").value;
           const desc = document.getElementById("productDesc").value;
-          const price_regular = parseFloat(document.getElementById('productPriceRegular').value);
-          const price_bulk = parseFloat(document.getElementById('productPriceBulk').value);
+          const price_regular = document.getElementById('productPriceRegular').value;
+          const price_bulk = document.getElementById('productPriceBulk').value;
           const img = uploadedImgDataUrl;
 
           if (!category || !name || !img) {
