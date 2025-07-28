@@ -34,6 +34,11 @@ MongoClient.connect(MONGO_URI).then((client) => {
     res.status(403).json({ success: false, message: "Forbidden" });
   };
 
+  // Add this route after your login/auth logic:
+  app.get("/api/admin-check", checkAdmin, (req, res) => {
+    res.json({ ok: true });
+  });
+
   // Optimized GET: support category filtering and limit fields
   app.get("/api/products", async (req, res) => {
     try {
