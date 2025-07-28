@@ -21,9 +21,19 @@
       footer {
         font-size: 0.95rem;
       }
+      .bulk-price {
+        display: none;
+        color: #d2691e;
+        font-weight: bold;
+      }
+      #bulk-btn[disabled] {
+        opacity: 0.6;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
+    <!-- Top Header with logo -->
     <nav class="navbar navbar-expand-lg" style="background-color: #fdb518">
       <div class="container-fluid py-3 px-0">
         <a
@@ -41,10 +51,20 @@
       </div>
     </nav>
     <div class="container mt-4">
+      <div class="text-center mb-3">
+        <button
+          id="bulk-btn"
+          class="btn btn-outline-info"
+          onclick="unlockBulkPrice()"
+        >
+          عرض أسعار الجملة
+        </button>
+      </div>
       <div id="main-content"></div>
     </div>
     <footer class="text-center text-muted py-3">
-      &copy; 2025 مهند الزروق 
+      &copy; 2025 مهند الزروق &mdash;
+      <a href="LICENSE" target="_blank">MIT License</a>
     </footer>
     <script>
       "use strict";
@@ -55,6 +75,8 @@
         { name: "عصائر", btn: "btn-outline-danger" },
         { name: "شكلاطة", btn: "btn-outline-info" },
       ];
+      let showBulk = false;
+      const BULK_CODE = "1234"; // Change this to your code
 
       function renderCategories() {
         let html = `<h2 class="mb-4 text-center mt-4">الأصناف</h2>
@@ -89,15 +111,41 @@
               <p class="card-text" style="font-size:0.85rem;">${
                 product.desc || ""
               }</p>
-              <p class="card-text text-primary" style="font-size:0.95rem;">${
-                product.price ? product.price + " د.ل" : ""
-              }</p>
+              <p class="card-text text-primary" style="font-size:0.95rem;">
+                السعر: ${
+                  product.price_regular ? product.price_regular + " د.ل" : ""
+                }
+                <span class="bulk-price">${
+                  product.price_bulk
+                    ? " | الجملة: " + product.price_bulk + " د.ل"
+                    : ""
+                }</span>
+              </p>
             </div>
           </div>
         </div>`;
         });
         html += `</div>`;
         document.getElementById("main-content").innerHTML = html;
+        updateBulkPriceDisplay();
+      }
+
+      function updateBulkPriceDisplay() {
+        const bulkSpans = document.querySelectorAll(".bulk-price");
+        bulkSpans.forEach((span) => {
+          span.style.display = showBulk ? "" : "none";
+        });
+        document.getElementById("bulk-btn").disabled = showBulk;
+      }
+
+      function unlockBulkPrice() {
+        const code = prompt("أدخل رمز الجملة (4 أرقام):");
+        if (code === BULK_CODE) {
+          showBulk = true;
+          updateBulkPriceDisplay();
+        } else if (code !== null) {
+          alert("رمز غير صحيح");
+        }
       }
 
       window.onload = renderCategories;

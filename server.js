@@ -1,104 +1,137 @@
+// server.js
 const express = require("express");
-const cookieParser = require("cookie-parser");
-const helmet = require("helmet");
 const { MongoClient, ObjectId } = require("mongodb");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
+const path = require("path");
 const app = express();
+
+const MONGO_URL = process.env.MONGO_URL || "mongodb://localhost:27017";
+const DB_NAME = process.env.DB_NAME || "emenu";
 const PORT = process.env.PORT || 3000;
 
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
-const MONGO_URI = process.env.MONGO_URI;
+const BULK_CODE = process.env.BULK_CODE || "1234";
 
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.static("."));
+app.use(bodyParser.json({ limit: "2mb" }));
 app.use(cookieParser());
-app.use(express.static(__dirname));
 
-let db, productsCollection;
-MongoClient.connect(MONGO_URI).then((client) => {
-  db = client.db("emenu");
-  productsCollection = db.collection("products");
-  productsCollection.createIndex({ category: 1 });
+MongoClient.connect(MONGO_URL).then((client) => {
+  const db = client.db(DB_NAME);
 
+  function checkAdmin(req, res, next) {
+    if (req.cookies.admin === "true") return next();
+    res.status(403).json({ error: "Unauthorized" });
+  }
+
+  // --- AUTH ---
   app.post("/api/login", (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-      res.cookie("admin", "true", { httpOnly: true });
+      res.cookie("admin", "true", {
+        httpOnly: true,
+        sameSite: "Lax",
+        secure: false,
+      });
       return res.json({ success: true });
     }
     res.status(401).json({ success: false, message: "Unauthorized" });
   });
 
-  const checkAdmin = (req, res, next) => {
-    if (req.cookies.admin === "true") return next();
-    res.status(403).json({ success: false, message: "Forbidden" });
-  };
+  app.post("/api/logout", (req, res) => {
+    res.clearCookie("admin");
+    res.json({ success: true });
+  });
 
-  // Add this route after your login/auth logic:
   app.get("/api/admin-check", checkAdmin, (req, res) => {
     res.json({ ok: true });
   });
 
-  // Optimized GET: support category filtering and limit fields
+  // --- PRODUCTS ---
   app.get("/api/products", async (req, res) => {
-    try {
-      const category = req.query.category;
-      const query = category ? { category } : {};
-      // Only send needed fields
-      const products = await productsCollection
-        .find(query, {
-          projection: { name: 1, desc: 1, price: 1, img: 1, category: 1 },
-        })
-        .toArray();
-      res.json(products);
-    } catch (err) {
-      res.status(500).json({ error: "Failed to fetch products" });
-    }
+    const { category } = req.query;
+    const query = category ? { category } : {};
+    // Only return the new price fields
+    const products = await db.collection("products").find(query).toArray();
+    res.json(
+      products.map((p) => ({
+        _id: p._id,
+        name: p.name,
+        desc: p.desc,
+        price_regular: p.price_regular,
+        price_bulk: p.price_bulk,
+        img: p.img,
+        category: p.category,
+      }))
+    );
   });
 
   app.post("/api/products", checkAdmin, async (req, res) => {
-    try {
-      const { name, desc, price, img, category } = req.body;
-      if (!name || !category || !img) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-      const result = await productsCollection.insertOne({
-        name,
-        desc,
-        price,
-        img,
-        category,
-      });
-      res.json({ success: true, id: result.insertedId });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to add product" });
+    const { name, desc, price_regular, price_bulk, img, category } = req.body;
+    if (
+      !name ||
+      !category ||
+      !img ||
+      price_regular === undefined ||
+      price_bulk === undefined
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
+    await db.collection("products").insertOne({
+      name,
+      desc,
+      price_regular,
+      price_bulk,
+      img,
+      category,
+    });
+    res.json({ success: true });
   });
 
   app.put("/api/products/:id", checkAdmin, async (req, res) => {
-    try {
-      const { name, desc, price, img, category } = req.body;
-      if (!name || !category || !img) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-      await productsCollection.updateOne(
-        { _id: new ObjectId(req.params.id) },
-        { $set: { name, desc, price, img, category } }
-      );
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to update product" });
+    const { name, desc, price_regular, price_bulk, img, category } = req.body;
+    if (
+      !name ||
+      !category ||
+      !img ||
+      price_regular === undefined ||
+      price_bulk === undefined
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
+    await db
+      .collection("products")
+      .updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { name, desc, price_regular, price_bulk, img, category } }
+      );
+    res.json({ success: true });
   });
 
   app.delete("/api/products/:id", checkAdmin, async (req, res) => {
-    try {
-      await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to delete product" });
-    }
+    await db
+      .collection("products")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
   });
 
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  // --- BULK PRICE UNLOCK ENDPOINT (optional, for better security) ---
+  app.post("/api/bulk-unlock", (req, res) => {
+    const { code } = req.body;
+    if (code === BULK_CODE) {
+      return res.json({ success: true });
+    }
+    res.status(401).json({ success: false });
+  });
+
+  // --- fallback ---
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+  });
+
+  app.listen(PORT, () => {
+    console.log(`eMenu server running on port ${PORT}`);
+  });
 });
