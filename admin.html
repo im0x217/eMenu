@@ -63,9 +63,6 @@
         text-align: right;
         transition: box-shadow 0.13s;
         position: relative;
-        max-width: 370px;
-        margin-left: auto;
-        margin-right: auto;
       }
       .product-card:hover {
         box-shadow: 0 4px 24px #0002;
@@ -128,15 +125,35 @@
         align-items: center;
         justify-content: center;
       }
-      @media (min-width: 768px) {
+      @media (min-width: 992px) {
+        .row-cols-lg-4 > .col {
+          flex: 0 0 auto;
+          width: 25%;
+          max-width: 25%;
+        }
+        #product-list {
+          justify-content: center;
+          align-items: stretch;
+          margin-left: 0;
+          margin-right: 0;
+        }
         .product-card {
+          max-width: 275px;
+          min-width: 250px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+      }
+      @media (min-width: 1200px) {
+        .product-card {
+          max-width: 250px;
           min-width: 230px;
         }
-        .card-btn-row {
-          gap: 0.7rem;
-        }
-        .card-btn-row .btn {
-          font-size: 1.12rem;
+      }
+      @media (max-width: 991.98px) {
+        .product-card {
+          max-width: 100%;
+          min-width: 0;
         }
       }
       @media (max-width: 600px) {
