@@ -513,6 +513,14 @@
         });
       }
 
+      function removeFromCart(idx) {
+        cart.splice(idx, 1);
+        updateCartBar();
+        saveCart();
+        showCartModal();
+      }
+      window.removeFromCart = removeFromCart;
+
       // Modern quantity and details controls
       window.updateCartQty = function(idx, delta) {
         cart[idx].qty = Math.max(1, cart[idx].qty + delta);
