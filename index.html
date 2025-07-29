@@ -6,17 +6,65 @@
     <title>حلويات عبمبر الزروق</title>
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
       crossorigin="anonymous"
     />
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
       crossorigin="anonymous"
-    ></script>
+    />
     <style>
-      .card-img-top {
-        height: 80px;
+      body {
+        background: #faf7f2;
+        min-height: 100vh;
+      }
+      .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .navbar-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #fffbe8;
         object-fit: cover;
+        box-shadow: 0 2px 6px #0001;
+        background: #fffbe8;
+      }
+      .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+      }
+      .category-btn {
+        border-radius: 20px !important;
+        font-size: 1.15rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        padding: 0.9rem 0.6rem;
+      }
+      .fullscreen-card {
+        max-width: 500px;
+        margin: auto;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px #0002;
+        padding: 2rem 1rem 1.5rem 1rem;
+        background: #fff;
+      }
+      @media (max-width: 600px) {
+        .fullscreen-card {
+          border-radius: 0 !important;
+          box-shadow: none;
+          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
+        }
+        .navbar {
+          padding: 0.5rem 0;
+        }
+        .product-card {
+          max-width: 100%;
+        }
       }
       .price-row {
         display: flex;
@@ -27,7 +75,7 @@
       .price-regular {
         color: #007bff;
         font-weight: bold;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         text-align: left;
       }
       .bulk-price,
@@ -35,15 +83,41 @@
         display: none;
         color: #d2691e;
         font-weight: bold;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         text-align: right;
       }
       .show-bulk .bulk-price,
       .show-bulk .price-bulk {
         display: inline;
       }
-      footer {
-        font-size: 0.95rem;
+      .product-card {
+        border-radius: 16px;
+        box-shadow: 0 2px 10px #0002;
+        padding: 0.5rem;
+        margin-bottom: 1.2rem;
+        background: #fff;
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .card-img-top {
+        border-radius: 12px;
+        height: 110px;
+        object-fit: cover;
+        margin-bottom: 0.5rem;
+      }
+      .card-title {
+        font-size: 1.08rem;
+        font-weight: bold;
+      }
+      .footer {
+        font-size: 1rem;
+        background: #ffd98d;
+        border-top: 1px solid #fdb518;
+        color: #555;
+      }
+      .btn {
+        border-radius: 12px;
       }
       #bulk-btn[disabled] {
         opacity: 0.6;
@@ -53,37 +127,48 @@
   </head>
   <body>
     <!-- Top Header with logo -->
-    <nav class="navbar navbar-expand-lg" style="background-color: #fdb518">
-      <div class="container-fluid py-3 px-0">
+    <nav
+      class="navbar navbar-expand-lg sticky-top shadow-sm"
+      style="background-color: #fdb518"
+    >
+      <div class="container-fluid justify-content-center">
         <a
-          class="navbar-brand ms-auto font-size-lg d-flex align-items-center"
-          href="admin.html"
-          style="text-align: right"
+          class="navbar-brand mx-auto d-flex flex-column align-items-center gap-2"
+          href="index.html"
+          style="text-decoration: none"
         >
-          <span class="me-3 fs-3 fw-bold">حلويات عبمبر الزروق</span>
-          <img
-            src="res/logo.jpg"
-            alt="Logo"
-            style="height: 60px; vertical-align: middle"
-          />
+          <img src="res/logo.jpg" alt="Logo" class="navbar-logo" />
+          <span class="fs-4 fw-bold text-dark">حلويات عبمبر الزروق</span>
         </a>
+        <a
+          href="admin.html"
+          class="btn btn-outline-dark d-none d-md-block"
+          style="position: absolute; left: 16px; top: 14px"
+          ><i class="bi bi-person-lock"></i> إدارة</a
+        >
       </div>
     </nav>
-    <div class="container mt-4">
+    <div class="container my-3">
       <div class="text-center mb-3">
         <button
           id="bulk-btn"
           class="btn btn-outline-info"
+          style="font-size: 1.1rem"
           onclick="unlockBulkPrice()"
         >
-          عرض أسعار الجملة
+          <i class="bi bi-lock"></i> عرض أسعار الجملة
         </button>
       </div>
       <div id="main-content"></div>
     </div>
-    <footer class="text-center text-muted py-3">
+    <footer class="footer text-center py-3">
       &copy; 2025 مهند الزروق &mdash;
-      <a href="LICENSE" target="_blank">MIT License</a>
+      <a
+        href="LICENSE"
+        target="_blank"
+        style="color: #333; text-decoration: underline"
+        >MIT License</a
+      >
     </footer>
     <script>
       "use strict";
@@ -95,24 +180,33 @@
         { name: "شكلاطة", btn: "btn-outline-info" },
       ];
       let showBulk = false;
-      const BULK_CODE = "1234"; // Change this to your code
+      const BULK_CODE = "1234"; // Change as needed
 
       function renderCategories() {
-        let html = `<h2 class="mb-4 text-center mt-4">الأصناف</h2>
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">`;
+        let html = `
+          <div class="fullscreen-card mb-3">
+            <h2 class="mb-4 text-center">الأصناف</h2>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">`;
         categories.forEach((cat) => {
           html += `<div class="col">
-          <a href="#" class="btn ${cat.btn} w-100 py-4 rounded-3 shadow-sm fs-4" onclick="renderProducts('${cat.name}')">${cat.name}</a>
-        </div>`;
+            <a href="#" class="btn ${cat.btn} w-100 category-btn"
+              onclick="renderProducts('${cat.name}')" style="min-width:150px;">
+                ${cat.name}
+            </a>
+          </div>`;
         });
-        html += `</div>`;
+        html += `</div></div>`;
         document.getElementById("main-content").innerHTML = html;
       }
 
       async function renderProducts(category) {
-        let html = `<h2 class="mb-4 text-center mt-4">${category}</h2>
-        <button class="btn btn-secondary mb-4" onclick="renderCategories()">عودة</button>
-        <div class="row row-cols-2 row-cols-md-4 g-2">`;
+        let html = `
+          <div class="fullscreen-card mb-3">
+            <h2 class="mb-4 text-center">${category}</h2>
+            <button class="btn btn-secondary mb-4 w-100" onclick="renderCategories()">
+              <i class="bi bi-arrow-right"></i> عودة
+            </button>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">`;
         let res = await fetch(
           `/api/products?category=${encodeURIComponent(category)}`
         );
@@ -135,17 +229,15 @@
               ? product.price_bulk + " د.ل"
               : "";
           html += `<div class="col">
-            <div class="card h-100 shadow-sm d-flex flex-column${
+            <div class="product-card shadow-sm d-flex flex-column${
               showBulk ? " show-bulk" : ""
-            }" style="max-width:170px; margin:auto;">
+            }">
               <img src="${product.img}" class="card-img-top" alt="${
             product.name
           }" loading="lazy">
               <div class="card-body p-2 d-flex flex-column">
-                <h6 class="card-title mb-1" style="font-size:0.95rem;">${
-                  product.name
-                }</h6>
-                <p class="card-text" style="font-size:0.85rem;">${
+                <h6 class="card-title mb-1">${product.name}</h6>
+                <p class="card-text" style="font-size:0.97rem;">${
                   product.desc || ""
                 }</p>
                 <div class="mt-auto price-row">
@@ -156,21 +248,21 @@
             </div>
           </div>`;
         });
-        html += `</div>`;
+        html += `</div></div>`;
         document.getElementById("main-content").innerHTML = html;
         updateBulkPriceDisplay();
       }
 
       function updateBulkPriceDisplay() {
-        // Add or remove "show-bulk" class to all cards for bulk price visibility
-        document.querySelectorAll(".card").forEach((card) => {
-          if (showBulk) {
-            card.classList.add("show-bulk");
-          } else {
-            card.classList.remove("show-bulk");
-          }
+        document.querySelectorAll(".product-card").forEach((card) => {
+          if (showBulk) card.classList.add("show-bulk");
+          else card.classList.remove("show-bulk");
         });
         document.getElementById("bulk-btn").disabled = showBulk;
+        // Swap icon
+        document.getElementById("bulk-btn").innerHTML = showBulk
+          ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
+          : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
       }
 
       function unlockBulkPrice() {
@@ -182,6 +274,9 @@
           alert("رمز غير صحيح");
         }
       }
+
+      window.renderProducts = renderProducts; // For inline onclick
+      window.renderCategories = renderCategories;
 
       window.onload = renderCategories;
     </script>

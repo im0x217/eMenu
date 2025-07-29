@@ -3,23 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>إدارة المنتجات</title>
+    <title>إدارة المنتجات | حلويات عبمبر الزروق</title>
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
       crossorigin="anonymous"
     />
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
       crossorigin="anonymous"
-    ></script>
+    />
     <style>
+      body {
+        background: #faf7f2;
+        min-height: 100vh;
+      }
+      .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .navbar-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #fffbe8;
+        object-fit: cover;
+        box-shadow: 0 2px 6px #0001;
+        background: #fffbe8;
+      }
+      .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+      }
+      .fullscreen-card {
+        max-width: 500px;
+        margin: auto;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px #0002;
+        padding: 2rem 1rem 1.5rem 1rem;
+        background: #fff;
+      }
+      .form-control,
+      .form-select {
+        font-size: 1.1rem;
+        padding: 0.7rem;
+        border-radius: 12px;
+      }
+      @media (max-width: 600px) {
+        .fullscreen-card {
+          border-radius: 0 !important;
+          box-shadow: none;
+          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
+        }
+        .navbar {
+          padding: 0.5rem 0;
+        }
+        .product-card {
+          max-width: 100%;
+        }
+      }
       #loading-spinner {
         display: none;
-        position: absolute;
+        position: fixed;
         left: 50%;
         top: 50%;
-        z-index: 1000;
+        z-index: 3000;
+        transform: translate(-50%, -50%);
       }
       .price-row {
         display: flex;
@@ -30,121 +82,218 @@
       .price-regular {
         color: #007bff;
         font-weight: bold;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         text-align: left;
       }
       .price-bulk {
         color: #d2691e;
         font-weight: bold;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         text-align: right;
+      }
+      .product-card {
+        border-radius: 16px;
+        box-shadow: 0 2px 10px #0002;
+        padding: 0.5rem;
+        margin-bottom: 1.2rem;
+        background: #fff;
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .card-img-top {
+        border-radius: 12px;
+        height: 110px;
+        object-fit: cover;
+        margin-bottom: 0.5rem;
+      }
+      .card-title {
+        font-size: 1.08rem;
+        font-weight: bold;
+      }
+      .card-btn-row {
+        margin-top: 0.7rem;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: space-between;
+      }
+      .btn {
+        border-radius: 12px;
+      }
+      .input-group-text {
+        font-size: 1.1rem;
+        background: #f6f6f6;
+        border-radius: 0 12px 12px 0;
+      }
+      .logout-btn {
+        position: absolute;
+        left: 16px;
+        top: 14px;
       }
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg" style="background-color: #fdb518">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="index.html">عودة</a>
+    <nav
+      class="navbar navbar-light sticky-top shadow-sm"
+      style="background-color: #fdb518; min-height: 70px; position: relative"
+    >
+      <div class="container-fluid justify-content-center">
+        <a
+          class="navbar-brand mx-auto d-flex flex-column align-items-center gap-2"
+          href="index.html"
+          style="text-decoration: none"
+        >
+          <img src="res/logo.jpg" alt="Logo" class="navbar-logo" />
+          <span class="fs-4 fw-bold text-dark">لوحة إدارة المنتجات</span>
+        </a>
+        <button
+          id="logout-btn"
+          class="btn btn-danger logout-btn d-none d-md-block"
+          style="font-size: 1rem"
+        >
+          <i class="bi bi-box-arrow-right"></i> خروج
+        </button>
       </div>
     </nav>
     <div id="loading-spinner">
       <div
         class="spinner-border text-warning"
         role="status"
-        style="width: 4rem; height: 4rem"
+        style="width: 3rem; height: 3rem"
       >
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <div class="container my-5" id="login-container">
-      <h2 class="mb-4 text-center">تسجيل الدخول</h2>
-      <form id="login-form" class="mb-4" style="max-width: 400px; margin: auto">
-        <div class="mb-3">
-          <label for="username" class="form-label">اسم المستخدم</label>
-          <input type="text" class="form-control" id="username" required />
-        </div>
-        <div class="mb-3">
-          <label for="password" class="form-label">كلمة السر</label>
-          <input type="password" class="form-control" id="password" required />
-        </div>
-        <button type="submit" class="btn btn-primary w-100">دخول</button>
-        <div id="login-error" class="text-danger mt-2" style="display: none">
-          بيانات الدخول خاطئة
-        </div>
-      </form>
+    <!-- Login Form -->
+    <div class="container my-4" id="login-container">
+      <div class="fullscreen-card">
+        <h2 class="mb-4 text-center">تسجيل الدخول</h2>
+        <form id="login-form" class="mb-3">
+          <div class="mb-3 input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="username"
+              placeholder="اسم المستخدم"
+              required
+            />
+          </div>
+          <div class="mb-3 input-group">
+            <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              placeholder="كلمة السر"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary w-100">دخول</button>
+          <div
+            id="login-error"
+            class="alert alert-danger mt-2 py-1 px-2"
+            style="display: none; font-size: 1rem"
+          >
+            بيانات الدخول خاطئة
+          </div>
+        </form>
+      </div>
     </div>
-    <div class="container my-5" id="admin-container" style="display: none">
-      <h2 class="mb-4 text-center">إدارة المنتجات</h2>
-      <form id="product-form" class="mb-4">
-        <div class="mb-3">
-          <label for="productCategory" class="form-label">الصنف</label>
-          <select class="form-select" id="productCategory" required>
-            <option value=""></option>
-            <option value="الشرقي">الشرقي</option>
-            <option value="الغربي">الغربي</option>
-            <option value="تورتات">تورتات</option>
-            <option value="عصائر">عصائر</option>
-            <option value="شكلاطة">شكلاطة</option>
-          </select>
+    <!-- Admin Panel -->
+    <div class="container my-4" id="admin-container" style="display: none">
+      <div class="fullscreen-card">
+        <!-- Mobile logout button -->
+        <div class="mb-2 text-end d-block d-md-none">
+          <button
+            id="logout-btn-mobile"
+            class="btn btn-danger"
+            style="font-size: 1rem"
+          >
+            <i class="bi bi-box-arrow-right"></i> خروج
+          </button>
         </div>
-        <div class="mb-3">
-          <label for="productName" class="form-label">اسم المنتج</label>
-          <input type="text" class="form-control" id="productName" required />
-        </div>
-        <div class="mb-3">
-          <label for="productDesc" class="form-label">وصف المنتج</label>
-          <textarea class="form-control" id="productDesc"></textarea>
-        </div>
-        <div class="row">
-          <div class="col-6 mb-3">
-            <label for="productPriceRegular" class="form-label">سعر عادي</label>
+        <h2 class="mb-4 text-center">إدارة المنتجات</h2>
+        <form id="product-form" class="mb-3">
+          <div class="mb-3">
+            <label for="productCategory" class="form-label">الصنف</label>
+            <select class="form-select" id="productCategory" required>
+              <option value=""></option>
+              <option value="الشرقي">الشرقي</option>
+              <option value="الغربي">الغربي</option>
+              <option value="تورتات">تورتات</option>
+              <option value="عصائر">عصائر</option>
+              <option value="شكلاطة">شكلاطة</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="productName" class="form-label">اسم المنتج</label>
+            <input type="text" class="form-control" id="productName" required />
+          </div>
+          <div class="mb-3">
+            <label for="productDesc" class="form-label">وصف المنتج</label>
+            <textarea class="form-control" id="productDesc" rows="2"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-12 col-sm-6 mb-3">
+              <label for="productPriceRegular" class="form-label"
+                >سعر عادي</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="productPriceRegular"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div class="col-12 col-sm-6 mb-3">
+              <label for="productPriceBulk" class="form-label">سعر جملة</label>
+              <input
+                type="number"
+                class="form-control"
+                id="productPriceBulk"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="productImgUpload" class="form-label">صورة المنتج</label>
             <input
-              type="number"
+              type="file"
               class="form-control"
-              id="productPriceRegular"
-              min="0"
-              step="0.01"
+              id="productImgUpload"
+              accept="image/*"
             />
           </div>
-          <div class="col-6 mb-3">
-            <label for="productPriceBulk" class="form-label">سعر جملة</label>
-            <input
-              type="number"
-              class="form-control"
-              id="productPriceBulk"
-              min="0"
-              step="0.01"
-            />
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">
+              إضافة المنتج
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary flex-fill"
+              id="cancelEditBtn"
+              style="display: none"
+            >
+              إلغاء التعديل
+            </button>
           </div>
-        </div>
-        <div class="mb-3">
-          <label for="productImgUpload" class="form-label">صورة المنتج</label>
-          <input
-            type="file"
-            class="form-control"
-            id="productImgUpload"
-            accept="image/*"
-          />
-        </div>
-        <button type="submit" class="btn btn-primary">إضافة المنتج</button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="cancelEditBtn"
+        </form>
+        <div
+          id="product-list"
+          class="row row-cols-1 row-cols-sm-2 g-3 mt-2"
+        ></div>
+        <div
+          id="admin-error"
+          class="alert alert-danger mt-2 py-1 px-2"
           style="display: none"
-        >
-          إلغاء التعديل
-        </button>
-      </form>
-      <div id="product-list" class="row row-cols-2 row-cols-md-3 g-4"></div>
-      <div
-        id="admin-error"
-        class="text-danger mt-2"
-        style="display: none"
-      ></div>
+        ></div>
+      </div>
     </div>
     <script>
-      // --- FUNCTIONS FIRST! ---
+      // ----- Functions -----
       function showSpinner(show) {
         document.getElementById("loading-spinner").style.display = show
           ? "block"
@@ -173,8 +322,6 @@
       }
 
       function renderProducts() {
-        const category =
-          document.getElementById("productCategory").value || "الشرقي";
         const productList = document.getElementById("product-list");
         productList.innerHTML = "";
         products.forEach((product) => {
@@ -194,40 +341,38 @@
             product.price_bulk !== ""
               ? product.price_bulk + " د.ل"
               : "";
-          const productCard = `
-          <div class="col">
-            <div class="card h-100 shadow-sm d-flex flex-column" style="max-width:180px; margin:auto;">
+          const card = document.createElement("div");
+          card.className = "col";
+          card.innerHTML = `
+            <div class="product-card shadow-sm d-flex flex-column">
               <img src="${product.img}" class="card-img-top" alt="${
             product.name
-          }" style="height:80px; object-fit:cover;">
+          }">
               <div class="card-body p-2 d-flex flex-column">
-                <h6 class="card-title mb-1" style="font-size:0.95rem;">${
-                  product.name
-                }</h6>
-                <p class="card-text" style="font-size:0.85rem;">${
+                <h6 class="card-title mb-1">${product.name}</h6>
+                <p class="card-text" style="font-size:0.97rem;">${
                   product.desc || ""
                 }</p>
                 <div class="mt-auto price-row">
                   <span class="price-regular">${price_regular}</span>
                   <span class="price-bulk">${price_bulk}</span>
                 </div>
-                <div class="mt-2 d-flex flex-row justify-content-between">
-                  <button class="btn btn-danger btn-sm" onclick="deleteProduct('${
+                <div class="card-btn-row">
+                  <button class="btn btn-danger btn-sm flex-fill" onclick="deleteProduct('${
                     product._id
-                  }')">حذف</button>
-                  <button class="btn btn-warning btn-sm" onclick="startEditProduct('${
+                  }')"><i class="bi bi-trash"></i> حذف</button>
+                  <button class="btn btn-warning btn-sm flex-fill" onclick="startEditProduct('${
                     product._id
-                  }')">تعديل</button>
+                  }')"><i class="bi bi-pencil-square"></i> تعديل</button>
                 </div>
               </div>
             </div>
-          </div>
           `;
-          productList.innerHTML += productCard;
+          productList.appendChild(card);
         });
       }
 
-      // --- EVENT HANDLERS ---
+      // ----- Events/Handlers -----
       window.deleteProduct = async function (id) {
         if (!confirm("هل تريد حذف المنتج؟")) return;
         showSpinner(true);
@@ -266,6 +411,7 @@
         document.getElementById("productCategory").value = product.category;
         uploadedImgDataUrl = product.img;
         document.getElementById("cancelEditBtn").style.display = "";
+        window.scrollTo({ top: 0, behavior: "smooth" });
       };
 
       document
@@ -356,9 +502,8 @@
               body: JSON.stringify(productData),
             });
             if (res.ok) {
-              const newProduct = await res.json();
-              products.push({ ...productData, _id: newProduct.id });
-              renderProducts();
+              // Ideally, backend should return new product data, but fallback to reload
+              fetchProducts(category);
               this.reset();
               uploadedImgDataUrl = "";
             } else {
@@ -401,7 +546,21 @@
           document.getElementById("admin-container").style.display = "none";
         }
       }
-      // --- INIT ---
+
+      // Logout functionality
+      async function logout() {
+        // Remove admin cookie by expiring it
+        document.cookie =
+          "admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.getElementById("login-container").style.display = "";
+        document.getElementById("admin-container").style.display = "none";
+      }
+      document.getElementById("logout-btn").addEventListener("click", logout);
+      document
+        .getElementById("logout-btn-mobile")
+        .addEventListener("click", logout);
+
+      // ----- INIT -----
       checkAuth();
     </script>
   </body>
