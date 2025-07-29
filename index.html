@@ -55,6 +55,16 @@
         box-shadow: 0 4px 24px #0002;
         padding: 2rem 1rem 1.5rem 1rem;
         background: #fff;
+        transition: border-radius 0.25s;
+      }
+      @media (max-width: 600px) {
+        .fullscreen-card {
+          border-radius: 18px 18px 0 0 !important;
+          box-shadow: 0 2px 16px #0001;
+          padding: 1.4rem 0.2rem 1.2rem 0.2rem;
+          margin-top: 6px;
+          margin-bottom: 10px;
+        }
       }
       .search-box {
         max-width: 350px;
@@ -149,14 +159,6 @@
         text-decoration: line-through;
       }
       @media (max-width: 600px) {
-        .fullscreen-card {
-          border-radius: 0 !important;
-          box-shadow: none;
-          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
-        }
-        .navbar {
-          padding: 0.5rem 0;
-        }
         .product-card {
           max-width: 100%;
         }
@@ -249,12 +251,12 @@
     <script>
       "use strict";
       const categories = [
-        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🧆" },
+        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍯" },
         { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
         { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
+        { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
         { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
         { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
-        { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
       ];
       let showBulk = false;
       const BULK_CODE = "1234";
