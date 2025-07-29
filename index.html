@@ -66,6 +66,13 @@
           margin-bottom: 10px;
         }
       }
+      .bulk-btn-fixed-bar {
+        max-width: 500px;
+        margin: 22px auto 0 auto;
+        padding-bottom: 0.3rem;
+        background: transparent;
+        text-align: center;
+      }
       .search-box {
         max-width: 350px;
         margin: 0 auto 1.3rem auto;
@@ -172,6 +179,10 @@
         .category-btn {
           width: 100% !important;
         }
+        .bulk-btn-fixed-bar {
+          max-width: 100%;
+          margin-top: 15px;
+        }
       }
       @media (min-width: 601px) {
         .category-col {
@@ -203,6 +214,16 @@
         >
       </div>
     </nav>
+    <div class="bulk-btn-fixed-bar" id="bulk-btn-bar">
+      <button
+        id="bulk-btn"
+        class="btn btn-outline-info"
+        style="font-size: 1.1rem; min-width: 140px"
+        onclick="unlockBulkPrice()"
+      >
+        <i class="bi bi-lock"></i> عرض أسعار الجملة
+      </button>
+    </div>
     <div class="container my-3" id="main-header">
       <div class="fullscreen-card mb-3 fade-in" id="categories-header"></div>
     </div>
@@ -251,12 +272,12 @@
     <script>
       "use strict";
       const categories = [
-        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍯" },
+        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🧆" },
         { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
         { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
-        { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
         { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
         { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
+        { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
       ];
       let showBulk = false;
       const BULK_CODE = "1234";
@@ -275,11 +296,6 @@
       }
       function renderCategories() {
         let html = `
-        <div class="text-center mb-3">
-          <button id="bulk-btn" class="btn btn-outline-info" style="font-size: 1.1rem; min-width:140px;" onclick="unlockBulkPrice()">
-            <i class="bi bi-lock"></i> عرض أسعار الجملة
-          </button>
-        </div>
         <h2 class="mb-4 text-center">الأصناف</h2>
         <div class="row g-3 justify-content-center flex-wrap">`;
         categories.forEach((cat, idx) => {
@@ -294,6 +310,7 @@
         document.getElementById("categories-header").innerHTML = html;
         document.getElementById("main-content").innerHTML = "";
         fadeInContent("categories-header");
+        updateBulkPriceDisplay();
       }
       function searchInputHTML() {
         return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." oninput="filterProducts()">`;
@@ -375,6 +392,7 @@
         }
       }
       function unlockBulkPrice() {
+        if (showBulk) return;
         const code = prompt("أدخل رمز الجملة (4 أرقام):");
         if (code === BULK_CODE) {
           showBulk = true;
@@ -399,6 +417,7 @@
       window.onload = () => {
         renderCategories();
         fadeInContent("categories-header");
+        updateBulkPriceDisplay();
       };
     </script>
   </body>

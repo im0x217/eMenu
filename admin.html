@@ -50,7 +50,7 @@
         }
       }
       .product-card {
-        border-radius: 16px;
+        border-radius: 24px;
         box-shadow: 0 2px 10px #0002;
         padding: 0.5rem 1rem 1rem 1rem;
         margin-bottom: 1.2rem;
@@ -71,7 +71,7 @@
         box-shadow: 0 4px 24px #0002;
       }
       .card-img-top {
-        border-radius: 12px;
+        border-radius: 14px;
         height: 110px;
         object-fit: cover;
         margin-bottom: 0.5rem;
@@ -117,18 +117,26 @@
       .card-btn-row {
         display: flex;
         gap: 0.5rem;
-        justify-content: flex-end;
+        justify-content: stretch;
+        margin-top: 0.7em;
       }
       .card-btn-row .btn {
-        min-width: 78px;
-        font-size: 0.96rem;
-        padding: 0.27rem 0.85rem;
+        flex: 1 1 0;
+        font-size: 1.08rem;
+        padding: 0.36rem 0.3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       @media (min-width: 768px) {
+        .product-card {
+          min-width: 230px;
+        }
+        .card-btn-row {
+          gap: 0.7rem;
+        }
         .card-btn-row .btn {
-          min-width: 100px;
-          font-size: 1.05rem;
-          padding: 0.25rem 1.2rem;
+          font-size: 1.12rem;
         }
       }
       @media (max-width: 600px) {
@@ -489,13 +497,13 @@
                 <span class="price-regular">${price_regular}</span>
                 <span class="price-bulk">${price_bulk}</span>
               </div>
-              <div class="card-btn-row mt-2">
-                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${
-                  product._id
-                }')"><i class="bi bi-trash"></i> حذف</button>
+              <div class="card-btn-row">
                 <button class="btn btn-warning btn-sm" onclick="startEditProduct('${
                   product._id
                 }')"><i class="bi bi-pencil-square"></i> تعديل</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${
+                  product._id
+                }')"><i class="bi bi-trash"></i> حذف</button>
               </div>
             </div>
           </div>
