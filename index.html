@@ -432,7 +432,11 @@
       function loadCart() {
         try {
           const data = localStorage.getItem('cart');
-          if (data) cart = JSON.parse(data);
+          if (data) {
+            cart = JSON.parse(data);
+            // Backward compatibility: add details if missing
+            cart.forEach(item => { if (!('details' in item)) item.details = ''; });
+          }
         } catch (e) { cart = []; }
       }
       function addToCart(btn) {
@@ -448,7 +452,8 @@
             name: product.name,
             price: price,
             img: product.img,
-            qty: 1
+            qty: 1,
+            details: ''
           });
         }
         saveCart();
@@ -470,15 +475,24 @@
         } else {
           html = '<ul class="list-group mb-3">';
           cart.forEach((item, idx) => {
-            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <img src="${item.img}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;margin-left:8px;">
-                <span>${item.name}</span>
-                <span class="badge bg-secondary ms-2">x${item.qty}</span>
-              </div>
-              <span class="fw-bold">${item.price} د.ل</span>
-              <button class="btn btn-sm btn-danger ms-2" onclick="removeFromCart(${idx})"><i class='bi bi-trash'></i></button>
-            </li>`;
+            html += `<li class="list-group-item">
+        <div class="d-flex align-items-center mb-2">
+          <img src="${item.img}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-left:10px;">
+          <div class="flex-grow-1">
+            <div class="fw-bold">${item.name}</div>
+            <div class="d-flex align-items-center mt-1">
+              <button class="btn btn-outline-secondary btn-sm me-1" onclick="updateCartQty(${idx},-1)"><i class="bi bi-dash"></i></button>
+              <input type="number" min="1" value="${item.qty}" onchange="updateCartQtyDirect(${idx},this.value)" style="width:48px;text-align:center;" class="form-control form-control-sm mx-1">
+              <button class="btn btn-outline-secondary btn-sm ms-1" onclick="updateCartQty(${idx},1)"><i class="bi bi-plus"></i></button>
+            </div>
+            <input type="text" class="form-control form-control-sm mt-2" placeholder="تفاصيل الطلب (اختياري)" value="${item.details || ''}" onchange="updateCartDetails(${idx},this.value)">
+          </div>
+          <div class="text-end ms-2">
+            <div class="fw-bold text-success">${item.price} د.ل</div>
+            <button class="btn btn-link text-danger p-0 mt-2" onclick="removeFromCart(${idx})"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </li>`;
           });
           html += '</ul>';
           html += `<div class="d-flex justify-content-between align-items-center mb-2">
@@ -499,22 +513,33 @@
         });
       }
 
-      function removeFromCart(idx) {
-        cart.splice(idx, 1);
-        updateCartBar();
+      // Modern quantity and details controls
+      window.updateCartQty = function(idx, delta) {
+        cart[idx].qty = Math.max(1, cart[idx].qty + delta);
         saveCart();
         showCartModal();
-      }
-
-      function cartTotal() {
-        return cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.qty), 0).toFixed(2);
-      }
+        updateCartBar();
+      };
+      window.updateCartQtyDirect = function(idx, val) {
+        let v = parseInt(val, 10);
+        if (isNaN(v) || v < 1) v = 1;
+        cart[idx].qty = v;
+        saveCart();
+        showCartModal();
+        updateCartBar();
+      };
+      window.updateCartDetails = function(idx, val) {
+        cart[idx].details = val;
+        saveCart();
+      };
 
       function proceedToWhatsApp() {
         if (cart.length === 0) return;
         let msg = 'طلب جديد من الموقع:%0A';
         cart.forEach(item => {
-          msg += `- ${item.name} x${item.qty} (${item.price} د.ل)%0A`;
+          msg += `- ${item.name} x${item.qty}`;
+          if (item.details && item.details.trim()) msg += ` (${item.details.trim()})`;
+          msg += ` (${item.price} د.ل)%0A`;
         });
         msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
         const phone = '218916688800';
