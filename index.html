@@ -18,6 +18,8 @@
       body {
         background: #faf7f2;
         min-height: 100vh;
+        direction: rtl;
+        text-align: right;
       }
       .navbar-logo {
         width: 48px;
@@ -35,7 +37,7 @@
       }
       .category-btn {
         border-radius: 20px !important;
-        font-size: 1.15rem;
+        font-size: 1.12rem;
         font-weight: bold;
         margin-bottom: 1rem;
         padding: 0.9rem 0.6rem;
@@ -43,7 +45,8 @@
       .category-emoji {
         font-size: 2em;
         vertical-align: middle;
-        margin-left: 0.2em;
+        margin-left: 0.35em;
+        margin-right: 0.2em;
       }
       .fullscreen-card {
         max-width: 500px;
@@ -53,23 +56,12 @@
         padding: 2rem 1rem 1.5rem 1rem;
         background: #fff;
       }
-      @media (max-width: 600px) {
-        .fullscreen-card {
-          border-radius: 0 !important;
-          box-shadow: none;
-          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
-        }
-        .navbar {
-          padding: 0.5rem 0;
-        }
-        .product-card {
-          max-width: 100%;
-        }
+      .search-box {
+        max-width: 350px;
+        margin: 0 auto 1.3rem auto;
       }
-      .product-grid-container {
-        max-width: 1300px;
-        margin: 0 auto;
-        padding: 0 8px;
+      .toast-container {
+        z-index: 2000;
       }
       .fade-in {
         animation: fadeIn 0.45s;
@@ -82,24 +74,28 @@
           opacity: 1;
         }
       }
-      .search-box {
-        max-width: 350px;
-        margin: 0 auto 1.3rem auto;
+      .product-grid-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 0 8px;
       }
       .product-card {
         border-radius: 16px;
         box-shadow: 0 2px 10px #0002;
-        padding: 0.5rem;
+        padding: 0.5rem 1rem 1rem 1rem;
         margin-bottom: 1.2rem;
         background: #fff;
-        max-width: 350px;
-        margin-left: auto;
-        margin-right: auto;
-        transition: box-shadow 0.13s;
+        width: 100%;
         min-height: 250px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
+        text-align: right;
+        transition: box-shadow 0.13s;
+        position: relative;
+        max-width: 370px;
+        margin-left: auto;
+        margin-right: auto;
       }
       .product-card:hover {
         box-shadow: 0 4px 24px #0002;
@@ -114,9 +110,72 @@
       .card-title {
         font-size: 1.08rem;
         font-weight: bold;
+        margin-bottom: 0.4rem;
       }
-      .toast-container {
-        z-index: 2000;
+      .card-text {
+        min-height: 32px;
+        font-size: 0.97rem;
+      }
+      .price-row {
+        margin-top: 0.7rem;
+        margin-bottom: 0.2rem;
+        display: flex;
+        gap: 0.8em;
+        align-items: center;
+      }
+      .price-regular {
+        color: #d98000;
+        font-weight: bold;
+        font-size: 1.09rem;
+        background: #fffbe8;
+        padding: 2px 10px;
+        border-radius: 8px;
+      }
+      .price-bulk {
+        color: #fff;
+        font-weight: bold;
+        font-size: 1.09rem;
+        background: #37b24d;
+        padding: 2px 10px;
+        border-radius: 8px;
+        display: none;
+      }
+      .show-bulk .price-bulk {
+        display: inline-block;
+      }
+      .show-bulk .price-regular {
+        background: #f8d7da;
+        color: #b02a37;
+        text-decoration: line-through;
+      }
+      @media (max-width: 600px) {
+        .fullscreen-card {
+          border-radius: 0 !important;
+          box-shadow: none;
+          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
+        }
+        .navbar {
+          padding: 0.5rem 0;
+        }
+        .product-card {
+          max-width: 100%;
+        }
+        .product-grid-container {
+          padding: 0;
+        }
+        .category-col {
+          max-width: 100%;
+          flex: 0 0 100%;
+        }
+        .category-btn {
+          width: 100% !important;
+        }
+      }
+      @media (min-width: 601px) {
+        .category-col {
+          max-width: 20%;
+          flex: 0 0 20%;
+        }
       }
     </style>
   </head>
@@ -190,11 +249,12 @@
     <script>
       "use strict";
       const categories = [
-        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍪" },
+        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🧆" },
         { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
         { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
         { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
         { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
+        { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
       ];
       let showBulk = false;
       const BULK_CODE = "1234";
@@ -213,23 +273,22 @@
       }
       function renderCategories() {
         let html = `
+        <div class="text-center mb-3">
+          <button id="bulk-btn" class="btn btn-outline-info" style="font-size: 1.1rem; min-width:140px;" onclick="unlockBulkPrice()">
+            <i class="bi bi-lock"></i> عرض أسعار الجملة
+          </button>
+        </div>
         <h2 class="mb-4 text-center">الأصناف</h2>
-        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-3">`;
-        categories.forEach((cat) => {
-          html += `<div class="col">
-          <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')" style="min-width:120px;">
+        <div class="row g-3 justify-content-center flex-wrap">`;
+        categories.forEach((cat, idx) => {
+          html += `<div class="col-12 category-col">
+          <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')">
             <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
             <span>${cat.name}</span>
           </button>
         </div>`;
         });
-        html += `</div>
-        <div class="text-center mt-4">
-          <button id="bulk-btn" class="btn btn-outline-info" style="font-size: 1.1rem;" onclick="unlockBulkPrice()">
-            <i class="bi bi-lock"></i> عرض أسعار الجملة
-          </button>
-        </div>
-      `;
+        html += `</div>`;
         document.getElementById("categories-header").innerHTML = html;
         document.getElementById("main-content").innerHTML = "";
         fadeInContent("categories-header");
@@ -286,12 +345,10 @@
           }" loading="lazy" onclick="zoomImg('${product.img}')">
             <div class="card-body p-2 d-flex flex-column">
               <h6 class="card-title mb-1">${product.name}</h6>
-              <p class="card-text" style="font-size:0.97rem;">${
-                product.desc || ""
-              }</p>
+              <p class="card-text">${product.desc || ""}</p>
               <div class="mt-auto price-row">
                 <span class="price-regular">${price_regular}</span>
-                <span class="price-bulk bulk-price">${price_bulk}</span>
+                <span class="price-bulk">${price_bulk}</span>
               </div>
             </div>
           </div>
