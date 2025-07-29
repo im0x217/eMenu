@@ -34,17 +34,14 @@ MongoClient.connect(MONGO_URI).then((client) => {
     res.status(403).json({ success: false, message: "Forbidden" });
   };
 
-  // Add this route after your login/auth logic:
   app.get("/api/admin-check", checkAdmin, (req, res) => {
     res.json({ ok: true });
   });
 
-  // Optimized GET: support category filtering and limit fields, always include price_regular, price_bulk, and price
   app.get("/api/products", async (req, res) => {
     try {
       const category = req.query.category;
       const query = category ? { category } : {};
-      // Only send needed fields, always include all price fields for fallback
       const products = await productsCollection
         .find(query, {
           projection: {
@@ -64,7 +61,6 @@ MongoClient.connect(MONGO_URI).then((client) => {
     }
   });
 
-  // Allow creating a product with at least price_regular or legacy price
   app.post("/api/products", checkAdmin, async (req, res) => {
     const { name, desc, price_regular, price_bulk, img, category, price } =
       req.body;
@@ -88,7 +84,6 @@ MongoClient.connect(MONGO_URI).then((client) => {
     res.json({ success: true });
   });
 
-  // Allow updating a product with at least price_regular or legacy price
   app.put("/api/products/:id", checkAdmin, async (req, res) => {
     const { name, desc, price_regular, price_bulk, img, category, price } =
       req.body;

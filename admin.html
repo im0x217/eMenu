@@ -164,7 +164,6 @@
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <!-- Login Form -->
     <div class="container my-4" id="login-container">
       <div class="fullscreen-card">
         <h2 class="mb-4 text-center">تسجيل الدخول</h2>
@@ -200,10 +199,8 @@
         </form>
       </div>
     </div>
-    <!-- Admin Panel -->
     <div class="container my-4" id="admin-container" style="display: none">
       <div class="fullscreen-card">
-        <!-- Mobile logout button -->
         <div class="mb-2 text-end d-block d-md-none">
           <button
             id="logout-btn-mobile"
@@ -293,7 +290,6 @@
       </div>
     </div>
     <script>
-      // ----- Functions -----
       function showSpinner(show) {
         document.getElementById("loading-spinner").style.display = show
           ? "block"
@@ -372,7 +368,6 @@
         });
       }
 
-      // ----- Events/Handlers -----
       window.deleteProduct = async function (id) {
         if (!confirm("هل تريد حذف المنتج؟")) return;
         showSpinner(true);
@@ -502,7 +497,6 @@
               body: JSON.stringify(productData),
             });
             if (res.ok) {
-              // Ideally, backend should return new product data, but fallback to reload
               fetchProducts(category);
               this.reset();
               uploadedImgDataUrl = "";
@@ -547,9 +541,7 @@
         }
       }
 
-      // Logout functionality
       async function logout() {
-        // Remove admin cookie by expiring it
         document.cookie =
           "admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.getElementById("login-container").style.display = "";
@@ -560,7 +552,6 @@
         .getElementById("logout-btn-mobile")
         .addEventListener("click", logout);
 
-      // ----- INIT -----
       checkAuth();
     </script>
   </body>
