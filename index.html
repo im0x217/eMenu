@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,6 +40,11 @@
         margin-bottom: 1rem;
         padding: 0.9rem 0.6rem;
       }
+      .category-emoji {
+        font-size: 2em;
+        vertical-align: middle;
+        margin-left: 0.2em;
+      }
       .fullscreen-card {
         max-width: 500px;
         margin: auto;
@@ -60,6 +65,11 @@
         .product-card {
           max-width: 100%;
         }
+      }
+      .product-grid-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 0 8px;
       }
       .fade-in {
         animation: fadeIn 0.45s;
@@ -86,6 +96,10 @@
         margin-left: auto;
         margin-right: auto;
         transition: box-shadow 0.13s;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
       }
       .product-card:hover {
         box-shadow: 0 4px 24px #0002;
@@ -100,11 +114,6 @@
       .card-title {
         font-size: 1.08rem;
         font-weight: bold;
-      }
-      .category-emoji {
-        font-size: 1.6em;
-        vertical-align: middle;
-        margin-left: 0.35em;
       }
       .toast-container {
         z-index: 2000;
@@ -133,18 +142,11 @@
         >
       </div>
     </nav>
-    <div class="container my-3">
-      <div class="text-center mb-3">
-        <button
-          id="bulk-btn"
-          class="btn btn-outline-info"
-          style="font-size: 1.1rem"
-          onclick="unlockBulkPrice()"
-        >
-          <i class="bi bi-lock"></i> عرض أسعار الجملة
-        </button>
-      </div>
-      <div id="main-content" class="fade-in"></div>
+    <div class="container my-3" id="main-header">
+      <div class="fullscreen-card mb-3 fade-in" id="categories-header"></div>
+    </div>
+    <div class="product-grid-container">
+      <div class="fade-in" id="main-content"></div>
     </div>
     <footer class="footer text-center py-3">
       &copy; 2025 مهند الزروق &mdash;
@@ -196,7 +198,6 @@
       ];
       let showBulk = false;
       const BULK_CODE = "1234";
-
       function showToast(msg, type = "primary") {
         const toastBody = document.getElementById("toast-body");
         const toastElem = document.getElementById("main-toast");
@@ -206,28 +207,33 @@
         const toast = new bootstrap.Toast(toastElem);
         toast.show();
       }
-
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
         new bootstrap.Modal(document.getElementById("img-modal")).show();
       }
-
       function renderCategories() {
         let html = `
-        <div class="fullscreen-card mb-3 fade-in">
-          <h2 class="mb-4 text-center">الأصناف</h2>
-          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">`;
+        <h2 class="mb-4 text-center">الأصناف</h2>
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-3">`;
         categories.forEach((cat) => {
           html += `<div class="col">
-          <a href="#" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')" style="min-width:150px;">
-            <span class="category-emoji">${cat.emoji}</span> ${cat.name}
-          </a>
+          <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')" style="min-width:120px;">
+            <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
+            <span>${cat.name}</span>
+          </button>
         </div>`;
         });
-        html += `</div></div>`;
-        document.getElementById("main-content").innerHTML = html;
+        html += `</div>
+        <div class="text-center mt-4">
+          <button id="bulk-btn" class="btn btn-outline-info" style="font-size: 1.1rem;" onclick="unlockBulkPrice()">
+            <i class="bi bi-lock"></i> عرض أسعار الجملة
+          </button>
+        </div>
+      `;
+        document.getElementById("categories-header").innerHTML = html;
+        document.getElementById("main-content").innerHTML = "";
+        fadeInContent("categories-header");
       }
-
       function searchInputHTML() {
         return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." oninput="filterProducts()">`;
       }
@@ -241,16 +247,15 @@
         });
         if (!found) showToast("لا يوجد نتائج مطابقة", "warning");
       }
-
       async function renderProducts(category) {
-        let html = `
-        <div class="fullscreen-card mb-3 fade-in">
-          <h2 class="mb-4 text-center">${
-            categories.find((c) => c.name === category).emoji
-          } ${category}</h2>
-          <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
-          ${searchInputHTML()}
-          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
+        document.getElementById("categories-header").innerHTML = `
+        <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
+        <h2 class="mb-4 text-center">${
+          categories.find((c) => c.name === category).emoji
+        } ${category}</h2>
+        ${searchInputHTML()}
+      `;
+        let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
         let res = await fetch(
           `/api/products?category=${encodeURIComponent(category)}`
         );
@@ -292,22 +297,24 @@
           </div>
         </div>`;
         });
-        html += `</div></div>`;
+        html += `</div>`;
         document.getElementById("main-content").innerHTML = html;
+        fadeInContent("main-content");
         updateBulkPriceDisplay();
       }
-
       function updateBulkPriceDisplay() {
         document.querySelectorAll(".product-card").forEach((card) => {
           if (showBulk) card.classList.add("show-bulk");
           else card.classList.remove("show-bulk");
         });
-        document.getElementById("bulk-btn").disabled = showBulk;
-        document.getElementById("bulk-btn").innerHTML = showBulk
-          ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
-          : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
+        const bulkBtn = document.getElementById("bulk-btn");
+        if (bulkBtn) {
+          bulkBtn.disabled = showBulk;
+          bulkBtn.innerHTML = showBulk
+            ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
+            : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
+        }
       }
-
       function unlockBulkPrice() {
         const code = prompt("أدخل رمز الجملة (4 أرقام):");
         if (code === BULK_CODE) {
@@ -318,7 +325,6 @@
           showToast("رمز غير صحيح", "danger");
         }
       }
-
       function fadeInContent(id) {
         const el = document.getElementById(id);
         if (!el) return;
@@ -326,21 +332,14 @@
         void el.offsetWidth;
         el.classList.add("fade-in");
       }
-
-      window.renderProducts = function (category) {
-        renderProducts(category).then(() => fadeInContent("main-content"));
-      };
-      window.renderCategories = function () {
-        renderCategories();
-        fadeInContent("main-content");
-      };
+      window.renderProducts = renderProducts;
+      window.renderCategories = renderCategories;
       window.filterProducts = filterProducts;
       window.unlockBulkPrice = unlockBulkPrice;
       window.zoomImg = zoomImg;
-
       window.onload = () => {
         renderCategories();
-        fadeInContent("main-content");
+        fadeInContent("categories-header");
       };
     </script>
   </body>

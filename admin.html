@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,6 +18,8 @@
       body {
         background: #faf7f2;
         min-height: 100vh;
+        direction: rtl;
+        text-align: right;
       }
       .navbar-logo {
         width: 48px;
@@ -57,6 +59,11 @@
         margin-left: auto;
         margin-right: auto;
         transition: box-shadow 0.13s;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: right;
       }
       .product-card:hover {
         box-shadow: 0 4px 24px #0002;
@@ -92,6 +99,40 @@
       .search-box {
         max-width: 350px;
         margin: 0 auto 1.3rem auto;
+        text-align: right;
+      }
+      .form-label,
+      .form-control,
+      .form-select,
+      .input-group-text {
+        text-align: right;
+        direction: rtl;
+      }
+      .card-title,
+      .card-text {
+        text-align: right;
+      }
+      .card-btn-row {
+        display: flex;
+        gap: 0.5rem;
+      }
+      @media (max-width: 600px) {
+        .fullscreen-card {
+          border-radius: 0 !important;
+          box-shadow: none;
+          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
+        }
+        .navbar {
+          padding: 0.5rem 0;
+        }
+        .product-card {
+          max-width: 100%;
+        }
+      }
+      .product-grid-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 0 8px;
       }
     </style>
   </head>
@@ -292,7 +333,7 @@
         />
         <div
           id="product-list"
-          class="row row-cols-1 row-cols-sm-2 g-3 mt-2 fade-in"
+          class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3 mt-2 fade-in"
         ></div>
         <div
           id="admin-error"
@@ -312,12 +353,10 @@
         const toast = new bootstrap.Toast(toastElem);
         toast.show();
       }
-
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
         new bootstrap.Modal(document.getElementById("img-modal")).show();
       }
-
       const dropArea = document.getElementById("drop-area");
       const imgInput = document.getElementById("productImgUpload");
       let uploadedImgDataUrl = "";
@@ -345,7 +384,6 @@
         };
         reader.readAsDataURL(file);
       }
-
       function fadeInContent(id) {
         const el = document.getElementById(id);
         if (!el) return;
@@ -353,7 +391,6 @@
         void el.offsetWidth;
         el.classList.add("fade-in");
       }
-
       let products = [];
       let editProductId = null;
       function showSpinner(show) {
@@ -496,7 +533,6 @@
           ).value;
           const price_bulk = document.getElementById("productPriceBulk").value;
           const img = uploadedImgDataUrl;
-
           if (
             !category ||
             !name ||
@@ -506,7 +542,6 @@
             showToast("يرجى تعبئة جميع الحقول المطلوبة.", "warning");
             return;
           }
-
           const productData = {
             name,
             category,
@@ -515,9 +550,7 @@
             price_regular: price_regular !== "" ? price_regular : undefined,
             price_bulk: price_bulk !== "" ? price_bulk : undefined,
           };
-
           showSpinner(true);
-
           if (editProductId) {
             const res = await fetch("/api/products/" + editProductId, {
               method: "PUT",
@@ -600,7 +633,6 @@
       document
         .getElementById("logout-btn-mobile")
         .addEventListener("click", logout);
-
       window.filterAdminProducts = function () {
         const q = document.getElementById("admin-search").value.trim();
         let found = false;
@@ -613,7 +645,6 @@
           });
         if (!found) showToast("لا يوجد نتائج مطابقة", "warning");
       };
-
       window.zoomImg = zoomImg;
       checkAuth();
     </script>
