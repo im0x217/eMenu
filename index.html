@@ -227,10 +227,14 @@
     <div class="container my-3" id="main-header">
       <div class="fullscreen-card mb-3 fade-in" id="categories-header"></div>
     </div>
+    <div id="loading-spinner" style="display:none;position:fixed;left:50%;top:50%;z-index:3000;transform:translate(-50%,-50%)">
+      <div class="spinner-border text-warning" role="status" aria-label="جاري التحميل" style="width:3rem;height:3rem">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+    </div>
     <div class="product-grid-container">
       <div class="fade-in" id="main-content"></div>
     </div>
-    <!-- Cart Button -->
     <div id="cart-bar" class="bulk-btn-fixed-bar" style="margin-top: 10px; display: none;">
       <button id="cart-btn" class="btn btn-success" style="font-size: 1.1rem; min-width: 140px" onclick="showCartModal()">
         <i class="bi bi-cart"></i> سلة المشتريات (<span id="cart-count">0</span>)
@@ -245,7 +249,6 @@
         >MIT License</a
       >
     </footer>
-    <!-- Cart Modal -->
     <div class="modal fade" id="cart-modal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -294,6 +297,7 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+    (function() {
       "use strict";
       const categories = [
         { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍯" },
@@ -337,7 +341,14 @@
         updateBulkPriceDisplay();
       }
       function searchInputHTML() {
-        return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." oninput="filterProducts()">`;
+        return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" autocomplete="off">`;
+      }
+      function debounce(fn, delay) {
+        let timer;
+        return function(...args) {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), delay);
+        };
       }
       function filterProducts() {
         const q = document.getElementById("search").value.trim();
@@ -347,8 +358,9 @@
           card.style.display = visible ? "" : "none";
           if (visible) found = true;
         });
-        if (!found) showToast("لا يوجد نتائج مطابقة", "warning");
+        if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
       }
+      const debouncedFilterProducts = debounce(filterProducts, 200);
       async function renderProducts(category) {
         document.getElementById("categories-header").innerHTML = `
         <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
@@ -357,6 +369,8 @@
         } ${category}</h2>
         ${searchInputHTML()}
       `;
+        document.getElementById("main-content").innerHTML = "";
+        document.getElementById("loading-spinner").style.display = "block";
         let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
         let res = await fetch(
           `/api/products?category=${encodeURIComponent(category)}`
@@ -393,22 +407,36 @@
                 <span class="price-regular">${price_regular}</span>
                 <span class="price-bulk">${price_bulk}</span>
               </div>
-              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(product).replace(/'/g, "&#39;")}' onclick="addToCart(this)"><i class='bi bi-cart-plus'></i> أضف للسلة</button>
+              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(product).replace(/'/g, "&#39;")}' onclick="addToCart(this)" aria-label="أضف ${product.name} للسلة"><i class='bi bi-cart-plus'></i> أضف للسلة</button>
             </div>
           </div>
         </div>`;
         });
         html += `</div>`;
         document.getElementById("main-content").innerHTML = html;
+        document.getElementById("loading-spinner").style.display = "none";
         fadeInContent("main-content");
         updateBulkPriceDisplay();
         updateCartBar();
+        const searchInput = document.getElementById("search");
+        if (searchInput) {
+          searchInput.addEventListener("input", debouncedFilterProducts);
+        }
       }
-      // --- Cart Functionality ---
       let cart = [];
+      function saveCart() {
+        try {
+          localStorage.setItem('cart', JSON.stringify(cart));
+        } catch (e) {}
+      }
+      function loadCart() {
+        try {
+          const data = localStorage.getItem('cart');
+          if (data) cart = JSON.parse(data);
+        } catch (e) { cart = []; }
+      }
       function addToCart(btn) {
         const product = JSON.parse(btn.getAttribute('data-product').replace(/&#39;/g, "'"));
-        // Try to find by name and price (since no _id)
         const price = showBulk && product.price_bulk ? product.price_bulk : (product.price_regular ?? product.price);
         const key = product.name + '|' + price;
         let found = cart.find(item => item.key === key);
@@ -423,6 +451,7 @@
             qty: 1
           });
         }
+        saveCart();
         showToast('تمت إضافة المنتج للسلة', 'success');
         updateCartBar();
       }
@@ -431,6 +460,7 @@
         const count = cart.reduce((sum, item) => sum + item.qty, 0);
         document.getElementById('cart-count').innerText = count;
         document.getElementById('cart-bar').style.display = count > 0 ? '' : 'none';
+        saveCart();
       }
 
       function showCartModal() {
@@ -457,12 +487,22 @@
           </div>`;
         }
         document.getElementById('cart-modal-body').innerHTML = html;
-        new bootstrap.Modal(document.getElementById('cart-modal')).show();
+        const modalEl = document.getElementById('cart-modal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        modalEl.addEventListener('hidden.bs.modal', function handler() {
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+          document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+          modalEl.removeEventListener('hidden.bs.modal', handler);
+        });
       }
 
       function removeFromCart(idx) {
         cart.splice(idx, 1);
         updateCartBar();
+        saveCart();
         showCartModal();
       }
 
@@ -514,7 +554,6 @@
       }
       window.renderProducts = renderProducts;
       window.renderCategories = renderCategories;
-      window.filterProducts = filterProducts;
       window.unlockBulkPrice = unlockBulkPrice;
       window.zoomImg = zoomImg;
       window.addToCart = addToCart;
@@ -522,11 +561,13 @@
       window.removeFromCart = removeFromCart;
       window.proceedToWhatsApp = proceedToWhatsApp;
       window.onload = () => {
+        loadCart();
         renderCategories();
         fadeInContent("categories-header");
         updateBulkPriceDisplay();
         updateCartBar();
       };
+    })();
     </script>
   </body>
 </html>

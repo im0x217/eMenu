@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
+const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +10,11 @@ const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
 const MONGO_URI = process.env.MONGO_URI;
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.static(__dirname));
@@ -23,7 +28,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
   app.post("/api/login", (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-      res.cookie("admin", "true", { httpOnly: true });
+      res.cookie("admin", "true", { httpOnly: true, sameSite: "Strict", secure: true });
       return res.json({ success: true });
     }
     res.status(401).json({ success: false, message: "Unauthorized" });
@@ -111,5 +116,10 @@ MongoClient.connect(MONGO_URI).then((client) => {
     }
   });
 
+  // Global error handler for deployment
+  app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  });
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });

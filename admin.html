@@ -718,7 +718,8 @@
       document
         .getElementById("logout-btn-mobile")
         .addEventListener("click", logout);
-      window.filterAdminProducts = function () {
+      // Debounced admin search for performance
+      function filterAdminProducts() {
         const q = document.getElementById("admin-search").value.trim();
         let found = false;
         document
@@ -728,8 +729,17 @@
             card.parentElement.style.display = visible ? "" : "none";
             if (visible) found = true;
           });
-        if (!found) showToast("لا يوجد نتائج مطابقة", "warning");
-      };
+        if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
+      }
+      function debounce(fn, delay) {
+        let timer;
+        return function(...args) {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+      const debouncedFilterAdminProducts = debounce(filterAdminProducts, 200);
+      document.getElementById("admin-search").addEventListener("input", debouncedFilterAdminProducts);
       window.zoomImg = zoomImg;
       checkAuth();
     </script>
