@@ -19,11 +19,6 @@
         background: #faf7f2;
         min-height: 100vh;
       }
-      .navbar-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
       .navbar-logo {
         width: 48px;
         height: 48px;
@@ -33,11 +28,6 @@
         box-shadow: 0 2px 6px #0001;
         background: #fffbe8;
       }
-      .sticky-top {
-        position: sticky;
-        top: 0;
-        z-index: 1020;
-      }
       .fullscreen-card {
         max-width: 500px;
         margin: auto;
@@ -46,50 +36,16 @@
         padding: 2rem 1rem 1.5rem 1rem;
         background: #fff;
       }
-      .form-control,
-      .form-select {
-        font-size: 1.1rem;
-        padding: 0.7rem;
-        border-radius: 12px;
+      .fade-in {
+        animation: fadeIn 0.45s;
       }
-      @media (max-width: 600px) {
-        .fullscreen-card {
-          border-radius: 0 !important;
-          box-shadow: none;
-          padding: 1.2rem 0.2rem 1.2rem 0.2rem;
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
         }
-        .navbar {
-          padding: 0.5rem 0;
+        to {
+          opacity: 1;
         }
-        .product-card {
-          max-width: 100%;
-        }
-      }
-      #loading-spinner {
-        display: none;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        z-index: 3000;
-        transform: translate(-50%, -50%);
-      }
-      .price-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
-      }
-      .price-regular {
-        color: #007bff;
-        font-weight: bold;
-        font-size: 1.1rem;
-        text-align: left;
-      }
-      .price-bulk {
-        color: #d2691e;
-        font-weight: bold;
-        font-size: 1.1rem;
-        text-align: right;
       }
       .product-card {
         border-radius: 16px;
@@ -100,35 +56,42 @@
         max-width: 350px;
         margin-left: auto;
         margin-right: auto;
+        transition: box-shadow 0.13s;
+      }
+      .product-card:hover {
+        box-shadow: 0 4px 24px #0002;
       }
       .card-img-top {
         border-radius: 12px;
         height: 110px;
         object-fit: cover;
         margin-bottom: 0.5rem;
+        cursor: zoom-in;
       }
-      .card-title {
-        font-size: 1.08rem;
-        font-weight: bold;
+      #drop-area {
+        border: 2px dashed #aaa;
+        padding: 1.5rem;
+        text-align: center;
+        background: #f9f9f9;
+        border-radius: 1rem;
+        margin: 1rem 0;
+        transition: background 0.3s;
+        cursor: pointer;
       }
-      .card-btn-row {
-        margin-top: 0.7rem;
-        display: flex;
-        gap: 0.5rem;
-        justify-content: space-between;
+      #drop-area.dragover {
+        background: #ffe;
       }
-      .btn {
-        border-radius: 12px;
+      #preview-img {
+        margin-top: 1rem;
+        max-width: 160px;
+        border-radius: 8px;
       }
-      .input-group-text {
-        font-size: 1.1rem;
-        background: #f6f6f6;
-        border-radius: 0 12px 12px 0;
+      .toast-container {
+        z-index: 2000;
       }
-      .logout-btn {
-        position: absolute;
-        left: 16px;
-        top: 14px;
+      .search-box {
+        max-width: 350px;
+        margin: 0 auto 1.3rem auto;
       }
     </style>
   </head>
@@ -149,19 +112,58 @@
         <button
           id="logout-btn"
           class="btn btn-danger logout-btn d-none d-md-block"
-          style="font-size: 1rem"
+          style="font-size: 1rem; position: absolute; left: 16px; top: 14px"
         >
           <i class="bi bi-box-arrow-right"></i> خروج
         </button>
       </div>
     </nav>
-    <div id="loading-spinner">
+    <div
+      id="loading-spinner"
+      style="
+        display: none;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        z-index: 3000;
+        transform: translate(-50%, -50%);
+      "
+    >
       <div
         class="spinner-border text-warning"
         role="status"
         style="width: 3rem; height: 3rem"
       >
         <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    <div class="position-fixed bottom-0 end-0 p-3 toast-container">
+      <div
+        id="main-toast"
+        class="toast align-items-center text-bg-primary border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="toast-body">تم الحفظ بنجاح!</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="img-modal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <img
+            id="img-modal-img"
+            class="w-100 rounded-3"
+            style="background: #fff"
+          />
+        </div>
       </div>
     </div>
     <div class="container my-4" id="login-container">
@@ -257,12 +259,16 @@
           </div>
           <div class="mb-3">
             <label for="productImgUpload" class="form-label">صورة المنتج</label>
-            <input
-              type="file"
-              class="form-control"
-              id="productImgUpload"
-              accept="image/*"
-            />
+            <div id="drop-area">
+              اسحب الصورة هنا أو اضغط للرفع
+              <input
+                type="file"
+                id="productImgUpload"
+                hidden
+                accept="image/*"
+              />
+              <img id="preview-img" />
+            </div>
           </div>
           <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary flex-fill">
@@ -278,9 +284,15 @@
             </button>
           </div>
         </form>
+        <input
+          id="admin-search"
+          class="form-control search-box"
+          placeholder="ابحث عن منتج..."
+          oninput="filterAdminProducts()"
+        />
         <div
           id="product-list"
-          class="row row-cols-1 row-cols-sm-2 g-3 mt-2"
+          class="row row-cols-1 row-cols-sm-2 g-3 mt-2 fade-in"
         ></div>
         <div
           id="admin-error"
@@ -289,17 +301,66 @@
         ></div>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+      function showToast(msg, type = "primary") {
+        const toastBody = document.getElementById("toast-body");
+        const toastElem = document.getElementById("main-toast");
+        toastBody.innerText = msg;
+        toastElem.className =
+          "toast align-items-center text-bg-" + type + " border-0";
+        const toast = new bootstrap.Toast(toastElem);
+        toast.show();
+      }
+
+      function zoomImg(src) {
+        document.getElementById("img-modal-img").src = src;
+        new bootstrap.Modal(document.getElementById("img-modal")).show();
+      }
+
+      const dropArea = document.getElementById("drop-area");
+      const imgInput = document.getElementById("productImgUpload");
+      let uploadedImgDataUrl = "";
+      dropArea.onclick = () => imgInput.click();
+      dropArea.ondragover = (e) => {
+        e.preventDefault();
+        dropArea.classList.add("dragover");
+      };
+      dropArea.ondragleave = (e) => {
+        dropArea.classList.remove("dragover");
+      };
+      dropArea.ondrop = (e) => {
+        e.preventDefault();
+        dropArea.classList.remove("dragover");
+        const file = e.dataTransfer.files[0];
+        handleImg(file);
+      };
+      imgInput.onchange = (e) => handleImg(e.target.files[0]);
+      function handleImg(file) {
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedImgDataUrl = e.target.result;
+          document.getElementById("preview-img").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function fadeInContent(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove("fade-in");
+        void el.offsetWidth;
+        el.classList.add("fade-in");
+      }
+
+      let products = [];
+      let editProductId = null;
       function showSpinner(show) {
         document.getElementById("loading-spinner").style.display = show
           ? "block"
           : "none";
       }
-
-      let products = [];
-      let uploadedImgDataUrl = "";
-      let editProductId = null;
-
       async function fetchProducts(category = null) {
         showSpinner(true);
         try {
@@ -312,11 +373,11 @@
             "خطأ في تحميل المنتجات.";
           document.getElementById("admin-error").style.display = "";
           products = [];
+          showToast("خطأ أثناء تحميل المنتجات", "danger");
         }
         renderProducts();
         showSpinner(false);
       }
-
       function renderProducts() {
         const productList = document.getElementById("product-list");
         productList.innerHTML = "";
@@ -340,34 +401,34 @@
           const card = document.createElement("div");
           card.className = "col";
           card.innerHTML = `
-            <div class="product-card shadow-sm d-flex flex-column">
-              <img src="${product.img}" class="card-img-top" alt="${
+          <div class="product-card shadow-sm d-flex flex-column">
+            <img src="${product.img}" class="card-img-top" alt="${
             product.name
-          }">
-              <div class="card-body p-2 d-flex flex-column">
-                <h6 class="card-title mb-1">${product.name}</h6>
-                <p class="card-text" style="font-size:0.97rem;">${
-                  product.desc || ""
-                }</p>
-                <div class="mt-auto price-row">
-                  <span class="price-regular">${price_regular}</span>
-                  <span class="price-bulk">${price_bulk}</span>
-                </div>
-                <div class="card-btn-row">
-                  <button class="btn btn-danger btn-sm flex-fill" onclick="deleteProduct('${
-                    product._id
-                  }')"><i class="bi bi-trash"></i> حذف</button>
-                  <button class="btn btn-warning btn-sm flex-fill" onclick="startEditProduct('${
-                    product._id
-                  }')"><i class="bi bi-pencil-square"></i> تعديل</button>
-                </div>
+          }" onclick="zoomImg('${product.img}')">
+            <div class="card-body p-2 d-flex flex-column">
+              <h6 class="card-title mb-1">${product.name}</h6>
+              <p class="card-text" style="font-size:0.97rem;">${
+                product.desc || ""
+              }</p>
+              <div class="mt-auto price-row">
+                <span class="price-regular">${price_regular}</span>
+                <span class="price-bulk">${price_bulk}</span>
+              </div>
+              <div class="card-btn-row mt-2">
+                <button class="btn btn-danger btn-sm flex-fill" onclick="deleteProduct('${
+                  product._id
+                }')"><i class="bi bi-trash"></i> حذف</button>
+                <button class="btn btn-warning btn-sm flex-fill" onclick="startEditProduct('${
+                  product._id
+                }')"><i class="bi bi-pencil-square"></i> تعديل</button>
               </div>
             </div>
-          `;
+          </div>
+        `;
           productList.appendChild(card);
         });
+        fadeInContent("product-list");
       }
-
       window.deleteProduct = async function (id) {
         if (!confirm("هل تريد حذف المنتج؟")) return;
         showSpinner(true);
@@ -375,12 +436,12 @@
         if (res.ok) {
           products = products.filter((p) => p._id !== id);
           renderProducts();
+          showToast("تم حذف المنتج", "success");
         } else {
-          alert("خطأ أثناء الحذف.");
+          showToast("خطأ أثناء الحذف", "danger");
         }
         showSpinner(false);
       };
-
       window.startEditProduct = function (id) {
         const product = products.find((p) => p._id === id);
         if (!product) return;
@@ -405,40 +466,24 @@
             : "";
         document.getElementById("productCategory").value = product.category;
         uploadedImgDataUrl = product.img;
+        document.getElementById("preview-img").src = product.img;
         document.getElementById("cancelEditBtn").style.display = "";
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
-
       document
         .getElementById("cancelEditBtn")
         .addEventListener("click", function () {
           editProductId = null;
           document.getElementById("product-form").reset();
           uploadedImgDataUrl = "";
+          document.getElementById("preview-img").src = "";
           this.style.display = "none";
         });
-
       document
         .getElementById("productCategory")
         .addEventListener("change", function () {
           fetchProducts(this.value);
         });
-
-      document
-        .getElementById("productImgUpload")
-        .addEventListener("change", function (event) {
-          const file = event.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              uploadedImgDataUrl = e.target.result;
-            };
-            reader.readAsDataURL(file);
-          } else {
-            uploadedImgDataUrl = "";
-          }
-        });
-
       document
         .getElementById("product-form")
         .addEventListener("submit", async function (event) {
@@ -458,7 +503,7 @@
             !img ||
             (price_regular === "" && price_bulk === "")
           ) {
-            alert("يرجى تعبئة جميع الحقول المطلوبة.");
+            showToast("يرجى تعبئة جميع الحقول المطلوبة.", "warning");
             return;
           }
 
@@ -487,8 +532,10 @@
               document.getElementById("cancelEditBtn").style.display = "none";
               this.reset();
               uploadedImgDataUrl = "";
+              document.getElementById("preview-img").src = "";
+              showToast("تم تعديل المنتج", "success");
             } else {
-              alert("خطأ أثناء تعديل المنتج.");
+              showToast("خطأ أثناء تعديل المنتج", "danger");
             }
           } else {
             const res = await fetch("/api/products", {
@@ -500,13 +547,14 @@
               fetchProducts(category);
               this.reset();
               uploadedImgDataUrl = "";
+              document.getElementById("preview-img").src = "";
+              showToast("تمت إضافة المنتج", "success");
             } else {
-              alert("خطأ أثناء إضافة المنتج.");
+              showToast("خطأ أثناء إضافة المنتج", "danger");
             }
           }
           showSpinner(false);
         });
-
       document
         .getElementById("login-form")
         .addEventListener("submit", async function (e) {
@@ -524,11 +572,12 @@
             document.getElementById("login-container").style.display = "none";
             document.getElementById("admin-container").style.display = "";
             fetchProducts();
+            showToast("تم تسجيل الدخول", "success");
           } else {
             document.getElementById("login-error").style.display = "";
+            showToast("بيانات الدخول غير صحيحة", "danger");
           }
         });
-
       async function checkAuth() {
         const res = await fetch("/api/admin-check");
         if (res.ok) {
@@ -540,18 +589,32 @@
           document.getElementById("admin-container").style.display = "none";
         }
       }
-
       async function logout() {
         document.cookie =
           "admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.getElementById("login-container").style.display = "";
         document.getElementById("admin-container").style.display = "none";
+        showToast("تم تسجيل الخروج", "info");
       }
       document.getElementById("logout-btn").addEventListener("click", logout);
       document
         .getElementById("logout-btn-mobile")
         .addEventListener("click", logout);
 
+      window.filterAdminProducts = function () {
+        const q = document.getElementById("admin-search").value.trim();
+        let found = false;
+        document
+          .querySelectorAll("#product-list .product-card")
+          .forEach((card) => {
+            const visible = card.innerText.includes(q);
+            card.parentElement.style.display = visible ? "" : "none";
+            if (visible) found = true;
+          });
+        if (!found) showToast("لا يوجد نتائج مطابقة", "warning");
+      };
+
+      window.zoomImg = zoomImg;
       checkAuth();
     </script>
   </body>

@@ -19,11 +19,6 @@
         background: #faf7f2;
         min-height: 100vh;
       }
-      .navbar-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
       .navbar-logo {
         width: 48px;
         height: 48px;
@@ -66,29 +61,20 @@
           max-width: 100%;
         }
       }
-      .price-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
+      .fade-in {
+        animation: fadeIn 0.45s;
       }
-      .price-regular {
-        color: #007bff;
-        font-weight: bold;
-        font-size: 1.1rem;
-        text-align: left;
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
-      .bulk-price,
-      .price-bulk {
-        display: none;
-        color: #d2691e;
-        font-weight: bold;
-        font-size: 1.1rem;
-        text-align: right;
-      }
-      .show-bulk .bulk-price,
-      .show-bulk .price-bulk {
-        display: inline;
+      .search-box {
+        max-width: 350px;
+        margin: 0 auto 1.3rem auto;
       }
       .product-card {
         border-radius: 16px;
@@ -99,29 +85,29 @@
         max-width: 350px;
         margin-left: auto;
         margin-right: auto;
+        transition: box-shadow 0.13s;
+      }
+      .product-card:hover {
+        box-shadow: 0 4px 24px #0002;
       }
       .card-img-top {
         border-radius: 12px;
         height: 110px;
         object-fit: cover;
         margin-bottom: 0.5rem;
+        cursor: zoom-in;
       }
       .card-title {
         font-size: 1.08rem;
         font-weight: bold;
       }
-      .footer {
-        font-size: 1rem;
-        background: #ffd98d;
-        border-top: 1px solid #fdb518;
-        color: #555;
+      .category-emoji {
+        font-size: 1.6em;
+        vertical-align: middle;
+        margin-left: 0.35em;
       }
-      .btn {
-        border-radius: 12px;
-      }
-      #bulk-btn[disabled] {
-        opacity: 0.6;
-        pointer-events: none;
+      .toast-container {
+        z-index: 2000;
       }
     </style>
   </head>
@@ -158,7 +144,7 @@
           <i class="bi bi-lock"></i> عرض أسعار الجملة
         </button>
       </div>
-      <div id="main-content"></div>
+      <div id="main-content" class="fade-in"></div>
     </div>
     <footer class="footer text-center py-3">
       &copy; 2025 مهند الزروق &mdash;
@@ -169,43 +155,102 @@
         >MIT License</a
       >
     </footer>
+    <div class="position-fixed bottom-0 end-0 p-3 toast-container">
+      <div
+        id="main-toast"
+        class="toast align-items-center text-bg-primary border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="toast-body">تم الحفظ بنجاح!</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="img-modal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <img
+            id="img-modal-img"
+            class="w-100 rounded-3"
+            style="background: #fff"
+          />
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       "use strict";
       const categories = [
-        { name: "الشرقي", btn: "btn-outline-secondary" },
-        { name: "الغربي", btn: "btn-outline-success" },
-        { name: "تورتات", btn: "btn-outline-warning" },
-        { name: "عصائر", btn: "btn-outline-danger" },
-        { name: "شكلاطة", btn: "btn-outline-info" },
+        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍪" },
+        { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
+        { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
+        { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
+        { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
       ];
       let showBulk = false;
-      const BULK_CODE = "1234"; 
+      const BULK_CODE = "1234";
+
+      function showToast(msg, type = "primary") {
+        const toastBody = document.getElementById("toast-body");
+        const toastElem = document.getElementById("main-toast");
+        toastBody.innerText = msg;
+        toastElem.className =
+          "toast align-items-center text-bg-" + type + " border-0";
+        const toast = new bootstrap.Toast(toastElem);
+        toast.show();
+      }
+
+      function zoomImg(src) {
+        document.getElementById("img-modal-img").src = src;
+        new bootstrap.Modal(document.getElementById("img-modal")).show();
+      }
 
       function renderCategories() {
         let html = `
-          <div class="fullscreen-card mb-3">
-            <h2 class="mb-4 text-center">الأصناف</h2>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">`;
+        <div class="fullscreen-card mb-3 fade-in">
+          <h2 class="mb-4 text-center">الأصناف</h2>
+          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">`;
         categories.forEach((cat) => {
           html += `<div class="col">
-            <a href="#" class="btn ${cat.btn} w-100 category-btn"
-              onclick="renderProducts('${cat.name}')" style="min-width:150px;">
-                ${cat.name}
-            </a>
-          </div>`;
+          <a href="#" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')" style="min-width:150px;">
+            <span class="category-emoji">${cat.emoji}</span> ${cat.name}
+          </a>
+        </div>`;
         });
         html += `</div></div>`;
         document.getElementById("main-content").innerHTML = html;
       }
 
+      function searchInputHTML() {
+        return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." oninput="filterProducts()">`;
+      }
+      function filterProducts() {
+        const q = document.getElementById("search").value.trim();
+        let found = false;
+        document.querySelectorAll(".product-card").forEach((card) => {
+          const visible = card.innerText.includes(q);
+          card.style.display = visible ? "" : "none";
+          if (visible) found = true;
+        });
+        if (!found) showToast("لا يوجد نتائج مطابقة", "warning");
+      }
+
       async function renderProducts(category) {
         let html = `
-          <div class="fullscreen-card mb-3">
-            <h2 class="mb-4 text-center">${category}</h2>
-            <button class="btn btn-secondary mb-4 w-100" onclick="renderCategories()">
-              <i class="bi bi-arrow-right"></i> عودة
-            </button>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">`;
+        <div class="fullscreen-card mb-3 fade-in">
+          <h2 class="mb-4 text-center">${
+            categories.find((c) => c.name === category).emoji
+          } ${category}</h2>
+          <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
+          ${searchInputHTML()}
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
         let res = await fetch(
           `/api/products?category=${encodeURIComponent(category)}`
         );
@@ -228,24 +273,24 @@
               ? product.price_bulk + " د.ل"
               : "";
           html += `<div class="col">
-            <div class="product-card shadow-sm d-flex flex-column${
-              showBulk ? " show-bulk" : ""
-            }">
-              <img src="${product.img}" class="card-img-top" alt="${
+          <div class="product-card shadow-sm d-flex flex-column${
+            showBulk ? " show-bulk" : ""
+          }">
+            <img src="${product.img}" class="card-img-top" alt="${
             product.name
-          }" loading="lazy">
-              <div class="card-body p-2 d-flex flex-column">
-                <h6 class="card-title mb-1">${product.name}</h6>
-                <p class="card-text" style="font-size:0.97rem;">${
-                  product.desc || ""
-                }</p>
-                <div class="mt-auto price-row">
-                  <span class="price-regular">${price_regular}</span>
-                  <span class="price-bulk bulk-price">${price_bulk}</span>
-                </div>
+          }" loading="lazy" onclick="zoomImg('${product.img}')">
+            <div class="card-body p-2 d-flex flex-column">
+              <h6 class="card-title mb-1">${product.name}</h6>
+              <p class="card-text" style="font-size:0.97rem;">${
+                product.desc || ""
+              }</p>
+              <div class="mt-auto price-row">
+                <span class="price-regular">${price_regular}</span>
+                <span class="price-bulk bulk-price">${price_bulk}</span>
               </div>
             </div>
-          </div>`;
+          </div>
+        </div>`;
         });
         html += `</div></div>`;
         document.getElementById("main-content").innerHTML = html;
@@ -268,15 +313,35 @@
         if (code === BULK_CODE) {
           showBulk = true;
           updateBulkPriceDisplay();
+          showToast("تم تفعيل أسعار الجملة", "success");
         } else if (code !== null) {
-          alert("رمز غير صحيح");
+          showToast("رمز غير صحيح", "danger");
         }
       }
 
-      window.renderProducts = renderProducts; 
-      window.renderCategories = renderCategories;
+      function fadeInContent(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove("fade-in");
+        void el.offsetWidth;
+        el.classList.add("fade-in");
+      }
 
-      window.onload = renderCategories;
+      window.renderProducts = function (category) {
+        renderProducts(category).then(() => fadeInContent("main-content"));
+      };
+      window.renderCategories = function () {
+        renderCategories();
+        fadeInContent("main-content");
+      };
+      window.filterProducts = filterProducts;
+      window.unlockBulkPrice = unlockBulkPrice;
+      window.zoomImg = zoomImg;
+
+      window.onload = () => {
+        renderCategories();
+        fadeInContent("main-content");
+      };
     </script>
   </body>
 </html>
