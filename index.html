@@ -584,3 +584,11 @@
         saveCart();
         updateCartBar();
         showCartModal();
+      }
+
+      // Ensure categories are rendered on page load
+      window.addEventListener('DOMContentLoaded', function() {
+        loadCart();
+        renderCategories();
+        updateCartBar();
+      });
