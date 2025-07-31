@@ -527,7 +527,12 @@
         cart = [];
         saveCart();
         updateCartBar();
-        showCartModal();
+        // If cart modal is open, close it
+        const modalEl = document.getElementById('cart-modal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        // Always re-render categories after clearing cart
+        renderCategories();
       }
       window.clearCart = clearCart;
 
@@ -586,10 +591,12 @@
         showCartModal();
       }
 
-      // Ensure categories are rendered on page load
-        window.addEventListener('DOMContentLoaded', function() {
-          loadCart();
-          renderCategories();
-          updateCartBar();
-        });
-      })();
+      // ...existing code...
+    })();
+
+    // Ensure categories are rendered on page load (outside IIFE)
+    window.addEventListener('DOMContentLoaded', function() {
+      if (typeof loadCart === 'function') loadCart();
+      if (typeof renderCategories === 'function') renderCategories();
+      if (typeof updateCartBar === 'function') updateCartBar();
+    });
