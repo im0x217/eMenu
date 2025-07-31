@@ -442,6 +442,15 @@
         const product = JSON.parse(btn.getAttribute('data-product').replace(/&#39;/g, "'"));
         const price = showBulk && product.price_bulk ? product.price_bulk : (product.price_regular ?? product.price);
         const key = product.name + '|' + price;
+        // Enforce single price type in cart
+        if (cart.length > 0) {
+          const isBulkCart = cart.every(item => item.price == item.price_bulk && !!item.price_bulk);
+          const isAddingBulk = showBulk && product.price_bulk;
+          if ((isBulkCart && !isAddingBulk) || (!isBulkCart && isAddingBulk)) {
+            showToast('لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة', 'danger');
+            return;
+          }
+        }
         let found = cart.find(item => item.key === key);
         if (found) {
           found.qty++;
@@ -452,7 +461,8 @@
             price: price,
             img: product.img,
             qty: 1,
-            details: ''
+            details: '',
+            price_bulk: product.price_bulk || null
           });
         }
         saveCart();
@@ -498,6 +508,7 @@
             <span class="fw-bold">الإجمالي:</span>
             <span class="fw-bold">${cartTotal()} د.ل</span>
           </div>`;
+          html += `<button class="btn btn-outline-danger w-100 mb-2" onclick="clearCart()"><i class="bi bi-x-circle"></i> إفراغ السلة</button>`;
         }
         document.getElementById('cart-modal-body').innerHTML = html;
         const modalEl = document.getElementById('cart-modal');
@@ -511,6 +522,14 @@
           modalEl.removeEventListener('hidden.bs.modal', handler);
         });
       }
+
+      function clearCart() {
+        cart = [];
+        saveCart();
+        updateCartBar();
+        showCartModal();
+      }
+      window.clearCart = clearCart;
 
       function removeFromCart(idx) {
         cart.splice(idx, 1);
@@ -541,68 +560,17 @@
 
       function proceedToWhatsApp() {
         if (cart.length === 0) return;
+        // Determine if cart is bulk or regular
+        const isBulkCart = cart.every(item => item.price == item.price_bulk && !!item.price_bulk);
+        const isRegularCart = cart.every(item => !item.price_bulk || item.price != item.price_bulk);
+        let phone = '';
+        if (isBulkCart) phone = '0916688800';
+        else if (isRegularCart) phone = '0921717901';
+        else {
+          showToast('لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة', 'danger');
+          return;
+        }
         let msg = 'طلب جديد من الموقع:%0A';
         cart.forEach(item => {
           msg += `- ${item.name} x${item.qty}`;
-          if (item.details && item.details.trim()) msg += ` (${item.details.trim()})`;
-          msg += ` (${item.price} د.ل)%0A`;
-        });
-        msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
-        const phone = '218916688800';
-        const url = `https://wa.me/${phone}?text=${msg}`;
-        window.open(url, '_blank');
-      }
-      function updateBulkPriceDisplay() {
-        document.querySelectorAll(".product-card").forEach((card) => {
-          if (showBulk) card.classList.add("show-bulk");
-          else card.classList.remove("show-bulk");
-        });
-        const bulkBtn = document.getElementById("bulk-btn");
-        if (bulkBtn) {
-          bulkBtn.disabled = showBulk;
-          bulkBtn.innerHTML = showBulk
-            ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
-            : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
-        }
-      }
-      function unlockBulkPrice() {
-        if (showBulk) return;
-        const code = prompt("أدخل رمز الجملة (4 أرقام):");
-        if (code === BULK_CODE) {
-          showBulk = true;
-          updateBulkPriceDisplay();
-          showToast("تم تفعيل أسعار الجملة", "success");
-        } else if (code !== null) {
-          showToast("رمز غير صحيح", "danger");
-        }
-      }
-      function fadeInContent(id) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove("fade-in");
-        void el.offsetWidth;
-        el.classList.add("fade-in");
-      }
-      function cartTotal() {
-        return cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.qty), 0).toFixed(2);
-      }
-      window.cartTotal = cartTotal;
-      window.renderProducts = renderProducts;
-      window.renderCategories = renderCategories;
-      window.unlockBulkPrice = unlockBulkPrice;
-      window.zoomImg = zoomImg;
-      window.addToCart = addToCart;
-      window.showCartModal = showCartModal;
-      window.removeFromCart = removeFromCart;
-      window.proceedToWhatsApp = proceedToWhatsApp;
-      window.onload = () => {
-        loadCart();
-        renderCategories();
-        fadeInContent("categories-header");
-        updateBulkPriceDisplay();
-        updateCartBar();
-      };
-    })();
-    </script>
-  </body>
-</html>
+          if
