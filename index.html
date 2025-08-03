@@ -227,17 +227,42 @@
     <div class="container my-3" id="main-header">
       <div class="fullscreen-card mb-3 fade-in" id="categories-header"></div>
     </div>
-    <div id="loading-spinner" style="display:none;position:fixed;left:50%;top:50%;z-index:3000;transform:translate(-50%,-50%)">
-      <div class="spinner-border text-warning" role="status" aria-label="جاري التحميل" style="width:3rem;height:3rem">
+    <div
+      id="loading-spinner"
+      style="
+        display: none;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        z-index: 3000;
+        transform: translate(-50%, -50%);
+      "
+    >
+      <div
+        class="spinner-border text-warning"
+        role="status"
+        aria-label="جاري التحميل"
+        style="width: 3rem; height: 3rem"
+      >
         <span class="visually-hidden">جاري التحميل...</span>
       </div>
     </div>
     <div class="product-grid-container">
       <div class="fade-in" id="main-content"></div>
     </div>
-    <div id="cart-bar" class="bulk-btn-fixed-bar" style="margin-top: 10px; display: none;">
-      <button id="cart-btn" class="btn btn-success" style="font-size: 1.1rem; min-width: 140px" onclick="showCartModal()">
-        <i class="bi bi-cart"></i> سلة المشتريات (<span id="cart-count">0</span>)
+    <div
+      id="cart-bar"
+      class="bulk-btn-fixed-bar"
+      style="margin-top: 10px; display: none"
+    >
+      <button
+        id="cart-btn"
+        class="btn btn-success"
+        style="font-size: 1.1rem; min-width: 140px"
+        onclick="showCartModal()"
+      >
+        <i class="bi bi-cart"></i> سلة المشتريات (<span id="cart-count">0</span
+        >)
       </button>
     </div>
     <footer class="footer text-center py-3">
@@ -254,12 +279,27 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">سلة المشتريات</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
           </div>
           <div class="modal-body" id="cart-modal-body"></div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-            <button type="button" class="btn btn-success" id="cart-whatsapp-btn" onclick="proceedToWhatsApp()">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إغلاق
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              id="cart-whatsapp-btn"
+              onclick="proceedToWhatsApp()"
+            >
               <i class="bi bi-whatsapp"></i> إتمام الطلب عبر واتساب
             </button>
           </div>
@@ -297,110 +337,110 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    (function() {
-      "use strict";
-      const categories = [
-        { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍯" },
-        { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
-        { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
-        { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
-        { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
-        { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
-      ];
-      let showBulk = false;
-      const BULK_CODE = "1234";
-      function showToast(msg, type = "primary") {
-        const toastBody = document.getElementById("toast-body");
-        const toastElem = document.getElementById("main-toast");
-        toastBody.innerText = msg;
-        toastElem.className =
-          "toast align-items-center text-bg-" + type + " border-0";
-        const toast = new bootstrap.Toast(toastElem);
-        toast.show();
-      }
-      function zoomImg(src) {
-        document.getElementById("img-modal-img").src = src;
-        new bootstrap.Modal(document.getElementById("img-modal")).show();
-      }
-      function renderCategories() {
-        let html = `
+      (function () {
+        "use strict";
+        const categories = [
+          { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍯" },
+          { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
+          { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
+          { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
+          { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
+          { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
+        ];
+        let showBulk = false;
+        const BULK_CODE = "1234";
+        function showToast(msg, type = "primary") {
+          const toastBody = document.getElementById("toast-body");
+          const toastElem = document.getElementById("main-toast");
+          toastBody.innerText = msg;
+          toastElem.className =
+            "toast align-items-center text-bg-" + type + " border-0";
+          const toast = new bootstrap.Toast(toastElem);
+          toast.show();
+        }
+        function zoomImg(src) {
+          document.getElementById("img-modal-img").src = src;
+          new bootstrap.Modal(document.getElementById("img-modal")).show();
+        }
+        function renderCategories() {
+          let html = `
         <h2 class="mb-4 text-center">الأصناف</h2>
         <div class="row g-3 justify-content-center flex-wrap">`;
-        categories.forEach((cat, idx) => {
-          html += `<div class="col-12 category-col">
+          categories.forEach((cat, idx) => {
+            html += `<div class="col-12 category-col">
           <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')">
             <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
             <span>${cat.name}</span>
           </button>
         </div>`;
-        });
-        html += `</div>`;
-        document.getElementById("categories-header").innerHTML = html;
-        document.getElementById("main-content").innerHTML = "";
-        fadeInContent("categories-header");
-        updateBulkPriceDisplay();
-      }
-      function searchInputHTML() {
-        return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" autocomplete="off">`;
-      }
-      function debounce(fn, delay) {
-        let timer;
-        return function(...args) {
-          clearTimeout(timer);
-          timer = setTimeout(() => fn.apply(this, args), delay);
-        };
-      }
-      function filterProducts() {
-        const q = document.getElementById("search").value.trim();
-        let found = false;
-        document.querySelectorAll(".product-card").forEach((card) => {
-          const visible = card.innerText.includes(q);
-          card.style.display = visible ? "" : "none";
-          if (visible) found = true;
-        });
-        if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
-      }
-      const debouncedFilterProducts = debounce(filterProducts, 200);
-      async function renderProducts(category) {
-        document.getElementById("categories-header").innerHTML = `
+          });
+          html += `</div>`;
+          document.getElementById("categories-header").innerHTML = html;
+          document.getElementById("main-content").innerHTML = "";
+          fadeInContent("categories-header");
+          updateBulkPriceDisplay();
+        }
+        function searchInputHTML() {
+          return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" autocomplete="off">`;
+        }
+        function debounce(fn, delay) {
+          let timer;
+          return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+          };
+        }
+        function filterProducts() {
+          const q = document.getElementById("search").value.trim();
+          let found = false;
+          document.querySelectorAll(".product-card").forEach((card) => {
+            const visible = card.innerText.includes(q);
+            card.style.display = visible ? "" : "none";
+            if (visible) found = true;
+          });
+          if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
+        }
+        const debouncedFilterProducts = debounce(filterProducts, 200);
+        async function renderProducts(category) {
+          document.getElementById("categories-header").innerHTML = `
         <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
         <h2 class="mb-4 text-center">${
           categories.find((c) => c.name === category).emoji
         } ${category}</h2>
         ${searchInputHTML()}
       `;
-        document.getElementById("main-content").innerHTML = "";
-        document.getElementById("loading-spinner").style.display = "block";
-        let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
-        let res = await fetch(
-          `/api/products?category=${encodeURIComponent(category)}`
-        );
-        let products = res.ok ? await res.json() : [];
-        products.forEach((product, idx) => {
-          const price_regular =
-            product.price_regular !== undefined &&
-            product.price_regular !== null &&
-            product.price_regular !== ""
-              ? product.price_regular + " د.ل"
-              : product.price !== undefined &&
-                product.price !== null &&
-                product.price !== ""
-              ? product.price + " د.ل"
-              : "";
-          const price_bulk =
-            product.price_bulk !== undefined &&
-            product.price_bulk !== null &&
-            product.price_bulk !== ""
-              ? product.price_bulk + " د.ل"
-              : "";
-          const unavailable = product.available === false;
-          html += `<div class="col">
+          document.getElementById("main-content").innerHTML = "";
+          document.getElementById("loading-spinner").style.display = "block";
+          let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
+          let res = await fetch(
+            `/api/products?category=${encodeURIComponent(category)}`
+          );
+          let products = res.ok ? await res.json() : [];
+          products.forEach((product, idx) => {
+            const price_regular =
+              product.price_regular !== undefined &&
+              product.price_regular !== null &&
+              product.price_regular !== ""
+                ? product.price_regular + " د.ل"
+                : product.price !== undefined &&
+                  product.price !== null &&
+                  product.price !== ""
+                ? product.price + " د.ل"
+                : "";
+            const price_bulk =
+              product.price_bulk !== undefined &&
+              product.price_bulk !== null &&
+              product.price_bulk !== ""
+                ? product.price_bulk + " د.ل"
+                : "";
+            const unavailable = product.available === false;
+            html += `<div class="col">
           <div class="product-card shadow-sm d-flex flex-column${
             showBulk ? " show-bulk" : ""
-          }${unavailable ? ' unavailable' : ''}">
+          }${unavailable ? " unavailable" : ""}">
             <img src="${product.img}" class="card-img-top" alt="${
-            product.name
-          }" loading="lazy" onclick="zoomImg('${product.img}')">
+              product.name
+            }" loading="lazy" onclick="zoomImg('${product.img}')">
             <div class="card-body p-2 d-flex flex-column">
               <h6 class="card-title mb-1">${product.name}</h6>
               <p class="card-text">${product.desc || ""}</p>
@@ -408,101 +448,138 @@
                 <span class="price-regular">${price_regular}</span>
                 <span class="price-bulk">${price_bulk}</span>
               </div>
-              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(product).replace(/'/g, "&#39;")}' onclick="addToCart(this)" aria-label="أضف ${product.name} للسلة" ${unavailable ? 'disabled' : ''}>
-                <i class='bi bi-cart-plus'></i> ${unavailable ? 'غير متوفر' : 'أضف للسلة'}
+              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(
+                product
+              ).replace(
+                /'/g,
+                "&#39;"
+              )}' onclick="addToCart(this)" aria-label="أضف ${
+              product.name
+            } للسلة" ${unavailable ? "disabled" : ""}>
+                <i class='bi bi-cart-plus'></i> ${
+                  unavailable ? "غير متوفر" : "أضف للسلة"
+                }
               </button>
-              ${unavailable ? '<div class="text-danger mt-2"><i class="bi bi-x-circle"></i> غير متوفر حالياً</div>' : ''}
+              ${
+                unavailable
+                  ? '<div class="text-danger mt-2"><i class="bi bi-x-circle"></i> غير متوفر حالياً</div>'
+                  : ""
+              }
             </div>
           </div>
         </div>`;
-        });
-        html += `</div>`;
-        document.getElementById("main-content").innerHTML = html;
-        document.getElementById("loading-spinner").style.display = "none";
-        fadeInContent("main-content");
-        updateBulkPriceDisplay();
-        updateCartBar();
-        const searchInput = document.getElementById("search");
-        if (searchInput) {
-          searchInput.addEventListener("input", debouncedFilterProducts);
-        }
-      }
-      let cart = [];
-      function saveCart() {
-        try {
-          localStorage.setItem('cart', JSON.stringify(cart));
-        } catch (e) {}
-      }
-      function loadCart() {
-        try {
-          const data = localStorage.getItem('cart');
-          if (data) {
-            cart = JSON.parse(data);
-            cart.forEach(item => { if (!('details' in item)) item.details = ''; });
+          });
+          html += `</div>`;
+          document.getElementById("main-content").innerHTML = html;
+          document.getElementById("loading-spinner").style.display = "none";
+          fadeInContent("main-content");
+          updateBulkPriceDisplay();
+          updateCartBar();
+          const searchInput = document.getElementById("search");
+          if (searchInput) {
+            searchInput.addEventListener("input", debouncedFilterProducts);
           }
-        } catch (e) { cart = []; }
-      }
-      function addToCart(btn) {
-        const product = JSON.parse(btn.getAttribute('data-product').replace(/&#39;/g, "'"));
-        if (product.available === false) {
-          showToast('هذا المنتج غير متوفر حالياً', 'danger');
-          return;
         }
-        const price = showBulk && product.price_bulk ? product.price_bulk : (product.price_regular ?? product.price);
-        const key = product.name + '|' + price;
-        // Enforce single price type in cart
-        if (cart.length > 0) {
-          const isBulkCart = cart.every(item => item.price == item.price_bulk && !!item.price_bulk);
-          const isAddingBulk = showBulk && product.price_bulk;
-          if ((isBulkCart && !isAddingBulk) || (!isBulkCart && isAddingBulk)) {
-            showToast('لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة', 'danger');
+        let cart = [];
+        function saveCart() {
+          try {
+            localStorage.setItem("cart", JSON.stringify(cart));
+          } catch (e) {}
+        }
+        function loadCart() {
+          try {
+            const data = localStorage.getItem("cart");
+            if (data) {
+              cart = JSON.parse(data);
+              cart.forEach((item) => {
+                if (!("details" in item)) item.details = "";
+              });
+            }
+          } catch (e) {
+            cart = [];
+          }
+        }
+        function addToCart(btn) {
+          const product = JSON.parse(
+            btn.getAttribute("data-product").replace(/&#39;/g, "'")
+          );
+          if (product.available === false) {
+            showToast("هذا المنتج غير متوفر حالياً", "danger");
             return;
           }
+          const price =
+            showBulk && product.price_bulk
+              ? product.price_bulk
+              : product.price_regular ?? product.price;
+          const key = product.name + "|" + price;
+          // Enforce single price type in cart
+          if (cart.length > 0) {
+            const isBulkCart = cart.every(
+              (item) => item.price == item.price_bulk && !!item.price_bulk
+            );
+            const isAddingBulk = showBulk && product.price_bulk;
+            if (
+              (isBulkCart && !isAddingBulk) ||
+              (!isBulkCart && isAddingBulk)
+            ) {
+              showToast(
+                "لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة",
+                "danger"
+              );
+              return;
+            }
+          }
+          let found = cart.find((item) => item.key === key);
+          if (found) {
+            found.qty++;
+          } else {
+            cart.push({
+              key,
+              name: product.name,
+              price: price,
+              img: product.img,
+              qty: 1,
+              details: "",
+              price_bulk: product.price_bulk || null,
+            });
+          }
+          saveCart();
+          showToast("تمت إضافة المنتج للسلة", "success");
+          updateCartBar();
         }
-        let found = cart.find(item => item.key === key);
-        if (found) {
-          found.qty++;
-        } else {
-          cart.push({
-            key,
-            name: product.name,
-            price: price,
-            img: product.img,
-            qty: 1,
-            details: '',
-            price_bulk: product.price_bulk || null
-          });
+
+        function updateCartBar() {
+          const count = cart.reduce((sum, item) => sum + item.qty, 0);
+          document.getElementById("cart-count").innerText = count;
+          document.getElementById("cart-bar").style.display =
+            count > 0 ? "" : "none";
+          saveCart();
         }
-        saveCart();
-        showToast('تمت إضافة المنتج للسلة', 'success');
-        updateCartBar();
-      }
 
-      function updateCartBar() {
-        const count = cart.reduce((sum, item) => sum + item.qty, 0);
-        document.getElementById('cart-count').innerText = count;
-        document.getElementById('cart-bar').style.display = count > 0 ? '' : 'none';
-        saveCart();
-      }
-
-      function showCartModal() {
-        let html = '';
-        if (cart.length === 0) {
-          html = '<div class="text-center">السلة فارغة</div>';
-        } else {
-          html = '<ul class="list-group mb-3">';
-          cart.forEach((item, idx) => {
-            html += `<li class="list-group-item">
+        function showCartModal() {
+          let html = "";
+          if (cart.length === 0) {
+            html = '<div class="text-center">السلة فارغة</div>';
+          } else {
+            html = '<ul class="list-group mb-3">';
+            cart.forEach((item, idx) => {
+              html += `<li class="list-group-item">
         <div class="d-flex align-items-center mb-2">
-          <img src="${item.img}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-left:10px;">
+          <img src="${
+            item.img
+          }" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-left:10px;">
           <div class="flex-grow-1">
             <div class="fw-bold">${item.name}</div>
             <div class="d-flex align-items-center mt-1">
               <button class="btn btn-outline-secondary btn-sm me-1" onclick="updateCartQty(${idx},-1)"><i class="bi bi-dash"></i></button>
-              <input type="number" min="1" value="${item.qty}" onchange="updateCartQtyDirect(${idx},this.value)" style="width:48px;text-align:center;" class="form-control form-control-sm mx-1">
+              <input type="number" min="1" value="${
+                item.qty
+              }" onchange="updateCartQtyDirect(${idx},this.value)" style="width:48px;text-align:center;" class="form-control form-control-sm mx-1">
               <button class="btn btn-outline-secondary btn-sm ms-1" onclick="updateCartQty(${idx},1)"><i class="bi bi-plus"></i></button>
             </div>
-            <input type="text" class="form-control form-control-sm mt-2" placeholder="تفاصيل الطلب (اختياري)" value="${item.details || ''}" onchange="updateCartDetails(${idx},this.value)">
+            <input type="text" class="form-control form-control-sm mt-2" placeholder="تفاصيل الطلب (اختياري)" value="${
+              item.details || ""
+            }" onchange="updateCartDetails(${idx},this.value)">
           </div>
           <div class="text-end ms-2">
             <div class="fw-bold text-success">${item.price} د.ل</div>
@@ -510,153 +587,165 @@
           </div>
         </div>
       </li>`;
-          });
-          html += '</ul>';
-          html += `<div class="d-flex justify-content-between align-items-center mb-2">
+            });
+            html += "</ul>";
+            html += `<div class="d-flex justify-content-between align-items-center mb-2">
             <span class="fw-bold">الإجمالي:</span>
             <span class="fw-bold">${cartTotal()} د.ل</span>
           </div>`;
-          html += `<button class="btn btn-outline-danger w-100 mb-2" onclick="clearCart()"><i class="bi bi-x-circle"></i> إفراغ السلة</button>`;
+            html += `<button class="btn btn-outline-danger w-100 mb-2" onclick="clearCart()"><i class="bi bi-x-circle"></i> إفراغ السلة</button>`;
+          }
+          document.getElementById("cart-modal-body").innerHTML = html;
+          const modalEl = document.getElementById("cart-modal");
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+          modalEl.addEventListener("hidden.bs.modal", function handler() {
+            document.body.classList.remove("modal-open");
+            document.body.style.overflow = "";
+            document.body.style.paddingRight = "";
+            document
+              .querySelectorAll(".modal-backdrop")
+              .forEach((e) => e.remove());
+            modalEl.removeEventListener("hidden.bs.modal", handler);
+          });
         }
-        document.getElementById('cart-modal-body').innerHTML = html;
-        const modalEl = document.getElementById('cart-modal');
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-        modalEl.addEventListener('hidden.bs.modal', function handler() {
-          document.body.classList.remove('modal-open');
-          document.body.style.overflow = '';
-          document.body.style.paddingRight = '';
-          document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
-          modalEl.removeEventListener('hidden.bs.modal', handler);
-        });
-      }
 
-      function clearCart() {
-        cart = [];
-        saveCart();
-        updateCartBar();
-        // If cart modal is open, close it
-        const modalEl = document.getElementById('cart-modal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        // Always re-render categories after clearing cart
-        renderCategories();
-      }
-      window.clearCart = clearCart;
-
-      function removeFromCart(idx) {
-        cart.splice(idx, 1);
-        updateCartBar();
-        saveCart();
-        showCartModal();
-      }
-      window.removeFromCart = removeFromCart;
-
-      window.updateCartQty = function(idx, delta) {
-        cart[idx].qty = Math.max(1, cart[idx].qty + delta);
-        saveCart();
-        showCartModal();
-        updateCartBar();
-      };
-      window.updateCartQtyDirect = function(idx, val) {
-        let v = parseInt(val, 10);
-        if (isNaN(v) || v < 1) v = 1;
-        cart[idx].qty = v;
-        saveCart();
-        showCartModal();
-        updateCartBar();
-      };
-      window.updateCartDetails = function(idx, val) {
-        cart[idx].details = val;
-        saveCart();
-      };
-
-      function proceedToWhatsApp() {
-        if (cart.length === 0) return;
-        // Determine if cart is bulk or regular
-        const isBulkCart = cart.every(item => item.price == item.price_bulk && !!item.price_bulk);
-        const isRegularCart = cart.every(item => !item.price_bulk || item.price != item.price_bulk);
-        let phone = '';
-        if (isBulkCart) phone = '0916688800';
-        else if (isRegularCart) phone = '0921717901';
-        else {
-          showToast('لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة', 'danger');
-          return;
+        function clearCart() {
+          cart = [];
+          saveCart();
+          updateCartBar();
+          // If cart modal is open, close it
+          const modalEl = document.getElementById("cart-modal");
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          // Always re-render categories after clearing cart
+          renderCategories();
         }
-        let msg = 'طلب جديد من الموقع:%0A';
-        cart.forEach(item => {
-          msg += `- ${item.name} x${item.qty}`;
-          if (item.details && item.details.trim()) msg += ` (${item.details.trim()})`;
-          msg += ` (${item.price} د.ل)%0A`;
-        });
-        msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
-        const url = `https://wa.me/${phone}?text=${msg}`;
-        window.open(url, '_blank');
-        // Empty cart after sending
-        cart = [];
-        saveCart();
-        updateCartBar();
-        // Close modal if open
-        const modalEl = document.getElementById('cart-modal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        renderCategories();
-    // Add style for unavailable products
-    const style = document.createElement('style');
-    style.innerHTML = `.product-card.unavailable { opacity: 0.6; pointer-events: none; filter: grayscale(0.7); }`;
-    document.head.appendChild(style);
-      }
-      function updateBulkPriceDisplay() {
-        document.querySelectorAll(".product-card").forEach((card) => {
-          if (showBulk) card.classList.add("show-bulk");
-          else card.classList.remove("show-bulk");
-        });
-        const bulkBtn = document.getElementById("bulk-btn");
-        if (bulkBtn) {
-          bulkBtn.disabled = showBulk;
-          bulkBtn.innerHTML = showBulk
-            ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
-            : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
+        window.clearCart = clearCart;
+
+        function removeFromCart(idx) {
+          cart.splice(idx, 1);
+          updateCartBar();
+          saveCart();
+          showCartModal();
         }
-      }
-      function unlockBulkPrice() {
-        if (showBulk) return;
-        const code = prompt("أدخل رمز الجملة (4 أرقام):");
-        if (code === BULK_CODE) {
-          showBulk = true;
+        window.removeFromCart = removeFromCart;
+
+        window.updateCartQty = function (idx, delta) {
+          cart[idx].qty = Math.max(1, cart[idx].qty + delta);
+          saveCart();
+          showCartModal();
+          updateCartBar();
+        };
+        window.updateCartQtyDirect = function (idx, val) {
+          let v = parseInt(val, 10);
+          if (isNaN(v) || v < 1) v = 1;
+          cart[idx].qty = v;
+          saveCart();
+          showCartModal();
+          updateCartBar();
+        };
+        window.updateCartDetails = function (idx, val) {
+          cart[idx].details = val;
+          saveCart();
+        };
+
+        function proceedToWhatsApp() {
+          if (cart.length === 0) return;
+          // Determine if cart is bulk or regular
+          const isBulkCart = cart.every(
+            (item) => item.price == item.price_bulk && !!item.price_bulk
+          );
+          const isRegularCart = cart.every(
+            (item) => !item.price_bulk || item.price != item.price_bulk
+          );
+          let phone = "";
+          if (isBulkCart) phone = "+218916688800";
+          else if (isRegularCart) phone = "+218921717901";
+          else {
+            showToast(
+              "لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة",
+              "danger"
+            );
+            return;
+          }
+          let msg = "طلب جديد من الموقع:%0A";
+          cart.forEach((item) => {
+            msg += `- ${item.name} x${item.qty}`;
+            if (item.details && item.details.trim())
+              msg += ` (${item.details.trim()})`;
+            msg += ` (${item.price} د.ل)%0A`;
+          });
+          msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
+          const url = `https://wa.me/${phone}?text=${msg}`;
+          window.open(url, "_blank");
+          // Empty cart after sending
+          cart = [];
+          saveCart();
+          updateCartBar();
+          // Close modal if open
+          const modalEl = document.getElementById("cart-modal");
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          renderCategories();
+          // Add style for unavailable products
+          const style = document.createElement("style");
+          style.innerHTML = `.product-card.unavailable { opacity: 0.6; pointer-events: none; filter: grayscale(0.7); }`;
+          document.head.appendChild(style);
+        }
+        function updateBulkPriceDisplay() {
+          document.querySelectorAll(".product-card").forEach((card) => {
+            if (showBulk) card.classList.add("show-bulk");
+            else card.classList.remove("show-bulk");
+          });
+          const bulkBtn = document.getElementById("bulk-btn");
+          if (bulkBtn) {
+            bulkBtn.disabled = showBulk;
+            bulkBtn.innerHTML = showBulk
+              ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
+              : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
+          }
+        }
+        function unlockBulkPrice() {
+          if (showBulk) return;
+          const code = prompt("أدخل رمز الجملة (4 أرقام):");
+          if (code === BULK_CODE) {
+            showBulk = true;
+            updateBulkPriceDisplay();
+            showToast("تم تفعيل أسعار الجملة", "success");
+          } else if (code !== null) {
+            showToast("رمز غير صحيح", "danger");
+          }
+        }
+        function fadeInContent(id) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.remove("fade-in");
+          void el.offsetWidth;
+          el.classList.add("fade-in");
+        }
+        function cartTotal() {
+          return cart
+            .reduce((sum, item) => sum + parseFloat(item.price) * item.qty, 0)
+            .toFixed(2);
+        }
+        window.cartTotal = cartTotal;
+        window.renderProducts = renderProducts;
+        window.renderCategories = renderCategories;
+        window.unlockBulkPrice = unlockBulkPrice;
+        window.zoomImg = zoomImg;
+        window.addToCart = addToCart;
+        window.showCartModal = showCartModal;
+        window.removeFromCart = removeFromCart;
+        window.proceedToWhatsApp = proceedToWhatsApp;
+        window.onload = () => {
+          loadCart();
+          renderCategories();
+          fadeInContent("categories-header");
           updateBulkPriceDisplay();
-          showToast("تم تفعيل أسعار الجملة", "success");
-        } else if (code !== null) {
-          showToast("رمز غير صحيح", "danger");
-        }
-      }
-      function fadeInContent(id) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove("fade-in");
-        void el.offsetWidth;
-        el.classList.add("fade-in");
-      }
-      function cartTotal() {
-        return cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.qty), 0).toFixed(2);
-      }
-      window.cartTotal = cartTotal;
-      window.renderProducts = renderProducts;
-      window.renderCategories = renderCategories;
-      window.unlockBulkPrice = unlockBulkPrice;
-      window.zoomImg = zoomImg;
-      window.addToCart = addToCart;
-      window.showCartModal = showCartModal;
-      window.removeFromCart = removeFromCart;
-      window.proceedToWhatsApp = proceedToWhatsApp;
-      window.onload = () => {
-        loadCart();
-        renderCategories();
-        fadeInContent("categories-header");
-        updateBulkPriceDisplay();
-        updateCartBar();
-      };
-    })();
+          updateCartBar();
+        };
+      })();
     </script>
   </body>
 </html>
