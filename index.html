@@ -393,10 +393,11 @@
             product.price_bulk !== ""
               ? product.price_bulk + " د.ل"
               : "";
+          const unavailable = product.available === false;
           html += `<div class="col">
           <div class="product-card shadow-sm d-flex flex-column${
             showBulk ? " show-bulk" : ""
-          }">
+          }${unavailable ? ' unavailable' : ''}">
             <img src="${product.img}" class="card-img-top" alt="${
             product.name
           }" loading="lazy" onclick="zoomImg('${product.img}')">
@@ -407,7 +408,10 @@
                 <span class="price-regular">${price_regular}</span>
                 <span class="price-bulk">${price_bulk}</span>
               </div>
-              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(product).replace(/'/g, "&#39;")}' onclick="addToCart(this)" aria-label="أضف ${product.name} للسلة"><i class='bi bi-cart-plus'></i> أضف للسلة</button>
+              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(product).replace(/'/g, "&#39;")}' onclick="addToCart(this)" aria-label="أضف ${product.name} للسلة" ${unavailable ? 'disabled' : ''}>
+                <i class='bi bi-cart-plus'></i> ${unavailable ? 'غير متوفر' : 'أضف للسلة'}
+              </button>
+              ${unavailable ? '<div class="text-danger mt-2"><i class="bi bi-x-circle"></i> غير متوفر حالياً</div>' : ''}
             </div>
           </div>
         </div>`;
@@ -440,8 +444,21 @@
       }
       function addToCart(btn) {
         const product = JSON.parse(btn.getAttribute('data-product').replace(/&#39;/g, "'"));
+        if (product.available === false) {
+          showToast('هذا المنتج غير متوفر حالياً', 'danger');
+          return;
+        }
         const price = showBulk && product.price_bulk ? product.price_bulk : (product.price_regular ?? product.price);
         const key = product.name + '|' + price;
+        // Enforce single price type in cart
+        if (cart.length > 0) {
+          const isBulkCart = cart.every(item => item.price == item.price_bulk && !!item.price_bulk);
+          const isAddingBulk = showBulk && product.price_bulk;
+          if ((isBulkCart && !isAddingBulk) || (!isBulkCart && isAddingBulk)) {
+            showToast('لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة', 'danger');
+            return;
+          }
+        }
         let found = cart.find(item => item.key === key);
         if (found) {
           found.qty++;
@@ -452,7 +469,8 @@
             price: price,
             img: product.img,
             qty: 1,
-            details: ''
+            details: '',
+            price_bulk: product.price_bulk || null
           });
         }
         saveCart();
@@ -498,6 +516,7 @@
             <span class="fw-bold">الإجمالي:</span>
             <span class="fw-bold">${cartTotal()} د.ل</span>
           </div>`;
+          html += `<button class="btn btn-outline-danger w-100 mb-2" onclick="clearCart()"><i class="bi bi-x-circle"></i> إفراغ السلة</button>`;
         }
         document.getElementById('cart-modal-body').innerHTML = html;
         const modalEl = document.getElementById('cart-modal');
@@ -511,6 +530,19 @@
           modalEl.removeEventListener('hidden.bs.modal', handler);
         });
       }
+
+      function clearCart() {
+        cart = [];
+        saveCart();
+        updateCartBar();
+        // If cart modal is open, close it
+        const modalEl = document.getElementById('cart-modal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        // Always re-render categories after clearing cart
+        renderCategories();
+      }
+      window.clearCart = clearCart;
 
       function removeFromCart(idx) {
         cart.splice(idx, 1);
@@ -541,6 +573,16 @@
 
       function proceedToWhatsApp() {
         if (cart.length === 0) return;
+        // Determine if cart is bulk or regular
+        const isBulkCart = cart.every(item => item.price == item.price_bulk && !!item.price_bulk);
+        const isRegularCart = cart.every(item => !item.price_bulk || item.price != item.price_bulk);
+        let phone = '';
+        if (isBulkCart) phone = '0916688800';
+        else if (isRegularCart) phone = '0921717901';
+        else {
+          showToast('لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة', 'danger');
+          return;
+        }
         let msg = 'طلب جديد من الموقع:%0A';
         cart.forEach(item => {
           msg += `- ${item.name} x${item.qty}`;
@@ -548,9 +590,21 @@
           msg += ` (${item.price} د.ل)%0A`;
         });
         msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
-        const phone = '218916688800';
         const url = `https://wa.me/${phone}?text=${msg}`;
         window.open(url, '_blank');
+        // Empty cart after sending
+        cart = [];
+        saveCart();
+        updateCartBar();
+        // Close modal if open
+        const modalEl = document.getElementById('cart-modal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        renderCategories();
+    // Add style for unavailable products
+    const style = document.createElement('style');
+    style.innerHTML = `.product-card.unavailable { opacity: 0.6; pointer-events: none; filter: grayscale(0.7); }`;
+    document.head.appendChild(style);
       }
       function updateBulkPriceDisplay() {
         document.querySelectorAll(".product-card").forEach((card) => {
