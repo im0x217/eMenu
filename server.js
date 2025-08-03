@@ -57,6 +57,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
             price_bulk: 1,
             img: 1,
             category: 1,
+            available: 1,
           },
         })
         .toArray();
@@ -67,8 +68,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
   });
 
   app.post("/api/products", checkAdmin, async (req, res) => {
-    const { name, desc, price_regular, price_bulk, img, category, price } =
-      req.body;
+    const { name, desc, price_regular, price_bulk, img, category, price, available } = req.body;
     if (
       !name ||
       !category ||
@@ -85,13 +85,13 @@ MongoClient.connect(MONGO_URI).then((client) => {
       price,
       img,
       category,
+      available: available === false ? false : true
     });
     res.json({ success: true });
   });
 
   app.put("/api/products/:id", checkAdmin, async (req, res) => {
-    const { name, desc, price_regular, price_bulk, img, category, price } =
-      req.body;
+    const { name, desc, price_regular, price_bulk, img, category, price, available } = req.body;
     if (
       !name ||
       !category ||
@@ -102,7 +102,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
     }
     await productsCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, desc, price_regular, price_bulk, price, img, category } }
+      { $set: { name, desc, price_regular, price_bulk, price, img, category, available: available === false ? false : true } }
     );
     res.json({ success: true });
   });
