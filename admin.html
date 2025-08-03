@@ -536,6 +536,10 @@
                 <span class="price-regular">${price_regular}</span>
                 <span class="price-bulk">${price_bulk}</span>
               </div>
+              <div class="form-check form-switch my-2">
+                <input class="form-check-input" type="checkbox" id="switch-${product._id}" ${product.available === false ? '' : 'checked'} onchange="toggleAvailability('${product._id}', this.checked)">
+                <label class="form-check-label" for="switch-${product._id}">${product.available === false ? 'غير متوفر' : 'متوفر'}</label>
+              </div>
               <div class="card-btn-row">
                 <button class="btn btn-warning btn-sm" onclick="startEditProduct('${
                   product._id
@@ -549,6 +553,27 @@
         `;
           productList.appendChild(card);
         });
+      window.toggleAvailability = async function(id, available) {
+        const product = products.find(p => p._id === id);
+        if (!product) return;
+        showSpinner(true);
+        const res = await fetch('/api/products/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...product,
+            available
+          })
+        });
+        if (res.ok) {
+          product.available = available;
+          renderProducts();
+          showToast('تم تحديث حالة التوفر', 'success');
+        } else {
+          showToast('خطأ أثناء تحديث التوفر', 'danger');
+        }
+        showSpinner(false);
+      };
         fadeInContent("product-list");
       }
       window.deleteProduct = async function (id) {
