@@ -16,8 +16,15 @@
     />
     <style>
       body {
-        background: #faf7f2;
-        min-height: 100vh;
+        background: #faf7f2;          html += "</ul>";
+          html += `<div class="mb-3">
+            <label for="delivery-date" class="form-label fw-bold">يوم الاستلام:</label>
+            <input type="date" id="delivery-date" class="form-control" value="${new Date().toISOString().split('T')[0]}" min="${new Date().toISOString().split('T')[0]}">
+          </div>`;
+          html += `<div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold">الإجمالي:</span>
+            <span class="fw-bold">${cartTotal()} د.ل</span>
+          </div>`;    min-height: 100vh;
         direction: rtl;
         text-align: right;
       }
@@ -591,6 +598,10 @@
       </li>`;
             });
             html += "</ul>";
+            html += `<div class="mb-3">
+              <label for="delivery-date" class="form-label fw-bold">يوم الاستلام:</label>
+              <input type="date" id="delivery-date" class="form-control" value="${new Date().toISOString().split('T')[0]}" min="${new Date().toISOString().split('T')[0]}">
+            </div>`;
             html += `<div class="d-flex justify-content-between align-items-center mb-2">
             <span class="fw-bold">الإجمالي:</span>
             <span class="fw-bold">${cartTotal()} د.ل</span>
@@ -672,6 +683,10 @@
             return;
           }
           let msg = "طلب جديد من الموقع:%0A";
+          const deliveryDate = document.getElementById('delivery-date').value;
+          if (deliveryDate) {
+            msg += `%0A*يوم الاستلام: ${deliveryDate}*%0A`;
+          }
           cart.forEach((item) => {
             msg += `- ${item.name} x${item.qty}`;
             if (item.details && item.details.trim())
