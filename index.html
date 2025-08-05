@@ -16,15 +16,8 @@
     />
     <style>
       body {
-        background: #faf7f2;          html += "</ul>";
-          html += `<div class="mb-3">
-            <label for="delivery-date" class="form-label fw-bold">يوم الاستلام:</label>
-            <input type="date" id="delivery-date" class="form-control" value="${new Date().toISOString().split('T')[0]}" min="${new Date().toISOString().split('T')[0]}">
-          </div>`;
-          html += `<div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold">الإجمالي:</span>
-            <span class="fw-bold">${cartTotal()} د.ل</span>
-          </div>`;    min-height: 100vh;
+        background: #faf7f2;          
+        min-height: 100vh;
         direction: rtl;
         text-align: right;
       }
@@ -356,7 +349,7 @@
           { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
           { name: "خدمات", btn: "btn-outline-secondary", emoji: "🛎️" },
         ];
-        let showBulk = false;
+        let showBulk = localStorage.getItem('showBulk') === 'true';
         const BULK_CODE = "1234";
         function showToast(msg, type = "primary") {
           const toastBody = document.getElementById("toast-body");
@@ -728,6 +721,7 @@
           const code = prompt("أدخل رمز الجملة (4 أرقام):");
           if (code === BULK_CODE) {
             showBulk = true;
+            localStorage.setItem('showBulk', 'true');
             updateBulkPriceDisplay();
             showToast("تم تفعيل أسعار الجملة", "success");
           } else if (code !== null) {
