@@ -328,6 +328,11 @@
     </div>
     <div class="container my-4" id="admin-container" style="display: none">
       <div class="fullscreen-card">
+        <div class="mb-2 text-end d-block">
+          <button id="manage-categories-btn" class="btn btn-info">
+            <i class="bi bi-tags"></i> إدارة الأصناف
+          </button>
+        </div>
         <div class="mb-2 text-end d-block d-md-none">
           <button
             id="logout-btn-mobile"
@@ -339,19 +344,18 @@
         </div>
         <h2 class="mb-4 text-center">إدارة المنتجات</h2>
         <form id="product-form" class="mb-3">
-          <div class="mb-3">
-            <label for="productCategory" class="form-label">الصنف</label>
-            <select class="form-select" id="productCategory" required>
-              <option value=""></option>
-              <option value="الشرقي">الشرقي</option>
-              <option value="الغربي">الغربي</option>
-              <option value="عبمبر">عبمبر</option>
-              <option value="تورتات">تورتات</option>
-              <option value="عصائر">عصائر</option>
-              <option value="شكلاطة">شكلاطة</option>
-              <option value="نواشف">نواشف</option>
-              <option value="خدمات">خدمات</option>
-            </select>
+          <div class="row">
+            <div class="col-12 col-sm-6 mb-3">
+                <label for="productMainCategory" class="form-label">الصنف الرئيسي</label>
+                <select class="form-select" id="productMainCategory" required>
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 mb-3">
+                <label for="productSubCategory" class="form-label">الصنف الفرعي</label>
+                <select class="form-select" id="productSubCategory">
+                    <option value="">-- اختياري --</option>
+                </select>
+            </div>
           </div>
           <div class="mb-3">
             <label for="productName" class="form-label">اسم المنتج</label>
@@ -429,6 +433,31 @@
         ></div>
       </div>
     </div>
+    <div class="container my-4" id="category-manager-container" style="display: none;">
+        <div class="fullscreen-card">
+            <h2 class="mb-4 text-center">إدارة الأصناف</h2>
+            <form id="category-form" class="mb-3">
+                <input type="hidden" id="categoryId">
+                <div class="mb-3">
+                    <label for="categoryName" class="form-label">اسم الصنف الرئيسي</label>
+                    <input type="text" class="form-control" id="categoryName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="categoryEmoji" class="form-label">Emoji</label>
+                    <input type="text" class="form-control" id="categoryEmoji" required>
+                </div>
+                <div class="mb-3">
+                    <label for="subCategories" class="form-label">الأصناف الفرعية (افصل بينها بفاصلة ,)</label>
+                    <input type="text" class="form-control" id="subCategories">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">حفظ الصنف</button>
+                    <button type="button" class="btn btn-secondary flex-fill" id="cancelCatEditBtn" style="display: none;">إلغاء</button>
+                </div>
+            </form>
+            <div id="category-list" class="list-group"></div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       function showToast(msg, type = "primary") {
@@ -480,6 +509,58 @@
       }
       let products = [];
       let editProductId = null;
+      let categories = [];
+
+      async function fetchAdminCategories() {
+        try {
+            const res = await fetch('/api/categories');
+            if (res.ok) {
+                categories = await res.json();
+                populateCategoryDropdowns();
+            } else {
+                showToast('فشل تحميل الأصناف', 'danger');
+            }
+        } catch(e) {
+            showToast('خطأ في تحميل الأصناف', 'danger');
+        }
+      }
+
+      function populateCategoryDropdowns() {
+        const mainCategorySelect = document.getElementById('productMainCategory');
+        const subCategorySelect = document.getElementById('productSubCategory');
+        
+        const currentMainVal = mainCategorySelect.value;
+        const currentSubVal = subCategorySelect.value;
+
+        mainCategorySelect.innerHTML = '<option value="">-- اختر --</option>';
+        categories.forEach(cat => {
+            mainCategorySelect.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+        });
+
+        mainCategorySelect.value = currentMainVal;
+
+        mainCategorySelect.addEventListener('change', () => {
+            const selectedMain = mainCategorySelect.value;
+            const category = categories.find(c => c.name === selectedMain);
+            
+            subCategorySelect.innerHTML = '<option value="">-- اختياري --</option>';
+            if (category && category.subCategories && category.subCategories.length > 0) {
+                category.subCategories.forEach(sub => {
+                    subCategorySelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+                });
+                subCategorySelect.disabled = false;
+            } else {
+                subCategorySelect.disabled = true;
+            }
+        });
+        
+        // Restore subcategory value if it was selected
+        if(currentMainVal) {
+            mainCategorySelect.dispatchEvent(new Event('change'));
+            subCategorySelect.value = currentSubVal;
+        }
+      }
+
       function showSpinner(show) {
         document.getElementById("loading-spinner").style.display = show
           ? "block"
@@ -613,7 +694,13 @@
           product.price_bulk !== ""
             ? product.price_bulk
             : "";
-        document.getElementById("productCategory").value = product.category;
+        document.getElementById("productMainCategory").value = product.category;
+        
+        // Trigger change to populate subcategories
+        document.getElementById("productMainCategory").dispatchEvent(new Event('change'));
+        
+        document.getElementById("productSubCategory").value = product.subCategory || '';
+
         uploadedImgDataUrl = product.img;
         document.getElementById("preview-img").src = product.img;
         document.getElementById("cancelEditBtn").style.display = "";
@@ -624,12 +711,14 @@
         .addEventListener("click", function () {
           editProductId = null;
           document.getElementById("product-form").reset();
+          document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
+          document.getElementById('productSubCategory').disabled = true;
           uploadedImgDataUrl = "";
           document.getElementById("preview-img").src = "";
           this.style.display = "none";
         });
       document
-        .getElementById("productCategory")
+        .getElementById("productMainCategory")
         .addEventListener("change", function () {
           fetchProducts(this.value);
         });
@@ -637,7 +726,8 @@
         .getElementById("product-form")
         .addEventListener("submit", async function (event) {
           event.preventDefault();
-          const category = document.getElementById("productCategory").value;
+          const category = document.getElementById("productMainCategory").value;
+          const subCategory = document.getElementById("productSubCategory").value;
           const name = document.getElementById("productName").value;
           const desc = document.getElementById("productDesc").value;
           const price_regular = document.getElementById(
@@ -657,6 +747,7 @@
           const productData = {
             name,
             category,
+            subCategory: subCategory || undefined,
             desc,
             img,
             price_regular: price_regular !== "" ? price_regular : undefined,
@@ -676,6 +767,8 @@
               editProductId = null;
               document.getElementById("cancelEditBtn").style.display = "none";
               this.reset();
+              document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
+              document.getElementById('productSubCategory').disabled = true;
               uploadedImgDataUrl = "";
               document.getElementById("preview-img").src = "";
               showToast("تم تعديل المنتج", "success");
@@ -691,6 +784,8 @@
             if (res.ok) {
               fetchProducts(category);
               this.reset();
+              document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
+              document.getElementById('productSubCategory').disabled = true;
               uploadedImgDataUrl = "";
               document.getElementById("preview-img").src = "";
               showToast("تمت إضافة المنتج", "success");
@@ -728,6 +823,7 @@
         if (res.ok) {
           document.getElementById("login-container").style.display = "none";
           document.getElementById("admin-container").style.display = "";
+          await fetchAdminCategories();
           fetchProducts();
         } else {
           document.getElementById("login-container").style.display = "";

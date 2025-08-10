@@ -19,11 +19,28 @@ app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.static(__dirname));
 
-let db, productsCollection;
-MongoClient.connect(MONGO_URI).then((client) => {
+let db, productsCollection, categoriesCollection;
+MongoClient.connect(MONGO_URI).then(async (client) => {
   db = client.db("emenu");
   productsCollection = db.collection("products");
+  categoriesCollection = db.collection("categories");
   productsCollection.createIndex({ category: 1 });
+  categoriesCollection.createIndex({ name: 1 }, { unique: true });
+
+  const count = await categoriesCollection.countDocuments();
+  if (count === 0) {
+    const initialCategories = [
+        { name: "الشرقي", emoji: "🍯", subCategories: ["صنف فرعي 1", "صنف فرعي 2"] },
+        { name: "الغربي", emoji: "🍰", subCategories: ["كيك", "جاتوه"] },
+        { name: "عبمبر", emoji: "💖", subCategories: [] },
+        { name: "تورتات", emoji: "🎂", subCategories: ["مناسبات", "عيد ميلاد"] },
+        { name: "عصائر", emoji: "🥤", subCategories: ["طبيعي", "غازي"] },
+        { name: "شكلاطة", emoji: "🍫", subCategories: [] },
+        { name: "نواشف", emoji: "🥐", subCategories: ["مالح", "حلو"] },
+        { name: "خدمات", emoji: "🛎️", subCategories: [] },
+    ];
+    await categoriesCollection.insertMany(initialCategories);
+  }
 
   app.post("/api/login", (req, res) => {
     const { username, password } = req.body;
@@ -57,6 +74,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
             price_bulk: 1,
             img: 1,
             category: 1,
+            subCategory: 1,
             available: 1,
           },
         })
@@ -68,7 +86,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
   });
 
   app.post("/api/products", checkAdmin, async (req, res) => {
-    const { name, desc, price_regular, price_bulk, img, category, price, available } = req.body;
+    const { name, desc, price_regular, price_bulk, img, category, subCategory, price, available } = req.body;
     if (
       !name ||
       !category ||
@@ -85,13 +103,14 @@ MongoClient.connect(MONGO_URI).then((client) => {
       price,
       img,
       category,
+      subCategory,
       available: available === false ? false : true
     });
     res.json({ success: true });
   });
 
   app.put("/api/products/:id", checkAdmin, async (req, res) => {
-    const { name, desc, price_regular, price_bulk, img, category, price, available } = req.body;
+    const { name, desc, price_regular, price_bulk, img, category, subCategory, price, available } = req.body;
     if (
       !name ||
       !category ||
@@ -102,7 +121,7 @@ MongoClient.connect(MONGO_URI).then((client) => {
     }
     await productsCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, desc, price_regular, price_bulk, price, img, category, available: available === false ? false : true } }
+      { $set: { name, desc, price_regular, price_bulk, price, img, category, subCategory, available: available === false ? false : true } }
     );
     res.json({ success: true });
   });
@@ -113,6 +132,54 @@ MongoClient.connect(MONGO_URI).then((client) => {
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
+  // Category Management API
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await categoriesCollection.find({}).toArray();
+      res.json(categories);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/categories", checkAdmin, async (req, res) => {
+    try {
+      const { name, emoji, subCategories } = req.body;
+      if (!name || !emoji) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const result = await categoriesCollection.insertOne({ name, emoji, subCategories: subCategories || [] });
+      res.status(201).json(result);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to create category" });
+    }
+  });
+
+  app.put("/api/categories/:id", checkAdmin, async (req, res) => {
+    try {
+      const { name, emoji, subCategories } = req.body;
+      if (!name || !emoji) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      await categoriesCollection.updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { name, emoji, subCategories: subCategories || [] } }
+      );
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
+    try {
+      await categoriesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to delete category" });
     }
   });
 

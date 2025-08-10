@@ -184,6 +184,10 @@
           margin-top: 15px;
         }
       }
+      .sub-category-filters button {
+        border-radius: 16px;
+        font-weight: 500;
+      }
       @media (min-width: 601px) {
         .category-col {
           max-width: 20%;
@@ -339,16 +343,20 @@
     <script>
       (function () {
         "use strict";
-        const categories = [
-          { name: "الشرقي", btn: "btn-outline-secondary", emoji: "🍯" },
-          { name: "الغربي", btn: "btn-outline-success", emoji: "🍰" },
-          { name: "عبمبر", btn: "btn-outline-dark", emoji: "💖" },
-          { name: "تورتات", btn: "btn-outline-warning", emoji: "🎂" },
-          { name: "عصائر", btn: "btn-outline-danger", emoji: "🥤" },
-          { name: "شكلاطة", btn: "btn-outline-info", emoji: "🍫" },
-          { name: "نواشف", btn: "btn-outline-primary", emoji: "🥐" },
-          { name: "خدمات", btn: "btn-outline-secondary", emoji: "🛎️" },
-        ];
+        let categories = [];
+        async function fetchCategories() {
+            try {
+                const res = await fetch('/api/categories');
+                if (res.ok) {
+                    categories = await res.json();
+                } else {
+                    console.error('Failed to fetch categories');
+                }
+            } catch (e) {
+                console.error('Error fetching categories:', e);
+            }
+        }
+
         let showBulk = localStorage.getItem('showBulk') === 'true';
         const BULK_CODE = "1234";
         function showToast(msg, type = "primary") {
@@ -370,7 +378,7 @@
         <div class="row g-3 justify-content-center flex-wrap">`;
           categories.forEach((cat, idx) => {
             html += `<div class="col-12 category-col">
-          <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="renderProducts('${cat.name}')">
+          <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="showCategoryView('${cat.name}')">
             <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
             <span>${cat.name}</span>
           </button>
@@ -403,19 +411,60 @@
           if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
         }
         const debouncedFilterProducts = debounce(filterProducts, 200);
-        async function renderProducts(category) {
+        
+        function filterProductsBySubCategory(subCategory) {
+            const productList = document.getElementById('product-list');
+            if (!productList) return;
+
+            productList.querySelectorAll(".col").forEach(col => {
+                const card = col.querySelector('.product-card');
+                const productSubCategory = card.dataset.subCategory;
+                if (subCategory === 'all' || productSubCategory === subCategory) {
+                    col.style.display = '';
+                } else {
+                    col.style.display = 'none';
+                }
+            });
+
+            const filtersContainer = document.querySelector('.sub-category-filters');
+            if (filtersContainer) {
+                filtersContainer.querySelectorAll('button').forEach(btn => {
+                    const btnSubCategory = btn.dataset.subCategory;
+                    if (btnSubCategory === subCategory) {
+                        btn.classList.remove('btn-outline-primary');
+                        btn.classList.add('btn-primary');
+                    } else {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-primary');
+                    }
+                });
+            }
+        }
+
+        async function showCategoryView(categoryName) {
+          const category = categories.find((c) => c.name === categoryName);
+          if (!category) return;
+
+          let subCategoryButtons = '';
+          if (category.subCategories && category.subCategories.length > 0) {
+              subCategoryButtons = `<div class="sub-category-filters mb-3 d-flex flex-wrap justify-content-center gap-2">
+                  <button class="btn btn-sm btn-primary" data-sub-category="all" onclick="filterProductsBySubCategory('all')">الكل</button>
+                  ${category.subCategories.map(sub => `<button class="btn btn-sm btn-outline-primary" data-sub-category="${sub}" onclick="filterProductsBySubCategory('${sub}')">${sub}</button>`).join('')}
+              </div>`;
+          }
+
           document.getElementById("categories-header").innerHTML = `
-        <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
-        <h2 class="mb-4 text-center">${
-          categories.find((c) => c.name === category).emoji
-        } ${category}</h2>
-        ${searchInputHTML()}
-      `;
+            <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
+            <h2 class="mb-4 text-center">${category.emoji} ${category.name}</h2>
+            ${subCategoryButtons}
+            ${searchInputHTML()}
+          `;
+
           document.getElementById("main-content").innerHTML = "";
           document.getElementById("loading-spinner").style.display = "block";
           let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
           let res = await fetch(
-            `/api/products?category=${encodeURIComponent(category)}`
+            `/api/products?category=${encodeURIComponent(categoryName)}`
           );
           let products = res.ok ? await res.json() : [];
           products.forEach((product, idx) => {
@@ -439,7 +488,7 @@
             html += `<div class="col">
           <div class="product-card shadow-sm d-flex flex-column${
             showBulk ? " show-bulk" : ""
-          }${unavailable ? " unavailable" : ""}">
+          }${unavailable ? " unavailable" : ""}" data-sub-category="${product.subCategory || ''}">
             <img src="${product.img}" class="card-img-top" alt="${
               product.name
             }" loading="lazy" onclick="zoomImg('${product.img}')">
@@ -741,7 +790,7 @@
             .toFixed(2);
         }
         window.cartTotal = cartTotal;
-        window.renderProducts = renderProducts;
+        window.showCategoryView = showCategoryView;
         window.renderCategories = renderCategories;
         window.unlockBulkPrice = unlockBulkPrice;
         window.zoomImg = zoomImg;
@@ -749,7 +798,9 @@
         window.showCartModal = showCartModal;
         window.removeFromCart = removeFromCart;
         window.proceedToWhatsApp = proceedToWhatsApp;
-        window.onload = () => {
+        window.filterProductsBySubCategory = filterProductsBySubCategory;
+        window.onload = async () => {
+          await fetchCategories();
           loadCart();
           renderCategories();
           fadeInContent("categories-header");
