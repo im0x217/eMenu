@@ -1,34 +1,38 @@
+require('dotenv').config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
 const path = require("path");
-const fs = require("fs");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "e-menu-products",
+    format: async (req, file) => "jpg", // supports promises as well
+    public_id: (req, file) => Date.now() + '-' + file.originalname,
+  },
+});
+
+const upload = multer({ storage: storage });
 
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
 const MONGO_URI = process.env.MONGO_URI;
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
-}
-
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // Append extension
-  }
-});
-const upload = multer({ storage: storage });
 
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -38,7 +42,6 @@ app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.static(__dirname));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 let db, productsCollection, categoriesCollection;
 MongoClient.connect(MONGO_URI).then(async (client) => {
@@ -57,7 +60,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
         { name: "تورتات", emoji: "🎂", subCategories: ["تورتة زمنية", "تورتات الشنتى", "تورتات درجة اولى", "مناسبات", "عيد ميلاد"] },
         { name: "عصائر", emoji: "🥤", subCategories: ["طبيعي", "غازي"] },
         { name: "نواشف", emoji: "🥐", subCategories: ["معجنات", "مالح", "حلو"] },
-        { name: "لوزيات", emoji: "", subCategories: ["شكلاطة"] },
+        { name: "لوزيات", emoji: "🥜", subCategories: ["شكلاطة"] },
         { name: "خدمات", emoji: "🛎️", subCategories: [] },
     ];
     await categoriesCollection.insertMany(initialCategories);
@@ -97,6 +100,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
             category: 1,
             subCategory: 1,
             available: 1,
+            cloudinary_public_id: 1,
           },
         })
         .toArray();
@@ -108,7 +112,8 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
 
   app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
     const { name, desc, price_regular, price_bulk, category, subCategory, price, available } = req.body;
-    const img = req.file ? `/uploads/${req.file.filename}` : null;
+    const img = req.file ? req.file.path : null;
+    const cloudinary_public_id = req.file ? req.file.filename : null;
     
     if (
       !name ||
@@ -116,7 +121,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
       !img ||
       (price_regular === undefined && price === undefined)
     ) {
-      if(img) fs.unlinkSync(path.join(__dirname, img)); // Clean up uploaded file
+      if(cloudinary_public_id) await cloudinary.uploader.destroy(cloudinary_public_id);
       return res.status(400).json({ error: "Missing required fields" });
     }
     await productsCollection.insertOne({
@@ -126,6 +131,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
       price_bulk,
       price,
       img,
+      cloudinary_public_id,
       category,
       subCategory,
       available: available === "false" ? false : true
@@ -136,7 +142,8 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
     const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg } = req.body;
     
-    let img = req.file ? `/uploads/${req.file.filename}` : existingImg;
+    let img = req.file ? req.file.path : existingImg;
+    let cloudinary_public_id = req.file ? req.file.filename : req.body.cloudinary_public_id;
 
     if (
       !name ||
@@ -144,21 +151,18 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
       !img ||
       (price_regular === undefined && price === undefined)
     ) {
-      if(req.file) fs.unlinkSync(path.join(__dirname, img)); // Clean up uploaded file
+      if(req.file) await cloudinary.uploader.destroy(cloudinary_public_id);
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // If a new image is uploaded and it's different from the old one, delete the old one.
-    if (req.file && existingImg && img !== existingImg) {
-        const oldImgPath = path.join(__dirname, existingImg);
-        if (fs.existsSync(oldImgPath)) {
-            fs.unlinkSync(oldImgPath);
-        }
+    if (req.file) {
+        const old_public_id = req.body.cloudinary_public_id;
+        if(old_public_id) await cloudinary.uploader.destroy(old_public_id);
     }
 
     await productsCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, desc, price_regular, price_bulk, price, img, category, subCategory, available: available === "false" ? false : true } }
+      { $set: { name, desc, price_regular, price_bulk, price, img, cloudinary_public_id, category, subCategory, available: available === "false" ? false : true } }
     );
     res.json({ success: true });
   });
@@ -166,11 +170,8 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   app.delete("/api/products/:id", checkAdmin, async (req, res) => {
     try {
       const product = await productsCollection.findOne({ _id: new ObjectId(req.params.id) });
-      if (product && product.img) {
-        const imgPath = path.join(__dirname, product.img);
-        if (fs.existsSync(imgPath)) {
-          fs.unlinkSync(imgPath);
-        }
+      if (product && product.cloudinary_public_id) {
+        await cloudinary.uploader.destroy(product.cloudinary_public_id);
       }
       await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
       res.json({ success: true });
