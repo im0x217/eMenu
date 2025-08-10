@@ -387,12 +387,21 @@
           new bootstrap.Modal(document.getElementById("img-modal")).show();
         }
         function renderCategories() {
+          const btn_colors = [
+            "btn-primary",
+            "btn-secondary",
+            "btn-success",
+            "btn-danger",
+            "btn-warning",
+            "btn-info",
+          ];
           let html = `
         <h2 class="mb-4 text-center">الأصناف</h2>
         <div class="row g-3 justify-content-center flex-wrap">`;
           categories.forEach((cat, idx) => {
+            const btn_class = btn_colors[idx % btn_colors.length];
             html += `<div class="col-12 category-col">
-          <button type="button" class="btn ${cat.btn} w-100 category-btn" onclick="showCategoryView('${cat.name}')">
+          <button type="button" class="btn ${btn_class} w-100 category-btn" onclick="showCategoryView('${cat.name}')">
             <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
             <span>${cat.name}</span>
           </button>
