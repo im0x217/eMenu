@@ -448,7 +448,7 @@
       }
       const dropArea = document.getElementById("drop-area");
       const imgInput = document.getElementById("productImgUpload");
-      let uploadedImgDataUrl = "";
+      let uploadedFileData = null;
       dropArea.onclick = () => imgInput.click();
       dropArea.ondragover = (e) => {
         e.preventDefault();
@@ -466,9 +466,9 @@
       imgInput.onchange = (e) => handleImg(e.target.files[0]);
       function handleImg(file) {
         if (!file) return;
+        uploadedFileData = file;
         let reader = new FileReader();
         reader.onload = (e) => {
-          uploadedImgDataUrl = e.target.result;
           document.getElementById("preview-img").src = e.target.result;
         };
         reader.readAsDataURL(file);
@@ -674,7 +674,7 @@
         
         document.getElementById("productSubCategory").value = product.subCategory || '';
 
-        uploadedImgDataUrl = product.img;
+        uploadedFileData = null; // Reset file data on edit start
         document.getElementById("preview-img").src = product.img;
         document.getElementById("cancelEditBtn").style.display = "";
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -686,7 +686,7 @@
           document.getElementById("product-form").reset();
           document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
           document.getElementById('productSubCategory').disabled = true;
-          uploadedImgDataUrl = "";
+          uploadedFileData = null;
           document.getElementById("preview-img").src = "";
           this.style.display = "none";
         });
@@ -707,66 +707,57 @@
             "productPriceRegular"
           ).value;
           const price_bulk = document.getElementById("productPriceBulk").value;
-          const img = uploadedImgDataUrl;
-          if (
-            !category ||
-            !name ||
-            !img ||
-            (price_regular === "" && price_bulk === "")
-          ) {
-            showToast("يرجى تعبئة جميع الحقول المطلوبة.", "warning");
+          
+          const formData = new FormData();
+          formData.append('name', name);
+          formData.append('desc', desc);
+          formData.append('price_regular', price_regular);
+          formData.append('price_bulk', price_bulk);
+          formData.append('category', category);
+          formData.append('subCategory', subCategory || '');
+          
+          if (uploadedFileData) {
+            formData.append('img', uploadedFileData);
+          } else if (editProductId) {
+            const product = products.find(p => p._id === editProductId);
+            formData.append('existingImg', product.img);
+          }
+
+          if (!formData.has('img') && !formData.has('existingImg')) {
+            showToast("يرجى رفع صورة للمنتج.", "warning");
             return;
           }
-          const productData = {
-            name,
-            category,
-            subCategory: subCategory || undefined,
-            desc,
-            img,
-            price_regular: price_regular !== "" ? price_regular : undefined,
-            price_bulk: price_bulk !== "" ? price_bulk : undefined,
-          };
+
           showSpinner(true);
-          if (editProductId) {
-            const res = await fetch("/api/products/" + editProductId, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(productData),
+          const url = editProductId ? `/api/products/${editProductId}` : '/api/products';
+          const method = editProductId ? 'PUT' : 'POST';
+
+          try {
+            const res = await fetch(url, {
+              method: method,
+              body: formData,
             });
-            if (res.ok) {
-              const i = products.findIndex((p) => p._id === editProductId);
-              if (i >= 0) products[i] = { ...productData, _id: editProductId };
-              renderProducts();
-              editProductId = null;
-              document.getElementById("cancelEditBtn").style.display = "none";
-              this.reset();
-              document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
-              document.getElementById('productSubCategory').disabled = true;
-              uploadedImgDataUrl = "";
-              document.getElementById("preview-img").src = "";
-              showToast("تم تعديل المنتج", "success");
-            } else {
-              showToast("خطأ أثناء تعديل المنتج", "danger");
-            }
-          } else {
-            const res = await fetch("/api/products", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(productData),
-            });
+
             if (res.ok) {
               fetchProducts(category);
               this.reset();
               document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
               document.getElementById('productSubCategory').disabled = true;
-              uploadedImgDataUrl = "";
+              uploadedFileData = null;
               document.getElementById("preview-img").src = "";
-              showToast("تمت إضافة المنتج", "success");
+              if(editProductId) {
+                editProductId = null;
+                document.getElementById("cancelEditBtn").style.display = "none";
+              }
+              showToast(editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج", "success");
             } else {
-              showToast("خطأ أثناء إضافة المنتج", "danger");
+              showToast("خطأ أثناء حفظ المنتج", "danger");
             }
+          } catch (error) {
+            showToast("خطأ في الشبكة", "danger");
+          } finally {
+            showSpinner(false);
           }
-          showSpinner(false);
         });
       document
         .getElementById("login-form")
