@@ -329,9 +329,7 @@
     <div class="container my-4" id="admin-container" style="display: none">
       <div class="fullscreen-card">
         <div class="mb-2 text-end d-block">
-          <button id="manage-categories-btn" class="btn btn-info">
-            <i class="bi bi-tags"></i> إدارة الأصناف
-          </button>
+          <a href="/category-management.html" class="btn btn-info"><i class="bi bi-tags"></i> إدارة الأصناف</a>
         </div>
         <div class="mb-2 text-end d-block d-md-none">
           <button
@@ -433,32 +431,7 @@
         ></div>
       </div>
     </div>
-    <div class="container my-4" id="category-manager-container" style="display: none;">
-        <div class="fullscreen-card">
-            <h2 class="mb-4 text-center">إدارة الأصناف</h2>
-            <form id="category-form" class="mb-3">
-                <input type="hidden" id="categoryId">
-                <div class="mb-3">
-                    <label for="categoryName" class="form-label">اسم الصنف الرئيسي</label>
-                    <input type="text" class="form-control" id="categoryName" required>
-                </div>
-                <div class="mb-3">
-                    <label for="categoryEmoji" class="form-label">Emoji</label>
-                    <input type="text" class="form-control" id="categoryEmoji" required>
-                </div>
-                <div class="mb-3">
-                    <label for="subCategories" class="form-label">الأصناف الفرعية (افصل بينها بفاصلة ,)</label>
-                    <input type="text" class="form-control" id="subCategories">
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-fill">حفظ الصنف</button>
-                    <button type="button" class="btn btn-secondary flex-fill" id="cancelCatEditBtn" style="display: none;">إلغاء</button>
-                </div>
-            </form>
-            <div id="category-list" class="list-group"></div>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       function showToast(msg, type = "primary") {
         const toastBody = document.getElementById("toast-body");

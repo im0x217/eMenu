@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الأصناف</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .table-responsive {
+            max-height: 60vh;
+        }
+        .sub-category-chip {
+            display: inline-block;
+            padding: .35em .65em;
+            font-size: .75em;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+            background-color: #6c757d;
+            border-radius: 10rem;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>إدارة الأصناف</h1>
+            <div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal">إضافة صنف جديد</button>
+                <a href="/admin.html" class="btn btn-secondary">العودة لإدارة المنتجات</a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الاسم</th>
+                        <th>Emoji</th>
+                        <th>الأصناف الفرعية</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                    <!-- Categories will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="categoryModalLabel">إضافة/تعديل صنف</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="categoryForm">
+                        <input type="hidden" id="categoryId">
+                        <div class="mb-3">
+                            <label for="categoryName" class="form-label">اسم الصنف</label>
+                            <input type="text" class="form-control" id="categoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryEmoji" class="form-label">Emoji</label>
+                            <input type="text" class="form-control" id="categoryEmoji" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subCategories" class="form-label">الأصناف الفرعية (مفصولة بفاصلة)</label>
+                            <input type="text" class="form-control" id="subCategories">
+                        </div>
+                        <button type="submit" class="btn btn-primary">حفظ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const categoryForm = document.getElementById('categoryForm');
+        const categoryIdInput = document.getElementById('categoryId');
+        const categoryNameInput = document.getElementById('categoryName');
+        const categoryEmojiInput = document.getElementById('categoryEmoji');
+        const subCategoriesInput = document.getElementById('subCategories');
+        const categoriesTableBody = document.getElementById('categoriesTableBody');
+        const categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+
+        async function fetchCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        window.location.href = '/admin.html';
+                    }
+                    throw new Error('Failed to fetch categories');
+                }
+                const categories = await response.json();
+                renderCategories(categories);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                alert('فشل في جلب الأصناف. قد تحتاج إلى تسجيل الدخول مرة أخرى.');
+            }
+        }
+
+        function renderCategories(categories) {
+            categoriesTableBody.innerHTML = '';
+            categories.forEach(category => {
+                const subCategoriesHtml = (category.subCategories || []).map(sub => `<span class="sub-category-chip">${sub}</span>`).join(' ');
+                const row = `
+                    <tr>
+                        <td>${category.name}</td>
+                        <td>${category.emoji}</td>
+                        <td>${subCategoriesHtml}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editCategory('${category._id}', '${category.name}', '${category.emoji}', '${(category.subCategories || []).join(', ')}')"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCategory('${category._id}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                categoriesTableBody.innerHTML += row;
+            });
+        }
+
+        categoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = categoryIdInput.value;
+            const subCategories = subCategoriesInput.value.split(',').map(s => s.trim()).filter(s => s);
+            const categoryData = {
+                name: categoryNameInput.value,
+                emoji: categoryEmojiInput.value,
+                subCategories: subCategories
+            };
+
+            const url = id ? `/api/categories/${id}` : '/api/categories';
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(categoryData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save category');
+                }
+                
+                categoryModal.hide();
+                fetchCategories();
+            } catch (error) {
+                console.error('Error saving category:', error);
+                alert('فشل في حفظ الصنف.');
+            }
+        });
+
+        document.getElementById('categoryModal').addEventListener('hidden.bs.modal', () => {
+            categoryForm.reset();
+            categoryIdInput.value = '';
+        });
+
+        window.editCategory = (id, name, emoji, subCategories) => {
+            categoryIdInput.value = id;
+            categoryNameInput.value = name;
+            categoryEmojiInput.value = emoji;
+            subCategoriesInput.value = subCategories;
+            categoryModal.show();
+        };
+
+        window.deleteCategory = async (id) => {
+            if (!confirm('هل أنت متأكد من رغبتك في حذف هذا الصنف؟')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error('Failed to delete category');
+                }
+                fetchCategories();
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                alert('فشل في حذف الصنف.');
+            }
+        };
+
+        fetchCategories();
+    </script>
+</body>
+</html>
