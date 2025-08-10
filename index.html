@@ -184,6 +184,18 @@
           margin-top: 15px;
         }
       }
+      .sub-category-filters {
+        overflow-x: auto;
+        white-space: nowrap;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      .sub-category-filters::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, and Opera */
+      }
+      .sub-category-filters .btn {
+        flex-shrink: 0;
+      }
       .sub-category-filters button {
         border-radius: 16px;
         font-weight: 500;

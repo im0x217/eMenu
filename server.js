@@ -31,12 +31,12 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   if (count === 0) {
     const initialCategories = [
         { name: "الشرقي", emoji: "🍯", subCategories: ["صنف فرعي 1", "صنف فرعي 2"] },
-        { name: "الغربي", emoji: "🍰", subCategories: ["كيك", "جاتوه"] },
+        { name: "الغربي", emoji: "🍰", subCategories: ["كيكات", "تورتات مقصوصة", "جاتوه"] },
         { name: "عبمبر", emoji: "💖", subCategories: [] },
-        { name: "تورتات", emoji: "🎂", subCategories: ["مناسبات", "عيد ميلاد"] },
+        { name: "تورتات", emoji: "🎂", subCategories: ["تورتة زمنية", "تورتات الشنتى", "تورتات درجة اولى", "مناسبات", "عيد ميلاد"] },
         { name: "عصائر", emoji: "🥤", subCategories: ["طبيعي", "غازي"] },
-        { name: "شكلاطة", emoji: "🍫", subCategories: [] },
-        { name: "نواشف", emoji: "🥐", subCategories: ["مالح", "حلو"] },
+        { name: "نواشف", emoji: "🥐", subCategories: ["معجنات", "مالح", "حلو"] },
+        { name: "لوزيات", emoji: "�", subCategories: ["شكلاطة"] },
         { name: "خدمات", emoji: "🛎️", subCategories: [] },
     ];
     await categoriesCollection.insertMany(initialCategories);
