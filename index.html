@@ -36,11 +36,29 @@
         z-index: 1020;
       }
       .category-btn {
-        border-radius: 20px !important;
-        font-size: 1.12rem;
+        background-color: #fff;
+        color: #b5830e; /* A darker, more readable gold for text */
+        border: 2px solid #fdb518;
+        border-radius: 30px; /* A more rounded, modern look */
+        font-size: 1.1rem;
         font-weight: bold;
         margin-bottom: 1rem;
-        padding: 0.9rem 0.6rem;
+        padding: 0.75rem 1.5rem; /* Adjust padding for the new look */
+        transition: all 0.3s ease; /* Smooth transition for hover effects */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+      .category-btn:hover {
+        background-color: #fdb518;
+        color: #fff;
+        transform: translateY(-2px); /* Subtle lift effect */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      .category-btn.active {
+        background-color: #fdb518;
+        color: #fff;
+        border-color: #fdb518;
+        box-shadow: 0 4px 12px rgba(253, 181, 24, 0.4); /* A glow effect for the active button */
+        transform: translateY(-2px);
       }
       .category-emoji {
         font-size: 2em;
