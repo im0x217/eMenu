@@ -505,7 +505,7 @@
         const currentMainVal = mainCategorySelect.value;
         const currentSubVal = subCategorySelect.value;
 
-        mainCategorySelect.innerHTML = '<option value="">-- اختر --</option>';
+        mainCategorySelect.innerHTML = '<option value="">جميع الأصناف</option>';
         categories.forEach(cat => {
             mainCategorySelect.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
         });
@@ -825,8 +825,10 @@
         if (res.ok) {
           document.getElementById("login-container").style.display = "none";
           document.getElementById("admin-container").style.display = "";
+          // Fetch all products first to show them by default
+          await fetchProducts(); 
+          // Then fetch categories, which might trigger a filter, but the initial view is correct.
           await fetchAdminCategories();
-          fetchProducts();
         } else {
           document.getElementById("login-container").style.display = "";
           document.getElementById("admin-container").style.display = "none";

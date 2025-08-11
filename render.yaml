@@ -4,6 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: npm install
+    preDeployCommand: node migrate_to_cloudinary.js
     startCommand: node server.js
     envVars:
       - fromGroup: e-menu-secrets
