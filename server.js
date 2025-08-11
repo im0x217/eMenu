@@ -86,8 +86,18 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
 
   app.get("/api/products", async (req, res) => {
     try {
-      const category = req.query.category;
-      const query = category ? { category } : {};
+      const { category, id } = req.query;
+      let query = {};
+
+      if (id) {
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).json({ error: "Invalid product ID" });
+        }
+        query = { _id: new ObjectId(id) };
+      } else if (category) {
+        query = { category };
+      }
+      
       const products = await productsCollection
         .find(query, {
           projection: {

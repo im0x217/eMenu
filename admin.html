@@ -726,7 +726,33 @@
           
           // When editing, pass along the existing image URL and public_id
           if (editProductId) {
-            const product = products.find(p => p._id === editProductId);
+            let product = products.find(p => p._id === editProductId);
+            
+            // If product is not in the current filtered list, we need to fetch it
+            if (!product) {
+                try {
+                    const res = await fetch(`/api/products?id=${editProductId}`);
+                    if (res.ok) {
+                        const fetchedProduct = await res.json();
+                        // The API returns an array, so we take the first element
+                        if (Array.isArray(fetchedProduct) && fetchedProduct.length > 0) {
+                            product = fetchedProduct[0];
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch the product being edited:", e);
+                    showToast("خطأ في جلب بيانات المنتج المعدل", "danger");
+                    showSpinner(false);
+                    return;
+                }
+            }
+
+            if (!product) {
+                showToast("لم يتم العثور على المنتج الذي يتم تعديله.", "danger");
+                showSpinner(false);
+                return;
+            }
+
             if (!uploadedFileData) { // only append existingImg if no new file is uploaded
                 formData.append('existingImg', product.img);
             }
