@@ -610,25 +610,29 @@
           productList.appendChild(card);
         });
       window.toggleAvailability = async function(id, available) {
-        const product = products.find(p => p._id === id);
-        if (!product) return;
         showSpinner(true);
-        const res = await fetch('/api/products/' + id, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...product,
-            available
-          })
-        });
-        if (res.ok) {
-          product.available = available;
-          renderProducts();
-          showToast('تم تحديث حالة التوفر', 'success');
-        } else {
-          showToast('خطأ أثناء تحديث التوفر', 'danger');
+        try {
+            const res = await fetch(`/api/products/${id}/availability`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ available: available })
+            });
+
+            if (res.ok) {
+              const product = products.find(p => p._id === id);
+              if (product) {
+                product.available = available;
+              }
+              renderProducts(); // Re-render to update the UI
+              showToast('تم تحديث حالة التوفر', 'success');
+            } else {
+              showToast('خطأ أثناء تحديث التوفر', 'danger');
+            }
+        } catch (e) {
+            showToast('خطأ في الشبكة أثناء تحديث التوفر', 'danger');
+        } finally {
+            showSpinner(false);
         }
-        showSpinner(false);
       };
         fadeInContent("product-list");
       }
@@ -718,9 +722,17 @@
           
           if (uploadedFileData) {
             formData.append('img', uploadedFileData);
-          } else if (editProductId) {
+          }
+          
+          // When editing, pass along the existing image URL and public_id
+          if (editProductId) {
             const product = products.find(p => p._id === editProductId);
-            formData.append('existingImg', product.img);
+            if (!uploadedFileData) { // only append existingImg if no new file is uploaded
+                formData.append('existingImg', product.img);
+            }
+            if (product.cloudinary_public_id) {
+              formData.append('cloudinary_public_id', product.cloudinary_public_id);
+            }
           }
 
           if (!formData.has('img') && !formData.has('existingImg')) {

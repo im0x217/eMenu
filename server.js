@@ -143,29 +143,68 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
     const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg } = req.body;
     
-    let img = req.file ? req.file.path : existingImg;
-    let cloudinary_public_id = req.file ? req.file.filename : req.body.cloudinary_public_id;
-
-    if (
-      !name ||
-      !category ||
-      !img ||
-      (price_regular === undefined && price === undefined)
-    ) {
-      if(req.file) await cloudinary.uploader.destroy(cloudinary_public_id);
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+    let updateData = {
+        name,
+        desc,
+        price_regular,
+        price_bulk,
+        price,
+        category,
+        subCategory,
+        available: available === "false" ? false : true
+    };
 
     if (req.file) {
+        // New image was uploaded
+        updateData.img = req.file.path;
+        updateData.cloudinary_public_id = req.file.filename;
+
+        // Delete the old image from Cloudinary
         const old_public_id = req.body.cloudinary_public_id;
-        if(old_public_id) await cloudinary.uploader.destroy(old_public_id);
+        if (old_public_id && old_public_id !== 'null' && old_public_id !== 'undefined') {
+            cloudinary.uploader.destroy(old_public_id).catch(err => 
+                console.error("Failed to delete old image from Cloudinary:", err)
+            );
+        }
+    } else {
+        // No new image, keep the existing one
+        updateData.img = existingImg;
+        updateData.cloudinary_public_id = req.body.cloudinary_public_id;
+    }
+
+    if (
+      !updateData.name ||
+      !updateData.category ||
+      !updateData.img ||
+      (updateData.price_regular === undefined && updateData.price === undefined)
+    ) {
+      // If a new file was uploaded in this failed request, delete it
+      if(req.file) await cloudinary.uploader.destroy(req.file.filename);
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     await productsCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, desc, price_regular, price_bulk, price, img, cloudinary_public_id, category, subCategory, available: available === "false" ? false : true } }
+      { $set: updateData }
     );
     res.json({ success: true });
+  });
+
+  app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
+    const { available } = req.body;
+    if (typeof available !== 'boolean') {
+        return res.status(400).json({ error: "Invalid 'available' status" });
+    }
+    try {
+        await productsCollection.updateOne(
+            { _id: new ObjectId(req.params.id) },
+            { $set: { available: available } }
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Error updating availability:", err);
+        res.status(500).json({ error: "Failed to update availability" });
+    }
   });
 
   app.delete("/api/products/:id", checkAdmin, async (req, res) => {
