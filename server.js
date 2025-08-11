@@ -106,6 +106,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
         .toArray();
       res.json(products);
     } catch (err) {
+      console.error("Error fetching products:", err);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
