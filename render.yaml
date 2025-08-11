@@ -7,4 +7,3 @@ services:
     startCommand: node server.js
     envVars:
       - fromGroup: e-menu-secrets
-    preDeployCommand: node migrate_to_cloudinary.js
