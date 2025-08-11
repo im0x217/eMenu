@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: e-menu
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - fromGroup: e-menu-secrets
+    preDeployCommand: node migrate_to_cloudinary.js
