@@ -387,6 +387,12 @@
               />
             </div>
           </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="productAllowFloat">
+            <label class="form-check-label" for="productAllowFloat">
+              السماح بالأسعار الكسرية (مثل: 1.5)
+            </label>
+          </div>
           <div class="mb-3">
             <label for="productImgUpload" class="form-label">صورة المنتج</label>
             <div id="drop-area">
@@ -677,6 +683,7 @@
         document.getElementById("productMainCategory").dispatchEvent(new Event('change'));
         
         document.getElementById("productSubCategory").value = product.subCategory || '';
+        document.getElementById("productAllowFloat").checked = product.allowFloat || false;
 
         uploadedFileData = null; // Reset file data on edit start
         document.getElementById("preview-img").src = product.img;
@@ -690,6 +697,7 @@
           document.getElementById("product-form").reset();
           document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
           document.getElementById('productSubCategory').disabled = true;
+          document.getElementById('productAllowFloat').checked = false;
           uploadedFileData = null;
           document.getElementById("preview-img").src = "";
           this.style.display = "none";
@@ -711,6 +719,7 @@
             "productPriceRegular"
           ).value;
           const price_bulk = document.getElementById("productPriceBulk").value;
+          const allowFloat = document.getElementById("productAllowFloat").checked;
           
           const formData = new FormData();
           formData.append('name', name);
@@ -719,6 +728,7 @@
           formData.append('price_bulk', price_bulk);
           formData.append('category', category);
           formData.append('subCategory', subCategory || '');
+          formData.append('allowFloat', allowFloat);
           
           if (uploadedFileData) {
             formData.append('img', uploadedFileData);

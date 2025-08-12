@@ -409,12 +409,21 @@
           new bootstrap.Modal(document.getElementById("img-modal")).show();
         }
         function renderCategories() {
+          const btn_colors = [
+            "btn-primary",
+            "btn-secondary",
+            "btn-success",
+            "btn-danger",
+            "btn-warning",
+            "btn-info",
+          ];
           let html = `
         <h2 class="mb-4 text-center">الأصناف</h2>
         <div class="row g-3 justify-content-center flex-wrap">`;
           categories.forEach((cat, idx) => {
+            const btn_class = btn_colors[idx % btn_colors.length];
             html += `<div class="col-12 category-col">
-          <button type="button" class="btn w-100 category-btn" onclick="showCategoryView('${cat.name}')">
+          <button type="button" class="btn ${btn_class} w-100 category-btn" onclick="showCategoryView('${cat.name}')">
             <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
             <span>${cat.name}</span>
           </button>
@@ -524,7 +533,7 @@
             html += `<div class="col">
           <div class="product-card shadow-sm d-flex flex-column${
             showBulk ? " show-bulk" : ""
-          }${unavailable ? " unavailable" : ""}" data-sub-category="${product.subCategory || ''}">
+          }${unavailable ? " unavailable" : ""}" data-sub-category="${product.subCategory || ''}" data-allow-float="${product.allowFloat || false}">
             <img src="${product.img}" class="card-img-top" alt="${
               product.name
             }" loading="lazy" onclick="zoomImg('${product.img}')">
@@ -628,6 +637,7 @@
               qty: 1,
               details: "",
               price_bulk: product.price_bulk || null,
+              allowFloat: product.allowFloat || false,
             });
           }
           saveCart();
@@ -650,6 +660,8 @@
           } else {
             html = '<ul class="list-group mb-3">';
             cart.forEach((item, idx) => {
+              const product = products.find(p => p.name === item.name);
+              const allowFloat = product ? product.allowFloat : item.allowFloat;
               html += `<li class="list-group-item">
         <div class="d-flex align-items-center mb-2">
           <img src="${
@@ -659,12 +671,11 @@
             <div class="fw-bold">${item.name}</div>
             <div class="d-flex align-items-center mt-1">
               <button class="btn btn-outline-secondary btn-sm me-1" onclick="updateCartQty(${idx},-1)"><i class="bi bi-dash"></i></button>
-              <input type="number" min="0.25" step="0.01" value="${
+              <input type="number" min="1" step="${allowFloat ? '0.5' : '1'}" value="${
                 item.qty
               }" onchange="updateCartQtyDirect(${idx},this.value)" style="width:60px;text-align:center;" class="form-control form-control-sm mx-1">
               <button class="btn btn-outline-secondary btn-sm ms-1" onclick="updateCartQty(${idx},1)"><i class="bi bi-plus"></i></button>
-              <button class="btn btn-outline-info btn-sm ms-1" onclick="updateCartQty(${idx}, 0.5)">+0.5</button>
-              <button class="btn btn-outline-info btn-sm ms-1" onclick="updateCartQty(${idx}, 0.25)">+0.25</button>
+              ${allowFloat ? `<button class="btn btn-outline-info btn-sm ms-1" onclick="updateCartQty(${idx}, 0.5)">+0.5</button>` : ''}
             </div>
             <input type="text" class="form-control form-control-sm mt-2" placeholder="تفاصيل الطلب (اختياري)" value="${
               item.details || ""
@@ -725,14 +736,22 @@
         window.removeFromCart = removeFromCart;
 
         window.updateCartQty = function (idx, delta) {
-          cart[idx].qty = Math.max(0.25, (parseFloat(cart[idx].qty) + parseFloat(delta)).toFixed(2));
+          const item = cart[idx];
+          const product = products.find(p => p.name === item.name);
+          const allowFloat = product ? product.allowFloat : item.allowFloat;
+          const newQty = parseFloat(item.qty) + parseFloat(delta);
+          cart[idx].qty = Math.max(allowFloat ? 0.5 : 1, newQty);
           saveCart();
           showCartModal();
           updateCartBar();
         };
         window.updateCartQtyDirect = function (idx, val) {
           let v = parseFloat(val);
-          if (isNaN(v) || v < 0.25) v = 0.25;
+          const item = cart[idx];
+          const product = products.find(p => p.name === item.name);
+          const allowFloat = product ? product.allowFloat : item.allowFloat;
+          const minQty = allowFloat ? 0.5 : 1;
+          if (isNaN(v) || v < minQty) v = minQty;
           cart[idx].qty = v;
           saveCart();
           showCartModal();
