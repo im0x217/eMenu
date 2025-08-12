@@ -856,6 +856,9 @@
         window.removeFromCart = removeFromCart;
         window.proceedToWhatsApp = proceedToWhatsApp;
         window.filterProductsBySubCategory = filterProductsBySubCategory;
+        
+        let products = []; // Define products in a broader scope
+
         window.onload = async () => {
           await fetchCategories();
           loadCart();
