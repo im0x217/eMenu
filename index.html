@@ -446,12 +446,15 @@
           };
         }
         function filterProducts() {
-          const q = document.getElementById("search").value.trim();
+          const q = document.getElementById("search").value.trim().toLowerCase();
           let found = false;
-          document.querySelectorAll(".product-card").forEach((card) => {
-            const visible = card.innerText.includes(q);
-            card.style.display = visible ? "" : "none";
-            if (visible) found = true;
+          document.querySelectorAll("#product-list .col").forEach((col) => {
+            const card = col.querySelector('.product-card');
+            if (card) {
+                const visible = card.innerText.toLowerCase().includes(q);
+                col.style.display = visible ? "" : "none";
+                if (visible) found = true;
+            }
           });
           if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
         }
@@ -653,6 +656,9 @@
           saveCart();
         }
 
+        const cartModalEl = document.getElementById("cart-modal");
+        const cartModal = new bootstrap.Modal(cartModalEl);
+
         function showCartModal() {
           let html = "";
           if (cart.length === 0) {
@@ -700,18 +706,9 @@
             html += `<button class="btn btn-outline-danger w-100 mb-2" onclick="clearCart()"><i class="bi bi-x-circle"></i> إفراغ السلة</button>`;
           }
           document.getElementById("cart-modal-body").innerHTML = html;
-          const modalEl = document.getElementById("cart-modal");
-          const modal = new bootstrap.Modal(modalEl);
-          modal.show();
-          modalEl.addEventListener("hidden.bs.modal", function handler() {
-            document.body.classList.remove("modal-open");
-            document.body.style.overflow = "";
-            document.body.style.paddingRight = "";
-            document
-              .querySelectorAll(".modal-backdrop")
-              .forEach((e) => e.remove());
-            modalEl.removeEventListener("hidden.bs.modal", handler);
-          });
+          if (!cartModalEl.classList.contains('show')) {
+            cartModal.show();
+          }
         }
 
         function clearCart() {
@@ -723,7 +720,11 @@
           const modal = bootstrap.Modal.getInstance(modalEl);
           if (modal) modal.hide();
           // Always re-render categories after clearing cart
-          renderCategories();
+          // This part seems wrong, renderCategories will clear the main content, not what we want if we are in a category view.
+          // Let's just ensure the cart is visually empty if the modal is open.
+          if (modalEl.classList.contains('show')) {
+              showCartModal();
+          }
         }
         window.clearCart = clearCart;
 

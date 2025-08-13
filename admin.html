@@ -424,7 +424,6 @@
           id="admin-search"
           class="form-control search-box"
           placeholder="ابحث عن منتج..."
-          oninput="filterAdminProducts()"
         />
         <div
           id="product-list"
@@ -855,19 +854,21 @@
       document
         .getElementById("logout-btn-mobile")
         .addEventListener("click", logout);
-      // Debounced admin search for performance
+      
       function filterAdminProducts() {
-        const q = document.getElementById("admin-search").value.trim();
+        const q = document.getElementById("admin-search").value.trim().toLowerCase();
         let found = false;
-        document
-          .querySelectorAll("#product-list .product-card")
-          .forEach((card) => {
-            const visible = card.innerText.includes(q);
-            card.parentElement.style.display = visible ? "" : "none";
-            if (visible) found = true;
-          });
+        document.querySelectorAll("#product-list .col").forEach((col) => {
+            const card = col.querySelector('.product-card');
+            if (card) {
+                const visible = card.innerText.toLowerCase().includes(q);
+                col.style.display = visible ? "" : "none";
+                if (visible) found = true;
+            }
+        });
         if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
       }
+
       function debounce(fn, delay) {
         let timer;
         return function(...args) {
