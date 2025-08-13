@@ -516,10 +516,11 @@
           );
           let products = res.ok ? await res.json() : [];
           products = products.filter(p => {
+            const type = p.purchaseType || 'both'; // Default to 'both' if undefined
             if (showBulk) {
-              return p.purchaseType === 'bulk' || p.purchaseType === 'both';
+              return type === 'bulk' || type === 'both';
             } else {
-              return p.purchaseType === 'regular' || p.purchaseType === 'both';
+              return type === 'regular' || type === 'both';
             }
           });
           products.forEach((product, idx) => {
