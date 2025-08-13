@@ -394,6 +394,27 @@
             </label>
           </div>
           <div class="mb-3">
+            <label class="form-label">نوع العرض</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="purchaseType" id="purchaseTypeBoth" value="both" checked>
+              <label class="form-check-label" for="purchaseTypeBoth">
+                عرض عادي وجملة
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="purchaseType" id="purchaseTypeRegular" value="regular">
+              <label class="form-check-label" for="purchaseTypeRegular">
+                عرض عادي فقط
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="purchaseType" id="purchaseTypeBulk" value="bulk">
+              <label class="form-check-label" for="purchaseTypeBulk">
+                عرض جملة فقط
+              </label>
+            </div>
+          </div>
+          <div class="mb-3">
             <label for="productImgUpload" class="form-label">صورة المنتج</label>
             <div id="drop-area">
               اسحب الصورة هنا أو اضغط للرفع
@@ -683,6 +704,9 @@
         
         document.getElementById("productSubCategory").value = product.subCategory || '';
         document.getElementById("productAllowFloat").checked = product.allowFloat || false;
+        
+        const purchaseType = product.purchaseType || 'both';
+        document.getElementById(`purchaseType${purchaseType.charAt(0).toUpperCase() + purchaseType.slice(1)}`).checked = true;
 
         uploadedFileData = null; // Reset file data on edit start
         document.getElementById("preview-img").src = product.img;
@@ -697,6 +721,7 @@
           document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
           document.getElementById('productSubCategory').disabled = true;
           document.getElementById('productAllowFloat').checked = false;
+          document.getElementById('purchaseTypeBoth').checked = true;
           uploadedFileData = null;
           document.getElementById("preview-img").src = "";
           this.style.display = "none";
@@ -719,6 +744,7 @@
           ).value;
           const price_bulk = document.getElementById("productPriceBulk").value;
           const allowFloat = document.getElementById("productAllowFloat").checked;
+          const purchaseType = document.querySelector('input[name="purchaseType"]:checked').value;
           
           const formData = new FormData();
           formData.append('name', name);
@@ -728,6 +754,7 @@
           formData.append('category', category);
           formData.append('subCategory', subCategory || '');
           formData.append('allowFloat', allowFloat);
+          formData.append('purchaseType', purchaseType);
           
           if (uploadedFileData) {
             formData.append('img', uploadedFileData);
@@ -790,6 +817,7 @@
               this.reset();
               document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
               document.getElementById('productSubCategory').disabled = true;
+              document.getElementById('purchaseTypeBoth').checked = true;
               uploadedFileData = null;
               document.getElementById("preview-img").src = "";
               if(editProductId) {

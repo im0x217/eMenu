@@ -515,6 +515,13 @@
             `/api/products?category=${encodeURIComponent(categoryName)}`
           );
           let products = res.ok ? await res.json() : [];
+          products = products.filter(p => {
+            if (showBulk) {
+              return p.purchaseType === 'bulk' || p.purchaseType === 'both';
+            } else {
+              return p.purchaseType === 'regular' || p.purchaseType === 'both';
+            }
+          });
           products.forEach((product, idx) => {
             const price_regular =
               product.price_regular !== undefined &&

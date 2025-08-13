@@ -112,6 +112,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
             available: 1,
             cloudinary_public_id: 1,
             allowFloat: 1,
+            purchaseType: 1,
           },
         })
         .toArray();
@@ -123,7 +124,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   });
 
   app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
-    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat } = req.body;
+    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
     const img = req.file ? req.file.path : null;
     const cloudinary_public_id = req.file ? req.file.filename : null;
     
@@ -147,13 +148,14 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
       category,
       subCategory,
       available: available === "false" ? false : true,
-      allowFloat: allowFloat === 'true'
+      allowFloat: allowFloat === 'true',
+      purchaseType: purchaseType || 'both'
     });
     res.json({ success: true });
   });
 
   app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
-    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg, allowFloat } = req.body;
+    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg, allowFloat, purchaseType } = req.body;
     
     let updateData = {
         name,
@@ -164,7 +166,8 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
         category,
         subCategory,
         available: available === "false" ? false : true,
-        allowFloat: allowFloat === 'true'
+        allowFloat: allowFloat === 'true',
+        purchaseType: purchaseType || 'both'
     };
 
     if (req.file) {
