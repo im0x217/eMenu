@@ -259,7 +259,7 @@
         id="bulk-btn"
         class="btn btn-outline-info"
         style="font-size: 1.1rem; min-width: 140px"
-        onclick="unlockBulkPrice()"
+        onclick="toggleBulkPrice()"
       >
         <i class="bi bi-lock"></i> عرض أسعار الجملة
       </button>
@@ -825,24 +825,56 @@
           });
           const bulkBtn = document.getElementById("bulk-btn");
           if (bulkBtn) {
-            bulkBtn.disabled = showBulk;
-            bulkBtn.innerHTML = showBulk
-              ? '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة'
-              : '<i class="bi bi-lock"></i> عرض أسعار الجملة';
+            bulkBtn.disabled = false; // Always enabled to allow toggling
+            if (showBulk) {
+                bulkBtn.innerHTML = '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة';
+                bulkBtn.classList.remove('btn-outline-info');
+                bulkBtn.classList.add('btn-info');
+            } else {
+                bulkBtn.innerHTML = '<i class="bi bi-lock"></i> عرض أسعار الجملة';
+                bulkBtn.classList.remove('btn-info');
+                bulkBtn.classList.add('btn-outline-info');
+            }
           }
         }
-        function unlockBulkPrice() {
-          if (showBulk) return;
-          const code = prompt("أدخل رمز الجملة (4 أرقام):");
-          if (code === BULK_CODE) {
-            showBulk = true;
-            localStorage.setItem('showBulk', 'true');
-            updateBulkPriceDisplay();
-            showToast("تم تفعيل أسعار الجملة", "success");
-          } else if (code !== null) {
-            showToast("رمز غير صحيح", "danger");
+        function toggleBulkPrice() {
+          const currentCategoryName = getCurrentCategoryName();
+
+          if (showBulk) {
+            showBulk = false;
+            localStorage.setItem('showBulk', 'false');
+            showToast("تم إخفاء أسعار الجملة", "info");
+          } else {
+            const code = prompt("أدخل رمز الجملة (4 أرقام):");
+            if (code === BULK_CODE) {
+              showBulk = true;
+              localStorage.setItem('showBulk', 'true');
+              showToast("تم تفعيل أسعار الجملة", "success");
+            } else if (code !== null) {
+              showToast("رمز غير صحيح", "danger");
+              return; // Don't proceed if code is wrong
+            } else {
+              return; // Don't proceed if prompt is cancelled
+            }
+          }
+          
+          updateBulkPriceDisplay();
+
+          // If we are in a category view, refresh it to apply the new filter
+          if (currentCategoryName) {
+            showCategoryView(currentCategoryName);
           }
         }
+
+        function getCurrentCategoryName() {
+            const categoryHeader = document.querySelector('#categories-header h2');
+            if (categoryHeader && !categoryHeader.innerText.includes('الأصناف')) {
+                // Extract category name, assuming format "EMOJI NAME"
+                return categoryHeader.innerText.trim().split(' ').slice(1).join(' ');
+            }
+            return null;
+        }
+
         function fadeInContent(id) {
           const el = document.getElementById(id);
           if (!el) return;

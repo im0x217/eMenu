@@ -707,6 +707,7 @@
         
         const purchaseType = product.purchaseType || 'both';
         document.getElementById(`purchaseType${purchaseType.charAt(0).toUpperCase() + purchaseType.slice(1)}`).checked = true;
+        updatePriceInputStates();
 
         uploadedFileData = null; // Reset file data on edit start
         document.getElementById("preview-img").src = product.img;
@@ -722,6 +723,7 @@
           document.getElementById('productSubCategory').disabled = true;
           document.getElementById('productAllowFloat').checked = false;
           document.getElementById('purchaseTypeBoth').checked = true;
+          updatePriceInputStates();
           uploadedFileData = null;
           document.getElementById("preview-img").src = "";
           this.style.display = "none";
@@ -818,6 +820,7 @@
               document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
               document.getElementById('productSubCategory').disabled = true;
               document.getElementById('purchaseTypeBoth').checked = true;
+              updatePriceInputStates();
               uploadedFileData = null;
               document.getElementById("preview-img").src = "";
               if(editProductId) {
@@ -906,6 +909,27 @@
       }
       const debouncedFilterAdminProducts = debounce(filterAdminProducts, 200);
       document.getElementById("admin-search").addEventListener("input", debouncedFilterAdminProducts);
+      
+      function updatePriceInputStates() {
+        const purchaseTypeNode = document.querySelector('input[name="purchaseType"]:checked');
+        if (!purchaseTypeNode) return;
+        const purchaseType = purchaseTypeNode.value;
+        const priceRegularInput = document.getElementById('productPriceRegular');
+        const priceBulkInput = document.getElementById('productPriceBulk');
+
+        priceRegularInput.disabled = (purchaseType === 'bulk');
+        if (priceRegularInput.disabled) priceRegularInput.value = '';
+
+        priceBulkInput.disabled = (purchaseType === 'regular');
+        if (priceBulkInput.disabled) priceBulkInput.value = '';
+      }
+
+      document.querySelectorAll('input[name="purchaseType"]').forEach(radio => {
+        radio.addEventListener('change', updatePriceInputStates);
+      });
+      
+      updatePriceInputStates(); // Set initial state
+
       window.zoomImg = zoomImg;
       checkAuth();
     </script>
