@@ -115,6 +115,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
             purchaseType: 1,
           },
         })
+        .sort({ name: 1 })
         .toArray();
       res.json(products);
     } catch (err) {
