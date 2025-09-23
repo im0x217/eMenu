@@ -435,59 +435,153 @@
           fadeInContent("categories-header");
           updateBulkPriceDisplay();
         }
+        // Ensure debounce exists
+        if (typeof debounce !== "function") {
+          function debounce(fn, delay) {
+            let t;
+            return (...args) => {
+              clearTimeout(t);
+              t = setTimeout(() => fn.apply(this, args), delay);
+            };
+          }
+        }
+
+        // Global search state
+        let allProducts = [];
+        let allProductsLoaded = false;
+
+        async function loadAllProducts() {
+          try {
+            const res = await fetch("/api/products");
+            allProducts = res.ok ? await res.json() : [];
+            allProductsLoaded = true;
+          } catch (e) {
+            allProducts = [];
+            allProductsLoaded = true;
+          }
+        }
+
+        // Small helper to inject search input
         function searchInputHTML() {
-          return `<input id="search" class="form-control search-box" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" autocomplete="off">`;
+          return `
+            <div class="mb-3">
+              <input id="global-search" class="form-control" placeholder="ابحث في جميع الأصناف..." aria-label="بحث عام" autocomplete="off">
+            </div>
+          `;
         }
-        function debounce(fn, delay) {
-          let timer;
-          return function (...args) {
-            clearTimeout(timer);
-            timer = setTimeout(() => fn.apply(this, args), delay);
-          };
-        }
-        function filterProducts() {
-          const q = document.getElementById("search").value.trim().toLowerCase();
-          let found = false;
-          document.querySelectorAll("#product-list .col").forEach((col) => {
-            const card = col.querySelector('.product-card');
-            if (card) {
-                const visible = card.innerText.toLowerCase().includes(q);
-                col.style.display = visible ? "" : "none";
-                if (visible) found = true;
+
+        // Renders search results into the main content area
+        function renderSearchResults(query) {
+          const q = (query || "").trim().toLowerCase();
+          const filtered = allProducts.filter(p => {
+            const hay = `${p.name || ""} ${p.desc || ""} ${p.category || ""} ${p.subCategory || ""}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+
+            // Respect purchaseType + bulk view if you use them
+            const type = p.purchaseType || "both";
+            if (typeof window.showBulk === "boolean") {
+              return window.showBulk ? (type === "bulk" || type === "both") : (type === "regular" || type === "both");
             }
+            return true;
           });
-          if (!found && q) showToast("لا يوجد نتائج مطابقة", "warning");
-        }
-        const debouncedFilterProducts = debounce(filterProducts, 200);
-        
-        function filterProductsBySubCategory(subCategory) {
-            const productList = document.getElementById('product-list');
-            if (!productList) return;
 
-            productList.querySelectorAll(".col").forEach(col => {
-                const card = col.querySelector('.product-card');
-                const productSubCategory = card.dataset.subCategory;
-                if (subCategory === 'all' || productSubCategory === subCategory) {
-                    col.style.display = '';
-                } else {
-                    col.style.display = 'none';
-                }
-            });
+          let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
+          filtered.forEach(product => {
+            const price_regular =
+              product.price_regular !== undefined &&
+              product.price_regular !== null &&
+              product.price_regular !== ""
+                ? product.price_regular + " د.ل"
+                : product.price !== undefined &&
+                  product.price !== null &&
+                  product.price !== ""
+                ? product.price + " د.ل"
+                : "";
+            const price_bulk =
+              product.price_bulk !== undefined &&
+              product.price_bulk !== null &&
+              product.price_bulk !== ""
+                ? product.price_bulk + " د.ل"
+                : "";
+            const unavailable = product.available === false;
 
-            const filtersContainer = document.querySelector('.sub-category-filters');
-            if (filtersContainer) {
-                filtersContainer.querySelectorAll('button').forEach(btn => {
-                    const btnSubCategory = btn.dataset.subCategory;
-                    if (btnSubCategory === subCategory) {
-                        btn.classList.remove('btn-outline-primary');
-                        btn.classList.add('btn-primary');
-                    } else {
-                        btn.classList.remove('btn-primary');
-                        btn.classList.add('btn-outline-primary');
-                    }
-                });
-            }
+            html += `
+            <div class="col">
+              <div class="product-card shadow-sm d-flex flex-column${(window.showBulk ? " show-bulk" : "")}${unavailable ? " unavailable" : ""}" data-sub-category="${product.subCategory || ''}" data-allow-float="${product.allowFloat || false}">
+                <img src="${product.img}" class="card-img-top" alt="${product.name}" loading="lazy" onclick="zoomImg('${product.img}')">
+                <div class="card-body p-2 d-flex flex-column">
+                  <h6 class="card-title mb-1">${product.name}</h6>
+                  <p class="card-text">${product.desc || ""}</p>
+                  <div class="mt-auto price-row">
+                    <span class="price-regular">${price_regular}</span>
+                    <span class="price-bulk">${price_bulk}</span>
+                  </div>
+                  <button class="btn btn-outline-success mt-2 add-to-cart-btn"
+                    data-product='${JSON.stringify(product).replace(/'/g,"&#39;")}'
+
+                    onclick="addToCart(this)" aria-label="أضف ${product.name} للسلة" ${unavailable ? "disabled" : ""}>
+                    <i class="bi bi-cart-plus"></i> ${unavailable ? "غير متوفر" : "أضف للسلة"}
+                  </button>
+                  ${unavailable ? '<div class="text-danger mt-2"><i class="bi bi-x-circle"></i> غير متوفر حالياً</div>' : ""}
+                </div>
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+
+          const main = document.getElementById("main-content") || document.getElementById("products-container") || document.body;
+          main.innerHTML = html;
+          if (typeof updateBulkPriceDisplay === "function") updateBulkPriceDisplay();
         }
+
+        const debouncedGlobalSearch = debounce(async function () {
+          const input = document.getElementById("global-search");
+          if (!input) return;
+          const q = input.value.trim();
+          if (!q) {
+            // Clear results and show categories view again
+            const main = document.getElementById("main-content") || document.getElementById("products-container") || document.body;
+            main.innerHTML = "";
+            // If you have a function to re-render categories, call it:
+            if (typeof renderCategories === "function") renderCategories();
+            return;
+          }
+          if (!allProductsLoaded) {
+            await loadAllProducts();
+          }
+          renderSearchResults(q);
+        }, 200);
+
+        // Hook search into categories header render
+        const _renderCategories = typeof renderCategories === "function" ? renderCategories : null;
+        window.renderCategories = function (...args) {
+          // If original exists, call it
+          if (_renderCategories) _renderCategories.apply(this, args);
+
+          // Inject search input at top of categories header container
+          const header = document.getElementById("categories-header") || document.getElementById("header") || document.body;
+          const markerId = "global-search-wrapper";
+          let wrapper = document.getElementById(markerId);
+          if (!wrapper) {
+            wrapper = document.createElement("div");
+            wrapper.id = markerId;
+            wrapper.innerHTML = searchInputHTML();
+            header.prepend(wrapper);
+          } else {
+            wrapper.innerHTML = searchInputHTML();
+          }
+
+          const input = document.getElementById("global-search");
+          if (input && !input._bound) {
+            input.addEventListener("input", debouncedGlobalSearch);
+            input._bound = true;
+          }
+        };
+
+        window.addEventListener("load", async function () {
+          // Preload all products for snappy search
+          loadAllProducts().catch(() => {});
+        });
 
         async function showCategoryView(categoryName) {
           const category = categories.find((c) => c.name === categoryName);

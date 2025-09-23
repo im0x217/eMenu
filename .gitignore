@@ -1,5 +1,7 @@
-node_modules
-pakage-lock.json
-pakage.json
+node_modules/
+package-lock.json
+package.json
 products.json
 uploads/
+.env
+
