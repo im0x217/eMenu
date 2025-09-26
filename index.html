@@ -447,6 +447,7 @@
         // Global search state
         let allProducts = [];
         let allProductsLoaded = false;
+        let lastSearchQuery = ""; // remember last query so bar feels persistent
 
         async function loadAllProducts() {
           try {
@@ -466,6 +467,17 @@
               <input id="global-search" class="form-control" placeholder="ابحث في جميع الأصناف..." aria-label="بحث عام" autocomplete="off">
             </div>
           `;
+        }
+
+        // Ensure search input has listener and restores previous value
+        function ensureGlobalSearchBinding() {
+          const input = document.getElementById("global-search");
+          if (!input) return;
+          if (lastSearchQuery) input.value = lastSearchQuery;
+          if (!input._bound) {
+            input.addEventListener("input", debouncedGlobalSearch);
+            input._bound = true;
+          }
         }
 
         // Renders search results into the main content area
@@ -536,11 +548,10 @@
           const input = document.getElementById("global-search");
           if (!input) return;
           const q = input.value.trim();
+          lastSearchQuery = q; // store
           if (!q) {
-            // Clear results and show categories view again
             const main = document.getElementById("main-content") || document.getElementById("products-container") || document.body;
             main.innerHTML = "";
-            // If you have a function to re-render categories, call it:
             if (typeof renderCategories === "function") renderCategories();
             return;
           }
@@ -568,11 +579,13 @@
           } else {
             wrapper.innerHTML = searchInputHTML();
           }
-
-          const input = document.getElementById("global-search");
-          if (input && !input._bound) {
-            input.addEventListener("input", debouncedGlobalSearch);
-            input._bound = true;
+          ensureGlobalSearchBinding();
+          // If there was an active query, re-render results (keeps continuity when user navigates back)
+          if (lastSearchQuery) {
+            (async () => {
+              if (!allProductsLoaded) await loadAllProducts();
+              renderSearchResults(lastSearchQuery);
+            })();
           }
         };
 
@@ -599,6 +612,13 @@
             ${subCategoryButtons}
             ${searchInputHTML()}
           `;
+          ensureGlobalSearchBinding();
+          if (lastSearchQuery) {
+            (async () => {
+              if (!allProductsLoaded) await loadAllProducts();
+              renderSearchResults(lastSearchQuery);
+            })();
+          }
 
           document.getElementById("main-content").innerHTML = "";
           document.getElementById("loading-spinner").style.display = "block";
