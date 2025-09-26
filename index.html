@@ -265,6 +265,17 @@
       </button>
     </div>
     <div class="container my-3" id="main-header">
+      <div class="fullscreen-card mb-3" id="global-search-wrapper">
+        <div class="mb-3">
+          <input
+            id="global-search"
+            class="form-control"
+            placeholder="ابحث في جميع الأصناف..."
+            aria-label="بحث عام"
+            autocomplete="off"
+          />
+        </div>
+      </div>
       <div class="fullscreen-card mb-3 fade-in" id="categories-header"></div>
     </div>
     <div
@@ -460,27 +471,7 @@
           }
         }
 
-        // Small helper to inject search input
-        function searchInputHTML() {
-          return `
-            <div class="mb-3">
-              <input id="global-search" class="form-control" placeholder="ابحث في جميع الأصناف..." aria-label="بحث عام" autocomplete="off">
-            </div>
-          `;
-        }
-
         // Ensure search input has listener and restores previous value
-        function ensureGlobalSearchBinding() {
-          const input = document.getElementById("global-search");
-          if (!input) return;
-          if (lastSearchQuery) input.value = lastSearchQuery;
-          if (!input._bound) {
-            input.addEventListener("input", debouncedGlobalSearch);
-            input._bound = true;
-          }
-        }
-
-        // Renders search results into the main content area
         function renderSearchResults(query) {
           const q = (query || "").trim().toLowerCase();
           const filtered = allProducts.filter(p => {
@@ -561,39 +552,6 @@
           renderSearchResults(q);
         }, 200);
 
-        // Hook search into categories header render
-        const _renderCategories = typeof renderCategories === "function" ? renderCategories : null;
-        window.renderCategories = function (...args) {
-          // If original exists, call it
-          if (_renderCategories) _renderCategories.apply(this, args);
-
-          // Inject search input at top of categories header container
-          const header = document.getElementById("categories-header") || document.getElementById("header") || document.body;
-          const markerId = "global-search-wrapper";
-          let wrapper = document.getElementById(markerId);
-          if (!wrapper) {
-            wrapper = document.createElement("div");
-            wrapper.id = markerId;
-            wrapper.innerHTML = searchInputHTML();
-            header.prepend(wrapper);
-          } else {
-            wrapper.innerHTML = searchInputHTML();
-          }
-          ensureGlobalSearchBinding();
-          // If there was an active query, re-render results (keeps continuity when user navigates back)
-          if (lastSearchQuery) {
-            (async () => {
-              if (!allProductsLoaded) await loadAllProducts();
-              renderSearchResults(lastSearchQuery);
-            })();
-          }
-        };
-
-        window.addEventListener("load", async function () {
-          // Preload all products for snappy search
-          loadAllProducts().catch(() => {});
-        });
-
         async function showCategoryView(categoryName) {
           const category = categories.find((c) => c.name === categoryName);
           if (!category) return;
@@ -610,16 +568,7 @@
             <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
             <h2 class="mb-4 text-center">${category.emoji} ${category.name}</h2>
             ${subCategoryButtons}
-            ${searchInputHTML()}
           `;
-          ensureGlobalSearchBinding();
-          if (lastSearchQuery) {
-            (async () => {
-              if (!allProductsLoaded) await loadAllProducts();
-              renderSearchResults(lastSearchQuery);
-            })();
-          }
-
           document.getElementById("main-content").innerHTML = "";
           document.getElementById("loading-spinner").style.display = "block";
           let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
@@ -1033,8 +982,8 @@
         }
         window.cartTotal = cartTotal;
         window.showCategoryView = showCategoryView;
-        // Preserve the wrapped renderCategories (with global search injection) if already set
-        if (!window.renderCategories) window.renderCategories = renderCategories;
+        // Ensure we keep original assignment (no wrapper)
+        window.renderCategories = renderCategories;
         window.toggleBulkPrice = toggleBulkPrice;
         window.zoomImg = zoomImg;
         window.addToCart = addToCart;
@@ -1052,6 +1001,18 @@
           fadeInContent("categories-header");
           updateBulkPriceDisplay();
           updateCartBar();
+          // Bind global search once
+          const gs = document.getElementById('global-search');
+          if (gs && !gs._bound) {
+            gs.addEventListener('input', debouncedGlobalSearch);
+            gs._bound = true;
+            if (lastSearchQuery) {
+              gs.value = lastSearchQuery;
+              debouncedGlobalSearch();
+            }
+          }
+          // Preload products for faster first search
+          loadAllProducts().catch(()=>{});
         };
       })();
     </script>
