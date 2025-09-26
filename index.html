@@ -681,6 +681,42 @@
             searchInput.addEventListener("input", debouncedFilterProducts);
           }
         }
+
+        // NEW: Implement sub-category filter to avoid ReferenceError and enable filtering
+        function filterProductsBySubCategory(selectedSub) {
+          try {
+            const list = document.getElementById('product-list');
+            if (!list) return;
+            const cards = list.querySelectorAll('.product-card');
+            cards.forEach(card => {
+              const sub = (card.getAttribute('data-sub-category') || '').trim();
+              const col = card.closest('.col') || card.parentElement;
+              if (!col) return;
+              if (selectedSub === 'all' || sub === selectedSub) {
+                col.style.display = '';
+              } else {
+                col.style.display = 'none';
+              }
+            });
+            // Update button styles
+            const container = document.querySelector('.sub-category-filters');
+            if (container) {
+              const btns = container.querySelectorAll('button[data-sub-category]');
+              btns.forEach(btn => {
+                const val = btn.getAttribute('data-sub-category');
+                if (val === selectedSub) {
+                  btn.classList.remove('btn-outline-primary');
+                  btn.classList.add('btn-primary');
+                } else {
+                  btn.classList.remove('btn-primary');
+                  btn.classList.add('btn-outline-primary');
+                }
+              });
+            }
+          } catch (e) {
+            console.error('filterProductsBySubCategory error', e);
+          }
+        }
         let cart = [];
         function saveCart() {
           try {
@@ -983,7 +1019,8 @@
         }
         window.cartTotal = cartTotal;
         window.showCategoryView = showCategoryView;
-        window.renderCategories = renderCategories;
+        // Preserve the wrapped renderCategories (with global search injection) if already set
+        if (!window.renderCategories) window.renderCategories = renderCategories;
         window.toggleBulkPrice = toggleBulkPrice;
         window.zoomImg = zoomImg;
         window.addToCart = addToCart;
