@@ -15,1006 +15,376 @@
       crossorigin="anonymous"
     />
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        background: #faf7f2;          
+        background: linear-gradient(135deg, #fdb518 0%, #ffc849 100%);
         min-height: 100vh;
         direction: rtl;
         text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+        padding: 2rem;
       }
+
+      .landing-container {
+        max-width: 900px;
+        width: 100%;
+      }
+
+      .header-section {
+        text-align: center;
+        margin-bottom: 4rem;
+        animation: slideDown 0.6s ease-out;
+      }
+
+      .logo-section {
+        margin-bottom: 2rem;
+      }
+
       .navbar-logo {
-        width: 48px;
-        height: 48px;
+        width: 140px;
+        height: 140px;
         border-radius: 50%;
-        border: 2px solid #fffbe8;
+        border: 5px solid #fff;
         object-fit: cover;
-        box-shadow: 0 2px 6px #0001;
-        background: #fffbe8;
-      }
-      .sticky-top {
-        position: sticky;
-        top: 0;
-        z-index: 1020;
-      }
-      .category-btn {
-        background-color: #fff;
-        color: #b5830e; /* A darker, more readable gold for text */
-        border: 2px solid #fdb518;
-        border-radius: 30px; /* A more rounded, modern look */
-        font-size: 0.9rem; /* Adjusted for better fit */
-        font-weight: bold;
-        margin-bottom: 1rem;
-        padding: 0.6rem 1rem; /* Adjusted for better fit */
-        transition: all 0.3s ease; /* Smooth transition for hover effects */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        line-height: 1.3; /* Improved line height for wrapping */
-        white-space: normal; /* Ensure text can wrap */
-        word-break: break-word; /* Prevent overflow from long words */
-        vertical-align: middle; /* Align button with others */
-      }
-      .category-btn:hover {
-        background-color: #fdb518;
-        color: #fff;
-        transform: translateY(-2px); /* Subtle lift effect */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      }
-      .category-btn.active {
-        background-color: #fdb518;
-        color: #fff;
-        border-color: #fdb518;
-        box-shadow: 0 4px 12px rgba(253, 181, 24, 0.4); /* A glow effect for the active button */
-        transform: translateY(-2px);
-      }
-      .category-emoji {
-        font-size: 1.5em; /* Adjusted for balance */
-        vertical-align: middle;
-        margin-left: 0.35em;
-        margin-right: 0.2em;
-      }
-      .fullscreen-card {
-        max-width: 500px;
-        margin: auto;
-        border-radius: 20px;
-        box-shadow: 0 4px 24px #0002;
-        padding: 2rem 1rem 1.5rem 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         background: #fff;
-        transition: border-radius 0.25s;
       }
-      @media (max-width: 600px) {
-        .fullscreen-card {
-          border-radius: 12px !important;
-          box-shadow: 0 2px 16px #0001;
-          padding: 1.4rem 1.2rem 1.2rem 1.2rem;
-          margin-top: 6px;
-          margin-bottom: 10px;
-        }
+
+      .header-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin-top: 1.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        letter-spacing: -0.5px;
       }
-      .bulk-btn-fixed-bar {
-        max-width: 500px;
-        margin: 22px auto 0 auto;
-        padding-bottom: 0.3rem;
-        background: transparent;
+
+      .header-section p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-top: 0.5rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      .categories-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        width: 100%;
+        margin-bottom: 2rem;
+      }
+
+      .category-card {
+        position: relative;
+        height: 250px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      .category-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      }
+
+      .category-card.disabled {
+        cursor: not-allowed;
+        opacity: 1;
+      }
+
+      .category-card.disabled:hover {
+        transform: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .card-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        z-index: 1;
+      }
+
+      .category-card.disabled .card-background {
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+      }
+
+      .card-content {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .card-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+      }
+
+      .card-description {
+        font-size: 0.95rem;
+        color: #666;
         text-align: center;
       }
-      .search-box {
-        max-width: 350px;
-        margin: 0 auto 1.3rem auto;
+
+      /* Coming Soon Badge */
+      .coming-soon-badge {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 3;
+        background: #fff;
+        color: #000;
+        padding: 1.5rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
       }
-      .toast-container {
-        z-index: 2000;
+
+      .coming-soon-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #000;
       }
-      .fade-in {
-        animation: fadeIn 0.45s;
+
+      .coming-soon-text {
+        font-size: 0.95rem;
+        color: #333;
+        opacity: 1;
       }
-      @keyframes fadeIn {
+
+      /* Animations */
+      @keyframes slideDown {
         from {
           opacity: 0;
+          transform: translateY(-20px);
         }
         to {
           opacity: 1;
+          transform: translateY(0);
         }
       }
-      .product-grid-container {
-        max-width: 1300px;
-        margin: 0 auto;
-        padding: 0 8px;
-      }
-      .product-card {
-        border-radius: 16px;
-        box-shadow: 0 2px 10px #0002;
-        padding: 0.5rem 1rem 1rem 1rem;
-        margin-bottom: 1.2rem;
-        background: #fff;
-        width: 100%;
-        min-height: 250px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        text-align: right;
-        transition: box-shadow 0.13s;
-        position: relative;
-        max-width: 370px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .product-card:hover {
-        box-shadow: 0 4px 24px #0002;
-      }
-      .card-img-top {
-        border-radius: 12px;
-        height: 110px;
-        object-fit: cover;
-        margin-bottom: 0.5rem;
-        cursor: zoom-in;
-      }
-      .card-title {
-        font-size: 1.08rem;
-        font-weight: bold;
-        margin-bottom: 0.4rem;
-      }
-      .card-text {
-        min-height: 32px;
-        font-size: 0.97rem;
-      }
-      .price-row {
-        margin-top: 0.7rem;
-        margin-bottom: 0.2rem;
-        display: flex;
-        gap: 0.8em;
-        align-items: center;
-      }
-      .price-regular {
-        color: #d98000;
-        font-weight: bold;
-        font-size: 1.09rem;
-        background: #fffbe8;
-        padding: 2px 10px;
-        border-radius: 8px;
-      }
-      .price-bulk {
-        color: #fff;
-        font-weight: bold;
-        font-size: 1.09rem;
-        background: #37b24d;
-        padding: 2px 10px;
-        border-radius: 8px;
-        display: none;
-      }
-      .show-bulk .price-bulk {
-        display: inline-block;
-      }
-      .show-bulk .price-regular {
-        background: #f8d7da;
-        color: #b02a37;
-        text-decoration: line-through;
-      }
-      @media (max-width: 600px) {
-        .product-card {
-          max-width: 100%;
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
         }
-        .product-grid-container {
-          padding: 0;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .category-col {
-          max-width: 50%;
-          flex: 0 0 50%;
+      }
+
+      @keyframes popIn {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.3);
         }
-        .category-btn {
-          width: 100% !important;
+        50% {
+          transform: translate(-50%, -50%) scale(1.05);
+        }
+        100% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      .category-card:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        body {
+          padding: 1rem;
+        }
+
+        .header-section h1 {
+          font-size: 2rem;
+        }
+
+        .header-section p {
           font-size: 1rem;
-          padding: 0.8rem 0.4rem;
         }
-        .bulk-btn-fixed-bar {
-          max-width: 100%;
-          margin-top: 15px;
+
+        .navbar-logo {
+          width: 80px;
+          height: 80px;
+        }
+
+        .categories-section {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+
+        .category-card {
+          height: 220px;
+        }
+
+        .card-icon {
+          font-size: 3rem;
+        }
+
+        .card-title {
+          font-size: 1.3rem;
         }
       }
-      .sub-category-filters {
-        overflow-x: auto;
-        white-space: nowrap;
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-      }
-      .sub-category-filters::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, and Opera */
-      }
-      .sub-category-filters .btn {
-        flex-shrink: 0;
-      }
-      .sub-category-filters button {
-        border-radius: 16px;
-        font-weight: 500;
-      }
-      @media (min-width: 601px) {
-        .category-col {
-          max-width: 20%;
-          flex: 0 0 20%;
+
+      @media (max-width: 480px) {
+        .header-section {
+          margin-bottom: 2.5rem;
         }
+
+        .header-section h1 {
+          font-size: 1.5rem;
+        }
+
+        .header-section p {
+          font-size: 0.95rem;
+        }
+
+        .navbar-logo {
+          width: 70px;
+          height: 70px;
+        }
+
+        .category-card {
+          height: 200px;
+        }
+
+        .card-icon {
+          font-size: 2.5rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .card-title {
+          font-size: 1.1rem;
+        }
+
+        .card-description {
+          font-size: 0.85rem;
+        }
+
+        .coming-soon-badge {
+          padding: 0.75rem 1rem;
+        }
+
+        .coming-soon-title {
+          font-size: 1.1rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .coming-soon-text {
+          font-size: 0.8rem;
+        }
+      }
+
+      /* Hover effect for coming soon */
+      .category-card.disabled:hover .coming-soon-badge {
+        animation: pulse 1.5s ease-in-out;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.05);
+        }
+      }
+
+      footer {
+        margin-top: 3rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        text-align: center;
+      }
+
+      footer a {
+        color: rgba(255, 255, 255, 0.95);
+        text-decoration: none;
+        transition: opacity 0.3s;
+      }
+
+      footer a:hover {
+        opacity: 0.7;
       }
     </style>
   </head>
   <body>
-    <nav
-      class="navbar navbar-expand-lg sticky-top shadow-sm"
-      style="background-color: #fdb518"
-    >
-      <div class="container-fluid justify-content-center">
-        <a
-          class="navbar-brand mx-auto d-flex flex-column align-items-center gap-2"
-          href="index.html"
-          style="text-decoration: none"
-        >
+    <div class="landing-container">
+      <div class="header-section">
+        <div class="logo-section">
           <img src="res/logo.jpg" alt="Logo" class="navbar-logo" />
-          <span class="fs-4 fw-bold text-dark">حلويات عبمبر الزروق</span>
+        </div>
+        <h1>حلويات عبمبر الزروق</h1>
+        <p>اختر من بين الخيارات المتاحة</p>
+      </div>
+
+      <div class="categories-section">
+        <!-- Main Website Button -->
+        <a href="menu.html" style="text-decoration: none;">
+          <div class="category-card">
+            <div class="card-background"></div>
+            <div class="card-content">
+              <div class="card-icon">🍰</div>
+              <div class="card-title">المتجر الرئيسي</div>
+              <div class="card-description">تصفح جميع المنتجات والحلويات</div>
+            </div>
+          </div>
         </a>
-        <a
-          href="admin.html"
-          class="btn btn-outline-dark d-none d-md-block"
-          style="position: absolute; left: 16px; top: 14px"
-          ><i class="bi bi-person-lock"></i> إدارة</a
-        >
-      </div>
-    </nav>
-    <div class="bulk-btn-fixed-bar" id="bulk-btn-bar">
-      <button
-        id="bulk-btn"
-        class="btn btn-outline-info"
-        style="font-size: 1.1rem; min-width: 140px"
-        onclick="toggleBulkPrice()"
-      >
-        <i class="bi bi-lock"></i> عرض أسعار الجملة
-      </button>
-    </div>
-    <div class="container my-3" id="main-header">
-      <div class="fullscreen-card mb-3" id="global-search-wrapper">
-        <div class="mb-3">
-          <input
-            id="global-search"
-            class="form-control"
-            placeholder="ابحث في جميع الأصناف..."
-            aria-label="بحث عام"
-            autocomplete="off"
-          />
+
+        <!-- Coming Soon Button -->
+        <div class="category-card disabled">
+          <div class="card-background"></div>
+          <div class="card-content">
+            <div class="card-icon">✨</div>
+            <div class="card-title">نواشف</div>
+            <div class="card-description">قريباً جداً</div>
+          </div>
+          <div class="coming-soon-badge">
+            <div class="coming-soon-title">قريباً جداً</div>
+            <div class="coming-soon-text">🚀 هذا القسم قيد الإعداد</div>
+          </div>
         </div>
       </div>
-      <div class="fullscreen-card mb-3 fade-in" id="categories-header"></div>
     </div>
-    <div
-      id="loading-spinner"
-      style="
-        display: none;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        z-index: 3000;
-        transform: translate(-50%, -50%);
-      "
-    >
-      <div
-        class="spinner-border text-warning"
-        role="status"
-        aria-label="جاري التحميل"
-        style="width: 3rem; height: 3rem"
-      >
-        <span class="visually-hidden">جاري التحميل...</span>
-      </div>
-    </div>
-    <div class="product-grid-container">
-      <div class="fade-in" id="main-content"></div>
-    </div>
-    <div
-      id="cart-bar"
-      class="bulk-btn-fixed-bar"
-      style="margin-top: 10px; display: none"
-    >
-      <button
-        id="cart-btn"
-        class="btn btn-success"
-        style="font-size: 1.1rem; min-width: 140px"
-        onclick="showCartModal()"
-      >
-        <i class="bi bi-cart"></i> سلة المشتريات (<span id="cart-count">0</span
-        >)
-      </button>
-    </div>
-    <footer class="footer text-center py-3">
+
+    <footer>
       &copy; 2025 مهند الزروق &mdash;
-      <a
-        href="LICENSE"
-        target="_blank"
-        style="color: #333; text-decoration: underline"
-        >MIT License</a
-      >
+      <a href="LICENSE" target="_blank">MIT License</a>
     </footer>
-    <div class="modal fade" id="cart-modal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">سلة المشتريات</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
-          </div>
-          <div class="modal-body" id="cart-modal-body"></div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              إغلاق
-            </button>
-            <button
-              type="button"
-              class="btn btn-success"
-              id="cart-whatsapp-btn"
-              onclick="proceedToWhatsApp()"
-            >
-              <i class="bi bi-whatsapp"></i> إتمام الطلب عبر واتساب
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="position-fixed bottom-0 end-0 p-3 toast-container">
-      <div
-        id="main-toast"
-        class="toast align-items-center text-bg-primary border-0"
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
-      >
-        <div class="d-flex">
-          <div class="toast-body" id="toast-body">تم الحفظ بنجاح!</div>
-          <button
-            type="button"
-            class="btn-close btn-close-white me-2 m-auto"
-            data-bs-dismiss="toast"
-          ></button>
-        </div>
-      </div>
-    </div>
-    <div class="modal fade" id="img-modal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-transparent border-0">
-          <img
-            id="img-modal-img"
-            class="w-100 rounded-3"
-            style="background: #fff"
-          />
-        </div>
-      </div>
-    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      (function () {
-        "use strict";
-        let categories = [];
-        async function fetchCategories() {
-            try {
-                const res = await fetch('/api/categories');
-                if (res.ok) {
-                    categories = await res.json();
-                } else {
-                    console.error('Failed to fetch categories');
-                }
-            } catch (e) {
-                console.error('Error fetching categories:', e);
-            }
-        }
-
-        let showBulk = localStorage.getItem('showBulk') === 'true';
-        const BULK_CODE = "1234";
-        function showToast(msg, type = "primary") {
-          const toastBody = document.getElementById("toast-body");
-          const toastElem = document.getElementById("main-toast");
-          toastBody.innerText = msg;
-          toastElem.className =
-            "toast align-items-center text-bg-" + type + " border-0";
-          const toast = new bootstrap.Toast(toastElem);
-          toast.show();
-        }
-        function zoomImg(src) {
-          document.getElementById("img-modal-img").src = src;
-          new bootstrap.Modal(document.getElementById("img-modal")).show();
-        }
-        function renderCategories() {
-          const btn_colors = [
-            "btn-primary",
-            "btn-secondary",
-            "btn-success",
-            "btn-danger",
-            "btn-warning",
-            "btn-info",
-          ];
-          let html = `
-        <h2 class="mb-4 text-center">الأصناف</h2>
-        <div class="row g-3 justify-content-center flex-wrap">`;
-          categories.forEach((cat, idx) => {
-            const btn_class = btn_colors[idx % btn_colors.length];
-            html += `<div class="col-12 category-col">
-          <button type="button" class="btn ${btn_class} w-100 category-btn" onclick="showCategoryView('${cat.name}')">
-            <span class="category-emoji" aria-label="${cat.name}">${cat.emoji}</span>
-            <span>${cat.name}</span>
-          </button>
-        </div>`;
-          });
-          html += `</div>`;
-          document.getElementById("categories-header").innerHTML = html;
-          document.getElementById("main-content").innerHTML = "";
-          fadeInContent("categories-header");
-          updateBulkPriceDisplay();
-        }
-        // Debounce helper (always defined)
-        function debounce(fn, delay) {
-          let t;
-          return (...args) => {
-            clearTimeout(t);
-            t = setTimeout(() => fn.apply(this, args), delay);
-          };
-        }
-
-        // Global search state
-        let allProducts = [];
-        let allProductsLoaded = false;
-        let lastSearchQuery = ""; // remember last query so bar feels persistent
-
-        async function loadAllProducts() {
-          try {
-            const res = await fetch("/api/products");
-            allProducts = res.ok ? await res.json() : [];
-            allProductsLoaded = true;
-          } catch (e) {
-            allProducts = [];
-            allProductsLoaded = true;
-          }
-        }
-
-        // Ensure search input has listener and restores previous value
-        function renderSearchResults(query) {
-          const q = (query || "").trim().toLowerCase();
-          const filtered = allProducts.filter(p => {
-            const hay = `${p.name || ""} ${p.desc || ""} ${p.category || ""} ${p.subCategory || ""}`.toLowerCase();
-            if (!hay.includes(q)) return false;
-
-            // Respect purchaseType + bulk view if you use them
-            const type = p.purchaseType || "both";
-            if (typeof window.showBulk === "boolean") {
-              return window.showBulk ? (type === "bulk" || type === "both") : (type === "regular" || type === "both");
-            }
-            return true;
-          });
-
-          let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
-          filtered.forEach(product => {
-            const price_regular =
-              product.price_regular !== undefined &&
-              product.price_regular !== null &&
-              product.price_regular !== ""
-                ? product.price_regular + " د.ل"
-                : product.price !== undefined &&
-                  product.price !== null &&
-                  product.price !== ""
-                ? product.price + " د.ل"
-                : "";
-            const price_bulk =
-              product.price_bulk !== undefined &&
-              product.price_bulk !== null &&
-              product.price_bulk !== ""
-                ? product.price_bulk + " د.ل"
-                : "";
-            const unavailable = product.available === false;
-
-            html += `
-            <div class="col">
-              <div class="product-card shadow-sm d-flex flex-column${(window.showBulk ? " show-bulk" : "")}${unavailable ? " unavailable" : ""}" data-sub-category="${product.subCategory || ''}" data-allow-float="${product.allowFloat || false}">
-                <img src="${product.img}" class="card-img-top" alt="${product.name}" loading="lazy" onclick="zoomImg('${product.img}')">
-                <div class="card-body p-2 d-flex flex-column">
-                  <h6 class="card-title mb-1">${product.name}</h6>
-                  <p class="card-text">${product.desc || ""}</p>
-                  <div class="mt-auto price-row">
-                    <span class="price-regular">${price_regular}</span>
-                    <span class="price-bulk">${price_bulk}</span>
-                  </div>
-                  <button class="btn btn-outline-success mt-2 add-to-cart-btn"
-                    data-product='${JSON.stringify(product).replace(/'/g,"&#39;")}'
-
-                    onclick="addToCart(this)" aria-label="أضف ${product.name} للسلة" ${unavailable ? "disabled" : ""}>
-                    <i class="bi bi-cart-plus"></i> ${unavailable ? "غير متوفر" : "أضف للسلة"}
-                  </button>
-                  ${unavailable ? '<div class="text-danger mt-2"><i class="bi bi-x-circle"></i> غير متوفر حالياً</div>' : ""}
-                </div>
-              </div>
-            </div>`;
-          });
-          html += `</div>`;
-
-          const main = document.getElementById("main-content") || document.getElementById("products-container") || document.body;
-          main.innerHTML = html;
-          if (typeof updateBulkPriceDisplay === "function") updateBulkPriceDisplay();
-        }
-
-        const debouncedGlobalSearch = debounce(async function () {
-          const input = document.getElementById("global-search");
-          if (!input) return;
-          const q = input.value.trim();
-          lastSearchQuery = q; // store
-          if (!q) {
-            const main = document.getElementById("main-content") || document.getElementById("products-container") || document.body;
-            main.innerHTML = "";
-            if (typeof renderCategories === "function") renderCategories();
-            return;
-          }
-          if (!allProductsLoaded) {
-            await loadAllProducts();
-          }
-          renderSearchResults(q);
-        }, 200);
-
-        async function showCategoryView(categoryName) {
-          const category = categories.find((c) => c.name === categoryName);
-          if (!category) return;
-
-          let subCategoryButtons = '';
-          if (category.subCategories && category.subCategories.length > 0) {
-              subCategoryButtons = `<div class="sub-category-filters mb-3 d-flex flex-wrap justify-content-center gap-2">
-                  <button class="btn btn-sm btn-primary" data-sub-category="all" onclick="filterProductsBySubCategory('all')">الكل</button>
-                  ${category.subCategories.map(sub => `<button class="btn btn-sm btn-outline-primary" data-sub-category="${sub}" onclick="filterProductsBySubCategory('${sub}')">${sub}</button>`).join('')}
-              </div>`;
-          }
-
-          document.getElementById("categories-header").innerHTML = `
-            <button class="btn btn-secondary mb-3 w-100" onclick="renderCategories()"><i class="bi bi-arrow-right"></i> عودة</button>
-            <h2 class="mb-4 text-center">${category.emoji} ${category.name}</h2>
-            ${subCategoryButtons}
-          `;
-          document.getElementById("main-content").innerHTML = "";
-          document.getElementById("loading-spinner").style.display = "block";
-          let html = `<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-list">`;
-          let res = await fetch(
-            `/api/products?category=${encodeURIComponent(categoryName)}`
-          );
-          let products = res.ok ? await res.json() : [];
-          products = products.filter(p => {
-            const type = p.purchaseType || 'both'; // Default to 'both' if undefined
-            if (showBulk) {
-              return type === 'bulk' || type === 'both';
-            } else {
-              return type === 'regular' || type === 'both';
-            }
-          });
-          products.forEach((product, idx) => {
-            const price_regular =
-              product.price_regular !== undefined &&
-              product.price_regular !== null &&
-              product.price_regular !== ""
-                ? product.price_regular + " د.ل"
-                : product.price !== undefined &&
-                  product.price !== null &&
-                  product.price !== ""
-                ? product.price + " د.ل"
-                : "";
-            const price_bulk =
-              product.price_bulk !== undefined &&
-              product.price_bulk !== null &&
-              product.price_bulk !== ""
-                ? product.price_bulk + " د.ل"
-                : "";
-            const unavailable = product.available === false;
-            html += `<div class="col">
-          <div class="product-card shadow-sm d-flex flex-column${
-            showBulk ? " show-bulk" : ""
-          }${unavailable ? " unavailable" : ""}" data-sub-category="${product.subCategory || ''}" data-allow-float="${product.allowFloat || false}">
-            <img src="${product.img}" class="card-img-top" alt="${
-              product.name
-            }" loading="lazy" onclick="zoomImg('${product.img}')">
-            <div class="card-body p-2 d-flex flex-column">
-              <h6 class="card-title mb-1">${product.name}</h6>
-              <p class="card-text">${product.desc || ""}</p>
-              <div class="mt-auto price-row">
-                <span class="price-regular">${price_regular}</span>
-                <span class="price-bulk">${price_bulk}</span>
-              </div>
-              <button class="btn btn-outline-success mt-2 add-to-cart-btn" data-product='${JSON.stringify(
-                product
-              ).replace(
-                /'/g,
-                "&#39;"
-              )}' onclick="addToCart(this)" aria-label="أضف ${
-              product.name
-            } للسلة" ${unavailable ? "disabled" : ""}>
-                <i class='bi bi-cart-plus'></i> ${
-                  unavailable ? "غير متوفر" : "أضف للسلة"
-                }
-              </button>
-              ${
-                unavailable
-                  ? '<div class="text-danger mt-2"><i class="bi bi-x-circle"></i> غير متوفر حالياً</div>'
-                  : ""
-              }
-            </div>
-          </div>
-        </div>`;
-          });
-          html += `</div>`;
-          document.getElementById("main-content").innerHTML = html;
-          document.getElementById("loading-spinner").style.display = "none";
-          fadeInContent("main-content");
-          updateBulkPriceDisplay();
-          updateCartBar();
-        }
-
-        // NEW: Implement sub-category filter to avoid ReferenceError and enable filtering
-        function filterProductsBySubCategory(selectedSub) {
-          try {
-            const list = document.getElementById('product-list');
-            if (!list) return;
-            const cards = list.querySelectorAll('.product-card');
-            cards.forEach(card => {
-              const sub = (card.getAttribute('data-sub-category') || '').trim();
-              const col = card.closest('.col') || card.parentElement;
-              if (!col) return;
-              if (selectedSub === 'all' || sub === selectedSub) {
-                col.style.display = '';
-              } else {
-                col.style.display = 'none';
-              }
-            });
-            // Update button styles
-            const container = document.querySelector('.sub-category-filters');
-            if (container) {
-              const btns = container.querySelectorAll('button[data-sub-category]');
-              btns.forEach(btn => {
-                const val = btn.getAttribute('data-sub-category');
-                if (val === selectedSub) {
-                  btn.classList.remove('btn-outline-primary');
-                  btn.classList.add('btn-primary');
-                } else {
-                  btn.classList.remove('btn-primary');
-                  btn.classList.add('btn-outline-primary');
-                }
-              });
-            }
-          } catch (e) {
-            console.error('filterProductsBySubCategory error', e);
-          }
-        }
-        let cart = [];
-        function saveCart() {
-          try {
-            localStorage.setItem("cart", JSON.stringify(cart));
-          } catch (e) {}
-        }
-        function loadCart() {
-          try {
-            const data = localStorage.getItem("cart");
-            if (data) {
-              cart = JSON.parse(data);
-              cart.forEach((item) => {
-                if (!("details" in item)) item.details = "";
-              });
-            }
-          } catch (e) {
-            cart = [];
-          }
-        }
-        function addToCart(btn) {
-          const product = JSON.parse(
-            btn.getAttribute("data-product").replace(/&#39;/g, "'")
-          );
-          if (product.available === false) {
-            showToast("هذا المنتج غير متوفر حالياً", "danger");
-            return;
-          }
-          const price =
-            showBulk && product.price_bulk
-              ? product.price_bulk
-              : product.price_regular ?? product.price;
-          const key = product.name + "|" + price;
-          // Enforce single price type in cart
-          if (cart.length > 0) {
-            const isBulkCart = cart.every(
-              (item) => item.price == item.price_bulk && !!item.price_bulk
-            );
-            const isAddingBulk = showBulk && product.price_bulk;
-            if (
-              (isBulkCart && !isAddingBulk) ||
-              (!isBulkCart && isAddingBulk)
-            ) {
-              showToast(
-                "لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة",
-                "danger"
-              );
-              return;
-            }
-          }
-          let found = cart.find((item) => item.key === key);
-          if (found) {
-            found.qty++;
-          } else {
-            cart.push({
-              key,
-              name: product.name,
-              price: price,
-              img: product.img,
-              qty: 1,
-              details: "",
-              price_bulk: product.price_bulk || null,
-              allowFloat: product.allowFloat || false,
-            });
-          }
-          saveCart();
-          showToast("تمت إضافة المنتج للسلة", "success");
-          updateCartBar();
-        }
-
-        function updateCartBar() {
-          const count = cart.reduce((sum, item) => sum + item.qty, 0);
-          document.getElementById("cart-count").innerText = count;
-          document.getElementById("cart-bar").style.display =
-            count > 0 ? "" : "none";
-          saveCart();
-        }
-
-        const cartModalEl = document.getElementById("cart-modal");
-        const cartModal = new bootstrap.Modal(cartModalEl);
-
-        function showCartModal() {
-          let html = "";
-          if (cart.length === 0) {
-            html = '<div class="text-center">السلة فارغة</div>';
-          } else {
-            html = '<ul class="list-group mb-3">';
-            cart.forEach((item, idx) => {
-              const product = products.find(p => p.name === item.name);
-              const allowFloat = product ? product.allowFloat : item.allowFloat;
-              html += `<li class="list-group-item">
-        <div class="d-flex align-items-center mb-2">
-          <img src="${
-            item.img
-          }" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-left:10px;">
-          <div class="flex-grow-1">
-            <div class="fw-bold">${item.name}</div>
-            <div class="d-flex align-items-center mt-1">
-              <button class="btn btn-outline-secondary btn-sm me-1" onclick="updateCartQty(${idx},-1)"><i class="bi bi-dash"></i></button>
-              <input type="number" min="1" step="${allowFloat ? '0.5' : '1'}" value="${
-                item.qty
-              }" onchange="updateCartQtyDirect(${idx},this.value)" style="width:60px;text-align:center;" class="form-control form-control-sm mx-1">
-              <button class="btn btn-outline-secondary btn-sm ms-1" onclick="updateCartQty(${idx},1)"><i class="bi bi-plus"></i></button>
-              ${allowFloat ? `<button class="btn btn-outline-info btn-sm ms-1" onclick="updateCartQty(${idx}, 0.5)">+0.5</button>` : ''}
-            </div>
-            <input type="text" class="form-control form-control-sm mt-2" placeholder="تفاصيل الطلب (اختياري)" value="${
-              item.details || ""
-            }" onchange="updateCartDetails(${idx},this.value)">
-          </div>
-          <div class="text-end ms-2">
-            <div class="fw-bold text-success">${item.price} د.ل</div>
-            <button class="btn btn-link text-danger p-0 mt-2" onclick="removeFromCart(${idx})"><i class="bi bi-trash"></i></button>
-          </div>
-        </div>
-      </li>`;
-            });
-            html += "</ul>";
-            html += `<div class="mb-3">
-              <label for="delivery-date" class="form-label fw-bold">يوم الاستلام:</label>
-              <input type="date" id="delivery-date" class="form-control" value="${new Date().toISOString().split('T')[0]}" min="${new Date().toISOString().split('T')[0]}">
-            </div>`;
-            html += `<div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold">الإجمالي:</span>
-            <span class="fw-bold">${cartTotal()} د.ل</span>
-          </div>`;
-            html += `<button class="btn btn-outline-danger w-100 mb-2" onclick="clearCart()"><i class="bi bi-x-circle"></i> إفراغ السلة</button>`;
-          }
-          document.getElementById("cart-modal-body").innerHTML = html;
-          if (!cartModalEl.classList.contains('show')) {
-            cartModal.show();
-          }
-        }
-
-        function clearCart() {
-          cart = [];
-          saveCart();
-          updateCartBar();
-          // If cart modal is open, close it
-          const modalEl = document.getElementById("cart-modal");
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          if (modal) modal.hide();
-          // Always re-render categories after clearing cart
-          // This part seems wrong, renderCategories will clear the main content, not what we want if we are in a category view.
-          // Let's just ensure the cart is visually empty if the modal is open.
-          if (modalEl.classList.contains('show')) {
-              showCartModal();
-          }
-        }
-        window.clearCart = clearCart;
-
-        function removeFromCart(idx) {
-          cart.splice(idx, 1);
-          updateCartBar();
-          saveCart();
-          showCartModal();
-        }
-        window.removeFromCart = removeFromCart;
-
-        window.updateCartQty = function (idx, delta) {
-          const item = cart[idx];
-          const product = products.find(p => p.name === item.name);
-          const allowFloat = product ? product.allowFloat : item.allowFloat;
-          const newQty = parseFloat(item.qty) + parseFloat(delta);
-          cart[idx].qty = Math.max(allowFloat ? 0.5 : 1, newQty);
-          saveCart();
-          showCartModal();
-          updateCartBar();
-        };
-        window.updateCartQtyDirect = function (idx, val) {
-          let v = parseFloat(val);
-          const item = cart[idx];
-          const product = products.find(p => p.name === item.name);
-          const allowFloat = product ? product.allowFloat : item.allowFloat;
-          const minQty = allowFloat ? 0.5 : 1;
-          if (isNaN(v) || v < minQty) v = minQty;
-          cart[idx].qty = v;
-          saveCart();
-          showCartModal();
-          updateCartBar();
-        };
-        window.updateCartDetails = function (idx, val) {
-          cart[idx].details = val;
-          saveCart();
-        };
-
-        function proceedToWhatsApp() {
-          if (cart.length === 0) return;
-          // Determine if cart is bulk or regular
-          const isBulkCart = cart.every(
-            (item) => item.price == item.price_bulk && !!item.price_bulk
-          );
-          const isRegularCart = cart.every(
-            (item) => !item.price_bulk || item.price != item.price_bulk
-          );
-          let phone = "";
-          if (isBulkCart) phone = "+218916688800";
-          else if (isRegularCart) phone = "+218921717901";
-          else {
-            showToast(
-              "لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة",
-              "danger"
-            );
-            return;
-          }
-          let msg = "طلب جديد من الموقع:%0A";
-          const deliveryDate = document.getElementById('delivery-date').value;
-          if (deliveryDate) {
-            msg += `%0A*يوم الاستلام: ${deliveryDate}*%0A`;
-          }
-          cart.forEach((item) => {
-            msg += `- ${item.name} x${item.qty}`;
-            if (item.details && item.details.trim())
-              msg += ` (${item.details.trim()})`;
-            msg += ` (${item.price} د.ل)%0A`;
-          });
-          msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
-          const url = `https://wa.me/${phone}?text=${msg}`;
-          window.open(url, "_blank");
-          // Empty cart after sending
-          cart = [];
-          saveCart();
-          updateCartBar();
-          // Close modal if open
-          const modalEl = document.getElementById("cart-modal");
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          if (modal) modal.hide();
-          renderCategories();
-          // Add style for unavailable products
-          const style = document.createElement("style");
-          style.innerHTML = `.product-card.unavailable { opacity: 0.6; pointer-events: none; filter: grayscale(0.7); }`;
-          document.head.appendChild(style);
-        }
-        function updateBulkPriceDisplay() {
-          document.querySelectorAll(".product-card").forEach((card) => {
-            if (showBulk) card.classList.add("show-bulk");
-            else card.classList.remove("show-bulk");
-          });
-          const bulkBtn = document.getElementById("bulk-btn");
-          if (bulkBtn) {
-            bulkBtn.disabled = false; // Always enabled to allow toggling
-            if (showBulk) {
-                bulkBtn.innerHTML = '<i class="bi bi-unlock"></i> أسعار الجملة مفعلة';
-                bulkBtn.classList.remove('btn-outline-info');
-                bulkBtn.classList.add('btn-info');
-            } else {
-                bulkBtn.innerHTML = '<i class="bi bi-lock"></i> عرض أسعار الجملة';
-                bulkBtn.classList.remove('btn-info');
-                bulkBtn.classList.add('btn-outline-info');
-            }
-          }
-        }
-        function toggleBulkPrice() {
-          const currentCategoryName = getCurrentCategoryName();
-
-          if (showBulk) {
-            showBulk = false;
-            localStorage.setItem('showBulk', 'false');
-            showToast("تم إخفاء أسعار الجملة", "info");
-          } else {
-            const code = prompt("أدخل رمز الجملة (4 أرقام):");
-            if (code === BULK_CODE) {
-              showBulk = true;
-              localStorage.setItem('showBulk', 'true');
-              showToast("تم تفعيل أسعار الجملة", "success");
-            } else if (code !== null) {
-              showToast("رمز غير صحيح", "danger");
-              return; // Don't proceed if code is wrong
-            } else {
-              return; // Don't proceed if prompt is cancelled
-            }
-          }
-          
-          updateBulkPriceDisplay();
-
-          // If we are in a category view, refresh it to apply the new filter
-          if (currentCategoryName) {
-            showCategoryView(currentCategoryName);
-          }
-        }
-
-        function getCurrentCategoryName() {
-            const categoryHeader = document.querySelector('#categories-header h2');
-            if (categoryHeader && !categoryHeader.innerText.includes('الأصناف')) {
-                // Extract category name, assuming format "EMOJI NAME"
-                return categoryHeader.innerText.trim().split(' ').slice(1).join(' ');
-            }
-            return null;
-        }
-
-        function fadeInContent(id) {
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.classList.remove("fade-in");
-          void el.offsetWidth;
-          el.classList.add("fade-in");
-        }
-        function cartTotal() {
-          return cart
-            .reduce((sum, item) => sum + parseFloat(item.price) * item.qty, 0)
-            .toFixed(2);
-        }
-        window.cartTotal = cartTotal;
-        window.showCategoryView = showCategoryView;
-        // Ensure we keep original assignment (no wrapper)
-        window.renderCategories = renderCategories;
-        window.toggleBulkPrice = toggleBulkPrice;
-        window.zoomImg = zoomImg;
-        window.addToCart = addToCart;
-        window.showCartModal = showCartModal;
-        window.removeFromCart = removeFromCart;
-        window.proceedToWhatsApp = proceedToWhatsApp;
-        window.filterProductsBySubCategory = filterProductsBySubCategory;
-        
-        let products = []; // Define products in a broader scope
-
-        window.onload = async () => {
-          await fetchCategories();
-          loadCart();
-          renderCategories();
-          fadeInContent("categories-header");
-          updateBulkPriceDisplay();
-          updateCartBar();
-          // Bind global search once
-          const gs = document.getElementById('global-search');
-          if (gs && !gs._bound) {
-            gs.addEventListener('input', debouncedGlobalSearch);
-            gs._bound = true;
-            if (lastSearchQuery) {
-              gs.value = lastSearchQuery;
-              debouncedGlobalSearch();
-            }
-          }
-          // Preload products for faster first search
-          loadAllProducts().catch(()=>{});
-        };
-      })();
-    </script>
   </body>
 </html>
