@@ -47,6 +47,7 @@ console.log("[INIT] Registering API routes...");
 
 // ============ STATE ============
 let db, productsCollection, categoriesCollection;
+let db2, productsCollection2, categoriesCollection2;
 let mongoConnected = false;
 
 // ============ MIDDLEWARE ============
@@ -286,6 +287,152 @@ app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
   }
 });
 
+// ============ SHOP2 API ROUTES ============
+app.get("/api/shop2/categories", async (req, res) => {
+  try {
+    const cats = await categoriesCollection2.find({}).toArray();
+    res.json(cats);
+  } catch (err) {
+    console.error("Error fetching shop2 categories:", err);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+app.get("/api/shop2/products", async (req, res) => {
+  try {
+    const { category, bulkSearch } = req.query;
+    let query = {};
+    if (bulkSearch) {
+      query = { isBulk: true };
+    } else if (category) {
+      query = { category };
+    }
+    
+    const products = await productsCollection2
+      .find(query, {
+        projection: {
+          name: 1,
+          desc: 1,
+          price: 1,
+          price_regular: 1,
+          price_bulk: 1,
+          img: 1,
+          category: 1,
+          subCategory: 1,
+          available: 1,
+          cloudinary_public_id: 1,
+          allowFloat: 1,
+          purchaseType: 1,
+        },
+      })
+      .sort({ name: 1 })
+      .toArray();
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching shop2 products:", err);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, res) => {
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+  const img = req.file ? req.file.path : null;
+  const cloudinary_public_id = req.file ? req.file.filename : null;
+  
+  if (
+    !name ||
+    !category ||
+    !img ||
+    (price_regular === undefined && price === undefined)
+  ) {
+    if(cloudinary_public_id) await cloudinary.uploader.destroy(cloudinary_public_id);
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  await productsCollection2.insertOne({
+    name,
+    desc,
+    price_regular,
+    price_bulk,
+    price,
+    img,
+    cloudinary_public_id,
+    category,
+    subCategory,
+    available: available !== "false",
+    allowFloat: allowFloat === "true",
+    purchaseType: purchaseType || "both",
+  });
+  res.json({ success: true });
+});
+
+app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
+  try {
+    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+    const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    if (req.file && product.cloudinary_public_id) {
+      await cloudinary.uploader.destroy(product.cloudinary_public_id);
+    }
+    const img = req.file ? req.file.path : product.img;
+    const cloudinary_public_id = req.file ? req.file.filename : product.cloudinary_public_id;
+
+    await productsCollection2.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      {
+        $set: {
+          name,
+          desc,
+          price_regular,
+          price_bulk,
+          price,
+          img,
+          cloudinary_public_id,
+          category,
+          subCategory,
+          available: available !== "false",
+          allowFloat: allowFloat === "true",
+          purchaseType: purchaseType || "both",
+        },
+      }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
+app.delete("/api/shop2/products/:id", checkAdmin, async (req, res) => {
+  try {
+    const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
+    if (product && product.cloudinary_public_id) {
+      await cloudinary.uploader.destroy(product.cloudinary_public_id);
+    }
+    await productsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete product" });
+  }
+});
+
+// ============ SHOP2 ADMIN ROUTES ============
+app.post("/api/shop2/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Strict", secure: true });
+    return res.json({ success: true });
+  }
+  res.status(401).json({ success: false, message: "Unauthorized" });
+});
+
+app.get("/api/shop2/admin-check", (req, res) => {
+  const isAdmin = req.cookies.admin_shop2 === "true";
+  if (!isAdmin) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  res.json({ ok: true });
+});
+
 // ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
@@ -296,12 +443,17 @@ app.use((err, req, res, next) => {
 MongoClient.connect(MONGO_URI).then(async (client) => {
   console.log("✓ MongoDB connected successfully");
   db = client.db("emenu");
+  db2 = client.db("emenu2");
   productsCollection = db.collection("products");
   categoriesCollection = db.collection("categories");
+  productsCollection2 = db2.collection("products");
+  categoriesCollection2 = db2.collection("categories");
   mongoConnected = true;
   
   productsCollection.createIndex({ category: 1 });
   categoriesCollection.createIndex({ name: 1 }, { unique: true });
+  productsCollection2.createIndex({ category: 1 });
+  categoriesCollection2.createIndex({ name: 1 }, { unique: true });
 
   const count = await categoriesCollection.countDocuments();
   if (count === 0) {
@@ -320,6 +472,20 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
     console.log("✓ Categories initialized");
   } else {
     console.log(`✓ Found ${count} existing categories`);
+  }
+
+  const count2 = await categoriesCollection2.countDocuments();
+  if (count2 === 0) {
+    console.log("Initializing shop2 categories...");
+    const initialCategories2 = [
+        { name: "فئة أولى", emoji: "🎁", subCategories: ["نوع أول", "نوع ثاني"] },
+        { name: "فئة ثانية", emoji: "⭐", subCategories: [] },
+        { name: "فئة ثالثة", emoji: "🌟", subCategories: [] },
+    ];
+    await categoriesCollection2.insertMany(initialCategories2);
+    console.log("✓ Shop2 categories initialized");
+  } else {
+    console.log(`✓ Found ${count2} existing shop2 categories`);
   }
 
   app.listen(PORT, () => {
