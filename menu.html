@@ -1273,7 +1273,7 @@
 
         window.updateCartQty = function (idx, delta) {
           const item = cart[idx];
-          const product = products.find((p) => p.name === item.name);
+          const product = allProducts.find((p) => p.name === item.name);
           const allowFloat = product ? product.allowFloat : item.allowFloat;
           const newQty = parseFloat(item.qty) + parseFloat(delta);
           cart[idx].qty = Math.max(allowFloat ? 0.5 : 1, newQty);
@@ -1284,7 +1284,7 @@
         window.updateCartQtyDirect = function (idx, val) {
           let v = parseFloat(val);
           const item = cart[idx];
-          const product = products.find((p) => p.name === item.name);
+          const product = allProducts.find((p) => p.name === item.name);
           const allowFloat = product ? product.allowFloat : item.allowFloat;
           const minQty = allowFloat ? 0.5 : 1;
           if (isNaN(v) || v < minQty) v = minQty;
