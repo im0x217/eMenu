@@ -73,6 +73,81 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// ============ DEBUG ENDPOINTS ============
+app.get("/api/debug/products-by-category", checkMongoDB, async (req, res) => {
+  try {
+    const categories = await categoriesCollection.find({}).toArray();
+    const result = {};
+    
+    for (const cat of categories) {
+      const count = await productsCollection.countDocuments({ category: cat.name });
+      result[cat.name] = count;
+    }
+    
+    res.json({
+      shop: "shop1",
+      categories: result,
+      totalCategories: categories.length,
+      totalProducts: await productsCollection.countDocuments({})
+    });
+  } catch (err) {
+    console.error("Debug endpoint error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/debug/purchase-types", checkMongoDB, async (req, res) => {
+  try {
+    const results = await productsCollection.aggregate([
+      {
+        $group: {
+          _id: "$purchaseType",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]).toArray();
+    
+    res.json({
+      purchaseTypeDistribution: results,
+      total: await productsCollection.countDocuments({})
+    });
+  } catch (err) {
+    console.error("Debug endpoint error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/debug/subcategories", checkMongoDB, async (req, res) => {
+  try {
+    const category = req.query.category;
+    let query = {};
+    if (category) {
+      query = { category };
+    }
+    
+    const results = await productsCollection.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$subCategory",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]).toArray();
+    
+    res.json({
+      category: category || "all",
+      subCategories: results,
+      total: await productsCollection.countDocuments(query)
+    });
+  } catch (err) {
+    console.error("Debug endpoint error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============ LOGIN ============
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;

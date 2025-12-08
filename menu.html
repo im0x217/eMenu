@@ -905,16 +905,7 @@
             const hay = `${p.name || ""} ${p.desc || ""} ${p.category || ""} ${
               p.subCategory || ""
             }`.toLowerCase();
-            if (!hay.includes(q)) return false;
-
-            // Respect purchaseType + bulk view if you use them
-            const type = p.purchaseType || "both";
-            if (typeof window.showBulk === "boolean") {
-              return window.showBulk
-                ? type === "bulk" || type === "both"
-                : type === "regular" || type === "both";
-            }
-            return true;
+            return hay.includes(q);
           });
 
           let html = `<div class="product-grid" id="product-list">`;
@@ -1007,10 +998,12 @@
           if (!category) return;
 
           let subCategoryButtons = "";
-          if (category.subCategories && category.subCategories.length > 0) {
+          // Only show sub-category filters if there are non-empty sub-categories
+          const validSubCategories = (category.subCategories || []).filter(sub => sub && sub.trim());
+          if (validSubCategories && validSubCategories.length > 0) {
             subCategoryButtons = `<div class="sub-category-filters mb-3 d-flex flex-wrap justify-content-center gap-2">
                   <button class="btn btn-sm btn-primary" data-sub-category="all" onclick="filterProductsBySubCategory('all')">الكل</button>
-                  ${category.subCategories
+                  ${validSubCategories
                     .map(
                       (sub) =>
                         `<button class="btn btn-sm btn-outline-primary" data-sub-category="${sub}" onclick="filterProductsBySubCategory('${sub}')">${sub}</button>`
@@ -1031,14 +1024,8 @@
             `/api/products?category=${encodeURIComponent(categoryName)}`
           );
           let products = res.ok ? await res.json() : [];
-          products = products.filter((p) => {
-            const type = p.purchaseType || "both"; // Default to 'both' if undefined
-            if (showBulk) {
-              return type === "bulk" || type === "both";
-            } else {
-              return type === "regular" || type === "both";
-            }
-          });
+          // Don't filter by purchaseType - show all products regardless of bulk/regular setting
+          // The purchaseType filter will only apply to price display, not visibility
           products.forEach((product, idx) => {
             const price_regular =
               product.price_regular !== undefined &&
@@ -1104,22 +1091,36 @@
             const list = document.getElementById("product-list");
             if (!list) return;
             const cards = list.querySelectorAll(".product-card");
+            let visibleCount = 0;
+            
             cards.forEach((card) => {
               const sub = (card.getAttribute("data-sub-category") || "").trim();
-              const col = card.closest(".col") || card.parentElement;
-              if (!col) return;
-              if (selectedSub === "all" || sub === selectedSub) {
-                col.style.display = "";
+              let shouldShow = false;
+              
+              if (selectedSub === "all") {
+                shouldShow = true;
+              } else if (selectedSub && sub) {
+                // Both must exist and match
+                shouldShow = sub === selectedSub;
+              } else if (!selectedSub && !sub) {
+                // Both empty - show
+                shouldShow = true;
+              }
+              
+              if (shouldShow) {
+                card.style.display = "";
+                visibleCount++;
               } else {
-                col.style.display = "none";
+                card.style.display = "none";
               }
             });
+            
+            console.log(`Filter: ${selectedSub}, Visible: ${visibleCount}/${cards.length}`);
+            
             // Update button styles
             const container = document.querySelector(".sub-category-filters");
             if (container) {
-              const btns = container.querySelectorAll(
-                "button[data-sub-category]"
-              );
+              const btns = container.querySelectorAll("button[data-sub-category]");
               btns.forEach((btn) => {
                 const val = btn.getAttribute("data-sub-category");
                 if (val === selectedSub) {
