@@ -56,8 +56,8 @@ npm start
 
 Already configured in `.env`:
 ```
-AWS_ACCESS_KEY_ID=AKIAS7OINZXM5QPMGPK2
-AWS_SECRET_ACCESS_KEY=dTN2ursIXsTwCbP1ICmZXY9DpfkYWllpB6NG2mRY
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_S3_BUCKET=e-menu-products
 AWS_REGION=us-east-1
 ```
