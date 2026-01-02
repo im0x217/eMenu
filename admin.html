@@ -15,6 +15,24 @@
       crossorigin="anonymous"
     />
     <style>
+      * {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+      }
+
+      input,
+      textarea,
+      button,
+      a,
+      [onclick] {
+        user-select: auto;
+        -webkit-user-select: auto;
+        -moz-user-select: auto;
+        -ms-user-select: auto;
+      }
+
       body {
         background: #faf7f2;
         min-height: 100vh;
@@ -34,9 +52,12 @@
         max-width: 500px;
         margin: auto;
         border-radius: 20px;
-        box-shadow: 0 4px 24px #0002;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         padding: 2rem 1rem 1.5rem 1rem;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
       }
       .fade-in {
         animation: fadeIn 0.45s;
@@ -227,12 +248,19 @@
     >
       <div class="container-fluid justify-content-center">
         <a
+          href="/category-management.html"
+          class="btn btn-light d-none d-md-block"
+          style="font-size: 1rem; position: absolute; right: 16px; top: 14px"
+        >
+          <i class="bi bi-tags"></i> إدارة الأصناف
+        </a>
+        <a
           class="navbar-brand mx-auto d-flex flex-column align-items-center gap-2"
           href="index.html"
           style="text-decoration: none"
         >
           <img src="res/logo.jpg" alt="Logo" class="navbar-logo" />
-          <span class="fs-4 fw-bold text-dark">لوحة إدارة المنتجات</span>
+          <span class="fs-4 fw-bold text-white">لوحة إدارة المنتجات</span>
         </a>
         <button
           id="logout-btn"
@@ -328,7 +356,7 @@
     </div>
     <div class="container my-4" id="admin-container" style="display: none">
       <div class="fullscreen-card">
-        <div class="mb-2 text-end d-block">
+        <div class="mb-2 text-end d-block d-md-none">
           <a href="/category-management.html" class="btn btn-info"><i class="bi bi-tags"></i> إدارة الأصناف</a>
         </div>
         <div class="mb-2 text-end d-block d-md-none">
@@ -468,6 +496,7 @@
         const toast = new bootstrap.Toast(toastElem);
         toast.show();
       }
+      const getProductImg = (product) => product.imgSigned || product.img;
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
         new bootstrap.Modal(document.getElementById("img-modal")).show();
@@ -602,13 +631,14 @@
             product.price_bulk !== ""
               ? product.price_bulk + " د.ل"
               : "";
+          const imgSrc = getProductImg(product);
           const card = document.createElement("div");
           card.className = "col";
           card.innerHTML = `
           <div class="product-card shadow-sm d-flex flex-column">
-            <img src="${product.img}" class="card-img-top" alt="${
+            <img src="${imgSrc}" class="card-img-top" alt="${
             product.name
-          }" onclick="zoomImg('${product.img}')">
+          }" onclick="zoomImg('${imgSrc}')">
             <div class="card-body p-2 d-flex flex-column">
               <h6 class="card-title mb-1">${product.name}</h6>
               <p class="card-text" style="font-size:0.97rem;">${
@@ -710,7 +740,7 @@
         updatePriceInputStates();
 
         uploadedFileData = null; // Reset file data on edit start
-        document.getElementById("preview-img").src = product.img;
+        document.getElementById("preview-img").src = getProductImg(product);
         document.getElementById("cancelEditBtn").style.display = "";
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
