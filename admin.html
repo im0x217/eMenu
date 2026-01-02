@@ -496,7 +496,7 @@
         const toast = new bootstrap.Toast(toastElem);
         toast.show();
       }
-      const getProductImg = (product) => product.img;
+      const getProductImg = (product) => product.imgSigned || product.img;
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
         new bootstrap.Modal(document.getElementById("img-modal")).show();

@@ -6,7 +6,8 @@ const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const { S3Client } = require("@aws-sdk/client-s3");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const path = require("path");
 
 const app = express();
@@ -24,7 +25,7 @@ const s3Client = new S3Client({
 const storage = multerS3({
   s3: s3Client,
   bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
-  acl: "public-read",
+  acl: "private",  // Changed to private due to Block Public Access
   metadata: (req, file, cb) => {
     cb(null, { fieldName: file.fieldname });
   },
@@ -35,6 +36,38 @@ const storage = multerS3({
 });
 
 const upload = multer({ storage: storage });
+
+// Error handler for multer/S3 upload errors
+const uploadErrorHandler = (err, req, res, next) => {
+  if (err && err.code === 'NoSuchBucket') {
+    return res.status(503).json({ 
+      error: "S3 bucket not found. Please run 'node create-s3-bucket.js' to set it up.",
+      details: err.message
+    });
+  }
+  if (err) {
+    return res.status(400).json({ 
+      error: `Upload error: ${err.message}`,
+      code: err.code
+    });
+  }
+  next();
+};
+
+// Generate signed URL for private S3 files (valid for 1 hour)
+const generateSignedUrl = async (s3Key) => {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
+      Key: s3Key,
+    });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    return url;
+  } catch (err) {
+    console.error("Error generating signed URL:", err.message);
+    return null;
+  }
+};
 
 // S3 images are public-read, so no special handling needed
 const attachS3Images = (items = []) => items;
@@ -205,7 +238,20 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
       })
       .sort({ name: 1 })
       .toArray();
-    res.json(products);
+    
+    // Generate signed URLs for S3 images
+    const productsWithUrls = await Promise.all(products.map(async (product) => {
+      if (product.img && product.img.includes('amazonaws.com')) {
+        // Extract S3 key from full URL
+        const urlParts = product.img.split('/');
+        const s3Key = urlParts.slice(-2).join('/');
+        const signedUrl = await generateSignedUrl(s3Key);
+        return { ...product, imgSigned: signedUrl || product.img };
+      }
+      return product;
+    }));
+    
+    res.json(productsWithUrls);
   } catch (err) {
     console.error("Error fetching products:", err);
     res.status(500).json({ error: "Failed to fetch products" });
@@ -222,7 +268,11 @@ app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => 
     !img ||
     (price_regular === undefined && price === undefined)
   ) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields or image upload failed. Ensure S3 bucket exists." });
+  }
+  
+  if (req.fileValidationError) {
+    return res.status(400).json({ error: `Upload error: ${req.fileValidationError}` });
   }
   await productsCollection.insertOne({
     name,
@@ -231,7 +281,6 @@ app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => 
     price_bulk,
     price,
     img,
-    cloudinary_public_id,
     category,
     subCategory,
     available: available === "false" ? false : true,
@@ -258,18 +307,9 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) 
   };
 
   if (req.file) {
-      updateData.img = req.file.path;
-      updateData.cloudinary_public_id = req.file.filename;
-
-      const old_public_id = req.body.cloudinary_public_id;
-      if (old_public_id && old_public_id !== 'null' && old_public_id !== 'undefined') {
-          cloudinary.uploader.destroy(old_public_id).catch(err => 
-              console.error("Failed to delete old image:", err)
-          );
-      }
+      updateData.img = req.file.location;  // S3 location
   } else {
       updateData.img = existingImg;
-      updateData.cloudinary_public_id = req.body.cloudinary_public_id;
   }
 
   if (
@@ -278,7 +318,6 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) 
     !updateData.img ||
     (updateData.price_regular === undefined && updateData.price === undefined)
   ) {
-    if(req.file) await cloudinary.uploader.destroy(req.file.filename);
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -308,10 +347,6 @@ app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
 
 app.delete("/api/products/:id", checkAdmin, async (req, res) => {
   try {
-    const product = await productsCollection.findOne({ _id: new ObjectId(req.params.id) });
-    if (product && product.cloudinary_public_id) {
-      await cloudinary.uploader.destroy(product.cloudinary_public_id);
-    }
     await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -409,7 +444,20 @@ app.get("/api/shop2/products", async (req, res) => {
       })
       .sort({ name: 1 })
       .toArray();
-    res.json(products);
+    
+    // Generate signed URLs for S3 images
+    const productsWithUrls = await Promise.all(products.map(async (product) => {
+      if (product.img && product.img.includes('amazonaws.com')) {
+        // Extract S3 key from full URL
+        const urlParts = product.img.split('/');
+        const s3Key = urlParts.slice(-2).join('/');
+        const signedUrl = await generateSignedUrl(s3Key);
+        return { ...product, imgSigned: signedUrl || product.img };
+      }
+      return product;
+    }));
+    
+    res.json(productsWithUrls);
   } catch (err) {
     console.error("Error fetching shop2 products:", err);
     res.status(500).json({ error: "Failed to fetch products" });
@@ -426,7 +474,7 @@ app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, re
     !img ||
     (price_regular === undefined && price === undefined)
   ) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields or image upload failed. Ensure S3 bucket exists." });
   }
   await productsCollection2.insertOne({
     name,
@@ -435,7 +483,6 @@ app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, re
     price_bulk,
     price,
     img,
-    cloudinary_public_id,
     category,
     subCategory,
     available: available !== "false",
@@ -451,11 +498,7 @@ app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req,
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (!product) return res.status(404).json({ error: "Product not found" });
 
-    if (req.file && product.cloudinary_public_id) {
-      await cloudinary.uploader.destroy(product.cloudinary_public_id);
-    }
-    const img = req.file ? req.file.path : product.img;
-    const cloudinary_public_id = req.file ? req.file.filename : product.cloudinary_public_id;
+    const img = req.file ? req.file.location : product.img;
 
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -467,7 +510,6 @@ app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req,
           price_bulk,
           price,
           img,
-          cloudinary_public_id,
           category,
           subCategory,
           available: available !== "false",
@@ -484,10 +526,6 @@ app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req,
 
 app.delete("/api/shop2/products/:id", checkAdmin, async (req, res) => {
   try {
-    const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
-    if (product && product.cloudinary_public_id) {
-      await cloudinary.uploader.destroy(product.cloudinary_public_id);
-    }
     await productsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
