@@ -5,75 +5,39 @@ const helmet = require("helmet");
 const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("cloudinary").v2;
+const multerS3 = require("multer-s3");
+const { S3Client } = require("@aws-sdk/client-s3");
 const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Cloudinary Configuration
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+// AWS S3 Configuration
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "e-menu-products",
-    format: async (req, file) => "jpg",
-    public_id: (req, file) => Date.now() + '-' + file.originalname,
+const storage = multerS3({
+  s3: s3Client,
+  bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
+  acl: "public-read",
+  metadata: (req, file, cb) => {
+    cb(null, { fieldName: file.fieldname });
+  },
+  key: (req, file, cb) => {
+    const filename = Date.now() + '-' + file.originalname;
+    cb(null, 'products/' + filename);
   },
 });
 
 const upload = multer({ storage: storage });
 
-// Generate signed URL for Cloudinary resources
-// Resources are protected so we MUST use signed URLs
-const buildSignedImageUrl = (product) => {
-  // If we have public_id, use it to generate a signed URL
-  if (product?.cloudinary_public_id) {
-    try {
-      return cloudinary.url(product.cloudinary_public_id, {
-        secure: true,
-        sign_url: true,
-      });
-    } catch (e) {
-      console.error("Error generating signed URL for public_id:", product.cloudinary_public_id, e.message);
-      return product?.img;
-    }
-  }
-  
-  // If we have a Cloudinary URL but no public_id, extract the public_id from it
-  if (product?.img?.includes("cloudinary.com")) {
-    try {
-      // Extract public_id from URL like: 
-      // https://res.cloudinary.com/dcydipptm/image/upload/v1754850811/e-menu-products/product-xxx.jpg
-      const match = product.img.match(/\/e-menu-products\/([^\/]+)$/);
-      if (match) {
-        const publicId = `e-menu-products/${match[1]}`;
-        return cloudinary.url(publicId, {
-          secure: true,
-          sign_url: true,
-        });
-      }
-    } catch (e) {
-      console.error("Error extracting and signing Cloudinary URL:", e.message);
-    }
-  }
-  
-  return product?.img;
-};
-
-const attachSignedImages = (items = []) =>
-  items.map((item) => {
-    const signedImg = buildSignedImageUrl(item);
-    // Always return imgSigned even if it's the same as img
-    // This allows the frontend to use imgSigned || img as a fallback
-    return { ...item, imgSigned: signedImg };
-  });
+// S3 images are public-read, so no special handling needed
+const attachS3Images = (items = []) => items;
 
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
@@ -241,7 +205,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
       })
       .sort({ name: 1 })
       .toArray();
-    res.json(attachSignedImages(products));
+    res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
     res.status(500).json({ error: "Failed to fetch products" });
@@ -250,8 +214,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
 
 app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
-  const img = req.file ? req.file.path : null;
-  const cloudinary_public_id = req.file ? req.file.filename : null;
+  const img = req.file ? req.file.location : null;  // S3 location instead of path
   
   if (
     !name ||
@@ -259,7 +222,6 @@ app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => 
     !img ||
     (price_regular === undefined && price === undefined)
   ) {
-    if(cloudinary_public_id) await cloudinary.uploader.destroy(cloudinary_public_id);
     return res.status(400).json({ error: "Missing required fields" });
   }
   await productsCollection.insertOne({
@@ -447,7 +409,7 @@ app.get("/api/shop2/products", async (req, res) => {
       })
       .sort({ name: 1 })
       .toArray();
-    res.json(attachSignedImages(products));
+    res.json(products);
   } catch (err) {
     console.error("Error fetching shop2 products:", err);
     res.status(500).json({ error: "Failed to fetch products" });
@@ -456,8 +418,7 @@ app.get("/api/shop2/products", async (req, res) => {
 
 app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
-  const img = req.file ? req.file.path : null;
-  const cloudinary_public_id = req.file ? req.file.filename : null;
+  const img = req.file ? req.file.location : null;  // S3 location instead of path
   
   if (
     !name ||
@@ -465,7 +426,6 @@ app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, re
     !img ||
     (price_regular === undefined && price === undefined)
   ) {
-    if(cloudinary_public_id) await cloudinary.uploader.destroy(cloudinary_public_id);
     return res.status(400).json({ error: "Missing required fields" });
   }
   await productsCollection2.insertOne({
