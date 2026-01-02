@@ -30,25 +30,49 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Always hand back a signed Cloudinary URL so protected assets don't 401 in the browser
+// Generate signed URL for Cloudinary resources
+// Resources are protected so we MUST use signed URLs
 const buildSignedImageUrl = (product) => {
+  // If we have public_id, use it to generate a signed URL
   if (product?.cloudinary_public_id) {
-    const isAuthenticated = product?.img?.includes("/authenticated/");
-    return cloudinary.url(product.cloudinary_public_id, {
-      secure: true,
-      sign_url: true,
-      type: isAuthenticated ? "authenticated" : "upload",
-    });
+    try {
+      return cloudinary.url(product.cloudinary_public_id, {
+        secure: true,
+        sign_url: true,
+      });
+    } catch (e) {
+      console.error("Error generating signed URL for public_id:", product.cloudinary_public_id, e.message);
+      return product?.img;
+    }
   }
+  
+  // If we have a Cloudinary URL but no public_id, extract the public_id from it
+  if (product?.img?.includes("cloudinary.com")) {
+    try {
+      // Extract public_id from URL like: 
+      // https://res.cloudinary.com/dcydipptm/image/upload/v1754850811/e-menu-products/product-xxx.jpg
+      const match = product.img.match(/\/e-menu-products\/([^\/]+)$/);
+      if (match) {
+        const publicId = `e-menu-products/${match[1]}`;
+        return cloudinary.url(publicId, {
+          secure: true,
+          sign_url: true,
+        });
+      }
+    } catch (e) {
+      console.error("Error extracting and signing Cloudinary URL:", e.message);
+    }
+  }
+  
   return product?.img;
 };
 
 const attachSignedImages = (items = []) =>
   items.map((item) => {
     const signedImg = buildSignedImageUrl(item);
-    return signedImg
-      ? { ...item, imgSigned: signedImg }
-      : item;
+    // Always return imgSigned even if it's the same as img
+    // This allows the frontend to use imgSigned || img as a fallback
+    return { ...item, imgSigned: signedImg };
   });
 
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
