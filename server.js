@@ -69,6 +69,43 @@ const generateSignedUrl = async (s3Key) => {
   }
 };
 
+// Get display image (with fallback for missing or old images)
+const getDisplayImage = (product) => {
+  // If no image, use placeholder
+  if (!product.img) {
+    return {
+      img: product.img,
+      imgSigned: "/res/logo.jpg",
+      needsImage: true
+    };
+  }
+  
+  // If it's an old Cloudinary URL, replace with placeholder
+  if (product.img.includes('cloudinary.com')) {
+    return {
+      img: product.img,
+      imgSigned: "/res/logo.jpg",
+      needsImage: true
+    };
+  }
+  
+  // If it's an S3 URL, generate signed version (async not needed for now)
+  if (product.img.includes('amazonaws.com')) {
+    return {
+      img: product.img,
+      imgSigned: product.img, // Will be signed separately
+      needsImage: false
+    };
+  }
+  
+  // Default: return as-is
+  return {
+    img: product.img,
+    imgSigned: product.img,
+    needsImage: false
+  };
+};
+
 // S3 images are public-read, so no special handling needed
 const attachS3Images = (items = []) => items;
 
@@ -239,16 +276,19 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
       .sort({ name: 1 })
       .toArray();
     
-    // Generate signed URLs for S3 images
+    // Handle missing images and generate signed URLs for S3
     const productsWithUrls = await Promise.all(products.map(async (product) => {
+      const imageData = getDisplayImage(product);
+      
+      // If it's S3, generate signed URL
       if (product.img && product.img.includes('amazonaws.com')) {
-        // Extract S3 key from full URL
         const urlParts = product.img.split('/');
         const s3Key = urlParts.slice(-2).join('/');
-        const signedUrl = await generateSignedUrl(s3Key);
-        return { ...product, imgSigned: signedUrl || product.img };
+        const signedUrl = await generateSignedUrl(s3Key).catch(() => product.img);
+        imageData.imgSigned = signedUrl || product.img;
       }
-      return product;
+      
+      return { ...product, ...imageData };
     }));
     
     res.json(productsWithUrls);
@@ -445,16 +485,19 @@ app.get("/api/shop2/products", async (req, res) => {
       .sort({ name: 1 })
       .toArray();
     
-    // Generate signed URLs for S3 images
+    // Handle missing images and generate signed URLs for S3
     const productsWithUrls = await Promise.all(products.map(async (product) => {
+      const imageData = getDisplayImage(product);
+      
+      // If it's S3, generate signed URL
       if (product.img && product.img.includes('amazonaws.com')) {
-        // Extract S3 key from full URL
         const urlParts = product.img.split('/');
         const s3Key = urlParts.slice(-2).join('/');
-        const signedUrl = await generateSignedUrl(s3Key);
-        return { ...product, imgSigned: signedUrl || product.img };
+        const signedUrl = await generateSignedUrl(s3Key).catch(() => product.img);
+        imageData.imgSigned = signedUrl || product.img;
       }
-      return product;
+      
+      return { ...product, ...imageData };
     }));
     
     res.json(productsWithUrls);
