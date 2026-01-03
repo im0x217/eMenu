@@ -25,7 +25,7 @@ const s3Client = new S3Client({
 const storage = multerS3({
   s3: s3Client,
   bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
-  acl: "private",  // Changed to private due to Block Public Access
+  acl: "public-read",  // Public read allows images to be displayed without signing
   metadata: (req, file, cb) => {
     cb(null, { fieldName: file.fieldname });
   },
@@ -54,19 +54,11 @@ const uploadErrorHandler = (err, req, res, next) => {
   next();
 };
 
-// Generate signed URL for private S3 files (valid for 1 hour)
-const generateSignedUrl = async (s3Key) => {
-  try {
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
-      Key: s3Key,
-    });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-    return url;
-  } catch (err) {
-    console.error("Error generating signed URL:", err.message);
-    return null;
-  }
+// S3 files use public-read ACL - no signed URLs needed
+// Images are directly accessible via the S3 URL
+const getPublicUrl = (s3Url) => {
+  // S3 URLs with public-read ACL are directly accessible
+  return s3Url;
 };
 
 // Get display image (with fallback for missing or old images)
@@ -276,21 +268,14 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
       .sort({ name: 1 })
       .toArray();
     
-    // Handle missing images and generate signed URLs for S3
+    // Handle missing images - S3 images are public and directly accessible
     const productsWithUrls = await Promise.all(products.map(async (product) => {
       const imageData = getDisplayImage(product);
       
-      // If it's S3, generate signed URL
+      // If it's S3, the URL is directly accessible (public-read ACL)
       if (product.img && product.img.includes('amazonaws.com')) {
-        const urlParts = product.img.split('/');
-        const s3Key = urlParts.slice(-2).join('/');
-        console.log("[SIGNED URL] Generating for:", product.name, "key:", s3Key);
-        const signedUrl = await generateSignedUrl(s3Key).catch((err) => {
-          console.error("[SIGNED URL ERROR] For", product.name, ":", err.message);
-          return product.img;
-        });
-        console.log("[SIGNED URL]", product.name, signedUrl ? "✅" : "❌");
-        imageData.imgSigned = signedUrl || product.img;
+        console.log("[S3 IMAGE] Using direct URL for:", product.name);
+        imageData.imgSigned = product.img;  // No signing needed, images are public
       }
       
       return { ...product, ...imageData };
@@ -502,21 +487,14 @@ app.get("/api/shop2/products", async (req, res) => {
       .sort({ name: 1 })
       .toArray();
     
-    // Handle missing images and generate signed URLs for S3
+    // Handle missing images - S3 images are public and directly accessible
     const productsWithUrls = await Promise.all(products.map(async (product) => {
       const imageData = getDisplayImage(product);
       
-      // If it's S3, generate signed URL
+      // If it's S3, the URL is directly accessible (public-read ACL)
       if (product.img && product.img.includes('amazonaws.com')) {
-        const urlParts = product.img.split('/');
-        const s3Key = urlParts.slice(-2).join('/');
-        console.log("[SIGNED URL] Generating for:", product.name, "key:", s3Key);
-        const signedUrl = await generateSignedUrl(s3Key).catch((err) => {
-          console.error("[SIGNED URL ERROR] For", product.name, ":", err.message);
-          return product.img;
-        });
-        console.log("[SIGNED URL]", product.name, signedUrl ? "✅" : "❌");
-        imageData.imgSigned = signedUrl || product.img;
+        console.log("[S3 IMAGE] Using direct URL for:", product.name);
+        imageData.imgSigned = product.img;  // No signing needed, images are public
       }
       
       return { ...product, ...imageData };
