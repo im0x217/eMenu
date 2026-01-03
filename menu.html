@@ -411,11 +411,52 @@
         font-weight: 600;
         padding: 0.8rem 1.5rem;
         box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
       }
 
       .cart-bar button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3);
+      }
+
+      .cart-bar button i {
+        font-size: 1.2rem;
+      }
+
+      #cart-count {
+        font-weight: 700;
+        color: inherit;
+      }
+
+      /* Cart Modal Quantity Controls */
+      .cart-qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-wrap: nowrap;
+      }
+
+      .cart-qty-controls .btn {
+        min-width: 36px;
+        padding: 0.25rem 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .cart-qty-controls input[type="number"] {
+        width: 60px;
+        text-align: center;
+        padding: 0.25rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .cart-qty-controls .btn i {
+        font-size: 1rem;
       }
 
       /* Mobile Responsive */
@@ -546,6 +587,26 @@
         .cart-bar button {
           min-width: 140px;
           font-size: 0.9rem;
+          padding: 0.6rem 1rem;
+        }
+
+        .cart-bar button i {
+          font-size: 1rem;
+        }
+
+        .cart-qty-controls {
+          flex-wrap: wrap;
+          gap: 0.25rem;
+        }
+
+        .cart-qty-controls .btn {
+          min-width: 32px;
+          font-size: 0.85rem;
+        }
+
+        .cart-qty-controls input[type="number"] {
+          width: 50px;
+          font-size: 0.85rem;
         }
       }
 
@@ -1250,20 +1311,24 @@
                 item.imgDisplay || item.imgSigned || item.img || "res/logo.jpg";
               html += `<li class="list-group-item">
         <div class="d-flex align-items-center mb-2">
-          <img src="${imgSrc}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-left:10px;">
+          <img src="${imgSrc}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-left:10px;" alt="${item.name}">
           <div class="flex-grow-1">
             <div class="fw-bold">${item.name}</div>
-            <div class="d-flex align-items-center mt-1">
-              <button class="btn btn-outline-secondary btn-sm me-1" onclick="updateCartQty(${idx},-1)"><i class="bi bi-dash"></i></button>
+            <div class="cart-qty-controls mt-1">
+              <button class="btn btn-outline-secondary btn-sm" onclick="updateCartQty(${idx},-1)">
+                <i class="bi bi-dash"></i>
+              </button>
               <input type="number" min="1" step="${
                 allowFloat ? "0.5" : "1"
               }" value="${
                 item.qty
-              }" onchange="updateCartQtyDirect(${idx},this.value)" style="width:60px;text-align:center;" class="form-control form-control-sm mx-1">
-              <button class="btn btn-outline-secondary btn-sm ms-1" onclick="updateCartQty(${idx},1)"><i class="bi bi-plus"></i></button>
+              }" onchange="updateCartQtyDirect(${idx},this.value)" class="form-control form-control-sm">
+              <button class="btn btn-outline-secondary btn-sm" onclick="updateCartQty(${idx},1)">
+                <i class="bi bi-plus"></i>
+              </button>
               ${
                 allowFloat
-                  ? `<button class="btn btn-outline-info btn-sm ms-1" onclick="updateCartQty(${idx}, 0.5)">+0.5</button>`
+                  ? `<button class="btn btn-outline-info btn-sm" onclick="updateCartQty(${idx}, 0.5)">+0.5</button>`
                   : ""
               }
             </div>
@@ -1273,7 +1338,9 @@
           </div>
           <div class="text-end ms-2">
             <div class="fw-bold text-success">${item.price} د.ل</div>
-            <button class="btn btn-link text-danger p-0 mt-2" onclick="removeFromCart(${idx})"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-link text-danger p-0 mt-2" onclick="removeFromCart(${idx})">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
       </li>`;
