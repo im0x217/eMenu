@@ -284,7 +284,12 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
       if (product.img && product.img.includes('amazonaws.com')) {
         const urlParts = product.img.split('/');
         const s3Key = urlParts.slice(-2).join('/');
-        const signedUrl = await generateSignedUrl(s3Key).catch(() => product.img);
+        console.log("[SIGNED URL] Generating for:", product.name, "key:", s3Key);
+        const signedUrl = await generateSignedUrl(s3Key).catch((err) => {
+          console.error("[SIGNED URL ERROR] For", product.name, ":", err.message);
+          return product.img;
+        });
+        console.log("[SIGNED URL]", product.name, signedUrl ? "✅" : "❌");
         imageData.imgSigned = signedUrl || product.img;
       }
       
@@ -505,7 +510,12 @@ app.get("/api/shop2/products", async (req, res) => {
       if (product.img && product.img.includes('amazonaws.com')) {
         const urlParts = product.img.split('/');
         const s3Key = urlParts.slice(-2).join('/');
-        const signedUrl = await generateSignedUrl(s3Key).catch(() => product.img);
+        console.log("[SIGNED URL] Generating for:", product.name, "key:", s3Key);
+        const signedUrl = await generateSignedUrl(s3Key).catch((err) => {
+          console.error("[SIGNED URL ERROR] For", product.name, ":", err.message);
+          return product.img;
+        });
+        console.log("[SIGNED URL]", product.name, signedUrl ? "✅" : "❌");
         imageData.imgSigned = signedUrl || product.img;
       }
       
