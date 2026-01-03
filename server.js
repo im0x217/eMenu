@@ -302,32 +302,44 @@ app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => 
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   const img = req.file ? req.file.location : null;  // S3 location instead of path
   
+  console.log("[UPLOAD DEBUG] POST /api/products");
+  console.log("  File received:", req.file ? "Yes" : "No");
+  console.log("  File details:", req.file ? { bucket: req.file.bucket, key: req.file.key, location: req.file.location } : null);
+  console.log("  Form data:", { name, category, price_regular, price_bulk });
+  
   if (
     !name ||
     !category ||
     !img ||
     (price_regular === undefined && price === undefined)
   ) {
+    console.log("[UPLOAD ERROR] Missing fields - img:", img, "name:", name, "category:", category);
     return res.status(400).json({ error: "Missing required fields or image upload failed. Ensure S3 bucket exists." });
   }
   
   if (req.fileValidationError) {
     return res.status(400).json({ error: `Upload error: ${req.fileValidationError}` });
   }
-  await productsCollection.insertOne({
-    name,
-    desc,
-    price_regular,
-    price_bulk,
-    price,
-    img,
-    category,
-    subCategory,
-    available: available === "false" ? false : true,
-    allowFloat: allowFloat === 'true',
-    purchaseType: purchaseType || 'both'
-  });
-  res.json({ success: true });
+  try {
+    await productsCollection.insertOne({
+      name,
+      desc,
+      price_regular,
+      price_bulk,
+      price,
+      img,
+      category,
+      subCategory,
+      available: available === "false" ? false : true,
+      allowFloat: allowFloat === 'true',
+      purchaseType: purchaseType || 'both'
+    });
+    console.log("[UPLOAD SUCCESS] Product saved with image:", img);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("[UPLOAD ERROR] Database error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
