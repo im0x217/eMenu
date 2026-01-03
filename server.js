@@ -25,7 +25,7 @@ const s3Client = new S3Client({
 const storage = multerS3({
   s3: s3Client,
   bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
-  acl: "public-read",  // Public read allows images to be displayed without signing
+  // ACL removed - bucket policy makes all objects public
   metadata: (req, file, cb) => {
     cb(null, { fieldName: file.fieldname });
   },
