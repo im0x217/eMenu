@@ -496,7 +496,13 @@
         const toast = new bootstrap.Toast(toastElem);
         toast.show();
       }
-      const getProductImg = (product) => product.imgSigned || product.img;
+      const getProductImg = (product) => {
+        const img = product.imgSigned || product.img || "res/logo.jpg";
+        if (product.imgSigned && product.name === "qqq") {
+          console.log("[DEBUG] Product qqq: Using imgSigned:", img.substring(0, 80) + "...");
+        }
+        return img;
+      };
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
         new bootstrap.Modal(document.getElementById("img-modal")).show();
