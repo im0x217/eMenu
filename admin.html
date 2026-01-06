@@ -496,6 +496,13 @@
         const toast = new bootstrap.Toast(toastElem);
         toast.show();
       }
+      const getProductImg = (product) => {
+        const img = product.imgSigned || product.img || "res/logo.jpg";
+        if (product.imgSigned && product.name === "qqq") {
+          console.log("[DEBUG] Product qqq: Using imgSigned:", img.substring(0, 80) + "...");
+        }
+        return img;
+      };
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
         new bootstrap.Modal(document.getElementById("img-modal")).show();
@@ -630,13 +637,14 @@
             product.price_bulk !== ""
               ? product.price_bulk + " د.ل"
               : "";
+          const imgSrc = getProductImg(product);
           const card = document.createElement("div");
           card.className = "col";
           card.innerHTML = `
           <div class="product-card shadow-sm d-flex flex-column">
-            <img src="${product.img}" class="card-img-top" alt="${
+            <img src="${imgSrc}" class="card-img-top" alt="${
             product.name
-          }" onclick="zoomImg('${product.img}')">
+          }" onclick="zoomImg('${imgSrc}')">
             <div class="card-body p-2 d-flex flex-column">
               <h6 class="card-title mb-1">${product.name}</h6>
               <p class="card-text" style="font-size:0.97rem;">${
@@ -738,7 +746,7 @@
         updatePriceInputStates();
 
         uploadedFileData = null; // Reset file data on edit start
-        document.getElementById("preview-img").src = product.img;
+        document.getElementById("preview-img").src = getProductImg(product);
         document.getElementById("cancelEditBtn").style.display = "";
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
