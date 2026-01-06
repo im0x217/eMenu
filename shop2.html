@@ -946,7 +946,7 @@
             }" data-allow-float="${product.allowFloat || false}">
                 <img src="${imgSrc}" class="card-img-top" alt="${
               product.name
-            }" loading="lazy" onclick="zoomImg('${imgSrc}')">
+            }" loading="lazy" onclick="zoomImg('${imgSrc}')" onerror="this.src='res/logo.jpg'">
                 <h6 class="card-title">${product.name}</h6>
                 <p class="card-text">${product.desc || ""}</p>
                 <div class="price-row">
@@ -1066,7 +1066,7 @@
             }" data-allow-float="${product.allowFloat || false}">
               <img src="${imgSrc}" class="card-img-top" alt="${
               product.name
-            }" loading="lazy" onclick="zoomImg('${imgSrc}')">
+            }" loading="lazy" onclick="zoomImg('${imgSrc}')" onerror="this.src='res/logo.jpg'">
               <h6 class="card-title">${product.name}</h6>
               <p class="card-text">${product.desc || ""}</p>
               <div class="price-row">

@@ -290,7 +290,8 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
 
 app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
-  const img = req.file ? req.file.location : null;  // S3 location instead of path
+  // Always compute stable public URL using bucket + region + key
+  const img = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
   
   console.log("[UPLOAD DEBUG] POST /api/products");
   console.log("  File received:", req.file ? "Yes" : "No");
@@ -348,9 +349,10 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) 
       purchaseType: purchaseType || 'both'
   };
 
-  if (req.file) {
-      updateData.img = req.file.location;  // S3 location
-  } else {
+    if (req.file) {
+      // Compute deterministic public URL for updated image
+      updateData.img = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+    } else {
       updateData.img = existingImg;
   }
 

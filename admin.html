@@ -644,7 +644,7 @@
           <div class="product-card shadow-sm d-flex flex-column">
             <img src="${imgSrc}" class="card-img-top" alt="${
             product.name
-          }" onclick="zoomImg('${imgSrc}')">
+          }" onclick="zoomImg('${imgSrc}')" onerror="this.src='res/logo.jpg'">
             <div class="card-body p-2 d-flex flex-column">
               <h6 class="card-title mb-1">${product.name}</h6>
               <p class="card-text" style="font-size:0.97rem;">${
