@@ -25,6 +25,9 @@ const s3Client = new S3Client({
 const storage = multerS3({
   s3: s3Client,
   bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
+  // Ensure proper content type and long-term caching for faster repeat loads
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  cacheControl: 'public, max-age=31536000',
   // ACL removed - bucket policy makes all objects public
   metadata: (req, file, cb) => {
     cb(null, { fieldName: file.fieldname });
@@ -290,8 +293,10 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
 
 app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
-  // Always compute stable public URL using bucket + region + key
-  const img = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
+  // Always compute stable public URL using bucket + region + key, prefer CloudFront if configured
+  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+  const s3Url = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
+  const img = req.file ? (cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url) : null;
   
   console.log("[UPLOAD DEBUG] POST /api/products");
   console.log("  File received:", req.file ? "Yes" : "No");
@@ -350,8 +355,10 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) 
   };
 
     if (req.file) {
-      // Compute deterministic public URL for updated image
-      updateData.img = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+      // Compute deterministic public URL for updated image, prefer CloudFront if configured
+      const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+      const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+      updateData.img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
     } else {
       updateData.img = existingImg;
   }
@@ -511,7 +518,10 @@ app.get("/api/shop2/products", async (req, res) => {
 
 app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
-  const img = req.file ? req.file.location : null;  // S3 location instead of path
+  // Prefer CloudFront domain for image delivery if configured
+  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+  const s3Url = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
+  const img = req.file ? (cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url) : null;
   
   if (
     !name ||
@@ -543,7 +553,10 @@ app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req,
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (!product) return res.status(404).json({ error: "Product not found" });
 
-    const img = req.file ? req.file.location : product.img;
+    // Prefer CloudFront domain for image delivery if configured
+    const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+    const s3Url = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
+    const img = req.file ? (cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url) : product.img;
 
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
