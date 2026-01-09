@@ -874,6 +874,8 @@
 
         let showBulk = localStorage.getItem("showBulk") === "true";
         const BULK_CODE = "1234";
+        const WHATSAPP_BULK = "+218921717902";
+        const WHATSAPP_RETAIL = "+218921717901";
         function showToast(msg, type = "primary") {
           const toastBody = document.getElementById("toast-body");
           const toastElem = document.getElementById("main-toast");
@@ -1380,8 +1382,8 @@
             (item) => !item.price_bulk || item.price != item.price_bulk
           );
           let phone = "";
-          if (isBulkCart) phone = "+218921717902";
-          else if (isRegularCart) phone = "+218921717901";
+          if (isBulkCart) phone = WHATSAPP_BULK;
+          else if (isRegularCart) phone = WHATSAPP_RETAIL;
           else {
             showToast(
               "لا يمكن خلط أسعار الجملة مع أسعار التجزئة في نفس السلة",
