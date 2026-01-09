@@ -1380,7 +1380,7 @@
             (item) => !item.price_bulk || item.price != item.price_bulk
           );
           let phone = "";
-          if (isBulkCart) phone = "+218916688800";
+          if (isBulkCart) phone = "+218921717902";
           else if (isRegularCart) phone = "+218921717901";
           else {
             showToast(
@@ -1401,7 +1401,7 @@
             msg += ` (${item.price} د.ل)%0A`;
           });
           msg += `%0Aالإجمالي: ${cartTotal()} د.ل`;
-          const url = `https://wa.me/${phone}?text=${msg}`;
+          const url = `https://wa.me/${phone.replace(/\D/g, "")}?text=${msg}`;
           window.open(url, "_blank");
           // Empty cart after sending
           cart = [];
