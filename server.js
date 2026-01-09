@@ -133,7 +133,9 @@ const checkMongoDB = (req, res, next) => {
 };
 
 const checkAdmin = (req, res, next) => {
-  if (req.cookies.admin === "true") return next();
+  // Accept either legacy admin cookie or the shop2-specific cookie for new admin2 panel
+  const isAdmin = req.cookies.admin === "true" || req.cookies.admin_shop2 === "true";
+  if (isAdmin) return next();
   res.status(403).json({ success: false, message: "Forbidden" });
 };
 
