@@ -295,28 +295,37 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
 
 app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+  
+  // Check for file validation errors first
+  if (req.fileValidationError) {
+    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}`, warning: "Product will use placeholder image." });
+  }
+  
   // Always compute stable public URL using bucket + region + key, prefer CloudFront if configured
   const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-  const s3Url = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
-  const img = req.file ? (cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url) : null;
+  let img = "/res/logo.jpg"; // Default placeholder
+  let uploadWarning = null;
+  
+  if (req.file) {
+    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+    console.log("[UPLOAD SUCCESS] POST /api/products - File uploaded:", req.file.key);
+  } else {
+    uploadWarning = "Image upload failed - using placeholder. Check S3 configuration or file size/type.";
+    console.log("[UPLOAD WARNING] POST /api/products - No file received, using placeholder");
+  }
   
   console.log("[UPLOAD DEBUG] POST /api/products");
   console.log("  File received:", req.file ? "Yes" : "No");
-  console.log("  File details:", req.file ? { bucket: req.file.bucket, key: req.file.key, location: req.file.location } : null);
   console.log("  Form data:", { name, category, price_regular, price_bulk });
   
   if (
     !name ||
     !category ||
-    !img ||
     (price_regular === undefined && price === undefined)
   ) {
-    console.log("[UPLOAD ERROR] Missing fields - img:", img, "name:", name, "category:", category);
-    return res.status(400).json({ error: "Missing required fields or image upload failed. Ensure S3 bucket exists." });
-  }
-  
-  if (req.fileValidationError) {
-    return res.status(400).json({ error: `Upload error: ${req.fileValidationError}` });
+    console.log("[UPLOAD ERROR] Missing required fields - name:", name, "category:", category);
+    return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
   try {
     await productsCollection.insertOne({
@@ -356,29 +365,40 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) 
       purchaseType: purchaseType || 'both'
   };
 
-    if (req.file) {
+  let uploadWarning = null;
+  
+  if (req.file) {
       // Compute deterministic public URL for updated image, prefer CloudFront if configured
       const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
       const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
       updateData.img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
     } else {
-      updateData.img = existingImg;
+      // Use existing image, or placeholder if null/invalid
+      if (existingImg && existingImg !== 'null' && existingImg !== 'undefined') {
+        updateData.img = existingImg;
+      } else {
+        updateData.img = "/res/logo.jpg";
+        uploadWarning = "No valid image found - using placeholder.";
+      }
   }
 
   if (
     !updateData.name ||
     !updateData.category ||
-    !updateData.img ||
     (updateData.price_regular === undefined && updateData.price === undefined)
   ) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields (name, category, or price)" });
   }
 
   await productsCollection.updateOne(
     { _id: new ObjectId(req.params.id) },
     { $set: updateData }
   );
-  res.json({ success: true });
+  const response = { success: true };
+  if (uploadWarning) {
+    response.warning = uploadWarning;
+  }
+  res.json(response);
 });
 
 app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
@@ -520,18 +540,30 @@ app.get("/api/shop2/products", async (req, res) => {
 
 app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+  
+  // Check for file validation errors first
+  if (req.fileValidationError) {
+    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}`, warning: "Product will use placeholder image." });
+  }
+  
   // Prefer CloudFront domain for image delivery if configured
   const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-  const s3Url = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
-  const img = req.file ? (cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url) : null;
+  let img = "/res/logo.jpg"; // Default placeholder
+  let uploadWarning = null;
+  
+  if (req.file) {
+    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+  } else {
+    uploadWarning = "Image upload failed - using placeholder. Check S3 configuration or file size/type.";
+  }
   
   if (
     !name ||
     !category ||
-    !img ||
     (price_regular === undefined && price === undefined)
   ) {
-    return res.status(400).json({ error: "Missing required fields or image upload failed. Ensure S3 bucket exists." });
+    return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
   await productsCollection2.insertOne({
     name,
@@ -546,19 +578,37 @@ app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, re
     allowFloat: allowFloat === "true",
     purchaseType: purchaseType || "both",
   });
-  res.json({ success: true });
+  const response = { success: true };
+  if (uploadWarning) {
+    response.warning = uploadWarning;
+  }
+  res.json(response);
 });
 
 app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
   try {
-    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (!product) return res.status(404).json({ error: "Product not found" });
 
     // Prefer CloudFront domain for image delivery if configured
     const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-    const s3Url = req.file ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}` : null;
-    const img = req.file ? (cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url) : product.img;
+    let img;
+    let uploadWarning = null;
+    
+    if (req.file) {
+      const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+      img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+    } else {
+      // Use existing image from request or product, or placeholder if null/invalid
+      const existingImage = existingImg || product.img;
+      if (existingImage && existingImage !== 'null' && existingImage !== 'undefined') {
+        img = existingImage;
+      } else {
+        img = "/res/logo.jpg";
+        uploadWarning = "No valid image found - using placeholder.";
+      }
+    }
 
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -578,7 +628,11 @@ app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req,
         },
       }
     );
-    res.json({ success: true });
+    const response = { success: true };
+    if (uploadWarning) {
+      response.warning = uploadWarning;
+    }
+    res.json(response);
   } catch (err) {
     res.status(500).json({ error: "Failed to update product" });
   }

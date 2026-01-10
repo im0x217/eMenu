@@ -845,6 +845,7 @@
             });
 
             if (res.ok) {
+              const data = await res.json();
               fetchProducts(category);
               this.reset();
               document.getElementById('productSubCategory').innerHTML = '<option value="">-- اختياري --</option>';
@@ -857,9 +858,15 @@
                 editProductId = null;
                 document.getElementById("cancelEditBtn").style.display = "none";
               }
-              showToast(editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج", "success");
+              const successMsg = editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج";
+              if (data.warning) {
+                showToast(successMsg + " - تحذير: " + data.warning, "warning");
+              } else {
+                showToast(successMsg, "success");
+              }
             } else {
-              showToast("خطأ أثناء حفظ المنتج", "danger");
+              const errData = await res.json();
+              showToast(errData.error || "خطأ أثناء حفظ المنتج", "danger");
             }
           } catch (error) {
             showToast("خطأ في الشبكة", "danger");
