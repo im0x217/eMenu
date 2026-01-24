@@ -1,8 +1,0 @@
-{
-  "name": "eMenu-root-delegate",
-  "private": true,
-  "scripts": {
-    "postinstall": "cd Desktop/eMenu/eMenu-main && npm install",
-    "start": "cd Desktop/eMenu/eMenu-main && node server.js"
-  }
-}
