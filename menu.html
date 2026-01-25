@@ -1264,22 +1264,14 @@
             if (data) {
               cart = JSON.parse(data);
               const currentShop = "shop1"; // menu.html is Shop 1
-              
-              // Initialize shop property for all items and validate consistency
-              let hasMixedShops = false;
+
+              // Initialize shop property for all items
               cart.forEach((item) => {
                 if (!("details" in item)) item.details = "";
                 if (!item.shop) {
                   item.shop = currentShop;
-                } else if (item.shop !== currentShop) {
-                  hasMixedShops = true;
                 }
               });
-              
-              // If cart had items from different shop, clear it
-              if (hasMixedShops) {
-                cart = [];
-              }
             }
           } catch (e) {
             cart = [];
@@ -1300,7 +1292,7 @@
           if (cart.length > 0) {
             const cartShop = cart[0].shop;
             if (cartShop && cartShop !== currentShop) {
-              alert("لا يمكنك إضافة منتجات من متاجر مختلفة في نفس السلة.\n\nيجب عليك إما:\n1. تفريغ السلة الحالية\n2. أو إتمام الطلب قبل الشراء من متجر آخر");
+              showToast("لا يمكنك فعل ذلك، يرجى إتمام الطلب الحالي أو تفريغ السلة أولاً", "danger");
               return;
             }
           }
