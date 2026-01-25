@@ -1286,6 +1286,17 @@
               ? product.price_bulk
               : product.price_regular ?? product.price;
           const key = product.name + "|" + price;
+          const currentShop = "shop1"; // menu.html is Shop 1
+          
+          // Check if cart has items from different shop
+          if (cart.length > 0) {
+            const cartShop = cart[0].shop;
+            if (cartShop && cartShop !== currentShop) {
+              alert("لا يمكنك إضافة منتجات من متاجر مختلفة في نفس السلة.\n\nيجب عليك إما:\n1. تفريغ السلة الحالية\n2. أو إتمام الطلب قبل الشراء من متجر آخر");
+              return;
+            }
+          }
+          
           // Enforce single price type in cart
           if (cart.length > 0) {
             const isBulkCart = cart.every(
@@ -1316,6 +1327,7 @@
               details: "",
               price_bulk: product.price_bulk || null,
               allowFloat: product.allowFloat || false,
+              shop: currentShop,
             });
           }
           saveCart();
