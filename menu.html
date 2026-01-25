@@ -1263,9 +1263,23 @@
             const data = localStorage.getItem("cart");
             if (data) {
               cart = JSON.parse(data);
+              const currentShop = "shop1"; // menu.html is Shop 1
+              
+              // Initialize shop property for all items and validate consistency
+              let hasMixedShops = false;
               cart.forEach((item) => {
                 if (!("details" in item)) item.details = "";
+                if (!item.shop) {
+                  item.shop = currentShop;
+                } else if (item.shop !== currentShop) {
+                  hasMixedShops = true;
+                }
               });
+              
+              // If cart had items from different shop, clear it
+              if (hasMixedShops) {
+                cart = [];
+              }
             }
           } catch (e) {
             cart = [];
