@@ -1293,16 +1293,10 @@
             showToast("هذا المنتج غير متوفر حالياً", "danger");
             return;
           }
-          const productImg =
-            product.imgDisplay || product.imgSigned || product.img;
-          const price =
-            showBulk && product.price_bulk
-              ? product.price_bulk
-              : product.price_regular ?? product.price;
-          const key = product.name + "|" + price;
+          
           const currentShop = "shop1"; // menu.html is Shop 1
           
-          // Check if cart has items from different shop
+          // CHECK SHOP FIRST - before any other validation
           if (cart.length > 0) {
             const cartShop = cart[0].shop;
             if (cartShop && cartShop !== currentShop) {
@@ -1310,6 +1304,21 @@
               return;
             }
           }
+          
+          const productImg =
+            product.imgDisplay || product.imgSigned || product.img;
+          const price =
+            showBulk && product.price_bulk
+              ? product.price_bulk
+              : product.price_regular ?? product.price;
+          
+          // Handle products without price
+          if (!price) {
+            showToast("هذا المنتج لا يملك سعر محدد", "danger");
+            return;
+          }
+          
+          const key = product.name + "|" + price;
           
           // Enforce single price type in cart
           if (cart.length > 0) {
