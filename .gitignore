@@ -2,4 +2,6 @@ node_modules/
 products.json
 uploads/
 .env
+*.csv
+public/res/downloaded/
 
