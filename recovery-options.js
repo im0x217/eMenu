@@ -33,7 +33,11 @@ async function inspectBackups() {
   
   // Try to get current state
   try {
-    const uri = process.env.MONGO_URI || 'mongodb+srv://mohan:mohanali@cluster0.mongodb.net/emenu?retryWrites=true&w=majority';
+    const uri = process.env.MONGO_URI;
+    if (!uri) {
+      console.log('⚠️  MONGO_URI environment variable not set. Cannot connect to database.');
+      return;
+    }
     const client = new MongoClient(uri);
     
     console.log('\n📊 CURRENT DATABASE STATE:\n');

@@ -304,6 +304,8 @@
             type="button"
             class="btn-close btn-close-white me-2 m-auto"
             data-bs-dismiss="toast"
+            aria-label="إغلاق"
+            title="إغلاق"
           ></button>
         </div>
       </div>
@@ -315,6 +317,8 @@
             id="img-modal-img"
             class="w-100 rounded-3"
             style="background: #fff"
+            alt="صورة المنتج مكبرة"
+            title="صورة المنتج مكبرة"
           />
         </div>
       </div>
@@ -634,9 +638,9 @@
           card.className = "col";
           card.innerHTML = `
           <div class="product-card shadow-sm d-flex flex-column">
-            <img src="${product.img}" class="card-img-top" alt="${
+            <img src="${product.imgSigned || product.img}" class="card-img-top" alt="${
             product.name
-          }" onclick="zoomImg('${product.img}')">
+          }" onclick="zoomImg('${product.imgSigned || product.img}')" onerror="this.src='/res/logo2.jpg.jpeg'">
             <div class="card-body p-2 d-flex flex-column">
               <h6 class="card-title mb-1">${product.name}</h6>
               <p class="card-text" style="font-size:0.97rem;">${
@@ -854,11 +858,11 @@
               updatePriceInputStates();
               uploadedFileData = null;
               document.getElementById("preview-img").src = "";
+              const successMsg = editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج";
               if(editProductId) {
                 editProductId = null;
                 document.getElementById("cancelEditBtn").style.display = "none";
               }
-              const successMsg = editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج";
               if (data.warning) {
                 showToast(successMsg + " - تحذير: " + data.warning, "warning");
               } else {
@@ -914,7 +918,7 @@
       }
       async function logout() {
         document.cookie =
-          "admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          "admin_shop2=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.getElementById("login-container").style.display = "";
         document.getElementById("admin-container").style.display = "none";
         showToast("تم تسجيل الخروج", "info");

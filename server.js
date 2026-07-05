@@ -6,8 +6,7 @@ const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { S3Client } = require("@aws-sdk/client-s3");
 const path = require("path");
 
 const app = express();
@@ -115,7 +114,7 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, "public")));
 
 console.log("[INIT] Registering API routes...");
 
@@ -150,7 +149,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // ============ DEBUG ENDPOINTS ============
-app.get("/api/debug/products-by-category", checkMongoDB, async (req, res) => {
+app.get("/api/debug/products-by-category", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const categories = await categoriesCollection.find({}).toArray();
     const result = {};
@@ -172,7 +171,7 @@ app.get("/api/debug/products-by-category", checkMongoDB, async (req, res) => {
   }
 });
 
-app.get("/api/debug/purchase-types", checkMongoDB, async (req, res) => {
+app.get("/api/debug/purchase-types", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const results = await productsCollection.aggregate([
       {
@@ -194,7 +193,7 @@ app.get("/api/debug/purchase-types", checkMongoDB, async (req, res) => {
   }
 });
 
-app.get("/api/debug/subcategories", checkMongoDB, async (req, res) => {
+app.get("/api/debug/subcategories", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const category = req.query.category;
     let query = {};
@@ -389,22 +388,33 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) 
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)" });
   }
-
-  await productsCollection.updateOne(
-    { _id: new ObjectId(req.params.id) },
-    { $set: updateData }
-  );
-  const response = { success: true };
-  if (uploadWarning) {
-    response.warning = uploadWarning;
+  if (!ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid product ID" });
   }
-  res.json(response);
+
+  try {
+    await productsCollection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: updateData }
+    );
+    const response = { success: true };
+    if (uploadWarning) {
+      response.warning = uploadWarning;
+    }
+    res.json(response);
+  } catch (err) {
+    console.error("Error updating product:", err);
+    res.status(500).json({ error: "Failed to update product" });
+  }
 });
 
 app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
   const { available } = req.body;
   if (typeof available !== 'boolean') {
       return res.status(400).json({ error: "Invalid available status" });
+  }
+  if (!ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid product ID" });
   }
   try {
       await productsCollection.updateOne(
@@ -420,6 +430,9 @@ app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
 
 app.delete("/api/products/:id", checkAdmin, async (req, res) => {
   try {
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
     await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -458,6 +471,9 @@ app.put("/api/categories/:id", checkAdmin, async (req, res) => {
     if (!name || !emoji) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid category ID" });
+    }
     await categoriesCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
       { $set: { name, emoji, subCategories: subCategories || [] } }
@@ -470,6 +486,9 @@ app.put("/api/categories/:id", checkAdmin, async (req, res) => {
 
 app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
   try {
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid category ID" });
+    }
     await categoriesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -478,7 +497,7 @@ app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
 });
 
 // ============ SHOP2 API ROUTES ============
-app.get("/api/shop2/categories", async (req, res) => {
+app.get("/api/shop2/categories", checkMongoDB, async (req, res) => {
   try {
     const cats = await categoriesCollection2.find({}).toArray();
     res.json(cats);
@@ -488,7 +507,7 @@ app.get("/api/shop2/categories", async (req, res) => {
   }
 });
 
-app.post("/api/shop2/categories", checkAdmin, async (req, res) => {
+app.post("/api/shop2/categories", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const { name, emoji, subCategories } = req.body;
     if (!name || !emoji) {
@@ -502,11 +521,14 @@ app.post("/api/shop2/categories", checkAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/shop2/categories/:id", checkAdmin, async (req, res) => {
+app.put("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const { name, emoji, subCategories } = req.body;
     if (!name || !emoji) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid category ID" });
     }
     await categoriesCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -519,8 +541,11 @@ app.put("/api/shop2/categories/:id", checkAdmin, async (req, res) => {
   }
 });
 
-app.delete("/api/shop2/categories/:id", checkAdmin, async (req, res) => {
+app.delete("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid category ID" });
+    }
     await categoriesCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -529,7 +554,7 @@ app.delete("/api/shop2/categories/:id", checkAdmin, async (req, res) => {
   }
 });
 
-app.get("/api/shop2/products", async (req, res) => {
+app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
   try {
     const { category, bulkSearch } = req.query;
     let query = {};
@@ -579,7 +604,7 @@ app.get("/api/shop2/products", async (req, res) => {
   }
 });
 
-app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, res) => {
+app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   
   // Check for file validation errors first
@@ -606,29 +631,38 @@ app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, re
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
-  await productsCollection2.insertOne({
-    name,
-    desc,
-    price_regular,
-    price_bulk,
-    price,
-    img,
-    category,
-    subCategory,
-    available: available !== "false",
-    allowFloat: allowFloat === "true",
-    purchaseType: purchaseType || "both",
-  });
-  const response = { success: true };
-  if (uploadWarning) {
-    response.warning = uploadWarning;
+  try {
+    await productsCollection2.insertOne({
+      name,
+      desc,
+      price_regular,
+      price_bulk,
+      price,
+      img,
+      category,
+      subCategory,
+      available: available !== "false",
+      allowFloat: allowFloat === "true",
+      purchaseType: purchaseType || "both",
+    });
+    console.log("[UPLOAD SUCCESS] Shop2 product saved with image:", img);
+    const response = { success: true };
+    if (uploadWarning) {
+      response.warning = uploadWarning;
+    }
+    res.json(response);
+  } catch (err) {
+    console.error("[UPLOAD ERROR] Shop2 database error:", err.message);
+    res.status(500).json({ error: err.message });
   }
-  res.json(response);
 });
 
-app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
+app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), async (req, res) => {
   try {
     const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (!product) return res.status(404).json({ error: "Product not found" });
 
@@ -679,8 +713,11 @@ app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req,
   }
 });
 
-app.delete("/api/shop2/products/:id", checkAdmin, async (req, res) => {
+app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
     await productsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -688,10 +725,13 @@ app.delete("/api/shop2/products/:id", checkAdmin, async (req, res) => {
   }
 });
 
-app.patch("/api/shop2/products/:id/availability", checkAdmin, async (req, res) => {
+app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, async (req, res) => {
   const { available } = req.body;
   if (typeof available !== 'boolean') {
       return res.status(400).json({ error: "Invalid available status" });
+  }
+  if (!ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid product ID" });
   }
   try {
       await productsCollection2.updateOne(

@@ -304,6 +304,8 @@
             type="button"
             class="btn-close btn-close-white me-2 m-auto"
             data-bs-dismiss="toast"
+            aria-label="إغلاق"
+            title="إغلاق"
           ></button>
         </div>
       </div>
@@ -315,6 +317,8 @@
             id="img-modal-img"
             class="w-100 rounded-3"
             style="background: #fff"
+            alt="صورة المنتج مكبرة"
+            title="صورة المنتج مكبرة"
           />
         </div>
       </div>
@@ -497,11 +501,7 @@
         toast.show();
       }
       const getProductImg = (product) => {
-        const img = product.imgSigned || product.img || "res/logo.jpg";
-        if (product.imgSigned && product.name === "qqq") {
-          console.log("[DEBUG] Product qqq: Using imgSigned:", img.substring(0, 80) + "...");
-        }
-        return img;
+        return product.imgSigned || product.img || "res/logo.jpg";
       };
       function zoomImg(src) {
         document.getElementById("img-modal-img").src = src;
@@ -880,11 +880,11 @@
               updatePriceInputStates();
               uploadedFileData = null;
               document.getElementById("preview-img").src = "";
+              const successMsg = editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج";
               if(editProductId) {
                 editProductId = null;
                 document.getElementById("cancelEditBtn").style.display = "none";
               }
-              const successMsg = editProductId ? "تم تعديل المنتج" : "تمت إضافة المنتج";
               if (data.warning) {
                 showToast(successMsg + " - تحذير: " + data.warning, "warning");
               } else {

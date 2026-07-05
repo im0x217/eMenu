@@ -317,7 +317,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="categoryModalLabel">إضافة/تعديل صنف</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق" title="إغلاق"></button>
                 </div>
                 <div class="modal-body">
                     <form id="categoryForm">
@@ -378,8 +378,8 @@
                         <td>${category.emoji}</td>
                         <td>${subCategoriesHtml}</td>
                         <td>
-                            <button class="btn btn-sm btn-warning" onclick="editCategory('${category._id}', '${category.name}', '${category.emoji}', '${(category.subCategories || []).join(', ')}')"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteCategory('${category._id}')"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-warning" onclick="editCategory('${category._id}', '${category.name}', '${category.emoji}', '${(category.subCategories || []).join(', ')}')" aria-label="تعديل" title="تعديل"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCategory('${category._id}')" aria-label="حذف" title="حذف"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>
                 `;
