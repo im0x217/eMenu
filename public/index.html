@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>حلويات عبمبر الزروق</title>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
@@ -21,35 +23,15 @@
         box-sizing: border-box;
         user-select: none;
         -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-      }
-
-      input,
-      textarea,
-      button,
-      a {
-        user-select: auto;
-        -webkit-user-select: auto;
-        -moz-user-select: auto;
-        -ms-user-select: auto;
-      }
-
-      button,
-      a,
-      [onclick],
-      .category-card,
-      .category-btn {
-        cursor: pointer;
-      }
-
-      input,
-      textarea {
-        cursor: text;
       }
 
       body {
-        background: linear-gradient(135deg, #fdb518 0%, #ffc849 100%);
+        background-color: #0c0603;
+        background-image: 
+          radial-gradient(circle at 20% 20%, rgba(253, 181, 24, 0.08) 0%, transparent 40%),
+          radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 50% 50%, #150a05 0%, #080301 100%);
+        background-attachment: fixed;
         min-height: 100vh;
         direction: rtl;
         text-align: right;
@@ -57,178 +39,228 @@
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+        font-family: 'Cairo', sans-serif;
         padding: 2rem;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* Glowing background elements */
+      .glow-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0.5;
+        animation: orbFloat 15s ease-in-out infinite alternate;
+      }
+      .orb-1 {
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, rgba(253, 181, 24, 0.15) 0%, transparent 70%);
+        top: -50px;
+        left: -50px;
+      }
+      .orb-2 {
+        width: 450px;
+        height: 450px;
+        background: radial-gradient(circle, rgba(139, 69, 19, 0.25) 0%, transparent 70%);
+        bottom: -100px;
+        right: -100px;
+        animation-delay: -5s;
+      }
+
+      @keyframes orbFloat {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(40px, 30px) scale(1.1);
+        }
       }
 
       .landing-container {
         max-width: 900px;
         width: 100%;
+        z-index: 10;
+        margin: auto;
       }
 
       .header-section {
         text-align: center;
-        margin-bottom: 4rem;
-        animation: slideDown 0.6s ease-out;
+        margin-bottom: 3.5rem;
+        animation: fadeInDown 0.8s ease-out;
       }
 
       .logo-section {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        display: inline-block;
+      }
+
+      .logo-ring {
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        border: 2px dashed rgba(253, 181, 24, 0.3);
+        border-radius: 50%;
+        animation: rotateRing 20s linear infinite;
+      }
+
+      @keyframes rotateRing {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
 
       .navbar-logo {
-        width: 140px;
-        height: 140px;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
-        border: 5px solid #fff;
+        border: 4px solid rgba(255, 255, 255, 0.05);
         object-fit: cover;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        background: #fff;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6);
+        background: #1a0f0a;
+        position: relative;
+        z-index: 2;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .logo-section:hover .navbar-logo {
+        transform: rotate(360deg) scale(1.05);
+        border-color: rgba(253, 181, 24, 0.5);
+        box-shadow: 0 15px 45px rgba(253, 181, 24, 0.2);
       }
 
       .header-section h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #fff;
+        font-size: 2.8rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #ffffff 40%, #fdb518 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         margin-top: 1.5rem;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         letter-spacing: -0.5px;
       }
 
       .header-section p {
-        font-size: 1.1rem;
-        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.65);
         margin-top: 0.5rem;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        letter-spacing: 0.5px;
       }
 
       .categories-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 2rem;
         width: 100%;
         margin-bottom: 2rem;
       }
 
+      .category-link {
+        text-decoration: none !important;
+        color: inherit;
+        outline: none;
+      }
+
       .category-card {
         width: 100%;
-        height: 250px;
-        display: grid;
-        place-content: center;
-        color: #333;
-        text-shadow: none;
+        height: 270px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 28px;
+        padding: 2.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
         cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
-        animation: fadeInUp 0.6s ease-out;
-
-        --border-angle: 0turn;
-        --main-bg: conic-gradient(
-          from var(--border-angle),
-          #fff,
-          #fafafa 5%,
-          #fafafa 60%,
-          #fff 95%
-        );
-
-        border: solid 5px transparent;
-        border-radius: 2em;
-        --gradient-border: conic-gradient(
-          from var(--border-angle),
-          transparent 25%,
-          #fdb518,
-          #ffc849 99%,
-          transparent
-        );
-
-        background:
-          var(--main-bg) padding-box,
-          var(--gradient-border) border-box,
-          var(--main-bg) border-box;
-
-        background-position: center center;
-        animation: bg-spin 3s linear infinite, fadeInUp 0.6s ease-out;
+        animation: fadeInUp 0.8s ease-out;
       }
 
-      @keyframes bg-spin {
-        to {
-          --border-angle: 1turn;
-        }
+      /* Glowing inner border effect */
+      .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border-radius: 28px;
+        padding: 2px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(253, 181, 24, 0.1) 100%);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        transition: all 0.5s ease;
       }
 
-      @property --border-angle {
-        syntax: "<angle>";
-        inherits: true;
-        initial-value: 0turn;
-      }
-
+      /* Hover states */
       .category-card:hover {
-        animation-play-state: paused;
-        transform: translateY(-8px);
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(253, 181, 24, 0.2);
+        box-shadow: 
+          0 20px 40px rgba(0, 0, 0, 0.5), 
+          0 0 25px rgba(253, 181, 24, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
       }
 
-      .category-card.disabled {
-        cursor: not-allowed;
-        opacity: 1;
+      .category-card:hover::before {
+        background: linear-gradient(135deg, rgba(253, 181, 24, 0.5) 0%, transparent 50%, rgba(253, 181, 24, 0.3) 100%);
       }
 
-      .category-card.disabled:hover {
-        transform: none;
-        animation-play-state: running;
+      /* Card themes */
+      .theme-yellow:hover {
+        border-color: rgba(253, 181, 24, 0.3);
+      }
+      .theme-blue:hover {
+        border-color: rgba(30, 58, 95, 0.5);
       }
 
       .card-icon {
-        font-size: 3.5rem;
-        margin-bottom: 1rem;
+        font-size: 3.8rem;
+        margin-bottom: 1.2rem;
+        display: inline-block;
+        transition: transform 0.4s ease;
+        filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+      }
+
+      .category-card:hover .card-icon {
+        transform: scale(1.15) rotate(5deg);
       }
 
       .card-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 0.5rem;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 0.6rem;
+        letter-spacing: -0.2px;
       }
 
       .card-description {
         font-size: 0.95rem;
-        color: #666;
-        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        line-height: 1.5;
       }
 
-      /* Coming Soon Badge */
-      .coming-soon-badge {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 3;
-        background: #fff;
-        color: #000;
-        padding: 1.5rem 2rem;
-        border-radius: 16px;
-        text-align: center;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
-      }
-
-      .coming-soon-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        margin-bottom: 0.75rem;
-        letter-spacing: 0.5px;
-        color: #000;
-      }
-
-      .coming-soon-text {
-        font-size: 0.95rem;
-        color: #333;
-        opacity: 1;
+      .category-card:hover .card-description {
+        color: rgba(255, 255, 255, 0.8);
       }
 
       /* Animations */
-      @keyframes slideDown {
+      @keyframes fadeInDown {
         from {
           opacity: 0;
-          transform: translateY(-20px);
+          transform: translateY(-30px);
         }
         to {
           opacity: 1;
@@ -239,7 +271,7 @@
       @keyframes fadeInUp {
         from {
           opacity: 0;
-          transform: translateY(30px);
+          transform: translateY(40px);
         }
         to {
           opacity: 1;
@@ -247,41 +279,60 @@
         }
       }
 
-      @keyframes popIn {
-        0% {
-          opacity: 0;
-          transform: translate(-50%, -50%) scale(0.3);
-        }
-        50% {
-          transform: translate(-50%, -50%) scale(1.05);
-        }
-        100% {
-          opacity: 1;
-          transform: translate(-50%, -50%) scale(1);
-        }
+      .category-link:nth-child(2) .category-card {
+        animation-delay: 0.15s;
       }
 
-      .category-card:nth-child(2) {
-        animation-delay: 0.1s;
+      /* Footer */
+      footer {
+        position: relative;
+        z-index: 10;
+        margin-top: 4rem;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 900px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 20px;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 0.9rem;
       }
 
-      /* Responsive */
+      footer a {
+        color: #fdb518;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+      }
+
+      footer a:hover {
+        color: #ffe066;
+        text-decoration: underline !important;
+      }
+
+      /* Responsive styling */
       @media (max-width: 768px) {
         body {
-          padding: 1rem;
+          padding: 1.5rem 1rem;
         }
 
         .header-section h1 {
-          font-size: 2rem;
+          font-size: 2.2rem;
         }
 
         .header-section p {
-          font-size: 1rem;
+          font-size: 1.1rem;
         }
 
         .navbar-logo {
-          width: 80px;
-          height: 80px;
+          width: 120px;
+          height: 120px;
         }
 
         .categories-section {
@@ -290,15 +341,16 @@
         }
 
         .category-card {
-          height: 220px;
+          height: 230px;
+          padding: 2rem;
         }
 
         .card-icon {
-          font-size: 3rem;
+          font-size: 3.2rem;
         }
 
         .card-title {
-          font-size: 1.3rem;
+          font-size: 1.4rem;
         }
       }
 
@@ -308,122 +360,66 @@
         }
 
         .header-section h1 {
-          font-size: 1.5rem;
+          font-size: 1.8rem;
         }
 
         .header-section p {
-          font-size: 0.95rem;
+          font-size: 1rem;
         }
 
         .navbar-logo {
-          width: 70px;
-          height: 70px;
+          width: 100px;
+          height: 100px;
         }
 
-        .category-card {
-          height: 200px;
-        }
-
-        .card-icon {
-          font-size: 2.5rem;
-          margin-bottom: 0.75rem;
-        }
-
-        .card-title {
-          font-size: 1.1rem;
-        }
-
-        .card-description {
+        footer {
+          flex-direction: column;
+          gap: 0.25rem;
           font-size: 0.85rem;
+          margin-top: 3rem;
         }
-
-        .coming-soon-badge {
-          padding: 0.75rem 1rem;
-        }
-
-        .coming-soon-title {
-          font-size: 1.1rem;
-          margin-bottom: 0.25rem;
-        }
-
-        .coming-soon-text {
-          font-size: 0.8rem;
-        }
-      }
-
-      /* Hover effect for coming soon */
-      .category-card.disabled:hover .coming-soon-badge {
-        animation: pulse 1.5s ease-in-out;
-      }
-
-      @keyframes pulse {
-        0%, 100% {
-          transform: translate(-50%, -50%) scale(1);
-        }
-        50% {
-          transform: translate(-50%, -50%) scale(1.05);
-        }
-      }
-
-      footer {
-        position: sticky;
-        bottom: 0;
-        z-index: 100;
-        margin-top: 3rem;
-        padding: 1rem;
-        background: transparent;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.9rem;
-        text-align: center;
-      }
-
-      footer a {
-        color: rgba(255, 255, 255, 0.95);
-        text-decoration: none;
-        transition: opacity 0.3s;
-      }
-
-      footer a:hover {
-        opacity: 0.7;
       }
     </style>
   </head>
   <body>
+    <!-- Background Orbs -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
     <div class="landing-container">
       <div class="header-section">
         <div class="logo-section">
+          <div class="logo-ring"></div>
           <img src="res/logo.jpg" alt="Logo" class="navbar-logo" />
         </div>
         <h1>حلويات عبمبر الزروق</h1>
-        <p>اختر من بين الخيارات المتاحة</p>
+        <p>مرحباً بكم، اختر وجهتك لتصفح المنيو</p>
       </div>
 
       <div class="categories-section">
-        <!-- Main Website Button -->
-        <a href="menu.html" style="text-decoration: none;">
-          <div class="category-card">
+        <!-- Main Website Button (Yellow Theme) -->
+        <a href="menu.html" class="category-link">
+          <div class="category-card theme-yellow">
             <div class="card-icon">🍰</div>
             <div class="card-title">المتجر الرئيسي</div>
-            <div class="card-description">تصفح جميع المنتجات والحلويات</div>
+            <div class="card-description">تصفح جميع المنتجات، الجاتوهات، والحلويات الشرقية والغربية</div>
           </div>
         </a>
 
-        <!-- Blue Shop Button -->
-        <a href="shop2.html" style="text-decoration: none;">
-          <div class="category-card">
-            <div class="card-icon">✨</div>
-            <div class="card-title">النواشف</div>
-            <div class="card-description">كعك, غريبة ,قرينات وغيرهم...</div>
+        <!-- Blue Shop Button (Blue Theme) -->
+        <a href="shop2.html" class="category-link">
+          <div class="category-card theme-blue">
+            <div class="card-icon">🥯</div>
+            <div class="card-title">قسم النواشف</div>
+            <div class="card-description">تصفح أصناف النواشف، الكعك، الغريبة، القرينات والمالح</div>
           </div>
         </a>
       </div>
     </div>
 
     <footer>
-      &copy; 2025 مهند الزروق &mdash;
-      <a href="LICENSE" target="_blank">MIT License</a>
+      <span>&copy; 2026 حلويات عبمبر الزروق &mdash; جميع الحقوق محفوظة.</span>
+      <span>تصميم وتطوير بواسطة <a href="LICENSE" target="_blank">مهند الزروق</a></span>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
