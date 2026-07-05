@@ -155,7 +155,22 @@
             document.getElementById('progressList').appendChild(div);
         }
 
-        loadProducts();
+        // Check admin authentication before loading page content
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/admin-check');
+                if (!res.ok) {
+                    window.location.href = 'admin.html';
+                }
+            } catch (e) {
+                window.location.href = 'admin.html';
+            }
+        }
+
+        window.onload = async () => {
+            await checkAuth();
+            loadProducts();
+        };
     </script>
 </body>
 </html>

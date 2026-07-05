@@ -556,29 +556,6 @@
 
       /* Horizontal Categories swipe & Floating action cart button for mobile screens */
       @media (max-width: 600px) {
-        #categories-header > div {
-          display: flex !important;
-          flex-wrap: nowrap !important;
-          justify-content: flex-start !important;
-          overflow-x: auto !important;
-          padding: 0.5rem 0.5rem 1rem 0.5rem !important;
-          -webkit-overflow-scrolling: touch;
-          scroll-snap-type: x mandatory;
-          scrollbar-width: none;
-          gap: 0.75rem !important;
-        }
-        #categories-header > div::-webkit-scrollbar {
-          display: none;
-        }
-        #categories-header > div .category-btn {
-          scroll-snap-align: start;
-          flex-shrink: 0 !important;
-          min-width: 105px !important;
-          padding: 0.6rem 0.8rem !important;
-          font-size: 0.9rem !important;
-          border-radius: 18px !important;
-        }
-        
         /* Floating Action Cart Button */
         .cart-bar {
           position: fixed !important;
@@ -681,6 +658,8 @@
         .card-title {
           font-size: 0.85rem !important;
           margin-bottom: 0.2rem !important;
+          line-height: 1.4 !important;
+          padding-bottom: 2px !important;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -1030,7 +1009,6 @@
         }
 
         let showBulk = localStorage.getItem("showBulk") === "true";
-        const BULK_CODE = "1234";
         function showToast(msg, type = "primary") {
           const toastBody = document.getElementById("toast-body");
           const toastElem = document.getElementById("main-toast");
@@ -1619,10 +1597,6 @@
           const modal = bootstrap.Modal.getInstance(modalEl);
           if (modal) modal.hide();
           renderCategories();
-          // Add style for unavailable products
-          const style = document.createElement("style");
-          style.innerHTML = `.product-card.unavailable { opacity: 0.6; pointer-events: none; filter: grayscale(0.7); }`;
-          document.head.appendChild(style);
         }
         function updateBulkPriceDisplay() {
           document.querySelectorAll(".product-card").forEach((card) => {
@@ -1644,7 +1618,7 @@
             }
           }
         }
-        function toggleBulkPrice() {
+        async function toggleBulkPrice() {
           const currentCategoryName = getCurrentCategoryName();
 
           if (showBulk) {
@@ -1653,15 +1627,26 @@
             showToast("تم إخفاء أسعار الجملة", "info");
           } else {
             const code = prompt("أدخل رمز الجملة (4 أرقام):");
-            if (code === BULK_CODE) {
-              showBulk = true;
-              localStorage.setItem("showBulk", "true");
-              showToast("تم تفعيل أسعار الجملة", "success");
-            } else if (code !== null) {
-              showToast("رمز غير صحيح", "danger");
-              return; // Don't proceed if code is wrong
-            } else {
-              return; // Don't proceed if prompt is cancelled
+            if (code === null) return; // Prompt cancelled
+            
+            try {
+              const res = await fetch("/api/verify-bulk-code", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code })
+              });
+              
+              if (res.ok) {
+                showBulk = true;
+                localStorage.setItem("showBulk", "true");
+                showToast("تم تفعيل أسعار الجملة", "success");
+              } else {
+                showToast("رمز غير صحيح", "danger");
+                return;
+              }
+            } catch (e) {
+              showToast("خطأ في الاتصال بالخادم", "danger");
+              return;
             }
           }
 

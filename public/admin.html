@@ -565,6 +565,29 @@
         const mainCategorySelect = document.getElementById('productMainCategory');
         const subCategorySelect = document.getElementById('productSubCategory');
         
+      function updateSubCategories() {
+        const mainCategorySelect = document.getElementById('productMainCategory');
+        const subCategorySelect = document.getElementById('productSubCategory');
+        const selectedMain = mainCategorySelect.value;
+        const category = categories.find(c => c.name === selectedMain);
+        
+        const currentSubVal = subCategorySelect.value;
+        subCategorySelect.innerHTML = '<option value="">-- اختياري --</option>';
+        if (category && category.subCategories && category.subCategories.length > 0) {
+            category.subCategories.forEach(sub => {
+                subCategorySelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+            subCategorySelect.disabled = false;
+            subCategorySelect.value = currentSubVal;
+        } else {
+            subCategorySelect.disabled = true;
+        }
+      }
+
+      function populateCategoryDropdowns() {
+        const mainCategorySelect = document.getElementById('productMainCategory');
+        const subCategorySelect = document.getElementById('productSubCategory');
+        
         const currentMainVal = mainCategorySelect.value;
         const currentSubVal = subCategorySelect.value;
 
@@ -574,27 +597,8 @@
         });
 
         mainCategorySelect.value = currentMainVal;
-
-        mainCategorySelect.addEventListener('change', () => {
-            const selectedMain = mainCategorySelect.value;
-            const category = categories.find(c => c.name === selectedMain);
-            
-            subCategorySelect.innerHTML = '<option value="">-- اختياري --</option>';
-            if (category && category.subCategories && category.subCategories.length > 0) {
-                category.subCategories.forEach(sub => {
-                    subCategorySelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-                });
-                subCategorySelect.disabled = false;
-            } else {
-                subCategorySelect.disabled = true;
-            }
-        });
-        
-        // Restore subcategory value if it was selected
-        if(currentMainVal) {
-            mainCategorySelect.dispatchEvent(new Event('change'));
-            subCategorySelect.value = currentSubVal;
-        }
+        updateSubCategories();
+        subCategorySelect.value = currentSubVal;
       }
 
       function showSpinner(show) {
@@ -684,6 +688,9 @@
         `;
           productList.appendChild(card);
         });
+        fadeInContent("product-list");
+      }
+
       window.toggleAvailability = async function(id, available) {
         showSpinner(true);
         try {
@@ -709,8 +716,7 @@
             showSpinner(false);
         }
       };
-        fadeInContent("product-list");
-      }
+
       window.deleteProduct = async function (id) {
         if (!confirm("هل تريد حذف المنتج؟")) return;
         showSpinner(true);
@@ -780,6 +786,7 @@
       document
         .getElementById("productMainCategory")
         .addEventListener("change", function () {
+          updateSubCategories();
           fetchProducts(this.value);
         });
 

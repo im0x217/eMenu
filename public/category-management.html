@@ -371,19 +371,58 @@
         function renderCategories(categories) {
             categoriesTableBody.innerHTML = '';
             categories.forEach(category => {
-                const subCategoriesHtml = (category.subCategories || []).map(sub => `<span class="sub-category-chip">${sub}</span>`).join(' ');
-                const row = `
-                    <tr>
-                        <td>${category.name}</td>
-                        <td>${category.emoji}</td>
-                        <td>${subCategoriesHtml}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" onclick="editCategory('${category._id}', '${category.name}', '${category.emoji}', '${(category.subCategories || []).join(', ')}')" aria-label="تعديل" title="تعديل"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteCategory('${category._id}')" aria-label="حذف" title="حذف"><i class="bi bi-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-                categoriesTableBody.innerHTML += row;
+                const tr = document.createElement('tr');
+                
+                const tdName = document.createElement('td');
+                tdName.textContent = category.name || '';
+                tr.appendChild(tdName);
+                
+                const tdEmoji = document.createElement('td');
+                tdEmoji.textContent = category.emoji || '';
+                tr.appendChild(tdEmoji);
+                
+                const tdSubs = document.createElement('td');
+                if (category.subCategories && category.subCategories.length > 0) {
+                    category.subCategories.forEach(sub => {
+                        const span = document.createElement('span');
+                        span.className = 'sub-category-chip';
+                        span.textContent = sub;
+                        tdSubs.appendChild(span);
+                        tdSubs.appendChild(document.createTextNode(' '));
+                    });
+                }
+                tr.appendChild(tdSubs);
+                
+                const tdActions = document.createElement('td');
+                
+                const btnEdit = document.createElement('button');
+                btnEdit.className = 'btn btn-sm btn-warning';
+                btnEdit.title = 'تعديل';
+                btnEdit.setAttribute('aria-label', 'تعديل');
+                btnEdit.innerHTML = '<i class="bi bi-pencil-square"></i>';
+                btnEdit.addEventListener('click', () => {
+                    editCategory(
+                        category._id,
+                        category.name || '',
+                        category.emoji || '',
+                        (category.subCategories || []).join(', ')
+                    );
+                });
+                tdActions.appendChild(btnEdit);
+                tdActions.appendChild(document.createTextNode(' '));
+                
+                const btnDelete = document.createElement('button');
+                btnDelete.className = 'btn btn-sm btn-danger';
+                btnDelete.title = 'حذف';
+                btnDelete.setAttribute('aria-label', 'حذف');
+                btnDelete.innerHTML = '<i class="bi bi-trash"></i>';
+                btnDelete.addEventListener('click', () => {
+                    deleteCategory(category._id);
+                });
+                tdActions.appendChild(btnDelete);
+                
+                tr.appendChild(tdActions);
+                categoriesTableBody.appendChild(tr);
             });
         }
 

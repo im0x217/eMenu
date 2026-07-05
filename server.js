@@ -63,6 +63,12 @@ const getPublicUrl = (s3Url) => {
   return s3Url;
 };
 
+const parsePrice = (val, allowFloat) => {
+  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") return null;
+  const parsed = allowFloat ? parseFloat(val) : parseInt(val, 10);
+  return isNaN(parsed) ? null : parsed;
+};
+
 // Get display image (with fallback for missing or old images)
 const getDisplayImage = (product) => {
   // If no image, use placeholder
@@ -252,7 +258,31 @@ app.get("/api/debug/subcategories", checkMongoDB, checkAdmin, async (req, res) =
 });
 
 // ============ LOGIN ============
-app.post("/api/login", (req, res) => {
+const loginLimiter = (() => {
+  const ipCache = new Map();
+  return (req, res, next) => {
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const now = Date.now();
+    const windowMs = 15 * 60 * 1000; // 15 minutes
+    const maxRequests = 10; // Max 10 attempts per 15 minutes
+    
+    if (!ipCache.has(ip)) {
+      ipCache.set(ip, []);
+    }
+    
+    const timestamps = ipCache.get(ip).filter(t => now - t < windowMs);
+    timestamps.push(now);
+    ipCache.set(ip, timestamps);
+    
+    if (timestamps.length > maxRequests) {
+      console.log(`[RATE LIMIT EXCEEDED] IP: ${ip} exceeded login attempts limit.`);
+      return res.status(429).json({ error: "Too many login attempts. Please try again after 15 minutes." });
+    }
+    next();
+  };
+})();
+
+app.post("/api/login", loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     res.cookie("admin", "true", { httpOnly: true, sameSite: "Strict", secure: true });
@@ -320,6 +350,16 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
   }
 });
 
+app.post("/api/verify-bulk-code", (req, res) => {
+  const { code } = req.body;
+  const BULK_CODE = process.env.BULK_CODE || "1234";
+  if (code === BULK_CODE) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: "Invalid code" });
+  }
+});
+
 app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   
@@ -346,10 +386,15 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
   console.log("  File received:", req.file ? "Yes" : "No");
   console.log("  Form data:", { name, category, price_regular, price_bulk });
   
+  const isFloat = allowFloat === 'true';
+  const parsedPriceRegular = parsePrice(price_regular, isFloat);
+  const parsedPriceBulk = parsePrice(price_bulk, isFloat);
+  const parsedPrice = parsePrice(price, isFloat);
+
   if (
     !name ||
     !category ||
-    (price_regular === undefined && price === undefined)
+    (parsedPriceRegular === null && parsedPrice === null)
   ) {
     console.log("[UPLOAD ERROR] Missing required fields - name:", name, "category:", category);
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
@@ -358,14 +403,14 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
     await productsCollection.insertOne({
       name,
       desc,
-      price_regular,
-      price_bulk,
-      price,
+      price_regular: parsedPriceRegular,
+      price_bulk: parsedPriceBulk,
+      price: parsedPrice,
       img,
       category,
       subCategory,
       available: available === "false" ? false : true,
-      allowFloat: allowFloat === 'true',
+      allowFloat: isFloat,
       purchaseType: purchaseType || 'both'
     });
     console.log("[UPLOAD SUCCESS] Product saved with image:", img);
@@ -377,18 +422,21 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg, allowFloat, purchaseType } = req.body;
+  const isFloat = allowFloat === 'true';
+  const parsedPriceRegular = parsePrice(price_regular, isFloat);
+  const parsedPriceBulk = parsePrice(price_bulk, isFloat);
+  const parsedPrice = parsePrice(price, isFloat);
   
   let updateData = {
       name,
       desc,
-      price_regular,
-      price_bulk,
-      price,
+      price_regular: parsedPriceRegular,
+      price_bulk: parsedPriceBulk,
+      price: parsedPrice,
       category,
       subCategory,
       available: available === "false" ? false : true,
-      allowFloat: allowFloat === 'true',
+      allowFloat: isFloat,
       purchaseType: purchaseType || 'both'
   };
 
@@ -412,7 +460,7 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
   if (
     !updateData.name ||
     !updateData.category ||
-    (updateData.price_regular === undefined && updateData.price === undefined)
+    (updateData.price_regular === null && updateData.price === null)
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)" });
   }
@@ -656,10 +704,15 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
     uploadWarning = "Image upload failed - using placeholder. Check S3 configuration or file size/type.";
   }
   
+  const isFloat = allowFloat === 'true';
+  const parsedPriceRegular = parsePrice(price_regular, isFloat);
+  const parsedPriceBulk = parsePrice(price_bulk, isFloat);
+  const parsedPrice = parsePrice(price, isFloat);
+
   if (
     !name ||
     !category ||
-    (price_regular === undefined && price === undefined)
+    (parsedPriceRegular === null && parsedPrice === null)
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
@@ -667,14 +720,14 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
     await productsCollection2.insertOne({
       name,
       desc,
-      price_regular,
-      price_bulk,
-      price,
+      price_regular: parsedPriceRegular,
+      price_bulk: parsedPriceBulk,
+      price: parsedPrice,
       img,
       category,
       subCategory,
       available: available !== "false",
-      allowFloat: allowFloat === "true",
+      allowFloat: isFloat,
       purchaseType: purchaseType || "both",
     });
     console.log("[UPLOAD SUCCESS] Shop2 product saved with image:", img);
@@ -717,20 +770,25 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
       }
     }
 
+    const isFloat = allowFloat === "true";
+    const parsedPriceRegular = parsePrice(price_regular, isFloat);
+    const parsedPriceBulk = parsePrice(price_bulk, isFloat);
+    const parsedPrice = parsePrice(price, isFloat);
+
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
       {
         $set: {
           name,
           desc,
-          price_regular,
-          price_bulk,
-          price,
+          price_regular: parsedPriceRegular,
+          price_bulk: parsedPriceBulk,
+          price: parsedPrice,
           img,
           category,
           subCategory,
           available: available !== "false",
-          allowFloat: allowFloat === "true",
+          allowFloat: isFloat,
           purchaseType: purchaseType || "both",
         },
       }
@@ -782,7 +840,7 @@ app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, asyn
 });
 
 // ============ SHOP2 ADMIN ROUTES ============
-app.post("/api/shop2/login", (req, res) => {
+app.post("/api/shop2/login", loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Strict", secure: true });
