@@ -292,7 +292,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
+app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   
   // Check for file validation errors first
@@ -348,7 +348,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => 
   }
 });
 
-app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
+app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg, allowFloat, purchaseType } = req.body;
   
   let updateData = {
@@ -604,7 +604,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), async (req, res) => {
+app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   
   // Check for file validation errors first
@@ -657,7 +657,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
   }
 });
 
-app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), async (req, res) => {
+app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
     const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
