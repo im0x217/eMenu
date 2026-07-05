@@ -6,7 +6,7 @@ const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const { S3Client } = require("@aws-sdk/client-s3");
+const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const path = require("path");
 
 const app = express();
@@ -102,6 +102,34 @@ const getDisplayImage = (product) => {
 
 // S3 images are public-read, so no special handling needed
 const attachS3Images = (items = []) => items;
+
+// Helper to delete a product's image from S3
+const deleteProductImageFromS3 = async (product) => {
+  if (!product || !product.img) return;
+  
+  let s3Key = null;
+  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+  
+  if (product.img.includes('amazonaws.com') || (cloudfrontDomain && product.img.includes(cloudfrontDomain))) {
+    const index = product.img.indexOf('products/');
+    if (index !== -1) {
+      s3Key = product.img.substring(index);
+    }
+  }
+  
+  if (s3Key) {
+    try {
+      console.log("[S3 DELETE] Attempting to delete S3 object:", s3Key);
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
+        Key: s3Key
+      }));
+      console.log("[S3 DELETE] Successfully deleted image:", s3Key);
+    } catch (err) {
+      console.error("[S3 DELETE ERROR] Failed to delete image:", s3Key, err.message);
+    }
+  }
+};
 
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
@@ -433,6 +461,10 @@ app.delete("/api/products/:id", checkAdmin, async (req, res) => {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
     }
+    const product = await productsCollection.findOne({ _id: new ObjectId(req.params.id) });
+    if (product) {
+      await deleteProductImageFromS3(product);
+    }
     await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -717,6 +749,10 @@ app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res)
   try {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
+    }
+    const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
+    if (product) {
+      await deleteProductImageFromS3(product);
     }
     await productsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
