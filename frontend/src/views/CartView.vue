@@ -59,6 +59,27 @@ const handleUpdateNote = (itemId, note) => {
     cartStore.persist();
   }
 };
+
+const handleDirectQtyInput = (itemId, value, allowFloat) => {
+  let parsed = parseFloat(value);
+  if (isNaN(parsed) || parsed <= 0) {
+    parsed = allowFloat ? 0.5 : 1;
+  }
+  
+  if (allowFloat) {
+    parsed = Math.round(parsed * 10) / 10;
+  } else {
+    parsed = Math.round(parsed);
+  }
+  
+  cartStore.updateQty(itemId, parsed);
+};
+
+const handleClearCart = () => {
+  if (confirm('هل أنت متأكد من رغبتك في إفراغ سلة التسوق بالكامل؟')) {
+    cartStore.clearCart();
+  }
+};
 </script>
 
 <template>
@@ -80,7 +101,16 @@ const handleUpdateNote = (itemId, note) => {
       
       <!-- Cart Items List -->
       <div class="cart-items-section glass-panel">
-        <h3 class="section-title">الأصناف المختارة</h3>
+        <div class="cart-section-header">
+          <h3 class="section-title">الأصناف المختارة</h3>
+          <button class="clear-cart-btn" @click="handleClearCart" title="إفراغ السلة">
+            <span>إفراغ السلة</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
         
         <div class="cart-list">
           <div v-for="item in cartStore.items" :key="item._id" class="cart-item">
@@ -98,7 +128,15 @@ const handleUpdateNote = (itemId, note) => {
               <!-- Quantity adjuster -->
               <div class="qty-adjuster">
                 <button class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity - (item.allowFloat ? 0.5 : 1))">-</button>
-                <span class="qty-val">{{ item.quantity }}</span>
+                <input 
+                  type="number" 
+                  class="qty-input-field" 
+                  :value="item.quantity" 
+                  :step="item.allowFloat ? '0.5' : '1'" 
+                  min="0.5"
+                  @change="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
+                  @blur="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
+                />
                 <button class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity + (item.allowFloat ? 0.5 : 1))">+</button>
               </div>
             </div>
@@ -476,5 +514,64 @@ const handleUpdateNote = (itemId, note) => {
 
 .checkout-btn:hover {
   background: #20ba59;
+}
+
+/* Clear Cart and Direct Input styling */
+.cart-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 8px;
+}
+
+.clear-cart-btn {
+  background: transparent;
+  border: none;
+  color: #e63946;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.clear-cart-btn:active {
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.qty-input-field {
+  width: 40px;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2c2520;
+  font-family: 'Cairo', sans-serif;
+  padding: 0;
+}
+
+.qty-input-field:focus {
+  outline: none;
+  background: rgba(var(--primary-color-rgb), 0.08);
+  border-radius: 4px;
+}
+
+/* Remove spin buttons */
+.qty-input-field::-webkit-outer-spin-button,
+.qty-input-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input-field {
+  -moz-appearance: textfield;
 }
 </style>
