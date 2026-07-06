@@ -186,7 +186,7 @@ const getStatusLabel = (status) => {
 .view-title {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #fff;
+  color: #2c2520;
   margin-bottom: 2px;
 }
 
@@ -207,7 +207,7 @@ const getStatusLabel = (status) => {
   display: block;
   font-size: 0.82rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.8);
+  color: #495057;
   margin-bottom: 4px;
 }
 
@@ -239,7 +239,7 @@ const getStatusLabel = (status) => {
 .section-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #fff;
+  color: #2c2520;
   margin-bottom: 0.25rem;
 }
 
@@ -287,8 +287,8 @@ const getStatusLabel = (status) => {
 }
 
 .order-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   padding: 0.85rem;
 }
@@ -372,7 +372,7 @@ const getStatusLabel = (status) => {
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #495057;
 }
 
 .order-total-row {

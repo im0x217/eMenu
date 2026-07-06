@@ -95,10 +95,10 @@ const navToShop = () => {
   left: 0;
   right: 0;
   height: 64px;
-  background: rgba(15, 10, 8, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -109,7 +109,7 @@ const navToShop = () => {
 .nav-tab-btn {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -132,7 +132,7 @@ const navToShop = () => {
 
 .nav-tab-btn.active svg {
   transform: scale(1.1);
-  fill: rgba(var(--primary-color-rgb), 0.15);
+  fill: rgba(var(--primary-color-rgb), 0.12);
 }
 
 .tab-label {
@@ -159,6 +159,6 @@ const navToShop = () => {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  border: 1px solid #000;
+  border: 1.5px solid #ffffff;
 }
 </style>

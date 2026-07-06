@@ -206,7 +206,7 @@ const handleUpdateNote = (itemId, note) => {
 .view-title {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #fff;
+  color: #2c2520;
   margin-bottom: 2px;
 }
 
@@ -233,7 +233,7 @@ const handleUpdateNote = (itemId, note) => {
 .empty-title {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fff;
+  color: #2c2520;
 }
 
 .empty-desc {
@@ -251,7 +251,7 @@ const handleUpdateNote = (itemId, note) => {
 .section-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #fff;
+  color: #2c2520;
   margin-bottom: 0.5rem;
 }
 
@@ -273,7 +273,7 @@ const handleUpdateNote = (itemId, note) => {
 }
 
 .cart-item {
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
   padding-bottom: 12px;
 }
 
@@ -304,7 +304,7 @@ const handleUpdateNote = (itemId, note) => {
 .item-title {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #fff;
+  color: #2c2520;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -331,15 +331,15 @@ const handleUpdateNote = (itemId, note) => {
 .qty-adjuster {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 8px;
 }
 
 .qty-btn {
   background: transparent;
   border: none;
-  color: #fff;
+  color: #2c2520;
   width: 28px;
   height: 28px;
   font-weight: 700;
@@ -354,6 +354,7 @@ const handleUpdateNote = (itemId, note) => {
   font-size: 0.8rem;
   font-weight: 700;
   padding: 0 4px;
+  color: #2c2520;
 }
 
 .item-note-wrapper {
@@ -363,10 +364,10 @@ const handleUpdateNote = (itemId, note) => {
 .item-note-input {
   width: 100%;
   padding: 6px 10px;
-  background: rgba(255,255,255,0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.02);
+  border: 1px dashed rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  color: rgba(255,255,255,0.8);
+  color: #2c2520;
   font-family: 'Cairo', sans-serif;
   font-size: 0.75rem;
 }
@@ -392,7 +393,7 @@ const handleUpdateNote = (itemId, note) => {
   display: block;
   font-size: 0.82rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.8);
+  color: #495057;
   margin-bottom: 4px;
 }
 
@@ -424,8 +425,8 @@ const handleUpdateNote = (itemId, note) => {
 
 .change-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #495057;
   padding: 4px 10px;
   border-radius: 6px;
   font-family: 'Cairo', sans-serif;

@@ -305,7 +305,7 @@ const hasBulkProducts = computed(() => {
 .shop-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #fff;
+  color: #2c2520;
 }
 
 .logo-placeholder {
@@ -356,7 +356,7 @@ const hasBulkProducts = computed(() => {
 .search-icon {
   position: absolute;
   right: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
 }
@@ -366,7 +366,7 @@ const hasBulkProducts = computed(() => {
   padding: 0.75rem 2.5rem 0.75rem 2rem;
   background: transparent;
   border: none;
-  color: #fff;
+  color: #2c2520;
   font-family: 'Cairo', sans-serif;
   font-size: 0.95rem;
 }
@@ -380,7 +380,7 @@ const hasBulkProducts = computed(() => {
   left: 12px;
   background: transparent;
   border: none;
-  color: rgba(255,255,255,0.4);
+  color: rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   cursor: pointer;
 }
@@ -393,10 +393,10 @@ const hasBulkProducts = computed(() => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #fff;
+  color: #495057;
   white-space: nowrap;
   cursor: pointer;
-  border-color: rgba(255,255,255,0.04);
+  border-color: rgba(0, 0, 0, 0.04);
   transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
   flex-shrink: 0;
 }
@@ -416,9 +416,9 @@ const hasBulkProducts = computed(() => {
 }
 
 .subcat-btn {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.6);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #495057;
   padding: 4px 12px;
   border-radius: 20px;
   font-family: 'Cairo', sans-serif;
@@ -498,12 +498,12 @@ const hasBulkProducts = computed(() => {
 .modal-title {
   font-size: 1.2rem;
   font-weight: 800;
-  color: #fff;
+  color: #2c2520;
 }
 
 .modal-desc {
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: #6c757d;
   line-height: 1.4;
 }
 
@@ -536,8 +536,8 @@ const hasBulkProducts = computed(() => {
 }
 
 .modal-btn.cancel {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.05);
+  color: #495057;
 }
 
 /* Zoom Image Modal */
