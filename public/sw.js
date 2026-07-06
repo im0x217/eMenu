@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v1';
+const CACHE_NAME = 'emenu-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -35,43 +35,31 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Fetch Event (Network-First falling back to Cache for API calls, Cache-First for assets)
+// Fetch Event (Network-First falling back to Cache for all GET requests)
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // For API endpoints, try network first, fallback to cache
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, response.clone());
-            return response;
-          });
-        })
-        .catch(() => {
-          return caches.match(event.request);
-        })
-    );
+  // Skip caching for non-GET requests or different origins
+  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // For static assets, try cache first, fallback to network
+  // Network-First falling back to Cache
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        // Cache newly fetched assets
-        if (event.request.method === 'GET' && response.status === 200) {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, response.clone());
-            return response;
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful response
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
           });
         }
         return response;
-      });
-    })
+      })
+      .catch(() => {
+        // Fallback to cache if network fails
+        return caches.match(event.request);
+      })
   );
 });
