@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import BottomNav from './components/BottomNav.vue';
 import BottomCartBar from './components/BottomCartBar.vue';
+import Toast from './components/Toast.vue';
 import { useFavoritesStore } from './stores/favorites';
 
 const favoritesStore = useFavoritesStore();
@@ -27,6 +28,9 @@ onMounted(() => {
     
     <!-- Persistent bottom bar navigation -->
     <BottomNav />
+
+    <!-- Global non-blocking Toast Notifications -->
+    <Toast />
   </div>
 </template>
 

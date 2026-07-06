@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useShopStore } from '../stores/shop';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
+import { useToastStore } from '../stores/toast';
 
 const props = defineProps({
   product: {
@@ -16,6 +17,7 @@ const emit = defineEmits(['zoom']);
 const shopStore = useShopStore();
 const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
+const toastStore = useToastStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isBulkMode = computed(() => shopStore.isBulkVerified);
@@ -34,6 +36,11 @@ const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props
 
 const toggleSave = () => {
   favoritesStore.toggleFavorite(activeShop.value, props.product._id);
+  if (favoritesStore.isFavorite(activeShop.value, props.product._id)) {
+    toastStore.show('تم إضافة المنتج إلى المفضلة ❤️');
+  } else {
+    toastStore.show('تم إزالة المنتج من المفضلة');
+  }
 };
 
 const handleAddToCart = () => {
@@ -47,9 +54,9 @@ const handleAddToCart = () => {
   
   try {
     cartStore.addToCart(props.product, activeShop.value, mode, 1);
-    alert('تم إضافة المنتج إلى السلة بنجاح!');
+    toastStore.show('تم إضافة المنتج إلى السلة بنجاح! 🛒');
   } catch (err) {
-    alert(err.message);
+    toastStore.show(err.message, 'error');
   }
 };
 

@@ -2,9 +2,11 @@
 import { computed, ref } from 'vue';
 import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
+import { useToastStore } from '../stores/toast';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
+const toastStore = useToastStore();
 
 // Guest checkout details (Name and Phone)
 const nameInput = ref(authStore.customerName);
@@ -42,7 +44,7 @@ const handleCheckout = async () => {
   try {
     await cartStore.submitOrder();
   } catch (err) {
-    alert(err.message);
+    toastStore.show(err.message, 'error');
   } finally {
     isSubmitting.value = false;
   }
@@ -75,9 +77,26 @@ const handleDirectQtyInput = (itemId, value, allowFloat) => {
   cartStore.updateQty(itemId, parsed);
 };
 
+const isConfirmingClear = ref(false);
+let confirmTimer = null;
+
 const handleClearCart = () => {
-  if (confirm('هل أنت متأكد من رغبتك في إفراغ سلة التسوق بالكامل؟')) {
+  if (!isConfirmingClear.value) {
+    // First tap: change state to confirm mode
+    isConfirmingClear.value = true;
+    toastStore.show('اضغط مرة أخرى لتأكيد إفراغ السلة 🗑️');
+    
+    // Auto reset after 3 seconds if not clicked again
+    if (confirmTimer) clearTimeout(confirmTimer);
+    confirmTimer = setTimeout(() => {
+      isConfirmingClear.value = false;
+    }, 3000);
+  } else {
+    // Second tap: empty the cart!
+    if (confirmTimer) clearTimeout(confirmTimer);
+    isConfirmingClear.value = false;
     cartStore.clearCart();
+    toastStore.show('تم إفراغ السلة بالكامل! 🧹');
   }
 };
 </script>
@@ -103,8 +122,8 @@ const handleClearCart = () => {
       <div class="cart-items-section glass-panel">
         <div class="cart-section-header">
           <h3 class="section-title">الأصناف المختارة</h3>
-          <button class="clear-cart-btn" @click="handleClearCart" title="إفراغ السلة">
-            <span>إفراغ السلة</span>
+          <button class="clear-cart-btn" @click="handleClearCart" :class="{ confirming: isConfirmingClear }" title="إفراغ السلة">
+            <span>{{ isConfirmingClear ? 'تأكيد الإفراغ؟' : 'إفراغ السلة' }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -544,6 +563,14 @@ const handleClearCart = () => {
 
 .clear-cart-btn:active {
   background: rgba(230, 57, 70, 0.08);
+}
+
+.clear-cart-btn.confirming {
+  background: #e63946 !important;
+  color: #ffffff !important;
+  padding: 4px 10px;
+  border-radius: 8px;
+  animation: pulse 1.5s infinite;
 }
 
 .qty-input-field {
