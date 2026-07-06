@@ -1,0 +1,38 @@
+{
+  "name": "حلويات عبمبر الزروق",
+  "short_name": "عبمبر الزروق",
+  "description": "منيو حلويات عبمبر الزروق وقسم النواشف",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c0603",
+  "theme_color": "#fdb518",
+  "icons": [
+    {
+      "src": "/res/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/res/logo2.jpg.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "المتجر الرئيسي",
+      "short_name": "المتجر الرئيسي",
+      "url": "/app/#/shop1",
+      "icons": [{ "src": "/res/logo.jpg", "sizes": "512x512" }]
+    },
+    {
+      "name": "قسم النواشف",
+      "short_name": "قسم النواشف",
+      "url": "/app/#/shop2",
+      "icons": [{ "src": "/res/logo2.jpg.jpeg", "sizes": "512x512" }]
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+/* Main Design System */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  font-family: 'Cairo', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: #0c0603;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Theme color configuration. Will be modified dynamically per shop */
+  --primary-color: #fdb518; /* Default to shop1 gold */
+  --primary-color-rgb: 253, 181, 24;
+  --primary-glow: rgba(253, 181, 24, 0.15);
+  
+  --bg-dark: #0c0603;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --border-card: rgba(255, 255, 255, 0.06);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Shop Theme Overrides */
+.shop-theme-shop1 {
+  --primary-color: #fdb518; /* Gold */
+  --primary-color-rgb: 253, 181, 24;
+  --primary-glow: rgba(253, 181, 24, 0.15);
+}
+
+.shop-theme-shop2 {
+  --primary-color: #1e3a5f; /* Deep Blue */
+  --primary-color-rgb: 30, 58, 95;
+  --primary-glow: rgba(30, 58, 95, 0.25);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  direction: rtl;
+  text-align: right;
+  background-color: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(var(--primary-color-rgb), 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(139, 69, 19, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, #0d0603 0%, #060201 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+  padding-bottom: calc(64px + var(--safe-bottom)); /* Leave space for bottom nav bar */
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
+}
+
+/* Layout Utilities */
+.app-container {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Horizontal scroll for categories */
+.scroll-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Product Grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 600px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+  }
+}
+
+/* Card lifting animation */
+.card-hover-effect {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
+}
+
+.card-hover-effect:active, .card-hover-effect:hover {
+  transform: translateY(-4px);
+  border-color: rgba(var(--primary-color-rgb), 0.3);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px var(--primary-glow);
+}
+
+/* Floating badges */
+.badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #e63946;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  border: 1px solid var(--bg-dark);
+}
+
+/* Inputs and Forms styling */
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.95rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 0.85rem 1.5rem;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* RTL Helpers */
+.rtl-flip {
+  transform: scaleX(-1);
+}

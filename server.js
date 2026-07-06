@@ -155,6 +155,7 @@ console.log("[INIT] Registering API routes...");
 // ============ STATE ============
 let db, productsCollection, categoriesCollection;
 let db2, productsCollection2, categoriesCollection2;
+let customersCollection, favoritesCollection, ordersCollection, ordersCollection2;
 let mongoConnected = false;
 
 // ============ MIDDLEWARE ============
@@ -423,6 +424,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
@@ -860,6 +862,198 @@ app.get("/api/shop2/admin-check", (req, res) => {
   res.json({ ok: true });
 });
 
+// ============ CUSTOMER & FAVORITES APIs ============
+
+app.post("/api/customer/identify", checkMongoDB, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    if (!name || !phone) {
+      return res.status(400).json({ error: "Missing name or phone number" });
+    }
+    
+    const normalizedPhone = phone.trim();
+    
+    await customersCollection.updateOne(
+      { phone: normalizedPhone },
+      { 
+        $set: { 
+          name: name.trim(), 
+          lastActive: new Date() 
+        },
+        $setOnInsert: {
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Identify customer error:", err);
+    res.status(500).json({ error: "Failed to identify customer" });
+  }
+});
+
+app.post("/api/customer/favorites", checkMongoDB, async (req, res) => {
+  try {
+    const { phone, shop, favorites } = req.body;
+    if (!phone || !shop || !Array.isArray(favorites)) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    const normalizedPhone = phone.trim();
+    
+    // Clear existing favorites for this shop and phone
+    await favoritesCollection.deleteMany({ phone: normalizedPhone, shop });
+    
+    // Insert new favorites
+    if (favorites.length > 0) {
+      const docs = favorites.map(id => ({
+        phone: normalizedPhone,
+        productId: new ObjectId(id),
+        shop,
+        createdAt: new Date()
+      }));
+      await favoritesCollection.insertMany(docs);
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Sync favorites error:", err);
+    res.status(500).json({ error: "Failed to sync favorites" });
+  }
+});
+
+app.get("/api/customer/favorites", checkMongoDB, async (req, res) => {
+  try {
+    const { phone } = req.query;
+    if (!phone) {
+      return res.status(400).json({ error: "Missing phone parameter" });
+    }
+    
+    const normalizedPhone = phone.trim();
+    const favs = await favoritesCollection.find({ phone: normalizedPhone }).toArray();
+    
+    const shop1 = favs.filter(f => f.shop === 'shop1').map(f => f.productId.toString());
+    const shop2 = favs.filter(f => f.shop === 'shop2').map(f => f.productId.toString());
+    
+    res.json({ shop1, shop2 });
+  } catch (err) {
+    console.error("Fetch favorites error:", err);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+app.get("/api/customer/orders", checkMongoDB, async (req, res) => {
+  try {
+    const { phone } = req.query;
+    if (!phone) {
+      return res.status(400).json({ error: "Missing phone parameter" });
+    }
+    
+    const normalizedPhone = phone.trim();
+    
+    // Query both databases/collections
+    const orders1 = await ordersCollection.find({ "customerInfo.phone": normalizedPhone }).toArray();
+    const orders2 = await ordersCollection2.find({ "customerInfo.phone": normalizedPhone }).toArray();
+    
+    // Add shop tags
+    const taggedOrders1 = orders1.map(o => ({ ...o, shop: 'shop1' }));
+    const taggedOrders2 = orders2.map(o => ({ ...o, shop: 'shop2' }));
+    
+    // Combine and sort by date descending
+    const allOrders = [...taggedOrders1, ...taggedOrders2].sort((a, b) => {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    
+    res.json(allOrders);
+  } catch (err) {
+    console.error("Fetch orders error:", err);
+    res.status(500).json({ error: "Failed to fetch order history" });
+  }
+});
+
+// ============ ORDER SUBMISSION APIs ============
+
+app.post("/api/orders", checkMongoDB, async (req, res) => {
+  try {
+    const { customer, items, totalPrice, deliveryDate, notes, priceMode } = req.body;
+    if (!customer || !items || !Array.isArray(items)) {
+      return res.status(400).json({ error: "Missing order details" });
+    }
+    
+    const orderDoc = {
+      customerInfo: {
+        name: customer.name.trim(),
+        phone: customer.phone.trim()
+      },
+      items: items.map(item => ({
+        productId: new ObjectId(item.productId),
+        name: item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+        allowFloat: !!item.allowFloat,
+        notes: item.notes || ''
+      })),
+      totalPrice: Number(totalPrice),
+      deliveryDate: deliveryDate || '',
+      notes: notes || '',
+      priceMode: priceMode || 'regular',
+      status: 'pending',
+      whatsappSent: true,
+      createdAt: new Date()
+    };
+    
+    const result = await ordersCollection.insertOne(orderDoc);
+    res.status(201).json({ success: true, orderId: result.insertedId });
+  } catch (err) {
+    console.error("Save order error:", err);
+    res.status(500).json({ error: "Failed to save order" });
+  }
+});
+
+app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
+  try {
+    const { customer, items, totalPrice, deliveryDate, notes, priceMode } = req.body;
+    if (!customer || !items || !Array.isArray(items)) {
+      return res.status(400).json({ error: "Missing order details" });
+    }
+    
+    const orderDoc = {
+      customerInfo: {
+        name: customer.name.trim(),
+        phone: customer.phone.trim()
+      },
+      items: items.map(item => ({
+        productId: new ObjectId(item.productId),
+        name: item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+        allowFloat: !!item.allowFloat,
+        notes: item.notes || ''
+      })),
+      totalPrice: Number(totalPrice),
+      deliveryDate: deliveryDate || '',
+      notes: notes || '',
+      priceMode: priceMode || 'regular',
+      status: 'pending',
+      whatsappSent: true,
+      createdAt: new Date()
+    };
+    
+    const result = await ordersCollection2.insertOne(orderDoc);
+    res.status(201).json({ success: true, orderId: result.insertedId });
+  } catch (err) {
+    console.error("Save shop2 order error:", err);
+    res.status(500).json({ error: "Failed to save order" });
+  }
+});
+
+// ============ CATCH-ALL ROUTE FOR VUE SPA ============
+app.get("/app/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app", "index.html"));
+});
+
 // ============ FONT FILE HANDLER ============
 // Handle requests for font files that may not exist (prevents 404 errors in console)
 app.get("/*.ttf", (req, res) => {
@@ -889,12 +1083,20 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   categoriesCollection = db.collection("categories");
   productsCollection2 = db2.collection("products");
   categoriesCollection2 = db2.collection("categories");
+  customersCollection = db.collection("customers");
+  favoritesCollection = db.collection("favorites");
+  ordersCollection = db.collection("orders");
+  ordersCollection2 = db2.collection("orders");
   mongoConnected = true;
   
   productsCollection.createIndex({ category: 1 });
   categoriesCollection.createIndex({ name: 1 }, { unique: true });
   productsCollection2.createIndex({ category: 1 });
   categoriesCollection2.createIndex({ name: 1 }, { unique: true });
+  customersCollection.createIndex({ phone: 1 }, { unique: true });
+  favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
+  ordersCollection.createIndex({ "customerInfo.phone": 1 });
+  ordersCollection2.createIndex({ "customerInfo.phone": 1 });
 
   const count = await categoriesCollection.countDocuments();
   if (count === 0) {
