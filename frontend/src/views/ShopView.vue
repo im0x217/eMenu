@@ -402,16 +402,18 @@ const hasBulkProducts = computed(() => {
 }
 
 .cat-btn.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
 }
 
-:global(.shop-theme-shop1) .cat-btn.active {
-  color: #0c0603; /* Dark text for active gold button */
+:global(.shop-theme-shop1) .cat-btn.active,
+:global(.shop-theme-shop1) .cat-btn.active * {
+  color: #0c0603 !important;
 }
 
-:global(.shop-theme-shop2) .cat-btn.active {
-  color: #ffffff; /* White text for active blue button */
+:global(.shop-theme-shop2) .cat-btn.active,
+:global(.shop-theme-shop2) .cat-btn.active * {
+  color: #ffffff !important;
 }
 
 .cat-emoji {
