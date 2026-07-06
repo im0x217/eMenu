@@ -18,7 +18,7 @@
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
             <label>اسم المستخدم</label>
-            <input v-model="loginForm.username" type="text" required placeholder="أدخل اسم المستخدم" class="form-control" />
+            <input v-model="loginForm.username" type="text" required placeholder="أدخل اسم المستخدم" class="form-control" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" />
           </div>
 
           <div class="form-group">

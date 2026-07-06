@@ -39,8 +39,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Skip caching for non-GET requests or different origins
-  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+  // Skip caching for non-GET requests, API routes, or different origins
+  if (
+    event.request.method !== 'GET' || 
+    url.pathname.startsWith('/api') || 
+    !event.request.url.startsWith(self.location.origin)
+  ) {
     return;
   }
 

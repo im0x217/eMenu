@@ -286,8 +286,8 @@ const loginLimiter = (() => {
 app.post("/api/login", loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    const isSecure = process.env.NODE_ENV === "production" || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin", "true", { httpOnly: true, sameSite: "Strict", secure: isSecure });
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
     return res.json({ success: true });
   }
   res.status(401).json({ success: false, message: "Unauthorized" });
@@ -849,8 +849,8 @@ app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, asyn
 app.post("/api/shop2/login", loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    const isSecure = process.env.NODE_ENV === "production" || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Strict", secure: isSecure });
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
     return res.json({ success: true });
   }
   res.status(401).json({ success: false, message: "Unauthorized" });

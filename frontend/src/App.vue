@@ -1,11 +1,17 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import BottomNav from './components/BottomNav.vue';
 import BottomCartBar from './components/BottomCartBar.vue';
 import Toast from './components/Toast.vue';
 import { useFavoritesStore } from './stores/favorites';
 
 const favoritesStore = useFavoritesStore();
+const route = useRoute();
+
+const showCustomerNav = computed(() => {
+  return route.path !== '/admin';
+});
 
 onMounted(() => {
   // Silent load of synced customer favorites if identified
@@ -15,7 +21,17 @@ onMounted(() => {
 
 <template>
   <div class="app-layout">
-    <main class="app-container">
+    <!-- For customer routes, wrap in app-container -->
+    <main v-if="showCustomerNav" class="app-container">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </main>
+
+    <!-- For admin route, render raw full-screen without app-container layout limits -->
+    <main v-else class="admin-main-wrapper">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -24,10 +40,10 @@ onMounted(() => {
     </main>
 
     <!-- Floating checkout helper pill on mobile viewports -->
-    <BottomCartBar />
+    <BottomCartBar v-if="showCustomerNav" />
     
     <!-- Persistent bottom bar navigation -->
-    <BottomNav />
+    <BottomNav v-if="showCustomerNav" />
 
     <!-- Global non-blocking Toast Notifications -->
     <Toast />
@@ -43,6 +59,12 @@ onMounted(() => {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+}
+
+.admin-main-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Page transitions */
