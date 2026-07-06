@@ -1,0 +1,2283 @@
+<template>
+  <div class="admin-layout" :class="'shop-theme-' + activeShop">
+    <!-- Spinner overlay -->
+    <div v-if="loading" class="spinner-overlay">
+      <div class="spinner"></div>
+      <p class="spinner-text">جاري تحميل البيانات...</p>
+    </div>
+
+    <!-- Login Container -->
+    <div v-if="!isAuthenticated" class="login-container glass-panel animate-fade-in">
+      <div class="login-card">
+        <div class="login-header">
+          <img :src="loginShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="login-logo" />
+          <h2>لوحة الإدارة الذكية</h2>
+          <p>يرجى تسجيل الدخول للوصول إلى لوحة التحكم</p>
+        </div>
+
+        <form @submit.prevent="handleLogin" class="login-form">
+          <div class="form-group">
+            <label>اسم المستخدم</label>
+            <input v-model="loginForm.username" type="text" required placeholder="أدخل اسم المستخدم" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <input v-model="loginForm.password" type="password" required placeholder="أدخل كلمة المرور" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>المتجر المستهدف</label>
+            <div class="shop-select-pills">
+              <button type="button" class="shop-pill" :class="{ active: loginShop === 'shop1' }" @click="loginShop = 'shop1'">
+                المتجر الرئيسي (حلويات)
+              </button>
+              <button type="button" class="shop-pill" :class="{ active: loginShop === 'shop2' }" @click="loginShop = 'shop2'">
+                قسم النواشف (فاخر)
+              </button>
+            </div>
+          </div>
+
+          <div v-if="loginError" class="alert alert-danger">
+            {{ loginError }}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">تسجيل الدخول</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Admin Panel Container -->
+    <div v-else class="admin-container">
+      <!-- Sidebar -->
+      <aside class="admin-sidebar" :class="{ open: sidebarOpen }">
+        <div class="sidebar-brand">
+          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="sidebar-logo" />
+          <div>
+            <h3>لوحة التحكم</h3>
+            <span class="badge">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}</span>
+          </div>
+        </div>
+
+        <div class="shop-switcher">
+          <label class="switch-label">المتجر الحالي:</label>
+          <div class="shop-select-pills compact">
+            <button class="shop-pill" :class="{ active: activeShop === 'shop1' }" @click="switchShop('shop1')">رئيسي</button>
+            <button class="shop-pill" :class="{ active: activeShop === 'shop2' }" @click="switchShop('shop2')">نواشف</button>
+          </div>
+        </div>
+
+        <nav class="sidebar-menu">
+          <button class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span>الإحصائيات والتقارير</span>
+          </button>
+          <button class="menu-item" :class="{ active: activeTab === 'products' }" @click="setTab('products')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <span>إدارة المنتجات</span>
+          </button>
+          <button class="menu-item" :class="{ active: activeTab === 'categories' }" @click="setTab('categories')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>إدارة الأصناف</span>
+          </button>
+          <button class="menu-item" :class="{ active: activeTab === 'images' }" @click="setTab('images')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            <span>إصلاح الصور التالفة</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <a href="/" class="btn btn-outline w-100 mb-2">معاينة المتجر</a>
+          <button @click="handleLogout" class="btn btn-danger w-100">تسجيل الخروج</button>
+        </div>
+      </aside>
+
+      <!-- Mobile Header -->
+      <header class="admin-mobile-header">
+        <button class="menu-toggle-btn" @click="sidebarOpen = !sidebarOpen">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <h2>لوحة إدارة e-Menu</h2>
+        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
+      </header>
+
+      <!-- Main Content -->
+      <main class="admin-main">
+        <div class="main-header">
+          <h1>{{ tabTitles[activeTab] }}</h1>
+          <!-- Period Selector for Analytics -->
+          <div v-if="activeTab === 'analytics'" class="period-selector">
+            <button v-for="p in periods" :key="p.val" class="btn btn-sm" :class="analyticsPeriod === p.val ? 'btn-primary' : 'btn-outline'" @click="changePeriod(p.val)">
+              {{ p.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content-wrapper animate-fade-in" :key="activeTab">
+          
+          <!-- ANALYTICS TAB -->
+          <div v-if="activeTab === 'analytics'" class="analytics-tab-content">
+            <!-- KPI Cards Grid -->
+            <div class="kpi-grid">
+              <div class="kpi-card glass-panel">
+                <div class="kpi-icon-wrapper sales-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-title">إجمالي المبيعات</span>
+                  <span class="kpi-value">{{ formatCurrency(analyticsData.kpi.totalRevenue) }}</span>
+                </div>
+              </div>
+              <div class="kpi-card glass-panel">
+                <div class="kpi-icon-wrapper orders-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-title">إجمالي الطلبات</span>
+                  <span class="kpi-value">{{ analyticsData.kpi.orderCount }} طلب</span>
+                </div>
+              </div>
+              <div class="kpi-card glass-panel">
+                <div class="kpi-icon-wrapper aov-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-title">متوسط الطلب</span>
+                  <span class="kpi-value">{{ formatCurrency(analyticsData.kpi.avgOrderValue) }}</span>
+                </div>
+              </div>
+              <div class="kpi-card glass-panel">
+                <div class="kpi-icon-wrapper customers-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v-2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-title">العملاء النشطون</span>
+                  <span class="kpi-value">{{ analyticsData.kpi.activeCustomers }} عميل</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts & Metrics Grid -->
+            <div class="charts-grid">
+              <!-- Sales Trend Chart Card -->
+              <div class="chart-card glass-panel span-2">
+                <h3 class="chart-title">مؤشر مبيعات الإيرادات (د.ل)</h3>
+                <div class="svg-chart-container">
+                  <div v-if="analyticsData.revenueTrend.length === 0" class="empty-chart">
+                    لا توجد بيانات كافية لرسم المخطط البياني في هذه الفترة.
+                  </div>
+                  <svg v-else class="svg-line-chart" viewBox="0 0 600 240">
+                    <defs>
+                      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="var(--chart-primary)" stop-opacity="0.4"/>
+                        <stop offset="100%" stop-color="var(--chart-primary)" stop-opacity="0.0"/>
+                      </linearGradient>
+                    </defs>
+                    <!-- Grid Lines -->
+                    <line x1="40" y1="40" x2="560" y2="40" stroke="#f1f3f5" stroke-dasharray="4"/>
+                    <line x1="40" y1="100" x2="560" y2="100" stroke="#f1f3f5" stroke-dasharray="4"/>
+                    <line x1="40" y1="160" x2="560" y2="160" stroke="#f1f3f5" stroke-dasharray="4"/>
+                    <line x1="40" y1="210" x2="560" y2="210" stroke="#ced4da"/>
+                    
+                    <!-- Line & Area Paths -->
+                    <path :d="svgTrendAreaPath" fill="url(#chartGradient)"/>
+                    <path :d="svgTrendLinePath" fill="none" stroke="var(--chart-primary)" stroke-width="3"/>
+                    
+                    <!-- Dots & Tooltips -->
+                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group">
+                      <circle :cx="dot.x" :cy="dot.y" r="5" fill="#fff" stroke="var(--chart-primary)" stroke-width="2" />
+                      <!-- Hover interaction area -->
+                      <circle :cx="dot.x" :cy="dot.y" r="14" fill="transparent" class="dot-hover-trigger">
+                        <title>{{ dot.date }}: {{ formatCurrency(dot.val) }}</title>
+                      </circle>
+                    </g>
+                    <!-- X labels -->
+                    <text v-for="(label, idx) in trendXLabels" :key="'lbl-'+idx" :x="label.x" y="232" class="chart-text label-x" text-anchor="middle">
+                      {{ label.text }}
+                    </text>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Price Mode Split Chart Card -->
+              <div class="chart-card glass-panel">
+                <h3 class="chart-title">توزيع المبيعات (جملة / مفرد)</h3>
+                <div class="split-display">
+                  <div class="donut-display">
+                    <!-- Custom SVG Donut -->
+                    <svg viewBox="0 0 120 120" width="120" height="120">
+                      <circle cx="60" cy="60" r="45" fill="none" stroke="#e9ecef" stroke-width="12"/>
+                      <circle cx="60" cy="60" r="45" fill="none" stroke="var(--chart-primary)" stroke-width="12" 
+                              :stroke-dasharray="donutDashArray" :stroke-dashoffset="donutDashOffset"
+                              transform="rotate(-90 60 60)"/>
+                    </svg>
+                    <div class="donut-center">
+                      <span class="donut-percentage">{{ Math.round(priceModePercentages.regular) }}%</span>
+                      <span class="donut-sub">مفرد</span>
+                    </div>
+                  </div>
+                  <div class="split-legend">
+                    <div class="legend-row">
+                      <span class="dot dot-regular"></span>
+                      <span class="label">بيع بالمفرد:</span>
+                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.regular.revenue) }} ({{ analyticsData.priceModeSplit.regular.count }} طلب)</span>
+                    </div>
+                    <div class="legend-row mt-2">
+                      <span class="dot dot-bulk"></span>
+                      <span class="label">بيع بالجملة:</span>
+                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.bulk.revenue) }} ({{ analyticsData.priceModeSplit.bulk.count }} طلب)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Category Sales Share Card -->
+              <div class="chart-card glass-panel span-2">
+                <h3 class="chart-title">أداء الفئات والأصناف</h3>
+                <div class="bar-chart-list">
+                  <div v-if="analyticsData.categorySales.length === 0" class="empty-list">لا توجد أصناف مبيعات.</div>
+                  <div v-for="cat in analyticsData.categorySales" :key="cat.category" class="category-bar-row">
+                    <div class="bar-info">
+                      <span class="cat-name">{{ cat.category }}</span>
+                      <span class="cat-val">{{ formatCurrency(cat.revenue) }} ({{ cat.count }} مبيعات)</span>
+                    </div>
+                    <div class="bar-gauge">
+                      <div class="bar-fill" :style="{ width: getCategoryBarWidth(cat.revenue) + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Favorites Snapshot Card -->
+              <div class="chart-card glass-panel">
+                <h3 class="chart-title">أكثر المنتجات تفضيلاً</h3>
+                <div class="list-cards">
+                  <div v-if="analyticsData.topFavorites.length === 0" class="empty-list">لا توجد تفضيلات بعد.</div>
+                  <div v-for="(fav, idx) in analyticsData.topFavorites" :key="idx" class="list-item-row">
+                    <div class="list-badge">{{ idx + 1 }}</div>
+                    <div class="list-item-info">
+                      <span class="title">{{ fav.name }}</span>
+                      <span class="subtitle">تم التفضيل بواسطة {{ fav.count }} عميل</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Products Card -->
+              <div class="chart-card glass-panel span-2">
+                <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
+                <div class="table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المنتج</th>
+                        <th>الكمية المباعة</th>
+                        <th>إجمالي الإيراد</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="analyticsData.topProducts.length === 0">
+                        <td colspan="3" class="text-center">لا توجد منتجات مباعة.</td>
+                      </tr>
+                      <tr v-for="prod in analyticsData.topProducts" :key="prod.productId">
+                        <td>{{ prod.name }}</td>
+                        <td>{{ prod.quantity }} وحدة</td>
+                        <td>{{ formatCurrency(prod.revenue) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Top Customers Card -->
+              <div class="chart-card glass-panel">
+                <h3 class="chart-title">كبار العملاء (إنفاقاً)</h3>
+                <div class="table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>الاسم</th>
+                        <th>رقم الهاتف</th>
+                        <th>الإنفاق</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="analyticsData.topCustomers.length === 0">
+                        <td colspan="3" class="text-center">لا توجد بيانات عملاء.</td>
+                      </tr>
+                      <tr v-for="cust in analyticsData.topCustomers" :key="cust.phone">
+                        <td>{{ cust.name }}</td>
+                        <td>{{ cust.phone }}</td>
+                        <td class="text-semibold">{{ formatCurrency(cust.totalSpent) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRODUCTS CRUD TAB -->
+          <div v-if="activeTab === 'products'" class="products-tab-content">
+            <!-- Filter Bar -->
+            <div class="filter-actions-bar glass-panel mb-3">
+              <div class="filters-group">
+                <input v-model="filters.search" type="text" placeholder="البحث عن منتج..." class="form-control" />
+                <select v-model="filters.category" class="form-control">
+                  <option value="">كل الأصناف</option>
+                  <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
+                </select>
+              </div>
+              <button @click="openProductModal()" class="btn btn-primary">إضافة منتج جديد</button>
+            </div>
+
+            <!-- Products Table -->
+            <div class="table-card glass-panel">
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>الصورة</th>
+                      <th>الاسم</th>
+                      <th>الصنف</th>
+                      <th>السعر مفرد</th>
+                      <th>السعر جملة</th>
+                      <th>نوع البيع</th>
+                      <th>حالة التوفر</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="filteredProducts.length === 0">
+                      <td colspan="8" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
+                    </tr>
+                    <tr v-for="prod in filteredProducts" :key="prod._id">
+                      <td>
+                        <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="table-prod-img" @click="zoomImage(prod.img)" />
+                      </td>
+                      <td class="text-bold">{{ prod.name }}</td>
+                      <td>
+                        {{ prod.category }}
+                        <span v-if="prod.subCategory" class="badge-sub">{{ prod.subCategory }}</span>
+                      </td>
+                      <td>{{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</td>
+                      <td>{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
+                      <td>
+                        <span v-if="prod.purchaseType === 'both'" class="badge">كلاهما</span>
+                        <span v-else-if="prod.purchaseType === 'regular'" class="badge badge-gold">مفرد فقط</span>
+                        <span v-else-if="prod.purchaseType === 'bulk'" class="badge badge-green">جملة فقط</span>
+                      </td>
+                      <td>
+                        <div class="toggle-switch">
+                          <input type="checkbox" :id="'avail-'+prod._id" :checked="prod.available" @change="toggleProductAvailability(prod)" />
+                          <label :for="'avail-'+prod._id"></label>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="btn-group-row">
+                          <button @click="openProductModal(prod)" class="btn btn-sm btn-outline">تعديل</button>
+                          <button @click="deleteProduct(prod._id)" class="btn btn-sm btn-danger">حذف</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- CATEGORIES CRUD TAB -->
+          <div v-if="activeTab === 'categories'" class="categories-tab-content">
+            <div class="filter-actions-bar glass-panel mb-3 text-left">
+              <button @click="openCategoryModal()" class="btn btn-primary">إضافة صنف جديد</button>
+            </div>
+
+            <div class="table-card glass-panel">
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 80px;">الرمز</th>
+                      <th>اسم الصنف</th>
+                      <th>الأصناف الفرعية</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="categories.length === 0">
+                      <td colspan="4" class="text-center">لا توجد أصناف مدخلة.</td>
+                    </tr>
+                    <tr v-for="cat in categories" :key="cat._id">
+                      <td class="text-center text-large">{{ cat.emoji || '📂' }}</td>
+                      <td class="text-bold">{{ cat.name }}</td>
+                      <td>
+                        <div class="chips-list">
+                          <span v-if="!cat.subCategories || cat.subCategories.length === 0" class="text-muted text-small">لا يوجد أصناف فرعية</span>
+                          <span v-for="sub in cat.subCategories" :key="sub" class="sub-chip">{{ sub }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="btn-group-row">
+                          <button @click="openCategoryModal(cat)" class="btn btn-sm btn-outline">تعديل</button>
+                          <button @click="deleteCategory(cat._id)" class="btn btn-sm btn-danger">حذف</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- IMAGE RECOVERY TAB -->
+          <div v-if="activeTab === 'images'" class="images-tab-content">
+            <div class="glass-panel text-center p-5 animate-fade-in">
+              <div class="recovery-box">
+                <svg class="recovery-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <h2>أداة إصلاح الصور التالفة أو المفقودة</h2>
+                <p class="text-muted">إذا تم حذف الصور القديمة، يمكنك إرفاق صور جديدة للمنتجات مباشرة هنا.</p>
+                
+                <div class="recovery-form mt-4">
+                  <div class="form-group">
+                    <label>اختر المنتج المراد إصلاح صورته</label>
+                    <select v-model="recoveryProductId" class="form-control max-w-md mx-auto">
+                      <option value="">اختر المنتج...</option>
+                      <option v-for="prod in products" :key="prod._id" :value="prod._id">
+                        {{ prod.name }} ({{ prod.category }}) {{ !prod.img ? '[مفقودة]' : '' }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="image-dropzone max-w-md mx-auto mt-3" 
+                       :class="{ active: dragActive }" 
+                       @dragover.prevent="dragActive = true"
+                       @dragleave.prevent="dragActive = false"
+                       @drop.prevent="handleImageDrop($event)"
+                       @click="triggerImageSelect">
+                    <input type="file" ref="recoveryFileInput" class="hidden-file-input" accept="image/*" @change="handleImageFileSelect" />
+                    
+                    <div v-if="!recoveryFile" class="dropzone-prompt">
+                      <svg class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      <span>اسحب الصورة هنا أو اضغط للتصفح</span>
+                    </div>
+                    <div v-else class="dropzone-preview">
+                      <img :src="recoveryFilePreview" alt="Preview" />
+                      <span class="file-name">{{ recoveryFile.name }}</span>
+                    </div>
+                  </div>
+
+                  <button @click="uploadRecoveryImage" :disabled="!recoveryProductId || !recoveryFile" class="btn btn-primary mt-4">
+                    رفع وحفظ الصورة الجديدة
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- Product Modal Form -->
+    <div v-if="productModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-box glass-panel max-w-lg">
+        <div class="modal-header">
+          <h3>{{ editingProduct._id ? 'تعديل بيانات المنتج' : 'إضافة منتج جديد' }}</h3>
+          <button @click="productModalOpen = false" class="modal-close-btn">&times;</button>
+        </div>
+        <form @submit.prevent="saveProduct" class="modal-form">
+          <div class="form-group">
+            <label>اسم المنتج *</label>
+            <input v-model="editingProduct.name" type="text" required class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>الوصف</label>
+            <textarea v-model="editingProduct.desc" rows="2" class="form-control"></textarea>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>الصنف الرئيسي *</label>
+              <select v-model="editingProduct.category" @change="onProductCategoryChange" required class="form-control">
+                <option value="">اختر الصنف...</option>
+                <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الصنف الفرعي</label>
+              <select v-model="editingProduct.subCategory" :disabled="!subCategoriesForEditing.length" class="form-control">
+                <option value="">لا يوجد صنف فرعي</option>
+                <option v-for="sub in subCategoriesForEditing" :key="sub" :value="sub">{{ sub }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>طريقة البيع والتسعير</label>
+            <div class="purchase-type-radios">
+              <label class="radio-label">
+                <input type="radio" value="both" v-model="editingProduct.purchaseType" />
+                <span>كلاهما (مفرد + جملة)</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" value="regular" v-model="editingProduct.purchaseType" />
+                <span>مفرد فقط</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" value="bulk" v-model="editingProduct.purchaseType" />
+                <span>جملة فقط</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>سعر البيع بالمفرد (د.ل) *</label>
+              <input v-model.number="editingProduct.price_regular" type="number" step="0.01" :disabled="editingProduct.purchaseType === 'bulk'" :required="editingProduct.purchaseType !== 'bulk'" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>سعر البيع بالجملة (د.ل) *</label>
+              <input v-model.number="editingProduct.price_bulk" type="number" step="0.01" :disabled="editingProduct.purchaseType === 'regular'" :required="editingProduct.purchaseType !== 'regular'" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="modal-allow-float" v-model="editingProduct.allowFloat" />
+            <label for="modal-allow-float">يسمح بالكميات الكسرية (مثل: 0.5 كجم)</label>
+          </div>
+
+          <div class="form-group">
+            <label>صورة المنتج</label>
+            <div class="image-dropzone" 
+                 :class="{ active: modalDragActive }" 
+                 @dragover.prevent="modalDragActive = true"
+                 @dragleave.prevent="modalDragActive = false"
+                 @drop.prevent="handleModalImageDrop($event)"
+                 @click="triggerModalImageSelect">
+              <input type="file" ref="modalFileInput" class="hidden-file-input" accept="image/*" @change="handleModalImageFileSelect" />
+              
+              <div v-if="!modalFile && !editingProduct.img" class="dropzone-prompt">
+                <svg viewBox="0 0 24 24" class="cloud-icon" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>اسحب الصورة هنا أو اضغط للتصفح</span>
+              </div>
+              <div v-else class="dropzone-preview">
+                <img :src="modalFilePreview || editingProduct.img" alt="Product" />
+                <span class="file-name">{{ modalFile ? modalFile.name : 'الصورة الحالية' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary">حفظ المنتج</button>
+            <button type="button" @click="productModalOpen = false" class="btn btn-outline">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Category Modal Form -->
+    <div v-if="categoryModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-box glass-panel max-w-md">
+        <div class="modal-header">
+          <h3>{{ editingCategory._id ? 'تعديل الصنف' : 'إضافة صنف جديد' }}</h3>
+          <button @click="categoryModalOpen = false" class="modal-close-btn">&times;</button>
+        </div>
+        <form @submit.prevent="saveCategory" class="modal-form">
+          <div class="form-group">
+            <label>اسم الصنف *</label>
+            <input v-model="editingCategory.name" type="text" required class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>الرمز التعبيري (Emoji) *</label>
+            <input v-model="editingCategory.emoji" type="text" required placeholder="مثال: 🍰" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>الأصناف الفرعية (تفصل بينها بفواصل ",")</label>
+            <input v-model="categorySubcategoriesString" type="text" placeholder="مثال: صنف 1, صنف 2, صنف 3" class="form-control" />
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary">حفظ الصنف</button>
+            <button type="button" @click="categoryModalOpen = false" class="btn btn-outline">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Image Zoom View -->
+    <div v-if="zoomedImageSrc" class="modal-overlay zoom-overlay animate-fade-in" @click="zoomedImageSrc = null">
+      <div class="zoom-box">
+        <img :src="zoomedImageSrc" alt="Zoomed" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, reactive, computed, onMounted } from 'vue';
+import { useToastStore } from '../stores/toast';
+
+export default {
+  name: 'AdminView',
+  setup() {
+    const toast = useToastStore();
+    const loading = ref(false);
+    const isAuthenticated = ref(false);
+    const sidebarOpen = ref(false);
+    const activeTab = ref('analytics');
+    const activeShop = ref('shop1');
+    const loginShop = ref('shop1');
+
+    // Login Data
+    const loginForm = reactive({ username: '', password: '' });
+    const loginError = ref('');
+
+    // Tabs Titles
+    const tabTitles = {
+      analytics: 'لوحة الإحصائيات والتقارير المالية',
+      products: 'إدارة المنتجات وقائمة الأسعار',
+      categories: 'تصنيف وتقسيم الأصناف الرئيسية',
+      images: 'إصلاح ورفع صور المنتجات التالفة'
+    };
+
+    // Analytics Data
+    const analyticsPeriod = ref('30d');
+    const periods = [
+      { val: '7d', label: 'آخر 7 أيام' },
+      { val: '30d', label: 'آخر 30 يوم' },
+      { val: 'all', label: 'كل الأوقات' }
+    ];
+
+    const analyticsData = reactive({
+      kpi: { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 },
+      revenueTrend: [],
+      priceModeSplit: { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } },
+      topProducts: [],
+      topCustomers: [],
+      categorySales: [],
+      topFavorites: []
+    });
+
+    // Product & Categories datasets
+    const products = ref([]);
+    const categories = ref([]);
+
+    // Filters
+    const filters = reactive({ search: '', category: '' });
+
+    // Modals control
+    const productModalOpen = ref(false);
+    const categoryModalOpen = ref(false);
+    const zoomedImageSrc = ref(null);
+
+    // Product form bindings
+    const editingProduct = reactive({
+      _id: '',
+      name: '',
+      desc: '',
+      category: '',
+      subCategory: '',
+      purchaseType: 'both',
+      price_regular: null,
+      price_bulk: null,
+      allowFloat: false,
+      img: ''
+    });
+
+    const modalFileInput = ref(null);
+    const modalFile = ref(null);
+    const modalFilePreview = ref('');
+    const modalDragActive = ref(false);
+
+    // Category form bindings
+    const editingCategory = reactive({
+      _id: '',
+      name: '',
+      emoji: '',
+      subCategories: []
+    });
+    const categorySubcategoriesString = ref('');
+
+    // Image Recovery bindings
+    const recoveryProductId = ref('');
+    const recoveryFileInput = ref(null);
+    const recoveryFile = ref(null);
+    const recoveryFilePreview = ref('');
+    const dragActive = ref(false);
+
+    // Helper functions
+    const formatCurrency = (val) => {
+      return (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2 }) + ' د.ل';
+    };
+
+    // Authentication Checks
+    const checkAuthentication = async () => {
+      loading.value = true;
+      try {
+        const checkUrl = activeShop.value === 'shop2' ? '/api/shop2/admin-check' : '/api/admin-check';
+        const res = await fetch(checkUrl);
+        if (res.ok) {
+          isAuthenticated.value = true;
+          await loadAllData();
+        } else {
+          isAuthenticated.value = false;
+        }
+      } catch (err) {
+        console.error(err);
+        isAuthenticated.value = false;
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const handleLogin = async () => {
+      loading.value = true;
+      loginError.value = '';
+      try {
+        const loginUrl = loginShop.value === 'shop2' ? '/api/shop2/login' : '/api/login';
+        const res = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(loginForm)
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          activeShop.value = loginShop.value;
+          isAuthenticated.value = true;
+          toast.show('تم تسجيل الدخول بنجاح', 'success');
+          await loadAllData();
+        } else {
+          loginError.value = data.message || 'بيانات الدخول غير صحيحة';
+        }
+      } catch (err) {
+        loginError.value = 'حدث خطأ بالاتصال بالخادم';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const handleLogout = async () => {
+      // Clear cookie client side
+      document.cookie = activeShop.value === 'shop2' ? 'admin_shop2=; Max-Age=0; path=/;' : 'admin=; Max-Age=0; path=/;';
+      isAuthenticated.value = false;
+      toast.show('تم تسجيل الخروج بنجاح', 'success');
+    };
+
+    // Switch shops context in dashboard
+    const switchShop = async (shop) => {
+      activeShop.value = shop;
+      sidebarOpen.value = false;
+      await checkAuthentication();
+    };
+
+    // Tab switcher
+    const setTab = (tab) => {
+      activeTab.value = tab;
+      sidebarOpen.value = false;
+    };
+
+    // Load Data
+    const loadAllData = async () => {
+      loading.value = true;
+      try {
+        await Promise.all([
+          fetchAnalytics(),
+          fetchProducts(),
+          fetchCategories()
+        ]);
+      } catch (err) {
+        toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const fetchAnalytics = async () => {
+      try {
+        const res = await fetch(`/api/admin/analytics?shop=${activeShop.value}&period=${analyticsPeriod.value}`);
+        if (res.ok) {
+          const data = await res.json();
+          Object.assign(analyticsData, data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const changePeriod = async (p) => {
+      analyticsPeriod.value = p;
+      loading.value = true;
+      await fetchAnalytics();
+      loading.value = false;
+    };
+
+    const fetchProducts = async () => {
+      const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
+      const res = await fetch(url);
+      if (res.ok) {
+        products.value = await res.json();
+      }
+    };
+
+    const fetchCategories = async () => {
+      const url = activeShop.value === 'shop2' ? '/api/shop2/categories' : '/api/categories';
+      const res = await fetch(url);
+      if (res.ok) {
+        categories.value = await res.json();
+      }
+    };
+
+    // Filter Products
+    const filteredProducts = computed(() => {
+      return products.value.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || 
+                             (p.desc && p.desc.toLowerCase().includes(filters.search.toLowerCase()));
+        const matchesCat = !filters.category || p.category === filters.category;
+        return matchesSearch && matchesCat;
+      });
+    });
+
+    // Product Availability Toggle
+    const toggleProductAvailability = async (product) => {
+      const targetState = !product.available;
+      const url = activeShop.value === 'shop2'
+        ? `/api/shop2/products/${product._id}/availability`
+        : `/api/products/${product._id}/availability`;
+      
+      try {
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ available: targetState })
+        });
+        if (res.ok) {
+          product.available = targetState;
+          toast.show('تم تحديث حالة توفر المنتج', 'success');
+        } else {
+          toast.show('فشل تحديث حالة توفر المنتج', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      }
+    };
+
+    // Delete Product
+    const deleteProduct = async (id) => {
+      if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المنتج نهائياً؟')) return;
+      const url = activeShop.value === 'shop2'
+        ? `/api/shop2/products/${id}`
+        : `/api/products/${id}`;
+        
+      try {
+        const res = await fetch(url, { method: 'DELETE' });
+        if (res.ok) {
+          products.value = products.value.filter(p => p._id !== id);
+          toast.show('تم حذف المنتج بنجاح', 'success');
+          fetchAnalytics(); // Refresh analytics
+        } else {
+          toast.show('فشل في حذف المنتج', 'danger');
+        }
+      } catch (err) {
+        toast.show('خطأ بالخادم', 'danger');
+      }
+    };
+
+    // Open Add/Edit Product Modal
+    const subCategoriesForEditing = ref([]);
+    const openProductModal = (prod = null) => {
+      modalFile.value = null;
+      modalFilePreview.value = '';
+      
+      if (prod) {
+        // Edit Mode
+        editingProduct._id = prod._id;
+        editingProduct.name = prod.name;
+        editingProduct.desc = prod.desc || '';
+        editingProduct.category = prod.category;
+        editingProduct.subCategory = prod.subCategory || '';
+        editingProduct.purchaseType = prod.purchaseType || 'both';
+        editingProduct.price_regular = prod.price_regular || null;
+        editingProduct.price_bulk = prod.price_bulk || null;
+        editingProduct.allowFloat = !!prod.allowFloat;
+        editingProduct.img = prod.img || '';
+        
+        // Load subcategories for this category
+        const cat = categories.value.find(c => c.name === prod.category);
+        subCategoriesForEditing.value = cat ? (cat.subCategories || []) : [];
+      } else {
+        // Create Mode
+        editingProduct._id = '';
+        editingProduct.name = '';
+        editingProduct.desc = '';
+        editingProduct.category = '';
+        editingProduct.subCategory = '';
+        editingProduct.purchaseType = 'both';
+        editingProduct.price_regular = null;
+        editingProduct.price_bulk = null;
+        editingProduct.allowFloat = false;
+        editingProduct.img = '';
+        subCategoriesForEditing.value = [];
+      }
+      productModalOpen.value = true;
+    };
+
+    const onProductCategoryChange = () => {
+      const cat = categories.value.find(c => c.name === editingProduct.category);
+      subCategoriesForEditing.value = cat ? (cat.subCategories || []) : [];
+      editingProduct.subCategory = '';
+    };
+
+    // Save Product Form Action (FormData for MultiPart S3 images)
+    const saveProduct = async () => {
+      loading.value = true;
+      const url = editingProduct._id 
+        ? (activeShop.value === 'shop2' ? `/api/shop2/products/${editingProduct._id}` : `/api/products/${editingProduct._id}`)
+        : (activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products');
+
+      const formData = new FormData();
+      formData.append('name', editingProduct.name);
+      formData.append('desc', editingProduct.desc);
+      formData.append('category', editingProduct.category);
+      formData.append('subCategory', editingProduct.subCategory);
+      formData.append('purchaseType', editingProduct.purchaseType);
+      formData.append('allowFloat', editingProduct.allowFloat ? 'true' : 'false');
+      
+      if (editingProduct.purchaseType !== 'bulk' && editingProduct.price_regular) {
+        formData.append('price_regular', editingProduct.price_regular);
+      }
+      if (editingProduct.purchaseType !== 'regular' && editingProduct.price_bulk) {
+        formData.append('price_bulk', editingProduct.price_bulk);
+      }
+
+      if (modalFile.value) {
+        formData.append('img', modalFile.value);
+      } else if (editingProduct._id && editingProduct.img) {
+        // Keep existing image info for edits without a file change
+        formData.append('existingImg', editingProduct.img);
+      }
+
+      try {
+        const method = editingProduct._id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          body: formData
+        });
+        
+        if (res.ok) {
+          toast.show(editingProduct._id ? 'تم تعديل المنتج بنجاح' : 'تم إضافة المنتج بنجاح', 'success');
+          productModalOpen.value = false;
+          await fetchProducts();
+          fetchAnalytics(); // Refresh analytics
+        } else {
+          const errData = await res.json();
+          toast.show(errData.error || 'فشل في حفظ المنتج', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // Product Modal Image Handling
+    const triggerModalImageSelect = () => {
+      modalFileInput.value.click();
+    };
+
+    const handleModalImageFileSelect = (e) => {
+      const file = e.target.files[0];
+      if (file) setModalFile(file);
+    };
+
+    const handleModalImageDrop = (e) => {
+      modalDragActive.value = false;
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) setModalFile(file);
+    };
+
+    const setModalFile = (file) => {
+      modalFile.value = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        modalFilePreview.value = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Zoom Image Preview
+    const zoomImage = (src) => {
+      if (src) zoomedImageSrc.value = src;
+    };
+
+    // CATEGORIES CRUD LOGIC
+    const openCategoryModal = (cat = null) => {
+      if (cat) {
+        editingCategory._id = cat._id;
+        editingCategory.name = cat.name;
+        editingCategory.emoji = cat.emoji || '';
+        editingCategory.subCategories = cat.subCategories || [];
+        categorySubcategoriesString.value = (cat.subCategories || []).join(', ');
+      } else {
+        editingCategory._id = '';
+        editingCategory.name = '';
+        editingCategory.emoji = '📂';
+        editingCategory.subCategories = [];
+        categorySubcategoriesString.value = '';
+      }
+      categoryModalOpen.value = true;
+    };
+
+    const saveCategory = async () => {
+      loading.value = true;
+      const subCats = categorySubcategoriesString.value
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+        
+      const body = {
+        name: editingCategory.name,
+        emoji: editingCategory.emoji,
+        subCategories: subCats
+      };
+
+      const url = editingCategory._id
+        ? (activeShop.value === 'shop2' ? `/api/shop2/categories/${editingCategory._id}` : `/api/categories/${editingCategory._id}`)
+        : (activeShop.value === 'shop2' ? '/api/shop2/categories' : '/api/categories');
+
+      try {
+        const method = editingCategory._id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        if (res.ok) {
+          toast.show('تم حفظ الصنف بنجاح', 'success');
+          categoryModalOpen.value = false;
+          await fetchCategories();
+        } else {
+          const errData = await res.json();
+          toast.show(errData.error || 'فشل في حفظ الصنف', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const deleteCategory = async (id) => {
+      if (!confirm('هل أنت متأكد من حذف الصنف؟ ستبقى المنتجات تابعة له إلا إذا قمت بنقلها.')) return;
+      const url = activeShop.value === 'shop2'
+        ? `/api/shop2/categories/${id}`
+        : `/api/categories/${id}`;
+
+      try {
+        const res = await fetch(url, { method: 'DELETE' });
+        if (res.ok) {
+          categories.value = categories.value.filter(c => c._id !== id);
+          toast.show('تم حذف الصنف', 'success');
+        } else {
+          toast.show('فشل في حذف الصنف', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      }
+    };
+
+    // IMAGE RECOVERY TAB LOGIC
+    const triggerImageSelect = () => {
+      recoveryFileInput.value.click();
+    };
+
+    const handleImageFileSelect = (e) => {
+      const file = e.target.files[0];
+      if (file) setRecoveryFile(file);
+    };
+
+    const handleImageDrop = (e) => {
+      dragActive.value = false;
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) setRecoveryFile(file);
+    };
+
+    const setRecoveryFile = (file) => {
+      recoveryFile.value = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        recoveryFilePreview.value = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    const uploadRecoveryImage = async () => {
+      if (!recoveryProductId.value || !recoveryFile.value) return;
+      loading.value = true;
+      
+      const url = activeShop.value === 'shop2'
+        ? `/api/shop2/products/${recoveryProductId.value}`
+        : `/api/products/${recoveryProductId.value}`;
+
+      // Get existing product info
+      const prod = products.value.find(p => p._id === recoveryProductId.value);
+      if (!prod) return;
+
+      const formData = new FormData();
+      formData.append('name', prod.name);
+      formData.append('category', prod.category);
+      if (prod.desc) formData.append('desc', prod.desc);
+      if (prod.subCategory) formData.append('subCategory', prod.subCategory);
+      if (prod.purchaseType) formData.append('purchaseType', prod.purchaseType);
+      if (prod.price_regular) formData.append('price_regular', prod.price_regular);
+      if (prod.price_bulk) formData.append('price_bulk', prod.price_bulk);
+      formData.append('allowFloat', prod.allowFloat ? 'true' : 'false');
+      formData.append('img', recoveryFile.value);
+
+      try {
+        const res = await fetch(url, {
+          method: 'PUT',
+          body: formData
+        });
+        if (res.ok) {
+          toast.show('تم رفع وحفظ الصورة وإصلاح المنتج بنجاح', 'success');
+          recoveryProductId.value = '';
+          recoveryFile.value = null;
+          recoveryFilePreview.value = '';
+          await fetchProducts(); // Reload lists
+        } else {
+          toast.show('فشل في رفع وحفظ الصورة التالفة', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // SVG Line Chart coordinates math calculations
+    const trendCoordinates = computed(() => {
+      if (!analyticsData.revenueTrend.length) return [];
+      
+      const maxVal = Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 100);
+      const pointsCount = analyticsData.revenueTrend.length;
+      
+      // Map points onto 600x240 view box:
+      // X from 40 to 560
+      // Y from 210 to 40
+      return analyticsData.revenueTrend.map((t, idx) => {
+        const x = 40 + (idx / (pointsCount - 1 || 1)) * 520;
+        const y = 210 - (t.revenue / maxVal) * 170;
+        return { x, y, date: t.date, val: t.revenue };
+      });
+    });
+
+    const svgTrendLinePath = computed(() => {
+      const coords = trendCoordinates.value;
+      if (coords.length === 0) return '';
+      return coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
+    });
+
+    const svgTrendAreaPath = computed(() => {
+      const coords = trendCoordinates.value;
+      if (coords.length === 0) return '';
+      const lineStr = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
+      const startX = coords[0].x;
+      const endX = coords[coords.length - 1].x;
+      return `${lineStr} L ${endX} 210 L ${startX} 210 Z`;
+    });
+
+    const trendXLabels = computed(() => {
+      const trend = analyticsData.revenueTrend;
+      if (trend.length === 0) return [];
+      
+      // Determine how many labels to display
+      const maxLabels = Math.min(trend.length, 5);
+      const labels = [];
+      const step = Math.floor(trend.length / maxLabels) || 1;
+      
+      for (let i = 0; i < trend.length; i += step) {
+        const x = 40 + (i / (trend.length - 1 || 1)) * 520;
+        // Format YYYY-MM-DD to DD/MM
+        const rawDate = trend[i].date;
+        const dateParts = rawDate.split('-');
+        const text = dateParts.length > 2 ? `${dateParts[2]}/${dateParts[1]}` : rawDate;
+        labels.push({ x, text });
+      }
+      return labels;
+    });
+
+    // Donut chart math for Bulk vs Regular sales split
+    const priceModePercentages = computed(() => {
+      const reg = analyticsData.priceModeSplit.regular.revenue;
+      const blk = analyticsData.priceModeSplit.bulk.revenue;
+      const total = reg + blk;
+      if (total === 0) return { regular: 50, bulk: 50 };
+      return {
+        regular: (reg / total) * 100,
+        bulk: (blk / total) * 100
+      };
+    });
+
+    const donutDashArray = computed(() => {
+      // 2 * PI * R where R = 45 => 282.74
+      return '282.74';
+    });
+
+    const donutDashOffset = computed(() => {
+      const regPercent = priceModePercentages.value.regular;
+      // dashoffset = circum - (percent * circum)
+      return (282.74 - (regPercent / 100) * 282.74).toFixed(2);
+    });
+
+    const getCategoryBarWidth = (revenue) => {
+      const maxRevenue = Math.max(...analyticsData.categorySales.map(c => c.revenue), 1);
+      return Math.max((revenue / maxRevenue) * 100, 4); // Minimal width of 4% for design aesthetics
+    };
+
+    onMounted(() => {
+      checkAuthentication();
+    });
+
+    return {
+      loading,
+      isAuthenticated,
+      sidebarOpen,
+      activeTab,
+      activeShop,
+      loginShop,
+      loginForm,
+      loginError,
+      tabTitles,
+      analyticsPeriod,
+      periods,
+      analyticsData,
+      products,
+      categories,
+      filters,
+      filteredProducts,
+      productModalOpen,
+      categoryModalOpen,
+      zoomedImageSrc,
+      editingProduct,
+      subCategoriesForEditing,
+      modalFileInput,
+      modalFile,
+      modalFilePreview,
+      modalDragActive,
+      editingCategory,
+      categorySubcategoriesString,
+      recoveryProductId,
+      recoveryFileInput,
+      recoveryFile,
+      recoveryFilePreview,
+      dragActive,
+      formatCurrency,
+      handleLogin,
+      handleLogout,
+      switchShop,
+      setTab,
+      changePeriod,
+      toggleProductAvailability,
+      deleteProduct,
+      openProductModal,
+      onProductCategoryChange,
+      saveProduct,
+      triggerModalImageSelect,
+      handleModalImageFileSelect,
+      handleModalImageDrop,
+      zoomImage,
+      openCategoryModal,
+      saveCategory,
+      deleteCategory,
+      triggerImageSelect,
+      handleImageFileSelect,
+      handleImageDrop,
+      uploadRecoveryImage,
+      trendCoordinates,
+      svgTrendLinePath,
+      svgTrendAreaPath,
+      trendXLabels,
+      priceModePercentages,
+      donutDashArray,
+      donutDashOffset,
+      getCategoryBarWidth
+    };
+  }
+};
+</script>
+
+<style scoped>
+/* Glassmorphism dashboard styles using custom HSL/CSS tokens */
+.admin-layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 10% 20%, rgba(246, 248, 252, 0.95) 0%, rgba(230, 237, 246, 0.95) 90%);
+  font-family: 'Outfit', 'Inter', 'Cairo', sans-serif;
+  direction: rtl;
+}
+
+/* Define chart/theme palettes based on selected shop context */
+.shop-theme-shop1 {
+  --chart-primary: #fdb518;
+  --theme-btn-bg: #fdb518;
+  --theme-btn-hover: #e09e0a;
+  --theme-text-color: #0c0603;
+}
+
+.shop-theme-shop2 {
+  --chart-primary: #1e3a5f;
+  --theme-btn-bg: #1e3a5f;
+  --theme-btn-hover: #152943;
+  --theme-text-color: #ffffff;
+}
+
+/* Spinner Overlay */
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e9ecef;
+  border-top-color: var(--chart-primary);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+.spinner-text {
+  margin-top: 15px;
+  font-size: 1.1rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+/* Login Page styles */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 20px;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  width: 100%;
+  max-width: 450px;
+  padding: 40px 30px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.login-header h2 {
+  font-size: 1.5rem;
+  color: #1e3a5f;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.login-header p {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Admin Dashboard layout Grid */
+.admin-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100dvh;
+}
+
+/* Sidebar Navigation */
+.admin-sidebar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px);
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 25px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.sidebar-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.sidebar-brand h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.badge {
+  background: var(--chart-primary);
+  color: var(--theme-text-color);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.shop-switcher {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.switch-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.shop-select-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.shop-select-pills.compact .shop-pill {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.shop-pill {
+  flex: 1;
+  padding: 10px 12px;
+  background: #f1f3f5;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  color: #495057;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shop-pill.active {
+  background: var(--chart-primary);
+  border-color: var(--chart-primary);
+  color: var(--theme-text-color);
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  color: #495057;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: right;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover, .menu-item.active {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--chart-primary);
+}
+
+.menu-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid #dee2e6;
+  padding-top: 15px;
+}
+
+/* Mobile header styling */
+.admin-mobile-header {
+  display: none;
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+  padding: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.admin-mobile-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.menu-toggle-btn {
+  background: none;
+  border: none;
+  color: #1e3a5f;
+  cursor: pointer;
+}
+
+.mobile-logo {
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* Main Content Area */
+.admin-main {
+  padding: 30px;
+  overflow-y: auto;
+  height: 100dvh;
+}
+
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.main-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.period-selector {
+  display: flex;
+  gap: 8px;
+}
+
+/* KPI Cards Layout */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.kpi-icon-wrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.kpi-icon-wrapper svg {
+  width: 24px;
+  height: 24px;
+}
+
+.sales-icon { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.orders-icon { background: linear-gradient(135deg, #f1c40f, #f39c12); }
+.aov-icon { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+.customers-icon { background: linear-gradient(135deg, #3498db, #2980b9); }
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-title {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+/* Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.chart-card.span-2 {
+  grid-column: span 2;
+}
+
+.chart-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f3f5;
+  padding-bottom: 10px;
+}
+
+/* SVG Line Chart Style */
+.svg-chart-container {
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg-line-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-text {
+  font-size: 10px;
+  fill: #868e96;
+}
+
+.chart-dot-group:hover circle {
+  r: 7px;
+  stroke-width: 3px;
+}
+
+.dot-hover-trigger {
+  cursor: pointer;
+}
+
+.empty-chart {
+  color: #868e96;
+  font-size: 0.9rem;
+}
+
+/* Donut & Split Display */
+.split-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  height: 240px;
+}
+
+.donut-display {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.donut-percentage {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--chart-primary);
+}
+
+.donut-sub {
+  font-size: 0.75rem;
+  color: #868e96;
+}
+
+.split-legend {
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-regular { background-color: var(--chart-primary); }
+.dot-bulk { background-color: #ced4da; }
+
+.legend-row .label { color: #6c757d; }
+.legend-row .val { font-weight: 600; color: #1e3a5f; margin-right: auto; }
+
+/* Category bar gauges */
+.bar-chart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.bar-info .cat-name { font-weight: 600; color: #495057; }
+.bar-info .cat-val { color: #868e96; }
+
+.bar-gauge {
+  height: 8px;
+  background: #f1f3f5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--chart-primary);
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.1, 1, 0.1, 1);
+}
+
+/* List details */
+.list-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.list-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--chart-primary);
+  color: var(--theme-text-color);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.list-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-item-info .title { font-weight: 600; font-size: 0.9rem; color: #495057; }
+.list-item-info .subtitle { font-size: 0.75rem; color: #868e96; }
+
+/* Tables Layout inside dashboard */
+.table-container {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.admin-table th {
+  padding: 12px 10px;
+  background: #f1f3f5;
+  color: #495057;
+  font-weight: 700;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.admin-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e9ecef;
+  color: #495057;
+}
+
+.text-bold { font-weight: 700; }
+.text-semibold { font-weight: 600; }
+.text-center { text-align: center; }
+
+/* Filters actions bar */
+.filter-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+}
+
+.filters-group {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.form-control {
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  color: #495057;
+  font-weight: 500;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--chart-primary);
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: var(--theme-btn-bg);
+  color: var(--theme-text-color);
+}
+
+.btn-primary:hover {
+  background: var(--theme-btn-hover);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #ced4da;
+  color: #495057;
+}
+
+.btn-outline:hover {
+  background: #f1f3f5;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.table-prod-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  cursor: zoom-in;
+  border: 1px solid #dee2e6;
+}
+
+.badge-sub {
+  background: #e3faf2;
+  color: #0ca678;
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+}
+
+.chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sub-chip {
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+/* Modals overlays styling */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  padding: 25px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f3f5;
+  padding-bottom: 12px;
+}
+
+.modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #868e96;
+}
+
+.modal-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.modal-form label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.form-group-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.purchase-type-radios {
+  display: flex;
+  gap: 15px;
+  padding: 8px 0;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.checkbox-group {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+  cursor: pointer;
+}
+
+/* Drag drop upload zones styles */
+.image-dropzone {
+  border: 2px dashed #ced4da;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
+}
+
+.image-dropzone.active, .image-dropzone:hover {
+  border-color: var(--chart-primary);
+  background: rgba(var(--chart-primary), 0.02);
+}
+
+.cloud-icon {
+  width: 32px;
+  height: 32px;
+  color: #adb5bd;
+  margin-bottom: 8px;
+}
+
+.dropzone-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #868e96;
+}
+
+.dropzone-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropzone-preview img {
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.file-name {
+  font-size: 0.75rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+/* Image Recovery specific styling */
+.recovery-box {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.recovery-icon {
+  width: 55px;
+  height: 55px;
+  color: var(--chart-primary);
+  margin-bottom: 15px;
+}
+
+.recovery-box h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin-bottom: 10px;
+}
+
+/* Zoom screen view */
+.zoom-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.zoom-box img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Toggle Switch check input */
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch label {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #dee2e6;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.toggle-switch label:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + label {
+  background-color: #2ecc71;
+}
+
+.toggle-switch input:checked + label:before {
+  transform: translateX(24px);
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive breakdowns */
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart-card.span-2 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    width: 280px;
+    height: calc(100vh - 60px);
+    transform: translateX(100%);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-mobile-header {
+    display: flex;
+  }
+
+  .admin-main {
+    padding: 20px;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card.span-2 {
+    grid-column: span 1;
+  }
+
+  .filter-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters-group {
+    flex-direction: column;
+  }
+}
+</style>

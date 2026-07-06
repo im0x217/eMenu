@@ -862,6 +862,185 @@ app.get("/api/shop2/admin-check", (req, res) => {
   res.json({ ok: true });
 });
 
+// ============ ADMIN ANALYTICS API ============
+app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  const period = req.query.period || "30d";
+  
+  let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+  let prodColl = shop === "shop2" ? productsCollection2 : productsCollection;
+  
+  let startDate;
+  if (period === "7d") {
+    startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  } else if (period === "30d") {
+    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  } else {
+    startDate = new Date(0);
+  }
+  
+  try {
+    const matchStage = { createdAt: { $gte: startDate } };
+    
+    // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
+    const kpiSummary = await ordColl.aggregate([
+      { $match: matchStage },
+      { $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalPrice" },
+          orderCount: { $sum: 1 },
+          uniquePhones: { $addToSet: "$customerInfo.phone" }
+      } }
+    ]).toArray();
+    
+    const kpi = {
+      totalRevenue: kpiSummary[0] ? kpiSummary[0].totalRevenue : 0,
+      orderCount: kpiSummary[0] ? kpiSummary[0].orderCount : 0,
+      avgOrderValue: kpiSummary[0] && kpiSummary[0].orderCount > 0 ? (kpiSummary[0].totalRevenue / kpiSummary[0].orderCount) : 0,
+      activeCustomers: kpiSummary[0] ? kpiSummary[0].uniquePhones.length : 0
+    };
+    
+    // Revenue trend (sales trend chart)
+    const trend = await ordColl.aggregate([
+      { $match: matchStage },
+      { $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$totalPrice" },
+          orders: { $sum: 1 }
+      } },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+    
+    const revenueTrend = trend.map(t => ({
+      date: t._id,
+      revenue: t.revenue,
+      orders: t.orders
+    }));
+    
+    // Price Mode split (bulk vs regular)
+    const modes = await ordColl.aggregate([
+      { $match: matchStage },
+      { $group: {
+          _id: "$priceMode",
+          revenue: { $sum: "$totalPrice" },
+          count: { $sum: 1 }
+      } }
+    ]).toArray();
+    
+    const priceModeSplit = {
+      regular: { revenue: 0, count: 0 },
+      bulk: { revenue: 0, count: 0 }
+    };
+    modes.forEach(m => {
+      const key = m._id === "bulk" ? "bulk" : "regular";
+      priceModeSplit[key] = { revenue: m.revenue, count: m.count };
+    });
+    
+    // Top products by quantity sold
+    const topProducts = await ordColl.aggregate([
+      { $match: matchStage },
+      { $unwind: "$items" },
+      { $group: {
+          _id: "$items.productId",
+          name: { $first: "$items.name" },
+          quantity: { $sum: "$items.quantity" },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+      } },
+      { $sort: { quantity: -1 } },
+      { $limit: 10 }
+    ]).toArray();
+    
+    const topProductsFormatted = topProducts.map(p => ({
+      productId: p._id,
+      name: p.name || "منتج مجهول",
+      quantity: p.quantity,
+      revenue: p.revenue
+    }));
+    
+    // Top customers by spend
+    const topCustomersRaw = await ordColl.aggregate([
+      { $match: matchStage },
+      { $group: {
+          _id: "$customerInfo.phone",
+          name: { $first: "$customerInfo.name" },
+          totalSpent: { $sum: "$totalPrice" },
+          orderCount: { $sum: 1 }
+      } },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 10 }
+    ]).toArray();
+    
+    const topCustomers = topCustomersRaw.map(c => ({
+      phone: c._id,
+      name: c.name || "عميل مجهول",
+      totalSpent: c.totalSpent,
+      orderCount: c.orderCount
+    }));
+    
+    // Category Sales breakdown
+    const categoriesRaw = await ordColl.aggregate([
+      { $match: matchStage },
+      { $unwind: "$items" },
+      { $lookup: {
+          from: "products",
+          localField: "items.productId",
+          foreignField: "_id",
+          as: "prod"
+      } },
+      { $unwind: { path: "$prod", preserveNullAndEmptyArrays: true } },
+      { $group: {
+          _id: { $ifNull: ["$prod.category", "غير مصنف"] },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
+          count: { $sum: 1 }
+      } },
+      { $sort: { revenue: -1 } }
+    ]).toArray();
+    
+    const categorySales = categoriesRaw.map(c => ({
+      category: c._id,
+      revenue: c.revenue,
+      count: c.count
+    }));
+    
+    // Top favorites count (in-memory resolution of names to avoid cross-db lookup issues)
+    const favCounts = await favoritesCollection.aggregate([
+      { $match: { shop } },
+      { $group: {
+          _id: "$productId",
+          count: { $sum: 1 }
+      } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]).toArray();
+    
+    const favProductIds = favCounts.map(f => f._id);
+    const favProducts = await prodColl.find({ _id: { $in: favProductIds } }).toArray();
+    const favProdMap = {};
+    favProducts.forEach(p => {
+      favProdMap[p._id.toString()] = p.name;
+    });
+    
+    const topFavorites = favCounts.map(f => ({
+      name: favProdMap[f._id.toString()] || "منتج مجهول",
+      count: f.count
+    }));
+    
+    res.json({
+      kpi,
+      revenueTrend,
+      priceModeSplit,
+      topProducts: topProductsFormatted,
+      topCustomers,
+      categorySales,
+      topFavorites
+    });
+    
+  } catch (err) {
+    console.error("Aggregation analytics error:", err);
+    res.status(500).json({ error: "Failed to generate analytics" });
+  }
+});
+
 // ============ CUSTOMER & FAVORITES APIs ============
 
 app.post("/api/customer/identify", checkMongoDB, async (req, res) => {
