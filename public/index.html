@@ -158,7 +158,7 @@
 
       .categories-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
         gap: 2rem;
         width: 100%;
         margin-bottom: 2rem;
@@ -386,9 +386,11 @@
     </style>
   </head>
   <body>
-    <!-- Background Orbs -->
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
+    <!-- Background Orbs Wrapper to prevent iOS Zoom Out -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 0;">
+      <div class="glow-orb orb-1"></div>
+      <div class="glow-orb orb-2"></div>
+    </div>
 
     <div class="landing-container">
       <div class="header-section">
