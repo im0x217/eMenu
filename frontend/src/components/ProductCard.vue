@@ -29,18 +29,7 @@ const showBulkPrice = computed(() => {
   return props.product.purchaseType === 'bulk' || props.product.purchaseType === 'both';
 });
 
-// Quantity controls
-const quantity = ref(1);
-const quantityStep = computed(() => props.product.allowFloat ? 0.5 : 1);
-const quantityMin = computed(() => props.product.allowFloat ? 0.5 : 1);
-
-const adjustQuantity = (amount) => {
-  const nextVal = quantity.value + amount;
-  if (nextVal >= quantityMin.value) {
-    quantity.value = Math.round(nextVal * 10) / 10; // Avoid floating point precision issues
-  }
-};
-
+// Quantity controls removed - products add with quantity 1 by default
 const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props.product._id));
 
 const toggleSave = () => {
@@ -57,9 +46,7 @@ const handleAddToCart = () => {
   }
   
   try {
-    cartStore.addToCart(props.product, activeShop.value, mode, quantity.value);
-    // Reset quantity back to default
-    quantity.value = quantityMin.value;
+    cartStore.addToCart(props.product, activeShop.value, mode, 1);
     alert('تم إضافة المنتج إلى السلة بنجاح!');
   } catch (err) {
     alert(err.message);
@@ -81,7 +68,7 @@ const getImageUrl = () => {
         height="20" 
         viewBox="0 0 24 24" 
         :fill="isSaved ? 'var(--primary-color)' : 'none'" 
-        :stroke="isSaved ? 'var(--primary-color)' : 'rgba(255,255,255,0.6)'"
+        :stroke="isSaved ? 'var(--primary-color)' : 'rgba(0,0,0,0.4)'"
         stroke-width="2" 
         stroke-linecap="round" 
         stroke-linejoin="round"
@@ -126,19 +113,14 @@ const getImageUrl = () => {
         </div>
       </div>
 
-      <!-- Quantity Adjuster and Add Button -->
+      <!-- Add Button (Wide format) -->
       <div class="actions-row" v-if="product.available !== false">
-        <div class="qty-adjuster">
-          <button class="qty-btn" @click="adjustQuantity(-quantityStep)">-</button>
-          <span class="qty-val">{{ quantity }}</span>
-          <button class="qty-btn" @click="adjustQuantity(quantityStep)">+</button>
-        </div>
-        
-        <button class="add-btn" @click="handleAddToCart" aria-label="إضافة إلى السلة">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button class="add-btn-wide" @click="handleAddToCart" aria-label="إضافة إلى السلة">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px;">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
+          <span>أضف للسلة</span>
         </button>
       </div>
     </div>
@@ -251,10 +233,10 @@ const getImageUrl = () => {
   color: #6c757d;
   margin-bottom: 0.5rem;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 2.2em;
+  height: 3.4em;
   line-height: 1.15;
 }
 
@@ -298,67 +280,35 @@ const getImageUrl = () => {
 
 .actions-row {
   display: flex;
-  gap: 8px;
   margin-top: auto;
   align-items: center;
 }
 
-.qty-adjuster {
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 8px;
-  overflow: hidden;
-  flex-grow: 1;
-  justify-content: space-between;
-}
-
-.qty-btn {
-  background: transparent;
-  border: none;
-  color: #2c2520;
-  font-size: 1.1rem;
-  font-weight: 700;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-}
-
-.qty-btn:active {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.qty-val {
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 0 4px;
-  color: #2c2520;
-}
-
-.add-btn {
+.add-btn-wide {
+  width: 100%;
   background: var(--primary-color);
   border: none;
   border-radius: 8px;
-  width: 32px;
-  height: 32px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.1s;
 }
 
-.shop-theme-shop1 .add-btn {
+.shop-theme-shop1 .add-btn-wide {
   color: #0c0603; /* Dark text/icon for gold button */
 }
 
-.shop-theme-shop2 .add-btn {
+.shop-theme-shop2 .add-btn-wide {
   color: #ffffff; /* White text/icon for blue button */
 }
 
-.add-btn:active {
-  transform: scale(0.95);
+.add-btn-wide:active {
+  transform: scale(0.97);
 }
 </style>
