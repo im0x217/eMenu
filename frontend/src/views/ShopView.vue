@@ -403,8 +403,15 @@ const hasBulkProducts = computed(() => {
 
 .cat-btn.active {
   background: var(--primary-color);
-  color: #0c0603;
   border-color: var(--primary-color);
+}
+
+:global(.shop-theme-shop1) .cat-btn.active {
+  color: #0c0603; /* Dark text for active gold button */
+}
+
+:global(.shop-theme-shop2) .cat-btn.active {
+  color: #ffffff; /* White text for active blue button */
 }
 
 .cat-emoji {
