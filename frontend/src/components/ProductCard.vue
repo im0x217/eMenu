@@ -152,7 +152,7 @@ const getImageUrl = () => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
 }
 
 .product-card.not-available {
@@ -164,7 +164,7 @@ const getImageUrl = () => {
   top: 8px;
   right: 8px;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.8);
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -175,11 +175,12 @@ const getImageUrl = () => {
   cursor: pointer;
   transition: transform 0.2s, background-color 0.2s;
   backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .favorite-btn:hover {
   transform: scale(1.1);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .heart-icon {
@@ -195,7 +196,7 @@ const getImageUrl = () => {
   width: 100%;
   padding-top: 80%; /* 5:4 aspect ratio */
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.01);
+  background: rgba(0, 0, 0, 0.02);
   cursor: zoom-in;
 }
 
@@ -219,7 +220,7 @@ const getImageUrl = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -238,7 +239,7 @@ const getImageUrl = () => {
 .product-title {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #2c2520;
   margin-bottom: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
@@ -247,7 +248,7 @@ const getImageUrl = () => {
 
 .product-desc {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #6c757d;
   margin-bottom: 0.5rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -277,7 +278,7 @@ const getImageUrl = () => {
 
 .regular-price {
   background: rgba(253, 181, 24, 0.08);
-  color: #fdb518;
+  color: #d98000;
 }
 
 .regular-price.active {
@@ -287,11 +288,11 @@ const getImageUrl = () => {
 
 .bulk-price {
   background: rgba(55, 178, 77, 0.1);
-  color: #37b24d;
+  color: #2b8a3e;
 }
 
 .bulk-price.active {
-  background: #37b24d;
+  background: #2b8a3e;
   color: #fff;
 }
 
@@ -305,8 +306,8 @@ const getImageUrl = () => {
 .qty-adjuster {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 8px;
   overflow: hidden;
   flex-grow: 1;
@@ -316,7 +317,7 @@ const getImageUrl = () => {
 .qty-btn {
   background: transparent;
   border: none;
-  color: #fff;
+  color: #2c2520;
   font-size: 1.1rem;
   font-weight: 700;
   width: 28px;
@@ -325,18 +326,18 @@ const getImageUrl = () => {
 }
 
 .qty-btn:active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .qty-val {
   font-size: 0.85rem;
   font-weight: 700;
   padding: 0 4px;
+  color: #2c2520;
 }
 
 .add-btn {
   background: var(--primary-color);
-  color: #0c0603;
   border: none;
   border-radius: 8px;
   width: 32px;
@@ -347,6 +348,14 @@ const getImageUrl = () => {
   cursor: pointer;
   transition: opacity 0.2s;
   flex-shrink: 0;
+}
+
+.shop-theme-shop1 .add-btn {
+  color: #0c0603; /* Dark text/icon for gold button */
+}
+
+.shop-theme-shop2 .add-btn {
+  color: #ffffff; /* White text/icon for blue button */
 }
 
 .add-btn:active {
