@@ -32,9 +32,13 @@ onMounted(() => {
 
 <style>
 .app-layout {
-  min-height: 100vh;
+  height: 100%;
+  height: 100dvh;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
 }
 
 /* Page transitions */
