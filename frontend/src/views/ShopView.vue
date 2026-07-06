@@ -406,16 +406,6 @@ const hasBulkProducts = computed(() => {
   border-color: var(--primary-color) !important;
 }
 
-:global(.shop-theme-shop1) .cat-btn.active,
-:global(.shop-theme-shop1) .cat-btn.active * {
-  color: #0c0603 !important;
-}
-
-:global(.shop-theme-shop2) .cat-btn.active,
-:global(.shop-theme-shop2) .cat-btn.active * {
-  color: #ffffff !important;
-}
-
 .cat-emoji {
   font-size: 1.1rem;
 }

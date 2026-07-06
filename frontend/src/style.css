@@ -216,3 +216,14 @@ body {
 .rtl-flip {
   transform: scaleX(-1);
 }
+
+/* Category Button active contrast rules (Global to bypass Vue scoped selector limitations) */
+.shop-theme-shop1 .cat-btn.active,
+.shop-theme-shop1 .cat-btn.active * {
+  color: #0c0603 !important;
+}
+
+.shop-theme-shop2 .cat-btn.active,
+.shop-theme-shop2 .cat-btn.active * {
+  color: #ffffff !important;
+}
