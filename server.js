@@ -391,10 +391,11 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
 
+  const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
     !name ||
     !category ||
-    (parsedPriceRegular === null && parsedPrice === null)
+    !hasSomePrice
   ) {
     console.log("[UPLOAD ERROR] Missing required fields - name:", name, "category:", category);
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
@@ -457,10 +458,11 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
       }
   }
 
+  const hasSomePrice = updateData.price_regular !== null || updateData.price !== null || (updateData.purchaseType === 'bulk' && updateData.price_bulk !== null);
   if (
     !updateData.name ||
     !updateData.category ||
-    (updateData.price_regular === null && updateData.price === null)
+    !hasSomePrice
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)" });
   }
@@ -709,10 +711,11 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
 
+  const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
     !name ||
     !category ||
-    (parsedPriceRegular === null && parsedPrice === null)
+    !hasSomePrice
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
