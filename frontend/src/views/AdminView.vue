@@ -82,6 +82,14 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             <span>إدارة الأصناف</span>
           </button>
+          <button class="menu-item" :class="{ active: activeTab === 'orders' }" @click="setTab('orders')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span>إدارة الطلبات</span>
+          </button>
+          <button class="menu-item" :class="{ active: activeTab === 'customers' }" @click="setTab('customers')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>العملاء والمفضلات</span>
+          </button>
           <button class="menu-item" :class="{ active: activeTab === 'images' }" @click="setTab('images')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             <span>إصلاح الصور التالفة</span>
@@ -477,6 +485,123 @@
             </div>
           </div>
 
+          <!-- ORDERS MANAGEMENT TAB -->
+          <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
+            <div class="filter-actions-bar glass-panel mb-3">
+              <div class="filters-group">
+                <input v-model="orderFilters.search" type="text" placeholder="البحث برقم الهاتف أو الاسم..." class="form-control" />
+                <select v-model="orderFilters.status" class="form-control">
+                  <option value="">كل الحالات</option>
+                  <option value="pending">قيد الانتظار (Pending)</option>
+                  <option value="processing">جاري المعالجة (Processing)</option>
+                  <option value="completed">مكتمل (Completed)</option>
+                  <option value="cancelled">ملغي (Cancelled)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="glass-panel p-0 table-card overflow-hidden">
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>رقم الطلب</th>
+                      <th>تاريخ الطلب</th>
+                      <th>العميل</th>
+                      <th>المنتجات المطلوبة</th>
+                      <th>المجموع</th>
+                      <th>نوع السعر</th>
+                      <th>الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="filteredOrders.length === 0">
+                      <td colspan="7" class="text-center p-4">لا توجد طلبات متطابقة.</td>
+                    </tr>
+                    <tr v-for="order in filteredOrders" :key="order._id">
+                      <td class="text-bold">#{{ order._id.toString().slice(-6) }}</td>
+                      <td>{{ new Date(order.createdAt).toLocaleString('ar-LY') }}</td>
+                      <td>
+                        <div class="customer-info-cell">
+                          <span class="name block text-bold">{{ order.customerInfo.name }}</span>
+                          <span class="phone text-muted block">{{ order.customerInfo.phone }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="items-list-cell">
+                          <div v-for="(item, idx) in order.items" :key="idx" class="item-line">
+                            {{ item.name }} × {{ item.quantity }}
+                            <span v-if="item.notes" class="item-note">({{ item.notes }})</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-bold text-primary">{{ formatCurrency(order.totalPrice) }}</td>
+                      <td>
+                        <span class="price-mode-badge" :class="order.priceMode">
+                          {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
+                        </span>
+                      </td>
+                      <td>
+                        <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select" :class="'status-' + order.status">
+                          <option value="pending">قيد الانتظار</option>
+                          <option value="processing">جاري المعالجة</option>
+                          <option value="completed">مكتمل</option>
+                          <option value="cancelled">ملغي</option>
+                        </select>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- CUSTOMERS MANAGEMENT TAB -->
+          <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
+            <div class="filter-actions-bar glass-panel mb-3">
+              <div class="filters-group">
+                <input v-model="customerFilters.search" type="text" placeholder="البحث عن اسم أو رقم هاتف..." class="form-control" />
+              </div>
+            </div>
+
+            <div class="glass-panel p-0 table-card overflow-hidden">
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>الاسم</th>
+                      <th>رقم الهاتف</th>
+                      <th>تاريخ التسجيل</th>
+                      <th>آخر نشاط</th>
+                      <th>إجمالي الطلبات</th>
+                      <th>إجمالي الإنفاق</th>
+                      <th>خيارات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="filteredCustomers.length === 0">
+                      <td colspan="7" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
+                    </tr>
+                    <tr v-for="cust in filteredCustomers" :key="cust._id">
+                      <td class="text-bold">{{ cust.name }}</td>
+                      <td>{{ cust.phone }}</td>
+                      <td>{{ cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</td>
+                      <td>{{ cust.lastActive ? new Date(cust.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</td>
+                      <td>{{ cust.orderCount }} طلبات</td>
+                      <td class="text-bold text-primary">{{ formatCurrency(cust.totalSpent) }}</td>
+                      <td>
+                        <div class="actions-buttons-cell">
+                          <button @click="openCustomerEditModal(cust)" class="btn btn-outline btn-xs ml-1">تعديل</button>
+                          <button @click="openCustomerFavsModal(cust)" class="btn btn-outline btn-xs" :disabled="!cust.favorites || !cust.favorites.length">المفضلة</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
     </div>
@@ -610,6 +735,53 @@
       </div>
     </div>
 
+    <!-- Customer Modal Form -->
+    <div v-if="customerModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-box glass-panel max-w-md">
+        <div class="modal-header">
+          <h3>تعديل بيانات العميل</h3>
+          <button @click="customerModalOpen = false" class="modal-close-btn">&times;</button>
+        </div>
+        <form @submit.prevent="saveCustomerDetails" class="modal-form">
+          <div class="form-group">
+            <label>اسم العميل *</label>
+            <input v-model="editingCustomer.name" type="text" required class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>رقم الهاتف *</label>
+            <input v-model="editingCustomer.phone" type="text" required class="form-control" />
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary" :disabled="loading">حفظ التغييرات</button>
+            <button type="button" @click="customerModalOpen = false" class="btn btn-outline">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Customer Favorites Modal -->
+    <div v-if="customerFavsModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-box glass-panel max-w-md">
+        <div class="modal-header">
+          <h3>المنتجات المفضلة للعميل</h3>
+          <button @click="customerFavsModalOpen = false" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body py-3">
+          <ul v-if="viewingCustomerFavs.length > 0" class="favorites-modal-list">
+            <li v-for="(name, idx) in viewingCustomerFavs" :key="idx" class="fav-modal-item">
+              <span class="bullet">•</span> {{ name }}
+            </li>
+          </ul>
+          <p v-else class="text-center text-muted">لا توجد تفضيلات مسجلة.</p>
+        </div>
+        <div class="modal-footer mt-2">
+          <button type="button" @click="customerFavsModalOpen = false" class="btn btn-outline w-100">إغلاق</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Image Zoom View -->
     <div v-if="zoomedImageSrc" class="modal-overlay zoom-overlay animate-fade-in" @click="zoomedImageSrc = null">
       <div class="zoom-box">
@@ -643,6 +815,8 @@ export default {
       analytics: 'لوحة الإحصائيات والتقارير المالية',
       products: 'إدارة المنتجات وقائمة الأسعار',
       categories: 'تصنيف وتقسيم الأصناف الرئيسية',
+      orders: 'سجل وإدارة طلبات العملاء',
+      customers: 'قائمة العملاء والمنتجات المفضلة',
       images: 'إصلاح ورفع صور المنتجات التالفة'
     };
 
@@ -667,13 +841,27 @@ export default {
     // Product & Categories datasets
     const products = ref([]);
     const categories = ref([]);
+    const orders = ref([]);
+    const customers = ref([]);
 
     // Filters
     const filters = reactive({ search: '', category: '' });
+    const orderFilters = reactive({ search: '', status: '' });
+    const customerFilters = reactive({ search: '' });
 
     // Modals control
     const productModalOpen = ref(false);
     const categoryModalOpen = ref(false);
+    const customerModalOpen = ref(false);
+    const customerFavsModalOpen = ref(false);
+    
+    // Customer form bindings
+    const editingCustomer = reactive({
+      _id: '',
+      name: '',
+      phone: ''
+    });
+    const viewingCustomerFavs = ref([]);
     const zoomedImageSrc = ref(null);
 
     // Product form bindings
@@ -1094,7 +1282,9 @@ export default {
         await Promise.all([
           fetchAnalytics(),
           fetchProducts(),
-          fetchCategories()
+          fetchCategories(),
+          fetchOrders(),
+          fetchCustomers()
         ]);
       } catch (err) {
         toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
@@ -1137,6 +1327,106 @@ export default {
         categories.value = await res.json();
       }
     };
+
+    const fetchOrders = async () => {
+      try {
+        const url = `/api/admin/orders?shop=${activeShop.value}`;
+        const res = await adminFetch(url);
+        if (res.ok) {
+          orders.value = await res.json();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const fetchCustomers = async () => {
+      try {
+        const url = `/api/admin/customers?shop=${activeShop.value}`;
+        const res = await adminFetch(url);
+        if (res.ok) {
+          customers.value = await res.json();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const updateOrderStatus = async (orderId, status) => {
+      try {
+        const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
+        const res = await adminFetch(url, {
+          method: 'PUT',
+          body: JSON.stringify({ status })
+        });
+        if (res.ok) {
+          toast.show('تم تحديث حالة الطلب بنجاح', 'success');
+          await Promise.all([fetchOrders(), fetchAnalytics()]);
+        } else {
+          toast.show('فشل تحديث حالة الطلب', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      }
+    };
+
+    const openCustomerEditModal = (cust) => {
+      editingCustomer._id = cust._id;
+      editingCustomer.name = cust.name;
+      editingCustomer.phone = cust.phone;
+      customerModalOpen.value = true;
+    };
+
+    const saveCustomerDetails = async () => {
+      loading.value = true;
+      try {
+        const url = `/api/admin/customers/${editingCustomer._id}`;
+        const res = await adminFetch(url, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: editingCustomer.name,
+            phone: editingCustomer.phone
+          })
+        });
+        if (res.ok) {
+          toast.show('تم تحديث بيانات العميل بنجاح', 'success');
+          customerModalOpen.value = false;
+          await Promise.all([fetchCustomers(), fetchOrders(), fetchAnalytics()]);
+        } else {
+          const errData = await res.json();
+          toast.show(errData.error || 'فشل تحديث العميل', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const openCustomerFavsModal = (cust) => {
+      const favs = cust.favorites || [];
+      viewingCustomerFavs.value = favs.map(id => {
+        const prod = products.value.find(p => p._id === id);
+        return prod ? prod.name : 'منتج مجهول';
+      });
+      customerFavsModalOpen.value = true;
+    };
+
+    const filteredOrders = computed(() => {
+      return orders.value.filter(o => {
+        const matchesSearch = o.customerInfo.name.toLowerCase().includes(orderFilters.search.toLowerCase()) || 
+                             o.customerInfo.phone.includes(orderFilters.search);
+        const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
+        return matchesSearch && matchesStatus;
+      });
+    });
+
+    const filteredCustomers = computed(() => {
+      return customers.value.filter(c => {
+        return c.name.toLowerCase().includes(customerFilters.search.toLowerCase()) || 
+               c.phone.includes(customerFilters.search);
+      });
+    });
 
     const uploadRecoveryImage = async () => {
       if (!recoveryProductId.value || !recoveryFile.value) return;
@@ -1328,7 +1618,21 @@ export default {
       priceModePercentages,
       donutDashArray,
       donutDashOffset,
-      getCategoryBarWidth
+      getCategoryBarWidth,
+      orders,
+      customers,
+      orderFilters,
+      customerFilters,
+      filteredOrders,
+      filteredCustomers,
+      editingCustomer,
+      customerModalOpen,
+      customerFavsModalOpen,
+      viewingCustomerFavs,
+      updateOrderStatus,
+      openCustomerEditModal,
+      saveCustomerDetails,
+      openCustomerFavsModal
     };
   }
 };
@@ -2306,5 +2610,106 @@ export default {
   .filters-group {
     flex-direction: column;
   }
+}
+
+/* Orders & Customers Tab Specific Styles */
+.price-mode-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+}
+.price-mode-badge.regular {
+  background: #e7f5ff;
+  color: #228be6;
+}
+.price-mode-badge.bulk {
+  background: #fff4e6;
+  color: #fd7e14;
+}
+
+.status-select {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  outline: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: auto;
+  display: inline-block;
+}
+.status-select.status-pending {
+  background: #fff9db;
+  color: #f08c00;
+  border-color: #ffe066;
+}
+.status-select.status-processing {
+  background: #e7f5ff;
+  color: #228be6;
+  border-color: #a5d8ff;
+}
+.status-select.status-completed {
+  background: #ebfbee;
+  color: #40c057;
+  border-color: #b2f2bb;
+}
+.status-select.status-cancelled {
+  background: #fff5f5;
+  color: #fa5252;
+  border-color: #ffc9c9;
+}
+
+.customer-info-cell .block {
+  display: block;
+}
+.customer-info-cell .phone {
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.items-list-cell {
+  max-width: 300px;
+}
+.item-line {
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+  color: #495057;
+}
+.item-note {
+  font-size: 0.75rem;
+  color: #868e96;
+  font-style: italic;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+.ml-1 {
+  margin-left: 4px;
+}
+
+.favorites-modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.fav-modal-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f3f5;
+  font-weight: 500;
+  color: #343a40;
+}
+.fav-modal-item:last-child {
+  border-bottom: none;
+}
+.fav-modal-item .bullet {
+  color: var(--chart-primary);
+  margin-left: 6px;
+  font-weight: 700;
 }
 </style>

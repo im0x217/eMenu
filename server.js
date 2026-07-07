@@ -872,7 +872,7 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   let prodColl = shop === "shop2" ? productsCollection2 : productsCollection;
   
   let startDate;
-  if (period === "7d") {
+      if (period === "7d") {
     startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   } else if (period === "30d") {
     startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -881,7 +881,7 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   }
   
   try {
-    const matchStage = { createdAt: { $gte: startDate } };
+    const matchStage = { createdAt: { $gte: startDate }, status: "completed" };
     
     // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
     const kpiSummary = await ordColl.aggregate([
@@ -1039,6 +1039,131 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   } catch (err) {
     console.error("Aggregation analytics error:", err);
     res.status(500).json({ error: "Failed to generate analytics" });
+  }
+});
+
+// ============ ADMIN ORDERS & CUSTOMERS APIs ============
+
+// Get all orders for the admin panel
+app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  const status = req.query.status;
+  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+
+  try {
+    const query = {};
+    if (status) {
+      query.status = status;
+    }
+    const orders = await ordColl.find(query).sort({ createdAt: -1 }).limit(100).toArray();
+    res.json(orders);
+  } catch (err) {
+    console.error("Fetch admin orders error:", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+// Update order status
+app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
+    return res.status(400).json({ error: "Invalid status value" });
+  }
+
+  try {
+    const result = await ordColl.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status } }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error("Update order status error:", err);
+    res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
+// Get all customers with details
+app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+
+  try {
+    const customers = await customersCollection.find().toArray();
+    
+    const customersWithDetails = await Promise.all(customers.map(async (cust) => {
+      const phone = cust.phone;
+      
+      const orderStats = await ordColl.aggregate([
+        { $match: { "customerInfo.phone": phone } },
+        { $group: {
+            _id: null,
+            totalSpent: { $sum: "$totalPrice" },
+            orderCount: { $sum: 1 }
+        } }
+      ]).toArray();
+
+      const favRecord = await favoritesCollection.findOne({ phone, shop });
+      const favorites = favRecord ? favRecord.favorites : [];
+
+      return {
+        _id: cust._id,
+        name: cust.name,
+        phone: cust.phone,
+        lastActive: cust.lastActive,
+        createdAt: cust.createdAt,
+        totalSpent: orderStats[0] ? orderStats[0].totalSpent : 0,
+        orderCount: orderStats[0] ? orderStats[0].orderCount : 0,
+        favorites
+      };
+    }));
+
+    res.json(customersWithDetails);
+  } catch (err) {
+    console.error("Fetch admin customers error:", err);
+    res.status(500).json({ error: "Failed to fetch customers" });
+  }
+});
+
+// Update customer details (with reference linkage preservation)
+app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, phone } = req.body;
+
+  if (!name || !phone) {
+    return res.status(400).json({ error: "Name and phone are required" });
+  }
+
+  try {
+    const customer = await customersCollection.findOne({ _id: new ObjectId(id) });
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const oldPhone = customer.phone;
+    const newPhone = phone.trim();
+
+    await customersCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { name: name.trim(), phone: newPhone, lastActive: new Date() } }
+    );
+
+    if (oldPhone !== newPhone) {
+      await favoritesCollection.updateMany({ phone: oldPhone }, { $set: { phone: newPhone } });
+      await ordersCollection.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
+      await ordersCollection2.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
+    }
+
+    res.json({ success: true, name, phone: newPhone });
+  } catch (err) {
+    console.error("Update customer error:", err);
+    res.status(500).json({ error: "Failed to update customer" });
   }
 });
 
