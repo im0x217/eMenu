@@ -7,8 +7,8 @@
     </div>
 
     <!-- Login Container -->
-    <div v-if="!isAuthenticated" class="login-container glass-panel animate-fade-in">
-      <div class="login-card">
+    <div v-if="!isAuthenticated" class="login-container animate-fade-in">
+      <div class="login-card glass-panel">
         <div class="login-header">
           <img :src="loginShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="login-logo" />
           <h2>لوحة الإدارة الذكية</h2>
@@ -30,10 +30,10 @@
             <label>المتجر المستهدف</label>
             <div class="shop-select-pills">
               <button type="button" class="shop-pill" :class="{ active: loginShop === 'shop1' }" @click="loginShop = 'shop1'">
-                المتجر الرئيسي (حلويات)
+                المتجر الرئيسي
               </button>
               <button type="button" class="shop-pill" :class="{ active: loginShop === 'shop2' }" @click="loginShop = 'shop2'">
-                قسم النواشف (فاخر)
+                قسم النواشف
               </button>
             </div>
           </div>
@@ -46,6 +46,8 @@
         </form>
       </div>
     </div>
+
+
 
     <!-- Admin Panel Container -->
     <div v-else class="admin-container">
@@ -710,126 +712,7 @@ export default {
     const dragActive = ref(false);
 
     // Helper functions
-    const formatCurrency = (val) => {
-      return (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2 }) + ' د.ل';
-    };
 
-    // Authentication Checks
-    const checkAuthentication = async () => {
-      loading.value = true;
-      try {
-        const checkUrl = activeShop.value === 'shop2' ? '/api/shop2/admin-check' : '/api/admin-check';
-        const res = await fetch(checkUrl);
-        if (res.ok) {
-          isAuthenticated.value = true;
-          await loadAllData();
-        } else {
-          isAuthenticated.value = false;
-        }
-      } catch (err) {
-        console.error(err);
-        isAuthenticated.value = false;
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const handleLogin = async () => {
-      loading.value = true;
-      loginError.value = '';
-      try {
-        const loginUrl = loginShop.value === 'shop2' ? '/api/shop2/login' : '/api/login';
-        const res = await fetch(loginUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(loginForm)
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          activeShop.value = loginShop.value;
-          isAuthenticated.value = true;
-          toast.show('تم تسجيل الدخول بنجاح', 'success');
-          await loadAllData();
-        } else {
-          loginError.value = data.message || 'بيانات الدخول غير صحيحة';
-        }
-      } catch (err) {
-        loginError.value = 'حدث خطأ بالاتصال بالخادم';
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const handleLogout = async () => {
-      // Clear cookie client side
-      document.cookie = activeShop.value === 'shop2' ? 'admin_shop2=; Max-Age=0; path=/;' : 'admin=; Max-Age=0; path=/;';
-      isAuthenticated.value = false;
-      toast.show('تم تسجيل الخروج بنجاح', 'success');
-    };
-
-    // Switch shops context in dashboard
-    const switchShop = async (shop) => {
-      activeShop.value = shop;
-      sidebarOpen.value = false;
-      await checkAuthentication();
-    };
-
-    // Tab switcher
-    const setTab = (tab) => {
-      activeTab.value = tab;
-      sidebarOpen.value = false;
-    };
-
-    // Load Data
-    const loadAllData = async () => {
-      loading.value = true;
-      try {
-        await Promise.all([
-          fetchAnalytics(),
-          fetchProducts(),
-          fetchCategories()
-        ]);
-      } catch (err) {
-        toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const fetchAnalytics = async () => {
-      try {
-        const res = await fetch(`/api/admin/analytics?shop=${activeShop.value}&period=${analyticsPeriod.value}`);
-        if (res.ok) {
-          const data = await res.json();
-          Object.assign(analyticsData, data);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    const changePeriod = async (p) => {
-      analyticsPeriod.value = p;
-      loading.value = true;
-      await fetchAnalytics();
-      loading.value = false;
-    };
-
-    const fetchProducts = async () => {
-      const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
-      const res = await fetch(url);
-      if (res.ok) {
-        products.value = await res.json();
-      }
-    };
-
-    const fetchCategories = async () => {
-      const url = activeShop.value === 'shop2' ? '/api/shop2/categories' : '/api/categories';
-      const res = await fetch(url);
-      if (res.ok) {
-        categories.value = await res.json();
-      }
-    };
 
     // Filter Products
     const filteredProducts = computed(() => {
@@ -849,9 +732,8 @@ export default {
         : `/api/products/${product._id}/availability`;
       
       try {
-        const res = await fetch(url, {
+        const res = await adminFetch(url, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ available: targetState })
         });
         if (res.ok) {
@@ -873,7 +755,7 @@ export default {
         : `/api/products/${id}`;
         
       try {
-        const res = await fetch(url, { method: 'DELETE' });
+        const res = await adminFetch(url, { method: 'DELETE' });
         if (res.ok) {
           products.value = products.value.filter(p => p._id !== id);
           toast.show('تم حذف المنتج بنجاح', 'success');
@@ -962,7 +844,7 @@ export default {
 
       try {
         const method = editingProduct._id ? 'PUT' : 'POST';
-        const res = await fetch(url, {
+        const res = await adminFetch(url, {
           method,
           body: formData
         });
@@ -1050,9 +932,8 @@ export default {
 
       try {
         const method = editingCategory._id ? 'PUT' : 'POST';
-        const res = await fetch(url, {
+        const res = await adminFetch(url, {
           method,
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
         
@@ -1078,7 +959,7 @@ export default {
         : `/api/categories/${id}`;
 
       try {
-        const res = await fetch(url, { method: 'DELETE' });
+        const res = await adminFetch(url, { method: 'DELETE' });
         if (res.ok) {
           categories.value = categories.value.filter(c => c._id !== id);
           toast.show('تم حذف الصنف', 'success');
@@ -1115,6 +996,148 @@ export default {
       reader.readAsDataURL(file);
     };
 
+    const formatCurrency = (val) => {
+      return (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2 }) + ' د.ل';
+    };
+
+    const adminFetch = async (url, options = {}) => {
+      const token = localStorage.getItem('admin_token');
+      if (token) {
+        if (!options.headers) options.headers = {};
+        if (!(options.body instanceof FormData)) {
+          if (!options.headers['Content-Type']) {
+            options.headers['Content-Type'] = 'application/json';
+          }
+        }
+        options.headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch(url, options);
+      if (res.status === 401 || res.status === 403) {
+        isAuthenticated.value = false;
+        localStorage.removeItem('admin_token');
+      }
+      return res;
+    };
+
+    // Authentication Checks
+    const checkAuthentication = async () => {
+      loading.value = true;
+      try {
+        const checkUrl = activeShop.value === 'shop2' ? '/api/shop2/admin-check' : '/api/admin-check';
+        const res = await adminFetch(checkUrl);
+        if (res.ok) {
+          isAuthenticated.value = true;
+          await loadAllData();
+        } else {
+          isAuthenticated.value = false;
+        }
+      } catch (err) {
+        console.error(err);
+        isAuthenticated.value = false;
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const handleLogin = async () => {
+      loading.value = true;
+      loginError.value = '';
+      try {
+        const loginUrl = loginShop.value === 'shop2' ? '/api/shop2/login' : '/api/login';
+        const res = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(loginForm)
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          activeShop.value = loginShop.value;
+          localStorage.setItem('admin_token', data.token); // Save token for mobile compatibility
+          isAuthenticated.value = true;
+          toast.show('تم تسجيل الدخول بنجاح', 'success');
+          await loadAllData();
+        } else {
+          loginError.value = data.message || 'بيانات الدخول غير صحيحة';
+        }
+      } catch (err) {
+        loginError.value = 'حدث خطأ بالاتصال بالخادم';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const handleLogout = async () => {
+      document.cookie = activeShop.value === 'shop2' ? 'admin_shop2=; Max-Age=0; path=/;' : 'admin=; Max-Age=0; path=/;';
+      localStorage.removeItem('admin_token'); // Clear token
+      isAuthenticated.value = false;
+      toast.show('تم تسجيل الخروج بنجاح', 'success');
+    };
+
+    // Switch shops context in dashboard
+    const switchShop = async (shop) => {
+      activeShop.value = shop;
+      sidebarOpen.value = false;
+      await checkAuthentication();
+    };
+
+    // Tab switcher
+    const setTab = (tab) => {
+      activeTab.value = tab;
+      sidebarOpen.value = false;
+    };
+
+    // Load Data
+    const loadAllData = async () => {
+      loading.value = true;
+      try {
+        await Promise.all([
+          fetchAnalytics(),
+          fetchProducts(),
+          fetchCategories()
+        ]);
+      } catch (err) {
+        toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const fetchAnalytics = async () => {
+      try {
+        const res = await adminFetch(`/api/admin/analytics?shop=${activeShop.value}&period=${analyticsPeriod.value}`);
+        if (res.ok) {
+          const data = await res.json();
+          Object.assign(analyticsData, data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const changePeriod = async (p) => {
+      analyticsPeriod.value = p;
+      loading.value = true;
+      await fetchAnalytics();
+      loading.value = false;
+    };
+
+    const fetchProducts = async () => {
+      const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
+      const res = await adminFetch(url);
+      if (res.ok) {
+        products.value = await res.json();
+      }
+    };
+
+    const fetchCategories = async () => {
+      const url = activeShop.value === 'shop2' ? '/api/shop2/categories' : '/api/categories';
+      const res = await adminFetch(url);
+      if (res.ok) {
+        categories.value = await res.json();
+      }
+    };
+
     const uploadRecoveryImage = async () => {
       if (!recoveryProductId.value || !recoveryFile.value) return;
       loading.value = true;
@@ -1139,7 +1162,7 @@ export default {
       formData.append('img', recoveryFile.value);
 
       try {
-        const res = await fetch(url, {
+        const res = await adminFetch(url, {
           method: 'PUT',
           body: formData
         });
@@ -1905,6 +1928,8 @@ export default {
 }
 
 .form-control {
+  width: 100%;
+  box-sizing: border-box;
   padding: 10px 14px;
   background: #fff;
   border: 1px solid #ced4da;
@@ -1914,6 +1939,7 @@ export default {
   outline: none;
   font-family: inherit;
   transition: border-color 0.2s ease;
+  text-align: right;
 }
 
 .form-control:focus {
@@ -2042,17 +2068,18 @@ export default {
   color: #868e96;
 }
 
-.modal-form .form-group {
+.form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 15px;
 }
 
-.modal-form label {
+.form-group label {
   font-size: 0.85rem;
   font-weight: 600;
   color: #495057;
+  text-align: right;
 }
 
 .form-group-row {

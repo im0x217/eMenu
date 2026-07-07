@@ -167,8 +167,11 @@ const checkMongoDB = (req, res, next) => {
 };
 
 const checkAdmin = (req, res, next) => {
-  // Accept either legacy admin cookie or the shop2-specific cookie for new admin2 panel
-  const isAdmin = req.cookies.admin === "true" || req.cookies.admin_shop2 === "true";
+  // Accept legacy cookie, shop2 cookie, OR Authorization header for mobile compatibility
+  const isAdmin = req.cookies.admin === "true" || 
+                  req.cookies.admin_shop2 === "true" ||
+                  req.headers.authorization === "Bearer admin-token" ||
+                  req.headers.authorization === "Bearer admin-token-shop2";
   if (isAdmin) return next();
   res.status(403).json({ success: false, message: "Forbidden" });
 };
@@ -288,7 +291,7 @@ app.post("/api/login", loginLimiter, (req, res) => {
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-    return res.json({ success: true });
+    return res.json({ success: true, token: "admin-token" });
   }
   res.status(401).json({ success: false, message: "Unauthorized" });
 });
@@ -851,16 +854,12 @@ app.post("/api/shop2/login", loginLimiter, (req, res) => {
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-    return res.json({ success: true });
+    return res.json({ success: true, token: "admin-token-shop2" });
   }
   res.status(401).json({ success: false, message: "Unauthorized" });
 });
 
-app.get("/api/shop2/admin-check", (req, res) => {
-  const isAdmin = req.cookies.admin_shop2 === "true";
-  if (!isAdmin) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
+app.get("/api/shop2/admin-check", checkAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
