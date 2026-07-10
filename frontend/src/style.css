@@ -48,12 +48,40 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  background-color: #faf7f2; /* Prevents white flash/bounce backgrounds on mobile */
+}
+
 html, body {
   overflow: hidden;
   max-width: 100%;
   width: 100%;
   height: 100%;
-  height: 100dvh;
+  position: relative;
+  overscroll-behavior: none; /* Prevents viewport rubber-banding natively on iOS and Android */
+  cursor: default; /* Prevents I-beam text cursor on static components */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; /* Disables accidental selection highlights */
+}
+
+/* Allow text input carets and selection only on actual input fields */
+input, textarea, [contenteditable="true"] {
+  cursor: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Permit text selection on product names ONLY, but force the standard arrow cursor */
+.fav-card-name, .admin-table td.text-bold {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  cursor: default !important;
 }
 
 body {
@@ -80,11 +108,12 @@ body {
   max-width: 768px;
   width: 100%;
   height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   margin: 0 auto;
-  padding: 1rem;
-  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); /* Space so list scrolls past the bottom nav */
+  padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem calc(90px + env(safe-area-inset-bottom, 0px)) 1rem;
 }
 
 /* Horizontal scroll for categories */

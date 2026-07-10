@@ -1371,6 +1371,7 @@
               price_bulk: product.price_bulk || null,
               allowFloat: product.allowFloat || false,
               shop: currentShop,
+              productId: product._id || null
             });
           }
           saveCart();
@@ -1524,8 +1525,54 @@
             );
             return;
           }
-          let msg = "طلب جديد من الموقع:%0A";
+
+          let customerName = localStorage.getItem("customer_name") || "";
+          let customerPhone = localStorage.getItem("customer_phone") || "";
+
+          if (!customerName || !customerPhone) {
+            const enteredName = prompt("يرجى إدخال اسمك الكريم لتسجيل الطلب:");
+            if (!enteredName || !enteredName.trim()) return;
+            const enteredPhone = prompt("يرجى إدخال رقم هاتفك لتسجيل الطلب:");
+            if (!enteredPhone || !enteredPhone.trim()) return;
+
+            customerName = enteredName.trim();
+            customerPhone = enteredPhone.trim();
+            localStorage.setItem("customer_name", customerName);
+            localStorage.setItem("customer_phone", customerPhone);
+          }
+
           const deliveryDate = document.getElementById("delivery-date").value;
+
+          // Save order to server database silently
+          const orderBody = {
+            customer: {
+              name: customerName,
+              phone: customerPhone
+            },
+            items: cart.map(item => ({
+              productId: item.productId || null,
+              name: item.name,
+              price: Number(item.price),
+              quantity: Number(item.qty),
+              allowFloat: !!item.allowFloat,
+              notes: item.details || ''
+            })),
+            totalPrice: Number(cartTotal()),
+            deliveryDate: deliveryDate || '',
+            notes: '',
+            priceMode: isBulkCart ? 'bulk' : 'regular'
+          };
+
+          fetch("/api/shop2/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderBody)
+          }).catch(e => console.error("Error saving order to backend:", e));
+
+          let msg = "طلب جديد من الموقع:%0A";
+          msg += `*العميل:* ${customerName}%0A`;
+          msg += `*الهاتف:* ${customerPhone}%0A`;
+          msg += `--------------------------------%0A`;
           if (deliveryDate) {
             msg += `%0A*يوم الاستلام: ${deliveryDate}*%0A`;
           }

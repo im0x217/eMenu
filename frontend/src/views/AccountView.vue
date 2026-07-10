@@ -84,11 +84,6 @@ const getStatusLabel = (status) => {
 
 <template>
   <div class="account-view-container">
-    <header class="view-header glass-panel">
-      <h1 class="view-title">👤 حسابي الشخصي</h1>
-      <p class="view-desc">تعديل بياناتك وتصفح أرشيف طلباتك السابقة</p>
-    </header>
-
     <!-- Profile Management -->
     <div class="profile-section glass-panel">
       <h3 class="section-title">بيانات الحساب</h3>

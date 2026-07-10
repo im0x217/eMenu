@@ -2,12 +2,15 @@
 import { computed, ref } from 'vue';
 import { useShopStore } from '../stores/shop';
 import { useFavoritesStore } from '../stores/favorites';
+import { useAuthStore } from '../stores/auth';
 import ProductCard from '../components/ProductCard.vue';
 
 const shopStore = useShopStore();
 const favoritesStore = useFavoritesStore();
+const authStore = useAuthStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
+const isLoggedIn = computed(() => authStore.isIdentified());
 
 const favoriteProducts = computed(() => {
   const favIds = favoritesStore.getFavoritesList(activeShop.value);
@@ -28,10 +31,16 @@ const closeZoomModal = () => {
 
 <template>
   <div class="favorites-view-container">
-    <header class="view-header glass-panel">
-      <h1 class="view-title">❤️ مفضلاتي</h1>
-      <p class="view-desc">المنتجات التي قمت بحفظها في هذا القسم</p>
-    </header>
+    <!-- Warning Notice if not logged in -->
+    <div v-if="!isLoggedIn" class="login-notice-banner glass-panel">
+      <span class="notice-icon">⚠️</span>
+      <div class="notice-text">
+        <h3 class="notice-title">المفضلة السحابية غير نشطة</h3>
+        <p class="notice-desc">
+          يرجى الانتقال إلى صفحة <router-link to="/account" class="notice-link">حسابي</router-link> وتدوين <strong>اسمك ورقم هاتفك/نشاطك التجاري</strong> لحفظ ومزامنة تفضيلاتك سحابياً والوصول إليها من أي جهاز.
+        </p>
+      </div>
+    </div>
 
     <!-- Product Grid -->
     <div v-if="favoriteProducts.length > 0" class="product-grid">
@@ -82,6 +91,51 @@ const closeZoomModal = () => {
 .view-desc {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+/* Notice Banner */
+.login-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 1rem;
+  background: rgba(220, 53, 69, 0.05);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  border-radius: 12px;
+  color: #fff;
+  text-align: right;
+  margin-bottom: 0.5rem;
+}
+
+.notice-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.notice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notice-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.notice-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.notice-link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 700;
 }
 
 .empty-state {

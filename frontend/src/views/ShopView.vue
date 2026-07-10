@@ -10,8 +10,21 @@ const searchQuery = ref('');
 const activeCategory = ref('');
 const activeSubCategory = ref('');
 
+const carouselItems = ref([]);
+
+const fetchCarousel = async () => {
+  try {
+    const res = await fetch(`/api/marketing-carousel?shop=${shopStore.activeShop || 'shop1'}`);
+    if (res.ok) {
+      carouselItems.value = await res.json();
+    }
+  } catch (err) {
+    console.error('Failed to fetch marketing carousel:', err);
+  }
+};
+
 onMounted(async () => {
-  await shopStore.fetchMenu();
+  await Promise.all([shopStore.fetchMenu(), fetchCarousel()]);
   // Set default active category to the first one available
   if (shopStore.categories.length > 0) {
     activeCategory.value = shopStore.categories[0].name;
@@ -20,7 +33,7 @@ onMounted(async () => {
 
 // Watch shop parameter change to refetch items
 watch(() => shopStore.activeShop, async () => {
-  await shopStore.fetchMenu();
+  await Promise.all([shopStore.fetchMenu(), fetchCarousel()]);
   if (shopStore.categories.length > 0) {
     activeCategory.value = shopStore.categories[0].name;
   }
@@ -153,6 +166,21 @@ const hasBulkProducts = computed(() => {
         <span>{{ shopStore.isBulkVerified ? 'تعطيل أسعار الجملة' : 'تفعيل أسعار الجملة' }}</span>
       </button>
     </header>
+
+    <!-- Marketing Carousel -->
+    <div v-if="!searchQuery && carouselItems.length > 0" class="carousel-wrapper">
+      <div class="carousel-track">
+        <component
+          :is="item.link ? 'a' : 'div'"
+          v-for="item in carouselItems"
+          :key="item._id"
+          :href="item.link || undefined"
+          class="carousel-card"
+          :style="{ backgroundImage: `url('${item.image}')` }"
+        >
+        </component>
+      </div>
+    </div>
 
     <!-- Search Input -->
     <div class="search-box-wrapper glass-panel">
@@ -573,5 +601,47 @@ const hasBulkProducts = computed(() => {
   color: #fff;
   font-size: 1.8rem;
   cursor: pointer;
+}
+
+/* Marketing Carousel */
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  gap: 12px;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-card {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  position: relative;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  display: block;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.carousel-card:active {
+  transform: scale(0.98);
 }
 </style>

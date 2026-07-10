@@ -103,11 +103,6 @@ const handleClearCart = () => {
 
 <template>
   <div class="cart-view-container">
-    <header class="view-header glass-panel">
-      <h1 class="view-title">🛒 سلة المشتريات</h1>
-      <p class="view-desc">قم بمراجعة طلبك وإدخال بيانات الاستلام لإتمام الطلب</p>
-    </header>
-
     <!-- Empty State -->
     <div v-if="cartStore.items.length === 0" class="empty-state glass-panel">
       <div class="empty-icon-wrapper">🛍️</div>

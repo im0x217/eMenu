@@ -4,6 +4,7 @@ import { useShopStore } from '../stores/shop';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
 import { useToastStore } from '../stores/toast';
+import { useAuthStore } from '../stores/auth';
 
 const props = defineProps({
   product: {
@@ -18,6 +19,7 @@ const shopStore = useShopStore();
 const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
 const toastStore = useToastStore();
+const authStore = useAuthStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isBulkMode = computed(() => shopStore.isBulkVerified);
@@ -36,10 +38,20 @@ const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props
 
 const toggleSave = () => {
   favoritesStore.toggleFavorite(activeShop.value, props.product._id);
-  if (favoritesStore.isFavorite(activeShop.value, props.product._id)) {
-    toastStore.show('تم إضافة المنتج إلى المفضلة ❤️');
+  const isNowFav = favoritesStore.isFavorite(activeShop.value, props.product._id);
+  
+  if (!authStore.isIdentified()) {
+    if (isNowFav) {
+      toastStore.show('تم الحفظ محلياً! يرجى تسجيل الدخول باسمك ورقم نشاطك التجاري من صفحة "حسابي" لتفعيل وحفظ المفضلة سحابياً ⚠️');
+    } else {
+      toastStore.show('تم إزالة المنتج من المفضلة');
+    }
   } else {
-    toastStore.show('تم إزالة المنتج من المفضلة');
+    if (isNowFav) {
+      toastStore.show('تم إضافة المنتج إلى المفضلة ❤️');
+    } else {
+      toastStore.show('تم إزالة المنتج من المفضلة');
+    }
   }
 };
 

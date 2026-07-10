@@ -94,6 +94,10 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             <span>إصلاح الصور التالفة</span>
           </button>
+          <button class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+            <span>البنرات التسويقية</span>
+          </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -113,13 +117,49 @@
 
       <!-- Main Content -->
       <main class="admin-main">
-        <div class="main-header">
+        <div class="main-header no-print">
           <h1>{{ tabTitles[activeTab] }}</h1>
-          <!-- Period Selector for Analytics -->
-          <div v-if="activeTab === 'analytics'" class="period-selector">
-            <button v-for="p in periods" :key="p.val" class="btn btn-sm" :class="analyticsPeriod === p.val ? 'btn-primary' : 'btn-outline'" @click="changePeriod(p.val)">
-              {{ p.label }}
-            </button>
+          <!-- Period & Actions for Analytics -->
+          <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
+            <!-- Period Selector -->
+            <div class="segmented-control">
+              <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
+                {{ p.label }}
+              </button>
+            </div>
+            
+            <!-- Quick Action Buttons -->
+            <div class="report-actions">
+              <button @click="printReport" class="btn btn-sm btn-outline">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="me-1" style="display:inline-block; vertical-align:middle;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                طباعة التقرير
+              </button>
+              <div class="dropdown-export">
+                <button class="btn btn-sm btn-primary">
+                  تصدير البيانات CSV
+                </button>
+                <div class="dropdown-content">
+                  <a href="#" @click.prevent="exportReport('orders')">تقرير الطلبات</a>
+                  <a href="#" @click.prevent="exportReport('products')">أداء المنتجات</a>
+                  <a href="#" @click.prevent="exportReport('customers')">تفاعل العملاء</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Date Range Form -->
+        <div v-if="activeTab === 'analytics' && analyticsPeriod === 'custom'" class="custom-date-container glass-panel no-print mb-4 animate-fade-in">
+          <div class="date-picker-row">
+            <div class="date-input-group">
+              <label>تاريخ البدء:</label>
+              <input v-model="analyticsStartDate" type="date" class="form-control" />
+            </div>
+            <div class="date-input-group">
+              <label>تاريخ الانتهاء:</label>
+              <input v-model="analyticsEndDate" type="date" class="form-control" />
+            </div>
+            <button @click="fetchAnalytics" class="btn btn-primary btn-apply">تطبيق الفلتر</button>
           </div>
         </div>
 
@@ -325,6 +365,65 @@
                   </table>
                 </div>
               </div>
+
+            <!-- Actionable Insights Grid -->
+            <!-- Inactive Customers Card -->
+              <div class="chart-card glass-panel">
+                <div class="card-header-with-badge">
+                  <h3 class="chart-title">عملاء غائبون (بحاجة لتنشيط)</h3>
+                  <span class="badge badge-warning">آخر ظهور قديم</span>
+                </div>
+                <div class="table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>الاسم</th>
+                        <th>رقم الهاتف</th>
+                        <th>آخر نشاط</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="analyticsData.inactiveCustomers.length === 0">
+                        <td colspan="3" class="text-center">جميع العملاء نشطون في هذه الفترة!</td>
+                      </tr>
+                      <tr v-for="cust in analyticsData.inactiveCustomers" :key="cust.phone">
+                        <td>{{ cust.name }}</td>
+                        <td>{{ cust.phone }}</td>
+                        <td class="text-muted">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Low Performing Products Card -->
+              <div class="chart-card glass-panel span-2">
+                <div class="card-header-with-badge">
+                  <h3 class="chart-title">منتجات خاملة (0 مبيعات في هذه الفترة)</h3>
+                  <span class="badge badge-danger">مبيعات منخفضة</span>
+                </div>
+                <div class="table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المنتج</th>
+                        <th>الفئة</th>
+                        <th>السعر</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="analyticsData.lowPerformingProducts.length === 0">
+                        <td colspan="3" class="text-center">لا توجد منتجات خاملة، كل المنتجات تحقق مبيعات!</td>
+                      </tr>
+                      <tr v-for="prod in analyticsData.lowPerformingProducts" :key="prod.productId">
+                        <td>{{ prod.name }}</td>
+                        <td>{{ prod.category }}</td>
+                        <td class="text-semibold">{{ formatCurrency(prod.price) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -337,6 +436,10 @@
                 <select v-model="filters.category" class="form-control">
                   <option value="">كل الأصناف</option>
                   <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
+                </select>
+                <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="form-control animate-fade-in">
+                  <option value="">كل الأصناف الفرعية</option>
+                  <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
                 </select>
               </div>
               <button @click="openProductModal()" class="btn btn-primary">إضافة منتج جديد</button>
@@ -485,6 +588,38 @@
             </div>
           </div>
 
+          <!-- MARKETING CAROUSEL TAB -->
+          <div v-if="activeTab === 'carousel'" class="carousel-tab-content animate-fade-in">
+            <div class="filter-actions-bar glass-panel mb-3">
+              <div class="filters-group">
+                <span class="text-bold text-primary">إجمالي البنرات المضافة: {{ carouselItems.length }}</span>
+              </div>
+              <button @click="openCarouselModal()" class="btn btn-primary">إضافة بنر جديد</button>
+            </div>
+
+            <!-- Carousel Items Grid -->
+            <div v-if="carouselItems.length > 0" class="carousel-grid mt-3">
+              <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
+                <div class="card-image-wrapper">
+                  <img :src="item.image" alt="Banner Preview" class="card-image" />
+                </div>
+                <div class="card-info-bar">
+                  <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
+                  <button @click="deleteCarouselItem(item._id)" class="btn btn-danger btn-sm flex-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>حذف</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="glass-panel text-center p-5 text-muted">
+              لا توجد بنرات عروض تسويقية مضافة حالياً. اضغط على زر "إضافة بنر جديد" للبدء.
+            </div>
+          </div>
+
           <!-- ORDERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
             <div class="filter-actions-bar glass-panel mb-3">
@@ -496,6 +631,13 @@
                   <option value="processing">جاري المعالجة (Processing)</option>
                   <option value="completed">مكتمل (Completed)</option>
                   <option value="cancelled">ملغي (Cancelled)</option>
+                </select>
+                <select v-model="orderFilters.dateRange" class="form-control">
+                  <option value="all">كل الأوقات</option>
+                  <option value="today">اليوم</option>
+                  <option value="yesterday">أمس</option>
+                  <option value="7d">آخر 7 أيام</option>
+                  <option value="30d">آخر 30 يوم</option>
                 </select>
               </div>
             </div>
@@ -763,22 +905,87 @@
 
     <!-- Customer Favorites Modal -->
     <div v-if="customerFavsModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-md">
+      <div class="modal-box glass-panel max-w-4xl">
         <div class="modal-header">
           <h3>المنتجات المفضلة للعميل</h3>
           <button @click="customerFavsModalOpen = false" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body py-3">
-          <ul v-if="viewingCustomerFavs.length > 0" class="favorites-modal-list">
-            <li v-for="(name, idx) in viewingCustomerFavs" :key="idx" class="fav-modal-item">
-              <span class="bullet">•</span> {{ name }}
-            </li>
-          </ul>
-          <p v-else class="text-center text-muted">لا توجد تفضيلات مسجلة.</p>
+          <div v-if="viewingCustomer" class="customer-favs-meta mb-3 pb-2" style="border-bottom: 1px dashed #dee2e6;">
+            <span class="text-bold text-dark">العميل:</span> {{ viewingCustomer.name }}
+            <span class="mx-2">|</span>
+            <span class="text-bold text-dark">الهاتف:</span> <span style="direction: ltr; display: inline-block;">{{ viewingCustomer.phone }}</span>
+            <span class="mx-2">|</span>
+            <span class="text-bold text-dark">إجمالي المنتجات المفضلة:</span> {{ viewingCustomerFavs.length }}
+          </div>
+          
+          <div v-if="viewingCustomerFavs.length > 0" class="fav-grid-brows">
+            <div v-for="prod in viewingCustomerFavs" :key="prod._id" class="fav-grid-card glass-panel animate-scale-in">
+              <div class="fav-card-image-wrapper">
+                <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="fav-card-image" />
+              </div>
+              <div class="fav-card-info">
+                <span class="fav-card-name">{{ prod.name }}</span>
+                <span class="fav-card-cat">{{ prod.category }}</span>
+                <div class="fav-card-prices mt-2">
+                  <div v-if="prod.price_regular" class="price-pill regular">
+                    <span class="price-lbl">مفرد:</span>
+                    <span class="price-val">{{ formatCurrency(prod.price_regular) }}</span>
+                  </div>
+                  <div v-if="prod.price_bulk" class="price-pill bulk">
+                    <span class="price-lbl">جملة:</span>
+                    <span class="price-val">{{ formatCurrency(prod.price_bulk) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p v-else class="text-center text-muted py-5">لا توجد تفضيلات مسجلة لهذا العميل.</p>
         </div>
         <div class="modal-footer mt-2">
           <button type="button" @click="customerFavsModalOpen = false" class="btn btn-outline w-100">إغلاق</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Marketing Carousel Modal Form -->
+    <div v-if="carouselModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-box glass-panel max-w-md">
+        <div class="modal-header">
+          <h3>إضافة بنر إعلاني جديد</h3>
+          <button @click="carouselModalOpen = false" class="modal-close-btn">&times;</button>
+        </div>
+        <form @submit.prevent="saveCarouselItem" class="modal-form">
+          <p class="modal-subtitle text-muted text-small mb-3">اختر صورة البنر الإعلاني ليتم عرضها مباشرة في أعلى صفحة المنيو للزبائن.</p>
+          
+          <!-- S3 Image Upload Dropzone -->
+          <div class="form-group animate-fade-in">
+            <div class="image-dropzone" 
+                 :class="{ active: carouselDragActive }" 
+                 @dragover.prevent="carouselDragActive = true"
+                 @dragleave.prevent="carouselDragActive = false"
+                 @drop.prevent="handleCarouselDrop($event)"
+                 @click="triggerCarouselImageSelect">
+              <input type="file" ref="carouselFileInput" class="hidden-file-input" accept="image/*" @change="handleCarouselImageFileSelect" />
+              
+              <div v-if="!newCarouselItem.file" class="dropzone-prompt">
+                <svg class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>اسحب صورة البنر هنا أو اضغط للتصفح</span>
+              </div>
+              <div v-else class="dropzone-preview">
+                <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px;" />
+                <span class="file-name">{{ newCarouselItem.file.name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary" :disabled="loading">
+              {{ loading ? 'جاري الرفع...' : 'رفع ونشر البنر الإعلاني' }}
+            </button>
+            <button type="button" @click="carouselModalOpen = false" class="btn btn-outline" :disabled="loading">إلغاء</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -792,7 +999,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useToastStore } from '../stores/toast';
 
 export default {
@@ -817,15 +1024,19 @@ export default {
       categories: 'تصنيف وتقسيم الأصناف الرئيسية',
       orders: 'سجل وإدارة طلبات العملاء',
       customers: 'قائمة العملاء والمنتجات المفضلة',
-      images: 'إصلاح ورفع صور المنتجات التالفة'
+      images: 'إصلاح ورفع صور المنتجات التالفة',
+      carousel: 'إدارة بنرات العروض التسويقية'
     };
 
     // Analytics Data
     const analyticsPeriod = ref('30d');
+    const analyticsStartDate = ref('');
+    const analyticsEndDate = ref('');
     const periods = [
       { val: '7d', label: 'آخر 7 أيام' },
       { val: '30d', label: 'آخر 30 يوم' },
-      { val: 'all', label: 'كل الأوقات' }
+      { val: 'all', label: 'كل الأوقات' },
+      { val: 'custom', label: 'فترة مخصصة' }
     ];
 
     const analyticsData = reactive({
@@ -835,7 +1046,9 @@ export default {
       topProducts: [],
       topCustomers: [],
       categorySales: [],
-      topFavorites: []
+      topFavorites: [],
+      inactiveCustomers: [],
+      lowPerformingProducts: []
     });
 
     // Product & Categories datasets
@@ -844,10 +1057,19 @@ export default {
     const orders = ref([]);
     const customers = ref([]);
 
-    // Filters
-    const filters = reactive({ search: '', category: '' });
-    const orderFilters = reactive({ search: '', status: '' });
+    const filters = reactive({ search: '', category: '', subCategory: '' });
+    const orderFilters = reactive({ search: '', status: '', dateRange: 'all' });
     const customerFilters = reactive({ search: '' });
+
+    watch(() => filters.category, () => {
+      filters.subCategory = '';
+    });
+
+    const availableSubcategories = computed(() => {
+      if (!filters.category) return [];
+      const catObj = categories.value.find(c => c.name === filters.category);
+      return catObj ? (catObj.subCategories || []) : [];
+    });
 
     // Modals control
     const productModalOpen = ref(false);
@@ -862,6 +1084,7 @@ export default {
       phone: ''
     });
     const viewingCustomerFavs = ref([]);
+    const viewingCustomer = ref(null);
     const zoomedImageSrc = ref(null);
 
     // Product form bindings
@@ -882,6 +1105,19 @@ export default {
     const modalFile = ref(null);
     const modalFilePreview = ref('');
     const modalDragActive = ref(false);
+
+    // Marketing Carousel Ref State
+    const carouselItems = ref([]);
+    const carouselModalOpen = ref(false);
+    const carouselDragActive = ref(false);
+    const carouselFileInput = ref(null);
+    const newCarouselItem = reactive({
+      title: '',
+      subtitle: '',
+      link: '',
+      file: null,
+      filePreview: ''
+    });
 
     // Category form bindings
     const editingCategory = reactive({
@@ -908,7 +1144,8 @@ export default {
         const matchesSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || 
                              (p.desc && p.desc.toLowerCase().includes(filters.search.toLowerCase()));
         const matchesCat = !filters.category || p.category === filters.category;
-        return matchesSearch && matchesCat;
+        const matchesSubCat = !filters.category || !filters.subCategory || p.subCategory === filters.subCategory;
+        return matchesSearch && matchesCat && matchesSubCat;
       });
     });
 
@@ -1184,19 +1421,116 @@ export default {
       reader.readAsDataURL(file);
     };
 
+    // MARKETING CAROUSEL LOGIC
+    const fetchCarousel = async () => {
+      try {
+        const res = await adminFetch(`/api/admin/marketing-carousel?shop=${activeShop.value}`);
+        if (res.ok) {
+          carouselItems.value = await res.json();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const deleteCarouselItem = async (itemId) => {
+      if (!confirm('هل أنت متأكد من رغبتك في حذف هذا البنر الإعلاني؟')) return;
+      try {
+        const res = await adminFetch(`/api/admin/marketing-carousel/${itemId}`, { method: 'DELETE' });
+        if (res.ok) {
+          toast.show('تم حذف البنر الإعلاني بنجاح', 'success');
+          await fetchCarousel();
+        } else {
+          toast.show('فشل حذف البنر الإعلاني', 'danger');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const openCarouselModal = () => {
+      newCarouselItem.title = '';
+      newCarouselItem.subtitle = '';
+      newCarouselItem.link = '';
+      newCarouselItem.file = null;
+      newCarouselItem.filePreview = '';
+      carouselModalOpen.value = true;
+    };
+
+    const saveCarouselItem = async () => {
+      if (!newCarouselItem.file) {
+        toast.show('يرجى تحديد صورة للبنر الإعلاني', 'danger');
+        return;
+      }
+      
+      loading.value = true;
+      try {
+        const formData = new FormData();
+        formData.append('shop', activeShop.value);
+        formData.append('title', newCarouselItem.title);
+        formData.append('subtitle', newCarouselItem.subtitle);
+        formData.append('link', newCarouselItem.link);
+        formData.append('img', newCarouselItem.file);
+        
+        const res = await adminFetch(`/api/admin/marketing-carousel`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (res.ok) {
+          toast.show('تمت إضافة البنر الإعلاني بنجاح', 'success');
+          carouselModalOpen.value = false;
+          await fetchCarousel();
+        } else {
+          const errData = await res.json();
+          toast.show(errData.error || 'فشل إضافة البنر الإعلاني', 'danger');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.show('حدث خطأ أثناء حفظ البنر', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const triggerCarouselImageSelect = () => {
+      carouselFileInput.value.click();
+    };
+
+    const handleCarouselImageFileSelect = (e) => {
+      const file = e.target.files[0];
+      if (file) setCarouselFile(file);
+    };
+
+    const handleCarouselDrop = (e) => {
+      carouselDragActive.value = false;
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) setCarouselFile(file);
+    };
+
+    const setCarouselFile = (file) => {
+      newCarouselItem.file = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newCarouselItem.filePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
     const formatCurrency = (val) => {
       return (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2 }) + ' د.ل';
     };
 
     const adminFetch = async (url, options = {}) => {
+      if (!options.headers) options.headers = {};
+      if (options.body && !(options.body instanceof FormData)) {
+        if (!options.headers['Content-Type'] && !options.headers['content-type']) {
+          options.headers['Content-Type'] = 'application/json';
+        }
+      }
+
       const token = localStorage.getItem('admin_token');
       if (token) {
-        if (!options.headers) options.headers = {};
-        if (!(options.body instanceof FormData)) {
-          if (!options.headers['Content-Type']) {
-            options.headers['Content-Type'] = 'application/json';
-          }
-        }
         options.headers['Authorization'] = `Bearer ${token}`;
       }
       
@@ -1284,7 +1618,8 @@ export default {
           fetchProducts(),
           fetchCategories(),
           fetchOrders(),
-          fetchCustomers()
+          fetchCustomers(),
+          fetchCarousel()
         ]);
       } catch (err) {
         toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
@@ -1295,10 +1630,28 @@ export default {
 
     const fetchAnalytics = async () => {
       try {
-        const res = await adminFetch(`/api/admin/analytics?shop=${activeShop.value}&period=${analyticsPeriod.value}`);
+        let url = `/api/admin/analytics?shop=${activeShop.value}`;
+        if (analyticsPeriod.value === 'custom') {
+          if (analyticsStartDate.value && analyticsEndDate.value) {
+            url += `&startDate=${analyticsStartDate.value}&endDate=${analyticsEndDate.value}`;
+          } else {
+            url += `&period=30d`;
+          }
+        } else {
+          url += `&period=${analyticsPeriod.value}`;
+        }
+        const res = await adminFetch(url);
         if (res.ok) {
           const data = await res.json();
-          Object.assign(analyticsData, data);
+          analyticsData.kpi = data.kpi || { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 };
+          analyticsData.revenueTrend = data.revenueTrend || [];
+          analyticsData.priceModeSplit = data.priceModeSplit || { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } };
+          analyticsData.topProducts = data.topProducts || [];
+          analyticsData.topCustomers = data.topCustomers || [];
+          analyticsData.categorySales = data.categorySales || [];
+          analyticsData.topFavorites = data.topFavorites || [];
+          analyticsData.inactiveCustomers = data.inactiveCustomers || [];
+          analyticsData.lowPerformingProducts = data.lowPerformingProducts || [];
         }
       } catch (err) {
         console.error(err);
@@ -1307,9 +1660,31 @@ export default {
 
     const changePeriod = async (p) => {
       analyticsPeriod.value = p;
+      if (p !== 'custom') {
+        analyticsStartDate.value = '';
+        analyticsEndDate.value = '';
+      }
       loading.value = true;
       await fetchAnalytics();
       loading.value = false;
+    };
+
+    const exportReport = (type) => {
+      let url = `/api/admin/reports/export?shop=${activeShop.value}&type=${type}`;
+      if (analyticsPeriod.value === 'custom') {
+        if (analyticsStartDate.value && analyticsEndDate.value) {
+          url += `&startDate=${analyticsStartDate.value}&endDate=${analyticsEndDate.value}`;
+        } else {
+          url += `&period=30d`;
+        }
+      } else {
+        url += `&period=${analyticsPeriod.value}`;
+      }
+      window.open(url, '_blank');
+    };
+
+    const printReport = () => {
+      window.print();
     };
 
     const fetchProducts = async () => {
@@ -1404,12 +1779,44 @@ export default {
     };
 
     const openCustomerFavsModal = (cust) => {
+      viewingCustomer.value = cust;
       const favs = cust.favorites || [];
       viewingCustomerFavs.value = favs.map(id => {
         const prod = products.value.find(p => p._id === id);
-        return prod ? prod.name : 'منتج مجهول';
-      });
+        return prod ? prod : { _id: id, name: 'منتج غير معروف', category: 'غير معروف', img: '' };
+      }).filter(Boolean);
       customerFavsModalOpen.value = true;
+    };
+
+    const removeCustomerFavorite = async (productId) => {
+      if (!viewingCustomer.value) return;
+      
+      const updatedFavs = viewingCustomer.value.favorites.filter(id => id !== productId);
+      
+      loading.value = true;
+      try {
+        const res = await adminFetch('/api/customer/favorites', {
+          method: 'POST',
+          body: JSON.stringify({
+            phone: viewingCustomer.value.phone,
+            shop: activeShop.value,
+            favorites: updatedFavs
+          })
+        });
+        
+        if (res.ok) {
+          viewingCustomer.value.favorites = updatedFavs;
+          viewingCustomerFavs.value = viewingCustomerFavs.value.filter(p => p._id !== productId);
+          toast.show('تمت إزالة المنتج من المفضلة للعميل', 'success');
+          await fetchCustomers();
+        } else {
+          toast.show('فشل في إزالة المنتج من المفضلة', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
     };
 
     const filteredOrders = computed(() => {
@@ -1417,7 +1824,31 @@ export default {
         const matchesSearch = o.customerInfo.name.toLowerCase().includes(orderFilters.search.toLowerCase()) || 
                              o.customerInfo.phone.includes(orderFilters.search);
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
-        return matchesSearch && matchesStatus;
+        
+        let matchesDate = true;
+        if (orderFilters.dateRange && orderFilters.dateRange !== 'all') {
+          const orderDate = new Date(o.createdAt);
+          const today = new Date();
+          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          
+          if (orderFilters.dateRange === 'today') {
+            matchesDate = orderDate >= todayStart;
+          } else if (orderFilters.dateRange === 'yesterday') {
+            const yesterdayStart = new Date(todayStart);
+            yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+            matchesDate = orderDate >= yesterdayStart && orderDate < todayStart;
+          } else if (orderFilters.dateRange === '7d') {
+            const sevenDaysAgo = new Date(todayStart);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            matchesDate = orderDate >= sevenDaysAgo;
+          } else if (orderFilters.dateRange === '30d') {
+            const thirtyDaysAgo = new Date(todayStart);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            matchesDate = orderDate >= thirtyDaysAgo;
+          }
+        }
+        
+        return matchesSearch && matchesStatus && matchesDate;
       });
     });
 
@@ -1567,11 +1998,14 @@ export default {
       loginError,
       tabTitles,
       analyticsPeriod,
+      analyticsStartDate,
+      analyticsEndDate,
       periods,
       analyticsData,
       products,
       categories,
       filters,
+      availableSubcategories,
       filteredProducts,
       productModalOpen,
       categoryModalOpen,
@@ -1595,6 +2029,9 @@ export default {
       switchShop,
       setTab,
       changePeriod,
+      fetchAnalytics,
+      exportReport,
+      printReport,
       toggleProductAvailability,
       deleteProduct,
       openProductModal,
@@ -1629,10 +2066,23 @@ export default {
       customerModalOpen,
       customerFavsModalOpen,
       viewingCustomerFavs,
+      viewingCustomer,
       updateOrderStatus,
       openCustomerEditModal,
       saveCustomerDetails,
-      openCustomerFavsModal
+      openCustomerFavsModal,
+      removeCustomerFavorite,
+      carouselItems,
+      carouselModalOpen,
+      carouselDragActive,
+      carouselFileInput,
+      newCarouselItem,
+      openCarouselModal,
+      deleteCarouselItem,
+      saveCarouselItem,
+      triggerCarouselImageSelect,
+      handleCarouselImageFileSelect,
+      handleCarouselDrop
     };
   }
 };
@@ -1846,26 +2296,27 @@ export default {
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 15px;
+  gap: 14px;
+  padding: 14px 18px;
   border-radius: 12px;
-  color: #495057;
+  color: #212529;
   background: transparent;
   border: none;
   cursor: pointer;
   text-align: right;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
   transition: all 0.2s ease;
 }
 
 .menu-item:hover, .menu-item.active {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(0, 0, 0, 0.05);
   color: var(--chart-primary);
 }
 
 .menu-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .sidebar-footer {
@@ -1929,9 +2380,36 @@ export default {
   margin: 0;
 }
 
-.period-selector {
+.segmented-control {
   display: flex;
-  gap: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  gap: 2px;
+}
+
+.control-pill {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+}
+
+.control-pill:hover {
+  color: #212529;
+}
+
+.control-pill.active {
+  background: #ffffff;
+  color: var(--chart-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 /* KPI Cards Layout */
@@ -1951,6 +2429,11 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
 }
 
 .kpi-icon-wrapper {
@@ -1994,7 +2477,8 @@ export default {
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px 20px;
+  margin-bottom: 30px;
 }
 
 .chart-card {
@@ -2193,21 +2677,29 @@ export default {
   width: 100%;
   border-collapse: collapse;
   text-align: right;
-  font-size: 0.85rem;
+  font-size: 0.92rem;
 }
 
 .admin-table th {
-  padding: 12px 10px;
-  background: #f1f3f5;
-  color: #495057;
-  font-weight: 700;
-  border-bottom: 2px solid #dee2e6;
+  padding: 16px 14px;
+  background: #f8f9fa;
+  color: #343a40;
+  font-weight: 800;
+  border-bottom: 2px solid #e9ecef;
 }
 
 .admin-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #e9ecef;
+  padding: 16px 14px;
+  border-bottom: 1px solid #f1f3f5;
   color: #495057;
+  vertical-align: middle;
+}
+
+.admin-table tr {
+  transition: background-color 0.2s ease;
+}
+.admin-table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.015);
 }
 
 .text-bold { font-weight: 700; }
@@ -2219,16 +2711,27 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   padding: 15px 20px;
   background: rgba(255, 255, 255, 0.75);
   border-radius: 12px;
+  flex-wrap: wrap;
 }
 
 .filters-group {
   display: flex;
   gap: 12px;
-  flex: 1;
+  flex: 1 1 300px;
+  flex-wrap: wrap;
+}
+
+.filters-group .form-control {
+  flex: 1 1 180px;
+}
+
+.filter-actions-bar .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .form-control {
@@ -2251,13 +2754,35 @@ export default {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   padding: 10px 20px;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.92rem;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
+  letter-spacing: 0.2px;
+}
+
+.btn-group-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+.mb-2 {
+  margin-bottom: 8px !important;
 }
 
 .btn-primary {
@@ -2271,35 +2796,45 @@ export default {
 
 .btn-outline {
   background: transparent;
-  border: 1px solid #ced4da;
-  color: #495057;
+  border: 1.5px solid #d1d5db;
+  color: #374151;
 }
 
 .btn-outline:hover {
-  background: #f1f3f5;
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .btn-danger {
-  background: #e74c3c;
+  background: #dc2626;
   color: #fff;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.08);
 }
 
 .btn-danger:hover {
-  background: #c0392b;
+  background: #b91c1c;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.15);
 }
 
 .btn-sm {
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 8px 14px;
+  font-size: 0.85rem;
 }
 
 .table-prod-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 108px;
+  height: 108px;
+  border-radius: 16px;
   object-fit: cover;
   cursor: zoom-in;
-  border: 1px solid #dee2e6;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+}
+
+.table-prod-img:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .badge-sub {
@@ -2565,6 +3100,18 @@ export default {
   .chart-card.span-2 {
     grid-column: span 2;
   }
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .analytics-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2693,23 +3240,296 @@ export default {
   margin-left: 4px;
 }
 
-.favorites-modal-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Favorites Grid Browser in Modal */
+.fav-grid-brows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 8px 4px;
 }
-.fav-modal-item {
-  padding: 8px 12px;
+
+.fav-grid-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fav-grid-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.fav-card-image-wrapper {
+  width: 100%;
+  padding-top: 75%; /* 4:3 aspect ratio */
+  position: relative;
+  background: #f8f9fa;
+}
+
+.fav-card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-bottom: 1px solid #f1f3f5;
-  font-weight: 500;
+}
+
+.fav-card-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.fav-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
   color: #343a40;
 }
-.fav-modal-item:last-child {
-  border-bottom: none;
+
+.fav-card-cat {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
-.fav-modal-item .bullet {
-  color: var(--chart-primary);
-  margin-left: 6px;
+
+.fav-card-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.price-pill {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.price-pill.regular {
+  background: #e7f5ff;
+  color: #228be6;
+}
+
+.price-pill.bulk {
+  background: #fff4e6;
+  color: #fd7e14;
+}
+
+.price-lbl {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.price-val {
   font-weight: 700;
+}
+
+/* Analytics Header Actions */
+.analytics-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  flex: 1;
+}
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.dropdown-export {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background-color: #ffffff;
+  min-width: 140px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+  z-index: 100;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
+.dropdown-content a {
+  color: #212529;
+  padding: 10px 14px;
+  text-decoration: none;
+  display: block;
+  font-size: 0.85rem;
+  text-align: right;
+  transition: background-color 0.2s;
+}
+.dropdown-content a:hover {
+  background-color: #f8f9fa;
+}
+.dropdown-export:hover .dropdown-content {
+  display: block;
+}
+
+/* Custom Date Inputs */
+.custom-date-container {
+  padding: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+.date-picker-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.date-input-group label {
+  font-size: 0.85rem;
+  color: #495057;
+  font-weight: 500;
+}
+.date-input-group input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  outline: none;
+  font-size: 0.9rem;
+}
+.btn-apply {
+  padding: 0.5rem 1.5rem;
+  height: fit-content;
+}
+
+/* Actionable Insights Styles */
+.card-header-with-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.card-header-with-badge .chart-title {
+  margin-bottom: 0;
+}
+.badge-warning {
+  background-color: #ffe8cc;
+  color: #d9480f;
+}
+.badge-danger {
+  background-color: #ffe3e3;
+  color: #c92a2a;
+}
+.me-1 {
+  margin-left: 4px;
+}
+
+/* Print Styling */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print,
+  .admin-sidebar,
+  .main-header,
+  .custom-date-container,
+  .toast-container {
+    display: none !important;
+  }
+  .admin-container {
+    display: block !important;
+    padding: 0 !important;
+  }
+  .admin-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+  .glass-panel {
+    background: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .charts-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+  .span-2 {
+    grid-column: span 2 !important;
+  }
+  .chart-card {
+    page-break-inside: avoid !important;
+    border: 1px solid #dee2e6 !important;
+  }
+}
+
+/* Carousel Admin Grid Layout */
+.carousel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.carousel-admin-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.card-image-wrapper {
+  width: 100%;
+  padding-top: 50%; /* 2:1 aspect ratio */
+  position: relative;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.card-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.flex-center {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 </style>

@@ -155,7 +155,7 @@ console.log("[INIT] Registering API routes...");
 // ============ STATE ============
 let db, productsCollection, categoriesCollection;
 let db2, productsCollection2, categoriesCollection2;
-let customersCollection, favoritesCollection, ordersCollection, ordersCollection2;
+let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection;
 let mongoConnected = false;
 
 // ============ MIDDLEWARE ============
@@ -866,22 +866,29 @@ app.get("/api/shop2/admin-check", checkAdmin, (req, res) => {
 // ============ ADMIN ANALYTICS API ============
 app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const period = req.query.period || "30d";
   
   let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
   let prodColl = shop === "shop2" ? productsCollection2 : productsCollection;
   
-  let startDate;
-      if (period === "7d") {
-    startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  } else if (period === "30d") {
-    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  let startDate, endDate;
+  if (req.query.startDate && req.query.endDate) {
+    startDate = new Date(req.query.startDate);
+    endDate = new Date(req.query.endDate);
+    endDate.setHours(23, 59, 59, 999);
   } else {
-    startDate = new Date(0);
+    endDate = new Date();
+    const period = req.query.period || "30d";
+    if (period === "7d") {
+      startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    } else if (period === "30d") {
+      startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    } else {
+      startDate = new Date(0);
+    }
   }
   
   try {
-    const matchStage = { createdAt: { $gte: startDate }, status: "completed" };
+    const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" };
     
     // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
     const kpiSummary = await ordColl.aggregate([
@@ -1025,6 +1032,30 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       name: favProdMap[f._id.toString()] || "منتج مجهول",
       count: f.count
     }));
+
+    // Actionable Insights: Inactive Customers (not active in selected period)
+    const inactiveCustsRaw = await customersCollection.find({
+      lastActive: { $lt: startDate }
+    }).sort({ lastActive: -1 }).limit(10).toArray();
+    const inactiveCustomers = inactiveCustsRaw.map(c => ({
+      phone: c.phone,
+      name: c.name || "عميل مجهول",
+      lastActive: c.lastActive
+    }));
+
+    // Actionable Insights: Low Performing Products (sold 0 quantity in selected period)
+    const allProducts = await prodColl.find({}).toArray();
+    const soldProductIds = await ordColl.distinct("items.productId", matchStage);
+    const soldProductIdsStr = soldProductIds.filter(id => id).map(id => id.toString());
+    const lowPerformingProducts = allProducts
+      .filter(p => !soldProductIdsStr.includes(p._id.toString()))
+      .slice(0, 10)
+      .map(p => ({
+        productId: p._id,
+        name: p.name,
+        category: p.category || "غير مصنف",
+        price: p.price
+      }));
     
     res.json({
       kpi,
@@ -1033,12 +1064,109 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       topProducts: topProductsFormatted,
       topCustomers,
       categorySales,
-      topFavorites
+      topFavorites,
+      inactiveCustomers,
+      lowPerformingProducts
     });
     
   } catch (err) {
     console.error("Aggregation analytics error:", err);
     res.status(500).json({ error: "Failed to generate analytics" });
+  }
+});
+
+// ============ ADMIN REPORTS EXPORT API ============
+app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  const type = req.query.type || "orders"; // "orders" | "products" | "customers"
+  
+  let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+  
+  let startDate, endDate;
+  if (req.query.startDate && req.query.endDate) {
+    startDate = new Date(req.query.startDate);
+    endDate = new Date(req.query.endDate);
+    endDate.setHours(23, 59, 59, 999);
+  } else {
+    endDate = new Date();
+    const period = req.query.period || "30d";
+    if (period === "7d") {
+      startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    } else if (period === "30d") {
+      startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    } else {
+      startDate = new Date(0);
+    }
+  }
+  
+  const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" };
+  
+  function escapeCSV(val) {
+    if (val === null || val === undefined) return "";
+    let str = String(val);
+    if (str.includes(",") || str.includes("\"") || str.includes("\n") || str.includes("\r")) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }
+  
+  try {
+    if (type === "orders") {
+      const orders = await ordColl.find(matchStage).sort({ createdAt: -1 }).toArray();
+      let csv = "\uFEFF"; // UTF-8 BOM for Excel support
+      csv += "رقم الطلب,التاريخ,اسم العميل,رقم الهاتف,طريقة التسعير,تاريخ التوصيل,الإجمالي,الحالة,المنتجات\n";
+      orders.forEach(o => {
+        const itemsSummary = o.items.map(item => `${item.name} (x${item.quantity})`).join(" | ");
+        csv += `${escapeCSV(o._id)},${escapeCSV(o.createdAt.toISOString())},${escapeCSV(o.customerInfo.name)},${escapeCSV(o.customerInfo.phone)},${escapeCSV(o.priceMode)},${escapeCSV(o.deliveryDate)},${escapeCSV(o.totalPrice)},${escapeCSV(o.status)},${escapeCSV(itemsSummary)}\n`;
+      });
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="orders-report-${shop}.csv"`);
+      return res.status(200).send(csv);
+    } else if (type === "products") {
+      const topProducts = await ordColl.aggregate([
+        { $match: matchStage },
+        { $unwind: "$items" },
+        { $group: {
+            _id: "$items.productId",
+            name: { $first: "$items.name" },
+            quantity: { $sum: "$items.quantity" },
+            revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+        } },
+        { $sort: { quantity: -1 } }
+      ]).toArray();
+      
+      let csv = "\uFEFF";
+      csv += "معرف المنتج,اسم المنتج,الكمية المباعة,إجمالي الإيرادات\n";
+      topProducts.forEach(p => {
+        csv += `${escapeCSV(p._id)},${escapeCSV(p.name)},${escapeCSV(p.quantity)},${escapeCSV(p.revenue)}\n`;
+      });
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="products-report-${shop}.csv"`);
+      return res.status(200).send(csv);
+    } else if (type === "customers") {
+      const topCustomersRaw = await ordColl.aggregate([
+        { $match: matchStage },
+        { $group: {
+            _id: "$customerInfo.phone",
+            name: { $first: "$customerInfo.name" },
+            totalSpent: { $sum: "$totalPrice" },
+            orderCount: { $sum: 1 }
+        } },
+        { $sort: { totalSpent: -1 } }
+      ]).toArray();
+      
+      let csv = "\uFEFF";
+      csv += "رقم الهاتف,اسم العميل,إجمالي الإنفاق,عدد الطلبات\n";
+      topCustomersRaw.forEach(c => {
+        csv += `${escapeCSV(c._id)},${escapeCSV(c.name)},${escapeCSV(c.totalSpent)},${escapeCSV(c.orderCount)}\n`;
+      });
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="customers-report-${shop}.csv"`);
+      return res.status(200).send(csv);
+    }
+  } catch (err) {
+    console.error("Export report error:", err);
+    res.status(500).json({ error: "Failed to export report" });
   }
 });
 
@@ -1101,7 +1229,7 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
       const phone = cust.phone;
       
       const orderStats = await ordColl.aggregate([
-        { $match: { "customerInfo.phone": phone } },
+        { $match: { "customerInfo.phone": phone, status: "completed" } },
         { $group: {
             _id: null,
             totalSpent: { $sum: "$totalPrice" },
@@ -1109,8 +1237,8 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
         } }
       ]).toArray();
 
-      const favRecord = await favoritesCollection.findOne({ phone, shop });
-      const favorites = favRecord ? favRecord.favorites : [];
+      const favRecords = await favoritesCollection.find({ phone, shop }).toArray();
+      const favorites = favRecords.map(f => f.productId.toString());
 
       return {
         _id: cust._id,
@@ -1286,14 +1414,32 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
+
+    const normalizedPhone = customer.phone.trim();
+    const normalizedName = customer.name.trim();
+
+    // Upsert customer profile
+    await customersCollection.updateOne(
+      { phone: normalizedPhone },
+      { 
+        $set: { 
+          name: normalizedName, 
+          lastActive: new Date() 
+        },
+        $setOnInsert: {
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
     
     const orderDoc = {
       customerInfo: {
-        name: customer.name.trim(),
-        phone: customer.phone.trim()
+        name: normalizedName,
+        phone: normalizedPhone
       },
       items: items.map(item => ({
-        productId: new ObjectId(item.productId),
+        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
         name: item.name,
         price: Number(item.price),
         quantity: Number(item.quantity),
@@ -1323,14 +1469,32 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
+
+    const normalizedPhone = customer.phone.trim();
+    const normalizedName = customer.name.trim();
+
+    // Upsert customer profile
+    await customersCollection.updateOne(
+      { phone: normalizedPhone },
+      { 
+        $set: { 
+          name: normalizedName, 
+          lastActive: new Date() 
+        },
+        $setOnInsert: {
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
     
     const orderDoc = {
       customerInfo: {
-        name: customer.name.trim(),
-        phone: customer.phone.trim()
+        name: normalizedName,
+        phone: normalizedPhone
       },
       items: items.map(item => ({
-        productId: new ObjectId(item.productId),
+        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
         name: item.name,
         price: Number(item.price),
         quantity: Number(item.quantity),
@@ -1373,6 +1537,82 @@ app.get("/*.woff2", (req, res) => {
   res.status(204).send();
 });
 
+// ============ MARKETING CAROUSEL APIs ============
+
+// Get carousel items (Public)
+app.get("/api/marketing-carousel", checkMongoDB, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  try {
+    const items = await carouselCollection.find({ shop }).sort({ createdAt: -1 }).toArray();
+    res.json(items);
+  } catch (err) {
+    console.error("Get carousel error:", err);
+    res.status(500).json({ error: "Failed to fetch marketing carousel" });
+  }
+});
+
+// Get carousel items (Admin)
+app.get("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  try {
+    const items = await carouselCollection.find({ shop }).sort({ createdAt: -1 }).toArray();
+    res.json(items);
+  } catch (err) {
+    console.error("Get admin carousel error:", err);
+    res.status(500).json({ error: "Failed to fetch carousel items" });
+  }
+});
+
+// Add carousel item (Admin)
+app.post("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+  const { shop, title, subtitle, link } = req.body;
+  if (!shop) {
+    return res.status(400).json({ error: "Missing required shop field" });
+  }
+  
+  if (req.fileValidationError) {
+    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}` });
+  }
+  
+  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+  let img = "/res/logo.jpg";
+  if (req.file) {
+    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+  }
+  
+  try {
+    const newItem = {
+      shop: shop === "shop2" ? "shop2" : "shop1",
+      title: title || "",
+      subtitle: subtitle || "",
+      link: link || "",
+      image: img,
+      createdAt: new Date()
+    };
+    const result = await carouselCollection.insertOne(newItem);
+    res.json({ success: true, item: { ...newItem, _id: result.insertedId } });
+  } catch (err) {
+    console.error("Add carousel item error:", err);
+    res.status(500).json({ error: "Failed to create carousel item" });
+  }
+});
+
+// Delete carousel item (Admin)
+app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await carouselCollection.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete carousel item error:", err);
+    res.status(500).json({ error: "Failed to delete carousel item" });
+  }
+});
+
 // ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
@@ -1392,6 +1632,7 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   favoritesCollection = db.collection("favorites");
   ordersCollection = db.collection("orders");
   ordersCollection2 = db2.collection("orders");
+  carouselCollection = db.collection("marketing_carousel");
   mongoConnected = true;
   
   productsCollection.createIndex({ category: 1 });
