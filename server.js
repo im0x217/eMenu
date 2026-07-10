@@ -6,7 +6,8 @@ const compression = require("compression");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const path = require("path");
 
 const app = express();
@@ -63,12 +64,6 @@ const getPublicUrl = (s3Url) => {
   return s3Url;
 };
 
-const parsePrice = (val, allowFloat) => {
-  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") return null;
-  const parsed = allowFloat ? parseFloat(val) : parseInt(val, 10);
-  return isNaN(parsed) ? null : parsed;
-};
-
 // Get display image (with fallback for missing or old images)
 const getDisplayImage = (product) => {
   // If no image, use placeholder
@@ -109,34 +104,6 @@ const getDisplayImage = (product) => {
 // S3 images are public-read, so no special handling needed
 const attachS3Images = (items = []) => items;
 
-// Helper to delete a product's image from S3
-const deleteProductImageFromS3 = async (product) => {
-  if (!product || !product.img) return;
-  
-  let s3Key = null;
-  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-  
-  if (product.img.includes('amazonaws.com') || (cloudfrontDomain && product.img.includes(cloudfrontDomain))) {
-    const index = product.img.indexOf('products/');
-    if (index !== -1) {
-      s3Key = product.img.substring(index);
-    }
-  }
-  
-  if (s3Key) {
-    try {
-      console.log("[S3 DELETE] Attempting to delete S3 object:", s3Key);
-      await s3Client.send(new DeleteObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
-        Key: s3Key
-      }));
-      console.log("[S3 DELETE] Successfully deleted image:", s3Key);
-    } catch (err) {
-      console.error("[S3 DELETE ERROR] Failed to delete image:", s3Key, err.message);
-    }
-  }
-};
-
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
 const MONGO_URI = process.env.MONGO_URI;
@@ -148,14 +115,13 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(__dirname));
 
 console.log("[INIT] Registering API routes...");
 
 // ============ STATE ============
 let db, productsCollection, categoriesCollection;
 let db2, productsCollection2, categoriesCollection2;
-let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection;
 let mongoConnected = false;
 
 // ============ MIDDLEWARE ============
@@ -167,11 +133,8 @@ const checkMongoDB = (req, res, next) => {
 };
 
 const checkAdmin = (req, res, next) => {
-  // Accept legacy cookie, shop2 cookie, OR Authorization header for mobile compatibility
-  const isAdmin = req.cookies.admin === "true" || 
-                  req.cookies.admin_shop2 === "true" ||
-                  req.headers.authorization === "Bearer admin-token" ||
-                  req.headers.authorization === "Bearer admin-token-shop2";
+  // Accept either legacy admin cookie or the shop2-specific cookie for new admin2 panel
+  const isAdmin = req.cookies.admin === "true" || req.cookies.admin_shop2 === "true";
   if (isAdmin) return next();
   res.status(403).json({ success: false, message: "Forbidden" });
 };
@@ -187,7 +150,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // ============ DEBUG ENDPOINTS ============
-app.get("/api/debug/products-by-category", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/debug/products-by-category", checkMongoDB, async (req, res) => {
   try {
     const categories = await categoriesCollection.find({}).toArray();
     const result = {};
@@ -209,7 +172,7 @@ app.get("/api/debug/products-by-category", checkMongoDB, checkAdmin, async (req,
   }
 });
 
-app.get("/api/debug/purchase-types", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/debug/purchase-types", checkMongoDB, async (req, res) => {
   try {
     const results = await productsCollection.aggregate([
       {
@@ -231,7 +194,7 @@ app.get("/api/debug/purchase-types", checkMongoDB, checkAdmin, async (req, res) 
   }
 });
 
-app.get("/api/debug/subcategories", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/debug/subcategories", checkMongoDB, async (req, res) => {
   try {
     const category = req.query.category;
     let query = {};
@@ -262,36 +225,11 @@ app.get("/api/debug/subcategories", checkMongoDB, checkAdmin, async (req, res) =
 });
 
 // ============ LOGIN ============
-const loginLimiter = (() => {
-  const ipCache = new Map();
-  return (req, res, next) => {
-    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    const now = Date.now();
-    const windowMs = 15 * 60 * 1000; // 15 minutes
-    const maxRequests = 10; // Max 10 attempts per 15 minutes
-    
-    if (!ipCache.has(ip)) {
-      ipCache.set(ip, []);
-    }
-    
-    const timestamps = ipCache.get(ip).filter(t => now - t < windowMs);
-    timestamps.push(now);
-    ipCache.set(ip, timestamps);
-    
-    if (timestamps.length > maxRequests) {
-      console.log(`[RATE LIMIT EXCEEDED] IP: ${ip} exceeded login attempts limit.`);
-      return res.status(429).json({ error: "Too many login attempts. Please try again after 15 minutes." });
-    }
-    next();
-  };
-})();
-
-app.post("/api/login", loginLimiter, (req, res) => {
+app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-    return res.json({ success: true, token: "admin-token" });
+    res.cookie("admin", "true", { httpOnly: true, sameSite: "Strict", secure: true });
+    return res.json({ success: true });
   }
   res.status(401).json({ success: false, message: "Unauthorized" });
 });
@@ -355,17 +293,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/verify-bulk-code", (req, res) => {
-  const { code } = req.body;
-  const BULK_CODE = process.env.BULK_CODE || "1234";
-  if (code === BULK_CODE) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: "Invalid code" });
-  }
-});
-
-app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.post("/api/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   
   // Check for file validation errors first
@@ -391,16 +319,10 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
   console.log("  File received:", req.file ? "Yes" : "No");
   console.log("  Form data:", { name, category, price_regular, price_bulk });
   
-  const isFloat = allowFloat === 'true';
-  const parsedPriceRegular = parsePrice(price_regular, isFloat);
-  const parsedPriceBulk = parsePrice(price_bulk, isFloat);
-  const parsedPrice = parsePrice(price, isFloat);
-
-  const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
     !name ||
     !category ||
-    !hasSomePrice
+    (price_regular === undefined && price === undefined)
   ) {
     console.log("[UPLOAD ERROR] Missing required fields - name:", name, "category:", category);
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
@@ -409,14 +331,14 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
     await productsCollection.insertOne({
       name,
       desc,
-      price_regular: parsedPriceRegular,
-      price_bulk: parsedPriceBulk,
-      price: parsedPrice,
+      price_regular,
+      price_bulk,
+      price,
       img,
       category,
       subCategory,
       available: available === "false" ? false : true,
-      allowFloat: isFloat,
+      allowFloat: allowFloat === 'true',
       purchaseType: purchaseType || 'both'
     });
     console.log("[UPLOAD SUCCESS] Product saved with image:", img);
@@ -427,23 +349,19 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
   }
 });
 
-app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
-  const isFloat = allowFloat === 'true';
-  const parsedPriceRegular = parsePrice(price_regular, isFloat);
-  const parsedPriceBulk = parsePrice(price_bulk, isFloat);
-  const parsedPrice = parsePrice(price, isFloat);
+app.put("/api/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, existingImg, allowFloat, purchaseType } = req.body;
   
   let updateData = {
       name,
       desc,
-      price_regular: parsedPriceRegular,
-      price_bulk: parsedPriceBulk,
-      price: parsedPrice,
+      price_regular,
+      price_bulk,
+      price,
       category,
       subCategory,
       available: available === "false" ? false : true,
-      allowFloat: isFloat,
+      allowFloat: allowFloat === 'true',
       purchaseType: purchaseType || 'both'
   };
 
@@ -464,41 +382,29 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
       }
   }
 
-  const hasSomePrice = updateData.price_regular !== null || updateData.price !== null || (updateData.purchaseType === 'bulk' && updateData.price_bulk !== null);
   if (
     !updateData.name ||
     !updateData.category ||
-    !hasSomePrice
+    (updateData.price_regular === undefined && updateData.price === undefined)
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)" });
   }
-  if (!ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid product ID" });
-  }
 
-  try {
-    await productsCollection.updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: updateData }
-    );
-    const response = { success: true };
-    if (uploadWarning) {
-      response.warning = uploadWarning;
-    }
-    res.json(response);
-  } catch (err) {
-    console.error("Error updating product:", err);
-    res.status(500).json({ error: "Failed to update product" });
+  await productsCollection.updateOne(
+    { _id: new ObjectId(req.params.id) },
+    { $set: updateData }
+  );
+  const response = { success: true };
+  if (uploadWarning) {
+    response.warning = uploadWarning;
   }
+  res.json(response);
 });
 
 app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
   const { available } = req.body;
   if (typeof available !== 'boolean') {
       return res.status(400).json({ error: "Invalid available status" });
-  }
-  if (!ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid product ID" });
   }
   try {
       await productsCollection.updateOne(
@@ -514,13 +420,6 @@ app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
 
 app.delete("/api/products/:id", checkAdmin, async (req, res) => {
   try {
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid product ID" });
-    }
-    const product = await productsCollection.findOne({ _id: new ObjectId(req.params.id) });
-    if (product) {
-      await deleteProductImageFromS3(product);
-    }
     await productsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -559,9 +458,6 @@ app.put("/api/categories/:id", checkAdmin, async (req, res) => {
     if (!name || !emoji) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid category ID" });
-    }
     await categoriesCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
       { $set: { name, emoji, subCategories: subCategories || [] } }
@@ -574,9 +470,6 @@ app.put("/api/categories/:id", checkAdmin, async (req, res) => {
 
 app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
   try {
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid category ID" });
-    }
     await categoriesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -585,7 +478,7 @@ app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
 });
 
 // ============ SHOP2 API ROUTES ============
-app.get("/api/shop2/categories", checkMongoDB, async (req, res) => {
+app.get("/api/shop2/categories", async (req, res) => {
   try {
     const cats = await categoriesCollection2.find({}).toArray();
     res.json(cats);
@@ -595,7 +488,7 @@ app.get("/api/shop2/categories", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/shop2/categories", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/shop2/categories", checkAdmin, async (req, res) => {
   try {
     const { name, emoji, subCategories } = req.body;
     if (!name || !emoji) {
@@ -609,14 +502,11 @@ app.post("/api/shop2/categories", checkMongoDB, checkAdmin, async (req, res) => 
   }
 });
 
-app.put("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/shop2/categories/:id", checkAdmin, async (req, res) => {
   try {
     const { name, emoji, subCategories } = req.body;
     if (!name || !emoji) {
       return res.status(400).json({ error: "Missing required fields" });
-    }
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid category ID" });
     }
     await categoriesCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -629,11 +519,8 @@ app.put("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) 
   }
 });
 
-app.delete("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/shop2/categories/:id", checkAdmin, async (req, res) => {
   try {
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid category ID" });
-    }
     await categoriesCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -642,7 +529,7 @@ app.delete("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, re
   }
 });
 
-app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
+app.get("/api/shop2/products", async (req, res) => {
   try {
     const { category, bulkSearch } = req.query;
     let query = {};
@@ -692,7 +579,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.post("/api/shop2/products", checkAdmin, upload.single('img'), async (req, res) => {
   const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
   
   // Check for file validation errors first
@@ -712,51 +599,41 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
     uploadWarning = "Image upload failed - using placeholder. Check S3 configuration or file size/type.";
   }
   
-  const isFloat = allowFloat === 'true';
-  const parsedPriceRegular = parsePrice(price_regular, isFloat);
-  const parsedPriceBulk = parsePrice(price_bulk, isFloat);
-  const parsedPrice = parsePrice(price, isFloat);
-
-  const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
     !name ||
     !category ||
-    !hasSomePrice
+    (price_regular === undefined && price === undefined)
   ) {
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
-  try {
-    await productsCollection2.insertOne({
-      name,
-      desc,
-      price_regular: parsedPriceRegular,
-      price_bulk: parsedPriceBulk,
-      price: parsedPrice,
-      img,
-      category,
-      subCategory,
-      available: available !== "false",
-      allowFloat: isFloat,
-      purchaseType: purchaseType || "both",
-    });
-    console.log("[UPLOAD SUCCESS] Shop2 product saved with image:", img);
-    const response = { success: true };
-    if (uploadWarning) {
-      response.warning = uploadWarning;
-    }
-    res.json(response);
+try{
+  await productsCollection2.insertOne({
+    name,
+    desc,
+    price_regular,
+    price_bulk,
+    price,
+    img,
+    category,
+    subCategory,
+    available: available !== "false",
+    allowFloat: allowFloat === "true",
+    purchaseType: purchaseType || "both",
+  });
+  const response = { success: true };
+  if (uploadWarning) {
+    response.warning = uploadWarning;
+  }
   } catch (err) {
-    console.error("[UPLOAD ERROR] Shop2 database error:", err.message);
+    console.error("[UPLOAD ERROR] Database error:", err.message);
     res.status(500).json({ error: err.message });
   }
+  res.json(response);
 });
 
-app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.put("/api/shop2/products/:id", checkAdmin, upload.single('img'), async (req, res) => {
   try {
     const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid product ID" });
-    }
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (!product) return res.status(404).json({ error: "Product not found" });
 
@@ -779,25 +656,20 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
       }
     }
 
-    const isFloat = allowFloat === "true";
-    const parsedPriceRegular = parsePrice(price_regular, isFloat);
-    const parsedPriceBulk = parsePrice(price_bulk, isFloat);
-    const parsedPrice = parsePrice(price, isFloat);
-
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
       {
         $set: {
           name,
           desc,
-          price_regular: parsedPriceRegular,
-          price_bulk: parsedPriceBulk,
-          price: parsedPrice,
+          price_regular,
+          price_bulk,
+          price,
           img,
           category,
           subCategory,
           available: available !== "false",
-          allowFloat: isFloat,
+          allowFloat: allowFloat === "true",
           purchaseType: purchaseType || "both",
         },
       }
@@ -812,15 +684,8 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
   }
 });
 
-app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/shop2/products/:id", checkAdmin, async (req, res) => {
   try {
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid product ID" });
-    }
-    const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
-    if (product) {
-      await deleteProductImageFromS3(product);
-    }
     await productsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
@@ -828,13 +693,10 @@ app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res)
   }
 });
 
-app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, async (req, res) => {
+app.patch("/api/shop2/products/:id/availability", checkAdmin, async (req, res) => {
   const { available } = req.body;
   if (typeof available !== 'boolean') {
       return res.status(400).json({ error: "Invalid available status" });
-  }
-  if (!ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid product ID" });
   }
   try {
       await productsCollection2.updateOne(
@@ -849,678 +711,21 @@ app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, asyn
 });
 
 // ============ SHOP2 ADMIN ROUTES ============
-app.post("/api/shop2/login", loginLimiter, (req, res) => {
+app.post("/api/shop2/login", (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-    return res.json({ success: true, token: "admin-token-shop2" });
+    res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Strict", secure: true });
+    return res.json({ success: true });
   }
   res.status(401).json({ success: false, message: "Unauthorized" });
 });
 
-app.get("/api/shop2/admin-check", checkAdmin, (req, res) => {
+app.get("/api/shop2/admin-check", (req, res) => {
+  const isAdmin = req.cookies.admin_shop2 === "true";
+  if (!isAdmin) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
   res.json({ ok: true });
-});
-
-// ============ ADMIN ANALYTICS API ============
-app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  
-  let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
-  let prodColl = shop === "shop2" ? productsCollection2 : productsCollection;
-  
-  let startDate, endDate;
-  if (req.query.startDate && req.query.endDate) {
-    startDate = new Date(req.query.startDate);
-    endDate = new Date(req.query.endDate);
-    endDate.setHours(23, 59, 59, 999);
-  } else {
-    endDate = new Date();
-    const period = req.query.period || "30d";
-    if (period === "7d") {
-      startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    } else if (period === "30d") {
-      startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    } else {
-      startDate = new Date(0);
-    }
-  }
-  
-  try {
-    const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" };
-    
-    // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
-    const kpiSummary = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: null,
-          totalRevenue: { $sum: "$totalPrice" },
-          orderCount: { $sum: 1 },
-          uniquePhones: { $addToSet: "$customerInfo.phone" }
-      } }
-    ]).toArray();
-    
-    const kpi = {
-      totalRevenue: kpiSummary[0] ? kpiSummary[0].totalRevenue : 0,
-      orderCount: kpiSummary[0] ? kpiSummary[0].orderCount : 0,
-      avgOrderValue: kpiSummary[0] && kpiSummary[0].orderCount > 0 ? (kpiSummary[0].totalRevenue / kpiSummary[0].orderCount) : 0,
-      activeCustomers: kpiSummary[0] ? kpiSummary[0].uniquePhones.length : 0
-    };
-    
-    // Revenue trend (sales trend chart)
-    const trend = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          revenue: { $sum: "$totalPrice" },
-          orders: { $sum: 1 }
-      } },
-      { $sort: { _id: 1 } }
-    ]).toArray();
-    
-    const revenueTrend = trend.map(t => ({
-      date: t._id,
-      revenue: t.revenue,
-      orders: t.orders
-    }));
-    
-    // Price Mode split (bulk vs regular)
-    const modes = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: "$priceMode",
-          revenue: { $sum: "$totalPrice" },
-          count: { $sum: 1 }
-      } }
-    ]).toArray();
-    
-    const priceModeSplit = {
-      regular: { revenue: 0, count: 0 },
-      bulk: { revenue: 0, count: 0 }
-    };
-    modes.forEach(m => {
-      const key = m._id === "bulk" ? "bulk" : "regular";
-      priceModeSplit[key] = { revenue: m.revenue, count: m.count };
-    });
-    
-    // Top products by quantity sold
-    const topProducts = await ordColl.aggregate([
-      { $match: matchStage },
-      { $unwind: "$items" },
-      { $group: {
-          _id: "$items.productId",
-          name: { $first: "$items.name" },
-          quantity: { $sum: "$items.quantity" },
-          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
-      } },
-      { $sort: { quantity: -1 } },
-      { $limit: 10 }
-    ]).toArray();
-    
-    const topProductsFormatted = topProducts.map(p => ({
-      productId: p._id,
-      name: p.name || "منتج مجهول",
-      quantity: p.quantity,
-      revenue: p.revenue
-    }));
-    
-    // Top customers by spend
-    const topCustomersRaw = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: "$customerInfo.phone",
-          name: { $first: "$customerInfo.name" },
-          totalSpent: { $sum: "$totalPrice" },
-          orderCount: { $sum: 1 }
-      } },
-      { $sort: { totalSpent: -1 } },
-      { $limit: 10 }
-    ]).toArray();
-    
-    const topCustomers = topCustomersRaw.map(c => ({
-      phone: c._id,
-      name: c.name || "عميل مجهول",
-      totalSpent: c.totalSpent,
-      orderCount: c.orderCount
-    }));
-    
-    // Category Sales breakdown
-    const categoriesRaw = await ordColl.aggregate([
-      { $match: matchStage },
-      { $unwind: "$items" },
-      { $lookup: {
-          from: "products",
-          localField: "items.productId",
-          foreignField: "_id",
-          as: "prod"
-      } },
-      { $unwind: { path: "$prod", preserveNullAndEmptyArrays: true } },
-      { $group: {
-          _id: { $ifNull: ["$prod.category", "غير مصنف"] },
-          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
-          count: { $sum: 1 }
-      } },
-      { $sort: { revenue: -1 } }
-    ]).toArray();
-    
-    const categorySales = categoriesRaw.map(c => ({
-      category: c._id,
-      revenue: c.revenue,
-      count: c.count
-    }));
-    
-    // Top favorites count (in-memory resolution of names to avoid cross-db lookup issues)
-    const favCounts = await favoritesCollection.aggregate([
-      { $match: { shop } },
-      { $group: {
-          _id: "$productId",
-          count: { $sum: 1 }
-      } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]).toArray();
-    
-    const favProductIds = favCounts.map(f => f._id);
-    const favProducts = await prodColl.find({ _id: { $in: favProductIds } }).toArray();
-    const favProdMap = {};
-    favProducts.forEach(p => {
-      favProdMap[p._id.toString()] = p.name;
-    });
-    
-    const topFavorites = favCounts.map(f => ({
-      name: favProdMap[f._id.toString()] || "منتج مجهول",
-      count: f.count
-    }));
-
-    // Actionable Insights: Inactive Customers (not active in selected period)
-    const inactiveCustsRaw = await customersCollection.find({
-      lastActive: { $lt: startDate }
-    }).sort({ lastActive: -1 }).limit(10).toArray();
-    const inactiveCustomers = inactiveCustsRaw.map(c => ({
-      phone: c.phone,
-      name: c.name || "عميل مجهول",
-      lastActive: c.lastActive
-    }));
-
-    // Actionable Insights: Low Performing Products (sold 0 quantity in selected period)
-    const allProducts = await prodColl.find({}).toArray();
-    const soldProductIds = await ordColl.distinct("items.productId", matchStage);
-    const soldProductIdsStr = soldProductIds.filter(id => id).map(id => id.toString());
-    const lowPerformingProducts = allProducts
-      .filter(p => !soldProductIdsStr.includes(p._id.toString()))
-      .slice(0, 10)
-      .map(p => ({
-        productId: p._id,
-        name: p.name,
-        category: p.category || "غير مصنف",
-        price: p.price
-      }));
-    
-    res.json({
-      kpi,
-      revenueTrend,
-      priceModeSplit,
-      topProducts: topProductsFormatted,
-      topCustomers,
-      categorySales,
-      topFavorites,
-      inactiveCustomers,
-      lowPerformingProducts
-    });
-    
-  } catch (err) {
-    console.error("Aggregation analytics error:", err);
-    res.status(500).json({ error: "Failed to generate analytics" });
-  }
-});
-
-// ============ ADMIN REPORTS EXPORT API ============
-app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const type = req.query.type || "orders"; // "orders" | "products" | "customers"
-  
-  let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
-  
-  let startDate, endDate;
-  if (req.query.startDate && req.query.endDate) {
-    startDate = new Date(req.query.startDate);
-    endDate = new Date(req.query.endDate);
-    endDate.setHours(23, 59, 59, 999);
-  } else {
-    endDate = new Date();
-    const period = req.query.period || "30d";
-    if (period === "7d") {
-      startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    } else if (period === "30d") {
-      startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    } else {
-      startDate = new Date(0);
-    }
-  }
-  
-  const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" };
-  
-  function escapeCSV(val) {
-    if (val === null || val === undefined) return "";
-    let str = String(val);
-    if (str.includes(",") || str.includes("\"") || str.includes("\n") || str.includes("\r")) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  }
-  
-  try {
-    if (type === "orders") {
-      const orders = await ordColl.find(matchStage).sort({ createdAt: -1 }).toArray();
-      let csv = "\uFEFF"; // UTF-8 BOM for Excel support
-      csv += "رقم الطلب,التاريخ,اسم العميل,رقم الهاتف,طريقة التسعير,تاريخ التوصيل,الإجمالي,الحالة,المنتجات\n";
-      orders.forEach(o => {
-        const itemsSummary = o.items.map(item => `${item.name} (x${item.quantity})`).join(" | ");
-        csv += `${escapeCSV(o._id)},${escapeCSV(o.createdAt.toISOString())},${escapeCSV(o.customerInfo.name)},${escapeCSV(o.customerInfo.phone)},${escapeCSV(o.priceMode)},${escapeCSV(o.deliveryDate)},${escapeCSV(o.totalPrice)},${escapeCSV(o.status)},${escapeCSV(itemsSummary)}\n`;
-      });
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="orders-report-${shop}.csv"`);
-      return res.status(200).send(csv);
-    } else if (type === "products") {
-      const topProducts = await ordColl.aggregate([
-        { $match: matchStage },
-        { $unwind: "$items" },
-        { $group: {
-            _id: "$items.productId",
-            name: { $first: "$items.name" },
-            quantity: { $sum: "$items.quantity" },
-            revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
-        } },
-        { $sort: { quantity: -1 } }
-      ]).toArray();
-      
-      let csv = "\uFEFF";
-      csv += "معرف المنتج,اسم المنتج,الكمية المباعة,إجمالي الإيرادات\n";
-      topProducts.forEach(p => {
-        csv += `${escapeCSV(p._id)},${escapeCSV(p.name)},${escapeCSV(p.quantity)},${escapeCSV(p.revenue)}\n`;
-      });
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="products-report-${shop}.csv"`);
-      return res.status(200).send(csv);
-    } else if (type === "customers") {
-      const topCustomersRaw = await ordColl.aggregate([
-        { $match: matchStage },
-        { $group: {
-            _id: "$customerInfo.phone",
-            name: { $first: "$customerInfo.name" },
-            totalSpent: { $sum: "$totalPrice" },
-            orderCount: { $sum: 1 }
-        } },
-        { $sort: { totalSpent: -1 } }
-      ]).toArray();
-      
-      let csv = "\uFEFF";
-      csv += "رقم الهاتف,اسم العميل,إجمالي الإنفاق,عدد الطلبات\n";
-      topCustomersRaw.forEach(c => {
-        csv += `${escapeCSV(c._id)},${escapeCSV(c.name)},${escapeCSV(c.totalSpent)},${escapeCSV(c.orderCount)}\n`;
-      });
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="customers-report-${shop}.csv"`);
-      return res.status(200).send(csv);
-    }
-  } catch (err) {
-    console.error("Export report error:", err);
-    res.status(500).json({ error: "Failed to export report" });
-  }
-});
-
-// ============ ADMIN ORDERS & CUSTOMERS APIs ============
-
-// Get all orders for the admin panel
-app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const status = req.query.status;
-  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
-
-  try {
-    const query = {};
-    if (status) {
-      query.status = status;
-    }
-    const orders = await ordColl.find(query).sort({ createdAt: -1 }).limit(100).toArray();
-    res.json(orders);
-  } catch (err) {
-    console.error("Fetch admin orders error:", err);
-    res.status(500).json({ error: "Failed to fetch orders" });
-  }
-});
-
-// Update order status
-app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
-    return res.status(400).json({ error: "Invalid status value" });
-  }
-
-  try {
-    const result = await ordColl.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { status } }
-    );
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-    res.json({ success: true, status });
-  } catch (err) {
-    console.error("Update order status error:", err);
-    res.status(500).json({ error: "Failed to update order status" });
-  }
-});
-
-// Get all customers with details
-app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
-
-  try {
-    const customers = await customersCollection.find().toArray();
-    
-    const customersWithDetails = await Promise.all(customers.map(async (cust) => {
-      const phone = cust.phone;
-      
-      const orderStats = await ordColl.aggregate([
-        { $match: { "customerInfo.phone": phone, status: "completed" } },
-        { $group: {
-            _id: null,
-            totalSpent: { $sum: "$totalPrice" },
-            orderCount: { $sum: 1 }
-        } }
-      ]).toArray();
-
-      const favRecords = await favoritesCollection.find({ phone, shop }).toArray();
-      const favorites = favRecords.map(f => f.productId.toString());
-
-      return {
-        _id: cust._id,
-        name: cust.name,
-        phone: cust.phone,
-        lastActive: cust.lastActive,
-        createdAt: cust.createdAt,
-        totalSpent: orderStats[0] ? orderStats[0].totalSpent : 0,
-        orderCount: orderStats[0] ? orderStats[0].orderCount : 0,
-        favorites
-      };
-    }));
-
-    res.json(customersWithDetails);
-  } catch (err) {
-    console.error("Fetch admin customers error:", err);
-    res.status(500).json({ error: "Failed to fetch customers" });
-  }
-});
-
-// Update customer details (with reference linkage preservation)
-app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { name, phone } = req.body;
-
-  if (!name || !phone) {
-    return res.status(400).json({ error: "Name and phone are required" });
-  }
-
-  try {
-    const customer = await customersCollection.findOne({ _id: new ObjectId(id) });
-    if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
-    }
-
-    const oldPhone = customer.phone;
-    const newPhone = phone.trim();
-
-    await customersCollection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { name: name.trim(), phone: newPhone, lastActive: new Date() } }
-    );
-
-    if (oldPhone !== newPhone) {
-      await favoritesCollection.updateMany({ phone: oldPhone }, { $set: { phone: newPhone } });
-      await ordersCollection.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
-      await ordersCollection2.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
-    }
-
-    res.json({ success: true, name, phone: newPhone });
-  } catch (err) {
-    console.error("Update customer error:", err);
-    res.status(500).json({ error: "Failed to update customer" });
-  }
-});
-
-// ============ CUSTOMER & FAVORITES APIs ============
-
-app.post("/api/customer/identify", checkMongoDB, async (req, res) => {
-  try {
-    const { name, phone } = req.body;
-    if (!name || !phone) {
-      return res.status(400).json({ error: "Missing name or phone number" });
-    }
-    
-    const normalizedPhone = phone.trim();
-    
-    await customersCollection.updateOne(
-      { phone: normalizedPhone },
-      { 
-        $set: { 
-          name: name.trim(), 
-          lastActive: new Date() 
-        },
-        $setOnInsert: {
-          createdAt: new Date()
-        }
-      },
-      { upsert: true }
-    );
-    
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Identify customer error:", err);
-    res.status(500).json({ error: "Failed to identify customer" });
-  }
-});
-
-app.post("/api/customer/favorites", checkMongoDB, async (req, res) => {
-  try {
-    const { phone, shop, favorites } = req.body;
-    if (!phone || !shop || !Array.isArray(favorites)) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-    
-    const normalizedPhone = phone.trim();
-    
-    // Clear existing favorites for this shop and phone
-    await favoritesCollection.deleteMany({ phone: normalizedPhone, shop });
-    
-    // Insert new favorites
-    if (favorites.length > 0) {
-      const docs = favorites.map(id => ({
-        phone: normalizedPhone,
-        productId: new ObjectId(id),
-        shop,
-        createdAt: new Date()
-      }));
-      await favoritesCollection.insertMany(docs);
-    }
-    
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Sync favorites error:", err);
-    res.status(500).json({ error: "Failed to sync favorites" });
-  }
-});
-
-app.get("/api/customer/favorites", checkMongoDB, async (req, res) => {
-  try {
-    const { phone } = req.query;
-    if (!phone) {
-      return res.status(400).json({ error: "Missing phone parameter" });
-    }
-    
-    const normalizedPhone = phone.trim();
-    const favs = await favoritesCollection.find({ phone: normalizedPhone }).toArray();
-    
-    const shop1 = favs.filter(f => f.shop === 'shop1').map(f => f.productId.toString());
-    const shop2 = favs.filter(f => f.shop === 'shop2').map(f => f.productId.toString());
-    
-    res.json({ shop1, shop2 });
-  } catch (err) {
-    console.error("Fetch favorites error:", err);
-    res.status(500).json({ error: "Failed to fetch favorites" });
-  }
-});
-
-app.get("/api/customer/orders", checkMongoDB, async (req, res) => {
-  try {
-    const { phone } = req.query;
-    if (!phone) {
-      return res.status(400).json({ error: "Missing phone parameter" });
-    }
-    
-    const normalizedPhone = phone.trim();
-    
-    // Query both databases/collections
-    const orders1 = await ordersCollection.find({ "customerInfo.phone": normalizedPhone }).toArray();
-    const orders2 = await ordersCollection2.find({ "customerInfo.phone": normalizedPhone }).toArray();
-    
-    // Add shop tags
-    const taggedOrders1 = orders1.map(o => ({ ...o, shop: 'shop1' }));
-    const taggedOrders2 = orders2.map(o => ({ ...o, shop: 'shop2' }));
-    
-    // Combine and sort by date descending
-    const allOrders = [...taggedOrders1, ...taggedOrders2].sort((a, b) => {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-    
-    res.json(allOrders);
-  } catch (err) {
-    console.error("Fetch orders error:", err);
-    res.status(500).json({ error: "Failed to fetch order history" });
-  }
-});
-
-// ============ ORDER SUBMISSION APIs ============
-
-app.post("/api/orders", checkMongoDB, async (req, res) => {
-  try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode } = req.body;
-    if (!customer || !items || !Array.isArray(items)) {
-      return res.status(400).json({ error: "Missing order details" });
-    }
-
-    const normalizedPhone = customer.phone.trim();
-    const normalizedName = customer.name.trim();
-
-    // Upsert customer profile
-    await customersCollection.updateOne(
-      { phone: normalizedPhone },
-      { 
-        $set: { 
-          name: normalizedName, 
-          lastActive: new Date() 
-        },
-        $setOnInsert: {
-          createdAt: new Date()
-        }
-      },
-      { upsert: true }
-    );
-    
-    const orderDoc = {
-      customerInfo: {
-        name: normalizedName,
-        phone: normalizedPhone
-      },
-      items: items.map(item => ({
-        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
-        name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-        allowFloat: !!item.allowFloat,
-        notes: item.notes || ''
-      })),
-      totalPrice: Number(totalPrice),
-      deliveryDate: deliveryDate || '',
-      notes: notes || '',
-      priceMode: priceMode || 'regular',
-      status: 'pending',
-      whatsappSent: true,
-      createdAt: new Date()
-    };
-    
-    const result = await ordersCollection.insertOne(orderDoc);
-    res.status(201).json({ success: true, orderId: result.insertedId });
-  } catch (err) {
-    console.error("Save order error:", err);
-    res.status(500).json({ error: "Failed to save order" });
-  }
-});
-
-app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
-  try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode } = req.body;
-    if (!customer || !items || !Array.isArray(items)) {
-      return res.status(400).json({ error: "Missing order details" });
-    }
-
-    const normalizedPhone = customer.phone.trim();
-    const normalizedName = customer.name.trim();
-
-    // Upsert customer profile
-    await customersCollection.updateOne(
-      { phone: normalizedPhone },
-      { 
-        $set: { 
-          name: normalizedName, 
-          lastActive: new Date() 
-        },
-        $setOnInsert: {
-          createdAt: new Date()
-        }
-      },
-      { upsert: true }
-    );
-    
-    const orderDoc = {
-      customerInfo: {
-        name: normalizedName,
-        phone: normalizedPhone
-      },
-      items: items.map(item => ({
-        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
-        name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-        allowFloat: !!item.allowFloat,
-        notes: item.notes || ''
-      })),
-      totalPrice: Number(totalPrice),
-      deliveryDate: deliveryDate || '',
-      notes: notes || '',
-      priceMode: priceMode || 'regular',
-      status: 'pending',
-      whatsappSent: true,
-      createdAt: new Date()
-    };
-    
-    const result = await ordersCollection2.insertOne(orderDoc);
-    res.status(201).json({ success: true, orderId: result.insertedId });
-  } catch (err) {
-    console.error("Save shop2 order error:", err);
-    res.status(500).json({ error: "Failed to save order" });
-  }
-});
-
-// ============ CATCH-ALL ROUTE FOR VUE SPA ============
-app.get("/app/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "app", "index.html"));
 });
 
 // ============ FONT FILE HANDLER ============
@@ -1535,82 +740,6 @@ app.get("/*.woff", (req, res) => {
 
 app.get("/*.woff2", (req, res) => {
   res.status(204).send();
-});
-
-// ============ MARKETING CAROUSEL APIs ============
-
-// Get carousel items (Public)
-app.get("/api/marketing-carousel", checkMongoDB, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  try {
-    const items = await carouselCollection.find({ shop }).sort({ createdAt: -1 }).toArray();
-    res.json(items);
-  } catch (err) {
-    console.error("Get carousel error:", err);
-    res.status(500).json({ error: "Failed to fetch marketing carousel" });
-  }
-});
-
-// Get carousel items (Admin)
-app.get("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  try {
-    const items = await carouselCollection.find({ shop }).sort({ createdAt: -1 }).toArray();
-    res.json(items);
-  } catch (err) {
-    console.error("Get admin carousel error:", err);
-    res.status(500).json({ error: "Failed to fetch carousel items" });
-  }
-});
-
-// Add carousel item (Admin)
-app.post("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { shop, title, subtitle, link } = req.body;
-  if (!shop) {
-    return res.status(400).json({ error: "Missing required shop field" });
-  }
-  
-  if (req.fileValidationError) {
-    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}` });
-  }
-  
-  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-  let img = "/res/logo.jpg";
-  if (req.file) {
-    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
-  }
-  
-  try {
-    const newItem = {
-      shop: shop === "shop2" ? "shop2" : "shop1",
-      title: title || "",
-      subtitle: subtitle || "",
-      link: link || "",
-      image: img,
-      createdAt: new Date()
-    };
-    const result = await carouselCollection.insertOne(newItem);
-    res.json({ success: true, item: { ...newItem, _id: result.insertedId } });
-  } catch (err) {
-    console.error("Add carousel item error:", err);
-    res.status(500).json({ error: "Failed to create carousel item" });
-  }
-});
-
-// Delete carousel item (Admin)
-app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await carouselCollection.deleteOne({ _id: new ObjectId(id) });
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: "Item not found" });
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Delete carousel item error:", err);
-    res.status(500).json({ error: "Failed to delete carousel item" });
-  }
 });
 
 // ============ ERROR HANDLER ============
@@ -1628,21 +757,12 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   categoriesCollection = db.collection("categories");
   productsCollection2 = db2.collection("products");
   categoriesCollection2 = db2.collection("categories");
-  customersCollection = db.collection("customers");
-  favoritesCollection = db.collection("favorites");
-  ordersCollection = db.collection("orders");
-  ordersCollection2 = db2.collection("orders");
-  carouselCollection = db.collection("marketing_carousel");
   mongoConnected = true;
   
   productsCollection.createIndex({ category: 1 });
   categoriesCollection.createIndex({ name: 1 }, { unique: true });
   productsCollection2.createIndex({ category: 1 });
   categoriesCollection2.createIndex({ name: 1 }, { unique: true });
-  customersCollection.createIndex({ phone: 1 }, { unique: true });
-  favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
-  ordersCollection.createIndex({ "customerInfo.phone": 1 });
-  ordersCollection2.createIndex({ "customerInfo.phone": 1 });
 
   const count = await categoriesCollection.countDocuments();
   if (count === 0) {
