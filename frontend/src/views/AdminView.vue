@@ -1705,9 +1705,9 @@ export default {
     };
 
     const setCarouselFile = (file) => {
-      // Limit to 5MB
-      if (file.size > 5 * 1024 * 1024) {
-        toast.show('حجم الصورة كبير جداً. يجب أن تكون أقل من 5 ميجابايت.', 'danger');
+      // Limit to 100MB
+      if (file.size > 100 * 1024 * 1024) {
+        toast.show('حجم الصورة كبير جداً. يجب أن تكون أقل من 100 ميجابايت.', 'danger');
         return;
       }
 
