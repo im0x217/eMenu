@@ -126,6 +126,32 @@ body {
 }
 
 /* Horizontal scroll for categories */
+.categories-row, .subcategories-row {
+  position: relative;
+  width: 100%;
+}
+
+.categories-row::before, .subcategories-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 48px;
+  background: linear-gradient(to right, var(--bg-dark) 20%, transparent);
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes scrollHint {
+  0% { transform: translateX(0); }
+  15% { transform: translateX(35px); } /* Peek slightly to the left in RTL */
+  35% { transform: translateX(-12px); } /* Slight bounce back */
+  55% { transform: translateX(4px); }
+  75% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+
 .scroll-container {
   display: flex;
   overflow-x: auto;
@@ -133,6 +159,8 @@ body {
   padding: 0.5rem 0.25rem;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  animation: scrollHint 1.5s cubic-bezier(0.25, 1, 0.5, 1) 1;
+  animation-delay: 0.6s;
 }
 
 .scroll-container::-webkit-scrollbar {
