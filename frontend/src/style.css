@@ -129,6 +129,8 @@ body {
 .categories-row, .subcategories-row {
   position: relative;
   width: 100%;
+  overflow: hidden; /* Clips items cleanly at the page boundaries during animation */
+  z-index: 2; /* Establishes a parent stacking context */
 }
 
 .categories-row::before, .subcategories-row::before {
@@ -139,7 +141,7 @@ body {
   bottom: 0;
   width: 48px;
   background: linear-gradient(to right, var(--bg-dark) 20%, transparent);
-  z-index: 5;
+  z-index: 5; /* Remains on top of the container items */
   pointer-events: none;
 }
 
@@ -159,6 +161,8 @@ body {
   padding: 0.5rem 0.25rem;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1; /* Ensures buttons slide underneath the gradient, even during active transform animations */
 }
 
 .subcategories-row .scroll-container {
