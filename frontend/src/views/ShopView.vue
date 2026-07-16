@@ -18,8 +18,6 @@ const fetchCarousel = async () => {
     const res = await fetch(`/api/marketing-carousel?shop=${shopStore.activeShop || 'shop1'}`);
     if (res.ok) {
       carouselItems.value = await res.json();
-      await nextTick();
-      updateCardWidth();
     }
   } catch (err) {
     console.error('Failed to fetch marketing carousel:', err);
@@ -32,8 +30,6 @@ onMounted(async () => {
   if (shopStore.categories.length > 0) {
     activeCategory.value = shopStore.categories[0].name;
   }
-  updateCardWidth();
-  window.addEventListener('resize', updateCardWidth);
 });
 
 // Watch shop parameter change to refetch items
@@ -238,7 +234,6 @@ const stopAutoplay = () => {
 
 onUnmounted(() => {
   stopAutoplay();
-  window.removeEventListener('resize', updateCardWidth);
   if (carouselTrack.value) {
     carouselTrack.value.removeEventListener('scroll', handleCarouselScroll);
   }
@@ -811,7 +806,7 @@ watch(carouselItems, (newItems) => {
   flex: 0 0 100%;
   scroll-snap-align: start;
   position: relative;
-  height: 180px;
+  aspect-ratio: 3 / 1;
   border-radius: 16px;
   overflow: hidden;
   background-size: cover;

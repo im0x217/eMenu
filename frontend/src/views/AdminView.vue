@@ -4369,7 +4369,7 @@ export default {
 
 .card-image-wrapper {
   width: 100%;
-  padding-top: 50%; /* 2:1 aspect ratio */
+  padding-top: 33.33%; /* 3:1 aspect ratio */
   position: relative;
   background: rgba(0, 0, 0, 0.03);
 }
