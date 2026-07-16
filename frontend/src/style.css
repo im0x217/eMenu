@@ -159,8 +159,15 @@ body {
   padding: 0.5rem 0.25rem;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.subcategories-row .scroll-container {
   animation: scrollHint 1.5s cubic-bezier(0.25, 1, 0.5, 1) 1;
-  animation-delay: 0.6s;
+  animation-delay: 0.8s;
+}
+
+.scroll-hint-bounce {
+  animation: scrollHint 1.5s cubic-bezier(0.25, 1, 0.5, 1) 1;
 }
 
 .scroll-container::-webkit-scrollbar {

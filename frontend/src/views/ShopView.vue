@@ -13,6 +13,11 @@ const activeSubCategory = ref('');
 const carouselItems = ref([]);
 const carouselTrack = ref(null);
 
+const categoriesContainer = ref(null);
+const hasInteractedWithCats = ref(false);
+const showScrollHint = ref(false);
+let hintInterval = null;
+
 const fetchCarousel = async () => {
   try {
     const res = await fetch(`/api/marketing-carousel?shop=${shopStore.activeShop || 'shop1'}`);
@@ -29,6 +34,49 @@ onMounted(async () => {
   await Promise.all([shopStore.fetchMenu(), fetchCarousel()]);
   if (shopStore.categories.length > 0) {
     activeCategory.value = shopStore.categories[0].name;
+  }
+
+  // Setup repeating scroll hint if not interacted
+  const categoriesEl = categoriesContainer.value;
+  if (categoriesEl) {
+    const markInteracted = () => {
+      hasInteractedWithCats.value = true;
+      if (hintInterval) {
+        clearInterval(hintInterval);
+        hintInterval = null;
+      }
+      showScrollHint.value = false;
+      categoriesEl.removeEventListener('scroll', markInteracted);
+      categoriesEl.removeEventListener('touchstart', markInteracted);
+      categoriesEl.removeEventListener('mousedown', markInteracted);
+      categoriesEl.removeEventListener('wheel', markInteracted);
+    };
+
+    categoriesEl.addEventListener('scroll', markInteracted, { passive: true });
+    categoriesEl.addEventListener('touchstart', markInteracted, { passive: true });
+    categoriesEl.addEventListener('mousedown', markInteracted, { passive: true });
+    categoriesEl.addEventListener('wheel', markInteracted, { passive: true });
+
+    // Trigger initial hint shortly after load
+    setTimeout(() => {
+      if (!hasInteractedWithCats.value) {
+        showScrollHint.value = true;
+        setTimeout(() => { showScrollHint.value = false; }, 1500);
+      }
+    }, 1000);
+
+    // Repeating interval every 4 seconds
+    hintInterval = setInterval(() => {
+      if (hasInteractedWithCats.value) {
+        if (hintInterval) {
+          clearInterval(hintInterval);
+          hintInterval = null;
+        }
+        return;
+      }
+      showScrollHint.value = true;
+      setTimeout(() => { showScrollHint.value = false; }, 1500);
+    }, 4000);
   }
 });
 
@@ -237,6 +285,10 @@ onUnmounted(() => {
   if (carouselTrack.value) {
     carouselTrack.value.removeEventListener('scroll', handleCarouselScroll);
   }
+  if (hintInterval) {
+    clearInterval(hintInterval);
+    hintInterval = null;
+  }
 });
 
 const handleCarouselScroll = () => {
@@ -345,7 +397,9 @@ watch(carouselItems, (newItems) => {
     <!-- Category Selector (hidden when searching) -->
     <div v-if="!searchQuery" class="categories-row">
       <div 
+        ref="categoriesContainer"
         class="scroll-container" 
+        :class="{ 'scroll-hint-bounce': showScrollHint }"
         @wheel.prevent="handleHorizontalScroll"
         @mousedown="startDrag"
         @mousemove="drag"
