@@ -654,11 +654,11 @@
                       <th>المجموع</th>
                       <th>نوع السعر</th>
                       <th>الحالة</th>
-                    </tr>
+</tr>
                   </thead>
                   <tbody>
                     <tr v-if="filteredOrders.length === 0">
-                      <td colspan="7" class="text-center p-4">لا توجد طلبات متطابقة.</td>
+                      <td colspan="8" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
                     <tr v-for="order in filteredOrders" :key="order._id">
                       <td class="text-bold">#{{ order._id.toString().slice(-6) }}</td>
@@ -691,12 +691,124 @@
                           <option value="cancelled">ملغي</option>
                         </select>
                       </td>
+                      <td>
+                        <button @click="openOrderEditModal(order)" class="btn btn-outline btn-xs">تعديل</button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
+
+    <!-- Order Edit Modal -->
+    <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-content glass-panel" style="width: 95%; max-width: 950px; padding: 30px;">
+        <div class="modal-header">
+          <h3>تعديل محتويات الطلب #{{ editingOrder._id.toString().slice(-6) }}</h3>
+          <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
+        </div>
+        <form @submit.prevent="saveOrder">
+          <div v-if="editingOrder.notes" class="order-notes-static-display mb-3">
+            <strong>ملاحظات العميل:</strong> {{ editingOrder.notes }}
+          </div>
+
+          <div class="form-group">
+            <div class="order-items-header mb-3">
+              <span class="section-title">إدارة محتويات الطلب</span>
+              <div class="product-search-autocomplete-container">
+                <input 
+                  v-model="productSearchQuery" 
+                  type="text" 
+                  class="form-control product-search-input" 
+                  placeholder="🔍 ابحث باسم منتج لإضافته مباشرة للطلب..." 
+                  @focus="showSuggestions = productSearchQuery.length > 0"
+                  @blur="closeSuggestionsWithDelay"
+                  @keydown.down.prevent="navigateSuggestions(1)"
+                  @keydown.up.prevent="navigateSuggestions(-1)"
+                  @keydown.enter.prevent="selectHighlightedSuggestion"
+                />
+                <div v-if="showSuggestions" class="autocomplete-suggestions-dropdown">
+                  <div 
+                    v-for="(prod, index) in filteredSuggestions" 
+                    :key="prod._id" 
+                    class="suggestion-item"
+                    :class="{ highlighted: index === highlightedSuggestionIndex }"
+                    @mousedown="addSelectedProduct(prod)"
+                  >
+                    <img :src="prod.img" alt="" class="suggestion-img" v-if="prod.img" />
+                    <div class="suggestion-info">
+                      <span class="suggestion-name">{{ prod.name }}</span>
+                      <span class="suggestion-category">{{ prod.category }}</span>
+                    </div>
+                    <span class="suggestion-price">
+                      {{ editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price) }} د.ل
+                    </span>
+                  </div>
+                  <div v-if="filteredSuggestions.length === 0" class="suggestion-no-results">
+                    لا توجد نتائج مطابقة
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="edit-order-table-container">
+              <table class="edit-order-table">
+                <thead>
+                  <tr>
+                    <th>اسم المنتج</th>
+                    <th style="max-width: 120px;">الكمية</th>
+                    <th style="max-width: 140px;">سعر الوحدة</th>
+                    <th>إجمالي المنتج</th>
+                    <th style="width: 60px; text-align: center;">حذف</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, idx) in editingOrder.items" :key="idx">
+                    <td>
+                      <div class="edit-item-name-cell">
+                        <span v-if="item.productId" class="db-product-name" title="منتج مسجل بالمنظومة">✓ {{ item.name }}</span>
+                        <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
+                        <div v-if="item.notes" class="order-item-static-note" title="ملاحظة الزبون">
+                          * {{ item.notes }}
+                        </div>
+                      </div>
+                    </td>
+                    <td style="max-width: 120px;">
+                      <div class="edit-qty-input-wrapper">
+                        <input v-model.number="item.quantity" type="number" step="0.01" min="0.01" class="form-control edit-qty-input" placeholder="الكمية" required @input="recalcOrderTotal" />
+                      </div>
+                    </td>
+                    <td style="max-width: 140px;">
+                      <div class="edit-price-input-wrapper">
+                        <input v-model.number="item.price" type="number" step="0.01" min="0" class="form-control edit-price-input" placeholder="السعر" required @input="recalcOrderTotal" />
+                        <span class="currency-label">د.ل</span>
+                      </div>
+                    </td>
+                    <td class="text-bold text-dark">
+                      {{ formatCurrency(item.quantity * item.price) }}
+                    </td>
+                    <td style="width: 60px; text-align: center;">
+                      <button type="button" @click="removeOrderItem(idx)" class="btn btn-danger btn-xs btn-remove-item" :disabled="editingOrder.items.length <= 1" title="حذف المنتج">✕</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="order-total-display mb-3">
+            <span>إجمالي قيمة الطلب:</span>
+            <strong>{{ formatCurrency(editingOrder.totalPrice) }}</strong>
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+            <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
           <!-- CUSTOMERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
@@ -972,9 +1084,13 @@
                 <svg class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                 <span>اسحب صورة البنر هنا أو اضغط للتصفح</span>
               </div>
-              <div v-else class="dropzone-preview">
-                <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px;" />
+              <div v-else class="dropzone-preview" @click.stop>
+                <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px; margin-bottom: 8px;" />
                 <span class="file-name">{{ newCarouselItem.file.name }}</span>
+                <span v-if="newCarouselItem.dimensions" class="file-dimensions block text-muted text-small mt-1" style="font-size: 0.75rem; color: #868e96; font-weight: 500;">
+                  المقاسات: {{ newCarouselItem.dimensions }}
+                </span>
+                <button type="button" @click="clearCarouselFile" class="btn btn-outline btn-xs mt-2" style="color: #fa5252; border-color: #ffc9c9;">إزالة الصورة</button>
               </div>
             </div>
           </div>
@@ -989,18 +1105,74 @@
       </div>
     </div>
 
+
+
     <!-- Image Zoom View -->
     <div v-if="zoomedImageSrc" class="modal-overlay zoom-overlay animate-fade-in" @click="zoomedImageSrc = null">
       <div class="zoom-box">
         <img :src="zoomedImageSrc" alt="Zoomed" />
       </div>
     </div>
+    <!-- Premium Image Cropper Modal -->
+    <div v-if="cropperModalOpen" class="premium-cropper-overlay animate-fade-in">
+      <div class="premium-cropper-content">
+        <div class="premium-cropper-header">
+          <div>
+            <h2 class="text-xl text-bold" style="margin: 0; color: #1f2937;">تخصيص أبعاد البنر</h2>
+            <p class="text-muted text-small" style="margin: 0; margin-top: 4px;">قم بتعديل الصورة لتتناسب مع واجهة المتجر</p>
+          </div>
+          <button @click="cropperModalOpen = false" class="premium-close-btn">&times;</button>
+        </div>
+        
+        <div class="premium-cropper-body">
+          <div class="cropper-canvas-container">
+            <img ref="cropperImageElement" :src="cropperImageSrc" style="display: block; max-width: 100%;" />
+          </div>
+          
+          <div class="cropper-toolbar">
+            <div class="toolbar-section">
+              <span class="toolbar-label">نسبة العرض: ثابتة (3:1)</span>
+            </div>
+            
+            <div class="toolbar-actions">
+              <button @click="rotateCropperImage(90)" class="tool-btn" title="تدوير يمين">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M21 13a9 9 0 1 1-3-7.7L21 8"></path></svg>
+              </button>
+              <button @click="rotateCropperImage(-90)" class="tool-btn" title="تدوير يسار">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path></svg>
+              </button>
+              <div class="tool-divider"></div>
+              <button @click="zoomCropperImage(0.1)" class="tool-btn" title="تكبير">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <button @click="zoomCropperImage(-0.1)" class="tool-btn" title="تصغير">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <div class="tool-divider"></div>
+              <button @click="resetCropperImage" class="tool-btn" title="إعادة ضبط">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="premium-cropper-footer">
+          <button @click="cropperModalOpen = false" class="btn premium-btn-outline">إلغاء</button>
+          <button @click="cropAndSaveImage" class="btn premium-btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            تأكيد القص
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue';
 import { useToastStore } from '../stores/toast';
+import Cropper from 'cropperjs';
+import 'cropperjs/dist/cropper.css';
 
 export default {
   name: 'AdminView',
@@ -1016,6 +1188,13 @@ export default {
     // Login Data
     const loginForm = reactive({ username: '', password: '' });
     const loginError = ref('');
+
+    // Cropper Data (Missing Refs)
+    const cropperModalOpen = ref(false);
+    const cropperImageElement = ref(null);
+    const cropperImageSrc = ref('');
+    const activeAspectRatio = ref(3/1);
+    let cropperInstance = null;
 
     // Tabs Titles
     const tabTitles = {
@@ -1076,6 +1255,20 @@ export default {
     const categoryModalOpen = ref(false);
     const customerModalOpen = ref(false);
     const customerFavsModalOpen = ref(false);
+    const orderEditModalOpen = ref(false);
+
+    // Order edit form bindings
+    const editingOrder = reactive({
+      _id: '',
+      customerName: '',
+      customerPhone: '',
+      items: [],
+      totalPrice: 0,
+      priceMode: 'regular',
+      status: 'pending',
+      deliveryDate: '',
+      notes: ''
+    });
     
     // Customer form bindings
     const editingCustomer = reactive({
@@ -1116,7 +1309,8 @@ export default {
       subtitle: '',
       link: '',
       file: null,
-      filePreview: ''
+      filePreview: '',
+      dimensions: ''
     });
 
     // Category form bindings
@@ -1454,6 +1648,7 @@ export default {
       newCarouselItem.link = '';
       newCarouselItem.file = null;
       newCarouselItem.filePreview = '';
+      newCarouselItem.dimensions = '';
       carouselModalOpen.value = true;
     };
 
@@ -1509,12 +1704,93 @@ export default {
     };
 
     const setCarouselFile = (file) => {
-      newCarouselItem.file = file;
+      // Limit to 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        toast.show('حجم الصورة كبير جداً. يجب أن تكون أقل من 5 ميجابايت.', 'danger');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
-        newCarouselItem.filePreview = e.target.result;
+        cropperImageSrc.value = e.target.result;
+        cropperModalOpen.value = true;
+        
+        nextTick(() => {
+          if (cropperInstance) {
+            cropperInstance.destroy();
+          }
+          if (cropperImageElement.value) {
+            cropperInstance = new Cropper(cropperImageElement.value, {
+              aspectRatio: activeAspectRatio.value,
+              viewMode: 1,
+              autoCropArea: 1,
+              background: false,
+            });
+          }
+        });
       };
       reader.readAsDataURL(file);
+    };
+
+    const setAspectRatio = (ratio) => {
+      activeAspectRatio.value = ratio;
+      if (cropperInstance) {
+        cropperInstance.setAspectRatio(ratio);
+      }
+    };
+
+    const cropAndSaveImage = () => {
+      if (!cropperInstance) return;
+      
+      const canvas = cropperInstance.getCroppedCanvas({
+        maxWidth: 2400,
+        maxHeight: 1200,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+      });
+      
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        
+        const croppedFile = new File([blob], 'cropped_banner.jpg', {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+        
+        newCarouselItem.file = croppedFile;
+        newCarouselItem.filePreview = canvas.toDataURL('image/jpeg');
+        newCarouselItem.dimensions = `${canvas.width} × ${canvas.height} بكسل`;
+        
+        cropperModalOpen.value = false;
+        cropperInstance.destroy();
+        cropperInstance = null;
+        toast.show('تم ضبط وقص الصورة بنجاح', 'success');
+      }, 'image/jpeg', 0.9);
+    };
+
+    const rotateCropperImage = (degree) => {
+      if (cropperInstance) {
+        cropperInstance.rotate(degree);
+      }
+    };
+
+    const zoomCropperImage = (ratio) => {
+      if (cropperInstance) {
+        cropperInstance.zoom(ratio);
+      }
+    };
+
+    const resetCropperImage = () => {
+      if (cropperInstance) {
+        cropperInstance.reset();
+      }
+    };
+
+    const clearCarouselFile = () => {
+      newCarouselItem.file = null;
+      newCarouselItem.filePreview = '';
+      newCarouselItem.dimensions = '';
+      if (carouselFileInput.value) carouselFileInput.value.value = '';
     };
 
     const formatCurrency = (val) => {
@@ -1745,6 +2021,147 @@ export default {
       }
     };
 
+    const productSearchQuery = ref('');
+    const highlightedSuggestionIndex = ref(-1);
+    const showSuggestions = ref(false);
+
+    const filteredSuggestions = computed(() => {
+      const q = productSearchQuery.value.trim().toLowerCase();
+      if (!q) return [];
+      return products.value.filter(p => p.name.toLowerCase().includes(q)).slice(0, 8);
+    });
+
+    watch(productSearchQuery, (newVal) => {
+      showSuggestions.value = newVal.trim().length > 0;
+      highlightedSuggestionIndex.value = -1;
+    });
+
+    const navigateSuggestions = (dir) => {
+      const len = filteredSuggestions.value.length;
+      if (len === 0) return;
+      highlightedSuggestionIndex.value = (highlightedSuggestionIndex.value + dir + len) % len;
+    };
+
+    const selectHighlightedSuggestion = () => {
+      const index = highlightedSuggestionIndex.value;
+      if (index >= 0 && index < filteredSuggestions.value.length) {
+        addSelectedProduct(filteredSuggestions.value[index]);
+      }
+    };
+
+    const addSelectedProduct = (prod) => {
+      const price = editingOrder.priceMode === 'bulk' 
+        ? (prod.price_bulk !== undefined && prod.price_bulk !== null ? prod.price_bulk : prod.price) 
+        : (prod.price_regular !== undefined && prod.price_regular !== null ? prod.price_regular : prod.price);
+      
+      const existingItem = editingOrder.items.find(item => item.productId && item.productId.toString() === prod._id.toString());
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        editingOrder.items.push({
+          productId: prod._id,
+          name: prod.name,
+          price: Number(price) || 0,
+          quantity: 1,
+          notes: '',
+          allowFloat: !!prod.allowFloat
+        });
+      }
+      recalcOrderTotal();
+      productSearchQuery.value = '';
+      showSuggestions.value = false;
+    };
+
+    const closeSuggestionsWithDelay = () => {
+      setTimeout(() => {
+        showSuggestions.value = false;
+      }, 200);
+    };
+
+    const openOrderEditModal = (order) => {
+      editingOrder._id = order._id;
+      editingOrder.customerName = order.customerInfo?.name || '';
+      editingOrder.customerPhone = order.customerInfo?.phone || '';
+      editingOrder.items = (order.items || []).map(item => ({ ...item }));
+      editingOrder.totalPrice = order.totalPrice || 0;
+      editingOrder.priceMode = order.priceMode || 'regular';
+      editingOrder.status = order.status || 'pending';
+      editingOrder.deliveryDate = order.deliveryDate || '';
+      editingOrder.notes = order.notes || '';
+      productSearchQuery.value = '';
+      showSuggestions.value = false;
+      orderEditModalOpen.value = true;
+    };
+
+    const recalcOrderTotal = () => {
+      editingOrder.totalPrice = editingOrder.items.reduce((sum, item) => {
+        return sum + (Number(item.price) || 0) * (Number(item.quantity) || 0);
+      }, 0);
+    };
+
+    const onPriceModeChange = () => {
+      editingOrder.items.forEach(item => {
+        if (item.productId) {
+          const prod = products.value.find(p => p._id.toString() === item.productId.toString());
+          if (prod) {
+            item.price = editingOrder.priceMode === 'bulk' 
+              ? (prod.price_bulk !== undefined && prod.price_bulk !== null ? prod.price_bulk : prod.price) 
+              : (prod.price_regular !== undefined && prod.price_regular !== null ? prod.price_regular : prod.price);
+          }
+        }
+      });
+      recalcOrderTotal();
+    };
+
+    const removeOrderItem = (idx) => {
+      if (editingOrder.items.length > 1) {
+        editingOrder.items.splice(idx, 1);
+        recalcOrderTotal();
+      }
+    };
+
+    const saveOrder = async () => {
+      try {
+        loading.value = true;
+        const url = `/api/admin/orders/${editingOrder._id}?shop=${activeShop.value}`;
+        const payload = {
+          customerInfo: {
+            name: editingOrder.customerName,
+            phone: editingOrder.customerPhone
+          },
+          items: editingOrder.items.map(item => ({
+            productId: item.productId || undefined,
+            name: item.name,
+            price: Number(item.price),
+            quantity: Number(item.quantity),
+            allowFloat: item.allowFloat || false,
+            notes: item.notes || ''
+          })),
+          totalPrice: Number(editingOrder.totalPrice),
+          priceMode: editingOrder.priceMode,
+          status: editingOrder.status,
+          deliveryDate: editingOrder.deliveryDate,
+          notes: editingOrder.notes
+        };
+        const res = await adminFetch(url, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          toast.show('تم تعديل الطلب بنجاح', 'success');
+          orderEditModalOpen.value = false;
+          await Promise.all([fetchOrders(), fetchAnalytics()]);
+        } else {
+          const data = await res.json();
+          toast.show(data.error || 'فشل تعديل الطلب', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
     const openCustomerEditModal = (cust) => {
       editingCustomer._id = cust._id;
       editingCustomer.name = cust.name;
@@ -1779,12 +2196,21 @@ export default {
     };
 
     const openCustomerFavsModal = (cust) => {
+      console.log("[FAVORITES] Opening modal for customer:", cust);
+      console.log("[FAVORITES] Customer favorites IDs:", cust.favorites);
+      console.log("[FAVORITES] Total products list loaded:", products.value.length);
+      
       viewingCustomer.value = cust;
       const favs = cust.favorites || [];
       viewingCustomerFavs.value = favs.map(id => {
         const prod = products.value.find(p => p._id === id);
+        if (!prod) {
+          console.warn(`[FAVORITES] Product not found in active list for ID: ${id}`);
+        }
         return prod ? prod : { _id: id, name: 'منتج غير معروف', category: 'غير معروف', img: '' };
       }).filter(Boolean);
+      
+      console.log("[FAVORITES] Mapped products for display:", viewingCustomerFavs.value);
       customerFavsModalOpen.value = true;
     };
 
@@ -2068,6 +2494,19 @@ export default {
       viewingCustomerFavs,
       viewingCustomer,
       updateOrderStatus,
+      orderEditModalOpen,
+      editingOrder,
+      openOrderEditModal,
+      saveOrder,
+      productSearchQuery,
+      highlightedSuggestionIndex,
+      showSuggestions,
+      filteredSuggestions,
+      navigateSuggestions,
+      selectHighlightedSuggestion,
+      addSelectedProduct,
+      closeSuggestionsWithDelay,
+      removeOrderItem,
       openCustomerEditModal,
       saveCustomerDetails,
       openCustomerFavsModal,
@@ -2082,13 +2521,186 @@ export default {
       saveCarouselItem,
       triggerCarouselImageSelect,
       handleCarouselImageFileSelect,
-      handleCarouselDrop
+      handleCarouselDrop,
+      clearCarouselFile,
+      cropperModalOpen,
+      cropperImageElement,
+      cropperImageSrc,
+      activeAspectRatio,
+      cropperInstance,
+      setAspectRatio,
+      cropAndSaveImage,
+      rotateCropperImage,
+      zoomCropperImage,
     };
   }
 };
 </script>
 
 <style scoped>
+.premium-cropper-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.premium-cropper-content {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 1000px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.premium-cropper-header {
+  padding: 24px 32px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.premium-close-btn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.premium-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+.premium-cropper-body {
+  background: #1e293b;
+  display: flex;
+  flex-direction: column;
+}
+
+.cropper-canvas-container {
+  height: 60vh;
+  min-height: 400px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.cropper-toolbar {
+  background: rgba(15, 23, 42, 0.95);
+  border-top: 1px solid #334155;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.toolbar-label {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #334155;
+  padding: 6px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e293b;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.tool-btn {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tool-btn:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.tool-divider {
+  width: 1px;
+  height: 24px;
+  background: #334155;
+  margin: 0 4px;
+}
+
+.premium-cropper-footer {
+  padding: 24px 32px;
+  background: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.premium-btn-outline {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  background: transparent;
+  transition: all 0.2s;
+}
+.premium-btn-outline:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.premium-btn-primary {
+  padding: 12px 32px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+.premium-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
 /* Glassmorphism dashboard styles using custom HSL/CSS tokens */
 .admin-layout {
   min-height: 100dvh;
@@ -3238,6 +3850,240 @@ export default {
 }
 .ml-1 {
   margin-left: 4px;
+}
+
+/* Order Edit Modal Styles */
+.order-items-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e3a5f;
+}
+.product-search-autocomplete-container {
+  position: relative;
+  flex: 1;
+  max-width: 480px;
+}
+.product-search-input {
+  height: 40px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: 1px solid #ced4da;
+  width: 100%;
+}
+.autocomplete-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f1f3f5;
+}
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+.suggestion-item:hover, .suggestion-item.highlighted {
+  background: #e7f5ff;
+}
+.suggestion-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #dee2e6;
+}
+.suggestion-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-align: right;
+}
+.suggestion-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #212529;
+}
+.suggestion-category {
+  font-size: 0.7rem;
+  color: #868e96;
+}
+.suggestion-price {
+  font-weight: 700;
+  color: #228be6;
+  font-size: 0.85rem;
+  margin-right: auto;
+}
+.suggestion-no-results {
+  padding: 12px;
+  text-align: center;
+  color: #868e96;
+  font-size: 0.85rem;
+}
+.edit-order-table-container {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #ffffff;
+  margin-bottom: 20px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+.edit-order-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.edit-order-table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 12px 16px;
+  text-align: right;
+  border-bottom: 2px solid #dee2e6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.edit-order-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+.edit-item-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.db-product-name {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #e7f5ff;
+  color: #1c7ed6;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1px solid #a5d8ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+.edit-custom-name-input {
+  max-width: 250px;
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+.edit-qty-input-wrapper, .edit-price-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.edit-qty-input {
+  max-width: 90px;
+  height: 36px;
+  text-align: center;
+  padding: 6px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+.edit-price-input {
+  max-width: 100px;
+  height: 36px;
+  text-align: center;
+  padding: 6px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+.currency-label {
+  font-size: 0.8rem;
+  color: #868e96;
+}
+.btn-remove-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+.btn-remove-item:hover {
+  transform: scale(1.1);
+}
+.order-item-static-note {
+  font-size: 0.75rem;
+  color: #e03131;
+  font-style: italic;
+  margin-top: 4px;
+}
+.order-notes-static-display {
+  background: #fff9db;
+  border: 1px solid #ffe066;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #f08c00;
+}
+.order-total-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(30, 58, 95, 0.06);
+  border-radius: 8px;
+  font-size: 1.05rem;
+  border: 1px solid rgba(30, 58, 95, 0.15);
+  color: #1e3a5f;
+}
+.btn-danger {
+  background: #fa5252;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-danger:hover {
+  background: #e03131;
+}
+.btn-danger:disabled {
+  background: #dee2e6;
+  cursor: not-allowed;
+}
+@media (max-width: 640px) {
+  .edit-order-table th, .edit-order-table td {
+    padding: 8px 10px;
+  }
+  .product-search-autocomplete-container {
+    max-width: 100%;
+  }
 }
 
 /* Favorites Grid Browser in Modal */

@@ -39,8 +39,22 @@ export const useFavoritesStore = defineStore('favorites', () => {
     }
   };
 
-  const syncFavoritesWithBackend = async (shopId) => {
+  let syncTimeoutShop1 = null;
+  let syncTimeoutShop2 = null;
+
+  const syncFavoritesWithBackend = (shopId) => {
     if (!authStore.customerPhone) return;
+    
+    if (shopId === 'shop1') {
+      clearTimeout(syncTimeoutShop1);
+      syncTimeoutShop1 = setTimeout(() => executeSync('shop1'), 1000);
+    } else {
+      clearTimeout(syncTimeoutShop2);
+      syncTimeoutShop2 = setTimeout(() => executeSync('shop2'), 1000);
+    }
+  };
+
+  const executeSync = async (shopId) => {
     const list = getFavoritesList(shopId);
     try {
       await fetch('/api/customer/favorites', {
@@ -63,12 +77,12 @@ export const useFavoritesStore = defineStore('favorites', () => {
       const res = await fetch(`/api/customer/favorites?phone=${encodeURIComponent(authStore.customerPhone)}`);
       if (res.ok) {
         const data = await res.json();
-        // Merging favorites back to local storage
+        // Overwrite local storage with server truth
         if (data.shop1) {
-          shop1Favorites.value = Array.from(new Set([...shop1Favorites.value, ...data.shop1]));
+          shop1Favorites.value = [...data.shop1];
         }
         if (data.shop2) {
-          shop2Favorites.value = Array.from(new Set([...shop2Favorites.value, ...data.shop2]));
+          shop2Favorites.value = [...data.shop2];
         }
       }
     } catch (e) {

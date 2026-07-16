@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch, onUnmounted, nextTick } from 'vue';
 import { useShopStore } from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
 
@@ -11,24 +11,29 @@ const activeCategory = ref('');
 const activeSubCategory = ref('');
 
 const carouselItems = ref([]);
+const carouselTrack = ref(null);
 
 const fetchCarousel = async () => {
   try {
     const res = await fetch(`/api/marketing-carousel?shop=${shopStore.activeShop || 'shop1'}`);
     if (res.ok) {
       carouselItems.value = await res.json();
+      await nextTick();
+      updateCardWidth();
     }
   } catch (err) {
     console.error('Failed to fetch marketing carousel:', err);
   }
 };
 
+
 onMounted(async () => {
   await Promise.all([shopStore.fetchMenu(), fetchCarousel()]);
-  // Set default active category to the first one available
   if (shopStore.categories.length > 0) {
     activeCategory.value = shopStore.categories[0].name;
   }
+  updateCardWidth();
+  window.addEventListener('resize', updateCardWidth);
 });
 
 // Watch shop parameter change to refetch items
@@ -51,6 +56,10 @@ const subCategories = computed(() => {
 });
 
 const selectCategory = (catName) => {
+  if (dragMoved.value) {
+    dragMoved.value = false;
+    return;
+  }
   activeCategory.value = catName;
   activeSubCategory.value = ''; // Reset subcategory filter
 };
@@ -93,10 +102,11 @@ const filteredProducts = computed(() => {
 const showBulkModal = ref(false);
 const bulkCodeInput = ref('');
 const bulkError = ref(false);
+const showDisableConfirm = ref(false);
 
 const handleOpenBulkModal = () => {
   if (shopStore.isBulkVerified) {
-    shopStore.disableBulk();
+    showDisableConfirm.value = true;
   } else {
     showBulkModal.value = true;
     bulkCodeInput.value = '';
@@ -133,6 +143,130 @@ const hasBulkProducts = computed(() => {
   // Check if any product in shop catalog offers bulk pricing
   return shopStore.products.some(p => p.purchaseType === 'bulk' || p.purchaseType === 'both');
 });
+
+// Horizontal scrolling for mouse users on PC views
+const handleHorizontalScroll = (event) => {
+  const container = event.currentTarget;
+  if (container) {
+    container.scrollLeft += event.deltaY;
+  }
+};
+
+// Hold & Drag scrolling for mouse users on PC views
+const isDragging = ref(false);
+const startX = ref(0);
+const scrollLeftStart = ref(0);
+const activeContainer = ref(null);
+const dragMoved = ref(false);
+const currentAdIndex = ref(0);
+const isPaused = ref(false);
+
+const startDrag = (event) => {
+  isDragging.value = true;
+  isPaused.value = true;
+  dragMoved.value = false;
+  activeContainer.value = event.currentTarget;
+  startX.value = event.pageX - activeContainer.value.offsetLeft;
+  scrollLeftStart.value = activeContainer.value.scrollLeft;
+  activeContainer.value.style.cursor = 'grabbing';
+};
+
+const drag = (event) => {
+  if (!isDragging.value || !activeContainer.value) return;
+  event.preventDefault();
+  const x = event.pageX - activeContainer.value.offsetLeft;
+  const walk = (x - startX.value) * 1.5;
+  if (Math.abs(walk) > 5) {
+    dragMoved.value = true;
+  }
+  activeContainer.value.scrollLeft = scrollLeftStart.value - walk;
+};
+
+const endDrag = () => {
+  if (activeContainer.value) {
+    activeContainer.value.style.cursor = 'default';
+  }
+  isDragging.value = false;
+  isPaused.value = false;
+  activeContainer.value = null;
+};
+
+const selectSubCategory = (subName) => {
+  if (dragMoved.value) {
+    dragMoved.value = false;
+    return;
+  }
+  activeSubCategory.value = subName;
+};
+
+const handleCarouselClick = (event) => {
+  if (dragMoved.value) {
+    event.preventDefault();
+    event.stopPropagation();
+    dragMoved.value = false;
+  }
+};
+
+let autoplayTimer = null;
+
+const startAutoplay = () => {
+  stopAutoplay();
+  autoplayTimer = setInterval(() => {
+    if (carouselItems.value.length <= 1 || isDragging.value || isPaused.value || !carouselTrack.value) return;
+    
+    if (currentAdIndex.value >= carouselItems.value.length - 1) {
+      currentAdIndex.value = 0;
+    } else {
+      currentAdIndex.value++;
+    }
+    
+    const cardW = carouselTrack.value.clientWidth;
+    const targetLeft = -currentAdIndex.value * (cardW + 12);
+    carouselTrack.value.scrollTo({
+      left: targetLeft,
+      behavior: 'smooth'
+    });
+  }, 6000); // 6s step interval
+};
+
+const stopAutoplay = () => {
+  if (autoplayTimer) {
+    clearInterval(autoplayTimer);
+    autoplayTimer = null;
+  }
+};
+
+onUnmounted(() => {
+  stopAutoplay();
+  window.removeEventListener('resize', updateCardWidth);
+  if (carouselTrack.value) {
+    carouselTrack.value.removeEventListener('scroll', handleCarouselScroll);
+  }
+});
+
+const handleCarouselScroll = () => {
+  const el = carouselTrack.value;
+  if (!el) return;
+  const cardW = el.clientWidth;
+  if (cardW > 0) {
+    const scrollPos = Math.abs(el.scrollLeft);
+    currentAdIndex.value = Math.round(scrollPos / (cardW + 12));
+  }
+};
+
+// Watch carouselTrack reference to bind standard scroll listener for active index syncing
+watch(carouselTrack, (el, oldEl) => {
+  if (oldEl) oldEl.removeEventListener('scroll', handleCarouselScroll);
+  if (el) el.addEventListener('scroll', handleCarouselScroll);
+});
+
+watch(carouselItems, (newItems) => {
+  if (newItems.length > 0) {
+    startAutoplay();
+  } else {
+    stopAutoplay();
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -156,20 +290,32 @@ const hasBulkProducts = computed(() => {
       <button 
         v-if="hasBulkProducts"
         class="bulk-toggle-btn"
-        :class="{ active: shopStore.isBulkVerified }"
+        :class="{ active: shopStore.isBulkVerified, disabled: !shopStore.isBulkVerified }"
         @click="handleOpenBulkModal"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
         </svg>
-        <span>{{ shopStore.isBulkVerified ? 'تعطيل أسعار الجملة' : 'تفعيل أسعار الجملة' }}</span>
+        <span>أسعار الجملة: {{ shopStore.isBulkVerified ? 'مفعّلة ✅' : 'معطّلة ❌' }}</span>
       </button>
     </header>
 
     <!-- Marketing Carousel -->
     <div v-if="!searchQuery && carouselItems.length > 0" class="carousel-wrapper">
-      <div class="carousel-track">
+      <div 
+        ref="carouselTrack"
+        class="carousel-track" 
+        @wheel.prevent="handleHorizontalScroll"
+        @mousedown="startDrag"
+        @mousemove="drag"
+        @mouseup="endDrag"
+        @mouseleave="endDrag"
+        @mouseenter="isPaused = true"
+        @touchstart="isPaused = true"
+        @touchend="isPaused = false"
+        @touchcancel="isPaused = false"
+      >
         <component
           :is="item.link ? 'a' : 'div'"
           v-for="item in carouselItems"
@@ -177,6 +323,8 @@ const hasBulkProducts = computed(() => {
           :href="item.link || undefined"
           class="carousel-card"
           :style="{ backgroundImage: `url('${item.image}')` }"
+          @click="handleCarouselClick"
+          draggable="false"
         >
         </component>
       </div>
@@ -201,7 +349,14 @@ const hasBulkProducts = computed(() => {
 
     <!-- Category Selector (hidden when searching) -->
     <div v-if="!searchQuery" class="categories-row">
-      <div class="scroll-container">
+      <div 
+        class="scroll-container" 
+        @wheel.prevent="handleHorizontalScroll"
+        @mousedown="startDrag"
+        @mousemove="drag"
+        @mouseup="endDrag"
+        @mouseleave="endDrag"
+      >
         <button 
           v-for="cat in shopStore.categories" 
           :key="cat._id" 
@@ -217,11 +372,18 @@ const hasBulkProducts = computed(() => {
 
     <!-- Subcategories filter (hidden when searching) -->
     <div v-if="!searchQuery && subCategories.length > 0" class="subcategories-row">
-      <div class="scroll-container">
+      <div 
+        class="scroll-container" 
+        @wheel.prevent="handleHorizontalScroll"
+        @mousedown="startDrag"
+        @mousemove="drag"
+        @mouseup="endDrag"
+        @mouseleave="endDrag"
+      >
         <button 
           class="subcat-btn"
           :class="{ active: activeSubCategory === '' }"
-          @click="activeSubCategory = ''"
+          @click="selectSubCategory('')"
         >
           الكل
         </button>
@@ -230,7 +392,7 @@ const hasBulkProducts = computed(() => {
           :key="sub" 
           class="subcat-btn"
           :class="{ active: activeSubCategory === sub }"
-          @click="activeSubCategory = sub"
+          @click="selectSubCategory(sub)"
         >
           {{ sub }}
         </button>
@@ -282,6 +444,18 @@ const hasBulkProducts = computed(() => {
         <div class="modal-actions">
           <button class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
           <button class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disable Bulk Confirmation Modal -->
+    <div v-if="showDisableConfirm" class="modal-backdrop">
+      <div class="modal-content glass-panel">
+        <h3 class="modal-title">تعطيل أسعار الجملة</h3>
+        <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>
+        <div class="modal-actions">
+          <button class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
+          <button class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
         </div>
       </div>
     </div>
@@ -351,9 +525,9 @@ const hasBulkProducts = computed(() => {
 }
 
 .bulk-toggle-btn {
-  background: rgba(55, 178, 77, 0.1);
-  border: 1px solid rgba(55, 178, 77, 0.2);
-  color: #37b24d;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.2);
+  color: #ff4d4f;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
   font-size: 0.85rem;
@@ -369,10 +543,16 @@ const hasBulkProducts = computed(() => {
   transition: background-color 0.2s, color 0.2s;
 }
 
+.bulk-toggle-btn.disabled {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.2);
+  color: #ff4d4f;
+}
 .bulk-toggle-btn.active {
   background: #37b24d;
   color: #fff;
 }
+
 
 .search-box-wrapper {
   position: relative;
@@ -620,6 +800,7 @@ const hasBulkProducts = computed(() => {
   gap: 12px;
   padding: 4px 0;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .carousel-track::-webkit-scrollbar {
@@ -639,6 +820,10 @@ const hasBulkProducts = computed(() => {
   display: block;
   cursor: pointer;
   transition: transform 0.2s;
+  user-drag: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .carousel-card:active {

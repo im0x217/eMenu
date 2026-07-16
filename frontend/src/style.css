@@ -52,6 +52,15 @@ html {
   background-color: #faf7f2; /* Prevents white flash/bounce backgrounds on mobile */
 }
 
+/* Hide scrollbars globally across the application while preserving scroll function */
+::-webkit-scrollbar {
+  display: none !important;
+}
+* {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
 html, body {
   overflow: hidden;
   max-width: 100%;

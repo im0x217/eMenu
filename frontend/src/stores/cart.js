@@ -147,13 +147,17 @@ export const useCartStore = defineStore('cart', () => {
     // Save order to server database
     const endpoint = shopId === 'shop2' ? '/api/shop2/orders' : '/api/orders';
     try {
-      await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      if (!res.ok) {
+        throw new Error('Server returned an error');
+      }
     } catch (e) {
-      console.warn('Failed to save order in database, proceeding to WhatsApp anyway', e);
+      console.error('Order submission failed:', e);
+      throw new Error('عذراً، فشل إرسال الطلب بسبب مشكلة في الخادم. يرجى المحاولة مرة أخرى.');
     }
 
     // Launch WhatsApp redirect

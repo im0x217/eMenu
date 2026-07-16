@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { useFavoritesStore } from '../stores/favorites';
 
 const authStore = useAuthStore();
+const favoritesStore = useFavoritesStore();
 
 // Form inputs
 const nameInput = ref(authStore.customerName);
@@ -41,7 +43,7 @@ watch(() => authStore.customerPhone, () => {
   loadOrderHistory();
 });
 
-const handleSaveProfile = () => {
+const handleSaveProfile = async () => {
   if (!nameInput.value.trim() || !phoneInput.value.trim()) {
     message.value = 'يرجى كتابة الاسم ورقم الهاتف بشكل صحيح.';
     messageType.value = 'danger';
@@ -49,6 +51,18 @@ const handleSaveProfile = () => {
   }
 
   authStore.setIdentity(nameInput.value, phoneInput.value);
+
+  // Sync and load favorites immediately upon login/profile save
+  try {
+    await favoritesStore.loadFavoritesFromBackend();
+    await Promise.all([
+      favoritesStore.syncFavoritesWithBackend('shop1'),
+      favoritesStore.syncFavoritesWithBackend('shop2')
+    ]);
+  } catch (e) {
+    console.warn('Failed to sync favorites on profile save', e);
+  }
+
   message.value = 'تم حفظ بياناتك بنجاح!';
   messageType.value = 'success';
 

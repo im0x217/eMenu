@@ -3,7 +3,7 @@ import ShopView from '../views/ShopView.vue';
 import FavoritesView from '../views/FavoritesView.vue';
 import CartView from '../views/CartView.vue';
 import AccountView from '../views/AccountView.vue';
-import AdminView from '../views/AdminView.vue';
+
 import { useShopStore } from '../stores/shop';
 
 const routes = [
@@ -52,7 +52,7 @@ const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: AdminView
+    component: () => import('../views/AdminView.vue')
   },
   {
     path: '/:catchAll(.*)',
