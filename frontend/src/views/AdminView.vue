@@ -846,6 +846,7 @@
                       <td>
                         <div class="actions-buttons-cell">
                           <button @click="openCustomerEditModal(cust)" class="btn btn-outline btn-xs ml-1">تعديل</button>
+                          <button @click="deleteCustomer(cust._id)" class="btn btn-outline btn-xs ml-1" style="color: #ef4444; border-color: #fca5a5;">حذف كلي</button>
                           <button @click="openCustomerFavsModal(cust)" class="btn btn-outline btn-xs" :disabled="!cust.favorites || !cust.favorites.length">المفضلة</button>
                         </div>
                       </td>
@@ -2003,6 +2004,29 @@ export default {
       }
     };
 
+    const deleteCustomer = async (id) => {
+      if (!confirm('تحذير: سيتم حذف العميل، وجميع مفضلاته، وجميع طلباته السابقة بشكل نهائي. هل أنت متأكد؟')) return;
+      
+      loading.value = true;
+      try {
+        const res = await adminFetch(`/api/admin/customers/${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (res.ok) {
+          toast.show('تم حذف العميل وجميع بياناته بنجاح', 'success');
+          await fetchCustomers();
+        } else {
+          toast.show('فشل حذف العميل', 'danger');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.show('حدث خطأ أثناء الاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
     const updateOrderStatus = async (orderId, status) => {
       try {
         const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
@@ -2508,6 +2532,7 @@ export default {
       closeSuggestionsWithDelay,
       removeOrderItem,
       openCustomerEditModal,
+      deleteCustomer,
       saveCustomerDetails,
       openCustomerFavsModal,
       removeCustomerFavorite,

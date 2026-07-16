@@ -1394,6 +1394,35 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) =
   }
 });
 
+// Delete customer and all their data (orders, favorites)
+app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const customer = await customersCollection.findOne({ _id: new ObjectId(id) });
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const phone = customer.phone;
+
+    // Wipe customer
+    await customersCollection.deleteOne({ _id: new ObjectId(id) });
+
+    // Wipe all related data
+    if (phone) {
+      await favoritesCollection.deleteMany({ phone });
+      await ordersCollection.deleteMany({ "customerInfo.phone": phone });
+      await ordersCollection2.deleteMany({ "customerInfo.phone": phone });
+    }
+
+    res.json({ success: true, message: "Customer and all associated data deleted successfully." });
+  } catch (err) {
+    console.error("Delete customer error:", err);
+    res.status(500).json({ error: "Failed to delete customer" });
+  }
+});
+
 // ============ REPORTS EXPORT APIs ============
 
 // Export report as CSV
