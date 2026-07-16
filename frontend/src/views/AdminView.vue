@@ -605,13 +605,22 @@
                 </div>
                 <div class="card-info-bar">
                   <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
-                  <button @click="deleteCarouselItem(item._id)" class="btn btn-danger btn-sm flex-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    <span>حذف</span>
-                  </button>
+                  <div style="display: flex; gap: 8px;">
+                    <button @click="openCarouselModal(item)" class="btn btn-outline btn-sm flex-center" style="border-color: #ced4da; color: #495057;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
+                      </svg>
+                      <span>تعديل</span>
+                    </button>
+                    <button @click="deleteCarouselItem(item._id)" class="btn btn-danger btn-sm flex-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                      <span>حذف</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1065,11 +1074,11 @@
     <div v-if="carouselModalOpen" class="modal-overlay animate-fade-in">
       <div class="modal-box glass-panel max-w-md">
         <div class="modal-header">
-          <h3>إضافة بنر إعلاني جديد</h3>
+          <h3>{{ editingCarouselId ? 'تعديل البنر الإعلاني' : 'إضافة بنر إعلاني جديد' }}</h3>
           <button @click="carouselModalOpen = false" class="modal-close-btn">&times;</button>
         </div>
         <form @submit.prevent="saveCarouselItem" class="modal-form">
-          <p class="modal-subtitle text-muted text-small mb-3">اختر صورة البنر الإعلاني ليتم عرضها مباشرة في أعلى صفحة المنيو للزبائن.</p>
+          <p class="modal-subtitle text-muted text-small mb-3">اختر صورة البنر الإعلاني ورابط التوجيه ليتم تحديثها وعرضها مباشرة للزبائن.</p>
           
           <!-- S3 Image Upload Dropzone -->
           <div class="form-group animate-fade-in">
@@ -1081,13 +1090,13 @@
                  @click="triggerCarouselImageSelect">
               <input type="file" ref="carouselFileInput" class="hidden-file-input" accept="image/*" @change="handleCarouselImageFileSelect" />
               
-              <div v-if="!newCarouselItem.file" class="dropzone-prompt">
+              <div v-if="!newCarouselItem.filePreview" class="dropzone-prompt">
                 <svg class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                 <span>اسحب صورة البنر هنا أو اضغط للتصفح</span>
               </div>
               <div v-else class="dropzone-preview" @click.stop>
                 <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px; margin-bottom: 8px;" />
-                <span class="file-name">{{ newCarouselItem.file.name }}</span>
+                <span class="file-name">{{ newCarouselItem.file ? newCarouselItem.file.name : 'البنر الحالي (اضغط للتغيير)' }}</span>
                 <span v-if="newCarouselItem.dimensions" class="file-dimensions block text-muted text-small mt-1" style="font-size: 0.75rem; color: #868e96; font-weight: 500;">
                   المقاسات: {{ newCarouselItem.dimensions }}
                 </span>
@@ -1096,9 +1105,16 @@
             </div>
           </div>
 
+          <!-- Link input field -->
+          <div class="form-group mt-3">
+            <label class="form-label text-bold" style="font-size: 0.9rem;">رابط التوجيه عند الضغط على البنر (اختياري)</label>
+            <input v-model="newCarouselItem.link" type="text" placeholder="مثال: /app/#/category/وجبات أو رابط خارجي" class="form-control" />
+            <p class="text-muted" style="font-size: 0.72rem; margin-top: 4px; line-height: 1.3;">عندما ينقر الزبون على هذا البنر، سيتم نقله تلقائياً إلى هذا الرابط.</p>
+          </div>
+
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary" :disabled="loading">
-              {{ loading ? 'جاري الرفع...' : 'رفع ونشر البنر الإعلاني' }}
+              {{ loading ? 'جاري الحفظ...' : (editingCarouselId ? 'حفظ التعديلات' : 'رفع ونشر البنر الإعلاني') }}
             </button>
             <button type="button" @click="carouselModalOpen = false" class="btn btn-outline" :disabled="loading">إلغاء</button>
           </div>
@@ -1302,6 +1318,7 @@ export default {
 
     // Marketing Carousel Ref State
     const carouselItems = ref([]);
+    const editingCarouselId = ref(null);
     const carouselModalOpen = ref(false);
     const carouselDragActive = ref(false);
     const carouselFileInput = ref(null);
@@ -1643,18 +1660,29 @@ export default {
       }
     };
 
-    const openCarouselModal = () => {
-      newCarouselItem.title = '';
-      newCarouselItem.subtitle = '';
-      newCarouselItem.link = '';
-      newCarouselItem.file = null;
-      newCarouselItem.filePreview = '';
-      newCarouselItem.dimensions = '';
+    const openCarouselModal = (item = null) => {
+      if (item) {
+        editingCarouselId.value = item._id;
+        newCarouselItem.title = item.title || '';
+        newCarouselItem.subtitle = item.subtitle || '';
+        newCarouselItem.link = item.link || '';
+        newCarouselItem.file = null;
+        newCarouselItem.filePreview = item.image || '';
+        newCarouselItem.dimensions = '';
+      } else {
+        editingCarouselId.value = null;
+        newCarouselItem.title = '';
+        newCarouselItem.subtitle = '';
+        newCarouselItem.link = '';
+        newCarouselItem.file = null;
+        newCarouselItem.filePreview = '';
+        newCarouselItem.dimensions = '';
+      }
       carouselModalOpen.value = true;
     };
 
     const saveCarouselItem = async () => {
-      if (!newCarouselItem.file) {
+      if (!editingCarouselId.value && !newCarouselItem.file) {
         toast.show('يرجى تحديد صورة للبنر الإعلاني', 'danger');
         return;
       }
@@ -1666,20 +1694,26 @@ export default {
         formData.append('title', newCarouselItem.title);
         formData.append('subtitle', newCarouselItem.subtitle);
         formData.append('link', newCarouselItem.link);
-        formData.append('img', newCarouselItem.file);
+        if (newCarouselItem.file) {
+          formData.append('img', newCarouselItem.file);
+        }
         
-        const res = await adminFetch(`/api/admin/marketing-carousel`, {
-          method: 'POST',
+        const url = editingCarouselId.value 
+          ? `/api/admin/marketing-carousel/${editingCarouselId.value}`
+          : `/api/admin/marketing-carousel`;
+          
+        const res = await adminFetch(url, {
+          method: editingCarouselId.value ? 'PUT' : 'POST',
           body: formData
         });
         
         if (res.ok) {
-          toast.show('تمت إضافة البنر الإعلاني بنجاح', 'success');
+          toast.show(editingCarouselId.value ? 'تم تعديل البنر الإعلاني بنجاح' : 'تمت إضافة البنر الإعلاني بنجاح', 'success');
           carouselModalOpen.value = false;
           await fetchCarousel();
         } else {
           const errData = await res.json();
-          toast.show(errData.error || 'فشل إضافة البنر الإعلاني', 'danger');
+          toast.show(errData.error || (editingCarouselId.value ? 'فشل تعديل البنر الإعلاني' : 'فشل إضافة البنر الإعلاني'), 'danger');
         }
       } catch (err) {
         console.error(err);
@@ -2537,6 +2571,7 @@ export default {
       openCustomerFavsModal,
       removeCustomerFavorite,
       carouselItems,
+      editingCarouselId,
       carouselModalOpen,
       carouselDragActive,
       carouselFileInput,
@@ -2557,6 +2592,7 @@ export default {
       cropAndSaveImage,
       rotateCropperImage,
       zoomCropperImage,
+      resetCropperImage,
     };
   }
 };

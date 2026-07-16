@@ -1896,6 +1896,46 @@ app.post("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, upload.singl
   }
 });
 
+// Update carousel item (Admin)
+app.put("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+  const { id } = req.params;
+  const { title, subtitle, link } = req.body;
+  
+  if (req.fileValidationError) {
+    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}` });
+  }
+
+  try {
+    const item = await carouselCollection.findOne({ _id: new ObjectId(id) });
+    if (!item) {
+      return res.status(404).json({ error: "Carousel item not found" });
+    }
+
+    const updateFields = {
+      title: title || "",
+      subtitle: subtitle || "",
+      link: link || "",
+    };
+
+    if (req.file) {
+      const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+      const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+      updateFields.image = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+    }
+
+    await carouselCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateFields }
+    );
+
+    res.json({ success: true, item: { ...item, ...updateFields } });
+  } catch (err) {
+    console.error("Update carousel item error:", err);
+    res.status(500).json({ error: "Failed to update carousel item" });
+  }
+});
+
+
 // Delete carousel item (Admin)
 app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, async (req, res) => {
   const { id } = req.params;
