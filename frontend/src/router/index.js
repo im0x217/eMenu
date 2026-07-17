@@ -65,4 +65,11 @@ const router = createRouter({
   routes
 });
 
+import { trackPageView } from '../utils/analytics';
+
+// Auto-track page views on route change
+router.afterEach((to) => {
+  trackPageView(to.fullPath, to.name ? String(to.name) : '');
+});
+
 export default router;

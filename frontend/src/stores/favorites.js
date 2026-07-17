@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import { useAuthStore } from './auth';
+import { trackEvent } from '../utils/analytics';
 
 export const useFavoritesStore = defineStore('favorites', () => {
   const authStore = useAuthStore();
@@ -34,8 +35,16 @@ export const useFavoritesStore = defineStore('favorites', () => {
     const index = list.value.indexOf(productId);
     if (index === -1) {
       list.value.push(productId);
+      trackEvent('add_to_wishlist', {
+        item_id: productId,
+        item_list_name: shopId
+      });
     } else {
       list.value.splice(index, 1);
+      trackEvent('remove_from_wishlist', {
+        item_id: productId,
+        item_list_name: shopId
+      });
     }
   };
 

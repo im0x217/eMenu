@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from './auth';
+import { trackEvent } from '../utils/analytics';
 
 export const useCartStore = defineStore('cart', () => {
   const authStore = useAuthStore();
@@ -55,6 +56,21 @@ export const useCartStore = defineStore('cart', () => {
       });
     }
     persist();
+
+    // Track GA4 Add to Cart Event
+    const price = priceMode === 'bulk' ? product.price_bulk : (product.price_regular || product.price);
+    trackEvent('add_to_cart', {
+      currency: 'LYD',
+      value: price * qty,
+      items: [{
+        item_id: product._id,
+        item_name: product.name,
+        price: price,
+        quantity: qty,
+        item_category: product.category || '',
+        item_list_name: shopId
+      }]
+    });
   };
 
   const updateQty = (productId, qty) => {
@@ -70,6 +86,22 @@ export const useCartStore = defineStore('cart', () => {
   };
 
   const removeFromCart = (productId) => {
+    const item = items.value.find(i => i._id === productId);
+    if (item) {
+      const price = item.priceMode === 'bulk' ? item.price_bulk : (item.price_regular || item.price);
+      trackEvent('remove_from_cart', {
+        currency: 'LYD',
+        value: price * item.quantity,
+        items: [{
+          item_id: item._id,
+          item_name: item.name,
+          price: price,
+          quantity: item.quantity,
+          item_category: item.category || '',
+          item_list_name: item.shop
+        }]
+      });
+    }
     items.value = items.value.filter(i => i._id !== productId);
     persist();
   };
@@ -159,6 +191,20 @@ export const useCartStore = defineStore('cart', () => {
       console.error('Order submission failed:', e);
       throw new Error('عذراً، فشل إرسال الطلب بسبب مشكلة في الخادم. يرجى المحاولة مرة أخرى.');
     }
+
+    // Track GA4 Purchase Event
+    trackEvent('purchase', {
+      transaction_id: `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      value: cartTotal.value,
+      currency: 'LYD',
+      items: items.value.map(item => ({
+        item_id: item._id,
+        item_name: item.name,
+        price: item.priceMode === 'bulk' ? item.price_bulk : (item.price_regular || item.price),
+        quantity: item.quantity,
+        item_category: item.category || ''
+      }))
+    });
 
     // Launch WhatsApp redirect
     const number = getWhatsAppNumber();
