@@ -83,36 +83,17 @@ const activeTagDetails = computed(() => {
   return found || { name: tagName, color: 'default', icon: 'heart' };
 });
 
-const getIconEmoji = (iconKey) => {
+const getIconUrl = (iconKey) => {
   const map = {
-    // الأكثر مبيعاً
-    trophy: '🏆',
-    medal: '🏅',
-    best_box: '📦',
-    
-    // وصول جديد
-    new_box: '📦',
-    gift: '🎁',
-    sprout: '🌱',
-    
-    // تخفيضات
-    tag_pct: '🏷️',
-    starburst_pct: '💥',
-    bag_pct: '🛍️',
-    
-    // إصدار محدود
-    crown: '👑',
-    diamond: '💎',
-    chest: '📦',
-
-    // القديم
-    heart: '❤️',
-    star: '⭐',
-    sparkles: '✨',
-    fire: '🔥',
-    tag: '🏷️'
+    heart: 'sprout',
+    star: 'medal',
+    sparkles: 'diamond',
+    fire: 'starburst_pct',
+    tag: 'tag_pct',
+    gift: 'gift'
   };
-  return map[iconKey] || '';
+  const key = map[iconKey] || iconKey;
+  return `/res/tags/${key}.png`;
 };
 </script>
 
@@ -141,7 +122,7 @@ const getIconEmoji = (iconKey) => {
       <!-- Tag Banner -->
       <div v-if="activeTagDetails" class="product-tag-banner" :class="'tag-' + activeTagDetails.color">
         <span>{{ activeTagDetails.name }}</span>
-        <span class="tag-emoji">{{ getIconEmoji(activeTagDetails.icon) }}</span>
+        <img :src="getIconUrl(activeTagDetails.icon)" class="tag-custom-icon" alt="Tag Icon" />
       </div>
 
       <img 
@@ -292,9 +273,10 @@ const getIconEmoji = (iconKey) => {
   box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
 }
 
-.tag-emoji {
-  font-size: 0.95rem;
-  line-height: 1;
+.tag-custom-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
   display: inline-flex;
   align-items: center;
 }

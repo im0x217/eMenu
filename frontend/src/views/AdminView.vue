@@ -578,7 +578,7 @@
                       <td>
                         <span class="tag-pill inline-flex items-center gap-1" :class="'tag-' + (t.color || 'default')">
                           <span>{{ t.name }}</span>
-                          <span style="margin-right: 4px;">{{ getIconEmoji(t.icon) }}</span>
+                          <img :src="getIconUrl(t.icon)" class="tag-custom-icon-admin" alt="Tag Icon" />
                         </span>
                       </td>
                       <td>
@@ -1831,6 +1831,19 @@ export default {
       return map[iconKey] || '❤️';
     };
 
+    const getIconUrl = (iconKey) => {
+      const map = {
+        heart: 'sprout',
+        star: 'medal',
+        sparkles: 'diamond',
+        fire: 'starburst_pct',
+        tag: 'tag_pct',
+        gift: 'gift'
+      };
+      const key = map[iconKey] || iconKey;
+      return `/res/tags/${key}.png`;
+    };
+
     const deleteTag = async (id) => {
       if (!confirm('هل أنت متأكد من حذف العلامة؟')) return;
       const url = activeShop.value === 'shop2'
@@ -2760,6 +2773,7 @@ export default {
       tagColors,
       tagIcons,
       getIconEmoji,
+      getIconUrl,
       openTagModal,
       saveTag,
       deleteTag,
@@ -4773,5 +4787,12 @@ export default {
 .tag-royal {
   background: #E9D8FD !important;
   color: #553C9A !important;
+}
+
+.tag-custom-icon-admin {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  margin-right: 4px;
 }
 </style>
