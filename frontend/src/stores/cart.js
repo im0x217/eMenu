@@ -12,7 +12,8 @@ export const useCartStore = defineStore('cart', () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
   };
-  const deliveryDate = ref(localStorage.getItem('cart_delivery_date') || getDefaultDeliveryDate());
+  const savedDate = localStorage.getItem('cart_delivery_date');
+  const deliveryDate = ref(savedDate && savedDate.length > 0 ? savedDate : getDefaultDeliveryDate());
   const orderNotes = ref(localStorage.getItem('cart_notes') || '');
 
   const persist = () => {

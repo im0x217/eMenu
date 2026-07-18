@@ -488,15 +488,19 @@ const handleClearCart = () => {
 
 .checkout-details-section {
   padding: 1.25rem 1rem;
+  overflow: hidden;
+}
+
+.checkout-details-section .form-group {
+  overflow: hidden;
 }
 
 .date-input {
+  display: block;
   max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   overflow: hidden;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
 }
 
 .checkout-footer {
