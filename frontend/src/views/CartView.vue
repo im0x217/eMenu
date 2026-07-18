@@ -204,7 +204,7 @@ const handleClearCart = () => {
 
         <div class="form-group">
           <label class="form-label">تاريخ استلام الطلب</label>
-          <input type="date" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input" />
+          <input type="date" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
         </div>
 
         <div class="form-group">
@@ -488,6 +488,15 @@ const handleClearCart = () => {
 
 .checkout-details-section {
   padding: 1.25rem 1rem;
+}
+
+.date-input {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .checkout-footer {

@@ -6,7 +6,13 @@ import { trackEvent } from '../utils/analytics';
 export const useCartStore = defineStore('cart', () => {
   const authStore = useAuthStore();
   const items = ref(JSON.parse(localStorage.getItem('cart_items') || '[]'));
-  const deliveryDate = ref(localStorage.getItem('cart_delivery_date') || '');
+  // Default to tomorrow's date if no saved date exists
+  const getDefaultDeliveryDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+  };
+  const deliveryDate = ref(localStorage.getItem('cart_delivery_date') || getDefaultDeliveryDate());
   const orderNotes = ref(localStorage.getItem('cart_notes') || '');
 
   const persist = () => {
