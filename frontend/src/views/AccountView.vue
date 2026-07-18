@@ -585,6 +585,7 @@ const handleResendWhatsApp = () => {
 .message-preview-modal {
   width: 100%;
   max-width: 480px;
+  max-height: 90vh;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -631,8 +632,12 @@ const handleResendWhatsApp = () => {
   background-size: 16px 16px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-grow: 1;
+  min-height: 0;
 }
 
 .chat-bubble-header {
@@ -642,6 +647,9 @@ const handleResendWhatsApp = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .app-logo-small {
