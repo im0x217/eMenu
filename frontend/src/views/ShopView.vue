@@ -139,7 +139,14 @@ const filteredProducts = computed(() => {
     }
   }
 
-  return list;
+  // 5. Sort: Products with tags appear first
+  return list.sort((a, b) => {
+    const aHasTags = a.tags && a.tags.length > 0;
+    const bHasTags = b.tags && b.tags.length > 0;
+    if (aHasTags && !bHasTags) return -1;
+    if (!aHasTags && bHasTags) return 1;
+    return 0; // Maintain original order otherwise
+  });
 });
 
 // Bulk price verification modal state

@@ -75,6 +75,16 @@ const handleAddToCart = () => {
 const getImageUrl = () => {
   return props.product.imgSigned || props.product.img || '/res/logo.jpg';
 };
+
+const getTagClass = (tag) => {
+  if (!tag) return 'tag-default';
+  const t = tag.trim().toLowerCase();
+  if (t.includes('مبيع')) return 'tag-best-seller'; // الأكثر مبيعاً
+  if (t.includes('جديد')) return 'tag-new-arrival'; // وصول جديد
+  if (t.includes('تخفيض') || t.includes('خصم')) return 'tag-sale'; // تخفيضات
+  if (t.includes('محدود') || t.includes('اصدار') || t.includes('إصدار')) return 'tag-limited'; // إصدار محدود
+  return 'tag-default';
+};
 </script>
 
 <template>
@@ -99,6 +109,12 @@ const getImageUrl = () => {
 
     <!-- Product Image -->
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
+      <!-- Tag Banner -->
+      <div v-if="product.tags && product.tags.length > 0" class="product-tag-banner" :class="getTagClass(product.tags[0])">
+        <span>{{ product.tags[0] }}</span>
+        <svg class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+
       <img 
         :src="getImageUrl()" 
         :alt="product.name" 
@@ -229,6 +245,57 @@ const getImageUrl = () => {
   font-weight: 700;
   font-size: 1rem;
 }
+
+/* Tag Banner Styles */
+.product-tag-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  border-bottom-right-radius: 14px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
+}
+
+.tag-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.tag-best-seller {
+  background: #FCE6B1;
+  color: #9E742C;
+}
+
+.tag-new-arrival {
+  background: #F7A3AD;
+  color: #8C172E;
+}
+
+.tag-sale {
+  background: #F66601;
+  color: #FFF;
+}
+.tag-sale .tag-icon {
+  color: #922005;
+}
+
+.tag-limited {
+  background: #9CB795;
+  color: #1D3D1F;
+}
+
+.tag-default {
+  background: rgba(var(--primary-color-rgb), 0.15);
+  color: var(--primary-color);
+}
+
 
 .product-info {
   padding: 0.75rem;
