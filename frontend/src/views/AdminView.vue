@@ -549,6 +549,40 @@
             </div>
           </div>
 
+          <!-- TAGS CRUD TAB -->
+          <div v-if="activeTab === 'tags'" class="tags-tab-content">
+            <div class="filter-actions-bar glass-panel mb-3 text-left">
+              <button @click="openTagModal()" class="btn btn-primary">إضافة علامة مميزة</button>
+            </div>
+
+            <div class="table-card glass-panel">
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>اسم العلامة</th>
+                      <th style="width: 120px;">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="tags.length === 0">
+                      <td colspan="2" class="text-center">لا توجد علامات مميزة مدخلة.</td>
+                    </tr>
+                    <tr v-for="t in tags" :key="t._id">
+                      <td class="text-bold">{{ t.name }}</td>
+                      <td>
+                        <div class="btn-group-row">
+                          <button @click="openTagModal(t)" class="btn btn-sm btn-outline">تعديل</button>
+                          <button @click="deleteTag(t._id)" class="btn btn-sm btn-danger">حذف</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <!-- IMAGE RECOVERY TAB -->
           <div v-if="activeTab === 'images'" class="images-tab-content">
             <div class="glass-panel text-center p-5 animate-fade-in">
@@ -912,6 +946,22 @@
           </div>
 
           <div class="form-group">
+            <label>العلامات المميزة (Tags)</label>
+            <div class="tags-checkbox-wrapper">
+              <label v-for="tag in tags" :key="tag._id" class="tag-checkbox-label">
+                <input 
+                  type="checkbox" 
+                  :value="tag.name"
+                  :checked="editingProduct.tags && editingProduct.tags.includes(tag.name)"
+                  @change="toggleProductTag(tag.name)"
+                />
+                <span class="tag-pill">{{ tag.name }}</span>
+              </label>
+              <div v-if="tags.length === 0" class="text-muted text-small mt-2">لا توجد علامات مميزة مسجلة في النظام. أضفها من تبويب (إدارة العلامات المميزة).</div>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>طريقة البيع والتسعير</label>
             <div class="purchase-type-radios">
               <label class="radio-label">
@@ -943,47 +993,6 @@
           <div class="form-group checkbox-group">
             <input type="checkbox" id="modal-allow-float" v-model="editingProduct.allowFloat" />
             <label for="modal-allow-float">يسمح بالكميات الكسرية (مثل: 0.5 كجم)</label>
-          </div>
-
-          <div class="form-group">
-            <label>العلامات المميزة (Tags)</label>
-            <div class="tags-input-wrapper">
-              <input 
-                v-model="newTag" 
-                @keydown.enter.prevent="addTag" 
-                type="text" 
-                placeholder="اكتب العلامة واضغط Enter (مثال: جديد, مميز)" 
-                class="form-control" 
-              />
-              <button type="button" @click.prevent="addTag" class="btn btn-sm btn-primary mt-2">إضافة</button>
-            </div>
-            <div class="tags-list mt-2" v-if="editingProduct.tags && editingProduct.tags.length > 0">
-              <span v-for="(tag, index) in editingProduct.tags" :key="index" class="tag-pill">
-                {{ tag }}
-                <button type="button" @click.prevent="removeTag(index)" class="tag-remove-btn">&times;</button>
-              </span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>صورة المنتج</label>
-            <div class="image-dropzone" 
-                 :class="{ active: modalDragActive }" 
-                 @dragover.prevent="modalDragActive = true"
-                 @dragleave.prevent="modalDragActive = false"
-                 @drop.prevent="handleModalImageDrop($event)"
-                 @click="triggerModalImageSelect">
-              <input type="file" ref="modalFileInput" class="hidden-file-input" accept="image/*" @change="handleModalImageFileSelect" />
-              
-              <div v-if="!modalFile && !editingProduct.img" class="dropzone-prompt">
-                <svg viewBox="0 0 24 24" class="cloud-icon" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>اسحب الصورة هنا أو اضغط للتصفح</span>
-              </div>
-              <div v-else class="dropzone-preview">
-                <img :src="modalFilePreview || editingProduct.img" alt="Product" />
-                <span class="file-name">{{ modalFile ? modalFile.name : 'الصورة الحالية' }}</span>
-              </div>
-            </div>
           </div>
 
           <div class="modal-footer mt-4">
@@ -1020,6 +1029,26 @@
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary">حفظ الصنف</button>
             <button type="button" @click="categoryModalOpen = false" class="btn btn-outline">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tag Modal Form -->
+    <div v-if="tagModalOpen" class="modal-overlay animate-fade-in">
+      <div class="modal-box glass-panel max-w-sm">
+        <div class="modal-header">
+          <h3>{{ editingTag._id ? 'تعديل العلامة' : 'إضافة علامة جديدة' }}</h3>
+          <button @click="tagModalOpen = false" class="modal-close-btn">&times;</button>
+        </div>
+        <form @submit.prevent="saveTag" class="modal-form">
+          <div class="form-group">
+            <label>اسم العلامة *</label>
+            <input v-model="editingTag.name" type="text" required class="form-control" />
+          </div>
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary">حفظ العلامة</button>
+            <button type="button" @click="tagModalOpen = false" class="btn btn-outline">إلغاء</button>
           </div>
         </form>
       </div>
@@ -1244,6 +1273,7 @@ export default {
       analytics: 'لوحة الإحصائيات والتقارير المالية',
       products: 'إدارة المنتجات وقائمة الأسعار',
       categories: 'تصنيف وتقسيم الأصناف الرئيسية',
+      tags: 'إدارة العلامات المميزة (Tags)',
       orders: 'سجل وإدارة طلبات العملاء',
       customers: 'قائمة العملاء والمنتجات المفضلة',
       images: 'إصلاح ورفع صور المنتجات التالفة',
@@ -1276,6 +1306,7 @@ export default {
     // Product & Categories datasets
     const products = ref([]);
     const categories = ref([]);
+    const tags = ref([]);
     const orders = ref([]);
     const customers = ref([]);
 
@@ -1296,6 +1327,7 @@ export default {
     // Modals control
     const productModalOpen = ref(false);
     const categoryModalOpen = ref(false);
+    const tagModalOpen = ref(false);
     const customerModalOpen = ref(false);
     const customerFavsModalOpen = ref(false);
     const orderEditModalOpen = ref(false);
@@ -1338,16 +1370,14 @@ export default {
       tags: []
     });
 
-    const newTag = ref('');
-    const addTag = () => {
-      const tag = newTag.value.trim();
-      if (tag && !editingProduct.tags.includes(tag)) {
-        editingProduct.tags.push(tag);
+    const toggleProductTag = (tagName) => {
+      if (!editingProduct.tags) editingProduct.tags = [];
+      const index = editingProduct.tags.indexOf(tagName);
+      if (index > -1) {
+        editingProduct.tags.splice(index, 1);
+      } else {
+        editingProduct.tags.push(tagName);
       }
-      newTag.value = '';
-    };
-    const removeTag = (index) => {
-      editingProduct.tags.splice(index, 1);
     };
 
     const modalFileInput = ref(null);
@@ -1378,6 +1408,12 @@ export default {
       subCategories: []
     });
     const categorySubcategoriesString = ref('');
+
+    // Tag form bindings
+    const editingTag = reactive({
+      _id: '',
+      name: ''
+    });
 
     // Image Recovery bindings
     const recoveryProductId = ref('');
@@ -1649,6 +1685,67 @@ export default {
         toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
       }
     };
+
+    // --- TAGS CRUD ---
+    const openTagModal = (tag = null) => {
+      if (tag) {
+        editingTag._id = tag._id;
+        editingTag.name = tag.name;
+      } else {
+        editingTag._id = '';
+        editingTag.name = '';
+      }
+      tagModalOpen.value = true;
+    };
+
+    const saveTag = async () => {
+      loading.value = true;
+      const body = { name: editingTag.name };
+      const url = editingTag._id
+        ? (activeShop.value === 'shop2' ? `/api/shop2/tags/${editingTag._id}` : `/api/tags/${editingTag._id}`)
+        : (activeShop.value === 'shop2' ? '/api/shop2/tags' : '/api/tags');
+
+      try {
+        const method = editingTag._id ? 'PUT' : 'POST';
+        const res = await adminFetch(url, {
+          method,
+          body: JSON.stringify(body)
+        });
+        
+        if (res.ok) {
+          toast.show('تم حفظ العلامة بنجاح', 'success');
+          tagModalOpen.value = false;
+          await fetchTags();
+        } else {
+          const errData = await res.json();
+          toast.show(errData.error || 'فشل في حفظ العلامة', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const deleteTag = async (id) => {
+      if (!confirm('هل أنت متأكد من حذف العلامة؟')) return;
+      const url = activeShop.value === 'shop2'
+        ? `/api/shop2/tags/${id}`
+        : `/api/tags/${id}`;
+
+      try {
+        const res = await adminFetch(url, { method: 'DELETE' });
+        if (res.ok) {
+          tags.value = tags.value.filter(t => t._id !== id);
+          toast.show('تم حذف العلامة', 'success');
+        } else {
+          toast.show('فشل في حذف العلامة', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      }
+    };
+
 
     // IMAGE RECOVERY TAB LOGIC
     const triggerImageSelect = () => {
@@ -1970,6 +2067,7 @@ export default {
           fetchAnalytics(),
           fetchProducts(),
           fetchCategories(),
+          fetchTags(),
           fetchOrders(),
           fetchCustomers(),
           fetchCarousel()
@@ -2053,6 +2151,14 @@ export default {
       const res = await adminFetch(url);
       if (res.ok) {
         categories.value = await res.json();
+      }
+    };
+
+    const fetchTags = async () => {
+      const url = activeShop.value === 'shop2' ? '/api/shop2/tags' : '/api/tags';
+      const res = await adminFetch(url);
+      if (res.ok) {
+        tags.value = await res.json();
       }
     };
 
@@ -2530,11 +2636,13 @@ export default {
       analyticsData,
       products,
       categories,
+      tags,
       filters,
       availableSubcategories,
       filteredProducts,
       productModalOpen,
       categoryModalOpen,
+      tagModalOpen,
       zoomedImageSrc,
       editingProduct,
       subCategoriesForEditing,
@@ -2544,9 +2652,11 @@ export default {
       modalDragActive,
       editingCategory,
       categorySubcategoriesString,
-      newTag,
-      addTag,
-      removeTag,
+      editingTag,
+      openTagModal,
+      saveTag,
+      deleteTag,
+      toggleProductTag,
       recoveryProductId,
       recoveryFileInput,
       recoveryFile,

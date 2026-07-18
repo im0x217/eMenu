@@ -161,8 +161,8 @@ app.use(express.static(path.join(__dirname, "public")));
 console.log("[INIT] Registering API routes...");
 
 // ============ STATE ============
-let db, productsCollection, categoriesCollection;
-let db2, productsCollection2, categoriesCollection2;
+let db, productsCollection, categoriesCollection, tagsCollection;
+let db2, productsCollection2, categoriesCollection2, tagsCollection2;
 let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection;
 let mongoConnected = false;
 
@@ -627,6 +627,52 @@ app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
   }
 });
 
+// ============ TAGS API ============
+app.get("/api/tags", checkMongoDB, async (req, res) => {
+  try {
+    const tags = await tagsCollection.find({}).toArray();
+    res.json(tags);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch tags" });
+  }
+});
+
+app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    const result = await tagsCollection.insertOne({ name });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create tag" });
+  }
+});
+
+app.put("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    await tagsCollection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { name } }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tag" });
+  }
+});
+
+app.delete("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    await tagsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete tag" });
+  }
+});
+
 // ============ SHOP2 API ROUTES ============
 app.get("/api/shop2/categories", checkMongoDB, async (req, res) => {
   try {
@@ -682,6 +728,51 @@ app.delete("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, re
   } catch (err) {
     console.error("Error deleting shop2 category:", err);
     res.status(500).json({ error: "Failed to delete category" });
+  }
+});
+
+app.get("/api/shop2/tags", checkMongoDB, async (req, res) => {
+  try {
+    const tags = await tagsCollection2.find({}).toArray();
+    res.json(tags);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch tags" });
+  }
+});
+
+app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    const result = await tagsCollection2.insertOne({ name });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create tag" });
+  }
+});
+
+app.put("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    await tagsCollection2.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { name } }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tag" });
+  }
+});
+
+app.delete("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    await tagsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete tag" });
   }
 });
 
@@ -2000,8 +2091,10 @@ const connectWithRetry = async () => {
     db2 = client.db("emenu2");
     productsCollection = db.collection("products");
     categoriesCollection = db.collection("categories");
+    tagsCollection = db.collection("tags");
     productsCollection2 = db2.collection("products");
     categoriesCollection2 = db2.collection("categories");
+    tagsCollection2 = db2.collection("tags");
     customersCollection = db.collection("customers");
     favoritesCollection = db.collection("favorites");
     ordersCollection = db.collection("orders");
@@ -2011,8 +2104,10 @@ const connectWithRetry = async () => {
     
     productsCollection.createIndex({ category: 1 });
     categoriesCollection.createIndex({ name: 1 }, { unique: true });
+    tagsCollection.createIndex({ name: 1 }, { unique: true });
     productsCollection2.createIndex({ category: 1 });
     categoriesCollection2.createIndex({ name: 1 }, { unique: true });
+    tagsCollection2.createIndex({ name: 1 }, { unique: true });
     customersCollection.createIndex({ phone: 1 }, { unique: true });
     favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
     ordersCollection.createIndex({ "customerInfo.phone": 1 });
