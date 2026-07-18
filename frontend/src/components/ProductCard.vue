@@ -82,6 +82,38 @@ const activeTagDetails = computed(() => {
   const found = shopStore.tags.find(t => t.name === tagName);
   return found || { name: tagName, color: 'default', icon: 'heart' };
 });
+
+const getIconEmoji = (iconKey) => {
+  const map = {
+    // الأكثر مبيعاً
+    trophy: '🏆',
+    medal: '🏅',
+    best_box: '📦',
+    
+    // وصول جديد
+    new_box: '📦',
+    gift: '🎁',
+    sprout: '🌱',
+    
+    // تخفيضات
+    tag_pct: '🏷️',
+    starburst_pct: '💥',
+    bag_pct: '🛍️',
+    
+    // إصدار محدود
+    crown: '👑',
+    diamond: '💎',
+    chest: '📦',
+
+    // القديم
+    heart: '❤️',
+    star: '⭐',
+    sparkles: '✨',
+    fire: '🔥',
+    tag: '🏷️'
+  };
+  return map[iconKey] || '';
+};
 </script>
 
 <template>
@@ -109,12 +141,7 @@ const activeTagDetails = computed(() => {
       <!-- Tag Banner -->
       <div v-if="activeTagDetails" class="product-tag-banner" :class="'tag-' + activeTagDetails.color">
         <span>{{ activeTagDetails.name }}</span>
-        <svg v-if="activeTagDetails.icon === 'heart'" class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        <svg v-else-if="activeTagDetails.icon === 'star'" class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-        <svg v-else-if="activeTagDetails.icon === 'sparkles'" class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11.5l1.45-3.05L23.5 7l-3.05-1.45L19 2.5l-1.45 3.05L14.5 7l3.05 1.45L19 11.5zm-8-3.5L12.5 5 14 3.5 12.5 2 11 .5 9.5 2 8 3.5 9.5 5 11 8zm-6.5 13L6 18l1.5-1.5L6 15 4.5 13.5 3 15 1.5 16.5 3 18l1.5 3z"/></svg>
-        <svg v-else-if="activeTagDetails.icon === 'fire'" class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-5.52 0-10-4.48-10-10 0-4.75 3.31-8.72 7.75-9.74l.25-.06.25.59c.64 1.51 1.7 2.76 3.06 3.63l.63.4.06-.74C14.07 4.96 14.77 2.72 16 1c.14.71.36 1.41.67 2.08l.19.42.4.15c2.45.92 4.24 3.12 4.65 5.76l.09.59.57.19c1.47.49 2.43 1.87 2.43 3.42C25 18.52 20.52 23 15 23h-3z"/></svg>
-        <svg v-else-if="activeTagDetails.icon === 'tag'" class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
-        <svg v-else-if="activeTagDetails.icon === 'gift'" class="tag-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 12 7.4 15.38 12 17 10.83 14.92 8H20v6z"/></svg>
+        <span class="tag-emoji">{{ getIconEmoji(activeTagDetails.icon) }}</span>
       </div>
 
       <img 
@@ -265,9 +292,11 @@ const activeTagDetails = computed(() => {
   box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
 }
 
-.tag-icon {
-  width: 14px;
-  height: 14px;
+.tag-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 
 .tag-default {

@@ -1451,12 +1451,32 @@ export default {
     ];
 
     const tagIcons = [
-      { key: 'heart', label: '❤️ قلب' },
+      // الأكثر مبيعاً
+      { key: 'trophy', label: '🏆 كأس (الأكثر مبيعاً)' },
+      { key: 'medal', label: '🏅 وسام (الأكثر مبيعاً)' },
+      { key: 'best_box', label: '📦 علبة #1 (الأكثر مبيعاً)' },
+      
+      // وصول جديد
+      { key: 'new_box', label: '📦 صندوق (وصول جديد)' },
+      { key: 'gift', label: '🎁 هدية (وصول جديد)' },
+      { key: 'sprout', label: '🌱 نبتة (وصول جديد)' },
+      
+      // تخفيضات
+      { key: 'tag_pct', label: '🏷️ بطاقة % (تخفيضات)' },
+      { key: 'starburst_pct', label: '💥 نجمة % (تخفيضات)' },
+      { key: 'bag_pct', label: '🛍️ حقيبة % (تخفيضات)' },
+      
+      // إصدار محدود
+      { key: 'crown', label: '👑 تاج (إصدار محدود)' },
+      { key: 'diamond', label: '💎 ألماسة (إصدار محدود)' },
+      { key: 'chest', label: '📦 صندوق كنز (إصدار محدود)' },
+
+      // متوافق مع القديم
+      { key: 'heart', label: '❤️ قلب (افتراضي)' },
       { key: 'star', label: '⭐ نجمة' },
       { key: 'sparkles', label: '✨ لمعان' },
       { key: 'fire', label: '🔥 نار' },
-      { key: 'tag', label: '🏷️ بطاقة' },
-      { key: 'gift', label: '🎁 هدية' }
+      { key: 'tag', label: '🏷️ بطاقة' }
     ];
 
     // Image Recovery bindings
@@ -1781,12 +1801,32 @@ export default {
 
     const getIconEmoji = (iconKey) => {
       const map = {
+        // الأكثر مبيعاً
+        trophy: '🏆',
+        medal: '🏅',
+        best_box: '📦',
+        
+        // وصول جديد
+        new_box: '📦',
+        gift: '🎁',
+        sprout: '🌱',
+        
+        // تخفيضات
+        tag_pct: '🏷️',
+        starburst_pct: '💥',
+        bag_pct: '🛍️',
+        
+        // إصدار محدود
+        crown: '👑',
+        diamond: '💎',
+        chest: '📦',
+
+        // القديم
         heart: '❤️',
         star: '⭐',
         sparkles: '✨',
         fire: '🔥',
-        tag: '🏷️',
-        gift: '🎁'
+        tag: '🏷️'
       };
       return map[iconKey] || '❤️';
     };
