@@ -10,7 +10,10 @@ export const useCartStore = defineStore('cart', () => {
   const getDefaultDeliveryDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`; // YYYY-MM-DD in local time
   };
   const savedDate = localStorage.getItem('cart_delivery_date');
   const deliveryDate = ref(savedDate && savedDate.length > 0 ? savedDate : getDefaultDeliveryDate());
@@ -221,7 +224,7 @@ export const useCartStore = defineStore('cart', () => {
     // Clear cart on success
     clearCart();
     
-    window.open(url, '_blank');
+    window.location.href = url;
   };
 
   return {
