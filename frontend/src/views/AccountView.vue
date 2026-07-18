@@ -263,8 +263,9 @@ const handleResendWhatsApp = () => {
     </div>
 
     <!-- WhatsApp Message Preview Modal -->
-    <div v-if="isModalOpen" class="modal-backdrop" @click.self="closeModal">
-      <div class="modal-content glass-panel message-preview-modal">
+    <Teleport to="body">
+      <div v-if="isModalOpen" class="modal-backdrop" @click.self="closeModal">
+        <div class="modal-content glass-panel message-preview-modal">
         <div class="modal-header">
           <h3 class="modal-title">تفاصيل رسالة الطلب</h3>
           <button class="close-btn" @click="closeModal">✕</button>
@@ -307,8 +308,9 @@ const handleResendWhatsApp = () => {
             إعادة إرسال على الواتساب
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
