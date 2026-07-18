@@ -5,6 +5,7 @@ export const useShopStore = defineStore('shop', () => {
   const activeShop = ref(null); // 'shop1' or 'shop2'
   const categories = ref([]);
   const products = ref([]);
+  const tags = ref([]);
   const isLoading = ref(false);
   const isBulkVerified = ref(localStorage.getItem('bulk_verified') === 'true');
 
@@ -20,6 +21,7 @@ export const useShopStore = defineStore('shop', () => {
     // Reset data
     categories.value = [];
     products.value = [];
+    tags.value = [];
   };
 
   const fetchMenu = async () => {
@@ -36,6 +38,12 @@ export const useShopStore = defineStore('shop', () => {
       const prodRes = await fetch(prodEndpoint);
       if (prodRes.ok) {
         products.value = await prodRes.json();
+      }
+
+      const tagEndpoint = activeShop.value === 'shop2' ? '/api/shop2/tags' : '/api/tags';
+      const tagRes = await fetch(tagEndpoint);
+      if (tagRes.ok) {
+        tags.value = await tagRes.json();
       }
     } catch (e) {
       console.error('Failed to fetch menu items', e);
@@ -74,6 +82,7 @@ export const useShopStore = defineStore('shop', () => {
     activeShop,
     categories,
     products,
+    tags,
     isLoading,
     isBulkVerified,
     setShop,

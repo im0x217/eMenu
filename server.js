@@ -639,9 +639,13 @@ app.get("/api/tags", checkMongoDB, async (req, res) => {
 
 app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, color, icon } = req.body;
     if (!name) return res.status(400).json({ error: "Name is required" });
-    const result = await tagsCollection.insertOne({ name });
+    const result = await tagsCollection.insertOne({ 
+      name, 
+      color: color || 'default', 
+      icon: icon || 'heart' 
+    });
     res.status(201).json(result);
   } catch (err) {
     res.status(500).json({ error: "Failed to create tag" });
@@ -650,12 +654,12 @@ app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
 
 app.put("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, color, icon } = req.body;
     if (!name) return res.status(400).json({ error: "Name is required" });
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
     await tagsCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name } }
+      { $set: { name, color: color || 'default', icon: icon || 'heart' } }
     );
     res.json({ success: true });
   } catch (err) {
@@ -742,9 +746,13 @@ app.get("/api/shop2/tags", checkMongoDB, async (req, res) => {
 
 app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, color, icon } = req.body;
     if (!name) return res.status(400).json({ error: "Name is required" });
-    const result = await tagsCollection2.insertOne({ name });
+    const result = await tagsCollection2.insertOne({ 
+      name, 
+      color: color || 'default', 
+      icon: icon || 'heart' 
+    });
     res.status(201).json(result);
   } catch (err) {
     res.status(500).json({ error: "Failed to create tag" });
@@ -753,12 +761,12 @@ app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
 
 app.put("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, color, icon } = req.body;
     if (!name) return res.status(400).json({ error: "Name is required" });
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
     await tagsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name } }
+      { $set: { name, color: color || 'default', icon: icon || 'heart' } }
     );
     res.json({ success: true });
   } catch (err) {

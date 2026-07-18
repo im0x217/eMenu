@@ -565,15 +565,22 @@
                   <thead>
                     <tr>
                       <th>اسم العلامة</th>
+                      <th>شكل المعاينة</th>
                       <th style="width: 120px;">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="tags.length === 0">
-                      <td colspan="2" class="text-center">لا توجد علامات مميزة مدخلة.</td>
+                      <td colspan="3" class="text-center">لا توجد علامات مميزة مدخلة.</td>
                     </tr>
                     <tr v-for="t in tags" :key="t._id">
                       <td class="text-bold">{{ t.name }}</td>
+                      <td>
+                        <span class="tag-pill inline-flex items-center gap-1" :class="'tag-' + (t.color || 'default')">
+                          <span>{{ t.name }}</span>
+                          <span style="margin-right: 4px;">{{ getIconEmoji(t.icon) }}</span>
+                        </span>
+                      </td>
                       <td>
                         <div class="btn-group-row">
                           <button @click="openTagModal(t)" class="btn btn-sm btn-outline">تعديل</button>
@@ -1046,9 +1053,21 @@
           <button @click="tagModalOpen = false" class="modal-close-btn">&times;</button>
         </div>
         <form @submit.prevent="saveTag" class="modal-form">
-          <div class="form-group">
+          <div class="form-group mb-3">
             <label>اسم العلامة *</label>
             <input v-model="editingTag.name" type="text" required class="form-control" />
+          </div>
+          <div class="form-group mb-3">
+            <label>اللون المميز *</label>
+            <select v-model="editingTag.color" class="form-control">
+              <option v-for="c in tagColors" :key="c.key" :value="c.key">{{ c.label }}</option>
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label>الأيقونة المميزة *</label>
+            <select v-model="editingTag.icon" class="form-control">
+              <option v-for="i in tagIcons" :key="i.key" :value="i.key">{{ i.label }}</option>
+            </select>
           </div>
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary">حفظ العلامة</button>
@@ -1416,8 +1435,29 @@ export default {
     // Tag form bindings
     const editingTag = reactive({
       _id: '',
-      name: ''
+      name: '',
+      color: 'default',
+      icon: 'heart'
     });
+
+    const tagColors = [
+      { key: 'default', label: 'اللون الافتراضي (رئيسي)' },
+      { key: 'rose', label: 'وردي (Rose)' },
+      { key: 'gold', label: 'ذهبي (Gold)' },
+      { key: 'fire', label: 'برتقالي/ناري (Fire)' },
+      { key: 'leaf', label: 'أخضر (Green)' },
+      { key: 'sky', label: 'أزرق (Blue)' },
+      { key: 'royal', label: 'بنفسجي (Purple)' }
+    ];
+
+    const tagIcons = [
+      { key: 'heart', label: '❤️ قلب' },
+      { key: 'star', label: '⭐ نجمة' },
+      { key: 'sparkles', label: '✨ لمعان' },
+      { key: 'fire', label: '🔥 نار' },
+      { key: 'tag', label: '🏷️ بطاقة' },
+      { key: 'gift', label: '🎁 هدية' }
+    ];
 
     // Image Recovery bindings
     const recoveryProductId = ref('');
@@ -1695,16 +1735,24 @@ export default {
       if (tag) {
         editingTag._id = tag._id;
         editingTag.name = tag.name;
+        editingTag.color = tag.color || 'default';
+        editingTag.icon = tag.icon || 'heart';
       } else {
         editingTag._id = '';
         editingTag.name = '';
+        editingTag.color = 'default';
+        editingTag.icon = 'heart';
       }
       tagModalOpen.value = true;
     };
 
     const saveTag = async () => {
       loading.value = true;
-      const body = { name: editingTag.name };
+      const body = { 
+        name: editingTag.name,
+        color: editingTag.color,
+        icon: editingTag.icon
+      };
       const url = editingTag._id
         ? (activeShop.value === 'shop2' ? `/api/shop2/tags/${editingTag._id}` : `/api/tags/${editingTag._id}`)
         : (activeShop.value === 'shop2' ? '/api/shop2/tags' : '/api/tags');
@@ -1729,6 +1777,18 @@ export default {
       } finally {
         loading.value = false;
       }
+    };
+
+    const getIconEmoji = (iconKey) => {
+      const map = {
+        heart: '❤️',
+        star: '⭐',
+        sparkles: '✨',
+        fire: '🔥',
+        tag: '🏷️',
+        gift: '🎁'
+      };
+      return map[iconKey] || '❤️';
     };
 
     const deleteTag = async (id) => {
@@ -2657,6 +2717,9 @@ export default {
       editingCategory,
       categorySubcategoriesString,
       editingTag,
+      tagColors,
+      tagIcons,
+      getIconEmoji,
       openTagModal,
       saveTag,
       deleteTag,
@@ -4640,5 +4703,35 @@ export default {
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+/* Tag Color Presets */
+.tag-default {
+  background: rgba(var(--primary-color-rgb), 0.12) !important;
+  color: var(--primary-color) !important;
+}
+.tag-rose {
+  background: #F7A3AD !important;
+  color: #8C172E !important;
+}
+.tag-gold {
+  background: #FCE6B1 !important;
+  color: #9E742C !important;
+}
+.tag-fire {
+  background: #F66601 !important;
+  color: #FFF !important;
+}
+.tag-leaf {
+  background: #9CB795 !important;
+  color: #1D3D1F !important;
+}
+.tag-sky {
+  background: #BEE3F8 !important;
+  color: #2B6CB0 !important;
+}
+.tag-royal {
+  background: #E9D8FD !important;
+  color: #553C9A !important;
 }
 </style>
