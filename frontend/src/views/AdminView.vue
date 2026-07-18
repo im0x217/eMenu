@@ -456,6 +456,7 @@
                       <th>الصنف</th>
                       <th>السعر مفرد</th>
                       <th>السعر جملة</th>
+                      <th>العلامات</th>
                       <th>نوع البيع</th>
                       <th>حالة التوفر</th>
                       <th>إجراءات</th>
@@ -476,6 +477,11 @@
                       </td>
                       <td>{{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</td>
                       <td>{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
+                      <td>
+                        <div class="tags-container-small">
+                          <span v-for="(tag, index) in prod.tags" :key="index" class="badge-tag-small">{{ tag }}</span>
+                        </div>
+                      </td>
                       <td>
                         <span v-if="prod.purchaseType === 'both'" class="badge">كلاهما</span>
                         <span v-else-if="prod.purchaseType === 'regular'" class="badge badge-gold">مفرد فقط</span>
@@ -940,6 +946,26 @@
           </div>
 
           <div class="form-group">
+            <label>العلامات المميزة (Tags)</label>
+            <div class="tags-input-wrapper">
+              <input 
+                v-model="newTag" 
+                @keydown.enter.prevent="addTag" 
+                type="text" 
+                placeholder="اكتب العلامة واضغط Enter (مثال: جديد, مميز)" 
+                class="form-control" 
+              />
+              <button type="button" @click.prevent="addTag" class="btn btn-sm btn-primary mt-2">إضافة</button>
+            </div>
+            <div class="tags-list mt-2" v-if="editingProduct.tags && editingProduct.tags.length > 0">
+              <span v-for="(tag, index) in editingProduct.tags" :key="index" class="tag-pill">
+                {{ tag }}
+                <button type="button" @click.prevent="removeTag(index)" class="tag-remove-btn">&times;</button>
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>صورة المنتج</label>
             <div class="image-dropzone" 
                  :class="{ active: modalDragActive }" 
@@ -1308,8 +1334,21 @@ export default {
       price_regular: null,
       price_bulk: null,
       allowFloat: false,
-      img: ''
+      img: '',
+      tags: []
     });
+
+    const newTag = ref('');
+    const addTag = () => {
+      const tag = newTag.value.trim();
+      if (tag && !editingProduct.tags.includes(tag)) {
+        editingProduct.tags.push(tag);
+      }
+      newTag.value = '';
+    };
+    const removeTag = (index) => {
+      editingProduct.tags.splice(index, 1);
+    };
 
     const modalFileInput = ref(null);
     const modalFile = ref(null);
@@ -1423,6 +1462,7 @@ export default {
         editingProduct.price_bulk = prod.price_bulk || null;
         editingProduct.allowFloat = !!prod.allowFloat;
         editingProduct.img = prod.img || '';
+        editingProduct.tags = Array.isArray(prod.tags) ? [...prod.tags] : [];
         
         // Load subcategories for this category
         const cat = categories.value.find(c => c.name === prod.category);
@@ -1439,6 +1479,7 @@ export default {
         editingProduct.price_bulk = null;
         editingProduct.allowFloat = false;
         editingProduct.img = '';
+        editingProduct.tags = [];
         subCategoriesForEditing.value = [];
       }
       productModalOpen.value = true;
@@ -1464,6 +1505,7 @@ export default {
       formData.append('subCategory', editingProduct.subCategory);
       formData.append('purchaseType', editingProduct.purchaseType);
       formData.append('allowFloat', editingProduct.allowFloat ? 'true' : 'false');
+      formData.append('tags', JSON.stringify(editingProduct.tags));
       
       if (editingProduct.purchaseType !== 'bulk' && editingProduct.price_regular) {
         formData.append('price_regular', editingProduct.price_regular);
@@ -2502,6 +2544,9 @@ export default {
       modalDragActive,
       editingCategory,
       categorySubcategoriesString,
+      newTag,
+      addTag,
+      removeTag,
       recoveryProductId,
       recoveryFileInput,
       recoveryFile,
@@ -2708,7 +2753,6 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
 }
 .tool-btn:hover {
   background: #334155;
@@ -4438,5 +4482,49 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 4px;
+}
+
+/* Tags Styles */
+.tags-input-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-pill {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tag-remove-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.tags-container-small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.badge-tag-small {
+  background: rgba(var(--primary-color-rgb), 0.15);
+  color: #d98000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 </style>

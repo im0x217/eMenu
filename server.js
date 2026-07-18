@@ -356,6 +356,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           cloudinary_public_id: 1,
           allowFloat: 1,
           purchaseType: 1,
+          tags: 1,
         },
       })
       .sort({ name: 1 })
@@ -392,7 +393,14 @@ app.post("/api/verify-bulk-code", (req, res) => {
 });
 
 app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  
+  let parsedTags = [];
+  try {
+    if (tags) parsedTags = JSON.parse(tags);
+  } catch (e) {
+    console.error("Failed to parse tags:", tags);
+  }
   
   // Check for file validation errors first
   if (req.fileValidationError) {
@@ -443,7 +451,8 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
       subCategory,
       available: available === "false" ? false : true,
       allowFloat: isFloat,
-      purchaseType: purchaseType || 'both'
+      purchaseType: purchaseType || 'both',
+      tags: parsedTags
     });
     console.log("[UPLOAD SUCCESS] Product saved with image:", img);
     res.json({ success: true });
@@ -454,11 +463,18 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
+  
+  let parsedTags = [];
+  try {
+    if (tags) parsedTags = JSON.parse(tags);
+  } catch (e) {
+    console.error("Failed to parse tags:", tags);
+  }
   
   let updateData = {
       name,
@@ -470,7 +486,8 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
       subCategory,
       available: available === "false" ? false : true,
       allowFloat: isFloat,
-      purchaseType: purchaseType || 'both'
+      purchaseType: purchaseType || 'both',
+      tags: parsedTags
   };
 
   let uploadWarning = null;
@@ -696,6 +713,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           cloudinary_public_id: 1,
           allowFloat: 1,
           purchaseType: 1,
+          tags: 1,
         },
       })
       .sort({ name: 1 })
@@ -722,7 +740,14 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
 });
 
 app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType } = req.body;
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  
+  let parsedTags = [];
+  try {
+    if (tags) parsedTags = JSON.parse(tags);
+  } catch (e) {
+    console.error("Failed to parse tags:", tags);
+  }
   
   // Check for file validation errors first
   if (req.fileValidationError) {
@@ -767,6 +792,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
       available: available !== "false",
       allowFloat: isFloat,
       purchaseType: purchaseType || "both",
+      tags: parsedTags
     });
     console.log("[UPLOAD SUCCESS] Shop2 product saved with image:", img);
     const response = { success: true };
@@ -782,12 +808,19 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
 
 app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
-    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg } = req.body;
+    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
     }
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (!product) return res.status(404).json({ error: "Product not found" });
+
+    let parsedTags = [];
+    try {
+      if (tags) parsedTags = JSON.parse(tags);
+    } catch (e) {
+      console.error("Failed to parse tags:", tags);
+    }
 
     // Prefer CloudFront domain for image delivery if configured
     const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
@@ -828,6 +861,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
           available: available !== "false",
           allowFloat: isFloat,
           purchaseType: purchaseType || "both",
+          tags: parsedTags,
         },
       }
     );
