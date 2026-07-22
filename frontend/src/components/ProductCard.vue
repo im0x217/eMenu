@@ -80,7 +80,7 @@ const activeTagDetails = computed(() => {
   if (!props.product.tags || props.product.tags.length === 0) return null;
   const tagName = props.product.tags[0];
   const found = shopStore.tags.find(t => t.name === tagName);
-  return found || { name: tagName, color: 'default', icon: 'heart' };
+  return found || { name: tagName, color: 'default', icon: 'trophy' };
 });
 
 const getIconUrl = (iconKey) => {
@@ -92,7 +92,7 @@ const getIconUrl = (iconKey) => {
     tag: 'tag_pct',
     gift: 'gift'
   };
-  const key = map[iconKey] || iconKey;
+  const key = map[iconKey] || iconKey || 'trophy';
   return `/res/tags/${key}.png`;
 };
 </script>

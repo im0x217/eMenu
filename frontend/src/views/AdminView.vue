@@ -483,7 +483,15 @@
                       <td>{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
                       <td>
                         <div class="tags-container-small">
-                          <span v-for="(tag, index) in prod.tags" :key="index" class="badge-tag-small">{{ tag }}</span>
+                          <span 
+                            v-for="(tagName, index) in prod.tags" 
+                            :key="index" 
+                            class="tag-pill tag-pill-table"
+                            :class="'tag-' + (getTagDetails(tagName).color || 'default')"
+                          >
+                            <span>{{ tagName }}</span>
+                            <img :src="getIconUrl(getTagDetails(tagName).icon)" class="tag-custom-icon-admin" alt="Tag Icon" />
+                          </span>
                         </div>
                       </td>
                       <td>
@@ -957,17 +965,26 @@
           </div>
 
           <div class="form-group">
-            <label>العلامات المميزة (Tags)</label>
-            <div class="tags-checkbox-wrapper">
-              <label v-for="tag in tags" :key="tag._id" class="tag-checkbox-label">
-                <input 
-                  type="checkbox" 
-                  :value="tag.name"
-                  :checked="editingProduct.tags && editingProduct.tags.includes(tag.name)"
-                  @change="toggleProductTag(tag.name)"
-                />
-                <span class="tag-pill">{{ tag.name }}</span>
-              </label>
+            <label class="form-label text-bold mb-2 block" style="font-size: 0.9rem;">العلامات المميزة (Tags)</label>
+            <div class="tags-picker-grid">
+              <div 
+                v-for="tag in tags" 
+                :key="tag._id" 
+                class="tag-picker-chip"
+                :class="[
+                  'tag-' + (tag.color || 'default'),
+                  { 'is-selected': editingProduct.tags && editingProduct.tags.includes(tag.name) }
+                ]"
+                @click="toggleProductTag(tag.name)"
+              >
+                <div class="tag-chip-checkbox">
+                  <svg v-if="editingProduct.tags && editingProduct.tags.includes(tag.name)" viewBox="0 0 24 24" class="check-svg" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <img :src="getIconUrl(tag.icon)" class="tag-chip-icon" alt="Tag Icon" />
+                <span class="tag-chip-name">{{ tag.name }}</span>
+              </div>
               <div v-if="tags.length === 0" class="text-muted text-small mt-2">لا توجد علامات مميزة مسجلة في النظام. أضفها من تبويب (إدارة العلامات المميزة).</div>
             </div>
           </div>
@@ -1065,9 +1082,14 @@
           </div>
           <div class="form-group mb-3">
             <label>الأيقونة المميزة *</label>
-            <select v-model="editingTag.icon" class="form-control">
-              <option v-for="i in tagIcons" :key="i.key" :value="i.key">{{ i.label }}</option>
-            </select>
+            <div class="icon-select-preview-wrapper">
+              <select v-model="editingTag.icon" class="form-control flex-1">
+                <option v-for="i in tagIcons" :key="i.key" :value="i.key">{{ i.label }}</option>
+              </select>
+              <div class="selected-icon-preview-box">
+                <img :src="getIconUrl(editingTag.icon)" class="selected-icon-preview-img" alt="Tag Icon Preview" />
+              </div>
+            </div>
           </div>
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary">حفظ العلامة</button>
@@ -1437,7 +1459,7 @@ export default {
       _id: '',
       name: '',
       color: 'default',
-      icon: 'heart'
+      icon: 'trophy'
     });
 
     const tagColors = [
@@ -1452,31 +1474,24 @@ export default {
 
     const tagIcons = [
       // الأكثر مبيعاً
-      { key: 'trophy', label: '🏆 كأس (الأكثر مبيعاً)' },
-      { key: 'medal', label: '🏅 وسام (الأكثر مبيعاً)' },
-      { key: 'best_box', label: '📦 علبة #1 (الأكثر مبيعاً)' },
+      { key: 'trophy', label: 'كأس (الأكثر مبيعاً)' },
+      { key: 'medal', label: 'وسام (الأكثر مبيعاً)' },
+      { key: 'best_box', label: 'علبة #1 (الأكثر مبيعاً)' },
       
       // وصول جديد
-      { key: 'new_box', label: '📦 صندوق (وصول جديد)' },
-      { key: 'gift', label: '🎁 هدية (وصول جديد)' },
-      { key: 'sprout', label: '🌱 نبتة (وصول جديد)' },
+      { key: 'new_box', label: 'صندوق (وصول جديد)' },
+      { key: 'gift', label: 'هدية (وصول جديد)' },
+      { key: 'sprout', label: 'نبتة (وصول جديد)' },
       
       // تخفيضات
-      { key: 'tag_pct', label: '🏷️ بطاقة % (تخفيضات)' },
-      { key: 'starburst_pct', label: '💥 نجمة % (تخفيضات)' },
-      { key: 'bag_pct', label: '🛍️ حقيبة % (تخفيضات)' },
+      { key: 'tag_pct', label: 'بطاقة % (تخفيضات)' },
+      { key: 'starburst_pct', label: 'نجمة % (تخفيضات)' },
+      { key: 'bag_pct', label: 'حقيبة % (تخفيضات)' },
       
       // إصدار محدود
-      { key: 'crown', label: '👑 تاج (إصدار محدود)' },
-      { key: 'diamond', label: '💎 ألماسة (إصدار محدود)' },
-      { key: 'chest', label: '📦 صندوق كنز (إصدار محدود)' },
-
-      // متوافق مع القديم
-      { key: 'heart', label: '❤️ قلب (افتراضي)' },
-      { key: 'star', label: '⭐ نجمة' },
-      { key: 'sparkles', label: '✨ لمعان' },
-      { key: 'fire', label: '🔥 نار' },
-      { key: 'tag', label: '🏷️ بطاقة' }
+      { key: 'crown', label: 'تاج (إصدار محدود)' },
+      { key: 'diamond', label: 'ألماسة (إصدار محدود)' },
+      { key: 'chest', label: 'صندوق كنز (إصدار محدود)' }
     ];
 
     // Image Recovery bindings
@@ -1756,12 +1771,12 @@ export default {
         editingTag._id = tag._id;
         editingTag.name = tag.name;
         editingTag.color = tag.color || 'default';
-        editingTag.icon = tag.icon || 'heart';
+        editingTag.icon = tag.icon || 'trophy';
       } else {
         editingTag._id = '';
         editingTag.name = '';
         editingTag.color = 'default';
-        editingTag.icon = 'heart';
+        editingTag.icon = 'trophy';
       }
       tagModalOpen.value = true;
     };
@@ -1799,36 +1814,9 @@ export default {
       }
     };
 
-    const getIconEmoji = (iconKey) => {
-      const map = {
-        // الأكثر مبيعاً
-        trophy: '🏆',
-        medal: '🏅',
-        best_box: '📦',
-        
-        // وصول جديد
-        new_box: '📦',
-        gift: '🎁',
-        sprout: '🌱',
-        
-        // تخفيضات
-        tag_pct: '🏷️',
-        starburst_pct: '💥',
-        bag_pct: '🛍️',
-        
-        // إصدار محدود
-        crown: '👑',
-        diamond: '💎',
-        chest: '📦',
-
-        // القديم
-        heart: '❤️',
-        star: '⭐',
-        sparkles: '✨',
-        fire: '🔥',
-        tag: '🏷️'
-      };
-      return map[iconKey] || '❤️';
+    const getTagDetails = (tagName) => {
+      const found = tags.value.find(t => t.name === tagName);
+      return found || { name: tagName, color: 'default', icon: 'trophy' };
     };
 
     const getIconUrl = (iconKey) => {
@@ -1840,7 +1828,7 @@ export default {
         tag: 'tag_pct',
         gift: 'gift'
       };
-      const key = map[iconKey] || iconKey;
+      const key = map[iconKey] || iconKey || 'trophy';
       return `/res/tags/${key}.png`;
     };
 
@@ -2772,7 +2760,7 @@ export default {
       editingTag,
       tagColors,
       tagIcons,
-      getIconEmoji,
+      getTagDetails,
       getIconUrl,
       openTagModal,
       saveTag,
@@ -4794,5 +4782,113 @@ export default {
   height: 14px;
   object-fit: contain;
   margin-right: 4px;
+}
+
+/* Tag Selection Picker in Product Modal */
+.tags-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.tag-picker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  font-weight: 600;
+  font-size: 0.85rem;
+  opacity: 0.55;
+  filter: grayscale(35%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.tag-picker-chip:hover {
+  opacity: 0.85;
+  filter: grayscale(0%);
+  transform: translateY(-1px);
+}
+
+.tag-picker-chip.is-selected {
+  opacity: 1;
+  filter: grayscale(0%);
+  border-color: currentColor;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.tag-chip-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid currentColor;
+  transition: all 0.15s ease;
+}
+
+.tag-picker-chip.is-selected .tag-chip-checkbox {
+  background: currentColor;
+  border-color: currentColor;
+}
+
+.tag-chip-checkbox .check-svg {
+  width: 12px;
+  height: 12px;
+  stroke: #ffffff;
+}
+
+.tag-chip-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.tag-chip-name {
+  line-height: 1;
+}
+
+/* Icon Select Preview Box in Tag Modal */
+.icon-select-preview-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selected-icon-preview-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.selected-icon-preview-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.tag-pill-table {
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  border-radius: 12px;
 }
 </style>
