@@ -116,11 +116,10 @@ const generateWhatsAppMessage = (order) => {
   }
   text += `--------------------------------\n`;
   
-  order.items.forEach((item, index) => {
-    text += `${index + 1}. *${item.name}*\n`;
-    text += `   الكمية: ${item.quantity} | السعر: ${item.price} د.ل | الإجمالي: ${item.price * item.quantity} د.ل\n`;
+  order.items.forEach((item) => {
+    text += `• *${item.name}* (${item.quantity} × ${item.price} د.ل)\n`;
     if (item.notes) {
-      text += `   ملاحظة: ${item.notes}\n`;
+      text += `  ملاحظة: ${item.notes}\n`;
     }
   });
   

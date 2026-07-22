@@ -135,12 +135,11 @@ export const useCartStore = defineStore('cart', () => {
     }
     text += `--------------------------------\n`;
     
-    items.value.forEach((item, index) => {
+    items.value.forEach((item) => {
       const price = item.priceMode === 'bulk' ? item.price_bulk : (item.price_regular || item.price);
-      text += `${index + 1}. *${item.name}*\n`;
-      text += `   الكمية: ${item.quantity} | السعر: ${price} د.ل | الإجمالي: ${price * item.quantity} د.ل\n`;
+      text += `• *${item.name}* (${item.quantity} × ${price} د.ل)\n`;
       if (item.itemNotes) {
-        text += `   ملاحظة: ${item.itemNotes}\n`;
+        text += `  ملاحظة: ${item.itemNotes}\n`;
       }
     });
     
