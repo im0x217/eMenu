@@ -3,7 +3,7 @@
     <!-- Spinner overlay -->
     <div v-if="loading" class="spinner-overlay">
       <div class="spinner"></div>
-      <p class="spinner-text">جاري تحميل البيانات...</p>
+      <p class="spinner-text">جاري تحميل البيانات…</p>
     </div>
 
     <!-- Login Container -->
@@ -436,7 +436,7 @@
             <!-- Filter Bar -->
             <div class="filter-actions-bar glass-panel mb-3">
               <div class="filters-group">
-                <input v-model="filters.search" type="text" placeholder="البحث عن منتج..." class="form-control" />
+                <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن منتج…" class="form-control" />
                 <select v-model="filters.category" class="form-control">
                   <option value="">كل الأصناف</option>
                   <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
@@ -614,7 +614,7 @@
                   <div class="form-group">
                     <label>اختر المنتج المراد إصلاح صورته</label>
                     <select v-model="recoveryProductId" class="form-control max-w-md mx-auto">
-                      <option value="">اختر المنتج...</option>
+                      <option value="">اختر المنتج…</option>
                       <option v-for="prod in products" :key="prod._id" :value="prod._id">
                         {{ prod.name }} ({{ prod.category }}) {{ !prod.img ? '[مفقودة]' : '' }}
                       </option>
@@ -692,7 +692,7 @@
           <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
             <div class="filter-actions-bar glass-panel mb-3">
               <div class="filters-group">
-                <input v-model="orderFilters.search" type="text" placeholder="البحث برقم الهاتف أو الاسم..." class="form-control" />
+                <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو الاسم…" class="form-control" />
                 <select v-model="orderFilters.status" class="form-control">
                   <option value="">كل الحالات</option>
                   <option value="pending">قيد الانتظار (Pending)</option>
@@ -789,7 +789,7 @@
                   v-model="productSearchQuery" 
                   type="text" 
                   class="form-control product-search-input" 
-                  placeholder="🔍 ابحث باسم منتج لإضافته مباشرة للطلب..." 
+                  placeholder="🔍 ابحث باسم منتج لإضافته مباشرة للطلب…" 
                   @focus="showSuggestions = productSearchQuery.length > 0"
                   @blur="closeSuggestionsWithDelay"
                   @keydown.down.prevent="navigateSuggestions(1)"
@@ -882,7 +882,7 @@
           <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
             <div class="filter-actions-bar glass-panel mb-3">
               <div class="filters-group">
-                <input v-model="customerFilters.search" type="text" placeholder="البحث عن اسم أو رقم هاتف..." class="form-control" />
+                <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن اسم أو رقم هاتف…" class="form-control" />
               </div>
             </div>
 
@@ -1214,7 +1214,7 @@
 
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary" :disabled="loading">
-              {{ loading ? 'جاري الحفظ...' : (editingCarouselId ? 'حفظ التعديلات' : 'رفع ونشر البنر الإعلاني') }}
+              {{ loading ? 'جاري الحفظ…' : (editingCarouselId ? 'حفظ التعديلات' : 'رفع ونشر البنر الإعلاني') }}
             </button>
             <button type="button" @click="carouselModalOpen = false" class="btn btn-outline" :disabled="loading">إلغاء</button>
           </div>

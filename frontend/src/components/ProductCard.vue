@@ -122,13 +122,15 @@ const getIconUrl = (iconKey) => {
       <!-- Tag Banner -->
       <div v-if="activeTagDetails" class="product-tag-banner" :class="'tag-' + activeTagDetails.color">
         <span>{{ activeTagDetails.name }}</span>
-        <img :src="getIconUrl(activeTagDetails.icon)" class="tag-custom-icon" alt="Tag Icon" />
+        <img :src="getIconUrl(activeTagDetails.icon)" class="tag-custom-icon" alt="" aria-hidden="true" width="16" height="16" />
       </div>
 
       <img 
         :src="getImageUrl()" 
         :alt="product.name" 
         loading="lazy"
+        width="300"
+        height="300"
         class="product-image"
         @error="$event.target.src = '/res/logo.jpg'"
       />

@@ -161,7 +161,7 @@ const handleClearCart = () => {
                 type="text" 
                 :value="item.itemNotes" 
                 @input="handleUpdateNote(item._id, $event.target.value)" 
-                placeholder="إضافة ملاحظة خاصة بهذا المنتج (مثال: بدون مكسرات)..." 
+                placeholder="إضافة ملاحظة خاصة بهذا المنتج (مثال: بدون مكسرات)…" 
                 class="item-note-input"
               />
             </div>
@@ -176,12 +176,12 @@ const handleClearCart = () => {
         
         <div class="form-group">
           <label class="form-label">الاسم بالكامل</label>
-          <input type="text" v-model="nameInput" placeholder="أدخل اسمك الكريم..." class="form-input" />
+          <input type="text" name="name" autocomplete="name" v-model="nameInput" placeholder="أدخل اسمك الكريم…" class="form-input" />
         </div>
         
         <div class="form-group">
           <label class="form-label">رقم الهاتف</label>
-          <input type="tel" v-model="phoneInput" placeholder="09XXXXXXXX" class="form-input" />
+          <input type="tel" name="phone" autocomplete="tel" v-model="phoneInput" placeholder="09XXXXXXXX" class="form-input" />
         </div>
         
         <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
@@ -212,7 +212,7 @@ const handleClearCart = () => {
           <textarea 
             v-model="cartStore.orderNotes" 
             @input="cartStore.persist" 
-            placeholder="أضف أي ملاحظات عامة حول الاستلام والتغليف هنا..." 
+            placeholder="أضف أي ملاحظات عامة حول الاستلام والتغليف هنا…" 
             class="form-input text-area"
             rows="3"
           ></textarea>

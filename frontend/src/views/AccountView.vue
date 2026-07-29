@@ -177,12 +177,12 @@ const handleResendWhatsApp = () => {
       
       <div class="form-group">
         <label class="form-label">الاسم بالكامل</label>
-        <input type="text" v-model="nameInput" placeholder="اكتب اسمك هنا..." class="form-input" />
+        <input type="text" name="name" autocomplete="name" v-model="nameInput" placeholder="اكتب اسمك هنا…" class="form-input" />
       </div>
 
       <div class="form-group">
         <label class="form-label">رقم الهاتف</label>
-        <input type="tel" v-model="phoneInput" placeholder="09XXXXXXXX" class="form-input" />
+        <input type="tel" name="phone" autocomplete="tel" v-model="phoneInput" placeholder="09XXXXXXXX" class="form-input" />
       </div>
 
       <div v-if="message" class="alert-msg" :class="messageType">
@@ -200,7 +200,7 @@ const handleResendWhatsApp = () => {
       <!-- Loading State -->
       <div v-if="isLoadingOrders" class="loading-orders">
         <div class="mini-spinner"></div>
-        <p>جاري جلب الطلبات...</p>
+        <p>جاري جلب الطلبات…</p>
       </div>
 
       <!-- No Phone State -->
@@ -550,7 +550,7 @@ const handleResendWhatsApp = () => {
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-resend-whatsapp:hover {
@@ -739,7 +739,7 @@ const handleResendWhatsApp = () => {
   border-radius: 8px;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .copy-btn {

@@ -394,8 +394,10 @@ watch(carouselItems, (newItems) => {
       </div>
       <input 
         type="text" 
+        name="search"
+        autocomplete="off"
         v-model="searchQuery" 
-        placeholder="ابحث عن منتج..." 
+        placeholder="ابحث عن منتج…" 
         class="search-input" 
       />
       <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">✕</button>
@@ -458,7 +460,7 @@ watch(carouselItems, (newItems) => {
     <!-- Loading Spinner -->
     <div v-if="shopStore.isLoading" class="loading-state">
       <div class="spinner"></div>
-      <p>جاري تحميل المنيو...</p>
+      <p>جاري تحميل المنيو…</p>
     </div>
 
     <!-- Product Grid -->
@@ -689,7 +691,7 @@ watch(carouselItems, (newItems) => {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .subcat-btn.active {

@@ -60,7 +60,7 @@ const toastStore = useToastStore();
 /* Animations */
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .toast-fade-enter-from {
