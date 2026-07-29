@@ -3147,6 +3147,7 @@ export default {
   top: 0;
   z-index: 100;
   transition: transform 0.3s ease;
+  overflow-y: auto;
 }
 
 .sidebar-brand {
@@ -4890,5 +4891,67 @@ export default {
   padding: 3px 8px;
   font-size: 0.78rem;
   border-radius: 12px;
+}
+
+/* Restore and style scrollbars for AdminView on Laptop & Desktop screens */
+@media (min-width: 769px) {
+  .admin-layout ::-webkit-scrollbar,
+  .admin-main::-webkit-scrollbar,
+  .admin-sidebar::-webkit-scrollbar,
+  .table-container::-webkit-scrollbar,
+  .edit-order-table-container::-webkit-scrollbar,
+  .modal-box::-webkit-scrollbar {
+    display: block !important;
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .admin-layout ::-webkit-scrollbar-track,
+  .admin-main::-webkit-scrollbar-track,
+  .admin-sidebar::-webkit-scrollbar-track,
+  .table-container::-webkit-scrollbar-track,
+  .edit-order-table-container::-webkit-scrollbar-track,
+  .modal-box::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-radius: 6px !important;
+  }
+
+  .admin-layout ::-webkit-scrollbar-thumb,
+  .admin-main::-webkit-scrollbar-thumb,
+  .admin-sidebar::-webkit-scrollbar-thumb,
+  .table-container::-webkit-scrollbar-thumb,
+  .edit-order-table-container::-webkit-scrollbar-thumb,
+  .modal-box::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.22) !important;
+    border-radius: 6px !important;
+    border: 2px solid transparent !important;
+    background-clip: content-box !important;
+    transition: background 0.2s ease !important;
+  }
+
+  .admin-layout ::-webkit-scrollbar-thumb:hover,
+  .admin-main::-webkit-scrollbar-thumb:hover,
+  .admin-sidebar::-webkit-scrollbar-thumb:hover,
+  .table-container::-webkit-scrollbar-thumb:hover,
+  .edit-order-table-container::-webkit-scrollbar-thumb:hover,
+  .modal-box::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4) !important;
+    background-clip: content-box !important;
+  }
+
+  .admin-layout ::-webkit-scrollbar-corner,
+  .admin-main::-webkit-scrollbar-corner,
+  .table-container::-webkit-scrollbar-corner {
+    background: transparent !important;
+  }
+
+  .admin-layout *,
+  .admin-main,
+  .admin-sidebar,
+  .table-container {
+    -ms-overflow-style: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.04) !important;
+  }
 }
 </style>
