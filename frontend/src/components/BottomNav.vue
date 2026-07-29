@@ -96,10 +96,10 @@ const navToShop = () => {
   right: 0;
   height: calc(64px + constant(safe-area-inset-bottom, 0px));
   height: calc(64px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 253, 249, 0.92);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-top: 1px solid rgba(44, 37, 32, 0.06);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -109,12 +109,13 @@ const navToShop = () => {
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
   will-change: transform;
+  box-shadow: 0 -4px 16px rgba(44, 37, 32, 0.04);
 }
 
 .nav-tab-btn {
   background: transparent;
   border: none;
-  color: rgba(0, 0, 0, 0.45);
+  color: #8a8078;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -123,7 +124,7 @@ const navToShop = () => {
   cursor: pointer;
   width: 25%;
   height: 100%;
-  transition: color 0.2s, transform 0.2s;
+  transition: color 0.25s ease, transform 0.2s ease;
   padding: 8px 0;
 }
 

@@ -540,6 +540,8 @@ watch(carouselItems, (newItems) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: linear-gradient(180deg, var(--bg-card) 0%, rgba(255, 253, 249, 0.6) 100%);
+  border-bottom: 1px solid rgba(44, 37, 32, 0.04);
 }
 
 .header-main {
@@ -617,14 +619,17 @@ watch(carouselItems, (newItems) => {
   display: flex;
   align-items: center;
   padding: 4px;
+  background: rgba(255, 253, 249, 0.85);
+  border-color: rgba(44, 37, 32, 0.05);
 }
 
 .search-icon {
   position: absolute;
   right: 12px;
-  color: rgba(0, 0, 0, 0.4);
+  color: #8a8078;
   display: flex;
   align-items: center;
+  transition: color 0.2s ease;
 }
 
 .search-input {
@@ -659,11 +664,12 @@ watch(carouselItems, (newItems) => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #495057;
+  color: #5c534a;
   white-space: nowrap;
   cursor: pointer;
-  border-color: rgba(0, 0, 0, 0.04);
-  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+  border-color: rgba(44, 37, 32, 0.06);
+  background: rgba(255, 253, 249, 0.9);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
   flex-shrink: 0;
 }
 
@@ -681,9 +687,9 @@ watch(carouselItems, (newItems) => {
 }
 
 .subcat-btn {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: #495057;
+  background: rgba(255, 253, 249, 0.85);
+  border: 1px solid rgba(44, 37, 32, 0.06);
+  color: #5c534a;
   padding: 4px 12px;
   border-radius: 20px;
   font-family: 'Cairo', sans-serif;
@@ -691,7 +697,7 @@ watch(carouselItems, (newItems) => {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 .subcat-btn.active {
@@ -741,8 +747,9 @@ watch(carouselItems, (newItems) => {
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(44, 37, 32, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -758,6 +765,7 @@ watch(carouselItems, (newItems) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: var(--shadow-xl);
 }
 
 .modal-title {
@@ -874,10 +882,10 @@ watch(carouselItems, (newItems) => {
   overflow: hidden;
   background-size: cover;
   background-position: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
   display: block;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-drag: none;
   -webkit-user-drag: none;
   user-select: none;

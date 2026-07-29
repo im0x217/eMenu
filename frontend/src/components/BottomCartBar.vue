@@ -59,8 +59,9 @@ const totalPrice = computed(() => cartStore.cartTotal);
   align-items: center;
   z-index: 998;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 10px var(--primary-glow);
-  border-color: rgba(var(--primary-color-rgb), 0.2);
+  box-shadow: var(--shadow-xl), 0 0 12px rgba(var(--primary-color-rgb), 0.12);
+  border-color: rgba(var(--primary-color-rgb), 0.15);
+  background: rgba(255, 253, 249, 0.97);
   animation: floatPulse 3s infinite alternate;
 }
 

@@ -181,7 +181,8 @@ const getIconUrl = (iconKey) => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
+  background: var(--bg-card);
 }
 
 .product-card.not-available {
@@ -193,7 +194,7 @@ const getIconUrl = (iconKey) => {
   top: 8px;
   right: 8px;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 253, 249, 0.85);
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -202,14 +203,15 @@ const getIconUrl = (iconKey) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(44, 37, 32, 0.08);
 }
 
 .favorite-btn:hover {
   transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 253, 249, 0.95);
 }
 
 .heart-icon {
@@ -225,7 +227,7 @@ const getIconUrl = (iconKey) => {
   width: 100%;
   padding-top: 80%; /* 5:4 aspect ratio */
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.02);
+  background: #f5f0ea;
   cursor: zoom-in;
 }
 
