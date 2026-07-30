@@ -5,6 +5,10 @@ import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
 import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
+import { gsap } from 'gsap';
+
+const heartBtnRef = ref(null);
+const addBtnRef = ref(null);
 
 const props = defineProps({
   product: {
@@ -37,6 +41,12 @@ const showBulkPrice = computed(() => {
 const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props.product._id));
 
 const toggleSave = () => {
+  if (heartBtnRef.value) {
+    gsap.fromTo(heartBtnRef.value, 
+      { scale: 0.7 }, 
+      { scale: 1, duration: 0.45, ease: 'back.out(2.5)' }
+    );
+  }
   favoritesStore.toggleFavorite(activeShop.value, props.product._id);
   const isNowFav = favoritesStore.isFavorite(activeShop.value, props.product._id);
   
@@ -56,6 +66,12 @@ const toggleSave = () => {
 };
 
 const handleAddToCart = () => {
+  if (addBtnRef.value) {
+    gsap.fromTo(addBtnRef.value,
+      { scale: 0.93 },
+      { scale: 1, duration: 0.3, ease: 'back.out(2)' }
+    );
+  }
   // Determine pricing mode to add to cart
   let mode = 'regular';
   if (isBulkMode.value && showBulkPrice.value) {
@@ -100,7 +116,7 @@ const getIconUrl = (iconKey) => {
 <template>
   <div class="product-card glass-panel card-hover-effect" :class="{ 'not-available': product.available === false }">
     <!-- Favorite Heart Toggle -->
-    <button class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
+    <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
         width="20" 
@@ -162,7 +178,7 @@ const getIconUrl = (iconKey) => {
 
       <!-- Add Button (Wide format) -->
       <div class="actions-row" v-if="product.available !== false">
-        <button class="add-btn-wide" @click="handleAddToCart" aria-label="إضافة إلى السلة">
+        <button ref="addBtnRef" class="add-btn-wide" @click="handleAddToCart" aria-label="إضافة إلى السلة">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px;">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>

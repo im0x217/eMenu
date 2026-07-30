@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, watch, onUnmounted, nextTick } from 'vue';
 import { useShopStore } from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
+import { gsap } from 'gsap';
 
 const shopStore = useShopStore();
 
@@ -145,9 +146,21 @@ const filteredProducts = computed(() => {
     const bHasTags = b.tags && b.tags.length > 0;
     if (aHasTags && !bHasTags) return -1;
     if (!aHasTags && bHasTags) return 1;
-    return 0; // Maintain original order otherwise
   });
 });
+
+// GSAP entrance stagger animation for product grid
+watch(filteredProducts, () => {
+  nextTick(() => {
+    const cards = document.querySelectorAll('.product-card');
+    if (cards.length > 0) {
+      gsap.fromTo(cards, 
+        { opacity: 0, y: 12, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power1.out', overwrite: 'auto' }
+      );
+    }
+  });
+}, { immediate: true });
 
 // Bulk price verification modal state
 const showBulkModal = ref(false);
