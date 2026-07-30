@@ -68,11 +68,12 @@ const iconType = computed(() => {
       <path d="M12 2v3"/>
     </svg>
 
-    <!-- Bakery / Pastries -->
+    <!-- Bakery / Pastries / Dry Sweets (نواشف / كعك) -->
     <svg v-else-if="iconType === 'bakery'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="m18 15-6-6-6 6"/>
-      <path d="M12 3v6"/>
-      <circle cx="12" cy="17" r="4"/>
+      <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5Z"/>
+      <circle cx="8.5" cy="8.5" r="0.75" fill="currentColor"/>
+      <circle cx="15.5" cy="13.5" r="0.75" fill="currentColor"/>
+      <circle cx="11" cy="13" r="0.75" fill="currentColor"/>
     </svg>
 
     <!-- Nuts / Confectionery -->
