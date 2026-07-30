@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, watch, onUnmounted, nextTick } from 'vue';
 import { useShopStore } from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
+import CategoryIcon from '../components/CategoryIcon.vue';
 import { gsap } from 'gsap';
 
 const shopStore = useShopStore();
@@ -442,7 +443,7 @@ watch(carouselItems, (newItems) => {
           :class="{ active: activeCategory === cat.name }"
           @click="selectCategory(cat.name)"
         >
-          <span class="cat-emoji">{{ cat.emoji }}</span>
+          <CategoryIcon :name="cat.name" :emoji="cat.emoji" />
           <span class="cat-name">{{ cat.name }}</span>
         </button>
       </div>
