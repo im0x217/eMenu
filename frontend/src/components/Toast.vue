@@ -8,8 +8,18 @@ const toastStore = useToastStore();
   <transition name="toast-fade">
     <div v-if="toastStore.visible" class="toast-notification" :class="toastStore.type">
       <div class="toast-content">
-        <span class="toast-icon" v-if="toastStore.type === 'success'">✅</span>
-        <span class="toast-icon" v-else>⚠️</span>
+        <span class="toast-icon" v-if="toastStore.type === 'success'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#25d366" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        <span class="toast-icon" v-else>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </span>
         <span class="toast-text">{{ toastStore.message }}</span>
       </div>
     </div>
@@ -19,17 +29,17 @@ const toastStore = useToastStore();
 <style scoped>
 .toast-notification {
   position: fixed;
-  top: 20px;
+  top: calc(16px + env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 99999;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 253, 249, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(44, 37, 32, 0.08);
   border-radius: 12px;
   padding: 10px 18px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-lg);
   width: max-content;
   max-width: 90%;
   pointer-events: none;

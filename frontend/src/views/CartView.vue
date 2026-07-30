@@ -82,9 +82,8 @@ let confirmTimer = null;
 
 const handleClearCart = () => {
   if (!isConfirmingClear.value) {
-    // First tap: change state to confirm mode
+    // First tap: change button state to confirm mode cleanly without blocking toast
     isConfirmingClear.value = true;
-    toastStore.show('اضغط مرة أخرى لتأكيد إفراغ السلة 🗑️');
     
     // Auto reset after 3 seconds if not clicked again
     if (confirmTimer) clearTimeout(confirmTimer);
@@ -96,7 +95,7 @@ const handleClearCart = () => {
     if (confirmTimer) clearTimeout(confirmTimer);
     isConfirmingClear.value = false;
     cartStore.clearCart();
-    toastStore.show('تم إفراغ السلة بالكامل! 🧹');
+    toastStore.show('تم إفراغ السلة بالكامل!');
   }
 };
 </script>
