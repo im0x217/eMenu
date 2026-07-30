@@ -105,7 +105,13 @@ const handleClearCart = () => {
   <div class="cart-view-container">
     <!-- Empty State -->
     <div v-if="cartStore.items.length === 0" class="empty-state glass-panel">
-      <div class="empty-icon-wrapper">🛍️</div>
+      <div class="empty-icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
       <h2 class="empty-title">السلة فارغة حالياً</h2>
       <p class="empty-desc">اذهب لقسم المنتجات وأضف ما ترغب به لتجده هنا.</p>
     </div>

@@ -33,7 +33,11 @@ const closeZoomModal = () => {
   <div class="favorites-view-container">
     <!-- Warning Notice if not logged in -->
     <div v-if="!isLoggedIn" class="login-notice-banner glass-panel">
-      <span class="notice-icon">⚠️</span>
+      <svg class="notice-icon-svg" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
       <div class="notice-text">
         <h3 class="notice-title">المفضلة السحابية غير نشطة</h3>
         <p class="notice-desc">
@@ -54,7 +58,12 @@ const closeZoomModal = () => {
 
     <!-- Empty State -->
     <div v-else class="empty-state glass-panel">
-      <div class="empty-icon-wrapper">💔</div>
+      <div class="empty-icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          <line x1="2" y1="2" x2="22" y2="22"/>
+        </svg>
+      </div>
       <h2 class="empty-title">المفضلة فارغة</h2>
       <p class="empty-desc">اضغط على زر القلب في بطاقات المنتجات لإضافتها هنا والوصول إليها بسرعة لاحقاً.</p>
     </div>
