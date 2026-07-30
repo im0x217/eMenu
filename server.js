@@ -1049,7 +1049,7 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   }
   
   try {
-    const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" };
+    const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: { $in: ["received", "completed"] } };
     
     // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
     const kpiSummary = await ordColl.aggregate([
@@ -1260,7 +1260,7 @@ app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) 
     }
   }
   
-  const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" };
+  const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: { $in: ["received", "completed"] } };
   
   function escapeCSV(val) {
     if (val === null || val === undefined) return "";
@@ -1359,7 +1359,7 @@ app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, re
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
+  if (!["pending", "ready", "received", "cancelled"].includes(status)) {
     return res.status(400).json({ error: "Invalid status value" });
   }
 
@@ -1412,7 +1412,7 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
     if (deliveryDate !== undefined) updateDoc.deliveryDate = deliveryDate;
     if (notes !== undefined) updateDoc.notes = notes;
     if (priceMode) updateDoc.priceMode = priceMode;
-    if (status && ["pending", "processing", "completed", "cancelled"].includes(status)) {
+    if (status && ["pending", "ready", "received", "cancelled"].includes(status)) {
       updateDoc.status = status;
     }
 
@@ -1444,7 +1444,7 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
     
     // Batch fetch all orders stats by phone
     const allOrderStats = await ordColl.aggregate([
-      { $match: { status: "completed" } },
+      { $match: { status: { $in: ["received", "completed"] } } },
       { $group: {
           _id: "$customerInfo.phone",
           totalSpent: { $sum: "$totalPrice" },
@@ -1602,14 +1602,14 @@ app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) 
         o.customerInfo ? o.customerInfo.phone : '',
         o.totalPrice || 0,
         o.priceMode === 'bulk' ? 'جملة' : 'مفرد',
-        o.status === 'completed' ? 'مكتمل' : o.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار',
+        o.status === 'received' ? 'تم الاستلام' : o.status === 'completed' ? 'مكتمل' : o.status === 'ready' ? 'جاهز للاستلام' : o.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار',
         o.items ? o.items.map(i => `${i.name} (x${i.quantity})`).join(' | ') : ''
       ]);
       csvContent = arrayToCSV(headers, rows);
       fileName = `تقرير_الطلبات_${shop}_${period}.csv`;
 
     } else if (type === "products") {
-      const completedOrders = await ordColl.find({ ...dateFilter, status: 'completed' }).toArray();
+      const completedOrders = await ordColl.find({ ...dateFilter, status: { $in: ['received', 'completed'] } }).toArray();
       const salesMap = {};
       for (const order of completedOrders) {
         if (!order.items) continue;
@@ -1654,7 +1654,7 @@ app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) 
 
       // Batch fetch all orders stats by phone
       const allOrderStats = await ordColl.aggregate([
-        { $match: { status: "completed", ...dateFilter } },
+        { $match: { status: { $in: ["received", "completed"] }, ...dateFilter } },
         { $group: {
             _id: "$customerInfo.phone",
             totalSpent: { $sum: "$totalPrice" },
@@ -1834,6 +1834,44 @@ app.get("/api/customer/orders", checkMongoDB, customerLimiter, async (req, res) 
   } catch (err) {
     console.error("Fetch orders error:", err);
     res.status(500).json({ error: "Failed to fetch order history" });
+  }
+});
+
+// Customer confirms order received
+app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phone, shop } = req.body;
+
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ error: "Missing or invalid phone" });
+    }
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid order ID" });
+    }
+
+    const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
+    const order = await ordColl.findOne({ _id: new ObjectId(id) });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    if (order.customerInfo.phone !== phone.trim()) {
+      return res.status(403).json({ error: "Phone mismatch" });
+    }
+    if (order.status !== 'ready') {
+      return res.status(400).json({ error: "Order is not in ready state" });
+    }
+
+    await ordColl.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status: 'received', receivedAt: new Date() } }
+    );
+
+    res.json({ success: true, status: 'received' });
+  } catch (err) {
+    console.error("Confirm order received error:", err);
+    res.status(500).json({ error: "Failed to update order status" });
   }
 });
 

@@ -90,10 +90,38 @@ const formatDate = (dateStr) => {
 
 const getStatusLabel = (status) => {
   switch (status) {
-    case 'completed': return 'مكتمل';
+    case 'ready': return 'جاهز للاستلام';
+    case 'received': return 'تم الاستلام';
+    case 'completed': return 'تم الاستلام'; // legacy
     case 'cancelled': return 'ملغي';
     case 'pending':
     default: return 'قيد الانتظار';
+  }
+};
+
+const confirmingOrderId = ref(null);
+
+const confirmReceived = async (order) => {
+  if (confirmingOrderId.value === order._id) return; // prevent double-tap
+  confirmingOrderId.value = order._id;
+  try {
+    const res = await fetch(`/api/customer/orders/${order._id}/received`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: authStore.customerPhone, shop: order.shop })
+    });
+    if (res.ok) {
+      order.status = 'received';
+      toastStore.show('تم تأكيد استلام الطلب بنجاح ✓', 'success');
+    } else {
+      const data = await res.json();
+      toastStore.show(data.error || 'فشل تأكيد الاستلام', 'danger');
+    }
+  } catch (e) {
+    console.error('Confirm received error', e);
+    toastStore.show('حدث خطأ بالاتصال', 'danger');
+  } finally {
+    confirmingOrderId.value = null;
   }
 };
 
@@ -269,6 +297,16 @@ const validateProfileOnBlur = () => {
           <div class="order-total-row">
             <span class="total-label">إجمالي الحساب:</span>
             <span class="total-value">{{ order.totalPrice }} د.ل</span>
+          </div>
+
+          <!-- Confirm Received Button -->
+          <div v-if="order.status === 'ready'" class="confirm-received-row">
+            <button class="btn-confirm-received" @click="confirmReceived(order)" :disabled="confirmingOrderId === order._id">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              {{ confirmingOrderId === order._id ? 'جاري التأكيد…' : 'تأكيد الاستلام' }}
+            </button>
           </div>
 
           <!-- Modern Action Button -->
@@ -492,6 +530,56 @@ const validateProfileOnBlur = () => {
 .order-status.cancelled {
   background: rgba(230, 57, 70, 0.15);
   color: #e63946;
+}
+
+.order-status.ready {
+  background: rgba(34, 139, 230, 0.15);
+  color: #228be6;
+}
+
+.order-status.received {
+  background: rgba(55, 178, 77, 0.15);
+  color: #37b24d;
+}
+
+.confirm-received-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.06);
+}
+
+.btn-confirm-received {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #37b24d, #2b8a3e);
+  color: #fff;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.btn-confirm-received:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(55, 178, 77, 0.3);
+}
+
+.btn-confirm-received:active {
+  transform: scale(0.97);
+}
+
+.btn-confirm-received:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .order-summary-details {

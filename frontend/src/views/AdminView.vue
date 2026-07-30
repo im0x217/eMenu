@@ -696,8 +696,8 @@
                 <select v-model="orderFilters.status" class="form-control">
                   <option value="">كل الحالات</option>
                   <option value="pending">قيد الانتظار (Pending)</option>
-                  <option value="processing">جاري المعالجة (Processing)</option>
-                  <option value="completed">مكتمل (Completed)</option>
+                  <option value="ready">جاهز للاستلام (Ready)</option>
+                  <option value="received">تم الاستلام (Received)</option>
                   <option value="cancelled">ملغي (Cancelled)</option>
                 </select>
                 <select v-model="orderFilters.dateRange" class="form-control">
@@ -722,6 +722,7 @@
                       <th>المجموع</th>
                       <th>نوع السعر</th>
                       <th>الحالة</th>
+                      <th>إجراءات</th>
 </tr>
                   </thead>
                   <tbody>
@@ -754,13 +755,18 @@
                       <td>
                         <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select" :class="'status-' + order.status">
                           <option value="pending">قيد الانتظار</option>
-                          <option value="processing">جاري المعالجة</option>
-                          <option value="completed">مكتمل</option>
+                          <option value="ready">جاهز للاستلام</option>
+                          <option value="received">تم الاستلام</option>
                           <option value="cancelled">ملغي</option>
                         </select>
                       </td>
                       <td>
-                        <button @click="openOrderEditModal(order)" class="btn btn-outline btn-xs">تعديل</button>
+                        <div class="order-actions-btns">
+                          <button @click="openOrderEditModal(order)" class="btn btn-outline btn-xs">تعديل</button>
+                          <button @click="printOrder(order)" class="btn btn-outline btn-xs btn-print" title="طباعة الطلب">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -1281,6 +1287,93 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Hidden Print Receipt (A5) -->
+  <div id="print-receipt" class="print-receipt" v-if="printingOrder">
+    <div class="receipt-header">
+      <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="receipt-logo" />
+      <div class="receipt-brand">
+        <h1 class="receipt-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+        <p class="receipt-tagline">الجودة في كل قطعة</p>
+      </div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div class="receipt-meta">
+      <div class="receipt-meta-row">
+        <span class="receipt-label">رقم الطلب:</span>
+        <span class="receipt-value">#{{ printingOrder._id.toString().slice(-6) }}</span>
+      </div>
+      <div class="receipt-meta-row">
+        <span class="receipt-label">التاريخ:</span>
+        <span class="receipt-value">{{ new Date(printingOrder.createdAt).toLocaleString('ar-LY') }}</span>
+      </div>
+      <div class="receipt-meta-row">
+        <span class="receipt-label">العميل:</span>
+        <span class="receipt-value">{{ printingOrder.customerInfo.name }}</span>
+      </div>
+      <div class="receipt-meta-row">
+        <span class="receipt-label">الهاتف:</span>
+        <span class="receipt-value receipt-phone">{{ printingOrder.customerInfo.phone }}</span>
+      </div>
+      <div class="receipt-meta-row" v-if="printingOrder.deliveryDate">
+        <span class="receipt-label">تاريخ التسليم:</span>
+        <span class="receipt-value">{{ printingOrder.deliveryDate }}</span>
+      </div>
+      <div class="receipt-meta-row">
+        <span class="receipt-label">نوع السعر:</span>
+        <span class="receipt-value">{{ printingOrder.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}</span>
+      </div>
+      <div class="receipt-meta-row">
+        <span class="receipt-label">الحالة:</span>
+        <span class="receipt-value">{{ printingOrder.status === 'ready' ? 'جاهز للاستلام' : printingOrder.status === 'received' ? 'تم الاستلام' : printingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار' }}</span>
+      </div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <table class="receipt-items-table">
+      <thead>
+        <tr>
+          <th class="receipt-th-name">المنتج</th>
+          <th class="receipt-th-qty">الكمية</th>
+          <th class="receipt-th-price">السعر</th>
+          <th class="receipt-th-total">الإجمالي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, idx) in printingOrder.items" :key="idx">
+          <td class="receipt-td-name">
+            {{ item.name }}
+            <span v-if="item.notes" class="receipt-item-note">{{ item.notes }}</span>
+          </td>
+          <td class="receipt-td-qty">{{ item.quantity }}</td>
+          <td class="receipt-td-price">{{ Number(item.price).toFixed(2) }}</td>
+          <td class="receipt-td-total">{{ (Number(item.price) * Number(item.quantity)).toFixed(2) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="receipt-divider"></div>
+
+    <div class="receipt-total-section">
+      <div class="receipt-grand-total">
+        <span>الإجمالي الكلي</span>
+        <span class="receipt-grand-value">{{ Number(printingOrder.totalPrice).toFixed(2) }} د.ل</span>
+      </div>
+    </div>
+
+    <div v-if="printingOrder.notes" class="receipt-notes">
+      <span class="receipt-label">ملاحظات:</span>
+      <p>{{ printingOrder.notes }}</p>
+    </div>
+
+    <div class="receipt-footer">
+      <p>شكراً لتعاملكم معنا ❤</p>
+      <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
     </div>
   </div>
 </template>
@@ -2243,6 +2336,15 @@ export default {
       window.print();
     };
 
+    const printingOrder = ref(null);
+
+    const printOrder = async (order) => {
+      printingOrder.value = order;
+      await nextTick();
+      window.print();
+      setTimeout(() => { printingOrder.value = null; }, 500);
+    };
+
     const fetchProducts = async () => {
       const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
       const res = await adminFetch(url);
@@ -2780,6 +2882,8 @@ export default {
       fetchAnalytics,
       exportReport,
       printReport,
+      printingOrder,
+      printOrder,
       toggleProductAvailability,
       deleteProduct,
       openProductModal,
@@ -4141,20 +4245,34 @@ export default {
   color: #f08c00;
   border-color: #ffe066;
 }
-.status-select.status-processing {
+.status-select.status-ready {
   background: #e7f5ff;
-  color: #228be6;
+  color: #1c7ed6;
   border-color: #a5d8ff;
 }
+.status-select.status-received,
 .status-select.status-completed {
   background: #ebfbee;
-  color: #40c057;
+  color: #2b8a3e;
   border-color: #b2f2bb;
 }
 .status-select.status-cancelled {
   background: #fff5f5;
   color: #fa5252;
   border-color: #ffc9c9;
+}
+
+.order-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-print {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
 }
 
 .customer-info-cell .block {
@@ -4622,45 +4740,179 @@ export default {
   margin-left: 4px;
 }
 
-/* Print Styling */
+/* Print Receipt Styling (A5) */
+.print-receipt {
+  display: none;
+}
+
 @media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
+  @page {
+    size: A5 portrait;
+    margin: 6mm 8mm;
   }
-  .no-print,
-  .admin-sidebar,
-  .main-header,
-  .custom-date-container,
-  .toast-container {
-    display: none !important;
+  
+  body * {
+    visibility: hidden;
   }
-  .admin-container {
+  
+  #print-receipt, #print-receipt * {
+    visibility: visible;
+  }
+  
+  #print-receipt {
     display: block !important;
-    padding: 0 !important;
-  }
-  .admin-main {
-    padding: 0 !important;
-    margin: 0 !important;
-    background: transparent !important;
-  }
-  .glass-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
     background: #ffffff !important;
-    border: 1px solid #dee2e6 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
+    color: #111111 !important;
+    font-family: 'Cairo', 'Fira Code', sans-serif;
+    direction: rtl;
+    font-size: 11pt;
   }
-  .charts-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 20px !important;
+  
+  .receipt-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
   }
-  .span-2 {
-    grid-column: span 2 !important;
+  
+  .receipt-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 8px;
   }
-  .chart-card {
-    page-break-inside: avoid !important;
-    border: 1px solid #dee2e6 !important;
+  
+  .receipt-shop-name {
+    font-size: 14pt;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+  }
+  
+  .receipt-tagline {
+    font-size: 8pt;
+    color: #64748b;
+    margin: 0;
+  }
+  
+  .receipt-divider {
+    border-bottom: 1px dashed #cbd5e1;
+    margin: 8px 0;
+  }
+  
+  .receipt-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    font-size: 9.5pt;
+  }
+  
+  .receipt-meta-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .receipt-label {
+    color: #64748b;
+    font-weight: 600;
+  }
+  
+  .receipt-value {
+    font-weight: 700;
+    color: #0f172a;
+  }
+  
+  .receipt-phone {
+    font-family: 'Fira Code', monospace;
+  }
+  
+  .receipt-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 9.5pt;
+  }
+  
+  .receipt-items-table th {
+    background: #f8fafc;
+    padding: 4px 6px;
+    text-align: right;
+    border-bottom: 1.5px solid #cbd5e1;
+    font-weight: 700;
+    font-size: 9pt;
+  }
+  
+  .receipt-items-table td {
+    padding: 5px 6px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+  
+  .receipt-td-qty, .receipt-td-price, .receipt-td-total {
+    font-family: 'Fira Code', monospace;
+    text-align: center;
+  }
+  
+  .receipt-td-total {
+    text-align: left;
+    font-weight: 700;
+  }
+  
+  .receipt-item-note {
+    display: block;
+    font-size: 8pt;
+    color: #64748b;
+  }
+  
+  .receipt-total-section {
+    margin-top: 6px;
+  }
+  
+  .receipt-grand-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 12pt;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .receipt-grand-value {
+    font-family: 'Fira Code', monospace;
+    color: #0f172a;
+  }
+  
+  .receipt-notes {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: #fffbeb;
+    border-radius: 4px;
+    font-size: 8.5pt;
+  }
+  
+  .receipt-footer {
+    text-align: center;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 9pt;
+    font-weight: 700;
+  }
+  
+  .receipt-footer-sub {
+    font-size: 7.5pt;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 2px;
   }
 }
 
