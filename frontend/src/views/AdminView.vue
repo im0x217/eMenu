@@ -3614,32 +3614,43 @@ export default {
   width: 100%;
   border-collapse: collapse;
   text-align: right;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .admin-table th {
-  padding: 16px 14px;
-  background: #f8f9fa;
-  color: #343a40;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #1e293b;
   font-weight: 800;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.82rem;
+  letter-spacing: -0.2px;
 }
 
 .admin-table td {
-  padding: 16px 14px;
-  border-bottom: 1px solid #f1f3f5;
-  color: #495057;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
   vertical-align: middle;
 }
 
 .admin-table tr {
   transition: background-color 0.2s ease;
 }
+
 .admin-table tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.015);
+  background-color: rgba(30, 58, 95, 0.03);
 }
 
-.text-bold { font-weight: 700; }
+.text-bold {
+  font-weight: 700;
+}
+
+.text-mono, .customer-info-cell .phone, .order-date, .kpi-value {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  letter-spacing: -0.3px;
+}
+
 .text-semibold { font-weight: 600; }
 .text-center { text-align: center; }
 

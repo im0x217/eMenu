@@ -320,3 +320,29 @@ body {
 .shop-theme-shop2 .cat-btn.active * {
   color: #ffffff !important;
 }
+
+/* Touch Action & Tap Delay Optimization */
+button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
+  touch-action: manipulation;
+}
+
+/* Accessible Keyboard Focus States */
+:focus-visible {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px var(--primary-glow) !important;
+}
+
+/* Reduced Motion Compliance for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .pulse-animation, .scroll-hint-bounce {
+    animation: none !important;
+  }
+}

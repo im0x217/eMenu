@@ -167,6 +167,11 @@ const handleResendWhatsApp = () => {
   const url = `https://wa.me/${number.replace('+', '')}?text=${encodeURIComponent(whatsappMessageText.value)}`;
   window.location.href = url;
 };
+const validateProfileOnBlur = () => {
+  if (nameInput.value.trim() && phoneInput.value.trim() && messageType.value === 'danger') {
+    message.value = '';
+  }
+};
 </script>
 
 <template>
@@ -176,13 +181,31 @@ const handleResendWhatsApp = () => {
       <h3 class="section-title">بيانات الحساب</h3>
       
       <div class="form-group">
-        <label class="form-label">الاسم بالكامل</label>
-        <input type="text" name="name" autocomplete="name" v-model="nameInput" placeholder="اكتب اسمك هنا…" class="form-input" />
+        <label for="account-name" class="form-label">الاسم بالكامل</label>
+        <input 
+          id="account-name" 
+          type="text" 
+          name="name" 
+          autocomplete="name" 
+          v-model="nameInput" 
+          @blur="validateProfileOnBlur" 
+          placeholder="اكتب اسمك هنا…" 
+          class="form-input" 
+        />
       </div>
 
       <div class="form-group">
-        <label class="form-label">رقم الهاتف</label>
-        <input type="tel" name="phone" autocomplete="tel" v-model="phoneInput" placeholder="09XXXXXXXX" class="form-input" />
+        <label for="account-phone" class="form-label">رقم الهاتف</label>
+        <input 
+          id="account-phone" 
+          type="tel" 
+          name="phone" 
+          autocomplete="tel" 
+          v-model="phoneInput" 
+          @blur="validateProfileOnBlur" 
+          placeholder="09XXXXXXXX" 
+          class="form-input" 
+        />
       </div>
 
       <div v-if="message" class="alert-msg" :class="messageType">

@@ -180,13 +180,31 @@ const handleClearCart = () => {
         <p class="section-desc">يرجى كتابة الاسم ورقم الهاتف لإكمال عملية إرسال الطلب.</p>
         
         <div class="form-group">
-          <label class="form-label">الاسم بالكامل</label>
-          <input type="text" name="name" autocomplete="name" v-model="nameInput" placeholder="أدخل اسمك الكريم…" class="form-input" />
+          <label for="cart-customer-name" class="form-label">الاسم بالكامل</label>
+          <input 
+            id="cart-customer-name" 
+            type="text" 
+            name="name" 
+            autocomplete="name" 
+            v-model="nameInput" 
+            @blur="handleSaveIdentity" 
+            placeholder="أدخل اسمك الكريم…" 
+            class="form-input" 
+          />
         </div>
         
         <div class="form-group">
-          <label class="form-label">رقم الهاتف</label>
-          <input type="tel" name="phone" autocomplete="tel" v-model="phoneInput" placeholder="09XXXXXXXX" class="form-input" />
+          <label for="cart-customer-phone" class="form-label">رقم الهاتف</label>
+          <input 
+            id="cart-customer-phone" 
+            type="tel" 
+            name="phone" 
+            autocomplete="tel" 
+            v-model="phoneInput" 
+            @blur="handleSaveIdentity" 
+            placeholder="09XXXXXXXX" 
+            class="form-input" 
+          />
         </div>
         
         <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
@@ -208,13 +226,14 @@ const handleClearCart = () => {
         <h3 class="section-title">بيانات الاستلام والملاحظات</h3>
 
         <div class="form-group">
-          <label class="form-label">تاريخ استلام الطلب</label>
-          <input type="date" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
+          <label for="cart-delivery-date" class="form-label">تاريخ استلام الطلب</label>
+          <input id="cart-delivery-date" type="date" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">ملاحظات عامة حول الطلب</label>
+          <label for="cart-order-notes" class="form-label">ملاحظات عامة حول الطلب</label>
           <textarea 
+            id="cart-order-notes" 
             v-model="cartStore.orderNotes" 
             @input="cartStore.persist" 
             placeholder="أضف أي ملاحظات عامة حول الاستلام والتغليف هنا…" 
