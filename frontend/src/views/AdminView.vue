@@ -51,6 +51,9 @@
 
     <!-- Admin Panel Container -->
     <div v-else class="admin-container">
+      <!-- Mobile Sidebar Backdrop Overlay -->
+      <div v-if="sidebarOpen" class="sidebar-backdrop" @click="sidebarOpen = false"></div>
+
       <!-- Sidebar -->
       <aside class="admin-sidebar" :class="{ open: sidebarOpen }">
         <div class="sidebar-brand">
@@ -3386,60 +3389,69 @@ export default {
 
 /* Sidebar Navigation */
 .admin-sidebar {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
   border-left: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 25px 20px;
+  padding: 24px 18px;
   display: flex;
   flex-direction: column;
   height: 100dvh;
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 14px;
+  margin-bottom: 26px;
+  padding: 4px 6px;
 }
 
 .sidebar-logo {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .sidebar-brand h3 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1e3a5f;
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: #0f172a;
   margin: 0;
+  letter-spacing: -0.2px;
+  font-family: inherit;
 }
 
 .badge {
-  background: var(--chart-primary);
-  color: var(--theme-text-color);
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
+  background: var(--primary-glow);
+  color: var(--primary-color);
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 800;
+  display: inline-block;
+  margin-top: 2px;
 }
 
 .shop-switcher {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid #e2e8f0;
   padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 25px;
+  border-radius: 14px;
+  margin-bottom: 22px;
 }
 
 .switch-label {
   font-size: 0.8rem;
-  color: #6c757d;
+  color: #64748b;
+  font-weight: 700;
   display: block;
   margin-bottom: 8px;
 }
@@ -3451,32 +3463,37 @@ export default {
 
 .shop-select-pills.compact .shop-pill {
   flex: 1;
-  padding: 6px 10px;
-  font-size: 0.8rem;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  min-height: 38px;
 }
 
 .shop-pill {
   flex: 1;
-  padding: 10px 12px;
-  background: #f1f3f5;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  color: #495057;
-  font-weight: 600;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #475569;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
 }
 
 .shop-pill.active {
-  background: var(--chart-primary);
-  border-color: var(--chart-primary);
-  color: var(--theme-text-color);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 3px 10px var(--primary-glow);
 }
 
 .sidebar-menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 
@@ -3484,32 +3501,53 @@ export default {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
+  padding: 12px 16px;
+  min-height: 48px;
   border-radius: 12px;
-  color: #212529;
+  color: #334155;
   background: transparent;
   border: none;
+  border-right: 4px solid transparent;
   cursor: pointer;
   text-align: right;
   font-weight: 700;
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.menu-item:hover, .menu-item.active {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--chart-primary);
+.menu-item:hover {
+  background: rgba(253, 181, 24, 0.08);
+  color: var(--primary-color);
+  transform: translateX(-3px);
+}
+
+.menu-item.active {
+  background: linear-gradient(135deg, rgba(253, 181, 24, 0.16) 0%, rgba(253, 181, 24, 0.06) 100%);
+  color: var(--primary-color);
+  border-right: 4px solid var(--primary-color);
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(253, 181, 24, 0.1);
 }
 
 .menu-icon {
   width: 22px;
   height: 22px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.menu-item.active .menu-icon {
+  color: var(--primary-color);
+  transform: scale(1.08);
 }
 
 .sidebar-footer {
   margin-top: auto;
-  border-top: 1px solid #dee2e6;
-  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
 }
 
 /* Mobile header styling */
@@ -4602,13 +4640,26 @@ export default {
     top: 60px;
     right: 0;
     width: 280px;
-    height: calc(100vh - 60px);
+    height: calc(100dvh - 60px);
     transform: translateX(100%);
-    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.05);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
   }
 
   .admin-sidebar.open {
     transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
   }
 
   .admin-mobile-header {
