@@ -339,8 +339,8 @@
                       </tr>
                       <tr v-for="prod in analyticsData.topProducts" :key="prod.productId">
                         <td>{{ prod.name }}</td>
-                        <td>{{ prod.quantity }} وحدة</td>
-                        <td>{{ formatCurrency(prod.revenue) }}</td>
+                        <td class="text-mono text-bold">{{ prod.quantity }} وحدة</td>
+                        <td class="text-mono text-bold text-primary">{{ formatCurrency(prod.revenue) }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -365,8 +365,8 @@
                       </tr>
                       <tr v-for="cust in analyticsData.topCustomers" :key="cust.phone">
                         <td>{{ cust.name }}</td>
-                        <td>{{ cust.phone }}</td>
-                        <td class="text-semibold">{{ formatCurrency(cust.totalSpent) }}</td>
+                        <td class="text-mono">{{ cust.phone }}</td>
+                        <td class="text-semibold text-mono text-primary">{{ formatCurrency(cust.totalSpent) }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -494,8 +494,8 @@
                         {{ prod.category }}
                         <span v-if="prod.subCategory" class="badge-sub">{{ prod.subCategory }}</span>
                       </td>
-                      <td>{{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</td>
-                      <td>{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
+                      <td class="text-mono text-bold">{{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</td>
+                      <td class="text-mono text-bold">{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
                       <td>
                         <div class="tags-container-small">
                           <span 
@@ -783,23 +783,23 @@
                       <td colspan="8" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
                     <tr v-for="order in filteredOrders" :key="order._id">
-                      <td class="text-bold">#{{ order._id.toString().slice(-6) }}</td>
-                      <td>{{ new Date(order.createdAt).toLocaleString('ar-LY') }}</td>
+                      <td class="text-bold text-mono">#{{ order._id.toString().slice(-6) }}</td>
+                      <td class="text-mono text-small">{{ new Date(order.createdAt).toLocaleString('ar-LY') }}</td>
                       <td>
                         <div class="customer-info-cell">
                           <span class="name block text-bold">{{ order.customerInfo.name }}</span>
-                          <span class="phone text-muted block">{{ order.customerInfo.phone }}</span>
+                          <span class="phone text-muted block text-mono">{{ order.customerInfo.phone }}</span>
                         </div>
                       </td>
                       <td>
                         <div class="items-list-cell">
                           <div v-for="(item, idx) in order.items" :key="idx" class="item-line">
-                            {{ item.name }} × {{ item.quantity }}
+                            {{ item.name }} × <span class="text-mono">{{ item.quantity }}</span>
                             <span v-if="item.notes" class="item-note">({{ item.notes }})</span>
                           </div>
                         </div>
                       </td>
-                      <td class="text-bold text-primary">{{ formatCurrency(order.totalPrice) }}</td>
+                      <td class="text-bold text-primary text-mono">{{ formatCurrency(order.totalPrice) }}</td>
                       <td>
                         <span class="price-mode-badge" :class="order.priceMode">
                           {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
@@ -974,11 +974,11 @@
                     </tr>
                     <tr v-for="cust in filteredCustomers" :key="cust._id">
                       <td class="text-bold">{{ cust.name }}</td>
-                      <td>{{ cust.phone }}</td>
-                      <td>{{ cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</td>
-                      <td>{{ cust.lastActive ? new Date(cust.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</td>
-                      <td>{{ cust.orderCount }} طلبات</td>
-                      <td class="text-bold text-primary">{{ formatCurrency(cust.totalSpent) }}</td>
+                      <td class="text-mono">{{ cust.phone }}</td>
+                      <td class="text-mono text-small">{{ cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</td>
+                      <td class="text-mono text-small">{{ cust.lastActive ? new Date(cust.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</td>
+                      <td class="text-mono text-bold">{{ cust.orderCount }} طلبات</td>
+                      <td class="text-bold text-primary text-mono">{{ formatCurrency(cust.totalSpent) }}</td>
                       <td>
                         <div class="actions-buttons-cell">
                           <button @click="openCustomerEditModal(cust)" class="btn btn-outline btn-xs ml-1">تعديل</button>
@@ -3896,38 +3896,69 @@ export default {
 /* Tables Layout inside dashboard */
 .table-container {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(203, 213, 225, 0.6) transparent;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.6);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.8);
 }
 
 .admin-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: right;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .admin-table th {
-  padding: 10px 12px;
-  background: #f8fafc;
-  color: #1e293b;
-  font-weight: 800;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 12px 14px;
+  background: rgba(248, 250, 252, 0.95);
+  backdrop-filter: blur(8px);
+  color: #334155;
+  font-weight: 850;
   border-bottom: 2px solid #e2e8f0;
-  font-size: 0.82rem;
+  font-size: 0.83rem;
   letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 
 .admin-table td {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   vertical-align: middle;
+  transition: background-color 0.15s ease;
 }
 
 .admin-table tr {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background-color: rgba(248, 250, 252, 0.4);
 }
 
 .admin-table tbody tr:hover {
-  background-color: rgba(30, 58, 95, 0.03);
+  background-color: rgba(253, 181, 24, 0.06);
 }
 
 .text-bold {
@@ -3935,7 +3966,7 @@ export default {
 }
 
 .text-mono, .customer-info-cell .phone, .order-date, .kpi-value {
-  font-family: 'Fira Code', 'Courier New', monospace;
+  font-family: 'Fira Code', 'Courier New', monospace !important;
   letter-spacing: -0.3px;
 }
 
