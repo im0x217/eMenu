@@ -936,21 +936,72 @@
     </div>
 
     <!-- Product Modal Form -->
-    <div v-if="productModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-lg">
+    <div v-if="productModalOpen" class="modal-overlay animate-fade-in" @click.self="productModalOpen = false">
+      <div class="modal-box glass-panel max-w-lg product-form-modal">
         <div class="modal-header">
-          <h3>{{ editingProduct._id ? 'تعديل بيانات المنتج' : 'إضافة منتج جديد' }}</h3>
-          <button @click="productModalOpen = false" class="modal-close-btn">&times;</button>
+          <div class="modal-title-group">
+            <div class="modal-title-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <h3>{{ editingProduct._id ? 'تعديل بيانات المنتج' : 'إضافة منتج جديد' }}</h3>
+          </div>
+          <button @click="productModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
         </div>
+
         <form @submit.prevent="saveProduct" class="modal-form">
+          
+          <!-- Product Image Upload Dropzone -->
+          <div class="form-group mb-4">
+            <label class="form-label text-bold mb-2 block" style="font-size: 0.9rem;">صورة المنتج</label>
+            <div 
+              class="image-upload-dropzone"
+              :class="{ 'has-preview': modalFilePreview || editingProduct.img, 'is-dragging': modalDragActive }"
+              @click="triggerModalImageSelect"
+              @dragover.prevent="modalDragActive = true"
+              @dragleave.prevent="modalDragActive = false"
+              @drop.prevent="handleModalImageDrop"
+            >
+              <input 
+                type="file" 
+                ref="modalFileInput" 
+                accept="image/*" 
+                style="display: none;" 
+                @change="handleModalImageFileSelect" 
+              />
+              
+              <div v-if="modalFilePreview || editingProduct.img" class="image-preview-container">
+                <img :src="modalFilePreview || editingProduct.img" alt="Product Preview" class="upload-preview-img" />
+                <div class="image-preview-overlay">
+                  <span class="preview-change-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    تغيير الصورة
+                  </span>
+                  <button type="button" class="preview-remove-btn" @click.stop="removeModalImage" title="حذف الصورة">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div v-else class="dropzone-placeholder">
+                <div class="dropzone-icon">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+                <div class="dropzone-text">
+                  <span class="dropzone-title">انقر هنا أو اسحب صورة المنتج لوضعها</span>
+                  <span class="dropzone-sub">يدعم JPG, PNG, WEBP (حجم أقصى 5 ميجابايت)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>اسم المنتج *</label>
-            <input v-model="editingProduct.name" type="text" required class="form-control" />
+            <input v-model="editingProduct.name" type="text" required placeholder="مثال: غريبة باللوز" class="form-control" />
           </div>
 
           <div class="form-group">
             <label>الوصف</label>
-            <textarea v-model="editingProduct.desc" rows="2" class="form-control"></textarea>
+            <textarea v-model="editingProduct.desc" rows="2" placeholder="أدخل وصفاً مشوقاً للمنتج..." class="form-control"></textarea>
           </div>
 
           <div class="form-group-row">
@@ -998,15 +1049,15 @@
           <div class="form-group">
             <label>طريقة البيع والتسعير</label>
             <div class="purchase-type-radios">
-              <label class="radio-label">
+              <label class="radio-label" :class="{ active: editingProduct.purchaseType === 'both' }">
                 <input type="radio" value="both" v-model="editingProduct.purchaseType" />
                 <span>كلاهما (مفرد + جملة)</span>
               </label>
-              <label class="radio-label">
+              <label class="radio-label" :class="{ active: editingProduct.purchaseType === 'regular' }">
                 <input type="radio" value="regular" v-model="editingProduct.purchaseType" />
                 <span>مفرد فقط</span>
               </label>
-              <label class="radio-label">
+              <label class="radio-label" :class="{ active: editingProduct.purchaseType === 'bulk' }">
                 <input type="radio" value="bulk" v-model="editingProduct.purchaseType" />
                 <span>جملة فقط</span>
               </label>
@@ -1024,13 +1075,16 @@
             </div>
           </div>
 
-          <div class="form-group checkbox-group">
+          <div class="form-group checkbox-group mt-2">
             <input type="checkbox" id="modal-allow-float" v-model="editingProduct.allowFloat" />
             <label for="modal-allow-float">يسمح بالكميات الكسرية (مثل: 0.5 كجم)</label>
           </div>
 
           <div class="modal-footer mt-4">
-            <button type="submit" class="btn btn-primary">حفظ المنتج</button>
+            <button type="submit" class="btn btn-primary premium-submit-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              حفظ المنتج
+            </button>
             <button type="button" @click="productModalOpen = false" class="btn btn-outline">إلغاء</button>
           </div>
         </form>
@@ -1676,6 +1730,7 @@ export default {
         editingProduct.price_bulk = prod.price_bulk || null;
         editingProduct.allowFloat = !!prod.allowFloat;
         editingProduct.img = prod.img || '';
+        modalFilePreview.value = prod.img || '';
         editingProduct.tags = Array.isArray(prod.tags) ? [...prod.tags] : [];
         
         // Load subcategories for this category
@@ -1693,6 +1748,7 @@ export default {
         editingProduct.price_bulk = null;
         editingProduct.allowFloat = false;
         editingProduct.img = '';
+        modalFilePreview.value = '';
         editingProduct.tags = [];
         subCategoriesForEditing.value = [];
       }
@@ -1781,6 +1837,12 @@ export default {
         modalFilePreview.value = e.target.result;
       };
       reader.readAsDataURL(file);
+    };
+
+    const removeModalImage = () => {
+      modalFile.value = null;
+      modalFilePreview.value = '';
+      editingProduct.img = '';
     };
 
     // Zoom Image Preview
@@ -2880,6 +2942,7 @@ export default {
       modalFile,
       modalFilePreview,
       modalDragActive,
+      removeModalImage,
       editingCategory,
       categorySubcategoriesString,
       editingTag,
@@ -4024,20 +4087,191 @@ export default {
   cursor: pointer;
 }
 
-/* Drag drop upload zones styles */
-.image-dropzone {
-  border: 2px dashed #ced4da;
+/* Polished Product Form Modal & Dropzone Styling */
+.product-form-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-title-icon {
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  padding: 20px;
+  background: var(--primary-glow);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-upload-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 16px;
   text-align: center;
   cursor: pointer;
-  background: #f8f9fa;
+  background: #f8fafc;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-upload-dropzone:hover,
+.image-upload-dropzone.is-dragging {
+  border-color: var(--primary-color);
+  background: var(--primary-glow);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.image-upload-dropzone.has-preview {
+  padding: 0;
+  border-style: solid;
+  border-color: #e2e8f0;
+  background: #0f172a;
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.upload-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.image-preview-container:hover .upload-preview-img {
+  transform: scale(1.04);
+}
+
+.image-preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.image-preview-container:hover .image-preview-overlay {
+  opacity: 1;
+}
+
+.preview-change-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.preview-remove-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.preview-remove-btn:hover {
+  transform: scale(1.1);
+  background: #dc2626;
+}
+
+.dropzone-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropzone-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(241, 245, 249, 0.8);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropzone-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dropzone-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Polished Radio Label Pills */
+.purchase-type-radios {
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.radio-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.image-dropzone.active, .image-dropzone:hover {
-  border-color: var(--chart-primary);
-  background: rgba(var(--chart-primary), 0.02);
+.radio-label:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.radio-label.active {
+  background: rgba(var(--primary-color-rgb), 0.1);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 700;
 }
 
 .cloud-icon {
