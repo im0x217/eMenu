@@ -2343,7 +2343,7 @@ export default {
     };
 
     const printingOrder = ref(null);
-    const ITEMS_PER_PAGE = 12; // 12 items per page maximizes row density on A5
+    const ITEMS_PER_PAGE = 16; // 16 items per page for ultra-dense A5 layout
 
     const paginatedOrderPages = computed(() => {
       if (!printingOrder.value || !printingOrder.value.items) return [];
@@ -4888,7 +4888,7 @@ export default {
   }
   
   .receipt-items-table td {
-    padding: 3.5px 6px;
+    padding: 2.5px 6px;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: top;
   }
