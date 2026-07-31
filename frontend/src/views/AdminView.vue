@@ -434,22 +434,33 @@
           <!-- PRODUCTS CRUD TAB -->
           <div v-if="activeTab === 'products'" class="products-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar">
-                <div class="filters-group">
-                  <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن منتج…" class="form-control" />
-                  <select v-model="filters.category" class="form-control">
-                    <option value="">كل الأصناف</option>
-                    <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
-                  </select>
-                  <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="form-control animate-fade-in">
-                    <option value="">كل الأصناف الفرعية</option>
-                    <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
-                  </select>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
+                    <span class="toolbar-badge">{{ filteredProducts.length }} منتج</span>
+                  </div>
+                  <button @click="openProductModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة منتج جديد
+                  </button>
                 </div>
-                <button @click="openProductModal()" class="btn btn-primary">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  إضافة منتج جديد
-                </button>
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث بالاسم أو الوصف…" class="form-control search-input" />
+                  </div>
+                  <div class="filters-inline">
+                    <select v-model="filters.category" class="form-control select-pill">
+                      <option value="">كل الأصناف</option>
+                      <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
+                    </select>
+                    <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="form-control select-pill animate-fade-in">
+                      <option value="">كل الأصناف الفرعية</option>
+                      <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div class="table-container">
@@ -522,11 +533,17 @@
           <!-- CATEGORIES CRUD TAB -->
           <div v-if="activeTab === 'categories'" class="categories-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-end">
-                <button @click="openCategoryModal()" class="btn btn-primary">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  إضافة صنف جديد
-                </button>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة أصناف المنيو</h3>
+                    <span class="toolbar-badge">{{ categories.length }} صنف</span>
+                  </div>
+                  <button @click="openCategoryModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة صنف جديد
+                  </button>
+                </div>
               </div>
 
               <div class="table-container">
@@ -568,11 +585,17 @@
           <!-- TAGS CRUD TAB -->
           <div v-if="activeTab === 'tags'" class="tags-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-end">
-                <button @click="openTagModal()" class="btn btn-primary">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  إضافة علامة مميزة
-                </button>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة العلامات المميزة (Tags)</h3>
+                    <span class="toolbar-badge">{{ tags.length }} علامة</span>
+                  </div>
+                  <button @click="openTagModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة علامة مميزة
+                  </button>
+                </div>
               </div>
 
               <div class="table-container">
@@ -657,14 +680,17 @@
           <!-- MARKETING CAROUSEL TAB -->
           <div v-if="activeTab === 'carousel'" class="carousel-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden p-0">
-              <div class="card-toolbar">
-                <div class="filters-group">
-                  <span class="text-bold text-primary">إجمالي البنرات المضافة: {{ carouselItems.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">بنرات العروض التسويقية</h3>
+                    <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
+                  </div>
+                  <button @click="openCarouselModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة بنر جديد
+                  </button>
                 </div>
-                <button @click="openCarouselModal()" class="btn btn-primary">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  إضافة بنر جديد
-                </button>
               </div>
 
               <div class="p-3">
@@ -704,23 +730,34 @@
           <!-- ORDERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar">
-                <div class="filters-group">
-                  <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو الاسم…" class="form-control" />
-                  <select v-model="orderFilters.status" class="form-control">
-                    <option value="">كل الحالات</option>
-                    <option value="pending">قيد الانتظار (Pending)</option>
-                    <option value="ready">جاهز للاستلام (Ready)</option>
-                    <option value="received">تم الاستلام (Received)</option>
-                    <option value="cancelled">ملغي (Cancelled)</option>
-                  </select>
-                  <select v-model="orderFilters.dateRange" class="form-control">
-                    <option value="all">كل الأوقات</option>
-                    <option value="today">اليوم</option>
-                    <option value="yesterday">أمس</option>
-                    <option value="7d">آخر 7 أيام</option>
-                    <option value="30d">آخر 30 يوم</option>
-                  </select>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
+                    <span class="toolbar-badge">{{ filteredOrders.length }} طلب</span>
+                  </div>
+                </div>
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو اسم العميل…" class="form-control search-input" />
+                  </div>
+                  <div class="filters-inline">
+                    <select v-model="orderFilters.status" class="form-control select-pill">
+                      <option value="">كل الحالات</option>
+                      <option value="pending">قيد الانتظار (Pending)</option>
+                      <option value="ready">جاهز للاستلام (Ready)</option>
+                      <option value="received">تم الاستلام (Received)</option>
+                      <option value="cancelled">ملغي (Cancelled)</option>
+                    </select>
+                    <select v-model="orderFilters.dateRange" class="form-control select-pill">
+                      <option value="all">كل الأوقات</option>
+                      <option value="today">اليوم</option>
+                      <option value="yesterday">أمس</option>
+                      <option value="7d">آخر 7 أيام</option>
+                      <option value="30d">آخر 30 يوم</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -900,9 +937,18 @@
           <!-- CUSTOMERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar">
-                <div class="filters-group">
-                  <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن اسم أو رقم هاتف…" class="form-control" />
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">دليل وقائمة العملاء</h3>
+                    <span class="toolbar-badge">{{ filteredCustomers.length }} عميل</span>
+                  </div>
+                </div>
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper w-100">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control search-input" />
+                  </div>
                 </div>
               </div>
 
@@ -3901,52 +3947,99 @@ export default {
   text-align: right;
 }
 
-/* Unified Card Toolbar Styles */
-.table-card.glass-panel {
-  padding: 0;
-  overflow: hidden;
-  border-radius: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  box-shadow: var(--shadow-md);
+/* Option 1: Split-Level Pill Bar Toolbar Styles */
+.card-toolbar-split {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(44, 37, 32, 0.07);
+  backdrop-filter: blur(10px);
 }
 
-.card-toolbar {
+.card-toolbar-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.45);
-  border-bottom: 1px solid rgba(44, 37, 32, 0.07);
-  backdrop-filter: blur(8px);
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.card-toolbar-end {
-  justify-content: flex-end;
+.toolbar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.card-toolbar .filters-group {
+.toolbar-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.toolbar-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--primary-glow);
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.card-toolbar-bottom {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
-  min-width: 240px;
   flex-wrap: wrap;
 }
 
-.card-toolbar .form-control {
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-input-wrapper .search-input {
+  padding-right: 36px !important;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 9px 14px;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
-  min-width: 180px;
+  width: 100%;
 }
 
-.card-toolbar .form-control:focus {
+.filters-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.select-pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-pill:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
