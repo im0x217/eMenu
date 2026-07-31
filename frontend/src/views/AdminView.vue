@@ -1291,89 +1291,95 @@
   </div>
 
   <!-- Hidden Print Receipt (A5) -->
-  <div id="print-receipt" class="print-receipt" v-if="printingOrder">
-    <div class="receipt-header">
-      <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="receipt-logo" />
-      <div class="receipt-brand">
-        <h1 class="receipt-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
-        <p class="receipt-tagline">الجودة في كل قطعة</p>
+  <div class="print-receipt-wrapper" v-if="printingOrder">
+    <div v-for="(pageChunk, pageIndex) in paginatedOrderPages" :key="pageIndex" class="print-receipt">
+      <div class="receipt-header">
+        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="receipt-logo" />
+        <div class="receipt-brand">
+          <h1 class="receipt-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+          <p class="receipt-tagline">الجودة في كل قطعة</p>
+        </div>
       </div>
-    </div>
 
-    <div class="receipt-divider"></div>
+      <div class="receipt-divider"></div>
 
-    <div class="receipt-meta">
-      <div class="receipt-meta-row">
-        <span class="receipt-label">رقم الطلب:</span>
-        <span class="receipt-value">#{{ printingOrder._id.toString().slice(-6) }}</span>
+      <div class="receipt-meta">
+        <div class="receipt-meta-row">
+          <span class="receipt-label">رقم الطلب:</span>
+          <span class="receipt-value">#{{ printingOrder._id.toString().slice(-6) }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">التاريخ:</span>
+          <span class="receipt-value">{{ new Date(printingOrder.createdAt).toLocaleString('ar-LY') }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">العميل:</span>
+          <span class="receipt-value">{{ printingOrder.customerInfo.name }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">الهاتف:</span>
+          <span class="receipt-value receipt-phone">{{ printingOrder.customerInfo.phone }}</span>
+        </div>
+        <div class="receipt-meta-row" v-if="printingOrder.deliveryDate">
+          <span class="receipt-label">تاريخ التسليم:</span>
+          <span class="receipt-value">{{ printingOrder.deliveryDate }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">نوع السعر:</span>
+          <span class="receipt-value">{{ printingOrder.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">الحالة:</span>
+          <span class="receipt-value">{{ printingOrder.status === 'ready' ? 'جاهز للاستلام' : printingOrder.status === 'received' ? 'تم الاستلام' : printingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار' }}</span>
+        </div>
       </div>
-      <div class="receipt-meta-row">
-        <span class="receipt-label">التاريخ:</span>
-        <span class="receipt-value">{{ new Date(printingOrder.createdAt).toLocaleString('ar-LY') }}</span>
-      </div>
-      <div class="receipt-meta-row">
-        <span class="receipt-label">العميل:</span>
-        <span class="receipt-value">{{ printingOrder.customerInfo.name }}</span>
-      </div>
-      <div class="receipt-meta-row">
-        <span class="receipt-label">الهاتف:</span>
-        <span class="receipt-value receipt-phone">{{ printingOrder.customerInfo.phone }}</span>
-      </div>
-      <div class="receipt-meta-row" v-if="printingOrder.deliveryDate">
-        <span class="receipt-label">تاريخ التسليم:</span>
-        <span class="receipt-value">{{ printingOrder.deliveryDate }}</span>
-      </div>
-      <div class="receipt-meta-row">
-        <span class="receipt-label">نوع السعر:</span>
-        <span class="receipt-value">{{ printingOrder.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}</span>
-      </div>
-      <div class="receipt-meta-row">
-        <span class="receipt-label">الحالة:</span>
-        <span class="receipt-value">{{ printingOrder.status === 'ready' ? 'جاهز للاستلام' : printingOrder.status === 'received' ? 'تم الاستلام' : printingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار' }}</span>
-      </div>
-    </div>
 
-    <div class="receipt-divider"></div>
+      <div class="receipt-divider"></div>
 
-    <table class="receipt-items-table">
-      <thead>
-        <tr>
-          <th class="receipt-th-name">المنتج</th>
-          <th class="receipt-th-qty">الكمية</th>
-          <th class="receipt-th-price">السعر</th>
-          <th class="receipt-th-total">الإجمالي</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(item, idx) in printingOrder.items" :key="idx">
-          <td class="receipt-td-name">
-            {{ item.name }}
-            <span v-if="item.notes" class="receipt-item-note">{{ item.notes }}</span>
-          </td>
-          <td class="receipt-td-qty">{{ item.quantity }}</td>
-          <td class="receipt-td-price">{{ Number(item.price).toFixed(2) }}</td>
-          <td class="receipt-td-total">{{ (Number(item.price) * Number(item.quantity)).toFixed(2) }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="receipt-items-table">
+        <thead>
+          <tr>
+            <th class="receipt-th-name">المنتج</th>
+            <th class="receipt-th-qty">الكمية</th>
+            <th class="receipt-th-price">السعر</th>
+            <th class="receipt-th-total">الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, idx) in pageChunk" :key="idx">
+            <td class="receipt-td-name">
+              {{ item.name }}
+              <span v-if="item.notes" class="receipt-item-note">{{ item.notes }}</span>
+            </td>
+            <td class="receipt-td-qty">{{ item.quantity }}</td>
+            <td class="receipt-td-price">{{ Number(item.price).toFixed(2) }}</td>
+            <td class="receipt-td-total">{{ (Number(item.price) * Number(item.quantity)).toFixed(2) }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <div class="receipt-divider"></div>
+      <!-- Footer elements only on last page -->
+      <template v-if="pageIndex === paginatedOrderPages.length - 1">
+        <div class="receipt-divider"></div>
 
-    <div class="receipt-total-section">
-      <div class="receipt-grand-total">
-        <span>الإجمالي الكلي</span>
-        <span class="receipt-grand-value">{{ Number(printingOrder.totalPrice).toFixed(2) }} د.ل</span>
+        <div class="receipt-total-section">
+          <div class="receipt-grand-total">
+            <span>الإجمالي الكلي</span>
+            <span class="receipt-grand-value">{{ Number(printingOrder.totalPrice).toFixed(2) }} د.ل</span>
+          </div>
+        </div>
+
+        <div v-if="printingOrder.notes" class="receipt-notes">
+          <span class="receipt-label">ملاحظات:</span>
+          <p>{{ printingOrder.notes }}</p>
+        </div>
+      </template>
+
+      <div class="receipt-footer">
+        <p v-if="paginatedOrderPages.length > 1" class="receipt-page-num">صفحة {{ pageIndex + 1 }} من {{ paginatedOrderPages.length }}</p>
+        <p>شكراً لتعاملكم معنا ❤</p>
+        <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
       </div>
-    </div>
-
-    <div v-if="printingOrder.notes" class="receipt-notes">
-      <span class="receipt-label">ملاحظات:</span>
-      <p>{{ printingOrder.notes }}</p>
-    </div>
-
-    <div class="receipt-footer">
-      <p>شكراً لتعاملكم معنا ❤</p>
-      <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
     </div>
   </div>
 </template>
@@ -2337,12 +2343,29 @@ export default {
     };
 
     const printingOrder = ref(null);
+    const ITEMS_PER_PAGE = 6; // 6 items per page guarantees zero page overflow on A5
+
+    const paginatedOrderPages = computed(() => {
+      if (!printingOrder.value || !printingOrder.value.items) return [];
+      const items = printingOrder.value.items;
+      const pages = [];
+      for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
+        pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+      }
+      return pages;
+    });
 
     const printOrder = async (order) => {
       printingOrder.value = order;
       await nextTick();
+
+      const cleanup = () => {
+        printingOrder.value = null;
+        window.removeEventListener('afterprint', cleanup);
+      };
+
+      window.addEventListener('afterprint', cleanup);
       window.print();
-      setTimeout(() => { printingOrder.value = null; }, 500);
     };
 
     const fetchProducts = async () => {
@@ -2883,6 +2906,7 @@ export default {
       exportReport,
       printReport,
       printingOrder,
+      paginatedOrderPages,
       printOrder,
       toggleProductAvailability,
       deleteProduct,
@@ -4751,19 +4775,25 @@ export default {
     margin: 6mm 8mm;
   }
   
-  body * {
-    visibility: hidden;
+  .admin-layout {
+    display: none !important;
   }
   
-  #print-receipt, #print-receipt * {
+  .print-receipt-wrapper, .print-receipt-wrapper * {
     visibility: visible;
   }
   
-  #print-receipt {
+  .print-receipt-wrapper {
     display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+
+  .print-receipt {
+    display: block !important;
     width: 100%;
     padding: 0;
     margin: 0;
@@ -4772,6 +4802,15 @@ export default {
     font-family: 'Cairo', 'Fira Code', sans-serif;
     direction: rtl;
     font-size: 11pt;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-receipt:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
   }
   
   .receipt-header {
@@ -4901,11 +4940,17 @@ export default {
   
   .receipt-footer {
     text-align: center;
-    margin-top: 12px;
+    margin-top: 24px;
     padding-top: 8px;
     border-top: 1px dashed #cbd5e1;
     font-size: 9pt;
     font-weight: 700;
+  }
+  
+  .receipt-page-num {
+    font-size: 8pt;
+    color: #64748b;
+    margin-bottom: 2px;
   }
   
   .receipt-footer-sub {

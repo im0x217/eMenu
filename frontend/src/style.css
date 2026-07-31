@@ -346,3 +346,19 @@ button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
     animation: none !important;
   }
 }
+
+/* Global Print Overrides: Reset layout wrappers that enforce 100dvh and overflow hidden */
+@media print {
+  html, body, #app, .app-layout, .admin-main-wrapper {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
