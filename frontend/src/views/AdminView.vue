@@ -433,24 +433,25 @@
 
           <!-- PRODUCTS CRUD TAB -->
           <div v-if="activeTab === 'products'" class="products-tab-content">
-            <!-- Filter Bar -->
-            <div class="filter-actions-bar glass-panel mb-3">
-              <div class="filters-group">
-                <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن منتج…" class="form-control" />
-                <select v-model="filters.category" class="form-control">
-                  <option value="">كل الأصناف</option>
-                  <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
-                </select>
-                <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="form-control animate-fade-in">
-                  <option value="">كل الأصناف الفرعية</option>
-                  <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
-                </select>
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar">
+                <div class="filters-group">
+                  <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن منتج…" class="form-control" />
+                  <select v-model="filters.category" class="form-control">
+                    <option value="">كل الأصناف</option>
+                    <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
+                  </select>
+                  <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="form-control animate-fade-in">
+                    <option value="">كل الأصناف الفرعية</option>
+                    <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
+                  </select>
+                </div>
+                <button @click="openProductModal()" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  إضافة منتج جديد
+                </button>
               </div>
-              <button @click="openProductModal()" class="btn btn-primary">إضافة منتج جديد</button>
-            </div>
 
-            <!-- Products Table -->
-            <div class="table-card glass-panel">
               <div class="table-container">
                 <table class="admin-table">
                   <thead>
@@ -520,11 +521,14 @@
 
           <!-- CATEGORIES CRUD TAB -->
           <div v-if="activeTab === 'categories'" class="categories-tab-content">
-            <div class="filter-actions-bar glass-panel mb-3 text-left">
-              <button @click="openCategoryModal()" class="btn btn-primary">إضافة صنف جديد</button>
-            </div>
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar card-toolbar-end">
+                <button @click="openCategoryModal()" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  إضافة صنف جديد
+                </button>
+              </div>
 
-            <div class="table-card glass-panel">
               <div class="table-container">
                 <table class="admin-table">
                   <thead>
@@ -563,11 +567,14 @@
 
           <!-- TAGS CRUD TAB -->
           <div v-if="activeTab === 'tags'" class="tags-tab-content">
-            <div class="filter-actions-bar glass-panel mb-3 text-left">
-              <button @click="openTagModal()" class="btn btn-primary">إضافة علامة مميزة</button>
-            </div>
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar card-toolbar-end">
+                <button @click="openTagModal()" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  إضافة علامة مميزة
+                </button>
+              </div>
 
-            <div class="table-card glass-panel">
               <div class="table-container">
                 <table class="admin-table">
                   <thead>
@@ -649,68 +656,74 @@
 
           <!-- MARKETING CAROUSEL TAB -->
           <div v-if="activeTab === 'carousel'" class="carousel-tab-content animate-fade-in">
-            <div class="filter-actions-bar glass-panel mb-3">
-              <div class="filters-group">
-                <span class="text-bold text-primary">إجمالي البنرات المضافة: {{ carouselItems.length }}</span>
-              </div>
-              <button @click="openCarouselModal()" class="btn btn-primary">إضافة بنر جديد</button>
-            </div>
-
-            <!-- Carousel Items Grid -->
-            <div v-if="carouselItems.length > 0" class="carousel-grid mt-3">
-              <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
-                <div class="card-image-wrapper">
-                  <img :src="item.image" alt="Banner Preview" class="card-image" />
+            <div class="table-card glass-panel overflow-hidden p-0">
+              <div class="card-toolbar">
+                <div class="filters-group">
+                  <span class="text-bold text-primary">إجمالي البنرات المضافة: {{ carouselItems.length }}</span>
                 </div>
-                <div class="card-info-bar">
-                  <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
-                  <div style="display: flex; gap: 8px;">
-                    <button @click="openCarouselModal(item)" class="btn btn-outline btn-sm flex-center" style="border-color: #ced4da; color: #495057;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
-                      </svg>
-                      <span>تعديل</span>
-                    </button>
-                    <button @click="deleteCarouselItem(item._id)" class="btn btn-danger btn-sm flex-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                      <span>حذف</span>
-                    </button>
+                <button @click="openCarouselModal()" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  إضافة بنر جديد
+                </button>
+              </div>
+
+              <div class="p-3">
+                <div v-if="carouselItems.length > 0" class="carousel-grid">
+                  <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
+                    <div class="card-image-wrapper">
+                      <img :src="item.image" alt="Banner Preview" class="card-image" />
+                    </div>
+                    <div class="card-info-bar">
+                      <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
+                      <div style="display: flex; gap: 8px;">
+                        <button @click="openCarouselModal(item)" class="btn btn-outline btn-sm flex-center" style="border-color: #ced4da; color: #495057;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
+                          </svg>
+                          <span>تعديل</span>
+                        </button>
+                        <button @click="deleteCarouselItem(item._id)" class="btn btn-danger btn-sm flex-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                          <span>حذف</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
+                <div v-else class="text-center p-5 text-muted">
+                  لا توجد بنرات عروض تسويقية مضافة حالياً. اضغط على زر "إضافة بنر جديد" للبدء.
+                </div>
               </div>
-            </div>
-            <div v-else class="glass-panel text-center p-5 text-muted">
-              لا توجد بنرات عروض تسويقية مضافة حالياً. اضغط على زر "إضافة بنر جديد" للبدء.
             </div>
           </div>
 
           <!-- ORDERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
-            <div class="filter-actions-bar glass-panel mb-3">
-              <div class="filters-group">
-                <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو الاسم…" class="form-control" />
-                <select v-model="orderFilters.status" class="form-control">
-                  <option value="">كل الحالات</option>
-                  <option value="pending">قيد الانتظار (Pending)</option>
-                  <option value="ready">جاهز للاستلام (Ready)</option>
-                  <option value="received">تم الاستلام (Received)</option>
-                  <option value="cancelled">ملغي (Cancelled)</option>
-                </select>
-                <select v-model="orderFilters.dateRange" class="form-control">
-                  <option value="all">كل الأوقات</option>
-                  <option value="today">اليوم</option>
-                  <option value="yesterday">أمس</option>
-                  <option value="7d">آخر 7 أيام</option>
-                  <option value="30d">آخر 30 يوم</option>
-                </select>
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar">
+                <div class="filters-group">
+                  <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو الاسم…" class="form-control" />
+                  <select v-model="orderFilters.status" class="form-control">
+                    <option value="">كل الحالات</option>
+                    <option value="pending">قيد الانتظار (Pending)</option>
+                    <option value="ready">جاهز للاستلام (Ready)</option>
+                    <option value="received">تم الاستلام (Received)</option>
+                    <option value="cancelled">ملغي (Cancelled)</option>
+                  </select>
+                  <select v-model="orderFilters.dateRange" class="form-control">
+                    <option value="all">كل الأوقات</option>
+                    <option value="today">اليوم</option>
+                    <option value="yesterday">أمس</option>
+                    <option value="7d">آخر 7 أيام</option>
+                    <option value="30d">آخر 30 يوم</option>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <div class="glass-panel p-0 table-card overflow-hidden">
               <div class="table-container">
                 <table class="admin-table">
                   <thead>
@@ -886,13 +899,13 @@
 
           <!-- CUSTOMERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
-            <div class="filter-actions-bar glass-panel mb-3">
-              <div class="filters-group">
-                <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن اسم أو رقم هاتف…" class="form-control" />
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar">
+                <div class="filters-group">
+                  <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث عن اسم أو رقم هاتف…" class="form-control" />
+                </div>
               </div>
-            </div>
 
-            <div class="glass-panel p-0 table-card overflow-hidden">
               <div class="table-container">
                 <table class="admin-table">
                   <thead>
@@ -3886,6 +3899,56 @@ export default {
   font-family: inherit;
   transition: border-color 0.2s ease;
   text-align: right;
+}
+
+/* Unified Card Toolbar Styles */
+.table-card.glass-panel {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-md);
+}
+
+.card-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.45);
+  border-bottom: 1px solid rgba(44, 37, 32, 0.07);
+  backdrop-filter: blur(8px);
+  flex-wrap: wrap;
+}
+
+.card-toolbar-end {
+  justify-content: flex-end;
+}
+
+.card-toolbar .filters-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+  flex-wrap: wrap;
+}
+
+.card-toolbar .form-control {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.card-toolbar .form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .form-control:focus {
