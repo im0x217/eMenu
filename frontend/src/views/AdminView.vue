@@ -2343,7 +2343,7 @@ export default {
     };
 
     const printingOrder = ref(null);
-    const ITEMS_PER_PAGE = 6; // 6 items per page guarantees zero page overflow on A5
+    const ITEMS_PER_PAGE = 9; // 9 items per page fills A5 paper height nicely with minimal bottom margin
 
     const paginatedOrderPages = computed(() => {
       if (!printingOrder.value || !printingOrder.value.items) return [];
@@ -4772,7 +4772,7 @@ export default {
 @media print {
   @page {
     size: A5 portrait;
-    margin: 6mm 8mm;
+    margin: 4mm 6mm;
   }
   
   .admin-layout {
