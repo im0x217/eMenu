@@ -2343,7 +2343,7 @@ export default {
     };
 
     const printingOrder = ref(null);
-    const ITEMS_PER_PAGE = 9; // 9 items per page fills A5 paper height nicely with minimal bottom margin
+    const ITEMS_PER_PAGE = 12; // 12 items per page maximizes row density on A5
 
     const paginatedOrderPages = computed(() => {
       if (!printingOrder.value || !printingOrder.value.items) return [];
@@ -4888,7 +4888,7 @@ export default {
   }
   
   .receipt-items-table td {
-    padding: 5px 6px;
+    padding: 3.5px 6px;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: top;
   }
@@ -4940,8 +4940,9 @@ export default {
   
   .receipt-footer {
     text-align: center;
-    margin-top: 24px;
-    padding-top: 8px;
+    margin-top: 6px;
+    margin-bottom: 5px;
+    padding-top: 6px;
     border-top: 1px dashed #cbd5e1;
     font-size: 9pt;
     font-weight: 700;
