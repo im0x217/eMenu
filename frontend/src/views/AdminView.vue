@@ -3948,14 +3948,25 @@ export default {
 }
 
 /* Option 1: Split-Level Pill Bar Toolbar Styles */
+.table-card.glass-panel {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-md);
+}
+
 .card-toolbar-split {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.55);
-  border-bottom: 1px solid rgba(44, 37, 32, 0.07);
-  backdrop-filter: blur(10px);
+  gap: 14px;
+  padding: 18px 24px;
+  background: rgba(255, 255, 255, 0.65);
+  border-bottom: 1px solid rgba(44, 37, 32, 0.08);
+  backdrop-filter: blur(12px);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 .card-toolbar-top {
@@ -3969,25 +3980,26 @@ export default {
 .toolbar-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .toolbar-title {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #1e293b;
+  font-size: 1.3rem;
+  font-weight: 850;
+  color: #0f172a;
   margin: 0;
+  letter-spacing: -0.2px;
 }
 
 .toolbar-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
   background: var(--primary-glow);
   color: var(--primary-color);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 800;
 }
 
 .card-toolbar-bottom {
