@@ -434,32 +434,32 @@
           <!-- PRODUCTS CRUD TAB -->
           <div v-if="activeTab === 'products'" class="products-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-bento">
-                <div class="bento-accent-bar"></div>
-                <div class="bento-toolbar-row">
-                  <div class="bento-title-pill">
-                    <span class="bento-title-icon">📦</span>
-                    <span class="bento-title-text">قائمة المنتجات</span>
-                    <span class="bento-count-chip">{{ filteredProducts.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
+                    <span class="toolbar-badge">{{ filteredProducts.length }} منتج</span>
                   </div>
-                  <div class="bento-search-box">
+                  <button @click="openProductModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة منتج جديد
+                  </button>
+                </div>
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="filters.search" type="text" placeholder="بحث سريع في المنتجات…" class="form-control bento-input" />
+                    <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث بالاسم أو الوصف…" class="form-control search-input" />
                   </div>
-                  <div class="bento-filters-row">
-                    <select v-model="filters.category" class="bento-select">
+                  <div class="filters-inline">
+                    <select v-model="filters.category" class="form-control select-pill">
                       <option value="">كل الأصناف</option>
                       <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
                     </select>
-                    <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="bento-select animate-fade-in">
-                      <option value="">كل الفرعيات</option>
+                    <select v-if="availableSubcategories.length > 0" v-model="filters.subCategory" class="form-control select-pill animate-fade-in">
+                      <option value="">كل الأصناف الفرعية</option>
                       <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
                     </select>
                   </div>
-                  <button @click="openProductModal()" class="btn btn-primary bento-action-btn me-auto">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة منتج
-                  </button>
                 </div>
               </div>
 
@@ -533,15 +533,13 @@
           <!-- CATEGORIES CRUD TAB -->
           <div v-if="activeTab === 'categories'" class="categories-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-bento">
-                <div class="bento-accent-bar"></div>
-                <div class="bento-toolbar-row">
-                  <div class="bento-title-pill">
-                    <span class="bento-title-icon">📂</span>
-                    <span class="bento-title-text">أصناف المنيو</span>
-                    <span class="bento-count-chip">{{ categories.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة أصناف المنيو</h3>
+                    <span class="toolbar-badge">{{ categories.length }} صنف</span>
                   </div>
-                  <button @click="openCategoryModal()" class="btn btn-primary bento-action-btn me-auto">
+                  <button @click="openCategoryModal()" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     إضافة صنف جديد
                   </button>
@@ -587,17 +585,15 @@
           <!-- TAGS CRUD TAB -->
           <div v-if="activeTab === 'tags'" class="tags-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-bento">
-                <div class="bento-accent-bar"></div>
-                <div class="bento-toolbar-row">
-                  <div class="bento-title-pill">
-                    <span class="bento-title-icon">🏷️</span>
-                    <span class="bento-title-text">العلامات المميزة</span>
-                    <span class="bento-count-chip">{{ tags.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة العلامات المميزة (Tags)</h3>
+                    <span class="toolbar-badge">{{ tags.length }} علامة</span>
                   </div>
-                  <button @click="openTagModal()" class="btn btn-primary bento-action-btn me-auto">
+                  <button @click="openTagModal()" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة علامة جديدة
+                    إضافة علامة مميزة
                   </button>
                 </div>
               </div>
@@ -684,15 +680,13 @@
           <!-- MARKETING CAROUSEL TAB -->
           <div v-if="activeTab === 'carousel'" class="carousel-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden p-0">
-              <div class="card-toolbar card-toolbar-bento">
-                <div class="bento-accent-bar"></div>
-                <div class="bento-toolbar-row">
-                  <div class="bento-title-pill">
-                    <span class="bento-title-icon">🖼️</span>
-                    <span class="bento-title-text">بنرات العروض</span>
-                    <span class="bento-count-chip">{{ carouselItems.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">بنرات العروض التسويقية</h3>
+                    <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
                   </div>
-                  <button @click="openCarouselModal()" class="btn btn-primary bento-action-btn me-auto">
+                  <button @click="openCarouselModal()" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     إضافة بنر جديد
                   </button>
@@ -736,27 +730,27 @@
           <!-- ORDERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-bento">
-                <div class="bento-accent-bar"></div>
-                <div class="bento-toolbar-row">
-                  <div class="bento-title-pill">
-                    <span class="bento-title-icon">🛒</span>
-                    <span class="bento-title-text">الطلبات الواردة</span>
-                    <span class="bento-count-chip">{{ filteredOrders.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
+                    <span class="toolbar-badge">{{ filteredOrders.length }} طلب</span>
                   </div>
-                  <div class="bento-search-box flex-1">
+                </div>
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="orderFilters.search" type="text" placeholder="بحث باسم العميل أو رقم الهاتف…" class="form-control bento-input" />
+                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو اسم العميل…" class="form-control search-input" />
                   </div>
-                  <div class="bento-filters-row">
-                    <select v-model="orderFilters.status" class="bento-select">
+                  <div class="filters-inline">
+                    <select v-model="orderFilters.status" class="form-control select-pill">
                       <option value="">كل الحالات</option>
-                      <option value="pending">قيد الانتظار</option>
-                      <option value="ready">جاهز للاستلام</option>
-                      <option value="received">تم الاستلام</option>
-                      <option value="cancelled">ملغي</option>
+                      <option value="pending">قيد الانتظار (Pending)</option>
+                      <option value="ready">جاهز للاستلام (Ready)</option>
+                      <option value="received">تم الاستلام (Received)</option>
+                      <option value="cancelled">ملغي (Cancelled)</option>
                     </select>
-                    <select v-model="orderFilters.dateRange" class="bento-select">
+                    <select v-model="orderFilters.dateRange" class="form-control select-pill">
                       <option value="all">كل الأوقات</option>
                       <option value="today">اليوم</option>
                       <option value="yesterday">أمس</option>
@@ -943,17 +937,17 @@
           <!-- CUSTOMERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-bento">
-                <div class="bento-accent-bar"></div>
-                <div class="bento-toolbar-row">
-                  <div class="bento-title-pill">
-                    <span class="bento-title-icon">👥</span>
-                    <span class="bento-title-text">سجل العملاء</span>
-                    <span class="bento-count-chip">{{ filteredCustomers.length }}</span>
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">دليل وقائمة العملاء</h3>
+                    <span class="toolbar-badge">{{ filteredCustomers.length }} عميل</span>
                   </div>
-                  <div class="bento-search-box flex-1">
+                </div>
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper w-100">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="customerFilters.search" type="text" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control bento-input" />
+                    <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control search-input" />
                   </div>
                 </div>
               </div>
@@ -3953,107 +3947,101 @@ export default {
   text-align: right;
 }
 
-/* Option 3: Floating Bento Header Layout */
-.card-toolbar-bento {
-  position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.65) 100%);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  backdrop-filter: blur(16px);
-}
-
-.bento-accent-bar {
-  height: 3px;
-  width: 100%;
-  background: linear-gradient(90deg, var(--primary-color), #f59e0b, #ec4899);
-}
-
-.bento-toolbar-row {
+/* Option 1: Split-Level Pill Bar Toolbar Styles */
+.card-toolbar-split {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(44, 37, 32, 0.07);
+  backdrop-filter: blur(10px);
+}
+
+.card-toolbar-top {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 18px;
   flex-wrap: wrap;
 }
 
-.bento-title-pill {
+.toolbar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.toolbar-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: #ffffff;
-  padding: 6px 14px;
-  border-radius: 30px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.bento-title-icon {
-  font-size: 1.1rem;
-}
-
-.bento-title-text {
-  font-weight: 800;
-  font-size: 0.95rem;
-  color: #0f172a;
-}
-
-.bento-count-chip {
+  padding: 3px 10px;
+  border-radius: 20px;
   background: var(--primary-glow);
   color: var(--primary-color);
-  font-weight: 800;
-  font-size: 0.78rem;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.bento-search-box {
+.card-toolbar-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input-wrapper {
   position: relative;
-  min-width: 200px;
+  flex: 1;
+  min-width: 220px;
 }
 
-.bento-search-box .search-icon {
+.search-input-wrapper .search-icon {
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
+  pointer-events: none;
 }
 
-.bento-input {
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 20px !important;
-  padding: 7px 36px 7px 14px !important;
-  font-size: 0.88rem !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+.search-input-wrapper .search-input {
+  padding-right: 36px !important;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  width: 100%;
 }
 
-.bento-input:focus {
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 3px var(--primary-glow) !important;
-}
-
-.bento-filters-row {
+.filters-inline {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.bento-select {
+.select-pill {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 20px;
-  padding: 7px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
   color: #334155;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.bento-action-btn {
-  border-radius: 20px !important;
-  padding: 7px 18px !important;
-  font-size: 0.88rem !important;
-  box-shadow: 0 4px 12px var(--primary-glow) !important;
+.select-pill:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .form-control:focus {
