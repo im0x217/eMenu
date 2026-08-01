@@ -4294,19 +4294,17 @@ export default {
 .card-toolbar-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  position: relative;
-  z-index: 100;
 }
 
 .search-input-wrapper {
   position: relative;
-  flex: 0 1 320px;
-  width: 100%;
-  max-width: 320px;
+  flex: 1 1 240px;
   min-width: 200px;
+  height: 38px;
+  display: flex;
+  align-items: center;
 }
 
 .search-input-wrapper .search-icon {
@@ -4319,6 +4317,9 @@ export default {
 }
 
 .search-input-wrapper .search-input {
+  height: 38px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
   padding-right: 36px !important;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -4333,7 +4334,6 @@ export default {
   gap: 8px;
   flex-wrap: wrap;
   flex-shrink: 0;
-  margin-right: auto;
   position: relative;
   z-index: 100;
 }
@@ -4342,12 +4342,15 @@ export default {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 0 12px;
+  height: 38px !important;
   font-size: 0.88rem;
   color: #334155;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 select,
