@@ -4317,6 +4317,22 @@ export default {
   transition: all 0.2s ease;
 }
 
+select,
+select.form-control,
+select.select-pill {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  background-size: 14px 14px;
+  padding-left: 34px !important;
+  padding-right: 14px !important;
+  text-align: right;
+  direction: rtl;
+}
+
 .select-pill:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-glow);
@@ -4934,35 +4950,45 @@ export default {
 }
 
 .status-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 8px center !important;
+  background-size: 12px 12px;
   padding: 6px 12px;
+  padding-left: 28px !important;
+  padding-right: 12px !important;
   font-size: 0.85rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #dee2e6;
   cursor: pointer;
   outline: none;
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.2s ease;
   width: auto;
   display: inline-block;
+  font-family: inherit;
 }
 .status-select.status-pending {
-  background: #fff9db;
+  background-color: #fff9db;
   color: #f08c00;
   border-color: #ffe066;
 }
 .status-select.status-ready {
-  background: #e7f5ff;
+  background-color: #e7f5ff;
   color: #1c7ed6;
   border-color: #a5d8ff;
 }
 .status-select.status-received,
 .status-select.status-completed {
-  background: #ebfbee;
+  background-color: #ebfbee;
   color: #2b8a3e;
   border-color: #b2f2bb;
 }
 .status-select.status-cancelled {
-  background: #fff5f5;
+  background-color: #fff5f5;
   color: #fa5252;
   border-color: #ffc9c9;
 }
