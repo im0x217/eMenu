@@ -13,6 +13,16 @@ const nameInput = ref(authStore.customerName);
 const phoneInput = ref(authStore.customerPhone);
 const showIdentityForm = computed(() => !authStore.isIdentified());
 
+// Minimum delivery date is always tomorrow
+const minDeliveryDate = computed(() => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
 // Checkout processing
 const isSubmitting = ref(false);
 const errorMsg = ref('');
@@ -227,7 +237,7 @@ const handleClearCart = () => {
 
         <div class="form-group">
           <label for="cart-delivery-date" class="form-label">تاريخ استلام الطلب</label>
-          <input id="cart-delivery-date" type="date" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
+          <input id="cart-delivery-date" type="date" :min="minDeliveryDate" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
         </div>
 
         <div class="form-group">

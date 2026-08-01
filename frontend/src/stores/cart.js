@@ -6,7 +6,7 @@ import { trackEvent } from '../utils/analytics';
 export const useCartStore = defineStore('cart', () => {
   const authStore = useAuthStore();
   const items = ref(JSON.parse(localStorage.getItem('cart_items') || '[]'));
-  // Default to tomorrow's date if no saved date exists
+  // Default to tomorrow's date if no saved date exists or if saved date is in the past
   const getDefaultDeliveryDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -16,7 +16,9 @@ export const useCartStore = defineStore('cart', () => {
     return `${year}-${month}-${day}`; // YYYY-MM-DD in local time
   };
   const savedDate = localStorage.getItem('cart_delivery_date');
-  const deliveryDate = ref(savedDate && savedDate.length > 0 ? savedDate : getDefaultDeliveryDate());
+  const minDefaultDate = getDefaultDeliveryDate();
+  const isDateValid = savedDate && savedDate.length > 0 && savedDate >= minDefaultDate;
+  const deliveryDate = ref(isDateValid ? savedDate : minDefaultDate);
   const orderNotes = ref(localStorage.getItem('cart_notes') || '');
 
   const persist = () => {
@@ -118,6 +120,8 @@ export const useCartStore = defineStore('cart', () => {
 
   const clearCart = () => {
     items.value = [];
+    deliveryDate.value = getDefaultDeliveryDate();
+    orderNotes.value = '';
     persist();
   };
 
