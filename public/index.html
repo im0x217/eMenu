@@ -29,14 +29,32 @@
         -webkit-user-select: none;
       }
 
-      body {
+      html {
+        background-color: #0c0603;
+        min-height: 100%;
+        overscroll-behavior: none;
+      }
+
+      html::before {
+        content: '';
+        position: fixed;
+        top: -120px;
+        left: -120px;
+        right: -120px;
+        bottom: -120px;
         background-color: #0c0603;
         background-image: 
           radial-gradient(circle at 20% 20%, rgba(253, 181, 24, 0.08) 0%, transparent 40%),
           radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.15) 0%, transparent 50%),
           radial-gradient(circle at 50% 50%, #150a05 0%, #080301 100%);
-        background-attachment: fixed;
+        z-index: -9999;
+        pointer-events: none;
+      }
+
+      body {
+        background-color: #0c0603;
         min-height: 100vh;
+        min-height: 100dvh;
         direction: rtl;
         text-align: right;
         display: flex;
@@ -47,6 +65,7 @@
         padding: 2rem;
         position: relative;
         overflow-x: hidden;
+        overscroll-behavior: none;
       }
 
       /* Glowing background elements */
