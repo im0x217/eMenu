@@ -1170,8 +1170,26 @@
             <input v-model="editingCategory.name" type="text" required class="form-control" />
           </div>
 
-          <div class="form-group">
-            <label>أيقونة ورمز الصنف (Emoji/SVG)</label>
+          <div class="form-group mb-3">
+            <label class="form-label text-bold block mb-1" style="font-size: 0.85rem; color: #475569;">اختر أيقونة من مكتبة الـ SVG:</label>
+            <div class="svg-icon-pool-grid">
+              <button 
+                type="button" 
+                v-for="item in svgIconPool" 
+                :key="item.key" 
+                class="svg-pool-item" 
+                :class="{ active: (editingCategory.emoji || '').includes(item.emoji) || (editingCategory.name || '').includes(item.keyword) }"
+                @click="selectCategoryIcon(item)"
+                :title="item.label"
+              >
+                <CategoryIcon :icon="item.key" :name="item.keyword" :emoji="item.emoji" />
+                <span class="pool-item-label">{{ item.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem; color: #475569;">رمز الصنف (Emoji/SVG)</label>
             <div class="category-icon-input-group">
               <input v-model="editingCategory.emoji" type="text" placeholder="مثال: 🍰" class="form-control" />
               <div class="icon-preview-box" title="معاينة أيقونة SVG الحالية">
@@ -1923,6 +1941,27 @@ export default {
     // Zoom Image Preview
     const zoomImage = (src) => {
       if (src) zoomedImageSrc.value = src;
+    };
+
+    // SVG ICON POOL FOR CATEGORIES
+    const svgIconPool = [
+      { key: 'oriental', label: 'شرقي', emoji: '🍯', keyword: 'شرقي' },
+      { key: 'cake', label: 'كعك كيك', emoji: '🍰', keyword: 'غربي' },
+      { key: 'heart', label: 'عبمبر', emoji: '💖', keyword: 'عبمبر' },
+      { key: 'birthday-cake', label: 'تورت', emoji: '🎂', keyword: 'تورت' },
+      { key: 'juice', label: 'عصائر', emoji: '🥤', keyword: 'عصائر' },
+      { key: 'bakery', label: 'نواشف', emoji: '🥐', keyword: 'نواشف' },
+      { key: 'cookie', label: 'بسكويت', emoji: '🥜', keyword: 'لوزيات' },
+      { key: 'coffee', label: 'قهوة', emoji: '☕', keyword: 'قهوة' },
+      { key: 'ice-cream', label: 'آيس كريم', emoji: '🍦', keyword: 'مثلجات' },
+      { key: 'service', label: 'خدمات', emoji: '🛎️', keyword: 'خدمات' },
+      { key: 'gift', label: 'هدايا', emoji: '🎁', keyword: 'هدايا' },
+      { key: 'star', label: 'مميز', emoji: '⭐', keyword: 'مميز' },
+      { key: 'utensils', label: 'عام', emoji: '🍽️', keyword: 'عام' },
+    ];
+
+    const selectCategoryIcon = (item) => {
+      editingCategory.emoji = item.emoji;
     };
 
     // CATEGORIES CRUD LOGIC
@@ -3055,6 +3094,8 @@ export default {
       handleModalImageFileSelect,
       handleModalImageDrop,
       zoomImage,
+      svgIconPool,
+      selectCategoryIcon,
       openCategoryModal,
       saveCategory,
       deleteCategory,
@@ -4044,6 +4085,63 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+/* SVG Icon Pool Grid in Category Modal */
+.svg-icon-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-height: 170px;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  scrollbar-width: thin;
+}
+
+.svg-pool-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.svg-pool-item:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--primary-glow);
+  transform: translateY(-2px);
+}
+
+.svg-pool-item.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 3px 10px var(--primary-glow);
+}
+
+.svg-pool-item.active .cat-svg-icon-wrapper {
+  color: #ffffff;
+}
+
+.pool-item-label {
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 .text-bold {

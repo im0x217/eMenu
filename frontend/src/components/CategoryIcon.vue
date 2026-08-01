@@ -9,10 +9,16 @@ const props = defineProps({
   emoji: {
     type: String,
     default: ''
+  },
+  icon: {
+    type: String,
+    default: ''
   }
 });
 
 const iconType = computed(() => {
+  if (props.icon) return props.icon;
+
   const n = (props.name || '').trim();
   const e = (props.emoji || '').trim();
 
@@ -23,6 +29,8 @@ const iconType = computed(() => {
   if (n.includes('عصائر') || n.includes('مشروب') || e.includes('🥤')) return 'juice';
   if (n.includes('نواشف') || n.includes('معجن') || e.includes('🥐')) return 'bakery';
   if (n.includes('لوزيات') || n.includes('شكلاط') || e.includes('🥜')) return 'cookie';
+  if (n.includes('قهوة') || e.includes('☕')) return 'coffee';
+  if (n.includes('مثلجات') || e.includes('🍦')) return 'ice-cream';
   if (n.includes('خدمات') || e.includes('🛎️')) return 'service';
   if (e.includes('🎁')) return 'gift';
   if (e.includes('⭐') || e.includes('🌟')) return 'star';
@@ -80,6 +88,21 @@ const iconType = computed(() => {
     <svg v-else-if="iconType === 'cookie'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="9"/>
       <path d="M8.5 8.5v.01M15.5 9.5v.01M12 14v.01M9.5 16.5v.01M14.5 15.5v.01"/>
+    </svg>
+
+    <!-- Coffee -->
+    <svg v-else-if="iconType === 'coffee'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 8h1a4 4 0 1 1 0 8h-1"/>
+      <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>
+      <line x1="6" y1="2" x2="6" y2="4"/>
+      <line x1="10" y1="2" x2="10" y2="4"/>
+      <line x1="14" y1="2" x2="14" y2="4"/>
+    </svg>
+
+    <!-- Ice Cream -->
+    <svg v-else-if="iconType === 'ice-cream'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m7 11 5 11 5-11"/>
+      <path d="M12 2a5 5 0 0 0-5 5c0 .3.02.6.07.9A4.5 4.5 0 0 0 12 11a4.5 4.5 0 0 0 4.93-3.1 5 5 0 0 0-4.93-5.9Z"/>
     </svg>
 
     <!-- Services / Concierge Bell -->
