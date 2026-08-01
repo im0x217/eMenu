@@ -757,13 +757,32 @@
                       <option value="received">تم الاستلام (Received)</option>
                       <option value="cancelled">ملغي (Cancelled)</option>
                     </select>
-                    <select v-model="orderFilters.dateRange" class="form-control select-pill">
-                      <option value="all">كل الأوقات</option>
-                      <option value="today">اليوم</option>
-                      <option value="yesterday">أمس</option>
-                      <option value="7d">آخر 7 أيام</option>
-                      <option value="30d">آخر 30 يوم</option>
-                    </select>
+
+                    <!-- Day/Date Picker Input with Clear & Today Shortcut -->
+                    <div class="date-picker-wrapper">
+                      <svg class="date-picker-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <input 
+                        v-model="orderFilters.selectedDate" 
+                        type="date" 
+                        class="form-control date-picker-input" 
+                        title="تحديد تاريخ معين" 
+                      />
+                      <button 
+                        v-if="orderFilters.selectedDate" 
+                        type="button" 
+                        class="btn-clear-date" 
+                        @click="orderFilters.selectedDate = ''" 
+                        title="عرض جميع التواريخ"
+                      >&times;</button>
+                    </div>
+
+                    <button 
+                      type="button" 
+                      class="btn-today-shortcut" 
+                      :class="{ active: isTodaySelected }" 
+                      @click="setOrderTodayDate"
+                      title="عرض طلبات اليوم فقط"
+                    >اليوم</button>
                   </div>
                 </div>
               </div>
@@ -1602,8 +1621,18 @@ export default {
     const customers = ref([]);
 
     const filters = reactive({ search: '', category: '', subCategory: '' });
-    const orderFilters = reactive({ search: '', status: '', dateRange: 'all' });
+    const orderFilters = reactive({ search: '', status: '', selectedDate: '' });
     const customerFilters = reactive({ search: '' });
+
+    const isTodaySelected = computed(() => {
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      return orderFilters.selectedDate === todayStr;
+    });
+
+    const setOrderTodayDate = () => {
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      orderFilters.selectedDate = orderFilters.selectedDate === todayStr ? '' : todayStr;
+    };
 
     watch(() => filters.category, () => {
       filters.subCategory = '';
@@ -2863,31 +2892,15 @@ export default {
 
     const filteredOrders = computed(() => {
       return orders.value.filter(o => {
-        const matchesSearch = o.customerInfo.name.toLowerCase().includes(orderFilters.search.toLowerCase()) || 
-                             o.customerInfo.phone.includes(orderFilters.search);
+        const matchesSearch = !orderFilters.search || 
+                              o.customerInfo.name.toLowerCase().includes(orderFilters.search.toLowerCase()) || 
+                              o.customerInfo.phone.includes(orderFilters.search);
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
         
         let matchesDate = true;
-        if (orderFilters.dateRange && orderFilters.dateRange !== 'all') {
-          const orderDate = new Date(o.createdAt);
-          const today = new Date();
-          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          
-          if (orderFilters.dateRange === 'today') {
-            matchesDate = orderDate >= todayStart;
-          } else if (orderFilters.dateRange === 'yesterday') {
-            const yesterdayStart = new Date(todayStart);
-            yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-            matchesDate = orderDate >= yesterdayStart && orderDate < todayStart;
-          } else if (orderFilters.dateRange === '7d') {
-            const sevenDaysAgo = new Date(todayStart);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            matchesDate = orderDate >= sevenDaysAgo;
-          } else if (orderFilters.dateRange === '30d') {
-            const thirtyDaysAgo = new Date(todayStart);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            matchesDate = orderDate >= thirtyDaysAgo;
-          }
+        if (orderFilters.selectedDate) {
+          const orderDateStr = new Date(o.createdAt).toLocaleDateString('en-CA');
+          matchesDate = orderDateStr === orderFilters.selectedDate;
         }
         
         return matchesSearch && matchesStatus && matchesDate;
@@ -3118,6 +3131,8 @@ export default {
       orders,
       customers,
       orderFilters,
+      isTodaySelected,
+      setOrderTodayDate,
       customerFilters,
       filteredOrders,
       filteredCustomers,
@@ -4336,6 +4351,94 @@ select.select-pill {
 .select-pill:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Date Picker Component in Order Toolbar */
+.date-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.date-picker-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+.date-picker-input {
+  padding-right: 32px !important;
+  padding-left: 28px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  color: #334155 !important;
+  font-family: 'Fira Code', 'Courier New', monospace, inherit !important;
+  cursor: pointer;
+  height: 38px;
+  background-position: left 8px center !important;
+}
+
+.date-picker-input:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+
+.btn-clear-date {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(148, 163, 184, 0.2);
+  color: #475569;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-date:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-today-shortcut {
+  padding: 7px 14px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 38px;
+  touch-action: manipulation;
+  font-family: inherit;
+}
+
+.btn-today-shortcut:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--primary-glow);
+}
+
+.btn-today-shortcut.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 3px 10px var(--primary-glow);
 }
 
 .form-control:focus {
