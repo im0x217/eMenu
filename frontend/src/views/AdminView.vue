@@ -4362,11 +4362,13 @@ export default {
 /* Option 1: Split-Level Pill Bar Toolbar Styles */
 .table-card.glass-panel {
   padding: 0;
-  overflow: hidden;
+  overflow: visible !important;
   border-radius: 20px;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: 5;
 }
 
 .card-toolbar-split {
@@ -4379,6 +4381,8 @@ export default {
   backdrop-filter: blur(12px);
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
+  position: relative;
+  z-index: 100;
 }
 
 .card-toolbar-top {
