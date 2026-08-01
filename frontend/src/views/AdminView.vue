@@ -564,7 +564,11 @@
                       <td colspan="4" class="text-center">لا توجد أصناف مدخلة.</td>
                     </tr>
                     <tr v-for="cat in categories" :key="cat._id">
-                      <td class="text-center text-large">{{ cat.emoji || '📂' }}</td>
+                      <td class="text-center">
+                        <div class="cat-icon-badge">
+                          <CategoryIcon :name="cat.name" :emoji="cat.emoji" />
+                        </div>
+                      </td>
                       <td class="text-bold">{{ cat.name }}</td>
                       <td>
                         <div class="chips-list">
@@ -1167,8 +1171,13 @@
           </div>
 
           <div class="form-group">
-            <label>الرمز التعبيري (Emoji) *</label>
-            <input v-model="editingCategory.emoji" type="text" required placeholder="مثال: 🍰" class="form-control" />
+            <label>أيقونة ورمز الصنف (Emoji/SVG)</label>
+            <div class="category-icon-input-group">
+              <input v-model="editingCategory.emoji" type="text" placeholder="مثال: 🍰" class="form-control" />
+              <div class="icon-preview-box" title="معاينة أيقونة SVG الحالية">
+                <CategoryIcon :name="editingCategory.name" :emoji="editingCategory.emoji" />
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -1503,11 +1512,15 @@
 <script>
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue';
 import { useToastStore } from '../stores/toast';
+import CategoryIcon from '../components/CategoryIcon.vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 
 export default {
   name: 'AdminView',
+  components: {
+    CategoryIcon
+  },
   setup() {
     const toast = useToastStore();
     const loading = ref(false);
@@ -3990,6 +4003,47 @@ export default {
 
 .admin-table tbody tr:hover {
   background-color: rgba(253, 181, 24, 0.06);
+}
+
+/* Category SVG Icon Badges in Table & Modal */
+.cat-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--primary-glow);
+  color: var(--primary-color);
+  border: 1px solid rgba(253, 181, 24, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-table tbody tr:hover .cat-icon-badge {
+  transform: scale(1.1);
+  background: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.category-icon-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-icon-input-group .icon-preview-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--primary-glow);
+  color: var(--primary-color);
+  border: 1px solid rgba(253, 181, 24, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .text-bold {
