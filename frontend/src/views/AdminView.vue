@@ -817,8 +817,7 @@
                         </div>
 
                         <div class="datepicker-footer">
-                          <button type="button" class="btn btn-sm btn-outline" @click="orderFilters.selectedDate = ''; datePickerOpen = false;">عرض الكل</button>
-                          <button type="button" class="btn btn-sm btn-primary" @click="setOrderTodayDate(); datePickerOpen = false;">اليوم</button>
+                          <button type="button" class="btn-dp-show-all" @click="orderFilters.selectedDate = ''; datePickerOpen = false;">عرض جميع التواريخ</button>
                         </div>
                       </div>
                     </div>
@@ -4673,9 +4672,30 @@ select.select-pill {
 .datepicker-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   border-top: 1px solid #f1f5f9;
   padding-top: 10px;
+}
+
+.btn-dp-show-all {
+  width: 100%;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  touch-action: manipulation;
+}
+
+.btn-dp-show-all:hover {
+  background: var(--primary-glow);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .btn-today-shortcut {
