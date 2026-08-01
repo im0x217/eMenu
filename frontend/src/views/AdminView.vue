@@ -1843,9 +1843,7 @@ export default {
       { key: 'chest', label: 'صندوق كنز (إصدار محدود)' }
     ];
 
-    // Image Recovery bindings
 
-    const dragActive = ref(false);
 
     // Helper functions
 
@@ -2232,30 +2230,6 @@ export default {
 
 
     // IMAGE RECOVERY TAB LOGIC
-    const triggerImageSelect = () => {
-      recoveryFileInput.value.click();
-    };
-
-    const handleImageFileSelect = (e) => {
-      const file = e.target.files[0];
-      if (file) setRecoveryFile(file);
-    };
-
-    const handleImageDrop = (e) => {
-      dragActive.value = false;
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) setRecoveryFile(file);
-    };
-
-    const setRecoveryFile = (file) => {
-      recoveryFile.value = file;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        recoveryFilePreview.value = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    };
-
     // MARKETING CAROUSEL LOGIC
     const fetchCarousel = async () => {
       try {
@@ -3115,7 +3089,6 @@ export default {
       deleteTag,
       toggleProductTag,
 
-      dragActive,
       formatCurrency,
       handleLogin,
       handleLogout,
@@ -3142,10 +3115,6 @@ export default {
       openCategoryModal,
       saveCategory,
       deleteCategory,
-      triggerImageSelect,
-      handleImageFileSelect,
-      handleImageDrop,
-      uploadRecoveryImage,
       trendCoordinates,
       svgTrendLinePath,
       svgTrendAreaPath,
