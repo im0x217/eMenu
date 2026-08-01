@@ -701,6 +701,7 @@
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو اسم العميل…" class="form-control search-input" />
+                    <button v-if="orderFilters.search" type="button" class="btn-clear-search" @click="orderFilters.search = ''" title="مسح البحث">&times;</button>
                   </div>
                   <div class="filters-inline">
                     <select v-model="orderFilters.status" class="form-control select-pill">
@@ -4294,14 +4295,17 @@ export default {
 .card-toolbar-bottom {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 100;
 }
 
 .search-input-wrapper {
   position: relative;
-  flex: 1 1 240px;
-  min-width: 200px;
+  flex: 1 1 260px;
+  min-width: 220px;
 }
 
 .search-input-wrapper .search-icon {
@@ -4314,12 +4318,45 @@ export default {
 }
 
 .search-input-wrapper .search-input {
+  height: 38px;
   padding-right: 36px !important;
+  padding-left: 32px !important;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.9rem;
   width: 100%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-input-wrapper .search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.btn-clear-search {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(148, 163, 184, 0.2);
+  color: #475569;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-search:hover {
+  background: #ef4444;
+  color: #ffffff;
 }
 
 .filters-inline {
