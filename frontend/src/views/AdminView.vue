@@ -97,10 +97,6 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             <span>العملاء والمفضلات</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'images' }" @click="setTab('images')">
-            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <span>إصلاح الصور التالفة</span>
-          </button>
           <button class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
@@ -639,50 +635,7 @@
             </div>
           </div>
 
-          <!-- IMAGE RECOVERY TAB -->
-          <div v-if="activeTab === 'images'" class="images-tab-content">
-            <div class="glass-panel text-center p-5 animate-fade-in">
-              <div class="recovery-box">
-                <svg class="recovery-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <h2>أداة إصلاح الصور التالفة أو المفقودة</h2>
-                <p class="text-muted">إذا تم حذف الصور القديمة، يمكنك إرفاق صور جديدة للمنتجات مباشرة هنا.</p>
-                
-                <div class="recovery-form mt-4">
-                  <div class="form-group">
-                    <label>اختر المنتج المراد إصلاح صورته</label>
-                    <select v-model="recoveryProductId" class="form-control max-w-md mx-auto">
-                      <option value="">اختر المنتج…</option>
-                      <option v-for="prod in products" :key="prod._id" :value="prod._id">
-                        {{ prod.name }} ({{ prod.category }}) {{ !prod.img ? '[مفقودة]' : '' }}
-                      </option>
-                    </select>
-                  </div>
 
-                  <div class="image-dropzone max-w-md mx-auto mt-3" 
-                       :class="{ active: dragActive }" 
-                       @dragover.prevent="dragActive = true"
-                       @dragleave.prevent="dragActive = false"
-                       @drop.prevent="handleImageDrop($event)"
-                       @click="triggerImageSelect">
-                    <input type="file" ref="recoveryFileInput" class="hidden-file-input" accept="image/*" @change="handleImageFileSelect" />
-                    
-                    <div v-if="!recoveryFile" class="dropzone-prompt">
-                      <svg class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                      <span>اسحب الصورة هنا أو اضغط للتصفح</span>
-                    </div>
-                    <div v-else class="dropzone-preview">
-                      <img :src="recoveryFilePreview" alt="Preview" />
-                      <span class="file-name">{{ recoveryFile.name }}</span>
-                    </div>
-                  </div>
-
-                  <button @click="uploadRecoveryImage" :disabled="!recoveryProductId || !recoveryFile" class="btn btn-primary mt-4">
-                    رفع وحفظ الصورة الجديدة
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- MARKETING CAROUSEL TAB -->
           <div v-if="activeTab === 'carousel'" class="carousel-tab-content animate-fade-in">
@@ -1891,10 +1844,7 @@ export default {
     ];
 
     // Image Recovery bindings
-    const recoveryProductId = ref('');
-    const recoveryFileInput = ref(null);
-    const recoveryFile = ref(null);
-    const recoveryFilePreview = ref('');
+
     const dragActive = ref(false);
 
     // Helper functions
@@ -3035,49 +2985,7 @@ export default {
       });
     });
 
-    const uploadRecoveryImage = async () => {
-      if (!recoveryProductId.value || !recoveryFile.value) return;
-      loading.value = true;
-      
-      const url = activeShop.value === 'shop2'
-        ? `/api/shop2/products/${recoveryProductId.value}`
-        : `/api/products/${recoveryProductId.value}`;
 
-      // Get existing product info
-      const prod = products.value.find(p => p._id === recoveryProductId.value);
-      if (!prod) return;
-
-      const formData = new FormData();
-      formData.append('name', prod.name);
-      formData.append('category', prod.category);
-      if (prod.desc) formData.append('desc', prod.desc);
-      if (prod.subCategory) formData.append('subCategory', prod.subCategory);
-      if (prod.purchaseType) formData.append('purchaseType', prod.purchaseType);
-      if (prod.price_regular) formData.append('price_regular', prod.price_regular);
-      if (prod.price_bulk) formData.append('price_bulk', prod.price_bulk);
-      formData.append('allowFloat', prod.allowFloat ? 'true' : 'false');
-      formData.append('img', recoveryFile.value);
-
-      try {
-        const res = await adminFetch(url, {
-          method: 'PUT',
-          body: formData
-        });
-        if (res.ok) {
-          toast.show('تم رفع وحفظ الصورة وإصلاح المنتج بنجاح', 'success');
-          recoveryProductId.value = '';
-          recoveryFile.value = null;
-          recoveryFilePreview.value = '';
-          await fetchProducts(); // Reload lists
-        } else {
-          toast.show('فشل في رفع وحفظ الصورة التالفة', 'danger');
-        }
-      } catch (err) {
-        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
-      } finally {
-        loading.value = false;
-      }
-    };
 
     // SVG Line Chart coordinates math calculations
     const trendCoordinates = computed(() => {
@@ -3206,10 +3114,7 @@ export default {
       saveTag,
       deleteTag,
       toggleProductTag,
-      recoveryProductId,
-      recoveryFileInput,
-      recoveryFile,
-      recoveryFilePreview,
+
       dragActive,
       formatCurrency,
       handleLogin,
@@ -5150,25 +5055,7 @@ select.select-pill {
   display: none;
 }
 
-/* Image Recovery specific styling */
-.recovery-box {
-  max-width: 500px;
-  margin: 0 auto;
-}
 
-.recovery-icon {
-  width: 55px;
-  height: 55px;
-  color: var(--chart-primary);
-  margin-bottom: 15px;
-}
-
-.recovery-box h2 {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1e3a5f;
-  margin-bottom: 10px;
-}
 
 /* Zoom screen view */
 .zoom-overlay {
