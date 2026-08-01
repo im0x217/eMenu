@@ -3,14 +3,15 @@ import { computed } from 'vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
 import { 
   Sun01Icon, 
-  BirthdayCakeIcon, 
+  CheeseCake02Icon,
+  CheeseCake01Icon,
+  Bread04Icon,
+  BiscuitIcon,
   HeartIcon, 
   GiftIcon, 
   Coffee01Icon, 
   IceCream01Icon, 
-  CookieIcon, 
   StarIcon, 
-  Store01Icon, 
   CupSodaIcon, 
   ConciergeBellIcon, 
   Dish01Icon 
@@ -44,22 +45,37 @@ const props = defineProps({
 });
 
 const iconComponent = computed(() => {
-  const iconKey = props.icon || '';
-  const n = (props.name || '').trim();
+  const iconKey = (props.icon || '').toLowerCase().trim();
+  const n = (props.name || '').toLowerCase().trim();
   const e = (props.emoji || '').trim();
 
-  if (iconKey === 'oriental' || n.includes('شرقي') || e.includes('🍯')) return Sun01Icon;
-  if (iconKey === 'cake' || n.includes('غربي') || e.includes('🍰')) return BirthdayCakeIcon;
-  if (iconKey === 'heart' || n.includes('عبمبر') || e.includes('💖')) return HeartIcon;
-  if (iconKey === 'birthday-cake' || n.includes('تورت') || e.includes('🎂')) return BirthdayCakeIcon;
-  if (iconKey === 'juice' || n.includes('عصائر') || n.includes('مشروب') || e.includes('🥤')) return CupSodaIcon;
-  if (iconKey === 'bakery' || n.includes('نواشف') || n.includes('معجن') || e.includes('🥐')) return Store01Icon;
-  if (iconKey === 'cookie' || n.includes('لوزيات') || n.includes('شكلاط') || e.includes('🥜')) return CookieIcon;
-  if (iconKey === 'coffee' || n.includes('قهوة') || e.includes('☕')) return Coffee01Icon;
-  if (iconKey === 'ice-cream' || n.includes('مثلجات') || e.includes('🍦')) return IceCream01Icon;
-  if (iconKey === 'service' || n.includes('خدمات') || e.includes('🛎️')) return ConciergeBellIcon;
-  if (iconKey === 'gift' || e.includes('🎁')) return GiftIcon;
-  if (iconKey === 'star' || e.includes('⭐') || e.includes('🌟')) return StarIcon;
+  // Direct Key Matching
+  if (iconKey === 'cheesecake02' || iconKey === 'western' || iconKey === 'cake') return CheeseCake02Icon;
+  if (iconKey === 'cheesecake01' || iconKey === 'torte' || iconKey === 'birthday-cake') return CheeseCake01Icon;
+  if (iconKey === 'bread04' || iconKey === 'bakery' || iconKey === 'dry' || iconKey === 'macaron') return Bread04Icon;
+  if (iconKey === 'biscuit' || iconKey === 'cookie' || iconKey === 'bitifour') return BiscuitIcon;
+  if (iconKey === 'oriental') return Sun01Icon;
+  if (iconKey === 'heart') return HeartIcon;
+  if (iconKey === 'juice') return CupSodaIcon;
+  if (iconKey === 'coffee') return Coffee01Icon;
+  if (iconKey === 'ice-cream') return IceCream01Icon;
+  if (iconKey === 'service') return ConciergeBellIcon;
+  if (iconKey === 'gift') return GiftIcon;
+  if (iconKey === 'star') return StarIcon;
+
+  // Keyword / Name / Emoji Fallback Matching
+  if (n.includes('غربي') || e.includes('🍰')) return CheeseCake02Icon;
+  if (n.includes('تورت') || n.includes('كيك') || e.includes('🎂')) return CheeseCake01Icon;
+  if (n.includes('نواشف') || n.includes('معجن') || n.includes('ماكرون') || e.includes('🥐')) return Bread04Icon;
+  if (n.includes('بيتي فور') || n.includes('بيتيفور') || n.includes('لوزيات') || n.includes('شكلاط') || n.includes('بسكويت') || e.includes('🥜') || e.includes('🍪')) return BiscuitIcon;
+  if (n.includes('شرقي') || e.includes('🍯')) return Sun01Icon;
+  if (n.includes('عبمبر') || e.includes('💖')) return HeartIcon;
+  if (n.includes('عصائر') || n.includes('مشروب') || e.includes('🥤')) return CupSodaIcon;
+  if (n.includes('قهوة') || e.includes('☕')) return Coffee01Icon;
+  if (n.includes('مثلجات') || e.includes('🍦')) return IceCream01Icon;
+  if (n.includes('خدمات') || e.includes('🛎️')) return ConciergeBellIcon;
+  if (e.includes('🎁')) return GiftIcon;
+  if (e.includes('⭐') || e.includes('🌟')) return StarIcon;
 
   return Dish01Icon;
 });

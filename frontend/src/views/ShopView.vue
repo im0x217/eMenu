@@ -443,7 +443,7 @@ watch(carouselItems, (newItems) => {
           :class="{ active: activeCategory === cat.name }"
           @click="selectCategory(cat.name)"
         >
-          <CategoryIcon :name="cat.name" :emoji="cat.emoji" />
+          <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
           <span class="cat-name">{{ cat.name }}</span>
         </button>
       </div>

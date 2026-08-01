@@ -566,7 +566,7 @@
                     <tr v-for="cat in categories" :key="cat._id">
                       <td class="text-center">
                         <div class="cat-icon-badge">
-                          <CategoryIcon :name="cat.name" :emoji="cat.emoji" />
+                          <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
                         </div>
                       </td>
                       <td class="text-bold">{{ cat.name }}</td>
@@ -1171,14 +1171,14 @@
           </div>
 
           <div class="form-group mb-3">
-            <label class="form-label text-bold block mb-1" style="font-size: 0.85rem; color: #475569;">اختر أيقونة من مكتبة الـ SVG:</label>
+            <label class="form-label text-bold block mb-1" style="font-size: 0.85rem; color: #475569;">اختر أيقونة من مكتبة الـ SVG (Hugeicons):</label>
             <div class="svg-icon-pool-grid">
               <button 
                 type="button" 
                 v-for="item in svgIconPool" 
                 :key="item.key" 
                 class="svg-pool-item" 
-                :class="{ active: (editingCategory.emoji || '').includes(item.emoji) || (editingCategory.name || '').includes(item.keyword) }"
+                :class="{ active: editingCategory.icon === item.key || (editingCategory.emoji || '').includes(item.emoji) }"
                 @click="selectCategoryIcon(item)"
                 :title="item.label"
               >
@@ -1193,7 +1193,7 @@
             <div class="category-icon-input-group">
               <input v-model="editingCategory.emoji" type="text" placeholder="مثال: 🍰" class="form-control" />
               <div class="icon-preview-box" title="معاينة أيقونة SVG الحالية">
-                <CategoryIcon :name="editingCategory.name" :emoji="editingCategory.emoji" />
+                <CategoryIcon :icon="editingCategory.icon" :name="editingCategory.name" :emoji="editingCategory.emoji" />
               </div>
             </div>
           </div>
@@ -1943,15 +1943,15 @@ export default {
       if (src) zoomedImageSrc.value = src;
     };
 
-    // SVG ICON POOL FOR CATEGORIES
+    // SVG ICON POOL FOR CATEGORIES (HUGEICONS)
     const svgIconPool = [
+      { key: 'cheesecake02', label: 'حلويات غربية', emoji: '🍰', keyword: 'غربي' },
+      { key: 'cheesecake01', label: 'تورت كيك', emoji: '🎂', keyword: 'تورت' },
+      { key: 'bread04', label: 'نواشف ماكرون', emoji: '🥐', keyword: 'نواشف' },
+      { key: 'biscuit', label: 'بيتي فور ولوزيات', emoji: '🍪', keyword: 'بيتي فور' },
       { key: 'oriental', label: 'شرقي', emoji: '🍯', keyword: 'شرقي' },
-      { key: 'cake', label: 'كعك كيك', emoji: '🍰', keyword: 'غربي' },
       { key: 'heart', label: 'عبمبر', emoji: '💖', keyword: 'عبمبر' },
-      { key: 'birthday-cake', label: 'تورت', emoji: '🎂', keyword: 'تورت' },
       { key: 'juice', label: 'عصائر', emoji: '🥤', keyword: 'عصائر' },
-      { key: 'bakery', label: 'نواشف', emoji: '🥐', keyword: 'نواشف' },
-      { key: 'cookie', label: 'بسكويت', emoji: '🥜', keyword: 'لوزيات' },
       { key: 'coffee', label: 'قهوة', emoji: '☕', keyword: 'قهوة' },
       { key: 'ice-cream', label: 'آيس كريم', emoji: '🍦', keyword: 'مثلجات' },
       { key: 'service', label: 'خدمات', emoji: '🛎️', keyword: 'خدمات' },
@@ -1962,6 +1962,7 @@ export default {
 
     const selectCategoryIcon = (item) => {
       editingCategory.emoji = item.emoji;
+      editingCategory.icon = item.key;
     };
 
     // CATEGORIES CRUD LOGIC
@@ -1970,12 +1971,14 @@ export default {
         editingCategory._id = cat._id;
         editingCategory.name = cat.name;
         editingCategory.emoji = cat.emoji || '';
+        editingCategory.icon = cat.icon || '';
         editingCategory.subCategories = cat.subCategories || [];
         categorySubcategoriesString.value = (cat.subCategories || []).join(', ');
       } else {
         editingCategory._id = '';
         editingCategory.name = '';
-        editingCategory.emoji = '📂';
+        editingCategory.emoji = '';
+        editingCategory.icon = '';
         editingCategory.subCategories = [];
         categorySubcategoriesString.value = '';
       }
