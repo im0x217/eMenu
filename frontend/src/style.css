@@ -63,20 +63,6 @@
 
 html {
   background-color: #f7f3ec; /* Prevents white flash/bounce backgrounds on mobile */
-  overscroll-behavior: none;
-  min-height: 100%;
-}
-
-html::before {
-  content: '';
-  position: fixed;
-  top: -120px;
-  left: -120px;
-  right: -120px;
-  bottom: -120px;
-  background-color: #f7f3ec;
-  z-index: -9999;
-  pointer-events: none;
 }
 
 /* Hide scrollbars globally across the application while preserving scroll function */
@@ -89,9 +75,10 @@ html::before {
 }
 
 html, body {
+  overflow: hidden;
   max-width: 100%;
   width: 100%;
-  min-height: 100dvh;
+  height: 100%;
   position: relative;
   overscroll-behavior: none; /* Prevents viewport rubber-banding natively on iOS and Android */
   cursor: default; /* Prevents I-beam text cursor on static components */
