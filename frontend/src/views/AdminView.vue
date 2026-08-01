@@ -3949,9 +3949,40 @@ export default {
   transition: background-color 0.15s ease;
 }
 
-.admin-table tr {
+/* Table Row Entrance Fade Animation */
+@keyframes rowFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-table tbody tr {
+  animation: rowFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
   transition: background-color 0.15s ease;
 }
+
+.admin-table tbody tr:nth-child(1) { animation-delay: 0.02s; }
+.admin-table tbody tr:nth-child(2) { animation-delay: 0.04s; }
+.admin-table tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.admin-table tbody tr:nth-child(4) { animation-delay: 0.08s; }
+.admin-table tbody tr:nth-child(5) { animation-delay: 0.10s; }
+.admin-table tbody tr:nth-child(6) { animation-delay: 0.12s; }
+.admin-table tbody tr:nth-child(7) { animation-delay: 0.14s; }
+.admin-table tbody tr:nth-child(8) { animation-delay: 0.16s; }
+.admin-table tbody tr:nth-child(9) { animation-delay: 0.18s; }
+.admin-table tbody tr:nth-child(10) { animation-delay: 0.20s; }
+.admin-table tbody tr:nth-child(11) { animation-delay: 0.22s; }
+.admin-table tbody tr:nth-child(12) { animation-delay: 0.24s; }
+.admin-table tbody tr:nth-child(13) { animation-delay: 0.26s; }
+.admin-table tbody tr:nth-child(14) { animation-delay: 0.28s; }
+.admin-table tbody tr:nth-child(15) { animation-delay: 0.30s; }
+.admin-table tbody tr:nth-child(n+16) { animation-delay: 0.32s; }
 
 .admin-table tbody tr:nth-child(even) {
   background-color: rgba(248, 250, 252, 0.4);
