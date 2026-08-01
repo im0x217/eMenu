@@ -188,7 +188,7 @@
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي الطلبات</span>
-                  <span class="kpi-value">{{ analyticsData.kpi.orderCount }} طلب</span>
+                  <span class="kpi-value">{{ formatArabicPlural(analyticsData.kpi.orderCount, 'order') }}</span>
                 </div>
               </div>
               <div class="kpi-card glass-panel">
@@ -206,7 +206,7 @@
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">العملاء النشطون</span>
-                  <span class="kpi-value">{{ analyticsData.kpi.activeCustomers }} عميل</span>
+                  <span class="kpi-value">{{ formatArabicPlural(analyticsData.kpi.activeCustomers, 'customer') }}</span>
                 </div>
               </div>
             </div>
@@ -274,12 +274,12 @@
                     <div class="legend-row">
                       <span class="dot dot-regular"></span>
                       <span class="label">بيع بالمفرد:</span>
-                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.regular.revenue) }} ({{ analyticsData.priceModeSplit.regular.count }} طلب)</span>
+                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.regular.revenue) }} ({{ formatArabicPlural(analyticsData.priceModeSplit.regular.count, 'order') }})</span>
                     </div>
                     <div class="legend-row mt-2">
                       <span class="dot dot-bulk"></span>
                       <span class="label">بيع بالجملة:</span>
-                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.bulk.revenue) }} ({{ analyticsData.priceModeSplit.bulk.count }} طلب)</span>
+                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.bulk.revenue) }} ({{ formatArabicPlural(analyticsData.priceModeSplit.bulk.count, 'order') }})</span>
                     </div>
                   </div>
                 </div>
@@ -293,7 +293,7 @@
                   <div v-for="cat in analyticsData.categorySales" :key="cat.category" class="category-bar-row">
                     <div class="bar-info">
                       <span class="cat-name">{{ cat.category }}</span>
-                      <span class="cat-val">{{ formatCurrency(cat.revenue) }} ({{ cat.count }} مبيعات)</span>
+                      <span class="cat-val">{{ formatCurrency(cat.revenue) }} ({{ formatArabicPlural(cat.count, 'order') }})</span>
                     </div>
                     <div class="bar-gauge">
                       <div class="bar-fill" :style="{ width: getCategoryBarWidth(cat.revenue) + '%' }"></div>
@@ -311,7 +311,7 @@
                     <div class="list-badge">{{ idx + 1 }}</div>
                     <div class="list-item-info">
                       <span class="title">{{ fav.name }}</span>
-                      <span class="subtitle">تم التفضيل بواسطة {{ fav.count }} عميل</span>
+                      <span class="subtitle">تم التفضيل بواسطة {{ formatArabicPlural(fav.count, 'customer') }}</span>
                     </div>
                   </div>
                 </div>
@@ -335,7 +335,7 @@
                       </tr>
                       <tr v-for="prod in analyticsData.topProducts" :key="prod.productId">
                         <td>{{ prod.name }}</td>
-                        <td class="text-mono text-bold">{{ prod.quantity }} وحدة</td>
+                        <td class="text-mono text-bold">{{ formatArabicPlural(prod.quantity, 'unit') }}</td>
                         <td class="text-mono text-bold text-primary">{{ formatCurrency(prod.revenue) }}</td>
                       </tr>
                     </tbody>
@@ -437,7 +437,7 @@
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
-                    <span class="toolbar-badge">{{ filteredProducts.length }} منتج</span>
+                    <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
                   </div>
                   <button @click="openProductModal()" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -536,7 +536,7 @@
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">إدارة أصناف المنيو</h3>
-                    <span class="toolbar-badge">{{ categories.length }} صنف</span>
+                    <span class="toolbar-badge">{{ formatArabicPlural(categories.length, 'category') }}</span>
                   </div>
                   <button @click="openCategoryModal()" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -592,7 +592,7 @@
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">إدارة العلامات المميزة (Tags)</h3>
-                    <span class="toolbar-badge">{{ tags.length }} علامة</span>
+                    <span class="toolbar-badge">{{ formatArabicPlural(tags.length, 'tag') }}</span>
                   </div>
                   <button @click="openTagModal()" class="btn btn-primary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -694,7 +694,7 @@
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
-                    <span class="toolbar-badge">{{ filteredOrders.length }} طلب</span>
+                    <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
                   </div>
                 </div>
                 <div class="card-toolbar-bottom">
@@ -958,7 +958,7 @@
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">دليل وقائمة العملاء</h3>
-                    <span class="toolbar-badge">{{ filteredCustomers.length }} عميل</span>
+                    <span class="toolbar-badge">{{ formatArabicPlural(filteredCustomers.length, 'customer') }}</span>
                   </div>
                 </div>
                 <div class="card-toolbar-bottom">
@@ -991,7 +991,7 @@
                       <td class="text-mono">{{ cust.phone }}</td>
                       <td class="text-mono text-small">{{ cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</td>
                       <td class="text-mono text-small">{{ cust.lastActive ? new Date(cust.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</td>
-                      <td class="text-mono text-bold">{{ cust.orderCount }} طلبات</td>
+                      <td class="text-mono text-bold">{{ formatArabicPlural(cust.orderCount, 'order') }}</td>
                       <td class="text-bold text-primary text-mono">{{ formatCurrency(cust.totalSpent) }}</td>
                       <td>
                         <div class="actions-buttons-cell">
@@ -1297,7 +1297,7 @@
             <span class="mx-2">|</span>
             <span class="text-bold text-dark">الهاتف:</span> <span style="direction: ltr; display: inline-block;">{{ viewingCustomer.phone }}</span>
             <span class="mx-2">|</span>
-            <span class="text-bold text-dark">إجمالي المنتجات المفضلة:</span> {{ viewingCustomerFavs.length }}
+            <span class="text-bold text-dark">إجمالي المنتجات المفضلة:</span> {{ formatArabicPlural(viewingCustomerFavs.length, 'product') }}
           </div>
           
           <div v-if="viewingCustomerFavs.length > 0" class="fav-grid-brows">
@@ -1846,6 +1846,29 @@ export default {
 
 
     // Helper functions
+    const formatArabicPlural = (count, nounType = 'order') => {
+      const n = Math.abs(Number(count) || 0);
+      const mod100 = n % 100;
+      
+      const dictionaries = {
+        order: { s: 'طلب', d: 'طلبان', p: 'طلبات', a: 'طلباً' },
+        customer: { s: 'عميل', d: 'عميلان', p: 'عملاء', a: 'عميلاً' },
+        product: { s: 'منتج', d: 'منتجان', p: 'منتجات', a: 'منتجاً' },
+        category: { s: 'صنف', d: 'صنفان', p: 'أصناف', a: 'صنفاً' },
+        tag: { s: 'علامة', d: 'علامتان', p: 'علامات', a: 'علامةً' },
+        unit: { s: 'وحدة', d: 'وحدتان', p: 'وحدات', a: 'وحدةً' },
+        sale: { s: 'عملية بيع', d: 'عمليتا بيع', p: 'عمليات بيع', a: 'عملية بيع' }
+      };
+      
+      const dict = dictionaries[nounType] || dictionaries.order;
+      
+      if (n === 0) return `0 ${dict.p}`;
+      if (n === 1) return `1 ${dict.s}`;
+      if (n === 2) return `2 ${dict.d}`;
+      if (mod100 >= 3 && mod100 <= 10) return `${n} ${dict.p}`;
+      if (mod100 >= 11 && mod100 <= 99) return `${n} ${dict.a}`;
+      return `${n} ${dict.s}`;
+    };
 
 
     // Filter Products
@@ -3090,6 +3113,7 @@ export default {
       toggleProductTag,
 
       formatCurrency,
+      formatArabicPlural,
       handleLogin,
       handleLogout,
       switchShop,
