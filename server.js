@@ -585,11 +585,16 @@ app.get("/api/categories", checkMongoDB, async (req, res) => {
 
 app.post("/api/categories", checkAdmin, async (req, res) => {
   try {
-    const { name, emoji, subCategories } = req.body;
-    if (!name || !emoji) {
-      return res.status(400).json({ error: "Missing required fields" });
+    const { name, icon, emoji, subCategories } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Missing required category name" });
     }
-    const result = await categoriesCollection.insertOne({ name, emoji, subCategories: subCategories || [] });
+    const result = await categoriesCollection.insertOne({ 
+      name, 
+      icon: icon || '', 
+      emoji: emoji || '', 
+      subCategories: subCategories || [] 
+    });
     res.status(201).json(result);
   } catch (err) {
     res.status(500).json({ error: "Failed to create category" });
@@ -598,16 +603,16 @@ app.post("/api/categories", checkAdmin, async (req, res) => {
 
 app.put("/api/categories/:id", checkAdmin, async (req, res) => {
   try {
-    const { name, emoji, subCategories } = req.body;
-    if (!name || !emoji) {
-      return res.status(400).json({ error: "Missing required fields" });
+    const { name, icon, emoji, subCategories } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Missing required category name" });
     }
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid category ID" });
     }
     await categoriesCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, emoji, subCategories: subCategories || [] } }
+      { $set: { name, icon: icon || '', emoji: emoji || '', subCategories: subCategories || [] } }
     );
     res.json({ success: true });
   } catch (err) {

@@ -1189,12 +1189,12 @@
           </div>
 
           <div class="form-group mb-3">
-            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem; color: #475569;">رمز الصنف (Emoji/SVG)</label>
-            <div class="category-icon-input-group">
-              <input v-model="editingCategory.emoji" type="text" placeholder="مثال: 🍰" class="form-control" />
-              <div class="icon-preview-box" title="معاينة أيقونة SVG الحالية">
-                <CategoryIcon :icon="editingCategory.icon" :name="editingCategory.name" :emoji="editingCategory.emoji" />
+            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem; color: #475569;">الأيقونة المختارة للصنف:</label>
+            <div class="category-icon-preview-row">
+              <div class="icon-preview-box" title="معاينة أيقونة SVG">
+                <CategoryIcon :icon="editingCategory.icon" :name="editingCategory.name" :emoji="editingCategory.emoji" size="22" />
               </div>
+              <span class="text-semibold text-dark" style="font-size: 0.88rem;">{{ editingCategory.name || 'اسم الصنف' }}</span>
             </div>
           </div>
 
@@ -1994,7 +1994,8 @@ export default {
         
       const body = {
         name: editingCategory.name,
-        emoji: editingCategory.emoji,
+        icon: editingCategory.icon || '',
+        emoji: editingCategory.emoji || '',
         subCategories: subCats
       };
 
@@ -4075,6 +4076,16 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.category-icon-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
 }
 
 .category-icon-input-group .icon-preview-box {
