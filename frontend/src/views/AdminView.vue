@@ -725,12 +725,6 @@
                         <span>اختيار تاريخ</span>
                       </button>
 
-                      <!-- Selected Date Display Badge (Displayed to the left of the Today button) -->
-                      <div v-if="orderFilters.selectedDate" class="selected-date-badge animate-fade-in">
-                        <span class="date-text">{{ formatArabicDate(orderFilters.selectedDate) }}</span>
-                        <button type="button" class="btn-remove-date" @click="orderFilters.selectedDate = ''" title="إلغاء التصفية بالتاريخ">&times;</button>
-                      </div>
-
                       <!-- Today Shortcut Button -->
                       <button 
                         type="button" 
@@ -739,6 +733,12 @@
                         @click="setOrderTodayDate"
                         title="عرض طلبات اليوم فقط"
                       >اليوم</button>
+
+                      <!-- Selected Date Display Badge (Displayed after Today button in RTL reading order) -->
+                      <div v-if="orderFilters.selectedDate" class="selected-date-badge animate-fade-in">
+                        <span class="date-text">{{ formatArabicDate(orderFilters.selectedDate) }}</span>
+                        <button type="button" class="btn-remove-date" @click="orderFilters.selectedDate = ''" title="إلغاء التصفية بالتاريخ">&times;</button>
+                      </div>
 
                       <!-- Custom Date Picker Popover Panel -->
                       <div v-if="datePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
@@ -4331,8 +4331,8 @@ export default {
 
 .search-input-wrapper {
   position: relative;
-  flex: 1;
-  min-width: 220px;
+  flex: 1 1 240px;
+  min-width: 200px;
 }
 
 .search-input-wrapper .search-icon {
@@ -4358,6 +4358,9 @@ export default {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 
 .select-pill {
@@ -4369,6 +4372,7 @@ export default {
   color: #334155;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 select,
@@ -4399,6 +4403,8 @@ select.select-pill {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  z-index: 120;
 }
 
 .btn-datepicker-trigger {
@@ -4415,6 +4421,7 @@ select.select-pill {
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
+  flex-shrink: 0;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4439,6 +4446,8 @@ select.select-pill {
   gap: 6px;
   padding: 6px 12px;
   height: 38px;
+  flex-shrink: 0;
+  white-space: nowrap;
   background: linear-gradient(135deg, rgba(253, 181, 24, 0.18) 0%, rgba(253, 181, 24, 0.08) 100%);
   border: 1px solid rgba(253, 181, 24, 0.35);
   border-radius: 10px;
@@ -4447,6 +4456,7 @@ select.select-pill {
   font-weight: 800;
   font-family: inherit;
   box-shadow: 0 2px 8px rgba(253, 181, 24, 0.12);
+  will-change: transform, opacity;
 }
 
 .btn-remove-date {
