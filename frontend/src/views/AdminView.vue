@@ -758,31 +758,70 @@
                       <option value="cancelled">ملغي (Cancelled)</option>
                     </select>
 
-                    <!-- Day/Date Picker Input with Clear & Today Shortcut -->
-                    <div class="date-picker-wrapper">
-                      <svg class="date-picker-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      <input 
-                        v-model="orderFilters.selectedDate" 
-                        type="date" 
-                        class="form-control date-picker-input" 
-                        title="تحديد تاريخ معين" 
-                      />
+                    <!-- Custom Date Filter Component Group -->
+                    <div class="date-filter-group">
+                      <!-- Date Picker Trigger Button -->
                       <button 
-                        v-if="orderFilters.selectedDate" 
                         type="button" 
-                        class="btn-clear-date" 
-                        @click="orderFilters.selectedDate = ''" 
-                        title="عرض جميع التواريخ"
-                      >&times;</button>
-                    </div>
+                        class="btn-datepicker-trigger" 
+                        :class="{ active: datePickerOpen || orderFilters.selectedDate }"
+                        @click.stop="datePickerOpen = !datePickerOpen"
+                        title="فتح تقويم اختيار التاريخ"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>اختيار تاريخ</span>
+                      </button>
 
-                    <button 
-                      type="button" 
-                      class="btn-today-shortcut" 
-                      :class="{ active: isTodaySelected }" 
-                      @click="setOrderTodayDate"
-                      title="عرض طلبات اليوم فقط"
-                    >اليوم</button>
+                      <!-- Selected Date Display Badge (Displayed to the left of the Today button) -->
+                      <div v-if="orderFilters.selectedDate" class="selected-date-badge animate-fade-in">
+                        <span class="date-text">{{ formatArabicDate(orderFilters.selectedDate) }}</span>
+                        <button type="button" class="btn-remove-date" @click="orderFilters.selectedDate = ''" title="إلغاء التصفية بالتاريخ">&times;</button>
+                      </div>
+
+                      <!-- Today Shortcut Button -->
+                      <button 
+                        type="button" 
+                        class="btn-today-shortcut" 
+                        :class="{ active: isTodaySelected }" 
+                        @click="setOrderTodayDate"
+                        title="عرض طلبات اليوم فقط"
+                      >اليوم</button>
+
+                      <!-- Custom Date Picker Popover Panel -->
+                      <div v-if="datePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                        <div class="datepicker-header">
+                          <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق">&rsaquo;</button>
+                          <span class="dp-month-title">{{ currentMonthYearLabel }}</span>
+                          <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي">&lsaquo;</button>
+                        </div>
+
+                        <div class="dp-weekdays">
+                          <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                        </div>
+
+                        <div class="dp-days-grid">
+                          <button 
+                            type="button"
+                            v-for="(dayObj, idx) in calendarDays" 
+                            :key="idx"
+                            class="dp-day-cell"
+                            :class="{ 
+                              'other-month': !dayObj.inMonth,
+                              'is-today': dayObj.isToday,
+                              'is-selected': orderFilters.selectedDate === dayObj.dateStr
+                            }"
+                            @click="selectDateFromPicker(dayObj.dateStr)"
+                          >
+                            {{ dayObj.dayNum }}
+                          </button>
+                        </div>
+
+                        <div class="datepicker-footer">
+                          <button type="button" class="btn btn-sm btn-outline" @click="orderFilters.selectedDate = ''; datePickerOpen = false;">عرض الكل</button>
+                          <button type="button" class="btn btn-sm btn-primary" @click="setOrderTodayDate(); datePickerOpen = false;">اليوم</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1623,6 +1662,89 @@ export default {
     const filters = reactive({ search: '', category: '', subCategory: '' });
     const orderFilters = reactive({ search: '', status: '', selectedDate: '' });
     const customerFilters = reactive({ search: '' });
+
+    // Custom DatePicker State & Calendar Logic
+    const datePickerOpen = ref(false);
+    const today = new Date();
+    const pickerYear = ref(today.getFullYear());
+    const pickerMonth = ref(today.getMonth());
+
+    const currentMonthYearLabel = computed(() => {
+      const d = new Date(pickerYear.value, pickerMonth.value, 1);
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const prevMonth = () => {
+      if (pickerMonth.value === 0) {
+        pickerMonth.value = 11;
+        pickerYear.value--;
+      } else {
+        pickerMonth.value--;
+      }
+    };
+
+    const nextMonth = () => {
+      if (pickerMonth.value === 11) {
+        pickerMonth.value = 0;
+        pickerYear.value++;
+      } else {
+        pickerMonth.value++;
+      }
+    };
+
+    const calendarDays = computed(() => {
+      const year = pickerYear.value;
+      const month = pickerMonth.value;
+      
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      
+      const daysInMonth = lastDayOfMonth.getDate();
+      const startDayOfWeek = firstDayOfMonth.getDay();
+      
+      const days = [];
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const pDay = prevMonthLastDay - i;
+        const pDate = new Date(year, month - 1, pDay);
+        const dateStr = pDate.toLocaleDateString('en-CA');
+        days.push({ dayNum: pDay, dateStr, inMonth: false, isToday: false });
+      }
+      
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cDate = new Date(year, month, d);
+        const dateStr = cDate.toLocaleDateString('en-CA');
+        days.push({ 
+          dayNum: d, 
+          dateStr, 
+          inMonth: true, 
+          isToday: dateStr === todayStr 
+        });
+      }
+      
+      const remaining = (7 - (days.length % 7)) % 7;
+      for (let n = 1; n <= remaining; n++) {
+        const nDate = new Date(year, month + 1, n);
+        const dateStr = nDate.toLocaleDateString('en-CA');
+        days.push({ dayNum: n, dateStr, inMonth: false, isToday: false });
+      }
+      
+      return days;
+    });
+
+    const selectDateFromPicker = (dateStr) => {
+      orderFilters.selectedDate = dateStr;
+      datePickerOpen.value = false;
+    };
+
+    const formatArabicDate = (dateStr) => {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      return d.toLocaleDateString('ar-LY', { day: 'numeric', month: 'long', year: 'numeric' });
+    };
 
     const isTodaySelected = computed(() => {
       const todayStr = new Date().toLocaleDateString('en-CA');
@@ -3131,6 +3253,15 @@ export default {
       orders,
       customers,
       orderFilters,
+      datePickerOpen,
+      pickerYear,
+      pickerMonth,
+      currentMonthYearLabel,
+      calendarDays,
+      prevMonth,
+      nextMonth,
+      selectDateFromPicker,
+      formatArabicDate,
       isTodaySelected,
       setOrderTodayDate,
       customerFilters,
@@ -4353,53 +4484,71 @@ select.select-pill {
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-/* Date Picker Component in Order Toolbar */
-.date-picker-wrapper {
+/* Custom Date Filter Component & Popover Panel */
+.date-filter-group {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-datepicker-trigger {
   display: inline-flex;
   align-items: center;
-}
-
-.date-picker-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #64748b;
-  pointer-events: none;
-}
-
-.date-picker-input {
-  padding-right: 32px !important;
-  padding-left: 28px !important;
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 10px !important;
-  font-size: 0.88rem !important;
-  color: #334155 !important;
-  font-family: 'Fira Code', 'Courier New', monospace, inherit !important;
-  cursor: pointer;
+  gap: 8px;
+  padding: 8px 14px;
   height: 38px;
-  background-position: left 8px center !important;
-}
-
-.date-picker-input:focus {
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 3px var(--primary-glow) !important;
-}
-
-.btn-clear-date {
-  position: absolute;
-  left: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(148, 163, 184, 0.2);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   color: #475569;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-datepicker-trigger:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--primary-glow);
+}
+
+.btn-datepicker-trigger.active {
+  border-color: var(--primary-color);
+  background: var(--primary-glow);
+  color: var(--primary-color);
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.selected-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  height: 38px;
+  background: linear-gradient(135deg, rgba(253, 181, 24, 0.18) 0%, rgba(253, 181, 24, 0.08) 100%);
+  border: 1px solid rgba(253, 181, 24, 0.35);
+  border-radius: 10px;
+  color: #0f172a;
+  font-size: 0.86rem;
+  font-weight: 800;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(253, 181, 24, 0.12);
+}
+
+.btn-remove-date {
+  background: rgba(15, 23, 42, 0.1);
+  color: #334155;
   border: none;
   border-radius: 50%;
   width: 18px;
   height: 18px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
@@ -4408,9 +4557,121 @@ select.select-pill {
   transition: all 0.15s ease;
 }
 
-.btn-clear-date:hover {
+.btn-remove-date:hover {
   background: #ef4444;
   color: #ffffff;
+}
+
+/* DatePicker Popover Panel */
+.datepicker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1200;
+  width: 280px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(44, 37, 32, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
+}
+
+.datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dp-month-title {
+  font-weight: 850;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.dp-nav-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dp-nav-btn:hover {
+  background: var(--primary-glow);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.dp-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.dp-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.dp-day-cell {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  font-family: 'Fira Code', 'Courier New', monospace, inherit;
+  transition: all 0.15s ease;
+}
+
+.dp-day-cell:hover {
+  background: var(--primary-glow);
+  color: var(--primary-color);
+}
+
+.dp-day-cell.other-month {
+  color: #cbd5e1;
+}
+
+.dp-day-cell.is-today {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 850;
+}
+
+.dp-day-cell.is-selected {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  font-weight: 850;
+  box-shadow: 0 3px 8px var(--primary-glow);
+}
+
+.datepicker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
 }
 
 .btn-today-shortcut {
