@@ -219,7 +219,7 @@ const getIconUrl = (iconKey) => {
 .favorite-btn {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   z-index: 10;
   background: rgba(255, 253, 249, 0.85);
   border: none;
@@ -291,11 +291,11 @@ const getIconUrl = (iconKey) => {
 .product-tags-container {
   position: absolute;
   top: 10px;
-  left: 10px;
+  right: 10px;
   z-index: 6;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 6px;
   pointer-events: none;
 }
