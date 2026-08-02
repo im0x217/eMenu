@@ -700,7 +700,7 @@
                 <div class="card-toolbar-bottom">
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الهاتف أو اسم العميل…" class="form-control search-input" />
+                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل…" class="form-control search-input" />
                   </div>
                   <div class="filters-inline">
                     <select v-model="orderFilters.status" class="form-control select-pill">
@@ -2972,10 +2972,16 @@ export default {
     };
 
     const filteredOrders = computed(() => {
+      const query = orderFilters.search ? orderFilters.search.trim().toLowerCase().replace(/^#/, '') : '';
       return orders.value.filter(o => {
-        const matchesSearch = !orderFilters.search || 
-                              o.customerInfo.name.toLowerCase().includes(orderFilters.search.toLowerCase()) || 
-                              o.customerInfo.phone.includes(orderFilters.search);
+        const orderIdStr = o._id ? o._id.toString().toLowerCase() : '';
+        const orderIdShort = orderIdStr.slice(-6);
+
+        const matchesSearch = !query || 
+                              orderIdStr.includes(query) ||
+                              orderIdShort.includes(query) ||
+                              (o.customerInfo && o.customerInfo.name && o.customerInfo.name.toLowerCase().includes(query)) || 
+                              (o.customerInfo && o.customerInfo.phone && o.customerInfo.phone.includes(query));
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
         
         let matchesDate = true;
