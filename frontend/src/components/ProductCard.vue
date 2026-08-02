@@ -5,6 +5,7 @@ import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
 import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
+import CategoryIcon from './CategoryIcon.vue';
 import { gsap } from 'gsap';
 
 const heartBtnRef = ref(null);
@@ -137,8 +138,8 @@ const getIconUrl = (iconKey) => {
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
       <!-- Tag Banner -->
       <div v-if="activeTagDetails" class="product-tag-banner" :class="'tag-' + activeTagDetails.color">
+        <CategoryIcon :icon="activeTagDetails.icon" :name="activeTagDetails.name" size="14" />
         <span>{{ activeTagDetails.name }}</span>
-        <img :src="getIconUrl(activeTagDetails.icon)" class="tag-custom-icon" alt="" aria-hidden="true" width="16" height="16" />
       </div>
 
       <img 

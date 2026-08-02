@@ -14,7 +14,16 @@ import {
   StarIcon, 
   CupSodaIcon, 
   ConciergeBellIcon, 
-  Dish01Icon 
+  Dish01Icon,
+  Trophy,
+  Medal01Icon,
+  CrownIcon,
+  Diamond01Icon,
+  Fire02Icon,
+  Leaf01Icon,
+  DiscountTag01Icon,
+  ShoppingBag01Icon,
+  SparklesIcon
 } from '@hugeicons/core-free-icons';
 
 const props = defineProps({
@@ -49,7 +58,7 @@ const iconComponent = computed(() => {
   const n = (props.name || '').toLowerCase().trim();
   const e = (props.emoji || '').trim();
 
-  // Direct Key Matching
+  // Category Direct Key Matching
   if (iconKey === 'cheesecake02' || iconKey === 'western' || iconKey === 'cake') return CheeseCake02Icon;
   if (iconKey === 'cheesecake01' || iconKey === 'torte' || iconKey === 'birthday-cake') return CheeseCake01Icon;
   if (iconKey === 'bread04' || iconKey === 'bakery' || iconKey === 'dry' || iconKey === 'macaron') return Bread04Icon;
@@ -62,6 +71,17 @@ const iconComponent = computed(() => {
   if (iconKey === 'service') return ConciergeBellIcon;
   if (iconKey === 'gift') return GiftIcon;
   if (iconKey === 'star') return StarIcon;
+
+  // Tag Direct Key Matching
+  if (iconKey === 'trophy' || iconKey === 'best_box' || iconKey === 'award') return Trophy;
+  if (iconKey === 'medal') return Medal01Icon;
+  if (iconKey === 'crown') return CrownIcon;
+  if (iconKey === 'diamond' || iconKey === 'chest') return Diamond01Icon;
+  if (iconKey === 'fire' || iconKey === 'starburst_pct') return Fire02Icon;
+  if (iconKey === 'sprout' || iconKey === 'new_box') return Leaf01Icon;
+  if (iconKey === 'tag_pct' || iconKey === 'tag') return DiscountTag01Icon;
+  if (iconKey === 'bag_pct' || iconKey === 'bag') return ShoppingBag01Icon;
+  if (iconKey === 'sparkles') return SparklesIcon;
 
   // Keyword / Name / Emoji Fallback Matching
   if (n.includes('غربي') || e.includes('🍰')) return CheeseCake02Icon;

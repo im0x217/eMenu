@@ -622,8 +622,8 @@
                       <td class="text-bold">{{ t.name }}</td>
                       <td>
                         <span class="tag-pill inline-flex items-center gap-1" :class="'tag-' + (t.color || 'default')">
+                          <CategoryIcon :icon="t.icon" :name="t.name" size="14" />
                           <span>{{ t.name }}</span>
-                          <img :src="getIconUrl(t.icon)" class="tag-custom-icon-admin" alt="Tag Icon" />
                         </span>
                       </td>
                       <td>
@@ -1320,13 +1320,13 @@
             </select>
           </div>
           <div class="form-group mb-3">
-            <label>الأيقونة المميزة *</label>
-            <div class="icon-select-preview-wrapper">
-              <select v-model="editingTag.icon" class="form-control flex-1">
+            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">الأيقونة المميزة (Hugeicons SVG) *</label>
+            <div class="icon-select-preview-wrapper flex items-center gap-2">
+              <select v-model="editingTag.icon" class="form-select user-form-select flex-1">
                 <option v-for="i in tagIcons" :key="i.key" :value="i.key">{{ i.label }}</option>
               </select>
-              <div class="selected-icon-preview-box">
-                <img :src="getIconUrl(editingTag.icon)" class="selected-icon-preview-img" alt="Tag Icon Preview" />
+              <div class="selected-icon-preview-box flex items-center justify-center p-2" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; min-width: 44px; height: 44px;">
+                <CategoryIcon :icon="editingTag.icon" :name="editingTag.name" size="22" />
               </div>
             </div>
           </div>
