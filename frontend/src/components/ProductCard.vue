@@ -104,32 +104,32 @@ const activeTagsList = computed(() => {
 
 <template>
   <div class="product-card glass-panel card-hover-effect" :class="{ 'not-available': product.available === false }">
-    <!-- Product Image (Horizontal side) -->
-    <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
-      <!-- Favorite Heart Toggle -->
-      <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="17" 
-          height="17" 
-          viewBox="0 0 24 24" 
-          :fill="isSaved ? 'var(--primary-color)' : 'none'" 
-          :stroke="isSaved ? 'var(--primary-color)' : 'rgba(255,255,255,0.85)'"
-          stroke-width="2.2" 
-          stroke-linecap="round" 
-          stroke-linejoin="round"
-          class="heart-icon"
-        >
-          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-        </svg>
-      </button>
+    <!-- Favorite Heart Toggle -->
+    <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="18" 
+        height="18" 
+        viewBox="0 0 24 24" 
+        :fill="isSaved ? 'var(--primary-color)' : 'none'" 
+        :stroke="isSaved ? 'var(--primary-color)' : 'rgba(255,255,255,0.85)'"
+        stroke-width="2.2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        class="heart-icon"
+      >
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+      </svg>
+    </button>
 
+    <!-- Product Image (Bigger Image: 75% aspect ratio) -->
+    <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
       <img 
         :src="getImageUrl()" 
         :alt="product.name" 
         loading="lazy"
-        width="200"
-        height="200"
+        width="300"
+        height="225"
         class="product-image"
         @error="$event.target.src = '/res/logo.jpg'"
       />
@@ -138,10 +138,10 @@ const activeTagsList = computed(() => {
       </div>
     </div>
 
-    <!-- Product Details Content -->
+    <!-- Product Details Content (Horizontal distribution of info elements) -->
     <div class="product-info">
       <div class="info-top">
-        <h3 class="product-title">{{ product.name }}</h3>
+        <h3 class="product-title" :title="product.name">{{ product.name }}</h3>
         <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
 
         <!-- Inline Tags (After Description) -->
@@ -160,8 +160,8 @@ const activeTagsList = computed(() => {
         </div>
       </div>
 
-      <!-- Bottom Row: Prices & Add Button -->
-      <div class="prices-and-actions-row">
+      <!-- Bottom Horizontal Row: Price & Add Button -->
+      <div class="bottom-card-row">
         <!-- Price displays -->
         <div class="prices-row">
           <!-- Regular Price -->
@@ -179,15 +179,13 @@ const activeTagsList = computed(() => {
         </div>
 
         <!-- Add Button (Compact format) -->
-        <div class="actions-row" v-if="product.available !== false">
-          <button ref="addBtnRef" class="add-btn-compact" @click="handleAddToCart" aria-label="إضافة إلى السلة">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>إضافة</span>
-          </button>
-        </div>
+        <button v-if="product.available !== false" ref="addBtnRef" class="add-btn-compact" @click="handleAddToCart" aria-label="إضافة إلى السلة">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>إضافة</span>
+        </button>
       </div>
     </div>
   </div>
@@ -197,15 +195,14 @@ const activeTagsList = computed(() => {
 .product-card {
   position: relative;
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  min-height: 135px;
+  flex-direction: column;
+  height: 100%;
   width: 100%;
   overflow: hidden;
   border-radius: 20px;
   background: var(--bg-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
@@ -215,19 +212,18 @@ const activeTagsList = computed(() => {
 
 .favorite-btn {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 8px;
+  left: 8px;
   z-index: 10;
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -248,15 +244,11 @@ const activeTagsList = computed(() => {
 
 .img-wrapper {
   position: relative;
-  width: 130px;
-  min-width: 130px;
-  height: 100%;
-  min-height: 135px;
-  padding-top: 0;
+  width: 100%;
+  padding-top: 75%; /* Bigger image aspect ratio */
   overflow: hidden;
   background: #0f172a;
   cursor: zoom-in;
-  flex-shrink: 0;
 }
 
 .product-image {

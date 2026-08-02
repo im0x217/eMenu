@@ -150,6 +150,51 @@ const filteredProducts = computed(() => {
   });
 });
 
+// Subcategory grouped products section list (2 horizontal scrollable rows per subcategory)
+const subCategorySections = computed(() => {
+  if (searchQuery.value.trim()) {
+    return [{ name: 'نتائج البحث', products: filteredProducts.value }];
+  }
+
+  let list = shopStore.products;
+  if (activeCategory.value) {
+    list = list.filter(p => p.category === activeCategory.value);
+  }
+  if (shopStore.activeShop === 'shop2' && !shopStore.isBulkVerified) {
+    list = list.filter(p => p.purchaseType !== 'bulk');
+  }
+
+  // Sort tagged products first
+  list = list.slice().sort((a, b) => {
+    const aHasTags = a.tags && a.tags.length > 0;
+    const bHasTags = b.tags && b.tags.length > 0;
+    if (aHasTags && !bHasTags) return -1;
+    if (!aHasTags && bHasTags) return 1;
+    return 0;
+  });
+
+  const subs = currentCategoryObj.value?.subCategories || [];
+  const sections = [];
+
+  if (subs.length > 0) {
+    subs.forEach(subName => {
+      const subProds = list.filter(p => p.subCategory === subName);
+      if (subProds.length > 0) {
+        sections.push({ name: subName, products: subProds });
+      }
+    });
+
+    const unassignedProds = list.filter(p => !p.subCategory || !subs.includes(p.subCategory));
+    if (unassignedProds.length > 0) {
+      sections.push({ name: 'تشكيلة أخرى', products: unassignedProds });
+    }
+  } else {
+    sections.push({ name: activeCategory.value || 'الكل', products: list });
+  }
+
+  return sections;
+});
+
 // GSAP entrance stagger animation for product grid
 watch(filteredProducts, () => {
   nextTick(() => {
@@ -449,55 +494,45 @@ watch(carouselItems, (newItems) => {
       </div>
     </div>
 
-    <!-- Subcategories filter (hidden when searching) -->
-    <div v-if="!searchQuery && subCategories.length > 0" class="subcategories-row animate-fade-in">
-      <div class="subcat-section-header">
-        <span class="subcat-section-title">الأصناف الفرعية</span>
-        <span class="subcat-section-badge">{{ subCategories.length }} صنف</span>
-      </div>
-      <div 
-        class="subcat-grid-2rows" 
-        @wheel.prevent="handleHorizontalScroll"
-        @mousedown="startDrag"
-        @mousemove="drag"
-        @mouseup="endDrag"
-        @mouseleave="endDrag"
-      >
-        <button 
-          class="subcat-pill-btn"
-          :class="{ active: activeSubCategory === '' }"
-          @click="selectSubCategory('')"
-        >
-          <span class="subcat-icon-dot"></span>
-          <span>الكل</span>
-        </button>
-        <button 
-          v-for="sub in subCategories" 
-          :key="sub" 
-          class="subcat-pill-btn"
-          :class="{ active: activeSubCategory === sub }"
-          @click="selectSubCategory(sub)"
-        >
-          <span class="subcat-icon-dot"></span>
-          <span>{{ sub }}</span>
-        </button>
-      </div>
-    </div>
-
     <!-- Loading Spinner -->
     <div v-if="shopStore.isLoading" class="loading-state">
       <div class="spinner"></div>
       <p>جاري تحميل المنيو…</p>
     </div>
 
-    <!-- Product Grid -->
-    <div v-else-if="filteredProducts.length > 0" class="product-grid">
-      <ProductCard 
-        v-for="product in filteredProducts" 
-        :key="product._id" 
-        :product="product" 
-        @zoom="openZoomModal"
-      />
+    <!-- Sub-Category Product Sections (2 Horizontal Scrollable Rows Stacked On Top Of Each Other) -->
+    <div v-else-if="subCategorySections.length > 0" class="subcat-sections-wrapper">
+      <section 
+        v-for="group in subCategorySections" 
+        :key="group.name" 
+        class="subcat-section-card glass-panel animate-fade-in"
+      >
+        <!-- Subcategory Section Header Bar -->
+        <div class="subcat-section-header-bar">
+          <div class="subcat-title-group">
+            <h2 class="subcat-section-title">{{ group.name }}</h2>
+            <span class="subcat-section-count">{{ group.products.length }} منتج</span>
+          </div>
+          <span class="subcat-scroll-hint-label">اسحب أفقياً ‹</span>
+        </div>
+
+        <!-- 2 Horizontal Scrollable Product Rows Stacked On Top Of Each Other -->
+        <div 
+          class="subcat-products-grid-2rows" 
+          @wheel.prevent="handleHorizontalScroll"
+          @mousedown="startDrag"
+          @mousemove="drag"
+          @mouseup="endDrag"
+          @mouseleave="endDrag"
+        >
+          <ProductCard 
+            v-for="product in group.products" 
+            :key="product._id" 
+            :product="product" 
+            @zoom="openZoomModal"
+          />
+        </div>
+      </section>
     </div>
 
     <!-- Empty State -->
@@ -709,99 +744,82 @@ watch(carouselItems, (newItems) => {
   font-size: 1.1rem;
 }
 
-.subcategories-row {
-  margin-top: 2px;
-  margin-bottom: 6px;
+/* Sub-Category Product Sections with 2 Horizontal Scrollable Rows Stacked */
+.subcat-sections-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-top: 0.5rem;
 }
 
-.subcat-section-header {
+.subcat-section-card {
+  border-radius: 22px;
+  overflow: hidden;
+  padding: 14px 0 12px 0;
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.subcat-section-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px 6px 4px;
+  padding: 0 16px 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 8px;
+}
+
+.subcat-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .subcat-section-title {
   font-family: 'Cairo', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #94a3b8;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
 }
 
-.subcat-section-badge {
+.subcat-section-count {
   font-family: 'Cairo', sans-serif;
   font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 8px;
-  border-radius: 10px;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  padding: 2px 10px;
+  border-radius: 12px;
 }
 
-.subcat-grid-2rows {
+.subcat-scroll-hint-label {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.subcat-products-grid-2rows {
   display: grid;
   grid-template-rows: repeat(2, auto);
   grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  gap: 8px 10px;
+  grid-auto-columns: minmax(180px, 215px);
+  gap: 12px 14px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 4px 10px 4px;
+  padding: 6px 16px 10px 16px;
   scrollbar-width: none;
 }
 
-.subcat-grid-2rows::-webkit-scrollbar {
+.subcat-products-grid-2rows::-webkit-scrollbar {
   display: none;
-}
-
-.subcat-pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 14px;
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #e2e8f0;
-  font-family: 'Cairo', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.subcat-pill-btn .subcat-icon-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transition: transform 0.25s ease, background-color 0.25s ease;
-}
-
-.subcat-pill-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(51, 65, 85, 0.85);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.subcat-pill-btn.active {
-  background: linear-gradient(135deg, #d97706, #b45309);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
-  transform: translateY(-1px) scale(1.02);
-}
-
-.subcat-pill-btn.active .subcat-icon-dot {
-  background: #ffffff;
-  transform: scale(1.4);
 }
 
 .loading-state {
