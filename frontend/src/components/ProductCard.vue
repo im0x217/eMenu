@@ -138,13 +138,13 @@ const activeTagsList = computed(() => {
       </div>
     </div>
 
-    <!-- Product Details Content (Horizontal distribution of info elements) -->
+    <!-- Product Details Content -->
     <div class="product-info">
-      <div class="info-top">
+      <div class="info-body">
         <h3 class="product-title" :title="product.name">{{ product.name }}</h3>
         <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
 
-        <!-- Inline Tags (After Description) -->
+        <!-- Inline Tags Row -->
         <div v-if="activeTagsList.length > 0" class="product-inline-tags">
           <div 
             v-for="(tagItem, tIdx) in activeTagsList" 
@@ -158,11 +158,8 @@ const activeTagsList = computed(() => {
             <span class="tag-text">{{ tagItem.name }}</span>
           </div>
         </div>
-      </div>
 
-      <!-- Bottom Horizontal Row: Price & Add Button -->
-      <div class="bottom-card-row">
-        <!-- Price displays -->
+        <!-- Prices Row (Horizontal flex row) -->
         <div class="prices-row">
           <!-- Regular Price -->
           <div v-if="showRegularPrice" class="price-pill regular-price" :class="{ active: !isBulkMode }">
@@ -177,14 +174,16 @@ const activeTagsList = computed(() => {
             <span class="price-unit">د.ل</span>
           </div>
         </div>
+      </div>
 
-        <!-- Add Button (Compact format) -->
-        <button v-if="product.available !== false" ref="addBtnRef" class="add-btn-compact" @click="handleAddToCart" aria-label="إضافة إلى السلة">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Restored Full-Width Add To Cart Button -->
+      <div class="actions-row" v-if="product.available !== false">
+        <button ref="addBtnRef" class="add-btn-wide" @click="handleAddToCart" aria-label="إضافة إلى السلة">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px;">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <span>إضافة</span>
+          <span>أضف للسلة</span>
         </button>
       </div>
     </div>
@@ -368,19 +367,21 @@ const activeTagsList = computed(() => {
 .product-info {
   flex: 1;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  gap: 8px;
 }
 
-.info-top {
+.info-body {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .product-title {
-  font-size: 0.96rem;
+  font-size: 0.98rem;
   font-weight: 800;
   color: #f8fafc;
   margin-bottom: 2px;
@@ -402,22 +403,14 @@ const activeTagsList = computed(() => {
   height: auto;
 }
 
-.prices-and-actions-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 6px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
-}
-
 .prices-row {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  margin-top: 4px;
+  margin-bottom: 2px;
 }
 
 .price-pill {
@@ -452,35 +445,36 @@ const activeTagsList = computed(() => {
 }
 
 .actions-row {
-  display: flex;
-  align-items: center;
+  margin-top: auto;
+  width: 100%;
 }
 
-.add-btn-compact {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 14px;
+.add-btn-wide {
+  width: 100%;
+  padding: 8px 12px;
   border-radius: 12px;
   background: linear-gradient(135deg, #d97706, #b45309);
   color: #ffffff;
   border: none;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.35);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.add-btn-compact:hover {
+.add-btn-wide:hover {
   transform: translateY(-1px);
-  box-shadow: 0 5px 14px rgba(217, 119, 6, 0.5);
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.5);
   background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-.add-btn-compact:active {
-  transform: scale(0.96);
+.add-btn-wide:active {
+  transform: scale(0.97);
 }
 </style>
