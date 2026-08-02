@@ -500,7 +500,7 @@ watch(carouselItems, (newItems) => {
       <p>جاري تحميل المنيو…</p>
     </div>
 
-    <!-- Sub-Category Product Sections (2 Horizontal Scrollable Rows Stacked On Top Of Each Other) -->
+    <!-- Sub-Category Product Sections (1 Horizontal Scrollable Row Per Sub-Category) -->
     <div v-else-if="subCategorySections.length > 0" class="subcat-sections-wrapper">
       <div 
         v-for="group in subCategorySections" 
@@ -513,9 +513,9 @@ watch(carouselItems, (newItems) => {
           <span class="subcat-plain-badge">{{ group.products.length }}</span>
         </div>
 
-        <!-- 2 Horizontal Scrollable Product Rows Stacked On Top Of Each Other -->
+        <!-- 1 Horizontal Scrollable Product Row Per Sub-Category -->
         <div 
-          class="subcat-products-grid-2rows" 
+          class="subcat-products-grid-1row" 
           @wheel.prevent="handleHorizontalScroll"
           @mousedown="startDrag"
           @mousemove="drag"
@@ -780,12 +780,12 @@ watch(carouselItems, (newItems) => {
   border-radius: 12px;
 }
 
-.subcat-products-grid-2rows {
+.subcat-products-grid-1row {
   display: grid;
-  grid-template-rows: repeat(2, auto);
+  grid-template-rows: 1fr;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(260px, 300px); /* Increased horizontal size! */
-  gap: 12px 14px;
+  grid-auto-columns: minmax(220px, 260px);
+  gap: 14px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
@@ -794,7 +794,7 @@ watch(carouselItems, (newItems) => {
   scrollbar-width: none;
 }
 
-.subcat-products-grid-2rows::-webkit-scrollbar {
+.subcat-products-grid-1row::-webkit-scrollbar {
   display: none;
 }
 
