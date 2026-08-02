@@ -93,11 +93,12 @@ const getImageUrl = () => {
   return props.product.imgSigned || props.product.img || '/res/logo.jpg';
 };
 
-const activeTagDetails = computed(() => {
-  if (!props.product.tags || props.product.tags.length === 0) return null;
-  const tagName = props.product.tags[0];
-  const found = shopStore.tags.find(t => t.name === tagName);
-  return found || { name: tagName, color: 'default', icon: 'trophy' };
+const activeTagsList = computed(() => {
+  if (!props.product.tags || !Array.isArray(props.product.tags) || props.product.tags.length === 0) return [];
+  return props.product.tags.map(tagName => {
+    const found = shopStore.tags.find(t => t.name === tagName);
+    return found || { name: tagName, color: 'default', icon: 'trophy' };
+  });
 });
 
 const getIconUrl = (iconKey) => {
@@ -136,10 +137,17 @@ const getIconUrl = (iconKey) => {
 
     <!-- Product Image -->
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
-      <!-- Tag Banner -->
-      <div v-if="activeTagDetails" class="product-tag-banner" :class="'tag-' + activeTagDetails.color">
-        <CategoryIcon :icon="activeTagDetails.icon" :name="activeTagDetails.name" size="14" />
-        <span>{{ activeTagDetails.name }}</span>
+      <!-- Floating Tag Banners Container -->
+      <div v-if="activeTagsList.length > 0" class="product-tags-container">
+        <div 
+          v-for="(tagItem, tIdx) in activeTagsList" 
+          :key="tIdx" 
+          class="product-tag-banner" 
+          :class="'tag-' + (tagItem.color || 'default')"
+        >
+          <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="13" />
+          <span>{{ tagItem.name }}</span>
+        </div>
       </div>
 
       <img 
@@ -277,64 +285,75 @@ const getIconUrl = (iconKey) => {
   font-size: 1rem;
 }
 
-/* Tag Banner Styles */
-.product-tag-banner {
+/* Floating Product Tag Banner Styles */
+.product-tags-container {
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 5;
-  padding: 6px 14px;
+  top: 10px;
+  right: 10px;
+  z-index: 6;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
-  font-family: 'Cairo', sans-serif;
-  font-weight: 800;
-  font-size: 0.85rem;
-  border-bottom-right-radius: 14px;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
+  pointer-events: none;
 }
 
-.tag-custom-icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
+.product-tag-banner {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  transition: transform 0.25 ease, box-shadow 0.25s ease;
+}
+
+.card-hover-effect:hover .product-tag-banner {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
 .tag-default {
-  background: rgba(var(--primary-color-rgb), 0.15) !important;
-  color: var(--primary-color) !important;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.95), rgba(180, 83, 9, 0.95)) !important;
+  color: #ffffff !important;
 }
 
 .tag-rose {
-  background: #F7A3AD !important;
-  color: #8C172E !important;
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.95), rgba(190, 18, 60, 0.95)) !important;
+  color: #ffffff !important;
 }
 
 .tag-gold {
-  background: #FCE6B1 !important;
-  color: #9E742C !important;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.98), rgba(202, 138, 4, 0.98)) !important;
+  color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .tag-fire {
-  background: #F66601 !important;
-  color: #FFF !important;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.95), rgba(234, 88, 12, 0.95)) !important;
+  color: #ffffff !important;
 }
 
 .tag-leaf {
-  background: #9CB795 !important;
-  color: #1D3D1F !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95)) !important;
+  color: #ffffff !important;
 }
 
 .tag-sky {
-  background: #BEE3F8 !important;
-  color: #2B6CB0 !important;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.95), rgba(2, 132, 199, 0.95)) !important;
+  color: #ffffff !important;
 }
 
 .tag-royal {
-  background: #E9D8FD !important;
-  color: #553C9A !important;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(124, 58, 237, 0.95)) !important;
+  color: #ffffff !important;
 }
 
 

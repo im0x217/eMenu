@@ -501,11 +501,11 @@
                           <span 
                             v-for="(tagName, index) in prod.tags" 
                             :key="index" 
-                            class="tag-pill tag-pill-table"
+                            class="tag-pill tag-pill-table inline-flex items-center gap-1 px-2 py-1 rounded-md"
                             :class="'tag-' + (getTagDetails(tagName).color || 'default')"
                           >
+                            <CategoryIcon :icon="getTagDetails(tagName).icon" :name="tagName" size="13" />
                             <span>{{ tagName }}</span>
-                            <img :src="getIconUrl(getTagDetails(tagName).icon)" class="tag-custom-icon-admin" alt="Tag Icon" />
                           </span>
                         </div>
                       </td>
@@ -1201,7 +1201,7 @@
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </div>
-                <img :src="getIconUrl(tag.icon)" class="tag-chip-icon" alt="Tag Icon" />
+                <CategoryIcon :icon="tag.icon" :name="tag.name" size="16" />
                 <span class="tag-chip-name">{{ tag.name }}</span>
               </div>
               <div v-if="tags.length === 0" class="text-muted text-small mt-2">لا توجد علامات مميزة مسجلة في النظام. أضفها من تبويب (إدارة العلامات المميزة).</div>
