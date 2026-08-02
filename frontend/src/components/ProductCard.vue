@@ -103,7 +103,10 @@ const activeTagsList = computed(() => {
 </script>
 
 <template>
-  <div class="product-card glass-panel card-hover-effect" :class="{ 'not-available': product.available === false }">
+  <div 
+    class="product-card glass-panel card-hover-effect" 
+    :class="['shop-theme-' + activeShop, { 'not-available': product.available === false }]"
+  >
     <!-- Favorite Heart Toggle -->
     <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
       <svg 
@@ -453,25 +456,45 @@ const activeTagsList = computed(() => {
   width: 100%;
   padding: 8px 12px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #d97706, #b45309);
+  background: var(--primary-color, #d97706);
   color: #ffffff;
   border: none;
   font-family: 'Cairo', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+  box-shadow: 0 4px 14px rgba(var(--primary-color-rgb, 217, 119, 6), 0.35);
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.add-btn-wide:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.5);
+/* Shop 1 Theme: Warm Gold/Amber gradient with dark text */
+.shop-theme-shop1 .add-btn-wide {
   background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0c0603;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+}
+
+.shop-theme-shop1 .add-btn-wide:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.55);
+}
+
+/* Shop 2 Theme: Deep Royal Blue gradient with white text */
+.shop-theme-shop2 .add-btn-wide {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+}
+
+.shop-theme-shop2 .add-btn-wide:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.55);
 }
 
 .add-btn-wide:active {
