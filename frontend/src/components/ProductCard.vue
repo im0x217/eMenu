@@ -299,7 +299,7 @@ const activeTagsList = computed(() => {
   flex-direction: row;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px 3px 3px;
+  padding: 4px 12px 4px 5px;
   border-radius: 20px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
