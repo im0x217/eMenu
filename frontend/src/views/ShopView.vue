@@ -110,6 +110,23 @@ const selectCategory = (catName) => {
   activeSubCategory.value = ''; // Reset subcategory filter
 };
 
+// Helper comparator: Available products first, tagged products second, unavailable products LAST
+const sortProducts = (a, b) => {
+  const aAvail = a.available !== false ? 1 : 0;
+  const bAvail = b.available !== false ? 1 : 0;
+  if (aAvail !== bAvail) {
+    return bAvail - aAvail; // 1 (available) before 0 (unavailable)
+  }
+
+  const aHasTags = a.tags && Array.isArray(a.tags) && a.tags.length > 0 ? 1 : 0;
+  const bHasTags = b.tags && Array.isArray(b.tags) && b.tags.length > 0 ? 1 : 0;
+  if (aHasTags !== bHasTags) {
+    return bHasTags - aHasTags;
+  }
+
+  return 0;
+};
+
 // Filtered products list
 const filteredProducts = computed(() => {
   let list = shopStore.products;
@@ -117,7 +134,7 @@ const filteredProducts = computed(() => {
   // 1. Search Query filter (global)
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim();
-    return list.filter(p => 
+    list = list.filter(p => 
       p.name.toLowerCase().includes(q) || 
       (p.desc && p.desc.toLowerCase().includes(q))
     );
@@ -135,22 +152,16 @@ const filteredProducts = computed(() => {
 
   // 4. In Shop2, respect bulk view configurations
   if (shopStore.activeShop === 'shop2') {
-    // If not bulk verified, filter out bulk-only products
     if (!shopStore.isBulkVerified) {
       list = list.filter(p => p.purchaseType !== 'bulk');
     }
   }
 
-  // 5. Sort: Products with tags appear first
-  return list.sort((a, b) => {
-    const aHasTags = a.tags && a.tags.length > 0;
-    const bHasTags = b.tags && b.tags.length > 0;
-    if (aHasTags && !bHasTags) return -1;
-    if (!aHasTags && bHasTags) return 1;
-  });
+  // 5. Sort: Available products first, tagged products next, unavailable products LAST
+  return list.slice().sort(sortProducts);
 });
 
-// Subcategory grouped products section list (2 horizontal scrollable rows per subcategory)
+// Subcategory grouped products section list
 const subCategorySections = computed(() => {
   if (searchQuery.value.trim()) {
     return [{ name: 'نتائج البحث', products: filteredProducts.value }];
@@ -164,14 +175,8 @@ const subCategorySections = computed(() => {
     list = list.filter(p => p.purchaseType !== 'bulk');
   }
 
-  // Sort tagged products first
-  list = list.slice().sort((a, b) => {
-    const aHasTags = a.tags && a.tags.length > 0;
-    const bHasTags = b.tags && b.tags.length > 0;
-    if (aHasTags && !bHasTags) return -1;
-    if (!aHasTags && bHasTags) return 1;
-    return 0;
-  });
+  // Sort available products first, unavailable products last
+  list = list.slice().sort(sortProducts);
 
   const subs = currentCategoryObj.value?.subCategories || [];
   const sections = [];
