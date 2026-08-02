@@ -287,21 +287,21 @@ const activeTagsList = computed(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 5px;
   margin-bottom: 6px;
 }
 
 .product-tag-inline-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px 2px 3px;
-  border-radius: 16px;
+  gap: 6px;
+  padding: 4px 10px 4px 5px; /* Clean, balanced padding on all 4 sides */
+  border-radius: 20px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
-  font-size: 0.74rem;
-  line-height: 1.2;
+  font-size: 0.76rem;
+  line-height: 1;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -310,8 +310,9 @@ const activeTagsList = computed(() => {
 }
 
 .tag-icon-badge {
-  width: 19px;
-  height: 19px;
+  width: 20px;
+  height: 20px;
+  padding: 2px; /* Internal padding for vector icon */
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.45);
@@ -321,6 +322,12 @@ const activeTagsList = computed(() => {
   flex-shrink: 0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tag-text {
+  padding: 0 3px 0 1px;
+  line-height: 1;
+  display: inline-block;
 }
 
 .card-hover-effect:hover .product-tag-inline-pill {
