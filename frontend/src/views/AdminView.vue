@@ -1525,7 +1525,7 @@
 
   <!-- User Modal Form -->
   <div v-if="userModalOpen" class="modal-overlay animate-fade-in" @click.self="userModalOpen = false">
-    <div class="modal-box glass-panel max-w-lg">
+    <div class="modal-box glass-panel max-w-lg user-form-modal">
       <div class="modal-header">
         <div class="modal-title-group">
           <div class="modal-title-icon">
@@ -1550,7 +1550,7 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">الدور وصلاحيات الوصول</label>
-            <select v-model="editingUser.role" class="form-select">
+            <select v-model="editingUser.role" class="form-select user-form-select">
               <option value="order_manager">موظف إدارة الطلبات (Order Manager - مقفل للطلبات)</option>
               <option value="admin">مدير النظام (Admin - وصول كامل)</option>
             </select>
@@ -1558,7 +1558,7 @@
 
           <div class="form-group">
             <label class="form-label">نطاق المتجر</label>
-            <select v-model="editingUser.shopAccess" class="form-select">
+            <select v-model="editingUser.shopAccess" class="form-select user-form-select">
               <option value="all">جميع المتاجر</option>
               <option value="shop1">المتجر الرئيسي فقط</option>
               <option value="shop2">قسم النواشف فقط</option>
@@ -3522,6 +3522,49 @@ export default {
 </script>
 
 <style scoped>
+/* User Modal Popup Select Box Styling ONLY */
+.user-form-modal select,
+.user-form-select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background-color: #1e293b !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: left 14px center !important;
+  background-size: 16px 16px !important;
+  padding: 10px 14px 10px 38px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 12px !important;
+  color: #f8fafc !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  direction: rtl !important;
+  text-align: right !important;
+  cursor: pointer !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+}
+
+.user-form-modal select:focus,
+.user-form-select:focus {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25) !important;
+  background-color: #0f172a !important;
+}
+
+.user-form-modal select option,
+.user-form-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.92rem !important;
+  padding: 10px 14px !important;
+}
+
 .premium-cropper-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
