@@ -5269,11 +5269,12 @@ select.select-pill {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: left 10px center !important;
+  background-position: left 8px center !important;
   background-size: 12px 12px;
-  padding: 0 14px;
-  padding-left: 28px !important;
+  padding: 0 12px !important;
+  padding-left: 26px !important;
   height: 34px !important;
+  min-width: 140px;
   font-size: 0.84rem;
   border-radius: 8px;
   cursor: pointer;
@@ -5284,6 +5285,8 @@ select.select-pill {
   align-items: center;
   font-family: inherit;
   direction: rtl;
+  text-align: right;
+  white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 .status-select.status-pending {
