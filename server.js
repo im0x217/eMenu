@@ -1110,11 +1110,20 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       priceModeSplit[key] = { revenue: m.revenue, count: m.count };
     });
     
-    // Fetch IDs of currently unavailable products to exclude them from analytics product lists at call time
-    const unavailableProducts = await prodColl.find({ available: false }).toArray();
-    const unavailableProductIdsStr = unavailableProducts.map(p => p._id.toString());
+    // Fetch all products for this shop to evaluate real-time availability in-memory
+    const allShopProducts = await prodColl.find({}).toArray();
+    const isProductAvailable = (p) => {
+      if (!p) return false;
+      if (p.available === false || p.available === "false" || p.available === 0 || p.available === "0") {
+        return false;
+      }
+      return true;
+    };
 
-    // Top products by quantity sold (excluding currently unavailable products)
+    const availableProducts = allShopProducts.filter(p => isProductAvailable(p));
+    const availableProductIdsStr = availableProducts.map(p => p._id.toString());
+
+    // Top products by quantity sold (excluding currently unavailable products at call time)
     const topProductsRaw = await ordColl.aggregate([
       { $match: matchStage },
       { $unwind: "$items" },
@@ -1128,7 +1137,7 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
     ]).toArray();
     
     const topProductsFormatted = topProductsRaw
-      .filter(p => p._id && !unavailableProductIdsStr.includes(p._id.toString()))
+      .filter(p => p._id && availableProductIdsStr.includes(p._id.toString()))
       .slice(0, 10)
       .map(p => ({
         productId: p._id,
@@ -1182,7 +1191,7 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       count: c.count
     }));
     
-    // Top favorites count (excluding currently unavailable products)
+    // Top favorites count (excluding currently unavailable products at call time)
     const favCounts = await favoritesCollection.aggregate([
       { $match: { shop } },
       { $group: {
@@ -1192,10 +1201,8 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       { $sort: { count: -1 } }
     ]).toArray();
     
-    const favProductIds = favCounts.map(f => f._id);
-    const favProducts = await prodColl.find({ _id: { $in: favProductIds }, available: { $ne: false } }).toArray();
     const favProdMap = {};
-    favProducts.forEach(p => {
+    availableProducts.forEach(p => {
       favProdMap[p._id.toString()] = p.name;
     });
     
@@ -1218,7 +1225,6 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
     }));
 
     // Actionable Insights: Low Performing Products (currently AVAILABLE products with 0 sales in selected period)
-    const availableProducts = await prodColl.find({ available: { $ne: false } }).toArray();
     const soldProductIds = await ordColl.distinct("items.productId", matchStage);
     const soldProductIdsStr = soldProductIds.filter(id => id).map(id => id.toString());
     const lowPerformingProducts = availableProducts
