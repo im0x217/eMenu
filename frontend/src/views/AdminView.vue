@@ -589,8 +589,8 @@
             </div>
           </div>
 
-          <!-- TAGS CRUD TAB -->
-          <div v-if="activeTab === 'tags'" class="tags-tab-content">
+          <!-- TAGS MANAGEMENT TAB -->
+          <div v-if="activeTab === 'tags'" class="tags-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -610,7 +610,8 @@
                   <thead>
                     <tr>
                       <th>اسم العلامة</th>
-                      <th>شكل المعاينة</th>
+                      <th>معاينة الأيقونة واللون (Hugeicons SVG)</th>
+                      <th>رمز الأيقونة</th>
                       <th style="width: 120px;">إجراءات</th>
                     </tr>
                   </thead>
@@ -1302,37 +1303,81 @@
     </div>
 
     <!-- Tag Modal Form -->
-    <div v-if="tagModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-sm">
+    <div v-if="tagModalOpen" class="modal-overlay animate-fade-in" @click.self="tagModalOpen = false">
+      <div class="modal-box glass-panel max-w-md">
         <div class="modal-header">
-          <h3>{{ editingTag._id ? 'تعديل العلامة' : 'إضافة علامة جديدة' }}</h3>
-          <button @click="tagModalOpen = false" class="modal-close-btn">&times;</button>
+          <div class="modal-title-group">
+            <div class="modal-title-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            </div>
+            <h3>{{ editingTag._id ? 'تعديل العلامة المميزة' : 'إضافة علامة مميزة جديدة' }}</h3>
+          </div>
+          <button @click="tagModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
         </div>
+
         <form @submit.prevent="saveTag" class="modal-form">
           <div class="form-group mb-3">
-            <label>اسم العلامة *</label>
-            <input v-model="editingTag.name" type="text" required class="form-control" />
+            <label class="form-label text-bold mb-1 block">اسم العلامة *</label>
+            <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر مبيعاً، جديد، تخفيضات" required class="form-input" />
           </div>
+
+          <!-- Tag Color Selector -->
           <div class="form-group mb-3">
-            <label>اللون المميز *</label>
-            <select v-model="editingTag.color" class="form-control">
-              <option v-for="c in tagColors" :key="c.key" :value="c.key">{{ c.label }}</option>
-            </select>
-          </div>
-          <div class="form-group mb-3">
-            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">الأيقونة المميزة (Hugeicons SVG) *</label>
-            <div class="icon-select-preview-wrapper flex items-center gap-2">
-              <select v-model="editingTag.icon" class="form-select user-form-select flex-1">
-                <option v-for="i in tagIcons" :key="i.key" :value="i.key">{{ i.label }}</option>
-              </select>
-              <div class="selected-icon-preview-box flex items-center justify-center p-2" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; min-width: 44px; height: 44px;">
-                <CategoryIcon :icon="editingTag.icon" :name="editingTag.name" size="22" />
-              </div>
+            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">اختر لون العلامة *</label>
+            <div class="tag-color-swatch-grid">
+              <button 
+                type="button" 
+                v-for="c in tagColors" 
+                :key="c.key" 
+                class="color-swatch-btn" 
+                :class="['tag-' + c.key, { active: editingTag.color === c.key }]"
+                @click="editingTag.color = c.key"
+                :title="c.label"
+              >
+                <span class="swatch-circle"></span>
+                <span class="swatch-name">{{ c.label.split(' ')[0] }}</span>
+              </button>
             </div>
           </div>
-          <div class="modal-footer mt-4">
-            <button type="submit" class="btn btn-primary">حفظ العلامة</button>
-            <button type="button" @click="tagModalOpen = false" class="btn btn-outline">إلغاء</button>
+
+          <!-- Tag SVG Icon Pool Grid -->
+          <div class="form-group mb-3">
+            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">اختر أيقونة من مكتبة الـ SVG (Hugeicons):</label>
+            <div class="svg-icon-pool-grid">
+              <button 
+                type="button" 
+                v-for="item in tagIcons" 
+                :key="item.key" 
+                class="svg-pool-item" 
+                :class="{ active: editingTag.icon === item.key }"
+                @click="editingTag.icon = item.key"
+                :title="item.label"
+              >
+                <CategoryIcon :icon="item.key" size="20" />
+                <span class="pool-item-label">{{ item.label.split(' ')[0] }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Tag Preview Banner -->
+          <div class="form-group mb-3">
+            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">معاينة شكل العلامة على كارت المنتج:</label>
+            <div class="tag-live-preview-container p-3 flex items-center justify-center">
+              <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-bold" :class="'tag-' + (editingTag.color || 'default')">
+                <CategoryIcon :icon="editingTag.icon" :name="editingTag.name" size="16" />
+                <span>{{ editingTag.name || 'اسم العلامة' }}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              {{ loading ? 'جاري الحفظ…' : 'حفظ العلامة' }}
+            </button>
+            <button type="button" @click="tagModalOpen = false" class="btn btn-outline btn-modal-cancel">
+              إلغاء
+            </button>
           </div>
         </form>
       </div>
@@ -3522,6 +3567,56 @@ export default {
 </script>
 
 <style scoped>
+/* SVG Tag Swatches & Live Preview */
+.tag-color-swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-swatch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.color-swatch-btn .swatch-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.color-swatch-btn.tag-rose .swatch-circle { background: #f43f5e; }
+.color-swatch-btn.tag-gold .swatch-circle { background: #eab308; }
+.color-swatch-btn.tag-fire .swatch-circle { background: #f97316; }
+.color-swatch-btn.tag-leaf .swatch-circle { background: #10b981; }
+.color-swatch-btn.tag-sky .swatch-circle { background: #06b6d4; }
+.color-swatch-btn.tag-royal .swatch-circle { background: #8b5cf6; }
+
+.color-swatch-btn.active {
+  border-color: #d97706;
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.tag-live-preview-container {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+}
+
 /* User Modal Popup Select Box Styling ONLY */
 .user-form-modal select,
 .user-form-select {
