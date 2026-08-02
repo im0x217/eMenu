@@ -798,9 +798,9 @@ watch(carouselItems, (newItems) => {
   padding: 6px 12px 14px 12px;
   scrollbar-width: none;
   
-  /* Horizontal scrollability fade effect on edges */
-  mask-image: linear-gradient(to right, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+  /* Horizontal scrollability fade effect on edge boundaries */
+  mask-image: linear-gradient(to right, transparent 0%, black 6px, black calc(100% - 6px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 6px, black calc(100% - 6px), transparent 100%);
 }
 
 .subcat-products-grid-1row::-webkit-scrollbar {
