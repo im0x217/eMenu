@@ -1044,8 +1044,7 @@
                 <table class="admin-table">
                   <thead>
                     <tr>
-                      <th>الاسم الكامل</th>
-                      <th>اسم المستخدم</th>
+                      <th>الاسم / حساب الدخول</th>
                       <th>الدور / الصلاحية</th>
                       <th>نطاق المتجر</th>
                       <th>تاريخ الإضافة</th>
@@ -1054,11 +1053,10 @@
                   </thead>
                   <tbody>
                     <tr v-if="adminUsers.length === 0">
-                      <td colspan="6" class="text-center p-4">لا يوجد مستخدمون مدخلون بعد.</td>
+                      <td colspan="5" class="text-center p-4">لا يوجد مستخدمون مدخلون بعد.</td>
                     </tr>
                     <tr v-for="u in adminUsers" :key="u._id">
                       <td class="text-bold">{{ u.name }}</td>
-                      <td class="text-mono">{{ u.username }}</td>
                       <td>
                         <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
                           {{ u.role === 'admin' ? 'مدير النظام (Admin)' : 'موظف إدارة الطلبات (Order Manager)' }}
@@ -1539,17 +1537,12 @@
       </div>
 
       <form @submit.prevent="saveUser" class="modal-form">
-        <div class="form-group">
-          <label class="form-label">الاسم الكامل للمستخدم</label>
-          <input type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد" required />
+        <div class="form-group mb-3">
+          <label class="form-label">الاسم / اسم الحساب للدخول</label>
+          <input type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد أو موظف1" required />
         </div>
 
-        <div class="form-group">
-          <label class="form-label">اسم المستخدم (Username للدخول)</label>
-          <input type="text" v-model="editingUser.username" class="form-input text-mono" placeholder="مثال: staff_order1" required />
-        </div>
-
-        <div class="form-group">
+        <div class="form-group mb-3">
           <label class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
           <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'اتركه فارغاً للإبقاء' : 'كلمة السر'" :required="!editingUser._id" />
         </div>
@@ -1720,7 +1713,6 @@ export default {
     const editingUser = reactive({
       _id: null,
       name: '',
-      username: '',
       password: '',
       role: 'order_manager',
       shopAccess: 'all'
@@ -2735,14 +2727,12 @@ export default {
       if (user) {
         editingUser._id = user._id;
         editingUser.name = user.name || '';
-        editingUser.username = user.username || '';
         editingUser.password = '';
         editingUser.role = user.role || 'order_manager';
         editingUser.shopAccess = user.shopAccess || 'all';
       } else {
         editingUser._id = null;
         editingUser.name = '';
-        editingUser.username = '';
         editingUser.password = '';
         editingUser.role = 'order_manager';
         editingUser.shopAccess = 'all';
@@ -2751,7 +2741,7 @@ export default {
     };
 
     const saveUser = async () => {
-      if (!editingUser.name || !editingUser.username || (!editingUser._id && !editingUser.password)) {
+      if (!editingUser.name || (!editingUser._id && !editingUser.password)) {
         toast.show('يرجى تعبئة جميع الحقول المطلوبة', 'danger');
         return;
       }

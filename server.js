@@ -1092,17 +1092,18 @@ app.get("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
 
 app.post("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name, username, password, role, shopAccess } = req.body;
-    if (!name || !username || !password) {
-      return res.status(400).json({ error: "جميع الحقول المطلوبة يجب إدخالها" });
+    const { name, password, role, shopAccess } = req.body;
+    if (!name || !password) {
+      return res.status(400).json({ error: "الاسم وكلمة المرور مطلوبان" });
     }
-    const existing = await adminUsersCollection.findOne({ username: username.trim() });
+    const cleanName = name.trim();
+    const existing = await adminUsersCollection.findOne({ $or: [{ name: cleanName }, { username: cleanName }] });
     if (existing) {
-      return res.status(400).json({ error: "اسم المستخدم مستخدم بالفعل" });
+      return res.status(400).json({ error: "هذا الاسم مستخدم بالفعل" });
     }
     const newUser = {
-      name: name.trim(),
-      username: username.trim(),
+      name: cleanName,
+      username: cleanName,
       password: password.trim(),
       role: role === 'order_manager' ? 'order_manager' : 'admin',
       shopAccess: shopAccess || 'all',
@@ -1120,13 +1121,14 @@ app.post("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
 app.put("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, username, password, role, shopAccess } = req.body;
+    const { name, password, role, shopAccess } = req.body;
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ error: "Invalid user ID" });
     }
+    const cleanName = name ? name.trim() : '';
     const updateData = {
-      name: name.trim(),
-      username: username.trim(),
+      name: cleanName,
+      username: cleanName,
       role: role === 'order_manager' ? 'order_manager' : 'admin',
       shopAccess: shopAccess || 'all'
     };
