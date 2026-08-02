@@ -289,11 +289,11 @@ const getIconUrl = (iconKey) => {
 .product-tags-container {
   position: absolute;
   top: 10px;
-  right: 10px;
+  left: 10px;
   z-index: 6;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 6px;
   pointer-events: none;
 }
