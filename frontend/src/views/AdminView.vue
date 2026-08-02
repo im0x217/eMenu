@@ -306,8 +306,8 @@
               <div class="chart-card glass-panel">
                 <h3 class="chart-title">أكثر المنتجات تفضيلاً</h3>
                 <div class="list-cards">
-                  <div v-if="analyticsData.topFavorites.length === 0" class="empty-list">لا توجد تفضيلات بعد.</div>
-                  <div v-for="(fav, idx) in analyticsData.topFavorites" :key="idx" class="list-item-row">
+                  <div v-if="activeTopFavorites.length === 0" class="empty-list">لا توجد تفضيلات بعد.</div>
+                  <div v-for="(fav, idx) in activeTopFavorites" :key="idx" class="list-item-row">
                     <div class="list-badge">{{ idx + 1 }}</div>
                     <div class="list-item-info">
                       <span class="title">{{ fav.name }}</span>
@@ -330,10 +330,10 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-if="analyticsData.topProducts.length === 0">
+                      <tr v-if="activeTopProducts.length === 0">
                         <td colspan="3" class="text-center">لا توجد منتجات مباعة.</td>
                       </tr>
-                      <tr v-for="prod in analyticsData.topProducts" :key="prod.productId">
+                      <tr v-for="prod in activeTopProducts" :key="prod.productId">
                         <td>{{ prod.name }}</td>
                         <td class="text-mono text-bold">{{ formatArabicPlural(prod.quantity, 'unit') }}</td>
                         <td class="text-mono text-bold text-primary">{{ formatCurrency(prod.revenue) }}</td>
@@ -415,10 +415,10 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-if="analyticsData.lowPerformingProducts.length === 0">
+                      <tr v-if="activeLowPerformingProducts.length === 0">
                         <td colspan="3" class="text-center">لا توجد منتجات خاملة، كل المنتجات تحقق مبيعات!</td>
                       </tr>
-                      <tr v-for="prod in analyticsData.lowPerformingProducts" :key="prod.productId">
+                      <tr v-for="prod in activeLowPerformingProducts" :key="prod.productId">
                         <td>{{ prod.name }}</td>
                         <td>{{ prod.category }}</td>
                         <td class="text-semibold">{{ formatCurrency(prod.price) }}</td>
@@ -1910,6 +1910,7 @@ export default {
         if (res.ok) {
           product.available = targetState;
           toast.show('تم تحديث حالة توفر المنتج', 'success');
+          fetchAnalytics();
         } else {
           toast.show('فشل تحديث حالة توفر المنتج', 'danger');
         }
@@ -3001,6 +3002,49 @@ export default {
       });
     });
 
+    const isProdDisabled = (p) => {
+      if (!p) return false;
+      return p.available === false || p.available === 'false' || p.available === 0 || p.available === '0';
+    };
+
+    const activeLowPerformingProducts = computed(() => {
+      const disabledMap = new Set(
+        products.value.filter(isProdDisabled).map(p => p._id.toString())
+      );
+      const disabledNameSet = new Set(
+        products.value.filter(isProdDisabled).map(p => p.name.trim().toLowerCase())
+      );
+      return analyticsData.lowPerformingProducts.filter(p => {
+        if (p.productId && disabledMap.has(p.productId.toString())) return false;
+        if (p.name && disabledNameSet.has(p.name.trim().toLowerCase())) return false;
+        return true;
+      });
+    });
+
+    const activeTopProducts = computed(() => {
+      const disabledMap = new Set(
+        products.value.filter(isProdDisabled).map(p => p._id.toString())
+      );
+      const disabledNameSet = new Set(
+        products.value.filter(isProdDisabled).map(p => p.name.trim().toLowerCase())
+      );
+      return analyticsData.topProducts.filter(p => {
+        if (p.productId && disabledMap.has(p.productId.toString())) return false;
+        if (p.name && disabledNameSet.has(p.name.trim().toLowerCase())) return false;
+        return true;
+      });
+    });
+
+    const activeTopFavorites = computed(() => {
+      const disabledNameSet = new Set(
+        products.value.filter(isProdDisabled).map(p => p.name.trim().toLowerCase())
+      );
+      return analyticsData.topFavorites.filter(fav => {
+        if (fav.name && disabledNameSet.has(fav.name.trim().toLowerCase())) return false;
+        return true;
+      });
+    });
+
 
 
     // SVG Line Chart coordinates math calculations
@@ -3183,6 +3227,9 @@ export default {
       customerFilters,
       filteredOrders,
       filteredCustomers,
+      activeLowPerformingProducts,
+      activeTopProducts,
+      activeTopFavorites,
       editingCustomer,
       customerModalOpen,
       customerFavsModalOpen,
