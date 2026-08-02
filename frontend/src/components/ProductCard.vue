@@ -142,11 +142,13 @@ const getIconUrl = (iconKey) => {
         <div 
           v-for="(tagItem, tIdx) in activeTagsList" 
           :key="tIdx" 
-          class="product-tag-banner" 
+          class="product-tag-banner animate-fade-in" 
           :class="'tag-' + (tagItem.color || 'default')"
         >
-          <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="13" />
-          <span>{{ tagItem.name }}</span>
+          <span class="tag-icon-badge">
+            <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="14" stroke-width="2.3" />
+          </span>
+          <span class="tag-text">{{ tagItem.name }}</span>
         </div>
       </div>
 
@@ -301,23 +303,42 @@ const getIconUrl = (iconKey) => {
 .product-tag-banner {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
-  border-radius: 20px;
+  gap: 7px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 24px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
   font-size: 0.78rem;
   line-height: 1.2;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-  transition: transform 0.25 ease, box-shadow 0.25s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+
+.tag-icon-badge {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease;
 }
 
 .card-hover-effect:hover .product-tag-banner {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+.card-hover-effect:hover .tag-icon-badge {
+  transform: scale(1.15) rotate(-8deg);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .tag-default {
