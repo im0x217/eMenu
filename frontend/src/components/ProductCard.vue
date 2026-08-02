@@ -137,21 +137,6 @@ const getIconUrl = (iconKey) => {
 
     <!-- Product Image -->
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
-      <!-- Floating Tag Banners Container -->
-      <div v-if="activeTagsList.length > 0" class="product-tags-container">
-        <div 
-          v-for="(tagItem, tIdx) in activeTagsList" 
-          :key="tIdx" 
-          class="product-tag-banner animate-fade-in" 
-          :class="'tag-' + (tagItem.color || 'default')"
-        >
-          <span class="tag-icon-badge">
-            <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="14" stroke-width="2.3" />
-          </span>
-          <span class="tag-text">{{ tagItem.name }}</span>
-        </div>
-      </div>
-
       <img 
         :src="getImageUrl()" 
         :alt="product.name" 
@@ -170,6 +155,21 @@ const getIconUrl = (iconKey) => {
     <div class="product-info">
       <h3 class="product-title">{{ product.name }}</h3>
       <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
+
+      <!-- Inline Tags (After Description) -->
+      <div v-if="activeTagsList.length > 0" class="product-inline-tags">
+        <div 
+          v-for="(tagItem, tIdx) in activeTagsList" 
+          :key="tIdx" 
+          class="product-tag-inline-pill animate-fade-in" 
+          :class="'tag-' + (tagItem.color || 'default')"
+        >
+          <span class="tag-icon-badge">
+            <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="13" stroke-width="2.3" />
+          </span>
+          <span class="tag-text">{{ tagItem.name }}</span>
+        </div>
+      </div>
       
       <!-- Price displays -->
       <div class="prices-row">
@@ -287,39 +287,36 @@ const getIconUrl = (iconKey) => {
   font-size: 1rem;
 }
 
-/* Floating Product Tag Banner Styles */
-.product-tags-container {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 6;
+/* Inline Product Tag Styles (After Description) */
+.product-inline-tags {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
-  pointer-events: none;
+  margin-top: 6px;
+  margin-bottom: 8px;
 }
 
-.product-tag-banner {
+.product-tag-inline-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 12px 4px 5px;
-  border-radius: 24px;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 20px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   line-height: 1.2;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
 .tag-icon-badge {
-  width: 23px;
-  height: 23px;
+  width: 21px;
+  height: 21px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.45);
@@ -327,18 +324,16 @@ const getIconUrl = (iconKey) => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.card-hover-effect:hover .product-tag-banner {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+.card-hover-effect:hover .product-tag-inline-pill {
+  transform: translateY(-1px);
 }
 
 .card-hover-effect:hover .tag-icon-badge {
-  transform: scale(1.15) rotate(-8deg);
-  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.12) rotate(-6deg);
 }
 
 .tag-default {
