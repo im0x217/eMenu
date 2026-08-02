@@ -1110,8 +1110,12 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       priceModeSplit[key] = { revenue: m.revenue, count: m.count };
     });
     
-    // Top products by quantity sold
-    const topProducts = await ordColl.aggregate([
+    // Fetch IDs of currently unavailable products to exclude them from analytics product lists at call time
+    const unavailableProducts = await prodColl.find({ available: false }).toArray();
+    const unavailableProductIdsStr = unavailableProducts.map(p => p._id.toString());
+
+    // Top products by quantity sold (excluding currently unavailable products)
+    const topProductsRaw = await ordColl.aggregate([
       { $match: matchStage },
       { $unwind: "$items" },
       { $group: {
@@ -1120,16 +1124,18 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
           quantity: { $sum: { $toDouble: "$items.quantity" } },
           revenue: { $sum: { $multiply: [{ $toDouble: "$items.price" }, { $toDouble: "$items.quantity" }] } }
       } },
-      { $sort: { quantity: -1 } },
-      { $limit: 10 }
+      { $sort: { quantity: -1 } }
     ]).toArray();
     
-    const topProductsFormatted = topProducts.map(p => ({
-      productId: p._id,
-      name: p.name || "منتج مجهول",
-      quantity: p.quantity,
-      revenue: p.revenue
-    }));
+    const topProductsFormatted = topProductsRaw
+      .filter(p => p._id && !unavailableProductIdsStr.includes(p._id.toString()))
+      .slice(0, 10)
+      .map(p => ({
+        productId: p._id,
+        name: p.name || "منتج مجهول",
+        quantity: p.quantity,
+        revenue: p.revenue
+      }));
     
     // Top customers by spend
     const topCustomersRaw = await ordColl.aggregate([
@@ -1176,28 +1182,30 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       count: c.count
     }));
     
-    // Top favorites count (in-memory resolution of names to avoid cross-db lookup issues)
+    // Top favorites count (excluding currently unavailable products)
     const favCounts = await favoritesCollection.aggregate([
       { $match: { shop } },
       { $group: {
           _id: "$productId",
           count: { $sum: 1 }
       } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
+      { $sort: { count: -1 } }
     ]).toArray();
     
     const favProductIds = favCounts.map(f => f._id);
-    const favProducts = await prodColl.find({ _id: { $in: favProductIds } }).toArray();
+    const favProducts = await prodColl.find({ _id: { $in: favProductIds }, available: { $ne: false } }).toArray();
     const favProdMap = {};
     favProducts.forEach(p => {
       favProdMap[p._id.toString()] = p.name;
     });
     
-    const topFavorites = favCounts.map(f => ({
-      name: favProdMap[f._id.toString()] || "منتج مجهول",
-      count: f.count
-    }));
+    const topFavorites = favCounts
+      .filter(f => favProdMap[f._id.toString()])
+      .slice(0, 10)
+      .map(f => ({
+        name: favProdMap[f._id.toString()],
+        count: f.count
+      }));
 
     // Actionable Insights: Inactive Customers (not active in selected period)
     const inactiveCustsRaw = await customersCollection.find({
@@ -1209,11 +1217,11 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       lastActive: c.lastActive
     }));
 
-    // Actionable Insights: Low Performing Products (sold 0 quantity in selected period)
-    const allProducts = await prodColl.find({}).toArray();
+    // Actionable Insights: Low Performing Products (currently AVAILABLE products with 0 sales in selected period)
+    const availableProducts = await prodColl.find({ available: { $ne: false } }).toArray();
     const soldProductIds = await ordColl.distinct("items.productId", matchStage);
     const soldProductIdsStr = soldProductIds.filter(id => id).map(id => id.toString());
-    const lowPerformingProducts = allProducts
+    const lowPerformingProducts = availableProducts
       .filter(p => !soldProductIdsStr.includes(p._id.toString()))
       .slice(0, 10)
       .map(p => ({
