@@ -383,7 +383,7 @@ const activeTagsList = computed(() => {
 .product-title {
   font-size: 0.98rem;
   font-weight: 800;
-  color: #f8fafc;
+  color: var(--text-color, #2c2520);
   margin-bottom: 2px;
   line-height: 1.25;
   white-space: nowrap;
@@ -393,7 +393,7 @@ const activeTagsList = computed(() => {
 
 .product-desc {
   font-size: 0.76rem;
-  color: #94a3b8;
+  color: var(--text-muted, #64748b);
   margin-bottom: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
