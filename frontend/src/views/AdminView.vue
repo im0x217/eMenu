@@ -610,27 +610,32 @@
                   <thead>
                     <tr>
                       <th>اسم العلامة</th>
-                      <th>معاينة الأيقونة واللون (Hugeicons SVG)</th>
-                      <th>رمز الأيقونة</th>
-                      <th style="width: 120px;">إجراءات</th>
+                      <th>معاينة الشكل واللون (Hugeicons SVG)</th>
+                      <th style="width: 150px; text-align: center;">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="tags.length === 0">
-                      <td colspan="3" class="text-center">لا توجد علامات مميزة مدخلة.</td>
+                      <td colspan="3" class="text-center p-4">لا توجد علامات مميزة مدخلة.</td>
                     </tr>
                     <tr v-for="t in tags" :key="t._id">
                       <td class="text-bold">{{ t.name }}</td>
                       <td>
-                        <span class="tag-pill inline-flex items-center gap-1" :class="'tag-' + (t.color || 'default')">
-                          <CategoryIcon :icon="t.icon" :name="t.name" size="14" />
+                        <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
+                          <CategoryIcon :icon="t.icon" :name="t.name" size="16" />
                           <span>{{ t.name }}</span>
                         </span>
                       </td>
                       <td>
-                        <div class="btn-group-row">
-                          <button @click="openTagModal(t)" class="btn btn-sm btn-outline">تعديل</button>
-                          <button @click="deleteTag(t._id)" class="btn btn-sm btn-danger">حذف</button>
+                        <div class="order-actions-btns" style="justify-content: center;">
+                          <button @click="openTagModal(t)" class="btn-table-action btn-action-edit" title="تعديل العلامة">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span>تعديل</span>
+                          </button>
+                          <button @click="deleteTag(t._id)" class="btn-table-action" style="color: #ef4444; border-color: #fca5a5;" title="حذف العلامة">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span>حذف</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
