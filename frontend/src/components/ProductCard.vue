@@ -284,6 +284,7 @@ const activeTagsList = computed(() => {
 
 /* Inline Product Tag Styles (After Description) */
 .product-inline-tags {
+  direction: rtl;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -293,11 +294,12 @@ const activeTagsList = computed(() => {
 }
 
 .product-tag-inline-pill {
+  direction: rtl;
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  padding: 3px 10px 3px 4px;
+  padding: 3px 10px 3px 3px;
   border-radius: 20px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
@@ -311,6 +313,7 @@ const activeTagsList = computed(() => {
 }
 
 .tag-icon-badge {
+  order: 1;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -326,14 +329,17 @@ const activeTagsList = computed(() => {
 }
 
 .tag-text {
+  order: 2;
   display: inline-flex;
   align-items: center;
   height: 20px;
-  line-height: 20px;
-  padding: 0 2px;
+  line-height: 1;
+  text-align: right;
+  padding: 0 2px 0 0;
   margin: 0;
   color: inherit;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .card-hover-effect:hover .product-tag-inline-pill {
