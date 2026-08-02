@@ -2021,18 +2021,21 @@ export default {
     ];
 
     const tagIcons = [
+      { key: 'new', label: 'جديد (NEW)' },
+      { key: 'new_badge', label: 'إضافة جديدة' },
       { key: 'trophy', label: 'كأس' },
-      { key: 'medal', label: 'وسام' },
+      { key: 'badge_check', label: 'جودة' },
       { key: 'star_award', label: 'جائزة' },
       { key: 'gift', label: 'هدية' },
-      { key: 'sprout', label: 'نبتة' },
-      { key: 'tag_pct', label: 'بطاقة' },
+      { key: 'sprout', label: 'طازج' },
+      { key: 'tag_pct', label: 'خصم' },
       { key: 'fire', label: 'عروض' },
+      { key: 'flash', label: 'فلاش' },
       { key: 'bag_pct', label: 'حقيبة' },
       { key: 'crown', label: 'تاج' },
       { key: 'diamond', label: 'ألماسة' },
       { key: 'sparkles', label: 'بريق' },
-      { key: 'heart', label: 'قلب' },
+      { key: 'heart', label: 'مميز' },
       { key: 'star', label: 'نجمة' }
     ];
 

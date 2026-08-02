@@ -24,7 +24,11 @@ import {
   Leaf01Icon,
   DiscountTag01Icon,
   ShoppingBag01Icon,
-  SparklesIcon
+  SparklesIcon,
+  NewReleasesIcon,
+  BadgePlusIcon,
+  CheckmarkBadge01Icon,
+  FlashIcon
 } from '@hugeicons/core-free-icons';
 
 const props = defineProps({
@@ -73,18 +77,23 @@ const iconComponent = computed(() => {
   if (iconKey === 'gift') return GiftIcon;
   if (iconKey === 'star') return StarIcon;
 
-  // Tag Direct Key Matching (Unique 1-to-1 SVG icons)
-  if (iconKey === 'trophy') return Trophy;
-  if (iconKey === 'medal') return Medal01Icon;
-  if (iconKey === 'star_award' || iconKey === 'best_box') return StarAward01Icon;
+  // Tag Direct Key Matching (Unique 1-to-1 SVG icons including NEW tags)
+  if (iconKey === 'new' || iconKey === 'new_releases') return NewReleasesIcon;
+  if (iconKey === 'new_badge' || iconKey === 'new_box') return BadgePlusIcon;
+  if (iconKey === 'trophy' || iconKey === 'best_box') return Trophy;
+  if (iconKey === 'badge_check' || iconKey === 'medal') return CheckmarkBadge01Icon;
+  if (iconKey === 'star_award' || iconKey === 'award') return StarAward01Icon;
   if (iconKey === 'gift') return GiftIcon;
-  if (iconKey === 'sprout' || iconKey === 'new_box') return Leaf01Icon;
+  if (iconKey === 'sprout') return Leaf01Icon;
   if (iconKey === 'tag_pct' || iconKey === 'tag') return DiscountTag01Icon;
   if (iconKey === 'fire' || iconKey === 'starburst_pct') return Fire02Icon;
+  if (iconKey === 'flash') return FlashIcon;
   if (iconKey === 'bag_pct' || iconKey === 'bag') return ShoppingBag01Icon;
   if (iconKey === 'crown') return CrownIcon;
-  if (iconKey === 'diamond') return Diamond01Icon;
-  if (iconKey === 'sparkles' || iconKey === 'chest') return SparklesIcon;
+  if (iconKey === 'diamond' || iconKey === 'chest') return Diamond01Icon;
+  if (iconKey === 'sparkles') return SparklesIcon;
+  if (iconKey === 'heart') return HeartIcon;
+  if (iconKey === 'star') return StarIcon;
 
   // Keyword / Name / Emoji Fallback Matching
   if (n.includes('غربي') || e.includes('🍰')) return CheeseCake02Icon;
