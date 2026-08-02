@@ -163,7 +163,7 @@ console.log("[INIT] Registering API routes...");
 // ============ STATE ============
 let db, productsCollection, categoriesCollection, tagsCollection;
 let db2, productsCollection2, categoriesCollection2, tagsCollection2;
-let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection;
+let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection;
 let mongoConnected = false;
 
 // ============ MIDDLEWARE ============
@@ -310,13 +310,40 @@ const createRateLimiter = (windowMs, maxRequests) => {
 const loginLimiter = createRateLimiter(15 * 60 * 1000, 10); // 10 per 15 min
 const customerLimiter = createRateLimiter(5 * 60 * 1000, 60); // 60 per 5 min
 
-app.post("/api/login", loginLimiter, (req, res) => {
+app.post("/api/login", loginLimiter, async (req, res) => {
   const { username, password } = req.body;
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان" });
+  }
+
+  // 1. Search database users
+  if (mongoConnected) {
+    try {
+      const user = await adminUsersCollection.findOne({ username: username.trim(), password: password.trim() });
+      if (user) {
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+        res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
+        return res.json({ 
+          success: true, 
+          token: SESSION_TOKEN_SHOP1,
+          role: user.role || "admin",
+          name: user.name || user.username,
+          shopAccess: user.shopAccess || "all"
+        });
+      }
+    } catch (e) {
+      console.error("Login DB check error:", e);
+    }
+  }
+
+  // 2. Fallback ENV check
+  if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-    return res.json({ success: true, token: SESSION_TOKEN_SHOP1 });
-  } else { res.status(401).json({ success: false, message: "Unauthorized" }); }
+    return res.json({ success: true, token: SESSION_TOKEN_SHOP1, role: "admin", name: "المدير العام", shopAccess: "all" });
+  }
+
+  res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
 });
 
 app.get("/api/admin-check", checkAdmin, (req, res) => {
@@ -1016,13 +1043,116 @@ app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, asyn
 });
 
 // ============ SHOP2 ADMIN ROUTES ============
-app.post("/api/shop2/login", loginLimiter, (req, res) => {
+app.post("/api/shop2/login", loginLimiter, async (req, res) => {
   const { username, password } = req.body;
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان" });
+  }
+
+  // 1. Search database users
+  if (mongoConnected) {
+    try {
+      const user = await adminUsersCollection.findOne({ username: username.trim(), password: password.trim() });
+      if (user) {
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+        res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
+        return res.json({ 
+          success: true, 
+          token: SESSION_TOKEN_SHOP2,
+          role: user.role || "admin",
+          name: user.name || user.username,
+          shopAccess: user.shopAccess || "all"
+        });
+      }
+    } catch (e) {
+      console.error("Shop2 Login DB check error:", e);
+    }
+  }
+
+  // 2. Fallback ENV check
+  if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-    return res.json({ success: true, token: SESSION_TOKEN_SHOP2 });
-  } else { res.status(401).json({ success: false, message: "Unauthorized" }); }
+    return res.json({ success: true, token: SESSION_TOKEN_SHOP2, role: "admin", name: "المدير العام", shopAccess: "all" });
+  }
+
+  res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
+});
+
+// ============ USER MANAGEMENT APIs (ADMIN ONLY) ============
+app.get("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const users = await adminUsersCollection.find({}, { projection: { password: 0 } }).sort({ createdAt: -1 }).toArray();
+    res.json({ users });
+  } catch (err) {
+    console.error("Get users error:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+app.post("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name, username, password, role, shopAccess } = req.body;
+    if (!name || !username || !password) {
+      return res.status(400).json({ error: "جميع الحقول المطلوبة يجب إدخالها" });
+    }
+    const existing = await adminUsersCollection.findOne({ username: username.trim() });
+    if (existing) {
+      return res.status(400).json({ error: "اسم المستخدم مستخدم بالفعل" });
+    }
+    const newUser = {
+      name: name.trim(),
+      username: username.trim(),
+      password: password.trim(),
+      role: role === 'order_manager' ? 'order_manager' : 'admin',
+      shopAccess: shopAccess || 'all',
+      createdAt: new Date()
+    };
+    await adminUsersCollection.insertOne(newUser);
+    delete newUser.password;
+    res.json({ success: true, user: newUser });
+  } catch (err) {
+    console.error("Create user error:", err);
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
+app.put("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, username, password, role, shopAccess } = req.body;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+    const updateData = {
+      name: name.trim(),
+      username: username.trim(),
+      role: role === 'order_manager' ? 'order_manager' : 'admin',
+      shopAccess: shopAccess || 'all'
+    };
+    if (password && password.trim().length > 0) {
+      updateData.password = password.trim();
+    }
+    await adminUsersCollection.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+app.delete("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+    await adminUsersCollection.deleteOne({ _id: new ObjectId(id) });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete user error:", err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
 });
 
 app.get("/api/shop2/admin-check", checkAdmin, (req, res) => {
@@ -2165,6 +2295,7 @@ const connectWithRetry = async () => {
     ordersCollection = db.collection("orders");
     ordersCollection2 = db2.collection("orders");
     carouselCollection = db.collection("marketing_carousel");
+    adminUsersCollection = db.collection("admin_users");
     mongoConnected = true;
     
     productsCollection.createIndex({ category: 1 });
@@ -2177,6 +2308,22 @@ const connectWithRetry = async () => {
     favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
     ordersCollection.createIndex({ "customerInfo.phone": 1 });
     ordersCollection2.createIndex({ "customerInfo.phone": 1 });
+    adminUsersCollection.createIndex({ username: 1 }, { unique: true });
+
+    // Seed default admin user if empty
+    const userCount = await adminUsersCollection.countDocuments();
+    if (userCount === 0) {
+      console.log("Initializing default admin user...");
+      await adminUsersCollection.insertOne({
+        name: "المدير العام",
+        username: ADMIN_USER,
+        password: ADMIN_PASS,
+        role: "admin",
+        shopAccess: "all",
+        createdAt: new Date()
+      });
+      console.log("✓ Default admin user initialized");
+    }
 
     const count = await categoriesCollection.countDocuments();
     if (count === 0) {

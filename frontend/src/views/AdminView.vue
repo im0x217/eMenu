@@ -101,6 +101,10 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
           </button>
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'users' }" @click="setTab('users')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            <span>إدارة المستخدمين</span>
+          </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -1020,6 +1024,71 @@
             </div>
           </div>
 
+          <!-- USERS MANAGEMENT TAB -->
+          <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content animate-fade-in">
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">إدارة حسابات ومستخدمي النظام</h3>
+                    <span class="toolbar-badge">{{ formatArabicPlural(adminUsers.length, 'customer') }}</span>
+                  </div>
+                  <button @click="openUserModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة مستخدم جديد
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>الاسم الكامل</th>
+                      <th>اسم المستخدم</th>
+                      <th>الدور / الصلاحية</th>
+                      <th>نطاق المتجر</th>
+                      <th>تاريخ الإضافة</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="adminUsers.length === 0">
+                      <td colspan="6" class="text-center p-4">لا يوجد مستخدمون مدخلون بعد.</td>
+                    </tr>
+                    <tr v-for="u in adminUsers" :key="u._id">
+                      <td class="text-bold">{{ u.name }}</td>
+                      <td class="text-mono">{{ u.username }}</td>
+                      <td>
+                        <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
+                          {{ u.role === 'admin' ? 'مدير النظام (Admin)' : 'موظف إدارة الطلبات (Order Manager)' }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="text-small text-muted">
+                          {{ u.shopAccess === 'shop1' ? 'المتجر الرئيسي' : u.shopAccess === 'shop2' ? 'قسم النواشف' : 'جميع المتاجر' }}
+                        </span>
+                      </td>
+                      <td class="text-mono text-small">{{ u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-LY') : '-' }}</td>
+                      <td>
+                        <div class="order-actions-btns">
+                          <button @click="openUserModal(u)" class="btn-table-action btn-action-edit" title="تعديل المستخدم">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span>تعديل</span>
+                          </button>
+                          <button @click="deleteUser(u._id)" class="btn-table-action" style="color: #ef4444; border-color: #fca5a5;" title="حذف حساب المستخدم">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span>حذف</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
     </div>
@@ -1456,6 +1525,67 @@
     </div>
   </div>
 
+  <!-- User Modal Form -->
+  <div v-if="userModalOpen" class="modal-overlay animate-fade-in" @click.self="userModalOpen = false">
+    <div class="modal-box glass-panel max-w-lg">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-title-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          </div>
+          <h3>{{ editingUser._id ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم جديد' }}</h3>
+        </div>
+        <button @click="userModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+      </div>
+
+      <form @submit.prevent="saveUser" class="modal-form">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل للمستخدم</label>
+          <input type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">اسم المستخدم (Username للدخول)</label>
+          <input type="text" v-model="editingUser.username" class="form-input text-mono" placeholder="مثال: staff_order1" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
+          <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'اتركه فارغاً للإبقاء' : 'كلمة السر'" :required="!editingUser._id" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الدور وصلاحيات الوصول</label>
+            <select v-model="editingUser.role" class="form-select">
+              <option value="order_manager">موظف إدارة الطلبات (Order Manager - مقفل للطلبات)</option>
+              <option value="admin">مدير النظام (Admin - وصول كامل)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">نطاق المتجر</label>
+            <select v-model="editingUser.shopAccess" class="form-select">
+              <option value="all">جميع المتاجر</option>
+              <option value="shop1">المتجر الرئيسي فقط</option>
+              <option value="shop2">قسم النواشف فقط</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            {{ loading ? 'جاري الحفظ…' : 'حفظ البيانات' }}
+          </button>
+          <button type="button" @click="userModalOpen = false" class="btn btn-outline btn-modal-cancel">
+            إلغاء
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Hidden Print Receipt (A5) -->
   <div class="print-receipt-wrapper" v-if="printingOrder">
     <div v-for="(pageChunk, pageIndex) in paginatedOrderPages" :key="pageIndex" class="print-receipt">
@@ -1582,6 +1712,20 @@ export default {
     const activeAspectRatio = ref(3/1);
     let cropperInstance = null;
 
+    // User Roles & Authentication State
+    const userRole = ref(localStorage.getItem('admin_role') || 'admin');
+    const userDisplayName = ref(localStorage.getItem('admin_name') || 'المدير العام');
+    const adminUsers = ref([]);
+    const userModalOpen = ref(false);
+    const editingUser = reactive({
+      _id: null,
+      name: '',
+      username: '',
+      password: '',
+      role: 'order_manager',
+      shopAccess: 'all'
+    });
+
     // Tabs Titles
     const tabTitles = {
       analytics: 'لوحة الإحصائيات والتقارير المالية',
@@ -1590,8 +1734,8 @@ export default {
       tags: 'إدارة العلامات المميزة (Tags)',
       orders: 'سجل وإدارة طلبات العملاء',
       customers: 'قائمة العملاء والمنتجات المفضلة',
-      images: 'إصلاح ورفع صور المنتجات التالفة',
-      carousel: 'إدارة بنرات العروض التسويقية'
+      carousel: 'إدارة بنرات العروض التسويقية',
+      users: 'إدارة المستخدمين وصلاحيات النظام'
     };
 
     // Analytics Data
@@ -2521,6 +2665,15 @@ export default {
         if (res.ok && data.success) {
           activeShop.value = loginShop.value;
           localStorage.setItem('admin_token', data.token); // Save token for mobile compatibility
+          localStorage.setItem('admin_role', data.role || 'admin');
+          localStorage.setItem('admin_name', data.name || 'المدير العام');
+          userRole.value = data.role || 'admin';
+          userDisplayName.value = data.name || 'المدير العام';
+
+          if (userRole.value === 'order_manager') {
+            activeTab.value = 'orders';
+          }
+
           isAuthenticated.value = true;
           toast.show('تم تسجيل الدخول بنجاح', 'success');
           await loadAllData();
@@ -2537,6 +2690,10 @@ export default {
     const handleLogout = async () => {
       document.cookie = activeShop.value === 'shop2' ? 'admin_shop2=; Max-Age=0; path=/;' : 'admin=; Max-Age=0; path=/;';
       localStorage.removeItem('admin_token'); // Clear token
+      localStorage.removeItem('admin_role');
+      localStorage.removeItem('admin_name');
+      userRole.value = 'admin';
+      userDisplayName.value = 'المدير العام';
       isAuthenticated.value = false;
       toast.show('تم تسجيل الخروج بنجاح', 'success');
     };
@@ -2548,8 +2705,14 @@ export default {
       await checkAuthentication();
     };
 
-    // Tab switcher
+    // Tab switcher with locked routing for secondary order_manager role
     const setTab = (tab) => {
+      if (userRole.value === 'order_manager' && tab !== 'orders') {
+        toast.show('حسابك مخصص لمتابعة وإدارة الطلبات فقط', 'warning');
+        activeTab.value = 'orders';
+        sidebarOpen.value = false;
+        return;
+      }
       activeTab.value = tab;
       sidebarOpen.value = false;
     };
@@ -3230,6 +3393,14 @@ export default {
       activeLowPerformingProducts,
       activeTopProducts,
       activeTopFavorites,
+      userRole,
+      userDisplayName,
+      adminUsers,
+      userModalOpen,
+      editingUser,
+      openUserModal,
+      saveUser,
+      deleteUser,
       editingCustomer,
       customerModalOpen,
       customerFavsModalOpen,
