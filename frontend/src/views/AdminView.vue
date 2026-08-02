@@ -2717,6 +2717,83 @@ export default {
       sidebarOpen.value = false;
     };
 
+    // User Management Methods
+    const fetchUsers = async () => {
+      if (userRole.value !== 'admin') return;
+      try {
+        const res = await adminFetch('/api/admin/users');
+        if (res.ok) {
+          const data = await res.json();
+          adminUsers.value = data.users || [];
+        }
+      } catch (e) {
+        console.error('Fetch users error', e);
+      }
+    };
+
+    const openUserModal = (user = null) => {
+      if (user) {
+        editingUser._id = user._id;
+        editingUser.name = user.name || '';
+        editingUser.username = user.username || '';
+        editingUser.password = '';
+        editingUser.role = user.role || 'order_manager';
+        editingUser.shopAccess = user.shopAccess || 'all';
+      } else {
+        editingUser._id = null;
+        editingUser.name = '';
+        editingUser.username = '';
+        editingUser.password = '';
+        editingUser.role = 'order_manager';
+        editingUser.shopAccess = 'all';
+      }
+      userModalOpen.value = true;
+    };
+
+    const saveUser = async () => {
+      if (!editingUser.name || !editingUser.username || (!editingUser._id && !editingUser.password)) {
+        toast.show('يرجى تعبئة جميع الحقول المطلوبة', 'danger');
+        return;
+      }
+      loading.value = true;
+      try {
+        const isEdit = !!editingUser._id;
+        const url = isEdit ? `/api/admin/users/${editingUser._id}` : '/api/admin/users';
+        const method = isEdit ? 'PUT' : 'POST';
+        const res = await adminFetch(url, {
+          method,
+          body: JSON.stringify(editingUser)
+        });
+        if (res.ok) {
+          toast.show(isEdit ? 'تم تحديث بيانات المستخدم بنجاح' : 'تم إضافة المستخدم بنجاح', 'success');
+          userModalOpen.value = false;
+          await fetchUsers();
+        } else {
+          const data = await res.json();
+          toast.show(data.error || 'فشل حفظ بيانات المستخدم', 'danger');
+        }
+      } catch (e) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const deleteUser = async (id) => {
+      if (!confirm('هل أنت متأكد من حذف هذا المستخدم نهائياً؟')) return;
+      try {
+        const res = await adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          toast.show('تم حذف المستخدم بنجاح', 'success');
+          await fetchUsers();
+        } else {
+          toast.show('فشل حذف المستخدم', 'danger');
+        }
+      } catch (e) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      }
+    };
+
     // Load Data
     const loadAllData = async () => {
       loading.value = true;
@@ -2728,7 +2805,8 @@ export default {
           fetchTags(),
           fetchOrders(),
           fetchCustomers(),
-          fetchCarousel()
+          fetchCarousel(),
+          fetchUsers()
         ]);
       } catch (err) {
         toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
