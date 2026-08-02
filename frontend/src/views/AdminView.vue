@@ -797,18 +797,21 @@
                       <td colspan="8" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
                     <tr v-for="order in filteredOrders" :key="order._id">
-                      <td class="text-bold text-mono">#{{ order._id.toString().slice(-6) }}</td>
+                      <td class="text-bold text-mono">
+                        <span class="order-id-pill">#{{ order._id.toString().slice(-6) }}</span>
+                      </td>
                       <td class="text-mono text-small">{{ new Date(order.createdAt).toLocaleString('ar-LY') }}</td>
                       <td>
                         <div class="customer-info-cell">
                           <span class="name block text-bold">{{ order.customerInfo.name }}</span>
-                          <span class="phone text-muted block text-mono">{{ order.customerInfo.phone }}</span>
+                          <span class="phone text-muted block text-mono" style="direction: ltr; display: inline-block;">{{ order.customerInfo.phone }}</span>
                         </div>
                       </td>
                       <td>
                         <div class="items-list-cell">
                           <div v-for="(item, idx) in order.items" :key="idx" class="item-line">
-                            {{ item.name }} × <span class="text-mono">{{ item.quantity }}</span>
+                            <span class="item-name">{{ item.name }}</span>
+                            <span class="item-qty-badge">× {{ item.quantity }}</span>
                             <span v-if="item.notes" class="item-note">({{ item.notes }})</span>
                           </div>
                         </div>
@@ -829,9 +832,13 @@
                       </td>
                       <td>
                         <div class="order-actions-btns">
-                          <button @click="openOrderEditModal(order)" class="btn btn-outline btn-xs">تعديل</button>
-                          <button @click="printOrder(order)" class="btn btn-outline btn-xs btn-print" title="طباعة الطلب">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          <button @click="openOrderEditModal(order)" class="btn-table-action btn-action-edit" title="تعديل محتويات الطلب">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span>تعديل</span>
+                          </button>
+                          <button @click="printOrder(order)" class="btn-table-action btn-action-print" title="طباعة فاتورة الطلب">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            <span>طباعة</span>
                           </button>
                         </div>
                       </td>
@@ -944,8 +951,14 @@
           </div>
 
           <div class="modal-footer mt-4">
-            <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
-            <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline">إلغاء</button>
+            <button type="submit" class="btn btn-primary btn-modal-save">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>حفظ التعديلات</span>
+            </button>
+            <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline btn-modal-cancel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       </div>
@@ -5236,61 +5249,106 @@ select.select-pill {
   color: #fd7e14;
 }
 
+.order-id-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #1e293b;
+  font-weight: 800;
+  font-size: 0.86rem;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+
 .status-select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: left 8px center !important;
+  background-position: left 10px center !important;
   background-size: 12px 12px;
-  padding: 6px 12px;
+  padding: 0 14px;
   padding-left: 28px !important;
-  padding-right: 12px !important;
-  font-size: 0.85rem;
+  height: 34px !important;
+  font-size: 0.84rem;
   border-radius: 8px;
-  border: 1px solid #dee2e6;
   cursor: pointer;
   outline: none;
-  font-weight: 700;
-  transition: all 0.2s ease;
-  width: auto;
-  display: inline-block;
+  font-weight: 800;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
   font-family: inherit;
+  direction: rtl;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 .status-select.status-pending {
-  background-color: #fff9db;
-  color: #f08c00;
-  border-color: #ffe066;
+  background-color: rgba(253, 181, 24, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(253, 181, 24, 0.4);
 }
 .status-select.status-ready {
-  background-color: #e7f5ff;
-  color: #1c7ed6;
-  border-color: #a5d8ff;
+  background-color: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 .status-select.status-received,
 .status-select.status-completed {
-  background-color: #ebfbee;
-  color: #2b8a3e;
-  border-color: #b2f2bb;
+  background-color: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.35);
 }
 .status-select.status-cancelled {
-  background-color: #fff5f5;
-  color: #fa5252;
-  border-color: #ffc9c9;
+  background-color: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .order-actions-btns {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-.btn-print {
+.btn-table-action {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 4px 6px;
+  gap: 6px;
+  padding: 0 12px;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
+.btn-table-action:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--primary-glow);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.btn-table-action:active {
+  transform: scale(0.97);
+}
+
+.btn-action-print:hover {
+  border-color: #0284c7;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
 }
 
 .customer-info-cell .block {
@@ -5306,12 +5364,26 @@ select.select-pill {
 }
 .item-line {
   font-size: 0.85rem;
-  margin-bottom: 2px;
-  color: #495057;
+  margin-bottom: 3px;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.item-qty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
 }
 .item-note {
   font-size: 0.75rem;
-  color: #868e96;
+  color: #64748b;
   font-style: italic;
 }
 
@@ -5530,10 +5602,62 @@ select.select-pill {
   align-items: center;
   padding: 12px 16px;
   background: rgba(30, 58, 95, 0.06);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1.05rem;
   border: 1px solid rgba(30, 58, 95, 0.15);
   color: #1e3a5f;
+  font-weight: 700;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.btn-modal-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  background: linear-gradient(135deg, var(--primary-color), #e5a00d);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--primary-glow);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-modal-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px var(--primary-glow);
+}
+
+.btn-modal-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-modal-cancel:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #94a3b8;
 }
 .btn-danger {
   background: #fa5252;
