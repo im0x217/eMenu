@@ -414,8 +414,10 @@ const activeTagsList = computed(() => {
 
 .prices-row {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .price-pill {

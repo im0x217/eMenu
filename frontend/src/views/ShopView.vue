@@ -502,18 +502,15 @@ watch(carouselItems, (newItems) => {
 
     <!-- Sub-Category Product Sections (2 Horizontal Scrollable Rows Stacked On Top Of Each Other) -->
     <div v-else-if="subCategorySections.length > 0" class="subcat-sections-wrapper">
-      <section 
+      <div 
         v-for="group in subCategorySections" 
         :key="group.name" 
-        class="subcat-section-card glass-panel animate-fade-in"
+        class="subcat-plain-section animate-fade-in"
       >
-        <!-- Subcategory Section Header Bar -->
-        <div class="subcat-section-header-bar">
-          <div class="subcat-title-group">
-            <h2 class="subcat-section-title">{{ group.name }}</h2>
-            <span class="subcat-section-count">{{ group.products.length }} منتج</span>
-          </div>
-          <span class="subcat-scroll-hint-label">اسحب أفقياً ‹</span>
+        <!-- Subcategory Section Plain Header -->
+        <div class="subcat-plain-header">
+          <h2 class="subcat-plain-title">{{ group.name }}</h2>
+          <span class="subcat-plain-badge">{{ group.products.length }}</span>
         </div>
 
         <!-- 2 Horizontal Scrollable Product Rows Stacked On Top Of Each Other -->
@@ -532,7 +529,7 @@ watch(carouselItems, (newItems) => {
             @zoom="openZoomModal"
           />
         </div>
-      </section>
+      </div>
     </div>
 
     <!-- Empty State -->
@@ -744,77 +741,56 @@ watch(carouselItems, (newItems) => {
   font-size: 1.1rem;
 }
 
-/* Sub-Category Product Sections with 2 Horizontal Scrollable Rows Stacked */
+/* Sub-Category Product Sections (2 Horizontal Scrollable Rows Stacked - No Box Container) */
 .subcat-sections-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1.5rem;
   margin-top: 0.5rem;
 }
 
-.subcat-section-card {
-  border-radius: 22px;
-  overflow: hidden;
-  padding: 14px 0 12px 0;
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+.subcat-plain-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.subcat-section-header-bar {
+.subcat-plain-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px 10px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 8px;
+  gap: 8px;
+  padding: 0 4px;
 }
 
-.subcat-title-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.subcat-section-title {
+.subcat-plain-title {
   font-family: 'Cairo', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: #f8fafc;
+  color: #2c2520;
   margin: 0;
 }
 
-.subcat-section-count {
+.subcat-plain-badge {
   font-family: 'Cairo', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.12);
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  padding: 2px 10px;
+  color: var(--primary-color);
+  background: rgba(var(--primary-color-rgb), 0.1);
+  padding: 2px 8px;
   border-radius: 12px;
-}
-
-.subcat-scroll-hint-label {
-  font-family: 'Cairo', sans-serif;
-  font-size: 0.76rem;
-  color: #94a3b8;
-  font-weight: 600;
 }
 
 .subcat-products-grid-2rows {
   display: grid;
   grid-template-rows: repeat(2, auto);
   grid-auto-flow: column;
-  grid-auto-columns: minmax(180px, 215px);
+  grid-auto-columns: minmax(260px, 300px); /* Increased horizontal size! */
   gap: 12px 14px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  padding: 6px 16px 10px 16px;
+  padding: 4px 0 12px 0;
   scrollbar-width: none;
 }
 
