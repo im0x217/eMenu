@@ -202,9 +202,16 @@ const closeZoomModal = () => {
 
 .favorites-product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
   margin-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .favorites-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+  }
 }
 
 .loading-state {
