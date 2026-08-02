@@ -17,6 +17,7 @@ import {
   Dish01Icon,
   Trophy,
   Medal01Icon,
+  StarAward01Icon,
   CrownIcon,
   Diamond01Icon,
   Fire02Icon,
@@ -72,16 +73,18 @@ const iconComponent = computed(() => {
   if (iconKey === 'gift') return GiftIcon;
   if (iconKey === 'star') return StarIcon;
 
-  // Tag Direct Key Matching
-  if (iconKey === 'trophy' || iconKey === 'best_box' || iconKey === 'award') return Trophy;
+  // Tag Direct Key Matching (Unique 1-to-1 SVG icons)
+  if (iconKey === 'trophy') return Trophy;
   if (iconKey === 'medal') return Medal01Icon;
-  if (iconKey === 'crown') return CrownIcon;
-  if (iconKey === 'diamond' || iconKey === 'chest') return Diamond01Icon;
-  if (iconKey === 'fire' || iconKey === 'starburst_pct') return Fire02Icon;
+  if (iconKey === 'star_award' || iconKey === 'best_box') return StarAward01Icon;
+  if (iconKey === 'gift') return GiftIcon;
   if (iconKey === 'sprout' || iconKey === 'new_box') return Leaf01Icon;
   if (iconKey === 'tag_pct' || iconKey === 'tag') return DiscountTag01Icon;
+  if (iconKey === 'fire' || iconKey === 'starburst_pct') return Fire02Icon;
   if (iconKey === 'bag_pct' || iconKey === 'bag') return ShoppingBag01Icon;
-  if (iconKey === 'sparkles') return SparklesIcon;
+  if (iconKey === 'crown') return CrownIcon;
+  if (iconKey === 'diamond') return Diamond01Icon;
+  if (iconKey === 'sparkles' || iconKey === 'chest') return SparklesIcon;
 
   // Keyword / Name / Emoji Fallback Matching
   if (n.includes('غربي') || e.includes('🍰')) return CheeseCake02Icon;

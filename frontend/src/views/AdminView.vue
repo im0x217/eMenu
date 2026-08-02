@@ -1359,7 +1359,7 @@
                 :title="item.label"
               >
                 <CategoryIcon :icon="item.key" size="20" />
-                <span class="pool-item-label">{{ item.label.split(' ')[0] }}</span>
+                <span class="pool-item-label">{{ item.label }}</span>
               </button>
             </div>
           </div>
@@ -2021,25 +2021,19 @@ export default {
     ];
 
     const tagIcons = [
-      // الأكثر مبيعاً
-      { key: 'trophy', label: 'كأس (الأكثر مبيعاً)' },
-      { key: 'medal', label: 'وسام (الأكثر مبيعاً)' },
-      { key: 'best_box', label: 'علبة #1 (الأكثر مبيعاً)' },
-      
-      // وصول جديد
-      { key: 'new_box', label: 'صندوق (وصول جديد)' },
-      { key: 'gift', label: 'هدية (وصول جديد)' },
-      { key: 'sprout', label: 'نبتة (وصول جديد)' },
-      
-      // تخفيضات
-      { key: 'tag_pct', label: 'بطاقة % (تخفيضات)' },
-      { key: 'starburst_pct', label: 'نجمة % (تخفيضات)' },
-      { key: 'bag_pct', label: 'حقيبة % (تخفيضات)' },
-      
-      // إصدار محدود
-      { key: 'crown', label: 'تاج (إصدار محدود)' },
-      { key: 'diamond', label: 'ألماسة (إصدار محدود)' },
-      { key: 'chest', label: 'صندوق كنز (إصدار محدود)' }
+      { key: 'trophy', label: 'كأس' },
+      { key: 'medal', label: 'وسام' },
+      { key: 'star_award', label: 'جائزة' },
+      { key: 'gift', label: 'هدية' },
+      { key: 'sprout', label: 'نبتة' },
+      { key: 'tag_pct', label: 'بطاقة' },
+      { key: 'fire', label: 'عروض' },
+      { key: 'bag_pct', label: 'حقيبة' },
+      { key: 'crown', label: 'تاج' },
+      { key: 'diamond', label: 'ألماسة' },
+      { key: 'sparkles', label: 'بريق' },
+      { key: 'heart', label: 'قلب' },
+      { key: 'star', label: 'نجمة' }
     ];
 
 
