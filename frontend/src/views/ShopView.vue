@@ -450,9 +450,13 @@ watch(carouselItems, (newItems) => {
     </div>
 
     <!-- Subcategories filter (hidden when searching) -->
-    <div v-if="!searchQuery && subCategories.length > 0" class="subcategories-row">
+    <div v-if="!searchQuery && subCategories.length > 0" class="subcategories-row animate-fade-in">
+      <div class="subcat-section-header">
+        <span class="subcat-section-title">الأصناف الفرعية</span>
+        <span class="subcat-section-badge">{{ subCategories.length }} صنف</span>
+      </div>
       <div 
-        class="scroll-container" 
+        class="subcat-grid-2rows" 
         @wheel.prevent="handleHorizontalScroll"
         @mousedown="startDrag"
         @mousemove="drag"
@@ -460,20 +464,22 @@ watch(carouselItems, (newItems) => {
         @mouseleave="endDrag"
       >
         <button 
-          class="subcat-btn"
+          class="subcat-pill-btn"
           :class="{ active: activeSubCategory === '' }"
           @click="selectSubCategory('')"
         >
-          الكل
+          <span class="subcat-icon-dot"></span>
+          <span>الكل</span>
         </button>
         <button 
           v-for="sub in subCategories" 
           :key="sub" 
-          class="subcat-btn"
+          class="subcat-pill-btn"
           :class="{ active: activeSubCategory === sub }"
           @click="selectSubCategory(sub)"
         >
-          {{ sub }}
+          <span class="subcat-icon-dot"></span>
+          <span>{{ sub }}</span>
         </button>
       </div>
     </div>
@@ -704,27 +710,98 @@ watch(carouselItems, (newItems) => {
 }
 
 .subcategories-row {
-  margin-top: -4px;
+  margin-top: 2px;
+  margin-bottom: 6px;
 }
 
-.subcat-btn {
-  background: rgba(255, 253, 249, 0.85);
-  border: 1px solid rgba(44, 37, 32, 0.06);
-  color: #5c534a;
-  padding: 4px 12px;
-  border-radius: 20px;
+.subcat-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 6px 4px;
+}
+
+.subcat-section-title {
   font-family: 'Cairo', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.subcat-section-badge {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.75rem;
   font-weight: 600;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.subcat-grid-2rows {
+  display: grid;
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 8px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 4px 10px 4px;
+  scrollbar-width: none;
+}
+
+.subcat-grid-2rows::-webkit-scrollbar {
+  display: none;
+}
+
+.subcat-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 14px;
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.subcat-btn.active {
-  background: rgba(var(--primary-color-rgb), 0.12);
-  border-color: rgba(var(--primary-color-rgb), 0.3);
-  color: var(--primary-color);
+.subcat-pill-btn .subcat-icon-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.subcat-pill-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(51, 65, 85, 0.85);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.subcat-pill-btn.active {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.subcat-pill-btn.active .subcat-icon-dot {
+  background: #ffffff;
+  transform: scale(1.4);
 }
 
 .loading-state {

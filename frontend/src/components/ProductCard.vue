@@ -100,49 +100,36 @@ const activeTagsList = computed(() => {
     return found || { name: tagName, color: 'default', icon: 'trophy' };
   });
 });
-
-const getIconUrl = (iconKey) => {
-  const map = {
-    heart: 'sprout',
-    star: 'medal',
-    sparkles: 'diamond',
-    fire: 'starburst_pct',
-    tag: 'tag_pct',
-    gift: 'gift'
-  };
-  const key = map[iconKey] || iconKey || 'trophy';
-  return `/res/tags/${key}.png`;
-};
 </script>
 
 <template>
   <div class="product-card glass-panel card-hover-effect" :class="{ 'not-available': product.available === false }">
-    <!-- Favorite Heart Toggle -->
-    <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="20" 
-        height="20" 
-        viewBox="0 0 24 24" 
-        :fill="isSaved ? 'var(--primary-color)' : 'none'" 
-        :stroke="isSaved ? 'var(--primary-color)' : 'rgba(0,0,0,0.4)'"
-        stroke-width="2" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"
-        class="heart-icon"
-      >
-        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-      </svg>
-    </button>
-
-    <!-- Product Image -->
+    <!-- Product Image (Horizontal side) -->
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
+      <!-- Favorite Heart Toggle -->
+      <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="17" 
+          height="17" 
+          viewBox="0 0 24 24" 
+          :fill="isSaved ? 'var(--primary-color)' : 'none'" 
+          :stroke="isSaved ? 'var(--primary-color)' : 'rgba(255,255,255,0.85)'"
+          stroke-width="2.2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+          class="heart-icon"
+        >
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </svg>
+      </button>
+
       <img 
         :src="getImageUrl()" 
         :alt="product.name" 
         loading="lazy"
-        width="300"
-        height="300"
+        width="200"
+        height="200"
         class="product-image"
         @error="$event.target.src = '/res/logo.jpg'"
       />
@@ -151,51 +138,56 @@ const getIconUrl = (iconKey) => {
       </div>
     </div>
 
-    <!-- Product Details -->
+    <!-- Product Details Content -->
     <div class="product-info">
-      <h3 class="product-title">{{ product.name }}</h3>
-      <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
+      <div class="info-top">
+        <h3 class="product-title">{{ product.name }}</h3>
+        <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
 
-      <!-- Inline Tags (After Description) -->
-      <div v-if="activeTagsList.length > 0" class="product-inline-tags">
-        <div 
-          v-for="(tagItem, tIdx) in activeTagsList" 
-          :key="tIdx" 
-          class="product-tag-inline-pill animate-fade-in" 
-          :class="'tag-' + (tagItem.color || 'default')"
-        >
-          <span class="tag-icon-badge">
-            <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="13" stroke-width="2.3" />
-          </span>
-          <span class="tag-text">{{ tagItem.name }}</span>
-        </div>
-      </div>
-      
-      <!-- Price displays -->
-      <div class="prices-row">
-        <!-- Regular Price -->
-        <div v-if="showRegularPrice" class="price-pill regular-price" :class="{ active: !isBulkMode }">
-          <span class="price-val">{{ product.price_regular || product.price }}</span>
-          <span class="price-unit">د.ل</span>
-        </div>
-
-        <!-- Bulk Price -->
-        <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode }">
-          <span class="price-label">جملة: </span>
-          <span class="price-val">{{ product.price_bulk }}</span>
-          <span class="price-unit">د.ل</span>
+        <!-- Inline Tags (After Description) -->
+        <div v-if="activeTagsList.length > 0" class="product-inline-tags">
+          <div 
+            v-for="(tagItem, tIdx) in activeTagsList" 
+            :key="tIdx" 
+            class="product-tag-inline-pill animate-fade-in" 
+            :class="'tag-' + (tagItem.color || 'default')"
+          >
+            <span class="tag-icon-badge">
+              <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="12" stroke-width="2.3" />
+            </span>
+            <span class="tag-text">{{ tagItem.name }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Add Button (Wide format) -->
-      <div class="actions-row" v-if="product.available !== false">
-        <button ref="addBtnRef" class="add-btn-wide" @click="handleAddToCart" aria-label="إضافة إلى السلة">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px;">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span>أضف للسلة</span>
-        </button>
+      <!-- Bottom Row: Prices & Add Button -->
+      <div class="prices-and-actions-row">
+        <!-- Price displays -->
+        <div class="prices-row">
+          <!-- Regular Price -->
+          <div v-if="showRegularPrice" class="price-pill regular-price" :class="{ active: !isBulkMode }">
+            <span class="price-val">{{ product.price_regular || product.price }}</span>
+            <span class="price-unit">د.ل</span>
+          </div>
+
+          <!-- Bulk Price -->
+          <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode }">
+            <span class="price-label">جملة: </span>
+            <span class="price-val">{{ product.price_bulk }}</span>
+            <span class="price-unit">د.ل</span>
+          </div>
+        </div>
+
+        <!-- Add Button (Compact format) -->
+        <div class="actions-row" v-if="product.available !== false">
+          <button ref="addBtnRef" class="add-btn-compact" @click="handleAddToCart" aria-label="إضافة إلى السلة">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>إضافة</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -205,11 +197,16 @@ const getIconUrl = (iconKey) => {
 .product-card {
   position: relative;
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 135px;
+  width: 100%;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  border-radius: 20px;
   background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .product-card.not-available {
@@ -218,14 +215,14 @@ const getIconUrl = (iconKey) => {
 
 .favorite-btn {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   z-index: 10;
-  background: rgba(255, 253, 249, 0.85);
-  border: none;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,12 +230,12 @@ const getIconUrl = (iconKey) => {
   transition: transform 0.2s ease, background-color 0.2s ease;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 2px 8px rgba(44, 37, 32, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .favorite-btn:hover {
   transform: scale(1.1);
-  background: rgba(255, 253, 249, 0.95);
+  background: rgba(15, 23, 42, 0.85);
 }
 
 .heart-icon {
@@ -251,11 +248,15 @@ const getIconUrl = (iconKey) => {
 
 .img-wrapper {
   position: relative;
-  width: 100%;
-  padding-top: 80%; /* 5:4 aspect ratio */
+  width: 130px;
+  min-width: 130px;
+  height: 100%;
+  min-height: 135px;
+  padding-top: 0;
   overflow: hidden;
-  background: #f5f0ea;
+  background: #0f172a;
   cursor: zoom-in;
+  flex-shrink: 0;
 }
 
 .product-image {
@@ -269,7 +270,7 @@ const getIconUrl = (iconKey) => {
 }
 
 .product-card:hover .product-image {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .not-available-overlay {
@@ -278,13 +279,13 @@ const getIconUrl = (iconKey) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.88rem;
 }
 
 /* Inline Product Tag Styles (After Description) */
@@ -292,31 +293,31 @@ const getIconUrl = (iconKey) => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  margin-bottom: 8px;
+  gap: 5px;
+  margin-top: 4px;
+  margin-bottom: 6px;
 }
 
 .product-tag-inline-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 4px;
-  border-radius: 20px;
+  gap: 5px;
+  padding: 2px 8px 2px 3px;
+  border-radius: 16px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   line-height: 1.2;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
 .tag-icon-badge {
-  width: 21px;
-  height: 21px;
+  width: 19px;
+  height: 19px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.45);
@@ -324,7 +325,7 @@ const getIconUrl = (iconKey) => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -372,47 +373,63 @@ const getIconUrl = (iconKey) => {
   color: #ffffff !important;
 }
 
-
 .product-info {
-  padding: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.info-top {
+  display: flex;
+  flex-direction: column;
 }
 
 .product-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #2c2520;
-  margin-bottom: 0.25rem;
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 2px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .product-desc {
-  font-size: 0.75rem;
-  color: #6c757d;
-  margin-bottom: 0.5rem;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 3.4em;
-  line-height: 1.15;
+  line-height: 1.22;
+  height: auto;
+}
+
+.prices-and-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 .prices-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 0.75rem;
+  gap: 3px;
 }
 
 .price-pill {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -421,8 +438,8 @@ const getIconUrl = (iconKey) => {
 }
 
 .regular-price {
-  background: rgba(253, 181, 24, 0.08);
-  color: #d98000;
+  background: rgba(253, 181, 24, 0.12);
+  color: #fbbf24;
 }
 
 .regular-price.active {
@@ -431,8 +448,8 @@ const getIconUrl = (iconKey) => {
 }
 
 .bulk-price {
-  background: rgba(55, 178, 77, 0.1);
-  color: #2b8a3e;
+  background: rgba(55, 178, 77, 0.15);
+  color: #4ade80;
 }
 
 .bulk-price.active {
@@ -442,35 +459,34 @@ const getIconUrl = (iconKey) => {
 
 .actions-row {
   display: flex;
-  margin-top: auto;
   align-items: center;
 }
 
-.add-btn-wide {
-  width: 100%;
-  background: var(--primary-color);
-  border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
-  display: flex;
+.add-btn-compact {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #ffffff;
+  border: none;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.82rem;
   font-weight: 700;
+  font-size: 0.82rem;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.35);
+  transition: all 0.2s ease;
 }
 
-.shop-theme-shop1 .add-btn-wide {
-  color: #0c0603; /* Dark text/icon for gold button */
+.add-btn-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(217, 119, 6, 0.5);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-.shop-theme-shop2 .add-btn-wide {
-  color: #ffffff; /* White text/icon for blue button */
-}
-
-.add-btn-wide:active {
-  transform: scale(0.97);
+.add-btn-compact:active {
+  transform: scale(0.96);
 }
 </style>
