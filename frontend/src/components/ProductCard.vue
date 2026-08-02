@@ -295,24 +295,24 @@ const activeTagsList = computed(() => {
 .product-tag-inline-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 4px 10px 4px 5px; /* Clean, balanced padding on all 4 sides */
+  padding: 3px 10px 3px 4px;
   border-radius: 20px;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
   font-size: 0.76rem;
-  line-height: 1;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  vertical-align: middle;
 }
 
 .tag-icon-badge {
   width: 20px;
   height: 20px;
-  padding: 2px; /* Internal padding for vector icon */
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.45);
@@ -322,12 +322,18 @@ const activeTagsList = computed(() => {
   flex-shrink: 0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  line-height: 0;
 }
 
 .tag-text {
-  padding: 0 3px 0 1px;
-  line-height: 1;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  line-height: 20px;
+  padding: 0 2px;
+  margin: 0;
+  color: inherit;
+  font-weight: 700;
 }
 
 .card-hover-effect:hover .product-tag-inline-pill {
