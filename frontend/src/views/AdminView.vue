@@ -3949,6 +3949,16 @@ export default {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   overscroll-behavior: contain;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
+}
+
+.admin-sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .sidebar-brand {
@@ -6760,7 +6770,6 @@ select.select-pill {
 @media (min-width: 769px) {
   .admin-layout ::-webkit-scrollbar,
   .admin-main::-webkit-scrollbar,
-  .admin-sidebar::-webkit-scrollbar,
   .table-container::-webkit-scrollbar,
   .edit-order-table-container::-webkit-scrollbar,
   .modal-box::-webkit-scrollbar {
@@ -6771,7 +6780,6 @@ select.select-pill {
 
   .admin-layout ::-webkit-scrollbar-track,
   .admin-main::-webkit-scrollbar-track,
-  .admin-sidebar::-webkit-scrollbar-track,
   .table-container::-webkit-scrollbar-track,
   .edit-order-table-container::-webkit-scrollbar-track,
   .modal-box::-webkit-scrollbar-track {
@@ -6781,7 +6789,6 @@ select.select-pill {
 
   .admin-layout ::-webkit-scrollbar-thumb,
   .admin-main::-webkit-scrollbar-thumb,
-  .admin-sidebar::-webkit-scrollbar-thumb,
   .table-container::-webkit-scrollbar-thumb,
   .edit-order-table-container::-webkit-scrollbar-thumb,
   .modal-box::-webkit-scrollbar-thumb {
@@ -6794,7 +6801,6 @@ select.select-pill {
 
   .admin-layout ::-webkit-scrollbar-thumb:hover,
   .admin-main::-webkit-scrollbar-thumb:hover,
-  .admin-sidebar::-webkit-scrollbar-thumb:hover,
   .table-container::-webkit-scrollbar-thumb:hover,
   .edit-order-table-container::-webkit-scrollbar-thumb:hover,
   .modal-box::-webkit-scrollbar-thumb:hover {
@@ -6810,7 +6816,6 @@ select.select-pill {
 
   .admin-layout *,
   .admin-main,
-  .admin-sidebar,
   .table-container {
     -ms-overflow-style: auto !important;
     scrollbar-width: thin !important;
