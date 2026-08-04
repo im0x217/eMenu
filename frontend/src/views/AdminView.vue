@@ -4051,8 +4051,6 @@ export default {
   padding-bottom: 4px;
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%);
 }
 
 .menu-item {
@@ -6827,13 +6825,15 @@ select.select-pill {
 }
 
 /* Strictly hide scrollbar for admin sidebar and all its children across all viewports */
-.admin-sidebar,
-.admin-sidebar *,
 .admin-sidebar::-webkit-scrollbar,
 .admin-sidebar *::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+.admin-sidebar,
+.admin-sidebar * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
