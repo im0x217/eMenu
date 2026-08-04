@@ -2340,15 +2340,23 @@ export default {
     // Helper: compress any product image URL to high-efficiency WebP
     const compressProductUrlToWebp = async (imageUrl) => {
       return new Promise(async (resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Image fetch timeout'));
+        }, 12000); // 12 second timeout protection per image
+
         try {
           const response = await fetch(imageUrl);
-          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          if (!response.ok) {
+            clearTimeout(timeout);
+            throw new Error(`HTTP error ${response.status}`);
+          }
           const blob = await response.blob();
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.src = URL.createObjectURL(blob);
           
           img.onload = () => {
+            clearTimeout(timeout);
             const maxW = 900;
             const maxH = 900;
             let width = img.width;
@@ -2386,28 +2394,50 @@ export default {
           };
           
           img.onerror = (err) => {
+            clearTimeout(timeout);
             URL.revokeObjectURL(img.src);
             reject(err);
           };
         } catch (e) {
+          clearTimeout(timeout);
           reject(e);
         }
       });
     };
 
-    // Batch re-compress and re-upload all current product images
+    // Batch re-compress and re-upload all current product images across ALL shops
     const recompressAllProductImages = async () => {
-      const items = products.value.filter(p => p.img && !p.img.includes('/res/logo.jpg'));
-      if (items.length === 0) {
-        toast.show('لا توجد صور منتجات لإعادة ضغطها حالياً', 'warning');
-        return;
-      }
-
       recompressingProducts.value = true;
       recompressProductsProgress.value = 0;
       let updatedCount = 0;
 
       try {
+        // Fetch products from BOTH shops to process all 250+ products
+        const [resShop1, resShop2] = await Promise.all([
+          adminFetch('/api/products').catch(() => null),
+          adminFetch('/api/shop2/products').catch(() => null)
+        ]);
+
+        let allProducts = [];
+        if (resShop1 && resShop1.ok) {
+          const prods1 = await resShop1.json();
+          allProducts.push(...prods1.map(p => ({ ...p, _shop: 'shop1' })));
+        }
+        if (resShop2 && resShop2.ok) {
+          const prods2 = await resShop2.json();
+          allProducts.push(...prods2.map(p => ({ ...p, _shop: 'shop2' })));
+        }
+
+        // Filter products with valid image URLs
+        const items = allProducts.filter(p => p.img && typeof p.img === 'string' && !p.img.includes('/res/logo.jpg'));
+        
+        if (items.length === 0) {
+          toast.show('لا توجد صور منتجات لإعادة ضغطها حالياً', 'warning');
+          return;
+        }
+
+        toast.show(`بدء ضغط وتسريع ${items.length} صورة منتج…`, 'info');
+
         for (let i = 0; i < items.length; i++) {
           const prod = items[i];
           recompressProductsProgress.value = i + 1;
@@ -2417,7 +2447,7 @@ export default {
             const formData = new FormData();
             formData.append('name', prod.name);
             formData.append('desc', prod.desc || '');
-            formData.append('category', prod.category);
+            formData.append('category', prod.category || '');
             formData.append('subCategory', prod.subCategory || '');
             formData.append('purchaseType', prod.purchaseType || 'regular');
             formData.append('allowFloat', prod.allowFloat ? 'true' : 'false');
@@ -2426,7 +2456,7 @@ export default {
             if (prod.price_bulk) formData.append('price_bulk', prod.price_bulk);
             formData.append('img', compressedFile);
 
-            const url = activeShop.value === 'shop2' 
+            const url = prod._shop === 'shop2' 
               ? `/api/shop2/products/${prod._id}` 
               : `/api/products/${prod._id}`;
 
@@ -2439,11 +2469,11 @@ export default {
               updatedCount++;
             }
           } catch (prodErr) {
-            console.error(`Failed to recompress product image ${prod._id}:`, prodErr);
+            console.error(`Failed to recompress product image ${prod._id} (${prod.name}):`, prodErr);
           }
         }
 
-        toast.show(`⚡ تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${items.length} صورة منتج بنجاح وتوفير سرعة فائقة!`, 'success');
+        toast.show(`⚡ تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${items.length} صورة منتج بنجاح عبر جميع المتاجر!`, 'success');
         await fetchProducts();
       } catch (err) {
         console.error('Batch product image recompression error:', err);
