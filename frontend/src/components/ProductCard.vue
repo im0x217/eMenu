@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useShopStore } from '../stores/shop';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
@@ -11,6 +11,7 @@ import { gsap } from 'gsap';
 const heartBtnRef = ref(null);
 const addBtnRef = ref(null);
 const cardRef = ref(null);
+const imgRef = ref(null);
 
 const props = defineProps({
   product: {
@@ -40,9 +41,34 @@ const isLoaded = ref(false);
 const hasError = ref(false);
 let observer = null;
 
+const checkCachedImage = () => {
+  if (imgRef.value && imgRef.value.complete && imgRef.value.naturalWidth !== 0) {
+    isLoaded.value = true;
+  }
+};
+
+watch(() => props.product._id, () => {
+  isLoaded.value = false;
+  hasError.value = false;
+  nextTick(() => {
+    checkCachedImage();
+  });
+});
+
+watch(isIntersecting, (val) => {
+  if (val) {
+    nextTick(() => {
+      checkCachedImage();
+    });
+  }
+});
+
 onMounted(() => {
   if (props.priority === 'high') {
     isIntersecting.value = true;
+    nextTick(() => {
+      checkCachedImage();
+    });
     return;
   }
   
@@ -52,6 +78,9 @@ onMounted(() => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             isIntersecting.value = true;
+            nextTick(() => {
+              checkCachedImage();
+            });
             if (observer && cardRef.value) {
               observer.unobserve(cardRef.value);
             }
@@ -66,6 +95,9 @@ onMounted(() => {
     observer.observe(cardRef.value);
   } else {
     isIntersecting.value = true;
+    nextTick(() => {
+      checkCachedImage();
+    });
   }
 });
 
@@ -191,13 +223,14 @@ const activeTagsList = computed(() => {
 
     <!-- Product Image (Bigger Image: 75% aspect ratio) -->
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
-      <!-- Pulsing Glass Shimmer Placeholder -->
-      <div v-if="!isLoaded" class="img-skeleton-shimmer">
+      <!-- Pulsing Glass Shimmer Placeholder (Fades out smoothly when image loads) -->
+      <div class="img-skeleton-shimmer" :class="{ 'hidden-skeleton': isLoaded }">
         <div class="shimmer-wave"></div>
       </div>
 
       <img 
         v-if="shouldRenderImage"
+        ref="imgRef"
         :src="getImageUrl()" 
         :alt="product.name" 
         class="product-image"
@@ -336,6 +369,14 @@ const activeTagsList = computed(() => {
   -webkit-backdrop-filter: blur(8px);
   overflow: hidden;
   z-index: 1;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.img-skeleton-shimmer.hidden-skeleton {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .shimmer-wave {
