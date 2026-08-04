@@ -130,9 +130,6 @@ const activeTagsList = computed(() => {
       <img 
         :src="getImageUrl()" 
         :alt="product.name" 
-        loading="lazy"
-        width="300"
-        height="225"
         class="product-image"
         @error="$event.target.src = '/res/logo.jpg'"
       />

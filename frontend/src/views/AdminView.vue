@@ -2280,8 +2280,8 @@ export default {
           const img = new Image();
           img.src = e.target.result;
           img.onload = () => {
-            const maxW = 900;
-            const maxH = 900;
+            const maxW = 800;
+            const maxH = 800;
             let width = img.width;
             let height = img.height;
             
@@ -2311,13 +2311,13 @@ export default {
                 const sizeKb = (webpBlob.size / 1024).toFixed(1);
                 resolve({
                   file: compressedFile,
-                  preview: canvas.toDataURL('image/webp', 0.78),
+                  preview: canvas.toDataURL('image/webp', 0.82),
                   sizeKb
                 });
               } else {
                 resolve({ file, preview: e.target.result, sizeKb: (file.size / 1024).toFixed(1) });
               }
-            }, 'image/webp', 0.78);
+            }, 'image/webp', 0.82);
           };
           img.onerror = () => resolve({ file, preview: e.target.result, sizeKb: (file.size / 1024).toFixed(1) });
         };
@@ -2357,8 +2357,8 @@ export default {
           
           img.onload = () => {
             clearTimeout(timeout);
-            const maxW = 900;
-            const maxH = 900;
+            const maxW = 800;
+            const maxH = 800;
             let width = img.width;
             let height = img.height;
             
@@ -2390,7 +2390,7 @@ export default {
               } else {
                 reject(new Error('Canvas WebP compression failed'));
               }
-            }, 'image/webp', 0.78);
+            }, 'image/webp', 0.82);
           };
           
           img.onerror = (err) => {
