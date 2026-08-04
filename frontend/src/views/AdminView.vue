@@ -3946,20 +3946,10 @@ export default {
   position: sticky;
   top: 0;
   z-index: 100;
+  grid-column: 1;
+  grid-row: 1;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 45px, black calc(100% - 45px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0px, black 45px, black calc(100% - 45px), transparent 100%);
-}
-
-.admin-sidebar::-webkit-scrollbar,
-.admin-sidebar *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  overflow: hidden;
 }
 
 .sidebar-brand {
@@ -3968,6 +3958,7 @@ export default {
   gap: 14px;
   margin-bottom: 26px;
   padding: 4px 6px;
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
@@ -4004,6 +3995,7 @@ export default {
   padding: 12px;
   border-radius: 14px;
   margin-bottom: 22px;
+  flex-shrink: 0;
 }
 
 .switch-label {
@@ -4053,6 +4045,14 @@ export default {
   flex-direction: column;
   gap: 6px;
   flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%);
 }
 
 .menu-item {
@@ -4144,6 +4144,8 @@ export default {
 
 /* Main Content Area */
 .admin-main {
+  grid-column: 2;
+  grid-row: 1;
   padding: 30px;
   overflow-y: auto;
   height: 100dvh;
@@ -5621,6 +5623,11 @@ select.select-pill {
 @media (max-width: 768px) {
   .admin-container {
     grid-template-columns: 1fr;
+  }
+
+  .admin-main {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .admin-sidebar {
