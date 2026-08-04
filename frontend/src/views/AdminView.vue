@@ -443,23 +443,10 @@
                     <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
                   </div>
-                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button 
-                      @click="recompressAllProductImages" 
-                      class="btn btn-outline" 
-                      :disabled="recompressingProducts || products.length === 0"
-                      style="border-color: #10b981; color: #059669; font-weight: 700;"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="display:inline-block; vertical-align:middle;">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                      </svg>
-                      <span>{{ recompressingProducts ? `جاري تسريع الصور (${recompressProductsProgress}/${products.length})…` : '⚡ تسريع وضغط جميع صور المنتجات' }}</span>
-                    </button>
-                    <button @click="openProductModal()" class="btn btn-primary">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      إضافة منتج جديد
-                    </button>
-                  </div>
+                  <button @click="openProductModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة منتج جديد
+                  </button>
                 </div>
                 <div class="card-toolbar-bottom">
                   <div class="search-input-wrapper">
@@ -669,25 +656,10 @@
                     <h3 class="toolbar-title">بنرات العروض التسويقية</h3>
                     <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
                   </div>
-                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button 
-                      @click="recompressAllBanners" 
-                      class="btn btn-outline" 
-                      :disabled="recompressingBanners || carouselItems.length === 0"
-                      style="border-color: #3b82f6; color: #2563eb; font-weight: 700;"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="display:inline-block; vertical-align:middle;">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <polyline points="1 20 1 14 7 14"></polyline>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                      </svg>
-                      <span>{{ recompressingBanners ? `جاري ضغط البنرات (${recompressProgress}/${carouselItems.length})…` : 'إعادة ضغط البنرات بالنظام الجديد' }}</span>
-                    </button>
-                    <button @click="openCarouselModal()" class="btn btn-primary">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      إضافة بنر جديد
-                    </button>
-                  </div>
+                  <button @click="openCarouselModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة بنر جديد
+                  </button>
                 </div>
               </div>
 
