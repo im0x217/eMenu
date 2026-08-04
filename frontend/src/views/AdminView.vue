@@ -656,10 +656,25 @@
                     <h3 class="toolbar-title">بنرات العروض التسويقية</h3>
                     <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
                   </div>
-                  <button @click="openCarouselModal()" class="btn btn-primary">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة بنر جديد
-                  </button>
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button 
+                      @click="recompressAllBanners" 
+                      class="btn btn-outline" 
+                      :disabled="recompressingBanners || carouselItems.length === 0"
+                      style="border-color: #3b82f6; color: #2563eb; font-weight: 700;"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="display:inline-block; vertical-align:middle;">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                      </svg>
+                      <span>{{ recompressingBanners ? `جاري ضغط البنرات (${recompressProgress}/${carouselItems.length})…` : 'إعادة ضغط البنرات بالنظام الجديد' }}</span>
+                    </button>
+                    <button @click="openCarouselModal()" class="btn btn-primary">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      إضافة بنر جديد
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1984,6 +1999,8 @@ export default {
     const carouselModalOpen = ref(false);
     const carouselDragActive = ref(false);
     const carouselFileInput = ref(null);
+    const recompressingBanners = ref(false);
+    const recompressProgress = ref(0);
     const newCarouselItem = reactive({
       title: '',
       subtitle: '',
@@ -2595,29 +2612,141 @@ export default {
       if (!cropperInstance) return;
       
       const canvas = cropperInstance.getCroppedCanvas({
-        maxWidth: 2400,
-        maxHeight: 1200,
+        maxWidth: 1600,
+        maxHeight: 900,
         imageSmoothingEnabled: true,
         imageSmoothingQuality: 'high',
       });
       
+      // Heavy high-efficiency WebP compression preserving quality (0.78)
       canvas.toBlob((blob) => {
-        if (!blob) return;
+        if (!blob) {
+          toast.show('حدث خطأ أثناء معالجة وقص الصورة', 'danger');
+          return;
+        }
         
-        const croppedFile = new File([blob], 'cropped_banner.jpg', {
-          type: 'image/jpeg',
+        const sizeKb = (blob.size / 1024).toFixed(1);
+        const croppedFile = new File([blob], 'banner_compressed.webp', {
+          type: blob.type || 'image/webp',
           lastModified: Date.now()
         });
         
         newCarouselItem.file = croppedFile;
-        newCarouselItem.filePreview = canvas.toDataURL('image/jpeg');
-        newCarouselItem.dimensions = `${canvas.width} × ${canvas.height} بكسل`;
+        newCarouselItem.filePreview = canvas.toDataURL('image/webp', 0.78);
+        newCarouselItem.dimensions = `${canvas.width} × ${canvas.height} بكسل (حجم مضغوط: ${sizeKb} KB)`;
         
         cropperModalOpen.value = false;
         cropperInstance.destroy();
         cropperInstance = null;
-        toast.show('تم ضبط وقص الصورة بنجاح', 'success');
-      }, 'image/jpeg', 0.9);
+        toast.show(`تم ضغط البنر وقصه بنجاح ✓ (${sizeKb} KB)`, 'success');
+      }, 'image/webp', 0.78);
+    };
+
+    // Helper: compress any image URL to high-efficiency WebP
+    const compressImageUrlToWebp = async (imageUrl) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const response = await fetch(imageUrl);
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const blob = await response.blob();
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = URL.createObjectURL(blob);
+          
+          img.onload = () => {
+            const maxW = 1600;
+            const maxH = 900;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxW) {
+              height = Math.round((height * maxW) / width);
+              width = maxW;
+            }
+            if (height > maxH) {
+              width = Math.round((width * maxH) / height);
+              height = maxH;
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob((webpBlob) => {
+              URL.revokeObjectURL(img.src);
+              if (webpBlob) {
+                const compressedFile = new File([webpBlob], 'banner_recompressed.webp', {
+                  type: 'image/webp',
+                  lastModified: Date.now()
+                });
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Canvas WebP compression failed'));
+              }
+            }, 'image/webp', 0.78);
+          };
+          
+          img.onerror = (err) => {
+            URL.revokeObjectURL(img.src);
+            reject(err);
+          };
+        } catch (e) {
+          reject(e);
+        }
+      });
+    };
+
+    // Batch re-compress and re-upload all current banners
+    const recompressAllBanners = async () => {
+      if (carouselItems.value.length === 0) {
+        toast.show('لا توجد بنرات لإعادة ضغطها حالياً', 'warning');
+        return;
+      }
+
+      recompressingBanners.value = true;
+      recompressProgress.value = 0;
+      let updatedCount = 0;
+
+      try {
+        for (let i = 0; i < carouselItems.value.length; i++) {
+          const item = carouselItems.value[i];
+          recompressProgress.value = i + 1;
+          
+          try {
+            const compressedFile = await compressImageUrlToWebp(item.image);
+            const formData = new FormData();
+            formData.append('shop', activeShop.value);
+            formData.append('title', item.title || '');
+            formData.append('subtitle', item.subtitle || '');
+            formData.append('link', item.link || '');
+            formData.append('img', compressedFile);
+
+            const res = await adminFetch(`/api/admin/marketing-carousel/${item._id}`, {
+              method: 'PUT',
+              body: formData
+            });
+
+            if (res.ok) {
+              updatedCount++;
+            }
+          } catch (itemErr) {
+            console.error(`Failed to recompress banner ${item._id}:`, itemErr);
+          }
+        }
+
+        toast.show(`تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${carouselItems.value.length} بنر بنجاح!`, 'success');
+        await fetchCarousel();
+      } catch (err) {
+        console.error('Batch recompression error:', err);
+        toast.show('حدث خطأ أثناء الضغط المجمع للبنرات', 'danger');
+      } finally {
+        recompressingBanners.value = false;
+        recompressProgress.value = 0;
+      }
     };
 
     const rotateCropperImage = (degree) => {
@@ -3546,6 +3675,9 @@ export default {
       carouselModalOpen,
       carouselDragActive,
       carouselFileInput,
+      recompressingBanners,
+      recompressProgress,
+      recompressAllBanners,
       newCarouselItem,
       openCarouselModal,
       deleteCarouselItem,
