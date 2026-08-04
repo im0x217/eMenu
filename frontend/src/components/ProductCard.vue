@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useShopStore } from '../stores/shop';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
@@ -10,11 +10,16 @@ import { gsap } from 'gsap';
 
 const heartBtnRef = ref(null);
 const addBtnRef = ref(null);
+const cardRef = ref(null);
 
 const props = defineProps({
   product: {
     type: Object,
     required: true
+  },
+  priority: {
+    type: String,
+    default: 'auto' // 'high' | 'auto' | 'low'
   }
 });
 
@@ -29,6 +34,65 @@ const authStore = useAuthStore();
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isBulkMode = computed(() => shopStore.isBulkVerified);
 
+// View-Aware Image Prioritization & Blur-Up State
+const isIntersecting = ref(props.priority === 'high');
+const isLoaded = ref(false);
+const hasError = ref(false);
+let observer = null;
+
+onMounted(() => {
+  if (props.priority === 'high') {
+    isIntersecting.value = true;
+    return;
+  }
+  
+  if ('IntersectionObserver' in window && cardRef.value) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            isIntersecting.value = true;
+            if (observer && cardRef.value) {
+              observer.unobserve(cardRef.value);
+            }
+          }
+        });
+      },
+      {
+        rootMargin: '250px 120px 250px 120px',
+        threshold: 0.01
+      }
+    );
+    observer.observe(cardRef.value);
+  } else {
+    isIntersecting.value = true;
+  }
+});
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect();
+  }
+});
+
+const shouldRenderImage = computed(() => {
+  return props.priority === 'high' || isIntersecting.value;
+});
+
+const fetchPriorityAttr = computed(() => {
+  return props.priority === 'high' ? 'high' : 'auto';
+});
+
+const handleImageLoad = () => {
+  isLoaded.value = true;
+};
+
+const handleImageError = (e) => {
+  hasError.value = true;
+  isLoaded.value = true;
+  e.target.src = '/res/logo.jpg';
+};
+
 // Check if we should show regular/bulk prices based on purchaseType & shop settings
 const showRegularPrice = computed(() => {
   return props.product.purchaseType === 'regular' || props.product.purchaseType === 'both' || !props.product.purchaseType;
@@ -38,7 +102,6 @@ const showBulkPrice = computed(() => {
   return props.product.purchaseType === 'bulk' || props.product.purchaseType === 'both';
 });
 
-// Quantity controls removed - products add with quantity 1 by default
 const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props.product._id));
 
 const toggleSave = () => {
@@ -104,6 +167,7 @@ const activeTagsList = computed(() => {
 
 <template>
   <div 
+    ref="cardRef"
     class="product-card glass-panel card-hover-effect" 
     :class="['shop-theme-' + activeShop, { 'not-available': product.available === false }]"
   >
@@ -127,11 +191,21 @@ const activeTagsList = computed(() => {
 
     <!-- Product Image (Bigger Image: 75% aspect ratio) -->
     <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
+      <!-- Pulsing Glass Shimmer Placeholder -->
+      <div v-if="!isLoaded" class="img-skeleton-shimmer">
+        <div class="shimmer-wave"></div>
+      </div>
+
       <img 
+        v-if="shouldRenderImage"
         :src="getImageUrl()" 
         :alt="product.name" 
         class="product-image"
-        @error="$event.target.src = '/res/logo.jpg'"
+        :class="{ 'loaded': isLoaded }"
+        :fetchpriority="fetchPriorityAttr"
+        decoding="async"
+        @load="handleImageLoad"
+        @error="handleImageError"
       />
       <div v-if="product.available === false" class="not-available-overlay">
         <span>غير متوفر</span>
@@ -169,19 +243,25 @@ const activeTagsList = computed(() => {
 
           <!-- Bulk Price -->
           <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode }">
-            <span class="price-label">جملة: </span>
+            <span class="price-label">جملة:</span>
             <span class="price-val">{{ product.price_bulk }}</span>
             <span class="price-unit">د.ل</span>
           </div>
         </div>
       </div>
 
-      <!-- Restored Full-Width Add To Cart Button -->
-      <div class="actions-row" v-if="product.available !== false">
-        <button ref="addBtnRef" class="add-btn-wide" @click="handleAddToCart" aria-label="إضافة إلى السلة">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px;">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
+      <!-- Restored Full-Width Add To Cart Button at bottom -->
+      <div class="actions-row">
+        <button 
+          ref="addBtnRef"
+          class="add-btn-wide" 
+          @click.stop="handleAddToCart"
+          :disabled="product.available === false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
           </svg>
           <span>أضف للسلة</span>
         </button>
@@ -195,14 +275,11 @@ const activeTagsList = computed(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
+  border-radius: 16px;
   overflow: hidden;
-  border-radius: 20px;
-  background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+  height: 100%;
+  background: var(--bg-card, rgba(255, 253, 249, 0.95));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
 }
 
 .product-card.not-available {
@@ -246,8 +323,36 @@ const activeTagsList = computed(() => {
   width: 100%;
   padding-top: 75%; /* Bigger image aspect ratio */
   overflow: hidden;
-  background: #0f172a;
+  background: rgba(15, 23, 42, 0.3);
   cursor: zoom-in;
+}
+
+/* Pulsing Glass Shimmer Placeholder */
+.img-skeleton-shimmer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.12));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.shimmer-wave {
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.6s infinite ease-in-out;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
 }
 
 .product-image {
@@ -257,10 +362,18 @@ const activeTagsList = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
+  z-index: 2;
 }
 
-.product-card:hover .product-image {
+.product-image.loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.product-card:hover .product-image.loaded {
   transform: scale(1.06);
 }
 

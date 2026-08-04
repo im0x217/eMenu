@@ -75,9 +75,10 @@ const closeZoomModal = () => {
     <!-- Favorites Product Grid -->
     <div v-else-if="favoriteProducts.length > 0" class="favorites-product-grid">
       <ProductCard 
-        v-for="product in favoriteProducts" 
+        v-for="(product, idx) in favoriteProducts" 
         :key="product._id" 
         :product="product" 
+        :priority="idx < 4 ? 'high' : 'auto'"
         @zoom="openZoomModal"
       />
     </div>

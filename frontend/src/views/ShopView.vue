@@ -528,9 +528,10 @@ watch(carouselItems, (newItems) => {
           @mouseleave="endDrag"
         >
           <ProductCard 
-            v-for="product in group.products" 
+            v-for="(product, pIdx) in group.products" 
             :key="product._id" 
             :product="product" 
+            :priority="pIdx < 4 ? 'high' : 'auto'"
             @zoom="openZoomModal"
           />
         </div>
