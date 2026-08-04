@@ -2646,7 +2646,8 @@ export default {
     };
 
     const formatCurrency = (val) => {
-      return (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2 }) + ' د.ل';
+      const formatted = (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + ' د.ل';
     };
 
     const adminFetch = async (url, options = {}) => {
