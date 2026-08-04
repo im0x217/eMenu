@@ -2646,7 +2646,7 @@ export default {
     };
 
     const formatCurrency = (val) => {
-      const formatted = (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formatted = (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
       return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + ' د.ل';
     };
 
