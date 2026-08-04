@@ -100,6 +100,9 @@ const closeZoomModal = () => {
 
     <!-- Image Zoom Modal -->
     <div v-if="zoomedImgUrl" class="zoom-backdrop" @click="closeZoomModal">
+      <!-- Fixed Top-Left Close Button -->
+      <button class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
+
       <div class="zoom-content" @click.stop>
         <!-- Shimmer & Spinner Loader while full-size image downloads -->
         <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
@@ -118,7 +121,6 @@ const closeZoomModal = () => {
           @load="isZoomImgLoaded = true"
           @error="isZoomImgLoaded = true"
         />
-        <button class="zoom-close-btn" @click="closeZoomModal" aria-label="إغلاق">✕</button>
       </div>
     </div>
   </div>
@@ -290,42 +292,53 @@ const closeZoomModal = () => {
 .zoom-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(10, 15, 26, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  z-index: 2100;
+  background: rgba(10, 15, 26, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 2500;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.25s ease;
+  direction: ltr;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease;
 }
 
 .zoom-content {
   position: relative;
-  max-width: 92vw;
-  max-height: 88vh;
+  width: 100%;
+  max-width: 90vw;
+  max-height: 85vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
 .zoom-skeleton-loader {
+  width: 280px;
+  max-width: 85vw;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 3rem 2rem;
+  gap: 14px;
+  padding: 2rem 1.5rem;
   color: #f8fafc;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  direction: rtl;
 }
 
 .zoom-loading-text {
   font-family: 'Cairo', sans-serif;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #cbd5e1;
   margin: 0;
@@ -333,11 +346,11 @@ const closeZoomModal = () => {
 
 .zoom-image {
   max-width: 100%;
-  max-height: 85vh;
+  max-height: 80vh;
   border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   opacity: 0;
-  transform: scale(0.94);
+  transform: scale(0.95);
   transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   background: rgba(15, 23, 42, 0.8);
 }
@@ -348,26 +361,29 @@ const closeZoomModal = () => {
 }
 
 .zoom-close-btn {
-  position: absolute;
-  top: -45px;
-  left: 0;
-  background: rgba(255, 255, 255, 0.15);
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 2600;
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: bold;
   cursor: pointer;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: transform 0.2s, background 0.2s;
 }
 
-.zoom-close-btn:hover {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.28);
+.zoom-close-btn:active {
+  transform: scale(0.9);
 }
 </style>
