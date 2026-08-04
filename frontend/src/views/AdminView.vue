@@ -443,10 +443,23 @@
                     <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
                   </div>
-                  <button @click="openProductModal()" class="btn btn-primary">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة منتج جديد
-                  </button>
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button 
+                      @click="recompressAllProductImages" 
+                      class="btn btn-outline" 
+                      :disabled="recompressingProducts || products.length === 0"
+                      style="border-color: #10b981; color: #059669; font-weight: 700;"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="display:inline-block; vertical-align:middle;">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                      </svg>
+                      <span>{{ recompressingProducts ? `جاري تسريع الصور (${recompressProductsProgress}/${products.length})…` : '⚡ تسريع وضغط جميع صور المنتجات' }}</span>
+                    </button>
+                    <button @click="openProductModal()" class="btn btn-primary">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      إضافة منتج جديد
+                    </button>
+                  </div>
                 </div>
                 <div class="card-toolbar-bottom">
                   <div class="search-input-wrapper">
@@ -2001,6 +2014,8 @@ export default {
     const carouselFileInput = ref(null);
     const recompressingBanners = ref(false);
     const recompressProgress = ref(0);
+    const recompressingProducts = ref(false);
+    const recompressProductsProgress = ref(0);
     const newCarouselItem = reactive({
       title: '',
       subtitle: '',
@@ -2258,13 +2273,185 @@ export default {
       if (file && file.type.startsWith('image/')) setModalFile(file);
     };
 
-    const setModalFile = (file) => {
-      modalFile.value = file;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        modalFilePreview.value = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    const compressProductFileToWebp = (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            const maxW = 900;
+            const maxH = 900;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxW) {
+              height = Math.round((height * maxW) / width);
+              width = maxW;
+            }
+            if (height > maxH) {
+              width = Math.round((width * maxH) / height);
+              height = maxH;
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob((webpBlob) => {
+              if (webpBlob) {
+                const compressedFile = new File([webpBlob], 'product_compressed.webp', {
+                  type: 'image/webp',
+                  lastModified: Date.now()
+                });
+                const sizeKb = (webpBlob.size / 1024).toFixed(1);
+                resolve({
+                  file: compressedFile,
+                  preview: canvas.toDataURL('image/webp', 0.78),
+                  sizeKb
+                });
+              } else {
+                resolve({ file, preview: e.target.result, sizeKb: (file.size / 1024).toFixed(1) });
+              }
+            }, 'image/webp', 0.78);
+          };
+          img.onerror = () => resolve({ file, preview: e.target.result, sizeKb: (file.size / 1024).toFixed(1) });
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    const setModalFile = async (file) => {
+      if (file.size > 100 * 1024 * 1024) {
+        toast.show('حجم الصورة كبير جداً. يجب أن تكون أقل من 100 ميجابايت.', 'danger');
+        return;
+      }
+      
+      const { file: compressedFile, preview, sizeKb } = await compressProductFileToWebp(file);
+      modalFile.value = compressedFile;
+      modalFilePreview.value = preview;
+      toast.show(`تم ضغط وتسريع صورة المنتج بنجاح ✓ (${sizeKb} KB)`, 'success');
+    };
+
+    // Helper: compress any product image URL to high-efficiency WebP
+    const compressProductUrlToWebp = async (imageUrl) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const response = await fetch(imageUrl);
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const blob = await response.blob();
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = URL.createObjectURL(blob);
+          
+          img.onload = () => {
+            const maxW = 900;
+            const maxH = 900;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxW) {
+              height = Math.round((height * maxW) / width);
+              width = maxW;
+            }
+            if (height > maxH) {
+              width = Math.round((width * maxH) / height);
+              height = maxH;
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob((webpBlob) => {
+              URL.revokeObjectURL(img.src);
+              if (webpBlob) {
+                const compressedFile = new File([webpBlob], 'product_recompressed.webp', {
+                  type: 'image/webp',
+                  lastModified: Date.now()
+                });
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Canvas WebP compression failed'));
+              }
+            }, 'image/webp', 0.78);
+          };
+          
+          img.onerror = (err) => {
+            URL.revokeObjectURL(img.src);
+            reject(err);
+          };
+        } catch (e) {
+          reject(e);
+        }
+      });
+    };
+
+    // Batch re-compress and re-upload all current product images
+    const recompressAllProductImages = async () => {
+      const items = products.value.filter(p => p.img && !p.img.includes('/res/logo.jpg'));
+      if (items.length === 0) {
+        toast.show('لا توجد صور منتجات لإعادة ضغطها حالياً', 'warning');
+        return;
+      }
+
+      recompressingProducts.value = true;
+      recompressProductsProgress.value = 0;
+      let updatedCount = 0;
+
+      try {
+        for (let i = 0; i < items.length; i++) {
+          const prod = items[i];
+          recompressProductsProgress.value = i + 1;
+          
+          try {
+            const compressedFile = await compressProductUrlToWebp(prod.img);
+            const formData = new FormData();
+            formData.append('name', prod.name);
+            formData.append('desc', prod.desc || '');
+            formData.append('category', prod.category);
+            formData.append('subCategory', prod.subCategory || '');
+            formData.append('purchaseType', prod.purchaseType || 'regular');
+            formData.append('allowFloat', prod.allowFloat ? 'true' : 'false');
+            formData.append('tags', JSON.stringify(prod.tags || []));
+            if (prod.price_regular) formData.append('price_regular', prod.price_regular);
+            if (prod.price_bulk) formData.append('price_bulk', prod.price_bulk);
+            formData.append('img', compressedFile);
+
+            const url = activeShop.value === 'shop2' 
+              ? `/api/shop2/products/${prod._id}` 
+              : `/api/products/${prod._id}`;
+
+            const res = await adminFetch(url, {
+              method: 'PUT',
+              body: formData
+            });
+
+            if (res.ok) {
+              updatedCount++;
+            }
+          } catch (prodErr) {
+            console.error(`Failed to recompress product image ${prod._id}:`, prodErr);
+          }
+        }
+
+        toast.show(`⚡ تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${items.length} صورة منتج بنجاح وتوفير سرعة فائقة!`, 'success');
+        await fetchProducts();
+      } catch (err) {
+        console.error('Batch product image recompression error:', err);
+        toast.show('حدث خطأ أثناء الضغط المجمع لصور المنتجات', 'danger');
+      } finally {
+        recompressingProducts.value = false;
+        recompressProductsProgress.value = 0;
+      }
     };
 
     const removeModalImage = () => {
@@ -3678,6 +3865,9 @@ export default {
       recompressingBanners,
       recompressProgress,
       recompressAllBanners,
+      recompressingProducts,
+      recompressProductsProgress,
+      recompressAllProductImages,
       newCarouselItem,
       openCarouselModal,
       deleteCarouselItem,
