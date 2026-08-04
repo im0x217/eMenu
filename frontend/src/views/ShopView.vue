@@ -14,6 +14,12 @@ const activeSubCategory = ref('');
 
 const carouselItems = ref([]);
 const carouselTrack = ref(null);
+const loadedBannerIds = ref(new Set());
+
+const markBannerLoaded = (id) => {
+  loadedBannerIds.value.add(id);
+  loadedBannerIds.value = new Set(loadedBannerIds.value);
+};
 
 const categoriesContainer = ref(null);
 const hasInteractedWithCats = ref(false);
@@ -443,14 +449,30 @@ watch(carouselItems, (newItems) => {
       >
         <component
           :is="item.link ? 'a' : 'div'"
-          v-for="item in carouselItems"
+          v-for="(item, idx) in carouselItems"
           :key="item._id"
           :href="item.link || undefined"
           class="carousel-card"
-          :style="{ backgroundImage: `url('${item.image}')` }"
           @click="handleCarouselClick"
           draggable="false"
         >
+          <!-- Shimmer Placeholder until banner is loaded -->
+          <div v-if="!loadedBannerIds.has(item._id)" class="carousel-skeleton-shimmer">
+            <div class="shimmer-wave"></div>
+          </div>
+
+          <!-- Banner Image with View-Aware Prioritization & Smooth Fade-in -->
+          <img 
+            :src="item.image"
+            :alt="item.title || 'Banner'"
+            class="carousel-banner-img"
+            :class="{ 'loaded': loadedBannerIds.has(item._id) }"
+            :fetchpriority="idx === 0 ? 'high' : 'auto'"
+            :loading="idx === 0 ? 'eager' : 'lazy'"
+            decoding="async"
+            @load="markBannerLoaded(item._id)"
+            @error="markBannerLoaded(item._id)"
+          />
         </component>
       </div>
     </div>
@@ -982,8 +1004,7 @@ watch(carouselItems, (newItems) => {
   aspect-ratio: 3 / 1;
   border-radius: 16px;
   overflow: hidden;
-  background-size: cover;
-  background-position: center;
+  background: rgba(15, 23, 42, 0.4);
   box-shadow: var(--shadow-md);
   display: block;
   cursor: pointer;
@@ -992,6 +1013,31 @@ watch(carouselItems, (newItems) => {
   -webkit-user-drag: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.carousel-skeleton-shimmer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.14));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+  overflow: hidden;
+}
+
+.carousel-banner-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
+  z-index: 2;
+}
+
+.carousel-banner-img.loaded {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .carousel-card:active {
