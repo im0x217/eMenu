@@ -3951,11 +3951,12 @@ export default {
   overscroll-behavior: contain;
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 45px, black calc(100% - 45px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0px, black 45px, black calc(100% - 45px), transparent 100%);
 }
 
-.admin-sidebar::-webkit-scrollbar {
+.admin-sidebar::-webkit-scrollbar,
+.admin-sidebar *::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
@@ -6768,7 +6769,6 @@ select.select-pill {
 
 /* Restore and style scrollbars for AdminView on Laptop & Desktop screens */
 @media (min-width: 769px) {
-  .admin-layout ::-webkit-scrollbar,
   .admin-main::-webkit-scrollbar,
   .table-container::-webkit-scrollbar,
   .edit-order-table-container::-webkit-scrollbar,
@@ -6778,7 +6778,6 @@ select.select-pill {
     height: 8px !important;
   }
 
-  .admin-layout ::-webkit-scrollbar-track,
   .admin-main::-webkit-scrollbar-track,
   .table-container::-webkit-scrollbar-track,
   .edit-order-table-container::-webkit-scrollbar-track,
@@ -6787,7 +6786,6 @@ select.select-pill {
     border-radius: 6px !important;
   }
 
-  .admin-layout ::-webkit-scrollbar-thumb,
   .admin-main::-webkit-scrollbar-thumb,
   .table-container::-webkit-scrollbar-thumb,
   .edit-order-table-container::-webkit-scrollbar-thumb,
@@ -6799,7 +6797,6 @@ select.select-pill {
     transition: background 0.2s ease !important;
   }
 
-  .admin-layout ::-webkit-scrollbar-thumb:hover,
   .admin-main::-webkit-scrollbar-thumb:hover,
   .table-container::-webkit-scrollbar-thumb:hover,
   .edit-order-table-container::-webkit-scrollbar-thumb:hover,
@@ -6808,18 +6805,29 @@ select.select-pill {
     background-clip: content-box !important;
   }
 
-  .admin-layout ::-webkit-scrollbar-corner,
   .admin-main::-webkit-scrollbar-corner,
   .table-container::-webkit-scrollbar-corner {
     background: transparent !important;
   }
 
-  .admin-layout *,
   .admin-main,
+  .admin-main *,
   .table-container {
     -ms-overflow-style: auto !important;
     scrollbar-width: thin !important;
     scrollbar-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.04) !important;
   }
+}
+
+/* Strictly hide scrollbar for admin sidebar and all its children across all viewports */
+.admin-sidebar,
+.admin-sidebar *,
+.admin-sidebar::-webkit-scrollbar,
+.admin-sidebar *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 </style>
