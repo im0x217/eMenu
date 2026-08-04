@@ -25,13 +25,16 @@ const favoriteProducts = computed(() => {
 
 // Image zoom state
 const zoomedImgUrl = ref('');
+const isZoomImgLoaded = ref(false);
 
 const openZoomModal = (url) => {
+  isZoomImgLoaded.value = false;
   zoomedImgUrl.value = url;
 };
 
 const closeZoomModal = () => {
   zoomedImgUrl.value = '';
+  isZoomImgLoaded.value = false;
 };
 </script>
 
@@ -97,9 +100,25 @@ const closeZoomModal = () => {
 
     <!-- Image Zoom Modal -->
     <div v-if="zoomedImgUrl" class="zoom-backdrop" @click="closeZoomModal">
-      <div class="zoom-content">
-        <img :src="zoomedImgUrl" alt="Zoomed image" class="zoom-image" />
-        <button class="zoom-close-btn" @click="closeZoomModal">✕</button>
+      <div class="zoom-content" @click.stop>
+        <!-- Shimmer & Spinner Loader while full-size image downloads -->
+        <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
+          <div class="spinner"></div>
+          <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
+        </div>
+
+        <img 
+          :src="zoomedImgUrl" 
+          alt="صورة المنتج الكاملة" 
+          class="zoom-image"
+          :class="{ 'loaded': isZoomImgLoaded }"
+          fetchpriority="high"
+          loading="eager"
+          decoding="async"
+          @load="isZoomImgLoaded = true"
+          @error="isZoomImgLoaded = true"
+        />
+        <button class="zoom-close-btn" @click="closeZoomModal" aria-label="إغلاق">✕</button>
       </div>
     </div>
   </div>
@@ -271,35 +290,84 @@ const closeZoomModal = () => {
 .zoom-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.95);
+  background: rgba(10, 15, 26, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.zoom-content {
+  position: relative;
+  max-width: 92vw;
+  max-height: 88vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.zoom-content {
-  position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
+.zoom-skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 3rem 2rem;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.zoom-loading-text {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin: 0;
 }
 
 .zoom-image {
   max-width: 100%;
   max-height: 85vh;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.zoom-image.loaded {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .zoom-close-btn {
   position: absolute;
-  top: -40px;
+  top: -45px;
   left: 0;
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.zoom-close-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.28);
 }
 </style>
