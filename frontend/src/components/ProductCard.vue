@@ -354,19 +354,20 @@ const activeTagsList = computed(() => {
 .img-wrapper {
   position: relative;
   width: 100%;
-  padding-top: 75%; /* Bigger image aspect ratio */
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(15, 23, 42, 0.4);
   cursor: zoom-in;
 }
 
-/* Pulsing Glass Shimmer Placeholder */
+/* Pulsing Shimmer Placeholder */
 .img-skeleton-shimmer {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.12));
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
   overflow: hidden;
   z-index: 1;
   opacity: 1;
