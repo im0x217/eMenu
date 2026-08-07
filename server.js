@@ -1558,8 +1558,12 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
         allowFloat: !!item.allowFloat,
         notes: item.notes || ''
       }));
+      // Recalculate total price directly from items to guarantee mathematical correctness
+      const calculatedTotal = updateDoc.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      updateDoc.totalPrice = calculatedTotal;
+    } else if (totalPrice !== undefined) {
+      updateDoc.totalPrice = Number(totalPrice);
     }
-    if (totalPrice !== undefined) updateDoc.totalPrice = Number(totalPrice);
     if (deliveryDate !== undefined) updateDoc.deliveryDate = deliveryDate;
     if (notes !== undefined) updateDoc.notes = notes;
     if (priceMode) updateDoc.priceMode = priceMode;

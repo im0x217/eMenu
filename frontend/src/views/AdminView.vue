@@ -934,12 +934,12 @@
                     </td>
                     <td style="max-width: 120px;">
                       <div class="edit-qty-input-wrapper">
-                        <input v-model.number="item.quantity" type="number" step="0.01" min="0.01" class="form-control edit-qty-input" placeholder="الكمية" required @input="recalcOrderTotal" />
+                        <input v-model.number="item.quantity" type="number" step="0.01" min="0.01" class="form-control edit-qty-input" placeholder="الكمية" required @input="recalcOrderTotal" @change="recalcOrderTotal" />
                       </div>
                     </td>
                     <td style="max-width: 140px;">
                       <div class="edit-price-input-wrapper">
-                        <input v-model.number="item.price" type="number" step="0.01" min="0" class="form-control edit-price-input" placeholder="السعر" required @input="recalcOrderTotal" />
+                        <input v-model.number="item.price" type="number" step="0.01" min="0" class="form-control edit-price-input" placeholder="السعر" required @input="recalcOrderTotal" @change="recalcOrderTotal" />
                         <span class="currency-label">د.ل</span>
                       </div>
                     </td>
@@ -3415,6 +3415,7 @@ export default {
       productSearchQuery.value = '';
       showSuggestions.value = false;
       orderEditModalOpen.value = true;
+      recalcOrderTotal();
     };
 
     const recalcOrderTotal = () => {
@@ -3447,6 +3448,7 @@ export default {
     const saveOrder = async () => {
       try {
         loading.value = true;
+        recalcOrderTotal();
         const url = `/api/admin/orders/${editingOrder._id}?shop=${activeShop.value}`;
         const payload = {
           customerInfo: {
@@ -3474,7 +3476,7 @@ export default {
         if (res.ok) {
           toast.show('تم تعديل الطلب بنجاح', 'success');
           orderEditModalOpen.value = false;
-          await Promise.all([fetchOrders(), fetchAnalytics()]);
+          await Promise.all([fetchOrders(), fetchCustomers(), fetchAnalytics()]);
         } else {
           const data = await res.json();
           toast.show(data.error || 'فشل تعديل الطلب', 'danger');
