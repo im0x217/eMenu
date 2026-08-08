@@ -1887,40 +1887,61 @@
 
       <div class="recon-divider"></div>
 
-      <!-- Per-Order Detail Table -->
+      <!-- Aggregated Products Breakdown Sectioned by Main & Sub Category -->
       <div class="recon-section">
-        <h3 class="recon-section-title">تفاصيل الطلبات</h3>
-        <table class="recon-detail-table">
-          <thead>
-            <tr>
-              <th>رقم</th>
-              <th>العميل</th>
-              <th>الهاتف</th>
-              <th>المنتجات</th>
-              <th>النوع</th>
-              <th>الحالة</th>
-              <th>المجموع</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="order in reconciliationData.orders" :key="order._id">
-              <td class="recon-mono">#{{ order._id.toString().slice(-6) }}</td>
-              <td>{{ order.customerInfo.name }}</td>
-              <td class="recon-mono recon-phone">{{ order.customerInfo.phone }}</td>
-              <td class="recon-items-cell">
-                <span v-for="(item, idx) in order.items" :key="idx" class="recon-item-line">
-                  {{ item.name }} ×{{ item.quantity }}<span v-if="idx < order.items.length - 1">، </span>
-                </span>
-              </td>
-              <td>{{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}</td>
-              <td>{{ order.status === 'ready' ? 'جاهز' : order.status === 'received' ? 'مستلم' : order.status === 'cancelled' ? 'ملغي' : 'انتظار' }}</td>
-              <td class="recon-mono recon-bold">{{ Number(order.totalPrice).toFixed(2) }}</td>
-            </tr>
-          </tbody>
+        <h3 class="recon-section-title">إجمالي المنتجات المباعة (مقسمة حسب التصنيف الرئيسي والفرعي)</h3>
+
+        <div v-if="!reconciliationData.categoryProductBreakdown || reconciliationData.categoryProductBreakdown.length === 0" class="recon-empty-text">
+          لا توجد منتجات مباعة في الطلبات المحددة.
+        </div>
+
+        <div v-for="mainCat in reconciliationData.categoryProductBreakdown" :key="mainCat.name" class="recon-cat-block">
+          <div class="recon-cat-header">
+            <span class="recon-cat-title">📁 {{ mainCat.name }}</span>
+            <span class="recon-cat-stats">
+              إجمالي القطع: <strong>{{ mainCat.totalQty }}</strong> | الإيراد: <strong>{{ mainCat.totalRevenueFormatted }}</strong>
+            </span>
+          </div>
+
+          <div v-for="subCat in mainCat.subCategories" :key="subCat.name" class="recon-subcat-block">
+            <div class="recon-subcat-title" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
+              🏷️ {{ subCat.name }}
+            </div>
+
+            <table class="recon-detail-table">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">اسم المنتج</th>
+                  <th style="width: 20%; text-align: center;">سعر الوحدة</th>
+                  <th style="width: 15%; text-align: center;">الكمية المباعة</th>
+                  <th style="width: 20%; text-align: left;">إجمالي السعر</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="prod in subCat.products" :key="prod.name">
+                  <td class="recon-bold">{{ prod.name }}</td>
+                  <td class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
+                  <td class="recon-mono recon-bold text-center">{{ prod.quantity }}</td>
+                  <td class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
+                </tr>
+              </tbody>
+              <tfoot v-if="mainCat.subCategories.length > 1">
+                <tr class="recon-subtotal-row">
+                  <td colspan="2">مجموع فرعي ({{ subCat.name }})</td>
+                  <td class="recon-mono recon-bold text-center">{{ subCat.totalQty }}</td>
+                  <td class="recon-mono recon-bold text-left">{{ subCat.totalRevenueFormatted }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <table class="recon-grand-total-table" style="margin-top: 10px; width: 100%;">
           <tfoot>
             <tr class="recon-grand-total-row">
-              <td colspan="6">الإجمالي الكلي</td>
-              <td class="recon-mono recon-bold">{{ reconciliationData.totalRevenueRaw }} د.ل</td>
+              <td style="width: 45%;">إجمالي جميع المنتجات المباعة</td>
+              <td style="width: 35%; text-align: center;" class="recon-mono recon-bold">مجموع القطع: {{ reconciliationData.grandTotalItemsQty }} قطعة</td>
+              <td style="width: 20%; text-align: left;" class="recon-mono recon-bold">{{ reconciliationData.totalRevenueFormatted }}</td>
             </tr>
           </tfoot>
         </table>
@@ -3577,7 +3598,7 @@ export default {
       return pages;
     });
 
-    // Sales Reconciliation Report Data
+    // Sales Reconciliation Report Data (Aggregated Products sectioned by Main & Sub Category)
     const reconciliationData = computed(() => {
       const ordersList = filteredOrders.value;
       const dateLabel = orderFilters.selectedDate
@@ -3630,6 +3651,89 @@ export default {
           totalFormatted: formatCurrency(v.total),
         }));
 
+      // Product Aggregation sectioned by Main Category and Sub-Category
+      const productLookupById = {};
+      const productLookupByName = {};
+      (products.value || []).forEach(p => {
+        if (p._id) productLookupById[p._id.toString()] = p;
+        if (p.name) productLookupByName[p.name.trim().toLowerCase()] = p;
+      });
+
+      const catMap = {};
+      let grandTotalItemsQty = 0;
+
+      ordersList.forEach(o => {
+        (o.items || []).forEach(item => {
+          const qty = Number(item.quantity) || 0;
+          const price = Number(item.price) || 0;
+          const itemTotal = qty * price;
+          grandTotalItemsQty += qty;
+
+          let matchedProd = null;
+          if (item.productId) {
+            matchedProd = productLookupById[item.productId.toString()];
+          }
+          if (!matchedProd && item.name) {
+            matchedProd = productLookupByName[item.name.trim().toLowerCase()];
+          }
+
+          const mainCat = (matchedProd && matchedProd.category && matchedProd.category.trim()) ? matchedProd.category.trim() : 'تصنيفات أخرى';
+          const subCat = (matchedProd && matchedProd.subCategory && matchedProd.subCategory.trim()) ? matchedProd.subCategory.trim() : 'عام';
+          const prodName = item.name ? item.name.trim() : (matchedProd ? matchedProd.name : 'منتج غير معروف');
+
+          if (!catMap[mainCat]) {
+            catMap[mainCat] = {
+              name: mainCat,
+              totalQty: 0,
+              totalRevenue: 0,
+              subCats: {}
+            };
+          }
+          catMap[mainCat].totalQty += qty;
+          catMap[mainCat].totalRevenue += itemTotal;
+
+          if (!catMap[mainCat].subCats[subCat]) {
+            catMap[mainCat].subCats[subCat] = {
+              name: subCat,
+              totalQty: 0,
+              totalRevenue: 0,
+              products: {}
+            };
+          }
+          catMap[mainCat].subCats[subCat].totalQty += qty;
+          catMap[mainCat].subCats[subCat].totalRevenue += itemTotal;
+
+          const pKey = prodName.toLowerCase();
+          if (!catMap[mainCat].subCats[subCat].products[pKey]) {
+            catMap[mainCat].subCats[subCat].products[pKey] = {
+              name: prodName,
+              unitPrice: price,
+              quantity: 0,
+              totalRevenue: 0
+            };
+          }
+          catMap[mainCat].subCats[subCat].products[pKey].quantity += qty;
+          catMap[mainCat].subCats[subCat].products[pKey].totalRevenue += itemTotal;
+        });
+      });
+
+      const categoryProductBreakdown = Object.values(catMap).map(c => ({
+        name: c.name,
+        totalQty: c.totalQty,
+        totalRevenueFormatted: formatCurrency(c.totalRevenue),
+        subCategories: Object.values(c.subCats).map(sub => ({
+          name: sub.name,
+          totalQty: sub.totalQty,
+          totalRevenueFormatted: formatCurrency(sub.totalRevenue),
+          products: Object.values(sub.products).map(p => ({
+            name: p.name,
+            unitPriceFormatted: formatCurrency(p.unitPrice),
+            quantity: p.quantity,
+            totalRevenueFormatted: formatCurrency(p.totalRevenue)
+          }))
+        }))
+      }));
+
       return {
         dateLabel,
         totalOrders,
@@ -3638,7 +3742,8 @@ export default {
         avgOrderValueFormatted: formatCurrency(avgOrderValue),
         statusBreakdown,
         priceModeBreakdown,
-        orders: ordersList,
+        categoryProductBreakdown,
+        grandTotalItemsQty
       };
     });
 
@@ -7651,6 +7756,84 @@ select.select-pill {
 
   .recon-grand-total-row td {
     padding: 5px 6px;
+  }
+
+  .recon-cat-block {
+    margin-top: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+
+  .recon-cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 6px 10px;
+    border-bottom: 1.5px solid #cbd5e1;
+  }
+
+  .recon-cat-title {
+    font-weight: 800;
+    font-size: 9.5pt;
+    color: #0f172a;
+  }
+
+  .recon-cat-stats {
+    font-size: 8.5pt;
+    color: #475569;
+  }
+
+  .recon-subcat-block {
+    padding: 6px 8px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .recon-subcat-block:last-child {
+    border-bottom: none;
+  }
+
+  .recon-subcat-title {
+    font-weight: 700;
+    font-size: 8.5pt;
+    color: #334155;
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .recon-subtotal-row {
+    background: #fafafa;
+    font-size: 8pt;
+    font-weight: 700;
+    border-top: 1.5px solid #e2e8f0;
+  }
+
+  .recon-subtotal-row td {
+    padding: 3px 6px;
+  }
+
+  .recon-grand-total-table {
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .recon-empty-text {
+    text-align: center;
+    padding: 12px;
+    color: #64748b;
+    font-style: italic;
+  }
+
+  .text-center {
+    text-align: center !important;
+  }
+
+  .text-left {
+    text-align: left !important;
   }
 
   .recon-footer {
