@@ -761,6 +761,10 @@
                     <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
                   </div>
+                  <button @click="printReconciliation" class="btn btn-outline btn-sm flex-center reconciliation-print-btn" title="طباعة كشف تسوية المبيعات للتاريخ المحدد">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <span>كشف التسوية</span>
+                  </button>
                 </div>
                 <div class="card-toolbar-bottom">
                   <div class="search-input-wrapper">
@@ -1794,6 +1798,138 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Hidden Print Sales Reconciliation Report (A4) -->
+  <div class="print-reconciliation-wrapper" v-if="printingReconciliation">
+    <div class="reconciliation-page">
+      <div class="recon-header">
+        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="recon-logo" />
+        <div class="recon-brand">
+          <h1 class="recon-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+          <p class="recon-subtitle">كشف تسوية المبيعات</p>
+        </div>
+      </div>
+
+      <div class="recon-divider"></div>
+
+      <div class="recon-meta">
+        <div class="recon-meta-row">
+          <span class="recon-label">التاريخ:</span>
+          <span class="recon-value">{{ reconciliationData.dateLabel }}</span>
+        </div>
+        <div class="recon-meta-row">
+          <span class="recon-label">تاريخ الطباعة:</span>
+          <span class="recon-value">{{ new Date().toLocaleString('ar-LY') }}</span>
+        </div>
+      </div>
+
+      <div class="recon-divider"></div>
+
+      <!-- Summary KPIs -->
+      <div class="recon-kpi-grid">
+        <div class="recon-kpi-card">
+          <span class="recon-kpi-label">إجمالي الطلبات</span>
+          <span class="recon-kpi-value">{{ reconciliationData.totalOrders }}</span>
+        </div>
+        <div class="recon-kpi-card">
+          <span class="recon-kpi-label">الإيرادات الكلية</span>
+          <span class="recon-kpi-value recon-kpi-money">{{ reconciliationData.totalRevenueFormatted }}</span>
+        </div>
+        <div class="recon-kpi-card">
+          <span class="recon-kpi-label">متوسط قيمة الطلب</span>
+          <span class="recon-kpi-value recon-kpi-money">{{ reconciliationData.avgOrderValueFormatted }}</span>
+        </div>
+      </div>
+
+      <!-- Status Breakdown -->
+      <div class="recon-section">
+        <h3 class="recon-section-title">توزيع الطلبات حسب الحالة</h3>
+        <table class="recon-summary-table">
+          <thead>
+            <tr>
+              <th>الحالة</th>
+              <th>عدد الطلبات</th>
+              <th>المبلغ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in reconciliationData.statusBreakdown" :key="s.key">
+              <td>{{ s.label }}</td>
+              <td class="recon-mono">{{ s.count }}</td>
+              <td class="recon-mono recon-bold">{{ s.totalFormatted }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Price Mode Breakdown -->
+      <div class="recon-section">
+        <h3 class="recon-section-title">توزيع المبيعات حسب نوع السعر</h3>
+        <table class="recon-summary-table">
+          <thead>
+            <tr>
+              <th>نوع السعر</th>
+              <th>عدد الطلبات</th>
+              <th>المبلغ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="pm in reconciliationData.priceModeBreakdown" :key="pm.key">
+              <td>{{ pm.label }}</td>
+              <td class="recon-mono">{{ pm.count }}</td>
+              <td class="recon-mono recon-bold">{{ pm.totalFormatted }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="recon-divider"></div>
+
+      <!-- Per-Order Detail Table -->
+      <div class="recon-section">
+        <h3 class="recon-section-title">تفاصيل الطلبات</h3>
+        <table class="recon-detail-table">
+          <thead>
+            <tr>
+              <th>رقم</th>
+              <th>العميل</th>
+              <th>الهاتف</th>
+              <th>المنتجات</th>
+              <th>النوع</th>
+              <th>الحالة</th>
+              <th>المجموع</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in reconciliationData.orders" :key="order._id">
+              <td class="recon-mono">#{{ order._id.toString().slice(-6) }}</td>
+              <td>{{ order.customerInfo.name }}</td>
+              <td class="recon-mono recon-phone">{{ order.customerInfo.phone }}</td>
+              <td class="recon-items-cell">
+                <span v-for="(item, idx) in order.items" :key="idx" class="recon-item-line">
+                  {{ item.name }} ×{{ item.quantity }}<span v-if="idx < order.items.length - 1">، </span>
+                </span>
+              </td>
+              <td>{{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}</td>
+              <td>{{ order.status === 'ready' ? 'جاهز' : order.status === 'received' ? 'مستلم' : order.status === 'cancelled' ? 'ملغي' : 'انتظار' }}</td>
+              <td class="recon-mono recon-bold">{{ Number(order.totalPrice).toFixed(2) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="recon-grand-total-row">
+              <td colspan="6">الإجمالي الكلي</td>
+              <td class="recon-mono recon-bold">{{ reconciliationData.totalRevenueRaw }} د.ل</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="recon-footer">
+        <p>كشف تسوية مبيعات — {{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }} — طرابلس، ليبيا</p>
+        <p class="recon-footer-sub">تم إنشاء هذا الكشف آلياً بواسطة نظام e-Menu</p>
+      </div>
     </div>
   </div>
 
@@ -3428,6 +3564,7 @@ export default {
     };
 
     const printingOrder = ref(null);
+    const printingReconciliation = ref(false);
     const ITEMS_PER_PAGE = 16; // 16 items per page for ultra-dense A5 layout
 
     const paginatedOrderPages = computed(() => {
@@ -3439,6 +3576,84 @@ export default {
       }
       return pages;
     });
+
+    // Sales Reconciliation Report Data
+    const reconciliationData = computed(() => {
+      const ordersList = filteredOrders.value;
+      const dateLabel = orderFilters.selectedDate
+        ? formatArabicDate(orderFilters.selectedDate)
+        : 'جميع التواريخ';
+
+      const totalOrders = ordersList.length;
+      const totalRevenue = ordersList.reduce((sum, o) => sum + (Number(o.totalPrice) || 0), 0);
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      // Status breakdown
+      const statusMap = {
+        pending: { label: 'قيد الانتظار', count: 0, total: 0 },
+        ready: { label: 'جاهز للاستلام', count: 0, total: 0 },
+        received: { label: 'تم الاستلام', count: 0, total: 0 },
+        cancelled: { label: 'ملغي', count: 0, total: 0 },
+      };
+      ordersList.forEach(o => {
+        const key = o.status || 'pending';
+        if (statusMap[key]) {
+          statusMap[key].count++;
+          statusMap[key].total += Number(o.totalPrice) || 0;
+        }
+      });
+      const statusBreakdown = Object.entries(statusMap)
+        .filter(([, v]) => v.count > 0)
+        .map(([key, v]) => ({
+          key,
+          label: v.label,
+          count: v.count,
+          totalFormatted: formatCurrency(v.total),
+        }));
+
+      // Price mode breakdown
+      const pmMap = {
+        regular: { label: 'مفرد', count: 0, total: 0 },
+        bulk: { label: 'جملة', count: 0, total: 0 },
+      };
+      ordersList.forEach(o => {
+        const key = o.priceMode === 'bulk' ? 'bulk' : 'regular';
+        pmMap[key].count++;
+        pmMap[key].total += Number(o.totalPrice) || 0;
+      });
+      const priceModeBreakdown = Object.entries(pmMap)
+        .filter(([, v]) => v.count > 0)
+        .map(([key, v]) => ({
+          key,
+          label: v.label,
+          count: v.count,
+          totalFormatted: formatCurrency(v.total),
+        }));
+
+      return {
+        dateLabel,
+        totalOrders,
+        totalRevenueFormatted: formatCurrency(totalRevenue),
+        totalRevenueRaw: totalRevenue.toFixed(2),
+        avgOrderValueFormatted: formatCurrency(avgOrderValue),
+        statusBreakdown,
+        priceModeBreakdown,
+        orders: ordersList,
+      };
+    });
+
+    const printReconciliation = async () => {
+      printingReconciliation.value = true;
+      await nextTick();
+
+      const cleanup = () => {
+        printingReconciliation.value = false;
+        window.removeEventListener('afterprint', cleanup);
+      };
+
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    };
 
     const printOrder = async (order) => {
       printingOrder.value = order;
@@ -4071,6 +4286,9 @@ export default {
       exportReport,
       printReport,
       printingOrder,
+      printingReconciliation,
+      reconciliationData,
+      printReconciliation,
       paginatedOrderPages,
       printOrder,
       toggleProductAvailability,
@@ -7012,14 +7230,45 @@ select.select-pill {
   display: none;
 }
 
+/* Screen: hide print-only wrappers */
+.print-receipt-wrapper,
+.print-reconciliation-wrapper {
+  display: none;
+}
+
+/* Reconciliation print button styling */
+.reconciliation-print-btn {
+  gap: 6px;
+  border-color: rgba(30, 58, 95, 0.2);
+  color: #1e3a5f;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.reconciliation-print-btn:hover {
+  background: rgba(30, 58, 95, 0.08);
+  border-color: rgba(30, 58, 95, 0.35);
+}
+
 @media print {
+  /* Default page size for order receipts */
   @page {
     size: A5 portrait;
     margin: 4mm 6mm;
   }
-  
+
+  /* Named page for reconciliation — A4 landscape for wide detail table */
+  @page reconciliation {
+    size: A4 landscape;
+    margin: 8mm 10mm;
+  }
+
   .admin-layout {
     display: none !important;
+  }
+
+  /* When reconciliation is printing, the receipt wrapper won't exist (v-if) and vice versa */
+  .reconciliation-page {
+    page: reconciliation;
   }
   
   .print-receipt-wrapper, .print-receipt-wrapper * {
@@ -7200,6 +7449,222 @@ select.select-pill {
   .receipt-footer-sub {
     font-size: 7.5pt;
     color: #64748b;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  /* === Reconciliation Report Print Styles === */
+  .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
+    visibility: visible;
+  }
+
+  .print-reconciliation-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+
+  .reconciliation-page {
+    display: block !important;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: 'Cairo', 'Fira Code', sans-serif;
+    direction: rtl;
+    font-size: 9pt;
+  }
+
+  .recon-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .recon-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  .recon-shop-name {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+  }
+
+  .recon-subtitle {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #334155;
+    margin: 0;
+  }
+
+  .recon-divider {
+    border-bottom: 1px dashed #cbd5e1;
+    margin: 6px 0;
+  }
+
+  .recon-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 12px;
+    font-size: 9pt;
+  }
+
+  .recon-meta-row {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .recon-label {
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .recon-value {
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .recon-kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }
+
+  .recon-kpi-card {
+    text-align: center;
+    padding: 6px 4px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+  }
+
+  .recon-kpi-label {
+    display: block;
+    font-size: 7.5pt;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .recon-kpi-value {
+    display: block;
+    font-size: 12pt;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .recon-kpi-money {
+    font-family: 'Fira Code', monospace;
+  }
+
+  .recon-section {
+    margin: 6px 0;
+  }
+
+  .recon-section-title {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #1e3a5f;
+    margin: 4px 0 3px;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid #e2e8f0;
+  }
+
+  .recon-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-bottom: 4px;
+  }
+
+  .recon-summary-table th {
+    background: #f1f5f9;
+    padding: 3px 6px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 8.5pt;
+    border-bottom: 1.5px solid #cbd5e1;
+  }
+
+  .recon-summary-table td {
+    padding: 2.5px 6px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .recon-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+  }
+
+  .recon-detail-table th {
+    background: #f1f5f9;
+    padding: 2.5px 4px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 7.5pt;
+    border-bottom: 1.5px solid #cbd5e1;
+  }
+
+  .recon-detail-table td {
+    padding: 2px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+
+  .recon-items-cell {
+    font-size: 7pt;
+    line-height: 1.4;
+    max-width: 160px;
+  }
+
+  .recon-mono {
+    font-family: 'Fira Code', monospace;
+  }
+
+  .recon-bold {
+    font-weight: 700;
+  }
+
+  .recon-phone {
+    direction: ltr;
+    display: inline-block;
+    font-size: 7.5pt;
+  }
+
+  .recon-grand-total-row {
+    background: #f8fafc;
+    font-weight: 800;
+    font-size: 10pt;
+    border-top: 2px solid #cbd5e1;
+  }
+
+  .recon-grand-total-row td {
+    padding: 5px 6px;
+  }
+
+  .recon-footer {
+    text-align: center;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 8pt;
+    font-weight: 700;
+  }
+
+  .recon-footer-sub {
+    font-size: 7pt;
+    color: #94a3b8;
     font-weight: 400;
     margin-top: 2px;
   }
