@@ -1837,52 +1837,6 @@
           <span class="recon-kpi-label">الإيرادات الكلية</span>
           <span class="recon-kpi-value recon-kpi-money">{{ reconciliationData.totalRevenueFormatted }}</span>
         </div>
-        <div class="recon-kpi-card">
-          <span class="recon-kpi-label">متوسط قيمة الطلب</span>
-          <span class="recon-kpi-value recon-kpi-money">{{ reconciliationData.avgOrderValueFormatted }}</span>
-        </div>
-      </div>
-
-      <!-- Status Breakdown -->
-      <div class="recon-section">
-        <h3 class="recon-section-title">توزيع الطلبات حسب الحالة</h3>
-        <table class="recon-summary-table">
-          <thead>
-            <tr>
-              <th>الحالة</th>
-              <th>عدد الطلبات</th>
-              <th>المبلغ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="s in reconciliationData.statusBreakdown" :key="s.key">
-              <td>{{ s.label }}</td>
-              <td class="recon-mono">{{ s.count }}</td>
-              <td class="recon-mono recon-bold">{{ s.totalFormatted }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Price Mode Breakdown -->
-      <div class="recon-section">
-        <h3 class="recon-section-title">توزيع المبيعات حسب نوع السعر</h3>
-        <table class="recon-summary-table">
-          <thead>
-            <tr>
-              <th>نوع السعر</th>
-              <th>عدد الطلبات</th>
-              <th>المبلغ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="pm in reconciliationData.priceModeBreakdown" :key="pm.key">
-              <td>{{ pm.label }}</td>
-              <td class="recon-mono">{{ pm.count }}</td>
-              <td class="recon-mono recon-bold">{{ pm.totalFormatted }}</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
 
       <div class="recon-divider"></div>
@@ -7640,7 +7594,7 @@ select.select-pill {
 
   .recon-kpi-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin: 8px 0;
   }
