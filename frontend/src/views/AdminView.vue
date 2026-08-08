@@ -557,7 +557,7 @@
                     title="الصفحة السابقة"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    <span>السابق</span>
+                    <span class="btn-text-desktop">السابق</span>
                   </button>
 
                   <div class="pagination-pills">
@@ -579,7 +579,7 @@
                     @click="productsPage++" 
                     title="الصفحة التالية"
                   >
-                    <span>التالي</span>
+                    <span class="btn-text-desktop">التالي</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </button>
                 </div>
@@ -926,7 +926,7 @@
                     title="الصفحة السابقة"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    <span>السابق</span>
+                    <span class="btn-text-desktop">السابق</span>
                   </button>
 
                   <div class="pagination-pills">
@@ -948,7 +948,7 @@
                     @click="ordersPage++" 
                     title="الصفحة التالية"
                   >
-                    <span>التالي</span>
+                    <span class="btn-text-desktop">التالي</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </button>
                 </div>
@@ -1139,7 +1139,7 @@
                     title="الصفحة السابقة"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    <span>السابق</span>
+                    <span class="btn-text-desktop">السابق</span>
                   </button>
 
                   <div class="pagination-pills">
@@ -1161,7 +1161,7 @@
                     @click="customersPage++" 
                     title="الصفحة التالية"
                   >
-                    <span>التالي</span>
+                    <span class="btn-text-desktop">التالي</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </button>
                 </div>
@@ -3798,14 +3798,39 @@ export default {
       });
     });
 
+    // Responsive Mobile Viewport Tracking for Pagination
+    const isMobileScreen = ref(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
+    const handleResize = () => {
+      isMobileScreen.value = window.innerWidth <= 640;
+    };
+
+    onMounted(() => {
+      window.addEventListener('resize', handleResize);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', handleResize);
+    });
+
     // =========================================================================
     // PAGINATION ENGINE FOR TABLES (Products, Orders, Customers)
     // =========================================================================
     const getPageNumbers = (current, total) => {
-      if (total <= 7) {
+      const isMobile = isMobileScreen.value;
+      const maxPills = isMobile ? 5 : 7;
+      if (total <= maxPills) {
         const pages = [];
         for (let i = 1; i <= total; i++) pages.push(i);
         return pages;
+      }
+      if (isMobile) {
+        if (current <= 3) {
+          return [1, 2, 3, '...', total];
+        }
+        if (current >= total - 2) {
+          return [1, '...', total - 2, total - 1, total];
+        }
+        return [1, '...', current, '...', total];
       }
       if (current <= 4) {
         return [1, 2, 3, 4, 5, '...', total];
@@ -7770,5 +7795,78 @@ select.select-pill {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Mobile Responsive Adjustments for Numbered Pagination Engine */
+@media (max-width: 640px) {
+  .admin-pagination-bar {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .pagination-info {
+    font-size: 0.82rem;
+    text-align: center;
+    width: 100%;
+    order: 1;
+  }
+
+  .pagination-controls-group {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    order: 2;
+  }
+
+  .pagination-pills {
+    flex: 1;
+    justify-content: center;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px 0;
+  }
+
+  .pagination-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-num-pill {
+    min-width: 38px;
+    height: 38px;
+    font-size: 0.88rem;
+    flex-shrink: 0;
+  }
+
+  .pagination-btn {
+    height: 38px;
+    padding: 0 12px;
+    font-size: 0.84rem;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 440px) {
+  .btn-text-desktop {
+    display: none;
+  }
+
+  .pagination-btn {
+    padding: 0 10px;
+    min-width: 38px;
+    justify-content: center;
+  }
+
+  .page-num-pill {
+    min-width: 34px;
+    height: 36px;
+    padding: 0 4px;
+    font-size: 0.84rem;
+  }
 }
 </style>
