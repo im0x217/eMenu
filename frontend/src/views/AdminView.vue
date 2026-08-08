@@ -1548,6 +1548,7 @@
         </div>
 
         <img 
+          ref="adminZoomImgRef"
           :src="zoomedImageSrc" 
           alt="معاينة الصورة" 
           class="zoom-image"
@@ -2505,10 +2506,30 @@ export default {
     };
 
     // Zoom Image Preview
+    const adminZoomImgRef = ref(null);
+
+    const checkAdminZoomCached = () => {
+      if (adminZoomImgRef.value && adminZoomImgRef.value.complete && adminZoomImgRef.value.naturalWidth !== 0) {
+        isAdminZoomLoaded.value = true;
+      }
+    };
+
+    watch(zoomedImageSrc, (val) => {
+      if (val) {
+        isAdminZoomLoaded.value = false;
+        nextTick(() => {
+          checkAdminZoomCached();
+        });
+      }
+    });
+
     const zoomImage = (src) => {
       if (src) {
         isAdminZoomLoaded.value = false;
         zoomedImageSrc.value = src;
+        nextTick(() => {
+          checkAdminZoomCached();
+        });
       }
     };
 
@@ -3942,6 +3963,7 @@ export default {
       resetCropperImage,
       isAdminZoomLoaded,
       closeAdminZoom,
+      adminZoomImgRef,
     };
   }
 };
@@ -7320,5 +7342,109 @@ select.select-pill {
 
 .fav-card-image-wrapper:hover .fav-card-image {
   transform: scale(1.05);
+}
+
+/* Admin Full-Screen Image Zoom Modal */
+.zoom-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10, 15, 26, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  direction: ltr;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease;
+}
+
+.zoom-content {
+  position: relative;
+  width: 100%;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-skeleton-loader {
+  width: 280px;
+  max-width: 85vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 2rem 1.5rem;
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  direction: rtl;
+}
+
+.zoom-loading-text {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.zoom-image {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.zoom-image.loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.zoom-close-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.zoom-close-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.zoom-close-btn:active {
+  transform: scale(0.9);
 }
 </style>
