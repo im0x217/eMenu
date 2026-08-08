@@ -4774,9 +4774,13 @@ export default {
 .admin-main {
   grid-column: 2;
   grid-row: 1;
-  padding: 30px;
+  padding: 30px 30px calc(80px + env(safe-area-inset-bottom)) 30px;
   overflow-y: auto;
+  overflow-x: hidden;
   height: 100dvh;
+  max-width: 100%;
+  box-sizing: border-box;
+  overscroll-behavior-x: none;
 }
 
 .main-header {
@@ -6249,13 +6253,52 @@ select.select-pill {
 }
 
 @media (max-width: 768px) {
+  html, body, .admin-layout, .admin-container {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none !important;
+  }
+
   .admin-container {
     grid-template-columns: 1fr;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 
   .admin-main {
     grid-column: 1;
     grid-row: auto;
+    padding: 16px 12px calc(150px + env(safe-area-inset-bottom)) 12px !important;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    overscroll-behavior-x: none !important;
+  }
+
+  .products-tab-content,
+  .orders-tab-content,
+  .customers-tab-content,
+  .categories-tab-content,
+  .tags-tab-content,
+  .carousel-tab-content,
+  .users-tab-content,
+  .analytics-tab-content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .table-card {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .admin-sidebar {
