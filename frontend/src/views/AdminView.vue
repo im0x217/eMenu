@@ -487,7 +487,19 @@
                     </tr>
                     <tr v-for="prod in filteredProducts" :key="prod._id">
                       <td>
-                        <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="table-prod-img" @click="zoomImage(prod.img)" />
+                        <div class="admin-table-img-wrapper" @click="zoomImage(prod.img)" title="تكبير الصورة">
+                          <div class="admin-table-img-shimmer"></div>
+                          <img 
+                            :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" 
+                            class="table-prod-img" 
+                            loading="lazy" 
+                            decoding="async"
+                            @error="$event.target.src = activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'"
+                          />
+                          <div class="admin-img-zoom-badge">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                          </div>
+                        </div>
                       </td>
                       <td class="text-bold">{{ prod.name }}</td>
                       <td>
@@ -667,7 +679,8 @@
                 <div v-if="carouselItems.length > 0" class="carousel-grid">
                   <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
                     <div class="card-image-wrapper">
-                      <img :src="item.image" alt="Banner Preview" class="card-image" />
+                      <div class="admin-banner-shimmer"></div>
+                      <img :src="item.image" alt="Banner Preview" class="card-image" loading="lazy" decoding="async" @click="zoomImage(item.image)" title="انقر لتكبير المعاينة" />
                     </div>
                     <div class="card-info-bar">
                       <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
@@ -1132,7 +1145,8 @@
               />
               
               <div v-if="modalFilePreview || editingProduct.img" class="image-preview-container">
-                <img :src="modalFilePreview || editingProduct.img" alt="Product Preview" class="upload-preview-img" />
+                <div class="admin-preview-shimmer"></div>
+                <img :src="modalFilePreview || editingProduct.img" alt="Product Preview" class="upload-preview-img" decoding="async" loading="eager" />
                 <div class="image-preview-overlay">
                   <span class="preview-change-btn">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -1433,7 +1447,15 @@
           <div v-if="viewingCustomerFavs.length > 0" class="fav-grid-brows">
             <div v-for="prod in viewingCustomerFavs" :key="prod._id" class="fav-grid-card glass-panel animate-scale-in">
               <div class="fav-card-image-wrapper">
-                <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="fav-card-image" />
+                <div class="admin-fav-shimmer"></div>
+                <img 
+                  :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" 
+                  class="fav-card-image" 
+                  loading="lazy" 
+                  decoding="async" 
+                  @click="zoomImage(prod.img)"
+                  @error="$event.target.src = activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'"
+                />
               </div>
               <div class="fav-card-info">
                 <span class="fav-card-name">{{ prod.name }}</span>
@@ -1513,10 +1535,29 @@
 
 
 
-    <!-- Image Zoom View -->
-    <div v-if="zoomedImageSrc" class="modal-overlay zoom-overlay animate-fade-in" @click="zoomedImageSrc = null">
-      <div class="zoom-box">
-        <img :src="zoomedImageSrc" alt="Zoomed" />
+    <!-- Modern Admin Image Zoom View -->
+    <div v-if="zoomedImageSrc" class="zoom-backdrop" @click="closeAdminZoom">
+      <!-- Fixed Top-Left Close Button -->
+      <button class="zoom-close-btn" @click.stop="closeAdminZoom" aria-label="إغلاق">✕</button>
+
+      <div class="zoom-content" @click.stop>
+        <!-- Shimmer & Spinner Loader while full-size image downloads -->
+        <div v-if="!isAdminZoomLoaded" class="zoom-skeleton-loader">
+          <div class="spinner"></div>
+          <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
+        </div>
+
+        <img 
+          :src="zoomedImageSrc" 
+          alt="معاينة الصورة" 
+          class="zoom-image"
+          :class="{ 'loaded': isAdminZoomLoaded }"
+          fetchpriority="high"
+          loading="eager"
+          decoding="async"
+          @load="isAdminZoomLoaded = true"
+          @error="isAdminZoomLoaded = true"
+        />
       </div>
     </div>
     <!-- Premium Image Cropper Modal -->
@@ -1947,6 +1988,7 @@ export default {
     const viewingCustomerFavs = ref([]);
     const viewingCustomer = ref(null);
     const zoomedImageSrc = ref(null);
+    const isAdminZoomLoaded = ref(false);
 
     // Product form bindings
     const editingProduct = reactive({
@@ -2464,7 +2506,15 @@ export default {
 
     // Zoom Image Preview
     const zoomImage = (src) => {
-      if (src) zoomedImageSrc.value = src;
+      if (src) {
+        isAdminZoomLoaded.value = false;
+        zoomedImageSrc.value = src;
+      }
+    };
+
+    const closeAdminZoom = () => {
+      zoomedImageSrc.value = null;
+      isAdminZoomLoaded.value = false;
     };
 
     // SVG ICON POOL FOR CATEGORIES (HUGEICONS)
@@ -3890,6 +3940,8 @@ export default {
       rotateCropperImage,
       zoomCropperImage,
       resetCropperImage,
+      isAdminZoomLoaded,
+      closeAdminZoom,
     };
   }
 };
@@ -7162,5 +7214,111 @@ select.select-pill {
 .admin-sidebar * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
+}
+
+/* ==========================================================================
+   MODERN IMAGE LOADERS & SHIMMER PLACEHOLDERS (Admin View)
+   ========================================================================== */
+
+.admin-table-img-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+}
+
+.admin-table-img-wrapper:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  z-index: 10;
+}
+
+.admin-table-img-shimmer,
+.admin-banner-shimmer,
+.admin-fav-shimmer,
+.admin-preview-shimmer {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.12), rgba(15, 23, 42, 0.05));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.admin-img-zoom-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 3;
+}
+
+.admin-table-img-wrapper:hover .admin-img-zoom-badge {
+  opacity: 1;
+}
+
+.table-prod-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.1);
+  border-radius: 12px 12px 0 0;
+}
+
+.card-image {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  transition: transform 0.4s ease;
+  cursor: pointer;
+}
+
+.card-image-wrapper:hover .card-image {
+  transform: scale(1.04);
+}
+
+.fav-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.1);
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+}
+
+.fav-card-image {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  transition: transform 0.4s ease;
+}
+
+.fav-card-image-wrapper:hover .fav-card-image {
+  transform: scale(1.05);
 }
 </style>
