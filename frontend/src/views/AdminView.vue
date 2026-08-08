@@ -485,7 +485,7 @@
                     <tr v-if="filteredProducts.length === 0">
                       <td colspan="8" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
                     </tr>
-                    <tr v-for="prod in filteredProducts" :key="prod._id">
+                    <tr v-for="prod in paginatedProducts" :key="prod._id">
                       <td>
                         <div class="admin-table-img-wrapper" @click="zoomImage(prod.img)" title="تكبير الصورة">
                           <div class="admin-table-img-shimmer"></div>
@@ -541,6 +541,48 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Products Table Numbered Pagination Bar -->
+              <div v-if="productsTotalPages > 1" class="admin-pagination-bar">
+                <div class="pagination-info">
+                  <span>عرض <strong>{{ (productsPage - 1) * productsPerPage + 1 }}</strong> - <strong>{{ Math.min(productsPage * productsPerPage, filteredProducts.length) }}</strong> من أصل <strong>{{ filteredProducts.length }}</strong> منتج</span>
+                </div>
+
+                <div class="pagination-controls-group">
+                  <button 
+                    class="pagination-btn prev-btn" 
+                    :disabled="productsPage === 1" 
+                    @click="productsPage--" 
+                    title="الصفحة السابقة"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>السابق</span>
+                  </button>
+
+                  <div class="pagination-pills">
+                    <button 
+                      v-for="(p, pIdx) in productsVisiblePages" 
+                      :key="'prod-page-'+pIdx" 
+                      class="page-num-pill" 
+                      :class="{ active: productsPage === p, ellipsis: p === '...' }" 
+                      :disabled="p === '...'"
+                      @click="typeof p === 'number' && (productsPage = p)"
+                    >
+                      {{ p }}
+                    </button>
+                  </div>
+
+                  <button 
+                    class="pagination-btn next-btn" 
+                    :disabled="productsPage >= productsTotalPages" 
+                    @click="productsPage++" 
+                    title="الصفحة التالية"
+                  >
+                    <span>التالي</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -819,7 +861,7 @@
                     <tr v-if="filteredOrders.length === 0">
                       <td colspan="8" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
-                    <tr v-for="order in filteredOrders" :key="order._id">
+                    <tr v-for="order in paginatedOrders" :key="order._id">
                       <td class="text-bold text-mono">
                         <span class="order-id-pill">#{{ order._id.toString().slice(-6) }}</span>
                       </td>
@@ -868,6 +910,48 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Orders Table Numbered Pagination Bar -->
+              <div v-if="ordersTotalPages > 1" class="admin-pagination-bar">
+                <div class="pagination-info">
+                  <span>عرض <strong>{{ (ordersPage - 1) * ordersPerPage + 1 }}</strong> - <strong>{{ Math.min(ordersPage * ordersPerPage, filteredOrders.length) }}</strong> من أصل <strong>{{ filteredOrders.length }}</strong> طلب</span>
+                </div>
+
+                <div class="pagination-controls-group">
+                  <button 
+                    class="pagination-btn prev-btn" 
+                    :disabled="ordersPage === 1" 
+                    @click="ordersPage--" 
+                    title="الصفحة السابقة"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>السابق</span>
+                  </button>
+
+                  <div class="pagination-pills">
+                    <button 
+                      v-for="(p, pIdx) in ordersVisiblePages" 
+                      :key="'ord-page-'+pIdx" 
+                      class="page-num-pill" 
+                      :class="{ active: ordersPage === p, ellipsis: p === '...' }" 
+                      :disabled="p === '...'"
+                      @click="typeof p === 'number' && (ordersPage = p)"
+                    >
+                      {{ p }}
+                    </button>
+                  </div>
+
+                  <button 
+                    class="pagination-btn next-btn" 
+                    :disabled="ordersPage >= ordersTotalPages" 
+                    @click="ordersPage++" 
+                    title="الصفحة التالية"
+                  >
+                    <span>التالي</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1022,7 +1106,7 @@
                     <tr v-if="filteredCustomers.length === 0">
                       <td colspan="7" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
-                    <tr v-for="cust in filteredCustomers" :key="cust._id">
+                    <tr v-for="cust in paginatedCustomers" :key="cust._id">
                       <td class="text-bold">{{ cust.name }}</td>
                       <td class="text-mono">{{ cust.phone }}</td>
                       <td class="text-mono text-small">{{ cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</td>
@@ -1039,6 +1123,48 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Customers Table Numbered Pagination Bar -->
+              <div v-if="customersTotalPages > 1" class="admin-pagination-bar">
+                <div class="pagination-info">
+                  <span>عرض <strong>{{ (customersPage - 1) * customersPerPage + 1 }}</strong> - <strong>{{ Math.min(customersPage * customersPerPage, filteredCustomers.length) }}</strong> من أصل <strong>{{ filteredCustomers.length }}</strong> عميل</span>
+                </div>
+
+                <div class="pagination-controls-group">
+                  <button 
+                    class="pagination-btn prev-btn" 
+                    :disabled="customersPage === 1" 
+                    @click="customersPage--" 
+                    title="الصفحة السابقة"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>السابق</span>
+                  </button>
+
+                  <div class="pagination-pills">
+                    <button 
+                      v-for="(p, pIdx) in customersVisiblePages" 
+                      :key="'cust-page-'+pIdx" 
+                      class="page-num-pill" 
+                      :class="{ active: customersPage === p, ellipsis: p === '...' }" 
+                      :disabled="p === '...'"
+                      @click="typeof p === 'number' && (customersPage = p)"
+                    >
+                      {{ p }}
+                    </button>
+                  </div>
+
+                  <button 
+                    class="pagination-btn next-btn" 
+                    :disabled="customersPage >= customersTotalPages" 
+                    @click="customersPage++" 
+                    title="الصفحة التالية"
+                  >
+                    <span>التالي</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -3672,6 +3798,70 @@ export default {
       });
     });
 
+    // =========================================================================
+    // PAGINATION ENGINE FOR TABLES (Products, Orders, Customers)
+    // =========================================================================
+    const getPageNumbers = (current, total) => {
+      if (total <= 7) {
+        const pages = [];
+        for (let i = 1; i <= total; i++) pages.push(i);
+        return pages;
+      }
+      if (current <= 4) {
+        return [1, 2, 3, 4, 5, '...', total];
+      }
+      if (current >= total - 3) {
+        return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+      }
+      return [1, '...', current - 1, current, current + 1, '...', total];
+    };
+
+    // Products Pagination
+    const productsPage = ref(1);
+    const productsPerPage = ref(12);
+    const paginatedProducts = computed(() => {
+      const start = (productsPage.value - 1) * productsPerPage.value;
+      return filteredProducts.value.slice(start, start + productsPerPage.value);
+    });
+    const productsTotalPages = computed(() => Math.ceil(filteredProducts.value.length / productsPerPage.value) || 1);
+    const productsVisiblePages = computed(() => getPageNumbers(productsPage.value, productsTotalPages.value));
+
+    // Orders Pagination
+    const ordersPage = ref(1);
+    const ordersPerPage = ref(10);
+    const paginatedOrders = computed(() => {
+      const start = (ordersPage.value - 1) * ordersPerPage.value;
+      return filteredOrders.value.slice(start, start + ordersPerPage.value);
+    });
+    const ordersTotalPages = computed(() => Math.ceil(filteredOrders.value.length / ordersPerPage.value) || 1);
+    const ordersVisiblePages = computed(() => getPageNumbers(ordersPage.value, ordersTotalPages.value));
+
+    // Customers Pagination
+    const customersPage = ref(1);
+    const customersPerPage = ref(10);
+    const paginatedCustomers = computed(() => {
+      const start = (customersPage.value - 1) * customersPerPage.value;
+      return filteredCustomers.value.slice(start, start + customersPerPage.value);
+    });
+    const customersTotalPages = computed(() => Math.ceil(filteredCustomers.value.length / customersPerPage.value) || 1);
+    const customersVisiblePages = computed(() => getPageNumbers(customersPage.value, customersTotalPages.value));
+
+    // Reset pagination to Page 1 on filter/search or shop context change
+    watch([() => filters.search, () => filters.category, () => filters.subCategory], () => {
+      productsPage.value = 1;
+    });
+    watch([() => orderFilters.search, () => orderFilters.status, () => orderFilters.selectedDate], () => {
+      ordersPage.value = 1;
+    });
+    watch(() => customerFilters.search, () => {
+      customersPage.value = 1;
+    });
+    watch(activeShop, () => {
+      productsPage.value = 1;
+      ordersPage.value = 1;
+      customersPage.value = 1;
+    });
+
     const isProdDisabled = (p) => {
       if (!p) return false;
       return p.available === false || p.available === 'false' || p.available === 0 || p.available === '0';
@@ -3964,6 +4154,21 @@ export default {
       isAdminZoomLoaded,
       closeAdminZoom,
       adminZoomImgRef,
+      productsPage,
+      productsPerPage,
+      paginatedProducts,
+      productsTotalPages,
+      productsVisiblePages,
+      ordersPage,
+      ordersPerPage,
+      paginatedOrders,
+      ordersTotalPages,
+      ordersVisiblePages,
+      customersPage,
+      customersPerPage,
+      paginatedCustomers,
+      customersTotalPages,
+      customersVisiblePages,
     };
   }
 };
@@ -7446,5 +7651,124 @@ select.select-pill {
 
 .zoom-close-btn:active {
   transform: scale(0.9);
+}
+
+/* ==========================================================================
+   MODERN NUMBERED PAGINATION TABS BAR
+   ========================================================================== */
+
+.admin-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.pagination-info strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.pagination-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-num-pill {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: #334155;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.page-num-pill:hover:not(.active):not(:disabled) {
+  background: rgba(200, 149, 81, 0.12);
+  color: #c89551;
+  border-color: rgba(200, 149, 81, 0.3);
+  transform: translateY(-1px);
+}
+
+.page-num-pill.active {
+  background: #c89551;
+  color: #ffffff;
+  border-color: #c89551;
+  box-shadow: 0 4px 12px rgba(200, 149, 81, 0.35);
+  transform: scale(1.05);
+}
+
+.page-num-pill.ellipsis {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: default;
+  min-width: 24px;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  color: #1e293b;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.25);
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 </style>
