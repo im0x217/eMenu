@@ -1892,7 +1892,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useToastStore } from '../stores/toast';
 import CategoryIcon from '../components/CategoryIcon.vue';
 import Cropper from 'cropperjs';
