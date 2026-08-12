@@ -1808,40 +1808,43 @@
     </div>
   </div>
 
-  <!-- Hidden Print Sales Reconciliation Report (A4) -->
+  <!-- Hidden Print Sales Reconciliation Report (A4 Portrait) -->
   <div class="print-reconciliation-wrapper" v-if="printingReconciliation">
     <div class="reconciliation-page">
+      <!-- Header Banner -->
       <div class="recon-header">
-        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="recon-logo" />
         <div class="recon-brand">
-          <h1 class="recon-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
-          <p class="recon-subtitle">كشف تسوية المبيعات</p>
+          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="recon-logo" />
+          <div class="recon-brand-text">
+            <h1 class="recon-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+            <p class="recon-subtitle">تقرير تسوية المبيعات اليومية والشاملة</p>
+          </div>
         </div>
+        <div class="recon-header-badge">كشف تسوية رسمي</div>
       </div>
 
       <div class="recon-divider"></div>
 
+      <!-- Meta Info Bar -->
       <div class="recon-meta">
         <div class="recon-meta-row">
-          <span class="recon-label">التاريخ:</span>
-          <span class="recon-value">{{ reconciliationData.dateLabel }}</span>
+          <span class="recon-label">التاريخ المحدد:</span>
+          <span class="recon-value recon-date-pill">{{ reconciliationData.dateLabel }}</span>
         </div>
         <div class="recon-meta-row">
-          <span class="recon-label">تاريخ الطباعة:</span>
+          <span class="recon-label">تاريخ الإصدار:</span>
           <span class="recon-value">{{ new Date().toLocaleString('ar-LY') }}</span>
         </div>
       </div>
 
-      <div class="recon-divider"></div>
-
       <!-- Summary KPIs -->
       <div class="recon-kpi-grid">
         <div class="recon-kpi-card">
-          <span class="recon-kpi-label">إجمالي الطلبات</span>
-          <span class="recon-kpi-value">{{ reconciliationData.totalOrders }}</span>
+          <span class="recon-kpi-label">عدد الطلبات الكلي</span>
+          <span class="recon-kpi-value recon-mono">{{ reconciliationData.totalOrders }}</span>
         </div>
-        <div class="recon-kpi-card">
-          <span class="recon-kpi-label">الإيرادات الكلية</span>
+        <div class="recon-kpi-card highlight">
+          <span class="recon-kpi-label">إجمالي الإيرادات</span>
           <span class="recon-kpi-value recon-kpi-money">{{ reconciliationData.totalRevenueFormatted }}</span>
         </div>
       </div>
@@ -1850,20 +1853,24 @@
 
       <!-- Aggregated Products Breakdown Sectioned by Main & Sub Category -->
       <div class="recon-section">
-        <h3 class="recon-section-title">إجمالي المنتجات المباعة (مقسمة حسب التصنيف الرئيسي والفرعي)</h3>
+        <div class="recon-section-header">
+          <h3 class="recon-section-title">إجمالي المنتجات المباعة (مقسمة حسب التصنيف الرئيسي والفرعي)</h3>
+        </div>
 
         <div v-if="!reconciliationData.categoryProductBreakdown || reconciliationData.categoryProductBreakdown.length === 0" class="recon-empty-text">
           لا توجد منتجات مباعة في الطلبات المحددة.
         </div>
 
         <div v-for="mainCat in reconciliationData.categoryProductBreakdown" :key="mainCat.name" class="recon-cat-block">
+          <!-- Main Category Header -->
           <div class="recon-cat-header">
             <span class="recon-cat-title">📁 {{ mainCat.name }}</span>
             <span class="recon-cat-stats">
-              إجمالي القطع: <strong>{{ mainCat.totalQty }}</strong> | الإيراد: <strong>{{ mainCat.totalRevenueFormatted }}</strong>
+              إجمالي القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>
             </span>
           </div>
 
+          <!-- Subcategories -->
           <div v-for="subCat in mainCat.subCategories" :key="subCat.name" class="recon-subcat-block">
             <div class="recon-subcat-title" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
               🏷️ {{ subCat.name }}
@@ -1872,10 +1879,10 @@
             <table class="recon-detail-table">
               <thead>
                 <tr>
-                  <th style="width: 45%;">اسم المنتج</th>
-                  <th style="width: 20%; text-align: center;">سعر الوحدة</th>
-                  <th style="width: 15%; text-align: center;">الكمية المباعة</th>
-                  <th style="width: 20%; text-align: left;">إجمالي السعر</th>
+                  <th style="width: 42%;">اسم المنتج</th>
+                  <th style="width: 18%; text-align: center;">سعر الوحدة</th>
+                  <th style="width: 18%; text-align: center;">الكمية المباعة</th>
+                  <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
                 </tr>
               </thead>
               <tbody>
@@ -1897,20 +1904,19 @@
           </div>
         </div>
 
-        <table class="recon-grand-total-table" style="margin-top: 10px; width: 100%;">
-          <tfoot>
-            <tr class="recon-grand-total-row">
-              <td style="width: 45%;">إجمالي جميع المنتجات المباعة</td>
-              <td style="width: 35%; text-align: center;" class="recon-mono recon-bold">مجموع القطع: {{ reconciliationData.grandTotalItemsQty }} قطعة</td>
-              <td style="width: 20%; text-align: left;" class="recon-mono recon-bold">{{ reconciliationData.totalRevenueFormatted }}</td>
-            </tr>
-          </tfoot>
-        </table>
+        <!-- Grand Total Summary Card -->
+        <div class="recon-grand-total-card">
+          <div class="recon-gt-title">الإجمالي الكلي لجميع المبيعات والمنتجات</div>
+          <div class="recon-gt-metrics">
+            <span class="gt-metric">إجمالي القطع: <strong class="recon-mono">{{ reconciliationData.grandTotalItemsQty }} قطعة</strong></span>
+            <span class="gt-metric highlight">الإيراد الكلي: <strong class="recon-mono">{{ reconciliationData.totalRevenueFormatted }}</strong></span>
+          </div>
+        </div>
       </div>
 
       <div class="recon-footer">
-        <p>كشف تسوية مبيعات — {{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }} — طرابلس، ليبيا</p>
-        <p class="recon-footer-sub">تم إنشاء هذا الكشف آلياً بواسطة نظام e-Menu</p>
+        <p>كشف تسوية مبيعات رسمية — {{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }} — طرابلس، ليبيا</p>
+        <p class="recon-footer-sub">تم إنشاؤه واستخراجه من لوحة التحكم الذكية e-Menu</p>
       </div>
     </div>
   </div>
@@ -7377,9 +7383,9 @@ select.select-pill {
     margin: 4mm 6mm;
   }
 
-  /* Named page for reconciliation — A4 landscape for wide detail table */
+  /* Named page for reconciliation — A4 portrait layout */
   @page reconciliation {
-    size: A4 landscape;
+    size: A4 portrait;
     margin: 8mm 10mm;
   }
 
@@ -7573,7 +7579,7 @@ select.select-pill {
     font-weight: 400;
     margin-top: 2px;
   }
-  /* === Reconciliation Report Print Styles === */
+  /* === Reconciliation Report Print Styles (A4 Portrait Optimized) === */
   .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
     visibility: visible;
   }
@@ -7593,55 +7599,84 @@ select.select-pill {
     padding: 0;
     margin: 0;
     background: #ffffff !important;
-    color: #111111 !important;
+    color: #0f172a !important;
     font-family: 'Cairo', 'Fira Code', sans-serif;
     direction: rtl;
-    font-size: 9pt;
+    font-size: 9.5pt;
+    line-height: 1.5;
   }
 
   .recon-header {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+  }
+
+  .recon-brand {
+    display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 6px;
   }
 
   .recon-logo {
-    width: 42px;
-    height: 42px;
+    width: 50px;
+    height: 50px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+  }
+
+  .recon-brand-text {
+    display: flex;
+    flex-direction: column;
   }
 
   .recon-shop-name {
-    font-size: 13pt;
+    font-size: 15pt;
     font-weight: 800;
     margin: 0;
-    color: #0f172a;
+    color: #1e3a5f;
+    line-height: 1.2;
   }
 
   .recon-subtitle {
-    font-size: 10pt;
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #64748b;
+    margin: 2px 0 0 0;
+  }
+
+  .recon-header-badge {
+    background: #f1f5f9;
+    color: #1e3a5f;
+    border: 1.5px solid #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 8.5pt;
     font-weight: 700;
-    color: #334155;
-    margin: 0;
   }
 
   .recon-divider {
-    border-bottom: 1px dashed #cbd5e1;
-    margin: 6px 0;
+    border-bottom: 1.5px solid #e2e8f0;
+    margin: 10px 0;
   }
 
   .recon-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 3px 12px;
+    gap: 8px 16px;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
     font-size: 9pt;
   }
 
   .recon-meta-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
   }
 
   .recon-label {
@@ -7654,34 +7689,46 @@ select.select-pill {
     color: #0f172a;
   }
 
+  .recon-date-pill {
+    background: #ffffff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+  }
+
   .recon-kpi-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 8px 0;
+    gap: 12px;
+    margin: 12px 0;
   }
 
   .recon-kpi-card {
     text-align: center;
-    padding: 6px 4px;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
+    padding: 10px 8px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+  }
+
+  .recon-kpi-card.highlight {
     background: #f8fafc;
+    border-color: #1e3a5f;
   }
 
   .recon-kpi-label {
     display: block;
-    font-size: 7.5pt;
+    font-size: 8.5pt;
     color: #64748b;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
 
   .recon-kpi-value {
     display: block;
-    font-size: 12pt;
+    font-size: 14pt;
     font-weight: 800;
-    color: #0f172a;
+    color: #1e3a5f;
   }
 
   .recon-kpi-money {
@@ -7689,64 +7736,138 @@ select.select-pill {
   }
 
   .recon-section {
-    margin: 6px 0;
+    margin: 12px 0;
+  }
+
+  .recon-section-header {
+    background: #1e3a5f;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
   }
 
   .recon-section-title {
-    font-size: 9.5pt;
+    font-size: 10pt;
     font-weight: 800;
-    color: #1e3a5f;
-    margin: 4px 0 3px;
-    padding-bottom: 2px;
-    border-bottom: 1.5px solid #e2e8f0;
+    margin: 0;
+    color: #ffffff;
   }
 
-  .recon-summary-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt;
-    margin-bottom: 4px;
+  .recon-cat-block {
+    margin-top: 10px;
+    margin-bottom: 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
-  .recon-summary-table th {
+  .recon-cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: #f1f5f9;
-    padding: 3px 6px;
-    text-align: right;
-    font-weight: 700;
-    font-size: 8.5pt;
+    padding: 8px 12px;
     border-bottom: 1.5px solid #cbd5e1;
   }
 
-  .recon-summary-table td {
-    padding: 2.5px 6px;
-    border-bottom: 1px solid #f1f5f9;
+  .recon-cat-title {
+    font-weight: 800;
+    font-size: 10pt;
+    color: #0f172a;
+  }
+
+  .recon-cat-stats {
+    font-size: 9pt;
+    color: #334155;
+  }
+
+  .recon-subcat-block {
+    padding: 8px 10px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .recon-subcat-block:last-child {
+    border-bottom: none;
+  }
+
+  .recon-subcat-title {
+    font-weight: 700;
+    font-size: 9pt;
+    color: #1e3a5f;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #e2e8f0;
   }
 
   .recon-detail-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8pt;
+    font-size: 8.5pt;
   }
 
   .recon-detail-table th {
-    background: #f1f5f9;
-    padding: 2.5px 4px;
+    background: #f8fafc;
+    padding: 4px 6px;
     text-align: right;
     font-weight: 700;
-    font-size: 7.5pt;
+    font-size: 8pt;
     border-bottom: 1.5px solid #cbd5e1;
+    color: #475569;
   }
 
   .recon-detail-table td {
-    padding: 2px 4px;
+    padding: 4px 6px;
     border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
+    vertical-align: middle;
   }
 
-  .recon-items-cell {
-    font-size: 7pt;
-    line-height: 1.4;
-    max-width: 160px;
+  .recon-subtotal-row {
+    background: #f8fafc;
+    font-size: 8.5pt;
+    font-weight: 700;
+    border-top: 1.5px solid #cbd5e1;
+  }
+
+  .recon-subtotal-row td {
+    padding: 4px 6px;
+  }
+
+  .recon-grand-total-card {
+    margin-top: 14px;
+    background: #f8fafc;
+    border: 2px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 10px 14px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .recon-gt-title {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #1e3a5f;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .recon-gt-metrics {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 11pt;
+  }
+
+  .gt-metric {
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .gt-metric.highlight {
+    color: #1e3a5f;
+    font-size: 12pt;
   }
 
   .recon-mono {
@@ -7757,89 +7878,9 @@ select.select-pill {
     font-weight: 700;
   }
 
-  .recon-phone {
-    direction: ltr;
-    display: inline-block;
-    font-size: 7.5pt;
-  }
-
-  .recon-grand-total-row {
-    background: #f8fafc;
-    font-weight: 800;
-    font-size: 10pt;
-    border-top: 2px solid #cbd5e1;
-  }
-
-  .recon-grand-total-row td {
-    padding: 5px 6px;
-  }
-
-  .recon-cat-block {
-    margin-top: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    overflow: hidden;
-    page-break-inside: avoid;
-  }
-
-  .recon-cat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 6px 10px;
-    border-bottom: 1.5px solid #cbd5e1;
-  }
-
-  .recon-cat-title {
-    font-weight: 800;
-    font-size: 9.5pt;
-    color: #0f172a;
-  }
-
-  .recon-cat-stats {
-    font-size: 8.5pt;
-    color: #475569;
-  }
-
-  .recon-subcat-block {
-    padding: 6px 8px;
-    border-bottom: 1px dashed #e2e8f0;
-  }
-
-  .recon-subcat-block:last-child {
-    border-bottom: none;
-  }
-
-  .recon-subcat-title {
-    font-weight: 700;
-    font-size: 8.5pt;
-    color: #334155;
-    margin-bottom: 4px;
-    padding-bottom: 2px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-
-  .recon-subtotal-row {
-    background: #fafafa;
-    font-size: 8pt;
-    font-weight: 700;
-    border-top: 1.5px solid #e2e8f0;
-  }
-
-  .recon-subtotal-row td {
-    padding: 3px 6px;
-  }
-
-  .recon-grand-total-table {
-    border-collapse: collapse;
-    font-size: 9pt;
-  }
-
   .recon-empty-text {
     text-align: center;
-    padding: 12px;
+    padding: 16px;
     color: #64748b;
     font-style: italic;
   }
@@ -7854,15 +7895,16 @@ select.select-pill {
 
   .recon-footer {
     text-align: center;
-    margin-top: 8px;
-    padding-top: 6px;
+    margin-top: 14px;
+    padding-top: 8px;
     border-top: 1px dashed #cbd5e1;
-    font-size: 8pt;
+    font-size: 8.5pt;
     font-weight: 700;
+    color: #475569;
   }
 
   .recon-footer-sub {
-    font-size: 7pt;
+    font-size: 7.5pt;
     color: #94a3b8;
     font-weight: 400;
     margin-top: 2px;
