@@ -7781,8 +7781,6 @@ select.select-pill {
     border: 1.5px solid #cbd5e1;
     border-radius: 8px;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
   }
 
   .recon-cat-header {
@@ -7792,6 +7790,8 @@ select.select-pill {
     background: #f1f5f9;
     padding: 8px 12px;
     border-bottom: 1.5px solid #cbd5e1;
+    page-break-after: avoid;
+    break-after: avoid;
   }
 
   .recon-cat-title {
@@ -7821,6 +7821,13 @@ select.select-pill {
     margin-bottom: 6px;
     padding-bottom: 3px;
     border-bottom: 1px solid #e2e8f0;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .recon-detail-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .recon-detail-table {
