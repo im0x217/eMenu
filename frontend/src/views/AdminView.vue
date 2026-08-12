@@ -1891,7 +1891,7 @@
                   <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
               </tbody>
-              <tfoot v-if="mainCat.subCategories.length > 1">
+              <tfoot v-if="mainCat.subCategories.length > 1 && subCat.products.length > 1">
                 <tr class="recon-subtotal-row">
                   <td colspan="2">مجموع فرعي ({{ subCat.name }})</td>
                   <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ subCat.totalQty }}</td>
@@ -7741,11 +7741,11 @@ select.select-pill {
   /* Level 2: Sub-Category Block */
   .recon-subcat-block {
     padding: 6px 8px;
-    border-bottom: 1px solid #cccccc;
+    border-bottom: 1.5px solid #000000 !important;
   }
 
   .recon-subcat-block:last-child {
-    border-bottom: none;
+    border-bottom: none !important;
   }
 
   .recon-subcat-title-container {
@@ -7768,12 +7768,12 @@ select.select-pill {
     text-align: center;
   }
 
-  /* Level 3: Products Table (Never left visually open at page/block end) */
+  /* Level 3: Products Table (Guaranteed bottom closure line) */
   .recon-detail-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 9pt;
-    border-bottom: 1.5px solid #000000 !important;
+    margin-bottom: 2px;
   }
 
   .recon-detail-table thead {
@@ -7793,7 +7793,7 @@ select.select-pill {
     font-weight: 800;
     font-size: 8.5pt;
     color: #000000 !important;
-    border-bottom: 1.5px solid #000000;
+    border-bottom: 1.5px solid #000000 !important;
     border-top: 1px solid #cccccc;
     text-align: right;
   }
@@ -7809,13 +7809,15 @@ select.select-pill {
 
   .recon-detail-table td {
     padding: 4.5px 6px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #d0d0d0;
     vertical-align: middle;
     color: #000000 !important;
   }
 
-  /* Solid closure border on last body row so table never ends open */
-  .recon-detail-table tbody tr:last-child td {
+  /* Solid closure line on the last row of every table (tbody or tfoot) */
+  .recon-detail-table tr:last-child td,
+  .recon-detail-table tbody tr:last-child td,
+  .recon-detail-table tfoot tr:last-child td {
     border-bottom: 1.5px solid #000000 !important;
   }
 
@@ -7823,7 +7825,7 @@ select.select-pill {
     background: #e6e6e6 !important;
     font-size: 9pt;
     font-weight: 800;
-    border-top: 1.5px solid #000000;
+    border-top: 1.5px solid #000000 !important;
     border-bottom: 1.5px solid #000000 !important;
     color: #000000 !important;
   }
