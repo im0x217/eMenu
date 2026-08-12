@@ -1849,13 +1849,23 @@
         </div>
       </div>
 
-      <div class="recon-divider"></div>
-
       <!-- Aggregated Products Breakdown Sectioned by Main & Sub Category -->
       <div class="recon-section">
         <div class="recon-section-header">
           <h3 class="recon-section-title">إجمالي المنتجات المباعة (مقسمة حسب التصنيف الرئيسي والفرعي)</h3>
         </div>
+
+        <!-- Master Table Header (Rendered ONLY ONCE at the top) -->
+        <table class="recon-master-header-table">
+          <thead>
+            <tr>
+              <th style="width: 42%;">اسم المنتج</th>
+              <th style="width: 18%; text-align: center;">سعر الوحدة</th>
+              <th style="width: 18%; text-align: center;">الكمية المباعة</th>
+              <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
+            </tr>
+          </thead>
+        </table>
 
         <div v-if="!reconciliationData.categoryProductBreakdown || reconciliationData.categoryProductBreakdown.length === 0" class="recon-empty-text">
           لا توجد منتجات مباعة في الطلبات المحددة.
@@ -1877,27 +1887,19 @@
             </div>
 
             <table class="recon-detail-table">
-              <thead>
-                <tr>
-                  <th style="width: 42%;">اسم المنتج</th>
-                  <th style="width: 18%; text-align: center;">سعر الوحدة</th>
-                  <th style="width: 18%; text-align: center;">الكمية المباعة</th>
-                  <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
-                  <td class="recon-bold">{{ prod.name }}</td>
-                  <td class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
-                  <td class="recon-mono recon-bold text-center">{{ prod.quantity }}</td>
-                  <td class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
+                  <td style="width: 42%;" class="recon-bold">{{ prod.name }}</td>
+                  <td style="width: 18%;" class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
+                  <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ prod.quantity }}</td>
+                  <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
               </tbody>
               <tfoot v-if="mainCat.subCategories.length > 1">
                 <tr class="recon-subtotal-row">
                   <td colspan="2">مجموع فرعي ({{ subCat.name }})</td>
-                  <td class="recon-mono recon-bold text-center">{{ subCat.totalQty }}</td>
-                  <td class="recon-mono recon-bold text-left">{{ subCat.totalRevenueFormatted }}</td>
+                  <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ subCat.totalQty }}</td>
+                  <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ subCat.totalRevenueFormatted }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -7699,13 +7701,13 @@ select.select-pill {
   .recon-kpi-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 12px 0;
+    gap: 10px;
+    margin: 6px 0 8px 0;
   }
 
   .recon-kpi-card {
     text-align: center;
-    padding: 10px 8px;
+    padding: 8px 6px;
     border: 1.5px solid #e2e8f0;
     border-radius: 10px;
     background: #ffffff;
@@ -7721,12 +7723,12 @@ select.select-pill {
     font-size: 8.5pt;
     color: #64748b;
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   .recon-kpi-value {
     display: block;
-    font-size: 14pt;
+    font-size: 13pt;
     font-weight: 800;
     color: #1e3a5f;
   }
@@ -7736,27 +7738,46 @@ select.select-pill {
   }
 
   .recon-section {
-    margin: 12px 0;
+    margin: 4px 0 0 0;
   }
 
   .recon-section-header {
     background: #1e3a5f;
     color: #ffffff;
     padding: 6px 12px;
-    border-radius: 6px;
-    margin-bottom: 10px;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
   }
 
   .recon-section-title {
-    font-size: 10pt;
+    font-size: 9.5pt;
     font-weight: 800;
     margin: 0;
     color: #ffffff;
   }
 
+  .recon-master-header-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    background: #e2e8f0;
+    border-left: 1.5px solid #cbd5e1;
+    border-right: 1.5px solid #cbd5e1;
+    border-bottom: 2px solid #1e3a5f;
+    margin-bottom: 6px;
+  }
+
+  .recon-master-header-table th {
+    padding: 6px 8px;
+    font-weight: 800;
+    font-size: 8.5pt;
+    color: #0f172a;
+    text-align: right;
+  }
+
   .recon-cat-block {
-    margin-top: 10px;
-    margin-bottom: 14px;
+    margin-top: 6px;
+    margin-bottom: 10px;
     border: 1.5px solid #cbd5e1;
     border-radius: 8px;
     overflow: hidden;
