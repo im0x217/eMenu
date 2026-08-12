@@ -1872,18 +1872,18 @@
         </div>
 
         <div v-for="mainCat in reconciliationData.categoryProductBreakdown" :key="mainCat.name" class="recon-cat-block">
-          <!-- Main Category Header -->
+          <!-- Main Category Header (Centered) -->
           <div class="recon-cat-header">
             <span class="recon-cat-title">📁 {{ mainCat.name }}</span>
             <span class="recon-cat-stats">
-              إجمالي القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>
+              (إجمالي القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>)
             </span>
           </div>
 
           <!-- Subcategories -->
           <div v-for="subCat in mainCat.subCategories" :key="subCat.name" class="recon-subcat-block">
-            <div class="recon-subcat-title" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
-              🏷️ {{ subCat.name }}
+            <div class="recon-subcat-title-container" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
+              <span class="recon-subcat-title">🏷️ {{ subCat.name }}</span>
             </div>
 
             <table class="recon-detail-table">
@@ -7734,11 +7734,13 @@ select.select-pill {
 
   .recon-cat-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
     background: #e6e6e6 !important;
     color: #000000 !important;
-    padding: 7px 12px;
+    padding: 6px 12px;
     border-bottom: 1.5px solid #000000;
     page-break-after: avoid;
     break-after: avoid;
@@ -7746,14 +7748,17 @@ select.select-pill {
 
   .recon-cat-title {
     font-weight: 800;
-    font-size: 10.5pt;
+    font-size: 11pt;
     color: #000000 !important;
+    text-align: center;
   }
 
   .recon-cat-stats {
-    font-size: 9pt;
-    color: #000000 !important;
+    font-size: 8.5pt;
+    color: #222222 !important;
     font-weight: 700;
+    text-align: center;
+    margin-top: 1px;
   }
 
   /* Level 2: Sub-Category Block */
@@ -7766,15 +7771,24 @@ select.select-pill {
     border-bottom: none;
   }
 
+  .recon-subcat-title-container {
+    text-align: center;
+    margin-bottom: 6px;
+    margin-top: 2px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
   .recon-subcat-title {
+    display: inline-block;
     font-weight: 800;
     font-size: 9.5pt;
     color: #000000 !important;
-    margin-bottom: 4px;
-    padding-bottom: 3px;
-    border-bottom: 1px dashed #999999;
-    page-break-after: avoid;
-    break-after: avoid;
+    background: #f2f2f2 !important;
+    padding: 2px 14px;
+    border-radius: 4px;
+    border: 1px solid #aaaaaa !important;
+    text-align: center;
   }
 
   /* Level 3: Products Table */
