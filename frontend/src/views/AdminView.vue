@@ -7181,7 +7181,7 @@ select.select-pill {
 
 .fav-card-image-wrapper {
   width: 100%;
-  padding-top: 75%; /* 4:3 aspect ratio */
+  padding-top: 75%;
   position: relative;
   background: #f8f9fa;
 }
@@ -7259,15 +7259,18 @@ select.select-pill {
   gap: 1rem;
   flex: 1;
 }
+
 .report-actions {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
+
 .dropdown-export {
   position: relative;
   display: inline-block;
 }
+
 .dropdown-content {
   display: none;
   position: absolute;
@@ -7281,6 +7284,7 @@ select.select-pill {
   overflow: hidden;
   border: 1px solid #e9ecef;
 }
+
 .dropdown-content a {
   color: #212529;
   padding: 10px 14px;
@@ -7290,73 +7294,13 @@ select.select-pill {
   text-align: right;
   transition: background-color 0.2s;
 }
+
 .dropdown-content a:hover {
   background-color: #f8f9fa;
 }
+
 .dropdown-export:hover .dropdown-content {
   display: block;
-}
-
-/* Custom Date Inputs */
-.custom-date-container {
-  padding: 1.25rem;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-.date-picker-row {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-.date-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-.date-input-group label {
-  font-size: 0.85rem;
-  color: #495057;
-  font-weight: 500;
-}
-.date-input-group input {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #ced4da;
-  outline: none;
-  font-size: 0.9rem;
-}
-.btn-apply {
-  padding: 0.5rem 1.5rem;
-  height: fit-content;
-}
-
-/* Actionable Insights Styles */
-.card-header-with-badge {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.card-header-with-badge .chart-title {
-  margin-bottom: 0;
-}
-.badge-warning {
-  background-color: #ffe8cc;
-  color: #d9480f;
-}
-.badge-danger {
-  background-color: #ffe3e3;
-  color: #c92a2a;
-}
-.me-1 {
-  margin-left: 4px;
-}
-
-/* Print Receipt Styling (A5) */
-.print-receipt {
-  display: none;
 }
 
 /* Screen: hide print-only wrappers */
@@ -7373,6 +7317,7 @@ select.select-pill {
   font-weight: 600;
   transition: all 0.2s ease;
 }
+
 .reconciliation-print-btn:hover {
   background: rgba(30, 58, 95, 0.08);
   border-color: rgba(30, 58, 95, 0.35);
@@ -7395,15 +7340,15 @@ select.select-pill {
     display: none !important;
   }
 
-  /* When reconciliation is printing, the receipt wrapper won't exist (v-if) and vice versa */
   .reconciliation-page {
     page: reconciliation;
   }
-  
+
+  /* Order Receipt Print Styles (A5) */
   .print-receipt-wrapper, .print-receipt-wrapper * {
     visibility: visible;
   }
-  
+
   .print-receipt-wrapper {
     display: block !important;
     position: relative;
@@ -7433,72 +7378,72 @@ select.select-pill {
     page-break-after: avoid;
     break-after: avoid;
   }
-  
+
   .receipt-header {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 8px;
   }
-  
+
   .receipt-logo {
     width: 48px;
     height: 48px;
     object-fit: cover;
     border-radius: 8px;
   }
-  
+
   .receipt-shop-name {
     font-size: 14pt;
     font-weight: 800;
     margin: 0;
     color: #0f172a;
   }
-  
+
   .receipt-tagline {
     font-size: 8pt;
     color: #64748b;
     margin: 0;
   }
-  
+
   .receipt-divider {
     border-bottom: 1px dashed #cbd5e1;
     margin: 8px 0;
   }
-  
+
   .receipt-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
     font-size: 9.5pt;
   }
-  
+
   .receipt-meta-row {
     display: flex;
     justify-content: space-between;
   }
-  
+
   .receipt-label {
     color: #64748b;
     font-weight: 600;
   }
-  
+
   .receipt-value {
     font-weight: 700;
     color: #0f172a;
   }
-  
+
   .receipt-phone {
     font-family: 'Fira Code', monospace;
   }
-  
+
   .receipt-items-table {
     width: 100%;
     border-collapse: collapse;
     margin: 8px 0;
     font-size: 9.5pt;
   }
-  
+
   .receipt-items-table th {
     background: #f8fafc;
     padding: 4px 6px;
@@ -7507,33 +7452,33 @@ select.select-pill {
     font-weight: 700;
     font-size: 9pt;
   }
-  
+
   .receipt-items-table td {
     padding: 2.5px 6px;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: top;
   }
-  
+
   .receipt-td-qty, .receipt-td-price, .receipt-td-total {
     font-family: 'Fira Code', monospace;
     text-align: center;
   }
-  
+
   .receipt-td-total {
     text-align: left;
     font-weight: 700;
   }
-  
+
   .receipt-item-note {
     display: block;
     font-size: 8pt;
     color: #64748b;
   }
-  
+
   .receipt-total-section {
     margin-top: 6px;
   }
-  
+
   .receipt-grand-total {
     display: flex;
     justify-content: space-between;
@@ -7545,12 +7490,12 @@ select.select-pill {
     font-size: 12pt;
     border: 1px solid #e2e8f0;
   }
-  
+
   .receipt-grand-value {
     font-family: 'Fira Code', monospace;
     color: #0f172a;
   }
-  
+
   .receipt-notes {
     margin-top: 6px;
     padding: 6px 8px;
@@ -7558,7 +7503,7 @@ select.select-pill {
     border-radius: 4px;
     font-size: 8.5pt;
   }
-  
+
   .receipt-footer {
     text-align: center;
     margin-top: 6px;
@@ -7568,20 +7513,21 @@ select.select-pill {
     font-size: 9pt;
     font-weight: 700;
   }
-  
+
   .receipt-page-num {
     font-size: 8pt;
     color: #64748b;
     margin-bottom: 2px;
   }
-  
+
   .receipt-footer-sub {
     font-size: 7.5pt;
     color: #64748b;
     font-weight: 400;
     margin-top: 2px;
   }
-  /* === Reconciliation Report Print Styles (A4 Portrait Optimized) === */
+
+  /* === Sales Reconciliation Report Print Styles (B/W Printing Optimized) === */
   .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
     visibility: visible;
   }
@@ -7601,18 +7547,18 @@ select.select-pill {
     padding: 0;
     margin: 0;
     background: #ffffff !important;
-    color: #0f172a !important;
+    color: #000000 !important;
     font-family: 'Cairo', 'Fira Code', sans-serif;
     direction: rtl;
     font-size: 9.5pt;
-    line-height: 1.5;
+    line-height: 1.4;
   }
 
   .recon-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
   }
 
   .recon-brand {
@@ -7622,11 +7568,11 @@ select.select-pill {
   }
 
   .recon-logo {
-    width: 50px;
-    height: 50px;
+    width: 52px;
+    height: 52px;
     object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    border: 1.5px solid #000000;
   }
 
   .recon-brand-text {
@@ -7635,19 +7581,311 @@ select.select-pill {
   }
 
   .recon-shop-name {
-    font-size: 15pt;
+    font-size: 16pt;
     font-weight: 800;
     margin: 0;
-    color: #1e3a5f;
+    color: #000000 !important;
     line-height: 1.2;
   }
 
   .recon-subtitle {
-    font-size: 9.5pt;
-    font-weight: 600;
-    color: #64748b;
+    font-size: 10pt;
+    font-weight: 700;
+    color: #222222 !important;
     margin: 2px 0 0 0;
   }
+
+  .recon-header-badge {
+    background: #ffffff;
+    color: #000000 !important;
+    border: 2px solid #000000;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 9pt;
+    font-weight: 800;
+  }
+
+  .recon-divider {
+    border-bottom: 2px solid #000000;
+    margin: 8px 0;
+  }
+
+  .recon-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    background: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1.5px solid #000000;
+    font-size: 9.5pt;
+  }
+
+  .recon-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .recon-label {
+    color: #333333 !important;
+    font-weight: 700;
+  }
+
+  .recon-value {
+    font-weight: 800;
+    color: #000000 !important;
+  }
+
+  .recon-date-pill {
+    background: #f2f2f2;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #000000;
+  }
+
+  .recon-kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 6px 0 8px 0;
+  }
+
+  .recon-kpi-card {
+    text-align: center;
+    padding: 8px 6px;
+    border: 2px solid #000000 !important;
+    border-radius: 8px;
+    background: #ffffff !important;
+  }
+
+  .recon-kpi-card.highlight {
+    background: #f2f2f2 !important;
+    border-color: #000000 !important;
+  }
+
+  .recon-kpi-label {
+    display: block;
+    font-size: 9pt;
+    color: #222222 !important;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .recon-kpi-value {
+    display: block;
+    font-size: 15pt;
+    font-weight: 800;
+    color: #000000 !important;
+  }
+
+  .recon-kpi-money {
+    font-family: 'Fira Code', monospace;
+    font-weight: 800;
+  }
+
+  .recon-section {
+    margin: 4px 0 0 0;
+  }
+
+  .recon-section-header {
+    background: #000000 !important;
+    color: #ffffff !important;
+    padding: 6px 12px;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+  }
+
+  .recon-section-title {
+    font-size: 10pt;
+    font-weight: 800;
+    margin: 0;
+    color: #ffffff !important;
+  }
+
+  .recon-master-header-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    background: #d9d9d9 !important;
+    border-left: 2px solid #000000;
+    border-right: 2px solid #000000;
+    border-bottom: 2.5px solid #000000;
+    margin-bottom: 6px;
+  }
+
+  .recon-master-header-table th {
+    padding: 6px 8px;
+    font-weight: 800;
+    font-size: 9pt;
+    color: #000000 !important;
+    text-align: right;
+  }
+
+  .recon-cat-block {
+    margin-top: 6px;
+    margin-bottom: 10px;
+    border: 2px solid #000000;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .recon-cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e6e6e6 !important;
+    padding: 8px 12px;
+    border-bottom: 2px solid #000000;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .recon-cat-title {
+    font-weight: 800;
+    font-size: 10.5pt;
+    color: #000000 !important;
+  }
+
+  .recon-cat-stats {
+    font-size: 9.5pt;
+    color: #000000 !important;
+    font-weight: 700;
+  }
+
+  .recon-subcat-block {
+    padding: 6px 8px;
+    border-bottom: 1.5px solid #000000;
+  }
+
+  .recon-subcat-block:last-child {
+    border-bottom: none;
+  }
+
+  .recon-subcat-title {
+    font-weight: 800;
+    font-size: 9.5pt;
+    color: #000000 !important;
+    margin-bottom: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1.5px solid #000000;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .recon-detail-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .recon-detail-table tr:nth-child(even) {
+    background: #f8f8f8 !important;
+  }
+
+  .recon-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .recon-detail-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #cccccc;
+    vertical-align: middle;
+    color: #000000 !important;
+  }
+
+  .recon-subtotal-row {
+    background: #e6e6e6 !important;
+    font-size: 9pt;
+    font-weight: 800;
+    border-top: 2px solid #000000;
+    color: #000000 !important;
+  }
+
+  .recon-subtotal-row td {
+    padding: 4px 6px;
+    border-bottom: none;
+  }
+
+  .recon-grand-total-card {
+    margin-top: 12px;
+    background: #f2f2f2 !important;
+    border: 2.5px solid #000000 !important;
+    border-radius: 8px;
+    padding: 10px 14px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .recon-gt-title {
+    font-size: 10pt;
+    font-weight: 800;
+    color: #000000 !important;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .recon-gt-metrics {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 11.5pt;
+  }
+
+  .gt-metric {
+    font-weight: 800;
+    color: #000000 !important;
+  }
+
+  .gt-metric.highlight {
+    color: #000000 !important;
+    font-size: 13pt;
+    font-weight: 800;
+  }
+
+  .recon-mono {
+    font-family: 'Fira Code', monospace;
+    font-weight: 700;
+  }
+
+  .recon-bold {
+    font-weight: 800;
+    color: #000000 !important;
+  }
+
+  .recon-empty-text {
+    text-align: center;
+    padding: 16px;
+    color: #000000 !important;
+    font-weight: 700;
+  }
+
+  .text-center {
+    text-align: center !important;
+  }
+
+  .text-left {
+    text-align: left !important;
+  }
+
+  .recon-footer {
+    text-align: center;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 2px solid #000000;
+    font-size: 9pt;
+    font-weight: 800;
+    color: #000000 !important;
+  }
+
+  .recon-footer-sub {
+    font-size: 8pt;
+    color: #333333 !important;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+}
 
   .recon-header-badge {
     background: #f1f5f9;
@@ -7937,7 +8175,6 @@ select.select-pill {
     font-weight: 400;
     margin-top: 2px;
   }
-}
 
 /* Carousel Admin Grid Layout */
 .carousel-grid {
