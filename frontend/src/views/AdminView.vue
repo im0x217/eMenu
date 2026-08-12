@@ -563,7 +563,7 @@
                     @click="productsPage--" 
                     title="الصفحة السابقة"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     <span class="btn-text-desktop">السابق</span>
                   </button>
 
@@ -587,7 +587,7 @@
                     title="الصفحة التالية"
                   >
                     <span class="btn-text-desktop">التالي</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                   </button>
                 </div>
               </div>
@@ -825,9 +825,9 @@
                       <!-- Custom Date Picker Popover Panel -->
                       <div v-if="datePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                         <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق">&rsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق">&lsaquo;</button>
                           <span class="dp-month-title">{{ currentMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي">&lsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي">&rsaquo;</button>
                         </div>
 
                         <div class="dp-weekdays">
@@ -942,7 +942,7 @@
                     @click="ordersPage--" 
                     title="الصفحة السابقة"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     <span class="btn-text-desktop">السابق</span>
                   </button>
 
@@ -966,7 +966,7 @@
                     title="الصفحة التالية"
                   >
                     <span class="btn-text-desktop">التالي</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                   </button>
                 </div>
               </div>
@@ -1155,7 +1155,7 @@
                     @click="customersPage--" 
                     title="الصفحة السابقة"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     <span class="btn-text-desktop">السابق</span>
                   </button>
 
@@ -1179,7 +1179,7 @@
                     title="الصفحة التالية"
                   >
                     <span class="btn-text-desktop">التالي</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                   </button>
                 </div>
               </div>
