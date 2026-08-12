@@ -350,6 +350,23 @@ app.get("/api/admin-check", checkAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Public endpoint to list available admin/staff user accounts for login dropdown selector
+app.get("/api/public/admin-users", async (req, res) => {
+  try {
+    let users = [];
+    if (mongoConnected && adminUsersCollection) {
+      users = await adminUsersCollection.find({}, { projection: { username: 1, name: 1, role: 1 } }).sort({ name: 1 }).toArray();
+    }
+    if (!users || users.length === 0) {
+      users = [{ username: ADMIN_USER, name: "المدير العام", role: "admin" }];
+    }
+    res.json({ success: true, users });
+  } catch (err) {
+    console.error("Public admin users fetch error:", err);
+    res.json({ success: true, users: [{ username: ADMIN_USER, name: "المدير العام", role: "admin" }] });
+  }
+});
+
 // ============ PRODUCTS API ============
 app.get("/api/products", checkMongoDB, async (req, res) => {
   try {

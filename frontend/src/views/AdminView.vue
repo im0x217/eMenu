@@ -17,8 +17,15 @@
 
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
-            <label>اسم المستخدم</label>
-            <input v-model="loginForm.username" type="text" required placeholder="أدخل اسم المستخدم" class="form-control" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" />
+            <label>حساب المستخدم</label>
+            <div class="login-select-wrapper">
+              <select v-model="loginForm.username" required class="form-control login-user-select">
+                <option value="" disabled>اختر حساب المستخدم…</option>
+                <option v-for="u in publicAdminUsers" :key="u.username" :value="u.username">
+                  👤 {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'مدير الطلبات' : 'مستخدم' }})
+                </option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
@@ -2026,6 +2033,25 @@ export default {
     // Login Data
     const loginForm = reactive({ username: '', password: '' });
     const loginError = ref('');
+    const publicAdminUsers = ref([{ username: 'admin', name: 'المدير العام', role: 'admin' }]);
+
+    const fetchPublicAdminUsers = async () => {
+      try {
+        const res = await fetch('/api/public/admin-users');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.users && data.users.length > 0) {
+            publicAdminUsers.value = data.users;
+            // Auto select first user if not set
+            if (!loginForm.username && data.users.length > 0) {
+              loginForm.username = data.users[0].username;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load public admin users for dropdown:', err);
+      }
+    };
 
     // Cropper Data (Missing Refs)
     const cropperModalOpen = ref(false);
@@ -4287,6 +4313,7 @@ export default {
     };
 
     onMounted(() => {
+      fetchPublicAdminUsers();
       checkAuthentication();
     });
 
@@ -4299,6 +4326,8 @@ export default {
       loginShop,
       loginForm,
       loginError,
+      publicAdminUsers,
+      fetchPublicAdminUsers,
       tabTitles,
       analyticsPeriod,
       analyticsStartDate,
@@ -4806,6 +4835,39 @@ export default {
   width: 100%;
   max-width: 450px;
   padding: 40px 30px;
+}
+
+.login-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.login-user-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231e3a5f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 14px center;
+  padding-left: 38px;
+  font-weight: 700;
+  color: #1e3a5f;
+  border-radius: 12px;
+  border: 1.5px solid rgba(30, 58, 95, 0.2);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.login-user-select:focus {
+  border-color: #1e3a5f;
+  box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.12);
+  outline: none;
+}
+
+.login-user-select option {
+  background: #ffffff;
+  color: #1e3a5f;
+  padding: 10px;
+  font-weight: 600;
 }
 
 .login-header {
