@@ -7768,11 +7768,23 @@ select.select-pill {
     text-align: center;
   }
 
-  /* Level 3: Products Table */
+  /* Level 3: Products Table (Never left visually open at page/block end) */
   .recon-detail-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 9pt;
+    border-bottom: 1.5px solid #000000 !important;
+  }
+
+  .recon-detail-table thead {
+    display: table-header-group;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .recon-col-header-row {
+    page-break-after: avoid;
+    break-after: avoid;
   }
 
   .recon-col-header-row th {
@@ -7796,10 +7808,15 @@ select.select-pill {
   }
 
   .recon-detail-table td {
-    padding: 4px 6px;
+    padding: 4.5px 6px;
     border-bottom: 1px solid #e0e0e0;
     vertical-align: middle;
     color: #000000 !important;
+  }
+
+  /* Solid closure border on last body row so table never ends open */
+  .recon-detail-table tbody tr:last-child td {
+    border-bottom: 1.5px solid #000000 !important;
   }
 
   .recon-subtotal-row {
@@ -7807,12 +7824,13 @@ select.select-pill {
     font-size: 9pt;
     font-weight: 800;
     border-top: 1.5px solid #000000;
+    border-bottom: 1.5px solid #000000 !important;
     color: #000000 !important;
   }
 
   .recon-subtotal-row td {
     padding: 4px 6px;
-    border-bottom: none;
+    border-bottom: 1.5px solid #000000 !important;
   }
 
   .recon-grand-total-card {
