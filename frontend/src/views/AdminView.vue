@@ -1855,18 +1855,6 @@
           <h3 class="recon-section-title">إجمالي المنتجات المباعة (مقسمة حسب التصنيف الرئيسي والفرعي)</h3>
         </div>
 
-        <!-- Master Table Header (Rendered ONLY ONCE at the top) -->
-        <table class="recon-master-header-table">
-          <thead>
-            <tr>
-              <th style="width: 42%;">اسم المنتج</th>
-              <th style="width: 18%; text-align: center;">سعر الوحدة</th>
-              <th style="width: 18%; text-align: center;">الكمية المباعة</th>
-              <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
-            </tr>
-          </thead>
-        </table>
-
         <div v-if="!reconciliationData.categoryProductBreakdown || reconciliationData.categoryProductBreakdown.length === 0" class="recon-empty-text">
           لا توجد منتجات مباعة في الطلبات المحددة.
         </div>
@@ -1887,6 +1875,14 @@
             </div>
 
             <table class="recon-detail-table">
+              <thead>
+                <tr class="recon-col-header-row">
+                  <th style="width: 42%;">اسم المنتج</th>
+                  <th style="width: 18%; text-align: center;">سعر الوحدة</th>
+                  <th style="width: 18%; text-align: center;">الكمية المباعة</th>
+                  <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
+                </tr>
+              </thead>
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
                   <td style="width: 42%;" class="recon-bold">{{ prod.name }}</td>
@@ -7703,25 +7699,6 @@ select.select-pill {
     color: #ffffff !important;
   }
 
-  .recon-master-header-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt;
-    background: #d9d9d9 !important;
-    border-left: 2px solid #000000;
-    border-right: 2px solid #000000;
-    border-bottom: 2.5px solid #000000;
-    margin-bottom: 6px;
-  }
-
-  .recon-master-header-table th {
-    padding: 6px 8px;
-    font-weight: 800;
-    font-size: 9pt;
-    color: #000000 !important;
-    text-align: right;
-  }
-
   /* Level 1: Main Category Block */
   .recon-cat-block {
     margin-top: 8px;
@@ -7796,6 +7773,17 @@ select.select-pill {
     width: 100%;
     border-collapse: collapse;
     font-size: 9pt;
+  }
+
+  .recon-col-header-row th {
+    background: #e6e6e6 !important;
+    padding: 4px 6px;
+    font-weight: 800;
+    font-size: 8.5pt;
+    color: #000000 !important;
+    border-bottom: 1.5px solid #000000;
+    border-top: 1px solid #cccccc;
+    text-align: right;
   }
 
   .recon-detail-table tr {
