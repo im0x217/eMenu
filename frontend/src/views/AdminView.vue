@@ -1874,24 +1874,30 @@
         <div v-for="mainCat in reconciliationData.categoryProductBreakdown" :key="mainCat.name" class="recon-cat-block">
           <!-- Main Category Header -->
           <div class="recon-cat-header">
-            <span class="recon-cat-title">📁 {{ mainCat.name }}</span>
+            <span class="recon-cat-title">📂 {{ mainCat.name }}</span>
             <span class="recon-cat-stats">
-              إجمالي القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>
+              القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>
             </span>
           </div>
 
           <!-- Subcategories -->
           <div v-for="subCat in mainCat.subCategories" :key="subCat.name" class="recon-subcat-block">
             <div class="recon-subcat-title" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
-              🏷️ {{ subCat.name }}
+              <span class="subcat-prefix">🏷️</span>
+              <span class="subcat-label">التصنيف الفرعي:</span>
+              <span class="subcat-name">{{ subCat.name }}</span>
             </div>
 
             <table class="recon-detail-table">
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
-                  <td style="width: 42%;" class="recon-bold">{{ prod.name }}</td>
+                  <td style="width: 42%;" class="recon-prod-name-cell">
+                    <span class="prod-bullet">•</span> {{ prod.name }}
+                  </td>
                   <td style="width: 18%;" class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
-                  <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ prod.quantity }}</td>
+                  <td style="width: 18%;" class="recon-mono text-center">
+                    <span class="prod-qty-badge">{{ prod.quantity }}</span>
+                  </td>
                   <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
               </tbody>
@@ -7722,39 +7728,52 @@ select.select-pill {
     text-align: right;
   }
 
+  /* Level 1: Main Category Block */
   .recon-cat-block {
-    margin-top: 6px;
-    margin-bottom: 10px;
-    border: 2px solid #000000;
+    margin-top: 10px;
+    margin-bottom: 14px;
+    border: 2.5px solid #000000 !important;
     border-radius: 6px;
     overflow: hidden;
+    background: #ffffff !important;
   }
 
   .recon-cat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #e6e6e6 !important;
+    background: #000000 !important;
+    color: #ffffff !important;
     padding: 8px 12px;
-    border-bottom: 2px solid #000000;
+    border-bottom: 2.5px solid #000000;
     page-break-after: avoid;
     break-after: avoid;
   }
 
   .recon-cat-title {
-    font-weight: 800;
-    font-size: 10.5pt;
-    color: #000000 !important;
+    font-weight: 900;
+    font-size: 11.5pt;
+    color: #ffffff !important;
+    letter-spacing: 0.2px;
   }
 
   .recon-cat-stats {
-    font-size: 9.5pt;
+    font-size: 9pt;
     color: #000000 !important;
-    font-weight: 700;
+    font-weight: 800;
+    background: #ffffff !important;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid #ffffff;
   }
 
+  .recon-cat-stats strong {
+    color: #000000 !important;
+  }
+
+  /* Level 2: Sub-Category Block */
   .recon-subcat-block {
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-bottom: 1.5px solid #000000;
   }
 
@@ -7763,14 +7782,70 @@ select.select-pill {
   }
 
   .recon-subcat-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 800;
-    font-size: 9.5pt;
+    font-size: 9.8pt;
     color: #000000 !important;
-    margin-bottom: 4px;
-    padding-bottom: 3px;
-    border-bottom: 1.5px solid #000000;
+    background: #e6e6e6 !important;
+    padding: 5px 10px;
+    border-right: 5px solid #000000 !important;
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+    border-left: 1px solid #000000;
+    border-radius: 4px;
+    margin-bottom: 6px;
     page-break-after: avoid;
     break-after: avoid;
+  }
+
+  .subcat-prefix {
+    font-size: 10pt;
+  }
+
+  .subcat-label {
+    font-weight: 700;
+    color: #333333 !important;
+  }
+
+  .subcat-name {
+    font-weight: 900;
+    color: #000000 !important;
+    text-decoration: underline;
+  }
+
+  /* Level 3: Products Table */
+  .recon-detail-table {
+    width: calc(100% - 6px);
+    margin-right: 6px;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .recon-prod-name-cell {
+    font-weight: 700;
+    color: #000000 !important;
+    padding-right: 6px !important;
+  }
+
+  .prod-bullet {
+    font-weight: 900;
+    font-size: 11pt;
+    display: inline-block;
+    margin-left: 4px;
+    color: #000000 !important;
+  }
+
+  .prod-qty-badge {
+    display: inline-block;
+    font-weight: 800;
+    font-size: 9pt;
+    padding: 1px 7px;
+    background: #e0e0e0 !important;
+    border: 1px solid #888888 !important;
+    border-radius: 3px;
+    color: #000000 !important;
   }
 
   .recon-detail-table tr {
@@ -7779,27 +7854,22 @@ select.select-pill {
   }
 
   .recon-detail-table tr:nth-child(even) {
-    background: #f8f8f8 !important;
-  }
-
-  .recon-detail-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt;
+    background: #f4f4f4 !important;
   }
 
   .recon-detail-table td {
-    padding: 4px 6px;
-    border-bottom: 1px solid #cccccc;
+    padding: 5px 6px;
+    border-bottom: 1px solid #bbbbbb;
     vertical-align: middle;
     color: #000000 !important;
   }
 
   .recon-subtotal-row {
-    background: #e6e6e6 !important;
+    background: #d9d9d9 !important;
     font-size: 9pt;
     font-weight: 800;
     border-top: 2px solid #000000;
+    border-bottom: 2px solid #000000;
     color: #000000 !important;
   }
 
