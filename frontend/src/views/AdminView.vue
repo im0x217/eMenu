@@ -762,24 +762,30 @@
           <!-- ORDERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-split">
+              <div class="card-toolbar card-toolbar-split orders-toolbar-container">
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
+                  </div>
+                </div>
+
+                <!-- Row 1: Search Bar aligned with Print Button -->
+                <div class="orders-search-print-row">
+                  <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل…" class="form-control search-input" />
                   </div>
                   <button @click="printReconciliation" class="btn btn-outline btn-sm flex-center reconciliation-print-btn" title="طباعة كشف تسوية المبيعات للتاريخ المحدد">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     <span>كشف التسوية</span>
                   </button>
                 </div>
-                <div class="card-toolbar-bottom">
-                  <div class="search-input-wrapper">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل…" class="form-control search-input" />
-                  </div>
+
+                <!-- Row 2: Status Filter (under search bar) aligned with Date Buttons -->
+                <div class="orders-filters-row">
                   <div class="filters-inline">
-                    <select v-model="orderFilters.status" class="form-control select-pill">
+                    <select v-model="orderFilters.status" class="form-control select-pill order-status-select">
                       <option value="">كل الحالات</option>
                       <option value="pending">قيد الانتظار (Pending)</option>
                       <option value="ready">جاهز للاستلام (Ready)</option>
@@ -5754,6 +5760,50 @@ export default {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.orders-toolbar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.orders-search-print-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.orders-search-print-row .search-input-wrapper {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.orders-search-print-row .reconciliation-print-btn {
+  height: 38px !important;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.orders-filters-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.order-status-select {
+  height: 38px !important;
+  min-width: 160px;
 }
 
 .search-input-wrapper {
