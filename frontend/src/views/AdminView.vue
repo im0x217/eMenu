@@ -1862,7 +1862,7 @@
         <div v-for="mainCat in reconciliationData.categoryProductBreakdown" :key="mainCat.name" class="recon-cat-block">
           <!-- Main Category Header (Centered) -->
           <div class="recon-cat-header">
-            <span class="recon-cat-title">📁 {{ mainCat.name }}</span>
+            <span class="recon-cat-title">{{ mainCat.name }}</span>
             <span class="recon-cat-stats">
               (إجمالي القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>)
             </span>
@@ -1871,7 +1871,7 @@
           <!-- Subcategories -->
           <div v-for="subCat in mainCat.subCategories" :key="subCat.name" class="recon-subcat-block">
             <div class="recon-subcat-title-container" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
-              <span class="recon-subcat-title">🏷️ {{ subCat.name }}</span>
+              <span class="recon-subcat-title">{{ subCat.name }}</span>
             </div>
 
             <table class="recon-detail-table">
@@ -7702,7 +7702,7 @@ select.select-pill {
   /* Level 1: Main Category Block */
   .recon-cat-block {
     margin-top: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     border: 1.5px solid #000000 !important;
     border-radius: 6px;
     overflow: hidden;
@@ -7725,7 +7725,7 @@ select.select-pill {
 
   .recon-cat-title {
     font-weight: 800;
-    font-size: 11pt;
+    font-size: 10.5pt;
     color: #000000 !important;
     text-align: center;
   }
@@ -7741,16 +7741,16 @@ select.select-pill {
   /* Level 2: Sub-Category Block */
   .recon-subcat-block {
     padding: 6px 8px;
-    border-bottom: 1.5px solid #000000 !important;
+    border-bottom: 1px solid #e0e0e0;
   }
 
   .recon-subcat-block:last-child {
-    border-bottom: none !important;
+    border-bottom: none;
   }
 
   .recon-subcat-title-container {
     text-align: center;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     margin-top: 2px;
     page-break-after: avoid;
     break-after: avoid;
@@ -7761,14 +7761,12 @@ select.select-pill {
     font-weight: 800;
     font-size: 9.5pt;
     color: #000000 !important;
-    background: #f2f2f2 !important;
-    padding: 2px 14px;
-    border-radius: 4px;
-    border: 1px solid #aaaaaa !important;
+    padding: 2px 8px;
+    border-bottom: 1px dashed #999999;
     text-align: center;
   }
 
-  /* Level 3: Products Table (Guaranteed bottom closure line) */
+  /* Level 3: Products Table */
   .recon-detail-table {
     width: 100%;
     border-collapse: collapse;
@@ -7788,13 +7786,12 @@ select.select-pill {
   }
 
   .recon-col-header-row th {
-    background: #e6e6e6 !important;
+    background: #f0f0f0 !important;
     padding: 4px 6px;
     font-weight: 800;
     font-size: 8.5pt;
     color: #000000 !important;
-    border-bottom: 1.5px solid #000000 !important;
-    border-top: 1px solid #cccccc;
+    border-bottom: 1.5px solid #000000;
     text-align: right;
   }
 
@@ -7808,31 +7805,28 @@ select.select-pill {
   }
 
   .recon-detail-table td {
-    padding: 4.5px 6px;
-    border-bottom: 1px solid #d0d0d0;
+    padding: 4px 6px;
+    border-bottom: 1px solid #e0e0e0;
     vertical-align: middle;
     color: #000000 !important;
   }
 
-  /* Solid closure line on the last row of every table (tbody or tfoot) */
-  .recon-detail-table tr:last-child td,
-  .recon-detail-table tbody tr:last-child td,
-  .recon-detail-table tfoot tr:last-child td {
-    border-bottom: 1.5px solid #000000 !important;
+  /* Clean bottom line on last body row */
+  .recon-detail-table tbody tr:last-child td {
+    border-bottom: 1.5px solid #000000;
   }
 
   .recon-subtotal-row {
     background: #e6e6e6 !important;
     font-size: 9pt;
     font-weight: 800;
-    border-top: 1.5px solid #000000 !important;
-    border-bottom: 1.5px solid #000000 !important;
+    border-top: 1.5px solid #000000;
+    border-bottom: 1.5px solid #000000;
     color: #000000 !important;
   }
 
   .recon-subtotal-row td {
     padding: 4px 6px;
-    border-bottom: 1.5px solid #000000 !important;
   }
 
   .recon-grand-total-card {
