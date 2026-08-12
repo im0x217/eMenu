@@ -7780,6 +7780,12 @@ select.select-pill {
     break-after: avoid;
   }
 
+  .recon-detail-table tfoot {
+    display: table-row-group !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
   .recon-col-header-row {
     page-break-after: avoid;
     break-after: avoid;
