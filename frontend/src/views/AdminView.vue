@@ -1562,45 +1562,57 @@
     </div>
 
     <!-- Customer Modal Form -->
-    <div v-if="customerModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-md">
+    <div v-if="customerModalOpen" class="modal-overlay animate-fade-in" @click.self="customerModalOpen = false">
+      <div class="modal-content modal-md">
         <div class="modal-header">
-          <h3>تعديل بيانات العميل</h3>
-          <button @click="customerModalOpen = false" class="modal-close-btn">&times;</button>
+          <div class="modal-title-group">
+            <h2 class="modal-title">تعديل بيانات العميل</h2>
+            <span v-if="editingCustomer.phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ editingCustomer.phone }}</span>
+          </div>
+          <button @click="customerModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <form @submit.prevent="saveCustomerDetails" class="modal-form">
-          <div class="form-group">
-            <label>اسم العميل *</label>
-            <input v-model="editingCustomer.name" type="text" required class="form-control" />
-          </div>
+          <div class="modal-body">
+            <div class="form-group mb-3">
+              <label class="form-label">اسم العميل *</label>
+              <input v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل الكامل..." />
+            </div>
 
-          <div class="form-group">
-            <label>رقم الهاتف *</label>
-            <input v-model="editingCustomer.phone" type="text" required class="form-control" />
+            <div class="form-group mb-3">
+              <label class="form-label">رقم الهاتف *</label>
+              <input v-model="editingCustomer.phone" type="text" required class="form-control text-mono" placeholder="0910000000..." />
+            </div>
           </div>
 
           <div class="modal-footer mt-4">
-            <button type="submit" class="btn btn-primary" :disabled="loading">حفظ التغييرات</button>
-            <button type="button" @click="customerModalOpen = false" class="btn btn-outline">إلغاء</button>
+            <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>حفظ التغييرات</span>
+            </button>
+            <button type="button" @click="customerModalOpen = false" class="btn btn-outline btn-modal-cancel">
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- Customer Favorites Modal -->
-    <div v-if="customerFavsModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-4xl">
+    <div v-if="customerFavsModalOpen" class="modal-overlay animate-fade-in" @click.self="customerFavsModalOpen = false">
+      <div class="modal-content modal-lg">
         <div class="modal-header">
-          <h3>المنتجات المفضلة للعميل</h3>
-          <button @click="customerFavsModalOpen = false" class="modal-close-btn">&times;</button>
+          <div class="modal-title-group">
+            <h2 class="modal-title">المنتجات المفضلة للعميل</h2>
+            <span v-if="viewingCustomer" class="modal-subtitle">
+              {{ viewingCustomer.name }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ viewingCustomer.phone }}</span>
+            </span>
+          </div>
+          <button @click="customerFavsModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <div class="modal-body py-3">
-          <div v-if="viewingCustomer" class="customer-favs-meta mb-3 pb-2" style="border-bottom: 1px dashed #dee2e6;">
-            <span class="text-bold text-dark">العميل:</span> {{ viewingCustomer.name }}
-            <span class="mx-2">|</span>
-            <span class="text-bold text-dark">الهاتف:</span> <span style="direction: ltr; display: inline-block;">{{ viewingCustomer.phone }}</span>
-            <span class="mx-2">|</span>
-            <span class="text-bold text-dark">إجمالي المنتجات المفضلة:</span> {{ formatArabicPlural(viewingCustomerFavs.length, 'product') }}
+          <div v-if="viewingCustomer" class="customer-favs-meta mb-3 pb-2" style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+            <span class="text-bold text-muted">إجمالي المفضلة:</span>
+            <span class="toolbar-badge ms-2" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">{{ formatArabicPlural(viewingCustomerFavs.length, 'product') }}</span>
           </div>
           
           <div v-if="viewingCustomerFavs.length > 0" class="fav-grid-brows">
@@ -1629,13 +1641,16 @@
                     <span class="price-val">{{ formatCurrency(prod.price_bulk) }}</span>
                   </div>
                 </div>
+                <button @click="removeCustomerFavorite(prod._id)" class="btn btn-outline btn-xs w-100 mt-2" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="إزالة من قائمة مفضلة العميل">
+                  إزالة من المفضلة
+                </button>
               </div>
             </div>
           </div>
           <p v-else class="text-center text-muted py-5">لا توجد تفضيلات مسجلة لهذا العميل.</p>
         </div>
         <div class="modal-footer mt-2">
-          <button type="button" @click="customerFavsModalOpen = false" class="btn btn-outline w-100">إغلاق</button>
+          <button type="button" @click="customerFavsModalOpen = false" class="btn btn-outline btn-modal-cancel w-100">إغلاق</button>
         </div>
       </div>
     </div>
@@ -2035,10 +2050,15 @@
   </div>
 
   <!-- ============ PAYMENT RECORDING MODAL ============ -->
-  <div v-if="paymentModalOpen" class="modal-overlay animate-fade-in">
+  <div v-if="paymentModalOpen" class="modal-overlay animate-fade-in" @click.self="paymentModalOpen = false">
     <div class="modal-content modal-lg">
       <div class="modal-header">
-        <h2 class="modal-title">تسجيل دفعة — {{ paymentTarget.customerName }}</h2>
+        <div class="modal-title-group">
+          <h2 class="modal-title">تسجيل دفعة نقدية</h2>
+          <span class="modal-subtitle">
+            {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ paymentTarget.customerPhone }}</span>
+          </span>
+        </div>
         <button @click="paymentModalOpen = false" class="modal-close-btn">✕</button>
       </div>
 
@@ -2051,7 +2071,7 @@
         <!-- Customer Balance Summary -->
         <div class="payment-balance-summary">
           <div class="balance-card balance-outstanding">
-            <span class="balance-label">الرصيد المستحق</span>
+            <span class="balance-label">الرصيد المستحق الحالي</span>
             <span class="balance-value">{{ formatCurrency(paymentTarget.outstandingBalance) }}</span>
           </div>
           <div class="balance-card balance-after">
@@ -2086,7 +2106,7 @@
           <div class="payment-form-grid">
             <div class="form-group">
               <label class="form-label">المبلغ (د.ل)</label>
-              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" />
+              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" autofocus />
               <div class="payment-quick-amounts">
                 <button type="button" class="btn btn-outline btn-xs" @click="paymentTarget.amount = paymentTarget.outstandingBalance">كامل المبلغ</button>
                 <button v-if="paymentTarget.unpaidOrders.length && paymentTarget.unpaidOrders[0].remaining > 0" type="button" class="btn btn-outline btn-xs" @click="paymentTarget.amount = paymentTarget.unpaidOrders[0].remaining">أقدم طلب</button>
@@ -2110,12 +2130,12 @@
 
           <!-- FIFO Preview -->
           <div v-if="paymentFifoPreview.length" class="fifo-preview">
-            <h4 class="payment-section-title">معاينة التوزيع</h4>
+            <h4 class="payment-section-title">معاينة التوزيع التلقائي (من الأقدم للأحدث)</h4>
             <div class="fifo-preview-list">
               <div v-for="item in paymentFifoPreview" :key="item.orderId" class="fifo-preview-item" :class="{ 'fully-paid': item.fullyPaid }">
                 <span class="fifo-order-id">#{{ item.orderIdShort }}</span>
                 <span class="fifo-applied">{{ formatCurrency(item.applied) }}</span>
-                <span class="fifo-status">{{ item.fullyPaid ? '✓ مسدد' : 'جزئي' }}</span>
+                <span class="fifo-status">{{ item.fullyPaid ? '✓ مسدد بالكامل' : 'تسديد جزئي' }}</span>
               </div>
             </div>
           </div>
@@ -2136,10 +2156,15 @@
   </div>
 
   <!-- ============ PAYMENT HISTORY MODAL ============ -->
-  <div v-if="paymentHistoryModalOpen" class="modal-overlay animate-fade-in">
+  <div v-if="paymentHistoryModalOpen" class="modal-overlay animate-fade-in" @click.self="paymentHistoryModalOpen = false">
     <div class="modal-content modal-lg">
       <div class="modal-header">
-        <h2 class="modal-title">سجل المدفوعات — {{ paymentTarget.customerName }}</h2>
+        <div class="modal-title-group">
+          <h2 class="modal-title">سجل المدفوعات والتحصيلات</h2>
+          <span class="modal-subtitle">
+            {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ paymentTarget.customerPhone }}</span>
+          </span>
+        </div>
         <button @click="paymentHistoryModalOpen = false" class="modal-close-btn">✕</button>
       </div>
 
@@ -4568,12 +4593,28 @@ export default {
       isMobileScreen.value = window.innerWidth <= 640;
     };
 
+    const handleGlobalKeydown = (e) => {
+      if (e.key === 'Escape') {
+        if (paymentModalOpen.value) paymentModalOpen.value = false;
+        if (paymentHistoryModalOpen.value) paymentHistoryModalOpen.value = false;
+        if (customerModalOpen.value) customerModalOpen.value = false;
+        if (customerFavsModalOpen.value) customerFavsModalOpen.value = false;
+        if (orderEditModalOpen.value) orderEditModalOpen.value = false;
+        if (productModalOpen.value) productModalOpen.value = false;
+        if (categoryModalOpen.value) categoryModalOpen.value = false;
+        if (tagModalOpen.value) tagModalOpen.value = false;
+        if (cropperModalOpen.value) cropperModalOpen.value = false;
+      }
+    };
+
     onMounted(() => {
       window.addEventListener('resize', handleResize);
+      window.addEventListener('keydown', handleGlobalKeydown);
     });
 
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleGlobalKeydown);
     });
 
     // =========================================================================
