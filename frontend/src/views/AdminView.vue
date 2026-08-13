@@ -2098,16 +2098,18 @@
           </div>
         </div>
 
-        <!-- Unpaid Orders List -->
+        <!-- Unpaid Orders List with Scroll Lights & Shadows -->
         <div v-if="paymentTarget.unpaidOrders.length" class="payment-unpaid-orders">
           <h4 class="payment-section-title">الطلبات غير المسددة ({{ paymentTarget.unpaidOrders.length }})</h4>
-          <div class="unpaid-orders-list">
-            <div v-for="order in paymentTarget.unpaidOrders" :key="order._id" class="unpaid-order-item">
-              <div class="unpaid-order-id">#{{ order._id.toString().slice(-6) }}</div>
-              <div class="unpaid-order-date">{{ new Date(order.createdAt).toLocaleDateString('ar-LY') }}</div>
-              <div class="unpaid-order-total">{{ formatCurrency(order.totalPrice) }}</div>
-              <div class="unpaid-order-paid">مدفوع: {{ formatCurrency(order.paidAmount) }}</div>
-              <div class="unpaid-order-remaining text-bold" style="color: #ef4444;">متبقي: {{ formatCurrency(order.remaining) }}</div>
+          <div class="unpaid-orders-scroll-wrapper">
+            <div class="unpaid-orders-list">
+              <div v-for="order in paymentTarget.unpaidOrders" :key="order._id" class="unpaid-order-item">
+                <div class="unpaid-order-id">#{{ order._id.toString().slice(-6) }}</div>
+                <div class="unpaid-order-date">{{ new Date(order.createdAt).toLocaleDateString('ar-LY') }}</div>
+                <div class="unpaid-order-total">{{ formatCurrency(order.totalPrice) }}</div>
+                <div class="unpaid-order-paid">مدفوع: {{ formatCurrency(order.paidAmount) }}</div>
+                <div class="unpaid-order-remaining text-bold" style="color: #ef4444;">متبقي: {{ formatCurrency(order.remaining) }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -9978,18 +9980,86 @@ select.select-pill {
   color: #1e3a5f !important;
 }
 
-/* Unpaid Orders List */
+/* Unpaid Orders List Scroll Lights & Shadows */
 .payment-unpaid-orders {
   margin-bottom: 20px;
+}
+
+.unpaid-orders-scroll-wrapper {
+  position: relative;
+  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;
+  background: #f8fafc;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.unpaid-orders-scroll-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: linear-gradient(180deg, rgba(30, 58, 95, 0.22), rgba(30, 58, 95, 0));
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.unpaid-orders-scroll-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(0deg, rgba(217, 119, 6, 0.25), rgba(217, 119, 6, 0));
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .unpaid-orders-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 180px;
+  max-height: 195px;
   overflow-y: auto;
-  padding-left: 4px;
+  padding: 10px;
+  scroll-behavior: smooth;
+
+  /* Dynamic CSS Scroll Shadows & Lights */
+  background:
+    linear-gradient(#f8fafc 30%, rgba(248, 250, 252, 0)),
+    linear-gradient(rgba(248, 250, 252, 0), #f8fafc 70%) 0 100%,
+    radial-gradient(farthest-side at 50% 0, rgba(30, 58, 95, 0.3), rgba(0, 0, 0, 0)),
+    radial-gradient(farthest-side at 50% 100%, rgba(217, 119, 6, 0.35), rgba(0, 0, 0, 0)) 0 100%;
+  background-repeat: no-repeat;
+  background-color: #f8fafc;
+  background-size: 100% 32px, 100% 32px, 100% 16px, 100% 16px;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.unpaid-orders-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.unpaid-orders-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+}
+
+.unpaid-orders-list::-webkit-scrollbar-thumb {
+  background: rgba(217, 119, 6, 0.4);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.unpaid-orders-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 119, 6, 0.7);
 }
 
 .unpaid-order-item {
