@@ -774,7 +774,7 @@
                 <div class="orders-search-print-row">
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل…" class="form-control search-input" />
+                    <input id="order-search-input" v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل…" class="form-control search-input" />
                   </div>
                   <button @click="printReconciliation" class="btn btn-outline btn-sm flex-center reconciliation-print-btn" title="طباعة كشف تسوية المبيعات للتاريخ المحدد">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -4648,6 +4648,9 @@ export default {
       isMobileScreen.value = window.innerWidth <= 640;
     };
 
+    let scanBuffer = '';
+    let scanTimeout = null;
+
     const handleGlobalKeydown = (e) => {
       if (e.key === 'Escape') {
         if (paymentModalOpen.value) paymentModalOpen.value = false;
@@ -4659,6 +4662,50 @@ export default {
         if (categoryModalOpen.value) categoryModalOpen.value = false;
         if (tagModalOpen.value) tagModalOpen.value = false;
         if (cropperModalOpen.value) cropperModalOpen.value = false;
+        return;
+      }
+
+      // Check if user is typing into modal inputs or form inputs
+      const activeEl = document.activeElement;
+      const activeTag = activeEl ? activeEl.tagName : '';
+      const isInputFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+      // If user is focused on normal inputs OTHER than the order search input, ignore global scan buffer
+      if (isInputFocused && activeEl.id !== 'order-search-input') {
+        return;
+      }
+
+      // Hardware Barcode Scanners send 'Enter' at the end of a rapid scan
+      if (e.key === 'Enter') {
+        if (scanBuffer.length >= 4) {
+          const scannedVal = scanBuffer.trim();
+          scanBuffer = '';
+          
+          // Switch to orders tab automatically
+          activeTab.value = 'orders';
+          orderFilters.search = scannedVal;
+
+          // Focus search input
+          nextTick(() => {
+            const searchInput = document.getElementById('order-search-input');
+            if (searchInput) searchInput.focus();
+          });
+
+          // Show feedback toast
+          const cleanNum = scannedVal.replace(/^#/, '').slice(-6);
+          toast.show(`تم المسح الضوئي بنجاح والبحث عن الطلب #${cleanNum}`, 'success');
+        }
+        scanBuffer = '';
+        return;
+      }
+
+      // Buffer single printable characters
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        scanBuffer += e.key;
+        clearTimeout(scanTimeout);
+        scanTimeout = setTimeout(() => {
+          scanBuffer = '';
+        }, 150); // Reset buffer if typing pauses > 150ms
       }
     };
 
