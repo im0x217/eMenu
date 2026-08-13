@@ -3953,10 +3953,15 @@ export default {
       if (mode === 'target' && paymentTarget.targetOrderId) {
         const targetOrder = paymentTarget.unpaidOrders.find(o => o._id.toString() === paymentTarget.targetOrderId.toString());
         if (targetOrder) {
-          paymentTarget.amount = Math.max(0, targetOrder.remaining || (targetOrder.totalPrice - targetOrder.paidAmount));
+          const rem = targetOrder.remaining !== undefined ? targetOrder.remaining : (targetOrder.totalPrice - targetOrder.paidAmount);
+          paymentTarget.amount = Math.max(0, rem);
         }
       } else if (mode === 'full') {
         paymentTarget.amount = paymentTarget.outstandingBalance;
+      } else if (mode === 'fifo') {
+        if (paymentTarget.unpaidOrders.length && paymentTarget.unpaidOrders[0].remaining > 0) {
+          paymentTarget.amount = paymentTarget.unpaidOrders[0].remaining;
+        }
       }
     };
 
@@ -5228,6 +5233,7 @@ export default {
       paymentTarget,
       paymentFifoPreview,
       paymentRemainingAfter,
+      setPaymentMode,
       openPaymentModal,
       recordPayment,
       openPaymentHistory,
