@@ -801,10 +801,10 @@
                         class="btn-datepicker-trigger" 
                         :class="{ active: datePickerOpen || orderFilters.selectedDate }"
                         @click.stop="datePickerOpen = !datePickerOpen"
-                        title="فتح تقويم اختيار التاريخ"
+                        title="التصفية بحسب تاريخ الاستلام"
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        <span>اختيار تاريخ</span>
+                        <span>تاريخ الاستلام</span>
                       </button>
 
                       <!-- Today Shortcut Button -->
@@ -4093,8 +4093,26 @@ export default {
         
         let matchesDate = true;
         if (orderFilters.selectedDate) {
-          const orderDateStr = new Date(o.createdAt).toLocaleDateString('en-CA');
-          matchesDate = orderDateStr === orderFilters.selectedDate;
+          let receiveDateStr = '';
+          if (o.deliveryDate) {
+            const d = new Date(o.deliveryDate);
+            if (!isNaN(d.getTime())) {
+              receiveDateStr = d.toLocaleDateString('en-CA');
+            } else if (typeof o.deliveryDate === 'string') {
+              receiveDateStr = o.deliveryDate.trim().slice(0, 10);
+            }
+          } else if (o.receivedAt) {
+            const d = new Date(o.receivedAt);
+            if (!isNaN(d.getTime())) {
+              receiveDateStr = d.toLocaleDateString('en-CA');
+            }
+          } else if (o.createdAt) {
+            const d = new Date(o.createdAt);
+            if (!isNaN(d.getTime())) {
+              receiveDateStr = d.toLocaleDateString('en-CA');
+            }
+          }
+          matchesDate = receiveDateStr === orderFilters.selectedDate;
         }
         
         return matchesSearch && matchesStatus && matchesDate;
