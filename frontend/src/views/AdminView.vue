@@ -4028,25 +4028,55 @@ export default {
       }
     };
 
+    // Convert order or payment ID to a valid 12-digit UPC-A barcode string with Modulo 10 check digit
+    const toUpcA = (val) => {
+      const str = (val || '0').toString();
+      let digits = str.replace(/\D/g, '');
+      
+      if (!digits || digits.length < 11) {
+        let numStr = '';
+        for (let i = 0; i < str.length; i++) {
+          numStr += (str.charCodeAt(i) % 10).toString();
+        }
+        digits = numStr;
+      }
+
+      digits = digits.slice(-11).padStart(11, '0');
+
+      let oddSum = 0;
+      let evenSum = 0;
+      for (let i = 0; i < 11; i++) {
+        const d = parseInt(digits[i], 10);
+        if (i % 2 === 0) oddSum += d;
+        else evenSum += d;
+      }
+      const checkDigit = (10 - ((oddSum * 3 + evenSum) % 10)) % 10;
+
+      return digits + checkDigit;
+    };
+
     const renderBarcode = (selector, val, options = {}) => {
       try {
         const el = document.querySelector(selector);
         if (!el) return;
-        JsBarcode(selector, val, {
-          format: 'CODE128',
-          width: 2,
-          height: 38,
+
+        const upcCode = toUpcA(val);
+
+        JsBarcode(selector, upcCode, {
+          format: 'UPC',
+          width: 2.2,
+          height: 44,
           displayValue: true,
-          fontSize: 11,
+          fontSize: 12,
           fontOptions: 'bold',
           font: 'Cairo, Fira Code, monospace',
-          margin: 4,
+          margin: 6,
           background: '#ffffff',
           lineColor: '#000000',
           ...options
         });
       } catch (e) {
-        console.error('Render barcode error:', e);
+        console.error('Render UPC-A barcode error:', e);
       }
     };
 
@@ -4603,6 +4633,7 @@ export default {
         const matchesSearch = !query || 
                               orderIdStr.includes(query) ||
                               orderIdShort.includes(query) ||
+                              toUpcA(o._id).includes(query) ||
                               (o.customerInfo && o.customerInfo.name && o.customerInfo.name.toLowerCase().includes(query)) || 
                               (o.customerInfo && o.customerInfo.phone && o.customerInfo.phone.includes(query));
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
