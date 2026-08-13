@@ -2041,6 +2041,11 @@
         </div>
       </template>
 
+      <!-- Barcode Container -->
+      <div class="receipt-barcode-container">
+        <svg :id="'barcode-order-' + pageIndex" class="receipt-barcode-svg"></svg>
+      </div>
+
       <div class="receipt-footer">
         <p v-if="paginatedOrderPages.length > 1" class="receipt-page-num">صفحة {{ pageIndex + 1 }} من {{ paginatedOrderPages.length }}</p>
         <p>شكراً لتعاملكم معنا ❤</p>
@@ -2296,6 +2301,11 @@
         <p>{{ printingPayment.note }}</p>
       </div>
 
+      <!-- Barcode Container -->
+      <div class="receipt-barcode-container">
+        <svg id="barcode-payment" class="receipt-barcode-svg"></svg>
+      </div>
+
       <div class="receipt-footer">
         <p>شكراً لتعاملكم معنا ❤</p>
         <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
@@ -2311,6 +2321,7 @@ import { useToastStore } from '../stores/toast';
 import CategoryIcon from '../components/CategoryIcon.vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
+import JsBarcode from 'jsbarcode';
 
 export default {
   name: 'AdminView',
@@ -3992,6 +4003,13 @@ export default {
         };
         printingPaymentReceipt.value = true;
         await nextTick();
+
+        const payIdStr = result.paymentId ? result.paymentId.toString() : '';
+        const payShortNum = payIdStr.slice(-8);
+        renderBarcode('#barcode-payment', payIdStr || 'PAYMENT', {
+          text: `إيصال: #PAY-${payShortNum}`
+        });
+
         const cleanup = () => {
           printingPaymentReceipt.value = false;
           printingPayment.value = null;
@@ -4007,6 +4025,28 @@ export default {
         toast.show(err.message || 'فشل تسجيل الدفعة', 'error');
       } finally {
         paymentLoading.value = false;
+      }
+    };
+
+    const renderBarcode = (selector, val, options = {}) => {
+      try {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        JsBarcode(selector, val, {
+          format: 'CODE128',
+          width: 2,
+          height: 38,
+          displayValue: true,
+          fontSize: 11,
+          fontOptions: 'bold',
+          font: 'Cairo, Fira Code, monospace',
+          margin: 4,
+          background: '#ffffff',
+          lineColor: '#000000',
+          ...options
+        });
+      } catch (e) {
+        console.error('Render barcode error:', e);
       }
     };
 
@@ -4030,6 +4070,13 @@ export default {
       printingPayment.value = payment;
       printingPaymentReceipt.value = true;
       await nextTick();
+
+      const payIdStr = payment._id ? payment._id.toString() : '';
+      const payShortNum = payIdStr.slice(-8);
+      renderBarcode('#barcode-payment', payIdStr || 'PAYMENT', {
+        text: `إيصال: #PAY-${payShortNum}`
+      });
+
       const cleanup = () => {
         printingPaymentReceipt.value = false;
         printingPayment.value = null;
@@ -4214,6 +4261,14 @@ export default {
     const printOrder = async (order) => {
       printingOrder.value = order;
       await nextTick();
+
+      const orderIdStr = order._id ? order._id.toString() : '';
+      const orderShortNum = orderIdStr.slice(-6);
+      paginatedOrderPages.value.forEach((_, idx) => {
+        renderBarcode(`#barcode-order-${idx}`, orderIdStr || 'ORDER', {
+          text: `طلب: #${orderShortNum}`
+        });
+      });
 
       const cleanup = () => {
         printingOrder.value = null;
@@ -9858,6 +9913,19 @@ select.select-pill {
 
   .payment-receipt-distribution {
     margin-top: 10px;
+  }
+
+  .receipt-barcode-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 8px 0 4px 0;
+    text-align: center;
+  }
+
+  .receipt-barcode-svg {
+    max-width: 100%;
+    height: auto;
   }
 }
 </style>
