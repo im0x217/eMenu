@@ -7549,6 +7549,114 @@ select.select-pill {
 }
 
 @media (max-width: 768px) {
+  /* Independent Options Buttons Layout - Mobile View */
+  .order-actions-btns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    width: 100%;
+    min-width: 140px;
+  }
+
+  .btn-table-action {
+    width: 100%;
+    height: 38px;
+    justify-content: center;
+    padding: 0 8px;
+    font-size: 0.82rem;
+    border-radius: 8px;
+  }
+
+  .payment-mode-pills {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .mode-pill {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+    border-radius: 12px;
+  }
+
+  .modal-footer {
+    display: flex;
+    flex-direction: column-reverse;
+    width: 100%;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn-modal-save,
+  .btn-modal-cancel {
+    width: 100% !important;
+    justify-content: center;
+    min-height: 46px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+
+  .shop-select-pills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .shop-pill {
+    width: 100%;
+    text-align: center;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .segmented-control {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    gap: 4px;
+    padding: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .segmented-control::-webkit-scrollbar {
+    display: none;
+  }
+
+  .control-pill {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 8px 14px;
+    font-size: 0.84rem;
+  }
+
+  .report-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .report-actions .btn,
+  .report-actions .dropdown-export {
+    width: 100%;
+  }
+
+  .report-actions .btn {
+    justify-content: center;
+    min-height: 40px;
+  }
+
   html, body, .admin-layout, .admin-container {
     max-width: 100vw !important;
     overflow-x: hidden !important;
@@ -9403,8 +9511,61 @@ select.select-pill {
   border-radius: 12px;
 }
 
-/* Restore and style scrollbars for AdminView on Laptop & Desktop screens */
+/* Independent Options Buttons Layout - Desktop & Laptop View */
 @media (min-width: 769px) {
+  .order-actions-btns {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .btn-table-action {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  .payment-mode-pills {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .mode-pill {
+    width: auto;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+  }
+
+  .modal-footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .btn-modal-save,
+  .btn-modal-cancel {
+    width: auto !important;
+  }
+
+  .shop-select-pills {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .segmented-control {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+  }
+
   .admin-main::-webkit-scrollbar,
   .table-container::-webkit-scrollbar,
   .edit-order-table-container::-webkit-scrollbar,
