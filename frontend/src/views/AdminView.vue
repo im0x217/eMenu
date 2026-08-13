@@ -4067,6 +4067,7 @@ export default {
           width: 1.3,
           height: 28,
           displayValue: false,
+          flat: true,
           margin: 2,
           background: '#ffffff',
           lineColor: '#000000',
