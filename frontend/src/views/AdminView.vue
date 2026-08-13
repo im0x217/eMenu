@@ -6750,8 +6750,9 @@ select.select-pill {
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -6759,37 +6760,83 @@ select.select-pill {
   padding: 20px;
 }
 
-.modal-box {
-  background: #fff;
-  border-radius: 16px;
+.modal-box,
+.modal-content {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px !important;
   width: 100%;
+  max-width: 550px;
+  max-height: 90vh;
+  padding: 24px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75) !important;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-box.max-w-md,
+.modal-content.modal-md {
   max-width: 500px;
-  padding: 25px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-box.max-w-lg,
+.modal-content.modal-lg,
+.modal-box.max-w-2xl {
+  max-width: 720px;
+}
+
+.modal-box.max-w-4xl {
+  max-width: 900px;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 20px;
-  border-bottom: 1px solid #f1f3f5;
-  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 14px;
 }
 
-.modal-header h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #1e3a5f;
+.modal-header h3,
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #f8fafc !important;
   margin: 0;
 }
 
+.modal-subtitle {
+  display: block;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
 .modal-close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
   cursor: pointer;
-  color: #868e96;
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .form-group {
