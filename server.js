@@ -1512,7 +1512,9 @@ app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
     if (status) {
       query.status = status;
     }
-    const orders = await ordColl.find(query).sort({ createdAt: -1 }).limit(100).toArray();
+    const limitParam = req.query.limit;
+    const limit = limitParam ? Math.min(Number(limitParam) || 1000, 5000) : 1000;
+    const orders = await ordColl.find(query).sort({ createdAt: -1 }).limit(limit).toArray();
     res.json(orders);
   } catch (err) {
     console.error("Fetch admin orders error:", err);
