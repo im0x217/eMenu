@@ -6980,8 +6980,116 @@ select.select-pill {
 .form-group label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #495057;
+  color: #cbd5e1;
   text-align: right;
+}
+
+/* Modal Form Labels & Inputs Contrast Fixes */
+.modal-box .form-group label,
+.modal-content .form-group label,
+.modal-box label,
+.modal-content label,
+.modal-box .form-label,
+.modal-content .form-label {
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+  text-align: right !important;
+  margin-bottom: 6px !important;
+}
+
+.modal-box .form-control,
+.modal-content .form-control {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-size: 0.92rem !important;
+  font-family: inherit !important;
+}
+
+.modal-box .form-control::placeholder,
+.modal-content .form-control::placeholder {
+  color: #64748b !important;
+}
+
+.modal-box .form-control:focus,
+.modal-content .form-control:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+  outline: none !important;
+}
+
+.modal-box select.form-control,
+.modal-content select.form-control {
+  color: #f8fafc !important;
+  background-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+.modal-box select.form-control option,
+.modal-content select.form-control option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Modal Footer & Buttons Placement Fixes */
+.modal-box .modal-footer,
+.modal-content .modal-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  margin-top: 24px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.modal-box .btn-modal-save,
+.modal-content .btn-modal-save,
+.modal-box .btn-primary,
+.modal-content .btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  padding: 10px 22px !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.modal-box .btn-modal-save:hover,
+.modal-content .btn-modal-save:hover,
+.modal-box .btn-primary:hover,
+.modal-content .btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4) !important;
+}
+
+.modal-box .btn-modal-cancel,
+.modal-content .btn-modal-cancel,
+.modal-box .btn-outline,
+.modal-content .btn-outline {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  font-weight: 600 !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.modal-box .btn-modal-cancel:hover,
+.modal-content .btn-modal-cancel:hover,
+.modal-box .btn-outline:hover,
+.modal-content .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 .form-group-row {
