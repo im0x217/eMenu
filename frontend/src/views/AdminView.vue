@@ -1158,12 +1158,109 @@
                         </span>
                       </td>
                       <td>
-                        <div class="actions-buttons-cell">
-                          <button @click="openPaymentModal(cust)" class="btn btn-outline btn-xs ml-1" style="color: #059669; border-color: #6ee7b7;" title="تسجيل دفعة">دفعة</button>
-                          <button @click="openPaymentHistory(cust)" class="btn btn-outline btn-xs ml-1" title="سجل المدفوعات">السجل</button>
-                          <button @click="openCustomerEditModal(cust)" class="btn btn-outline btn-xs ml-1">تعديل</button>
-                          <button @click="deleteCustomer(cust._id)" class="btn btn-outline btn-xs ml-1" style="color: #ef4444; border-color: #fca5a5;">حذف كلي</button>
-                          <button @click="openCustomerFavsModal(cust)" class="btn btn-outline btn-xs" :disabled="!cust.favorites || !cust.favorites.length">المفضلة</button>
+                        <!-- Desktop Action Bar -->
+                        <div class="customer-actions-bar desktop-actions">
+                          <button 
+                            type="button" 
+                            @click="openPaymentModal(cust)" 
+                            class="cust-btn btn-pay" 
+                            title="تسجيل دفعة جديدة"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            <span>دفعة</span>
+                          </button>
+                          
+                          <button 
+                            type="button" 
+                            @click="openPaymentHistory(cust)" 
+                            class="cust-btn btn-history" 
+                            title="عرض سجل المدفوعات"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span>السجل</span>
+                          </button>
+
+                          <button 
+                            type="button" 
+                            @click="openCustomerFavsModal(cust)" 
+                            class="cust-btn btn-favs" 
+                            :disabled="!cust.favorites || !cust.favorites.length"
+                            title="عرض المفضلة"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <span>المفضلة</span>
+                          </button>
+
+                          <button 
+                            type="button" 
+                            @click="openCustomerEditModal(cust)" 
+                            class="cust-btn btn-edit" 
+                            title="تعديل بيانات العميل"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span>تعديل</span>
+                          </button>
+
+                          <button 
+                            type="button" 
+                            @click="deleteCustomer(cust._id)" 
+                            class="cust-btn btn-delete" 
+                            title="حذف العميل وكافة بياناته"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span>حذف</span>
+                          </button>
+                        </div>
+
+                        <!-- Mobile Action Bar -->
+                        <div class="customer-actions-bar mobile-actions">
+                          <button 
+                            type="button" 
+                            @click="openPaymentModal(cust)" 
+                            class="cust-btn-mobile btn-pay-mobile"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            <span>تسجيل دفعة</span>
+                          </button>
+
+                          <div class="mobile-actions-row">
+                            <button 
+                              type="button" 
+                              @click="openPaymentHistory(cust)" 
+                              class="cust-btn-mobile btn-sub"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                              <span>السجل</span>
+                            </button>
+
+                            <button 
+                              type="button" 
+                              @click="openCustomerFavsModal(cust)" 
+                              class="cust-btn-mobile btn-sub"
+                              :disabled="!cust.favorites || !cust.favorites.length"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                              <span>المفضلة</span>
+                            </button>
+
+                            <button 
+                              type="button" 
+                              @click="openCustomerEditModal(cust)" 
+                              class="cust-btn-mobile btn-sub"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                              <span>تعديل</span>
+                            </button>
+
+                            <button 
+                              type="button" 
+                              @click="deleteCustomer(cust._id)" 
+                              class="cust-btn-mobile btn-delete-sub"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                              <span>حذف</span>
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -7549,114 +7646,6 @@ select.select-pill {
 }
 
 @media (max-width: 768px) {
-  /* Independent Options Buttons Layout - Mobile View */
-  .order-actions-btns {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    width: 100%;
-    min-width: 140px;
-  }
-
-  .btn-table-action {
-    width: 100%;
-    height: 38px;
-    justify-content: center;
-    padding: 0 8px;
-    font-size: 0.82rem;
-    border-radius: 8px;
-  }
-
-  .payment-mode-pills {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 8px;
-    margin-top: 6px;
-  }
-
-  .mode-pill {
-    width: 100%;
-    justify-content: flex-start;
-    min-height: 44px;
-    padding: 10px 14px;
-    font-size: 0.86rem;
-    border-radius: 12px;
-  }
-
-  .modal-footer {
-    display: flex;
-    flex-direction: column-reverse;
-    width: 100%;
-    gap: 10px;
-    margin-top: 16px;
-  }
-
-  .btn-modal-save,
-  .btn-modal-cancel {
-    width: 100% !important;
-    justify-content: center;
-    min-height: 46px;
-    font-size: 0.95rem;
-    border-radius: 12px;
-  }
-
-  .shop-select-pills {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .shop-pill {
-    width: 100%;
-    text-align: center;
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .segmented-control {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    width: 100%;
-    gap: 4px;
-    padding: 4px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .segmented-control::-webkit-scrollbar {
-    display: none;
-  }
-
-  .control-pill {
-    white-space: nowrap;
-    flex-shrink: 0;
-    padding: 8px 14px;
-    font-size: 0.84rem;
-  }
-
-  .report-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .report-actions .btn,
-  .report-actions .dropdown-export {
-    width: 100%;
-  }
-
-  .report-actions .btn {
-    justify-content: center;
-    min-height: 40px;
-  }
-
   html, body, .admin-layout, .admin-container {
     max-width: 100vw !important;
     overflow-x: hidden !important;
@@ -9511,61 +9500,8 @@ select.select-pill {
   border-radius: 12px;
 }
 
-/* Independent Options Buttons Layout - Desktop & Laptop View */
+/* Restore and style scrollbars for AdminView on Laptop & Desktop screens */
 @media (min-width: 769px) {
-  .order-actions-btns {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: nowrap;
-  }
-
-  .btn-table-action {
-    height: 34px;
-    padding: 0 12px;
-    font-size: 0.84rem;
-    white-space: nowrap;
-  }
-
-  .payment-mode-pills {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .mode-pill {
-    width: auto;
-    font-size: 0.8rem;
-    padding: 6px 14px;
-  }
-
-  .modal-footer {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-  }
-
-  .btn-modal-save,
-  .btn-modal-cancel {
-    width: auto !important;
-  }
-
-  .shop-select-pills {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-  }
-
-  .segmented-control {
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-  }
-
   .admin-main::-webkit-scrollbar,
   .table-container::-webkit-scrollbar,
   .edit-order-table-container::-webkit-scrollbar,
@@ -10522,6 +10458,186 @@ select.select-pill {
     padding: 4px 0;
     font-size: 10pt;
   }
+
+/* ==========================================================================
+   CUSTOMER TABLE OPTIONS / ACTION BUTTONS LAYOUT (DESKTOP & MOBILE)
+   ========================================================================== */
+
+.customer-actions-bar {
+  display: flex;
+  align-items: center;
+}
+
+@media (min-width: 769px) {
+  .customer-actions-bar.desktop-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap !important;
+  }
+
+  .customer-actions-bar.mobile-actions {
+    display: none !important;
+  }
+
+  .cust-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    height: 30px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    outline: none;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .cust-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .cust-btn:active {
+    transform: scale(0.96);
+  }
+
+  .cust-btn.btn-pay {
+    background: #ecfdf5 !important;
+    color: #059669 !important;
+    border-color: #a7f3d0 !important;
+  }
+
+  .cust-btn.btn-pay:hover {
+    background: #d1fae5 !important;
+    color: #047857 !important;
+  }
+
+  .cust-btn.btn-history {
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .cust-btn.btn-history:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+  }
+
+  .cust-btn.btn-favs {
+    background: #fff1f2 !important;
+    color: #e11d48 !important;
+    border-color: #fecdd3 !important;
+  }
+
+  .cust-btn.btn-favs:hover:not(:disabled) {
+    background: #ffe4e6 !important;
+  }
+
+  .cust-btn.btn-favs:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+  }
+
+  .cust-btn.btn-edit {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    border-color: #bfdbfe !important;
+  }
+
+  .cust-btn.btn-edit:hover {
+    background: #dbeafe !important;
+  }
+
+  .cust-btn.btn-delete {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border-color: #fecaca !important;
+  }
+
+  .cust-btn.btn-delete:hover {
+    background: #fee2e2 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-actions-bar.desktop-actions {
+    display: none !important;
+  }
+
+  .customer-actions-bar.mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    min-width: 220px;
+    padding: 4px 0;
+  }
+
+  .cust-btn-mobile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+    touch-action: manipulation;
+  }
+
+  .btn-pay-mobile {
+    width: 100%;
+    height: 36px;
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+  }
+
+  .btn-pay-mobile:active {
+    transform: scale(0.98);
+  }
+
+  .mobile-actions-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    width: 100%;
+  }
+
+  .cust-btn-mobile.btn-sub {
+    height: 32px;
+    padding: 0 4px;
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-size: 0.74rem;
+  }
+
+  .cust-btn-mobile.btn-sub:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .cust-btn-mobile.btn-delete-sub {
+    height: 32px;
+    padding: 0 4px;
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+    font-size: 0.74rem;
+  }
+}
 
   .payment-receipt-highlight {
     font-weight: 800;
