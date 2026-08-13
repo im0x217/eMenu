@@ -900,12 +900,25 @@
                         </div>
                       </td>
                       <td class="text-bold text-primary text-mono">{{ formatCurrency(order.totalPrice) }}</td>
-                      <td>
-                        <span class="payment-status-badge" :class="order.paymentStatus || 'unpaid'">
-                          <template v-if="order.paymentStatus === 'paid'">مدفوع</template>
-                          <template v-else-if="order.paymentStatus === 'partial'">جزئي {{ formatCurrency(order.paidAmount || 0) }}</template>
-                          <template v-else>غير مدفوع</template>
-                        </span>
+                      <td class="text-nowrap">
+                        <button 
+                          type="button" 
+                          class="payment-status-badge" 
+                          :class="order.paymentStatus || 'unpaid'" 
+                          @click="openPaymentModal(order.customerInfo, order)"
+                          :title="order.paymentStatus === 'paid' ? 'تم دفع الطلب بالكامل — انقر لعرض رصيد العميل' : 'انقر لتسجيل دفع لهذا الطلب'"
+                        >
+                          <span class="badge-icon">
+                            <svg v-if="order.paymentStatus === 'paid'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <svg v-else-if="order.paymentStatus === 'partial'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                          </span>
+                          <span class="badge-text">
+                            <template v-if="order.paymentStatus === 'paid'">مدفوع</template>
+                            <template v-else-if="order.paymentStatus === 'partial'">جزئي {{ formatCurrency(order.paidAmount || 0) }}</template>
+                            <template v-else>غير مدفوع</template>
+                          </span>
+                        </button>
                       </td>
                       <td>
                         <span class="price-mode-badge" :class="order.priceMode">
@@ -3935,9 +3948,10 @@ export default {
       }
     };
 
-    const openPaymentModal = async (cust) => {
+    const openPaymentModal = async (cust, targetOrder = null) => {
+      if (!cust || !cust.phone) return;
       paymentTarget.customerPhone = cust.phone;
-      paymentTarget.customerName = cust.name;
+      paymentTarget.customerName = cust.name || cust.phone;
       paymentTarget.amount = '';
       paymentTarget.note = '';
       paymentTarget.method = 'cash';
@@ -3952,6 +3966,14 @@ export default {
         paymentTarget.outstandingBalance = data.outstandingBalance;
         paymentTarget.unpaidOrders = data.unpaidOrders;
         paymentTarget.recentPayments = data.recentPayments;
+
+        // If opened from a specific order, pre-fill remaining balance for that order
+        if (targetOrder) {
+          const remaining = (targetOrder.totalPrice || 0) - (targetOrder.paidAmount || 0);
+          if (remaining > 0) {
+            paymentTarget.amount = remaining;
+          }
+        }
       }
       paymentLoading.value = false;
     };
@@ -9756,31 +9778,55 @@ select.select-pill {
 .payment-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
+  gap: 5px;
+  padding: 4px 11px;
   border-radius: 20px;
   font-size: 0.78rem;
   font-weight: 700;
   font-family: 'Cairo', sans-serif;
   line-height: 1.2;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+  user-select: none;
+}
+
+.payment-status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  filter: brightness(1.06);
+}
+
+.payment-status-badge:active {
+  transform: scale(0.97);
 }
 
 .payment-status-badge.unpaid {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
 }
 
 .payment-status-badge.partial {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid #fde68a !important;
 }
 
 .payment-status-badge.paid {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.payment-status-badge .badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .customer-balance-cell {
