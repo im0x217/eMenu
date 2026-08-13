@@ -1577,10 +1577,25 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
       }));
       // Recalculate total price directly from items to guarantee mathematical correctness
       const calculatedTotal = updateDoc.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-      updateDoc.totalPrice = calculatedTotal;
+      updateDoc.totalPrice = Math.round(calculatedTotal * 100) / 100;
     } else if (totalPrice !== undefined) {
-      updateDoc.totalPrice = Number(totalPrice);
+      updateDoc.totalPrice = Math.round(Number(totalPrice) * 100) / 100;
     }
+
+    if (updateDoc.totalPrice !== undefined) {
+      const existingOrder = await ordColl.findOne({ _id: new ObjectId(id) });
+      if (existingOrder) {
+        const paid = existingOrder.paidAmount || 0;
+        if (paid >= updateDoc.totalPrice) {
+          updateDoc.paymentStatus = 'paid';
+        } else if (paid > 0) {
+          updateDoc.paymentStatus = 'partial';
+        } else {
+          updateDoc.paymentStatus = 'unpaid';
+        }
+      }
+    }
+
     if (deliveryDate !== undefined) updateDoc.deliveryDate = deliveryDate;
     if (notes !== undefined) updateDoc.notes = notes;
     if (priceMode) updateDoc.priceMode = priceMode;
@@ -1868,9 +1883,9 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
       const orderRemaining = (order.totalPrice || 0) - (order.paidAmount || 0);
       if (orderRemaining <= 0) continue;
 
-      const applied = Math.min(remaining, orderRemaining);
-      const newPaidAmount = (order.paidAmount || 0) + applied;
-      const newStatus = newPaidAmount >= order.totalPrice ? 'paid' : 'partial';
+      const applied = Math.round(Math.min(remaining, orderRemaining) * 100) / 100;
+      const newPaidAmount = Math.round(((order.paidAmount || 0) + applied) * 100) / 100;
+      const newStatus = (order.totalPrice - newPaidAmount) <= 0.009 ? 'paid' : 'partial';
 
       await ordColl.updateOne(
         { _id: order._id },
@@ -1886,10 +1901,10 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
         newStatus: newStatus
       });
 
-      remaining -= applied;
+      remaining = Math.round((remaining - applied) * 100) / 100;
     }
 
-    const remainingBalanceAfter = totalOutstanding - paymentAmount;
+    const remainingBalanceAfter = Math.round(Math.max(0, totalOutstanding - paymentAmount) * 100) / 100;
 
     // Record payment transaction
     const paymentDoc = {
