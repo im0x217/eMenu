@@ -869,6 +869,7 @@
                       <th>العميل</th>
                       <th>المنتجات المطلوبة</th>
                       <th>المجموع</th>
+                      <th>حالة الدفع</th>
                       <th>نوع السعر</th>
                       <th>الحالة</th>
                       <th>إجراءات</th>
@@ -876,7 +877,7 @@
                   </thead>
                   <tbody>
                     <tr v-if="filteredOrders.length === 0">
-                      <td colspan="8" class="text-center p-4">لا توجد طلبات متطابقة.</td>
+                      <td colspan="9" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
                     <tr v-for="order in paginatedOrders" :key="order._id">
                       <td class="text-bold text-mono">
@@ -899,6 +900,13 @@
                         </div>
                       </td>
                       <td class="text-bold text-primary text-mono">{{ formatCurrency(order.totalPrice) }}</td>
+                      <td>
+                        <span class="payment-status-badge" :class="order.paymentStatus || 'unpaid'">
+                          <template v-if="order.paymentStatus === 'paid'">مدفوع</template>
+                          <template v-else-if="order.paymentStatus === 'partial'">جزئي {{ formatCurrency(order.paidAmount || 0) }}</template>
+                          <template v-else>غير مدفوع</template>
+                        </span>
+                      </td>
                       <td>
                         <span class="price-mode-badge" :class="order.priceMode">
                           {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
@@ -1116,12 +1124,13 @@
                       <th>آخر نشاط</th>
                       <th>إجمالي الطلبات</th>
                       <th>إجمالي الإنفاق</th>
+                      <th>الرصيد المستحق</th>
                       <th>خيارات</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="filteredCustomers.length === 0">
-                      <td colspan="7" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
+                      <td colspan="8" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
                     <tr v-for="cust in paginatedCustomers" :key="cust._id">
                       <td class="text-bold">{{ cust.name }}</td>
@@ -1131,7 +1140,14 @@
                       <td class="text-mono text-bold">{{ formatArabicPlural(cust.orderCount, 'order') }}</td>
                       <td class="text-bold text-primary text-mono">{{ formatCurrency(cust.totalSpent) }}</td>
                       <td>
+                        <span class="customer-balance-cell" :style="{ color: (cust.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
+                          {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : 'مُسدد ✓' }}
+                        </span>
+                      </td>
+                      <td>
                         <div class="actions-buttons-cell">
+                          <button @click="openPaymentModal(cust)" class="btn btn-outline btn-xs ml-1" style="color: #059669; border-color: #6ee7b7;" title="تسجيل دفعة">دفعة</button>
+                          <button @click="openPaymentHistory(cust)" class="btn btn-outline btn-xs ml-1" title="سجل المدفوعات">السجل</button>
                           <button @click="openCustomerEditModal(cust)" class="btn btn-outline btn-xs ml-1">تعديل</button>
                           <button @click="deleteCustomer(cust._id)" class="btn btn-outline btn-xs ml-1" style="color: #ef4444; border-color: #fca5a5;">حذف كلي</button>
                           <button @click="openCustomerFavsModal(cust)" class="btn btn-outline btn-xs" :disabled="!cust.favorites || !cust.favorites.length">المفضلة</button>
@@ -2017,6 +2033,251 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ PAYMENT RECORDING MODAL ============ -->
+  <div v-if="paymentModalOpen" class="modal-overlay animate-fade-in">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">تسجيل دفعة — {{ paymentTarget.customerName }}</h2>
+        <button @click="paymentModalOpen = false" class="modal-close-btn">✕</button>
+      </div>
+
+      <div v-if="paymentLoading" class="modal-body text-center p-4">
+        <div class="spinner"></div>
+        <p class="text-muted mt-2">جاري تحميل البيانات...</p>
+      </div>
+
+      <div v-else class="modal-body">
+        <!-- Customer Balance Summary -->
+        <div class="payment-balance-summary">
+          <div class="balance-card balance-outstanding">
+            <span class="balance-label">الرصيد المستحق</span>
+            <span class="balance-value">{{ formatCurrency(paymentTarget.outstandingBalance) }}</span>
+          </div>
+          <div class="balance-card balance-after">
+            <span class="balance-label">المتبقي بعد الدفع</span>
+            <span class="balance-value">{{ formatCurrency(paymentRemainingAfter) }}</span>
+          </div>
+        </div>
+
+        <!-- Unpaid Orders List -->
+        <div v-if="paymentTarget.unpaidOrders.length" class="payment-unpaid-orders">
+          <h4 class="payment-section-title">الطلبات غير المسددة ({{ paymentTarget.unpaidOrders.length }})</h4>
+          <div class="unpaid-orders-list">
+            <div v-for="order in paymentTarget.unpaidOrders" :key="order._id" class="unpaid-order-item">
+              <div class="unpaid-order-id">#{{ order._id.toString().slice(-6) }}</div>
+              <div class="unpaid-order-date">{{ new Date(order.createdAt).toLocaleDateString('ar-LY') }}</div>
+              <div class="unpaid-order-total">{{ formatCurrency(order.totalPrice) }}</div>
+              <div class="unpaid-order-paid">مدفوع: {{ formatCurrency(order.paidAmount) }}</div>
+              <div class="unpaid-order-remaining text-bold" style="color: #ef4444;">متبقي: {{ formatCurrency(order.remaining) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="payment-no-debt">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <p>لا توجد مستحقات على هذا العميل</p>
+        </div>
+
+        <!-- Payment Input Section -->
+        <div v-if="paymentTarget.outstandingBalance > 0" class="payment-input-section">
+          <h4 class="payment-section-title">تفاصيل الدفعة</h4>
+
+          <div class="payment-form-grid">
+            <div class="form-group">
+              <label class="form-label">المبلغ (د.ل)</label>
+              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" />
+              <div class="payment-quick-amounts">
+                <button type="button" class="btn btn-outline btn-xs" @click="paymentTarget.amount = paymentTarget.outstandingBalance">كامل المبلغ</button>
+                <button v-if="paymentTarget.unpaidOrders.length && paymentTarget.unpaidOrders[0].remaining > 0" type="button" class="btn btn-outline btn-xs" @click="paymentTarget.amount = paymentTarget.unpaidOrders[0].remaining">أقدم طلب</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">طريقة الدفع</label>
+              <select v-model="paymentTarget.method" class="form-control">
+                <option value="cash">نقدي</option>
+                <option value="bank_transfer">تحويل بنكي</option>
+                <option value="other">أخرى</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group-full">
+              <label class="form-label">ملاحظة (اختياري)</label>
+              <input v-model="paymentTarget.note" type="text" class="form-control" placeholder="ملاحظة على الدفعة..." />
+            </div>
+          </div>
+
+          <!-- FIFO Preview -->
+          <div v-if="paymentFifoPreview.length" class="fifo-preview">
+            <h4 class="payment-section-title">معاينة التوزيع</h4>
+            <div class="fifo-preview-list">
+              <div v-for="item in paymentFifoPreview" :key="item.orderId" class="fifo-preview-item" :class="{ 'fully-paid': item.fullyPaid }">
+                <span class="fifo-order-id">#{{ item.orderIdShort }}</span>
+                <span class="fifo-applied">{{ formatCurrency(item.applied) }}</span>
+                <span class="fifo-status">{{ item.fullyPaid ? '✓ مسدد' : 'جزئي' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!paymentLoading && paymentTarget.outstandingBalance > 0" class="modal-footer mt-4">
+        <button type="button" @click="recordPayment" class="btn btn-primary btn-modal-save" :disabled="paymentLoading || !Number(paymentTarget.amount)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>تأكيد وطباعة إيصال</span>
+        </button>
+        <button type="button" @click="paymentModalOpen = false" class="btn btn-outline btn-modal-cancel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <span>إلغاء</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAYMENT HISTORY MODAL ============ -->
+  <div v-if="paymentHistoryModalOpen" class="modal-overlay animate-fade-in">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">سجل المدفوعات — {{ paymentTarget.customerName }}</h2>
+        <button @click="paymentHistoryModalOpen = false" class="modal-close-btn">✕</button>
+      </div>
+
+      <div v-if="paymentLoading" class="modal-body text-center p-4">
+        <div class="spinner"></div>
+        <p class="text-muted mt-2">جاري التحميل...</p>
+      </div>
+
+      <div v-else class="modal-body">
+        <div class="payment-balance-summary" style="margin-bottom: 20px;">
+          <div class="balance-card balance-outstanding">
+            <span class="balance-label">الرصيد المستحق الحالي</span>
+            <span class="balance-value">{{ formatCurrency(paymentTarget.outstandingBalance) }}</span>
+          </div>
+        </div>
+
+        <div v-if="paymentTarget.recentPayments.length" class="payment-history-list">
+          <div v-for="payment in paymentTarget.recentPayments" :key="payment._id" class="payment-history-item">
+            <div class="payment-history-header">
+              <span class="payment-history-amount">{{ formatCurrency(payment.amount) }}</span>
+              <span class="payment-history-method">{{ payment.method === 'cash' ? 'نقدي' : payment.method === 'bank_transfer' ? 'تحويل بنكي' : 'أخرى' }}</span>
+              <span class="payment-history-date">{{ new Date(payment.createdAt).toLocaleString('ar-LY') }}</span>
+            </div>
+            <div v-if="payment.note" class="payment-history-note">{{ payment.note }}</div>
+            <div class="payment-history-distribution">
+              <span v-for="d in payment.distributedTo" :key="d.orderId" class="payment-dist-chip">
+                #{{ d.orderId.toString().slice(-6) }}: {{ formatCurrency(d.applied) }}
+              </span>
+            </div>
+            <button @click="printPaymentReceipt(payment)" class="btn btn-outline btn-xs mt-1" title="إعادة طباعة الإيصال">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              طباعة
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="payment-no-debt">
+          <p>لا توجد مدفوعات مسجلة لهذا العميل</p>
+        </div>
+      </div>
+
+      <div class="modal-footer mt-4">
+        <button type="button" @click="paymentHistoryModalOpen = false" class="btn btn-outline btn-modal-cancel">
+          <span>إغلاق</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CASH-IN RECEIPT PRINT TEMPLATE ============ -->
+  <div class="print-payment-receipt-wrapper" v-if="printingPaymentReceipt && printingPayment">
+    <div class="print-payment-receipt">
+      <div class="receipt-header">
+        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="receipt-logo" />
+        <div class="receipt-brand">
+          <h1 class="receipt-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+          <p class="receipt-tagline">إيصال تحصيل نقدي</p>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <div class="receipt-meta">
+        <div class="receipt-meta-row">
+          <span class="receipt-label">رقم الإيصال:</span>
+          <span class="receipt-value">#{{ printingPayment._id.toString().slice(-8) }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">التاريخ:</span>
+          <span class="receipt-value">{{ new Date(printingPayment.createdAt).toLocaleString('ar-LY') }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">العميل:</span>
+          <span class="receipt-value">{{ printingPayment.customerName }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">الهاتف:</span>
+          <span class="receipt-value receipt-phone">{{ printingPayment.customerPhone }}</span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">طريقة الدفع:</span>
+          <span class="receipt-value">{{ printingPayment.method === 'cash' ? 'نقدي' : printingPayment.method === 'bank_transfer' ? 'تحويل بنكي' : 'أخرى' }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Payment Amount -->
+      <div class="payment-receipt-amount-section">
+        <div class="payment-receipt-row">
+          <span>الرصيد السابق</span>
+          <span>{{ Number(printingPayment.balanceBefore).toFixed(2) }} د.ل</span>
+        </div>
+        <div class="payment-receipt-row payment-receipt-highlight">
+          <span>المبلغ المدفوع</span>
+          <span>{{ Number(printingPayment.amount).toFixed(2) }} د.ل</span>
+        </div>
+        <div class="payment-receipt-row">
+          <span>الرصيد المتبقي</span>
+          <span>{{ Number(printingPayment.remainingBalanceAfter).toFixed(2) }} د.ل</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Distribution Breakdown -->
+      <div v-if="printingPayment.distributedTo && printingPayment.distributedTo.length" class="payment-receipt-distribution">
+        <h4 style="font-size: 11px; margin: 0 0 6px 0; font-weight: 700;">تفصيل التوزيع على الطلبات:</h4>
+        <table class="receipt-items-table">
+          <thead>
+            <tr>
+              <th>رقم الطلب</th>
+              <th>المبلغ المطبق</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="d in printingPayment.distributedTo" :key="d.orderId">
+              <td>#{{ d.orderId.toString().slice(-6) }}</td>
+              <td>{{ Number(d.applied).toFixed(2) }} د.ل</td>
+              <td>{{ d.newStatus === 'paid' ? 'مسدد' : 'جزئي' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="printingPayment.note" class="receipt-notes">
+        <span class="receipt-label">ملاحظة:</span>
+        <p>{{ printingPayment.note }}</p>
+      </div>
+
+      <div class="receipt-footer">
+        <p>شكراً لتعاملكم معنا ❤</p>
+        <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <script>
@@ -3576,7 +3837,182 @@ export default {
 
     const printingOrder = ref(null);
     const printingReconciliation = ref(false);
+    const printingPaymentReceipt = ref(false);
+    const printingPayment = ref(null);
     const ITEMS_PER_PAGE = 16; // 16 items per page for ultra-dense A5 layout
+
+    // ============ CUSTOMER PAYMENTS & BALANCES ============
+    const paymentModalOpen = ref(false);
+    const paymentHistoryModalOpen = ref(false);
+    const paymentLoading = ref(false);
+    const paymentTarget = reactive({
+      customerPhone: '',
+      customerName: '',
+      outstandingBalance: 0,
+      unpaidOrders: [],
+      recentPayments: [],
+      amount: '',
+      note: '',
+      method: 'cash'
+    });
+
+    const paymentFifoPreview = computed(() => {
+      const amount = Number(paymentTarget.amount) || 0;
+      if (amount <= 0 || !paymentTarget.unpaidOrders.length) return [];
+      let remaining = amount;
+      const preview = [];
+      for (const order of paymentTarget.unpaidOrders) {
+        if (remaining <= 0) break;
+        const orderRemaining = order.remaining;
+        if (orderRemaining <= 0) continue;
+        const applied = Math.min(remaining, orderRemaining);
+        preview.push({
+          orderId: order._id,
+          orderIdShort: order._id.toString().slice(-6),
+          orderTotal: order.totalPrice,
+          previousPaid: order.paidAmount,
+          applied,
+          newPaidAmount: order.paidAmount + applied,
+          fullyPaid: (order.paidAmount + applied) >= order.totalPrice
+        });
+        remaining -= applied;
+      }
+      return preview;
+    });
+
+    const paymentRemainingAfter = computed(() => {
+      const amount = Number(paymentTarget.amount) || 0;
+      return Math.max(0, paymentTarget.outstandingBalance - amount);
+    });
+
+    const fetchCustomerBalance = async (phone) => {
+      try {
+        const res = await adminFetch(`/api/admin/customers/${encodeURIComponent(phone)}/balance?shop=${activeShop.value}`);
+        if (!res.ok) throw new Error('Failed to fetch balance');
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        console.error('fetchCustomerBalance error:', err);
+        return null;
+      }
+    };
+
+    const openPaymentModal = async (cust) => {
+      paymentTarget.customerPhone = cust.phone;
+      paymentTarget.customerName = cust.name;
+      paymentTarget.amount = '';
+      paymentTarget.note = '';
+      paymentTarget.method = 'cash';
+      paymentTarget.outstandingBalance = 0;
+      paymentTarget.unpaidOrders = [];
+      paymentTarget.recentPayments = [];
+      paymentModalOpen.value = true;
+      paymentLoading.value = true;
+
+      const data = await fetchCustomerBalance(cust.phone);
+      if (data) {
+        paymentTarget.outstandingBalance = data.outstandingBalance;
+        paymentTarget.unpaidOrders = data.unpaidOrders;
+        paymentTarget.recentPayments = data.recentPayments;
+      }
+      paymentLoading.value = false;
+    };
+
+    const recordPayment = async () => {
+      const amount = Number(paymentTarget.amount);
+      if (!amount || amount <= 0) {
+        toast.show('أدخل مبلغ صحيح', 'error');
+        return;
+      }
+      if (amount > paymentTarget.outstandingBalance + 0.01) {
+        toast.show('المبلغ يتجاوز الرصيد المستحق', 'error');
+        return;
+      }
+
+      paymentLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/payments', {
+          method: 'POST',
+          body: JSON.stringify({
+            customerPhone: paymentTarget.customerPhone,
+            customerName: paymentTarget.customerName,
+            amount,
+            shop: activeShop.value,
+            note: paymentTarget.note,
+            method: paymentTarget.method
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed');
+        }
+
+        const result = await res.json();
+        toast.show(`تم تسجيل دفعة ${formatCurrency(amount)} بنجاح`, 'success');
+        paymentModalOpen.value = false;
+
+        // Auto-print receipt
+        printingPayment.value = {
+          _id: result.paymentId,
+          customerPhone: paymentTarget.customerPhone,
+          customerName: paymentTarget.customerName,
+          amount,
+          method: paymentTarget.method,
+          note: paymentTarget.note,
+          distributedTo: result.distributedTo,
+          balanceBefore: paymentTarget.outstandingBalance,
+          remainingBalanceAfter: result.remainingBalanceAfter,
+          createdAt: new Date().toISOString()
+        };
+        printingPaymentReceipt.value = true;
+        await nextTick();
+        const cleanup = () => {
+          printingPaymentReceipt.value = false;
+          printingPayment.value = null;
+          window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
+        window.print();
+
+        // Refresh data
+        fetchOrders();
+        fetchCustomers();
+      } catch (err) {
+        toast.show(err.message || 'فشل تسجيل الدفعة', 'error');
+      } finally {
+        paymentLoading.value = false;
+      }
+    };
+
+    const openPaymentHistory = async (cust) => {
+      paymentTarget.customerPhone = cust.phone;
+      paymentTarget.customerName = cust.name;
+      paymentTarget.recentPayments = [];
+      paymentTarget.outstandingBalance = 0;
+      paymentHistoryModalOpen.value = true;
+      paymentLoading.value = true;
+
+      const data = await fetchCustomerBalance(cust.phone);
+      if (data) {
+        paymentTarget.outstandingBalance = data.outstandingBalance;
+        paymentTarget.recentPayments = data.recentPayments;
+      }
+      paymentLoading.value = false;
+    };
+
+    const printPaymentReceipt = async (payment) => {
+      printingPayment.value = payment;
+      printingPaymentReceipt.value = true;
+      await nextTick();
+      const cleanup = () => {
+        printingPaymentReceipt.value = false;
+        printingPayment.value = null;
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    };
 
     const paginatedOrderPages = computed(() => {
       if (!printingOrder.value || !printingOrder.value.items) return [];
@@ -4528,6 +4964,18 @@ export default {
       paginatedCustomers,
       customersTotalPages,
       customersVisiblePages,
+      paymentModalOpen,
+      paymentHistoryModalOpen,
+      paymentLoading,
+      paymentTarget,
+      paymentFifoPreview,
+      paymentRemainingAfter,
+      openPaymentModal,
+      recordPayment,
+      openPaymentHistory,
+      printPaymentReceipt,
+      printingPaymentReceipt,
+      printingPayment,
     };
   }
 };
@@ -8978,4 +9426,351 @@ select.select-pill {
     font-size: 0.84rem;
   }
 }
+
+/* ==========================================================================
+   CUSTOMER BALANCES & PAYMENTS STYLES
+   ========================================================================== */
+
+/* Payment Status Badges */
+.payment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: 'Cairo', sans-serif;
+  line-height: 1.2;
+}
+
+.payment-status-badge.unpaid {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.payment-status-badge.partial {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.payment-status-badge.paid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.customer-balance-cell {
+  font-weight: 700;
+  font-family: 'Fira Code', 'Cairo', monospace;
+  font-size: 0.9rem;
+}
+
+/* Balance Summary Cards */
+.payment-balance-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.balance-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.balance-outstanding {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.balance-outstanding .balance-label {
+  font-size: 0.8rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.balance-outstanding .balance-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #dc2626;
+  font-family: 'Fira Code', 'Cairo', monospace;
+}
+
+.balance-after {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.balance-after .balance-label {
+  font-size: 0.8rem;
+  color: #059669;
+  font-weight: 600;
+}
+
+.balance-after .balance-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #059669;
+  font-family: 'Fira Code', 'Cairo', monospace;
+}
+
+/* Section Title */
+.payment-section-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: #e2e8f0;
+}
+
+/* Unpaid Orders List */
+.payment-unpaid-orders {
+  margin-bottom: 20px;
+}
+
+.unpaid-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-left: 4px;
+}
+
+.unpaid-order-item {
+  display: grid;
+  grid-template-columns: 80px 100px 1fr 1fr 1fr;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 0.84rem;
+}
+
+.unpaid-order-id {
+  font-weight: 700;
+  font-family: monospace;
+  color: #38bdf8;
+}
+
+.payment-no-debt {
+  text-align: center;
+  padding: 30px 16px;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px dashed rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Payment Form Grid */
+.payment-input-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.payment-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.payment-amount-input {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: #10b981 !important;
+}
+
+.payment-quick-amounts {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* FIFO Preview */
+.fifo-preview {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.fifo-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fifo-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.fifo-preview-item.fully-paid {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.fifo-order-id {
+  color: #94a3b8;
+}
+
+.fifo-applied {
+  color: #f59e0b;
+}
+
+.fifo-preview-item.fully-paid .fifo-applied {
+  color: #10b981;
+}
+
+.fifo-status {
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+/* Payment History */
+.payment-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.payment-history-item {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.payment-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+}
+
+.payment-history-amount {
+  font-weight: 800;
+  color: #10b981;
+  font-family: monospace;
+}
+
+.payment-history-method {
+  font-size: 0.76rem;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+.payment-history-date {
+  font-size: 0.76rem;
+  color: #94a3b8;
+}
+
+.payment-history-note {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.payment-history-distribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.payment-dist-chip {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+/* Print Payment Receipt Styles */
+.print-payment-receipt-wrapper {
+  display: none;
+}
+
+@media print {
+  .print-payment-receipt-wrapper, .print-payment-receipt-wrapper * {
+    visibility: visible;
+  }
+
+  .print-payment-receipt-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+
+  .print-payment-receipt {
+    display: block !important;
+    width: 100%;
+    padding: 16px;
+    margin: 0;
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: 'Cairo', 'Fira Code', sans-serif;
+    direction: rtl;
+    font-size: 10pt;
+  }
+
+  .payment-receipt-amount-section {
+    margin: 12px 0;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+  }
+
+  .payment-receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 10pt;
+  }
+
+  .payment-receipt-highlight {
+    font-weight: 800;
+    font-size: 12pt;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    padding: 6px 0;
+    margin: 4px 0;
+  }
+
+  .payment-receipt-distribution {
+    margin-top: 10px;
+  }
+}
 </style>
+

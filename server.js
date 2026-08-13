@@ -163,7 +163,7 @@ console.log("[INIT] Registering API routes...");
 // ============ STATE ============
 let db, productsCollection, categoriesCollection, tagsCollection;
 let db2, productsCollection2, categoriesCollection2, tagsCollection2;
-let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection;
+let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection, paymentsCollection;
 let mongoConnected = false;
 
 // ============ MIDDLEWARE ============
@@ -1624,6 +1624,26 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
       } }
     ]).toArray();
     
+    // Batch fetch outstanding balance stats by phone
+    const unpaidStats = await ordColl.aggregate([
+      { 
+        $match: { 
+          status: { $ne: "cancelled" },
+          $or: [
+            { paymentStatus: { $in: ["unpaid", "partial"] } },
+            { paymentStatus: { $exists: false } }
+          ]
+        } 
+      },
+      { 
+        $group: {
+          _id: "$customerInfo.phone",
+          totalOwed: { $sum: "$totalPrice" },
+          totalPaid: { $sum: { $ifNull: ["$paidAmount", 0] } }
+        } 
+      }
+    ]).toArray();
+
     // Batch fetch all favorites by phone for the active shop
     const allFavs = await favoritesCollection.find({ shop }).toArray();
     
@@ -1633,6 +1653,11 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
       if (stat._id) statsMap[stat._id] = stat;
     }
     
+    const balanceMap = {};
+    for (const b of unpaidStats) {
+      if (b._id) balanceMap[b._id] = Math.max(0, (b.totalOwed || 0) - (b.totalPaid || 0));
+    }
+
     const favsMap = {};
     for (const fav of allFavs) {
       if (!favsMap[fav.phone]) favsMap[fav.phone] = [];
@@ -1642,6 +1667,7 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
     const customersWithDetails = customers.map(cust => {
       const phone = cust.phone;
       const stats = statsMap[phone] || { totalSpent: 0, orderCount: 0 };
+      const outstandingBalance = balanceMap[phone] || 0;
       const favorites = favsMap[phone] || [];
       
       return {
@@ -1652,6 +1678,7 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
         createdAt: cust.createdAt,
         totalSpent: stats.totalSpent,
         orderCount: stats.orderCount,
+        outstandingBalance,
         favorites
       };
     });
@@ -1719,12 +1746,204 @@ app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res
       await favoritesCollection.deleteMany({ phone });
       await ordersCollection.deleteMany({ "customerInfo.phone": phone });
       await ordersCollection2.deleteMany({ "customerInfo.phone": phone });
+      await paymentsCollection.deleteMany({ customerPhone: phone });
     }
 
     res.json({ success: true, message: "Customer and all associated data deleted successfully." });
   } catch (err) {
     console.error("Delete customer error:", err);
     res.status(500).json({ error: "Failed to delete customer" });
+  }
+});
+
+// ============ CUSTOMER PAYMENTS & BALANCES ============
+
+// Get customer balance & unpaid orders
+app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
+  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+  const { phone } = req.params;
+
+  try {
+    const unpaidOrders = await ordColl.find({
+      "customerInfo.phone": phone,
+      status: { $ne: "cancelled" },
+      $or: [
+        { paymentStatus: { $in: ["unpaid", "partial"] } },
+        { paymentStatus: { $exists: false } }
+      ]
+    }).sort({ createdAt: 1 }).toArray();
+
+    // For legacy orders without paymentStatus, treat as unpaid
+    const normalizedOrders = unpaidOrders.map(o => ({
+      _id: o._id,
+      totalPrice: o.totalPrice || 0,
+      paidAmount: o.paidAmount || 0,
+      remaining: (o.totalPrice || 0) - (o.paidAmount || 0),
+      paymentStatus: o.paymentStatus || 'unpaid',
+      createdAt: o.createdAt,
+      deliveryDate: o.deliveryDate,
+      status: o.status,
+      items: o.items
+    }));
+
+    const totalOwed = normalizedOrders.reduce((sum, o) => sum + o.totalPrice, 0);
+    const totalPaid = normalizedOrders.reduce((sum, o) => sum + o.paidAmount, 0);
+    const outstandingBalance = totalOwed - totalPaid;
+
+    const recentPayments = await paymentsCollection.find({
+      customerPhone: phone,
+      shop
+    }).sort({ createdAt: -1 }).limit(20).toArray();
+
+    res.json({
+      totalOwed,
+      totalPaid,
+      outstandingBalance,
+      unpaidOrders: normalizedOrders,
+      recentPayments
+    });
+  } catch (err) {
+    console.error("Fetch customer balance error:", err);
+    res.status(500).json({ error: "Failed to fetch customer balance" });
+  }
+});
+
+// Record a payment (FIFO distribution)
+app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
+  const { customerPhone, customerName, amount, shop: reqShop, note, method } = req.body;
+  const shop = reqShop === "shop2" ? "shop2" : "shop1";
+  const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+
+  if (!customerPhone || typeof customerPhone !== 'string') {
+    return res.status(400).json({ error: "Missing customer phone" });
+  }
+  const paymentAmount = Number(amount);
+  if (!paymentAmount || paymentAmount <= 0) {
+    return res.status(400).json({ error: "Invalid payment amount" });
+  }
+  if (method && !['cash', 'bank_transfer', 'other'].includes(method)) {
+    return res.status(400).json({ error: "Invalid payment method" });
+  }
+
+  try {
+    // Fetch unpaid/partial orders sorted oldest first (FIFO)
+    const unpaidOrders = await ordColl.find({
+      "customerInfo.phone": customerPhone.trim(),
+      status: { $ne: "cancelled" },
+      $or: [
+        { paymentStatus: { $in: ["unpaid", "partial"] } },
+        { paymentStatus: { $exists: false } }
+      ]
+    }).sort({ createdAt: 1 }).toArray();
+
+    // Calculate total outstanding
+    const totalOutstanding = unpaidOrders.reduce((sum, o) => {
+      return sum + ((o.totalPrice || 0) - (o.paidAmount || 0));
+    }, 0);
+
+    if (paymentAmount > totalOutstanding + 0.01) {
+      return res.status(400).json({ 
+        error: "Payment exceeds outstanding balance",
+        outstanding: totalOutstanding
+      });
+    }
+
+    // FIFO distribution
+    let remaining = paymentAmount;
+    const distributedTo = [];
+
+    for (const order of unpaidOrders) {
+      if (remaining <= 0) break;
+
+      const orderRemaining = (order.totalPrice || 0) - (order.paidAmount || 0);
+      if (orderRemaining <= 0) continue;
+
+      const applied = Math.min(remaining, orderRemaining);
+      const newPaidAmount = (order.paidAmount || 0) + applied;
+      const newStatus = newPaidAmount >= order.totalPrice ? 'paid' : 'partial';
+
+      await ordColl.updateOne(
+        { _id: order._id },
+        { $set: { paidAmount: newPaidAmount, paymentStatus: newStatus } }
+      );
+
+      distributedTo.push({
+        orderId: order._id,
+        applied: applied,
+        orderTotal: order.totalPrice,
+        previousPaid: order.paidAmount || 0,
+        newPaidAmount: newPaidAmount,
+        newStatus: newStatus
+      });
+
+      remaining -= applied;
+    }
+
+    const remainingBalanceAfter = totalOutstanding - paymentAmount;
+
+    // Record payment transaction
+    const paymentDoc = {
+      customerPhone: customerPhone.trim(),
+      customerName: (customerName || '').trim(),
+      amount: paymentAmount,
+      method: method || 'cash',
+      shop,
+      note: (note || '').trim(),
+      distributedTo,
+      remainingBalanceAfter: Math.max(0, remainingBalanceAfter),
+      balanceBefore: totalOutstanding,
+      createdAt: new Date()
+    };
+
+    const result = await paymentsCollection.insertOne(paymentDoc);
+
+    res.status(201).json({
+      success: true,
+      paymentId: result.insertedId,
+      amount: paymentAmount,
+      distributedTo,
+      remainingBalanceAfter: Math.max(0, remainingBalanceAfter)
+    });
+  } catch (err) {
+    console.error("Record payment error:", err);
+    res.status(500).json({ error: "Failed to record payment" });
+  }
+});
+
+// Get payment history for a customer
+app.get("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
+  const { phone, shop: reqShop, limit: reqLimit } = req.query;
+  const shop = reqShop === "shop2" ? "shop2" : "shop1";
+  const limit = Math.min(Number(reqLimit) || 50, 200);
+
+  try {
+    const query = { shop };
+    if (phone) query.customerPhone = phone;
+    const payments = await paymentsCollection.find(query).sort({ createdAt: -1 }).limit(limit).toArray();
+    res.json(payments);
+  } catch (err) {
+    console.error("Fetch payments error:", err);
+    res.status(500).json({ error: "Failed to fetch payments" });
+  }
+});
+
+// Get single payment receipt
+app.get("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid payment ID" });
+  }
+
+  try {
+    const payment = await paymentsCollection.findOne({ _id: new ObjectId(id) });
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+    res.json(payment);
+  } catch (err) {
+    console.error("Fetch payment error:", err);
+    res.status(500).json({ error: "Failed to fetch payment" });
   }
 });
 
@@ -2088,6 +2307,8 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
         notes: item.notes || ''
       })),
       totalPrice: Number(totalPrice),
+      paidAmount: 0,
+      paymentStatus: 'unpaid',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
@@ -2143,6 +2364,8 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
         notes: item.notes || ''
       })),
       totalPrice: Number(totalPrice),
+      paidAmount: 0,
+      paymentStatus: 'unpaid',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
@@ -2319,6 +2542,7 @@ const connectWithRetry = async () => {
     ordersCollection2 = db2.collection("orders");
     carouselCollection = db.collection("marketing_carousel");
     adminUsersCollection = db.collection("admin_users");
+    paymentsCollection = db.collection("payments");
     mongoConnected = true;
     
     productsCollection.createIndex({ category: 1 });
