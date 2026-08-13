@@ -4066,12 +4066,8 @@ export default {
           format: 'EAN13',
           width: 1.3,
           height: 28,
-          displayValue: true,
-          fontSize: 10,
-          fontOptions: 'bold',
-          font: 'Cairo, Fira Code, monospace',
+          displayValue: false,
           margin: 2,
-          textMargin: 1,
           background: '#ffffff',
           lineColor: '#000000',
           ...options
