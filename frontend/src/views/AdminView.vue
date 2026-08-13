@@ -10403,62 +10403,6 @@ select.select-pill {
   color: #0284c7 !important;
 }
 
-/* Print Payment Receipt Styles */
-.print-payment-receipt-wrapper {
-  display: none;
-}
-
-@media print {
-  /* Ensure modal overlays and admin layout remain hidden */
-  .modal-overlay,
-  .modal-box,
-  .modal-content,
-  .admin-layout {
-    display: none !important;
-  }
-
-  .print-payment-receipt-wrapper, .print-payment-receipt-wrapper * {
-    visibility: visible;
-  }
-
-  .print-payment-receipt-wrapper {
-    display: block !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    padding: 0;
-    margin: 0;
-    background: transparent;
-  }
-
-  .print-payment-receipt {
-    display: block !important;
-    width: 100%;
-    padding: 16px;
-    margin: 0;
-    background: #ffffff !important;
-    color: #111111 !important;
-    font-family: 'Cairo', 'Fira Code', sans-serif;
-    direction: rtl;
-    font-size: 10pt;
-  }
-
-  .payment-receipt-amount-section {
-    margin: 12px 0;
-    padding: 10px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-  }
-
-  .payment-receipt-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    font-size: 10pt;
-  }
-
 /* ==========================================================================
    CUSTOMER TABLE OPTIONS / ACTION BUTTONS LAYOUT (DESKTOP & MOBILE)
    ========================================================================== */
@@ -10638,6 +10582,62 @@ select.select-pill {
     font-size: 0.74rem;
   }
 }
+
+/* Print Payment Receipt Styles */
+.print-payment-receipt-wrapper {
+  display: none;
+}
+
+@media print {
+  /* Ensure modal overlays and admin layout remain hidden */
+  .modal-overlay,
+  .modal-box,
+  .modal-content,
+  .admin-layout {
+    display: none !important;
+  }
+
+  .print-payment-receipt-wrapper, .print-payment-receipt-wrapper * {
+    visibility: visible;
+  }
+
+  .print-payment-receipt-wrapper {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+
+  .print-payment-receipt {
+    display: block !important;
+    width: 100%;
+    padding: 16px;
+    margin: 0;
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: 'Cairo', 'Fira Code', sans-serif;
+    direction: rtl;
+    font-size: 10pt;
+  }
+
+  .payment-receipt-amount-section {
+    margin: 12px 0;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+  }
+
+  .payment-receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 10pt;
+  }
 
   .payment-receipt-highlight {
     font-weight: 800;
