@@ -1732,6 +1732,8 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) =
       await favoritesCollection.updateMany({ phone: oldPhone }, { $set: { phone: newPhone } });
       await ordersCollection.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
       await ordersCollection2.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
+      // Cascade phone change to payment audit trail
+      await paymentsCollection.updateMany({ customerPhone: oldPhone }, { $set: { customerPhone: newPhone } });
     }
 
     res.json({ success: true, name, phone: newPhone });
@@ -1873,11 +1875,17 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
       });
     }
 
-    // FIFO distribution
+    // Prevent paying for cancelled orders
+    const activeUnpaidOrders = unpaidOrders.filter(o => o.status !== 'cancelled');
+    if (activeUnpaidOrders.length === 0 && paymentAmount > 0) {
+      return res.status(400).json({ error: "No active unpaid orders found for this customer" });
+    }
+
+    // FIFO distribution (only against active orders)
     let remaining = paymentAmount;
     const distributedTo = [];
 
-    for (const order of unpaidOrders) {
+    for (const order of activeUnpaidOrders) {
       if (remaining <= 0) break;
 
       const orderRemaining = (order.totalPrice || 0) - (order.paidAmount || 0);
@@ -2330,7 +2338,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
         allowFloat: !!item.allowFloat,
         notes: item.notes || ''
       })),
-      totalPrice: Number(totalPrice),
+      totalPrice: Math.round(Number(totalPrice) * 100) / 100,
       paidAmount: 0,
       paymentStatus: 'unpaid',
       deliveryDate: deliveryDate || '',
@@ -2387,7 +2395,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
         allowFloat: !!item.allowFloat,
         notes: item.notes || ''
       })),
-      totalPrice: Number(totalPrice),
+      totalPrice: Math.round(Number(totalPrice) * 100) / 100,
       paidAmount: 0,
       paymentStatus: 'unpaid',
       deliveryDate: deliveryDate || '',
