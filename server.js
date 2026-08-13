@@ -1588,6 +1588,7 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
         const paid = existingOrder.paidAmount || 0;
         if (paid >= updateDoc.totalPrice) {
           updateDoc.paymentStatus = 'paid';
+          updateDoc.paidAmount = updateDoc.totalPrice; // Cap overpayment to match new total price
         } else if (paid > 0) {
           updateDoc.paymentStatus = 'partial';
         } else {
@@ -1804,9 +1805,9 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
       items: o.items
     }));
 
-    const totalOwed = normalizedOrders.reduce((sum, o) => sum + o.totalPrice, 0);
-    const totalPaid = normalizedOrders.reduce((sum, o) => sum + o.paidAmount, 0);
-    const outstandingBalance = totalOwed - totalPaid;
+    const totalOwed = Math.round(normalizedOrders.reduce((sum, o) => sum + o.totalPrice, 0) * 100) / 100;
+    const totalPaid = Math.round(normalizedOrders.reduce((sum, o) => sum + o.paidAmount, 0) * 100) / 100;
+    const outstandingBalance = Math.round(Math.max(0, totalOwed - totalPaid) * 100) / 100;
 
     const recentPayments = await paymentsCollection.find({
       customerPhone: phone,
@@ -1863,10 +1864,13 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
       }
     }
 
-    // Calculate total outstanding
-    const totalOutstanding = unpaidOrders.reduce((sum, o) => {
+    // Prevent paying for cancelled orders
+    const activeUnpaidOrders = unpaidOrders.filter(o => o.status !== 'cancelled');
+
+    // Calculate total outstanding from active orders only
+    const totalOutstanding = Math.round(activeUnpaidOrders.reduce((sum, o) => {
       return sum + ((o.totalPrice || 0) - (o.paidAmount || 0));
-    }, 0);
+    }, 0) * 100) / 100;
 
     if (paymentAmount > totalOutstanding + 0.01) {
       return res.status(400).json({ 
@@ -1875,8 +1879,6 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
       });
     }
 
-    // Prevent paying for cancelled orders
-    const activeUnpaidOrders = unpaidOrders.filter(o => o.status !== 'cancelled');
     if (activeUnpaidOrders.length === 0 && paymentAmount > 0) {
       return res.status(400).json({ error: "No active unpaid orders found for this customer" });
     }

@@ -904,9 +904,9 @@
                         <button 
                           type="button" 
                           class="payment-status-badge" 
-                          :class="order.paymentStatus || 'unpaid'" 
-                          @click="openPaymentModal(order.customerInfo, order)"
-                          :title="order.paymentStatus === 'paid' ? 'تم دفع الطلب بالكامل — انقر لعرض رصيد العميل' : 'انقر لتسجيل دفع لهذا الطلب'"
+                          :class="[order.paymentStatus || 'unpaid', { 'is-cancelled': order.status === 'cancelled' }]" 
+                          @click="order.status !== 'cancelled' && openPaymentModal(order.customerInfo, order)"
+                          :title="order.status === 'cancelled' ? 'الطلب ملغي' : (order.paymentStatus === 'paid' ? 'تم دفع الطلب بالكامل — انقر لعرض رصيد العميل' : 'انقر لتسجيل دفع لهذا الطلب')"
                         >
                           <span class="badge-icon">
                             <svg v-if="order.paymentStatus === 'paid'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -4000,18 +4000,20 @@ export default {
         if (remaining <= 0) break;
         const orderRemaining = order.remaining !== undefined ? order.remaining : ((order.totalPrice || 0) - (order.paidAmount || 0));
         if (orderRemaining <= 0) continue;
-        const applied = Math.min(remaining, orderRemaining);
+        const applied = Math.round(Math.min(remaining, orderRemaining) * 100) / 100;
+        const newPaid = Math.round(((order.paidAmount || 0) + applied) * 100) / 100;
+        const fullyPaid = (order.totalPrice - newPaid) <= 0.009;
         preview.push({
           orderId: order._id,
           orderIdShort: order._id.toString().slice(-6),
           orderTotal: order.totalPrice,
           previousPaid: order.paidAmount,
           applied,
-          newPaidAmount: order.paidAmount + applied,
-          fullyPaid: (order.paidAmount + applied) >= order.totalPrice,
+          newPaidAmount: newPaid,
+          fullyPaid,
           isTarget: paymentTarget.targetOrderId && order._id.toString() === paymentTarget.targetOrderId.toString()
         });
-        remaining -= applied;
+        remaining = Math.round((remaining - applied) * 100) / 100;
       }
       return preview;
     });
@@ -9901,6 +9903,12 @@ select.select-pill {
 
 .payment-status-badge:active {
   transform: scale(0.97);
+}
+
+.payment-status-badge.is-cancelled {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  pointer-events: none;
 }
 
 .payment-status-badge.unpaid {
