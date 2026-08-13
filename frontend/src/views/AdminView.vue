@@ -4064,13 +4064,14 @@ export default {
 
         JsBarcode(selector, upcCode, {
           format: 'UPC',
-          width: 2.2,
-          height: 44,
+          width: 1.4,
+          height: 28,
           displayValue: true,
-          fontSize: 12,
+          fontSize: 10,
           fontOptions: 'bold',
           font: 'Cairo, Fira Code, monospace',
-          margin: 6,
+          margin: 2,
+          textMargin: 1,
           background: '#ffffff',
           lineColor: '#000000',
           ...options
@@ -9997,13 +9998,16 @@ select.select-pill {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 8px 0 4px 0;
+    margin: 4px 0 2px 0;
     text-align: center;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .receipt-barcode-svg {
-    max-width: 100%;
+    max-width: 160px;
     height: auto;
+    margin: 0 auto;
   }
 }
 </style>
