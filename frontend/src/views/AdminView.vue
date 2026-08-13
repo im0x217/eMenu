@@ -2132,7 +2132,8 @@
                 :class="{ active: paymentTarget.mode === 'target' }" 
                 @click="setPaymentMode('target')"
               >
-                🔒 مخصص للطلب #{{ paymentTarget.targetOrderShort }}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>مخصص للطلب #{{ paymentTarget.targetOrderShort }}</span>
               </button>
               <button 
                 type="button" 
@@ -2140,7 +2141,8 @@
                 :class="{ active: paymentTarget.mode === 'fifo' }" 
                 @click="setPaymentMode('fifo')"
               >
-                ⏳ الأقدم فأحدث (توزيع تلقائي)
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>الأقدم فأحدث (توزيع تلقائي)</span>
               </button>
               <button 
                 type="button" 
@@ -2148,7 +2150,8 @@
                 :class="{ active: paymentTarget.mode === 'full' }" 
                 @click="setPaymentMode('full')"
               >
-                💰 كامل المستحقات ({{ formatCurrency(paymentTarget.outstandingBalance) }})
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <span>كامل المستحقات ({{ formatCurrency(paymentTarget.outstandingBalance) }})</span>
               </button>
             </div>
           </div>
@@ -2157,11 +2160,6 @@
             <div class="form-group">
               <label class="form-label">المبلغ (د.ل)</label>
               <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" autofocus />
-              <div class="payment-quick-amounts">
-                <button v-if="paymentTarget.targetOrderId" type="button" class="btn btn-outline btn-xs" @click="setPaymentMode('target')">الطلب #{{ paymentTarget.targetOrderShort }}</button>
-                <button type="button" class="btn btn-outline btn-xs" @click="setPaymentMode('fifo')">الأقدم فأحدث</button>
-                <button type="button" class="btn btn-outline btn-xs" @click="setPaymentMode('full')">كامل المبلغ</button>
-              </div>
             </div>
 
             <div class="form-group">
@@ -2191,8 +2189,18 @@
                 <span class="fifo-order-id">#{{ item.orderIdShort }}</span>
                 <span class="fifo-applied">{{ formatCurrency(item.applied) }}</span>
                 <span class="fifo-status">
-                  <template v-if="item.isTarget">🎯 الطلب المخصص</template>
-                  <template v-else>{{ item.fullyPaid ? '✓ مسدد بالكامل' : 'تسديد جزئي' }}</template>
+                  <template v-if="item.isTarget">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                    <span>الطلب المخصص</span>
+                  </template>
+                  <template v-else-if="item.fullyPaid">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>مسدد بالكامل</span>
+                  </template>
+                  <template v-else>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>تسديد جزئي</span>
+                  </template>
                 </span>
               </div>
             </div>
@@ -10074,71 +10082,6 @@ select.select-pill {
   color: #059669 !important;
 }
 
-.payment-quick-amounts {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.payment-quick-amounts .btn {
-  background: rgba(217, 119, 6, 0.1) !important;
-  color: #b45309 !important;
-  border: 1px solid rgba(217, 119, 6, 0.3) !important;
-  font-weight: 700 !important;
-  border-radius: 20px !important;
-  padding: 3px 10px !important;
-  font-size: 0.76rem !important;
-}
-
-.payment-quick-amounts .btn:hover {
-  background: rgba(217, 119, 6, 0.2) !important;
-  color: #92400e !important;
-}
-
-/* FIFO Preview */
-.fifo-preview {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed #cbd5e1 !important;
-}
-
-.fifo-preview-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.fifo-preview-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: #fffbeb !important;
-  border: 1px solid #fde68a !important;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #b45309 !important;
-}
-
-.fifo-preview-item.fully-paid {
-  background: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
-  color: #047857 !important;
-}
-
-.fifo-order-id {
-  color: #64748b !important;
-}
-
-.fifo-applied {
-  color: #d97706 !important;
-}
-
-.fifo-preview-item.fully-paid .fifo-applied {
-  color: #059669 !important;
-}
-
 /* Mode Selector Pills */
 .payment-mode-selector {
   margin-bottom: 14px;
@@ -10152,6 +10095,9 @@ select.select-pill {
 }
 
 .mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
   color: #334155;
@@ -10174,6 +10120,14 @@ select.select-pill {
   color: #b45309 !important;
   border-color: #d97706 !important;
   box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
+}
+
+.fifo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .fifo-preview-item.target-order {
