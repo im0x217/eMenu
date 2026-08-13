@@ -4028,12 +4028,12 @@ export default {
       }
     };
 
-    // Convert order or payment ID to a valid 12-digit UPC-A barcode string with Modulo 10 check digit
-    const toUpcA = (val) => {
+    // Convert order or payment ID to a valid 13-digit EAN-13 barcode string with Modulo 10 check digit
+    const toEan13 = (val) => {
       const str = (val || '0').toString();
       let digits = str.replace(/\D/g, '');
       
-      if (!digits || digits.length < 11) {
+      if (!digits || digits.length < 12) {
         let numStr = '';
         for (let i = 0; i < str.length; i++) {
           numStr += (str.charCodeAt(i) % 10).toString();
@@ -4041,16 +4041,16 @@ export default {
         digits = numStr;
       }
 
-      digits = digits.slice(-11).padStart(11, '0');
+      digits = digits.slice(-12).padStart(12, '0');
 
       let oddSum = 0;
       let evenSum = 0;
-      for (let i = 0; i < 11; i++) {
+      for (let i = 0; i < 12; i++) {
         const d = parseInt(digits[i], 10);
         if (i % 2 === 0) oddSum += d;
         else evenSum += d;
       }
-      const checkDigit = (10 - ((oddSum * 3 + evenSum) % 10)) % 10;
+      const checkDigit = (10 - ((oddSum + (evenSum * 3)) % 10)) % 10;
 
       return digits + checkDigit;
     };
@@ -4060,11 +4060,11 @@ export default {
         const el = document.querySelector(selector);
         if (!el) return;
 
-        const upcCode = toUpcA(val);
+        const eanCode = toEan13(val);
 
-        JsBarcode(selector, upcCode, {
-          format: 'UPC',
-          width: 1.4,
+        JsBarcode(selector, eanCode, {
+          format: 'EAN13',
+          width: 1.3,
           height: 28,
           displayValue: true,
           fontSize: 10,
@@ -4077,7 +4077,7 @@ export default {
           ...options
         });
       } catch (e) {
-        console.error('Render UPC-A barcode error:', e);
+        console.error('Render EAN-13 barcode error:', e);
       }
     };
 
@@ -4634,7 +4634,7 @@ export default {
         const matchesSearch = !query || 
                               orderIdStr.includes(query) ||
                               orderIdShort.includes(query) ||
-                              toUpcA(o._id).includes(query) ||
+                              toEan13(o._id).includes(query) ||
                               (o.customerInfo && o.customerInfo.name && o.customerInfo.name.toLowerCase().includes(query)) || 
                               (o.customerInfo && o.customerInfo.phone && o.customerInfo.phone.includes(query));
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
