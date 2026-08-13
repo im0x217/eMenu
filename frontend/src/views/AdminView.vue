@@ -2199,10 +2199,12 @@
                 #{{ d.orderId.toString().slice(-6) }}: {{ formatCurrency(d.applied) }}
               </span>
             </div>
-            <button @click="printPaymentReceipt(payment)" class="btn btn-outline btn-xs mt-1" title="إعادة طباعة الإيصال">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              طباعة
-            </button>
+            <div class="payment-history-footer mt-2">
+              <button @click="printPaymentReceipt(payment)" class="btn btn-outline btn-xs btn-payment-print" title="طباعة الإيصال">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>طباعة الإيصال</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -8148,6 +8150,17 @@ select.select-pill {
 }
 
 @media print {
+  /* Hide all dashboard layout, modal pop-ups, backdrops, and web view elements */
+  .admin-layout,
+  .modal-overlay,
+  .modal-box,
+  .modal-content,
+  .admin-header,
+  .admin-sidebar,
+  .toast-container {
+    display: none !important;
+  }
+
   /* Default page size for order receipts */
   @page {
     size: A5 portrait;
@@ -8158,10 +8171,6 @@ select.select-pill {
   @page reconciliation {
     size: A4 portrait;
     margin: 8mm 10mm;
-  }
-
-  .admin-layout {
-    display: none !important;
   }
 
   .reconciliation-page {
@@ -10046,20 +10055,56 @@ select.select-pill {
   font-weight: 600;
 }
 
+.payment-history-footer {
+  display: flex;
+  justify-content: flex-end; /* In Arabic RTL mode, flex-end aligns to the LEFT side of the container */
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.btn-payment-print {
+  background: #ffffff !important;
+  color: #1e3a5f !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 4px 12px !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-payment-print:hover {
+  background: #e0f2fe !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
 /* Print Payment Receipt Styles */
 .print-payment-receipt-wrapper {
   display: none;
 }
 
 @media print {
+  /* Ensure modal overlays and admin layout remain hidden */
+  .modal-overlay,
+  .modal-box,
+  .modal-content,
+  .admin-layout {
+    display: none !important;
+  }
+
   .print-payment-receipt-wrapper, .print-payment-receipt-wrapper * {
     visibility: visible;
   }
 
   .print-payment-receipt-wrapper {
     display: block !important;
-    position: relative;
-    width: 100%;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
     padding: 0;
     margin: 0;
     background: transparent;
