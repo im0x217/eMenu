@@ -3989,7 +3989,7 @@ export default {
         paymentModalOpen.value = false;
 
         // Auto-print receipt
-        printingPayment.value = {
+        const paymentDoc = {
           _id: result.paymentId,
           customerPhone: paymentTarget.customerPhone,
           customerName: paymentTarget.customerName,
@@ -4001,22 +4001,7 @@ export default {
           remainingBalanceAfter: result.remainingBalanceAfter,
           createdAt: new Date().toISOString()
         };
-        printingPaymentReceipt.value = true;
-        await nextTick();
-
-        const payIdStr = result.paymentId ? result.paymentId.toString() : '';
-        const payShortNum = payIdStr.slice(-8);
-        renderBarcode('#barcode-payment', payIdStr || 'PAYMENT', {
-          text: `إيصال: #PAY-${payShortNum}`
-        });
-
-        const cleanup = () => {
-          printingPaymentReceipt.value = false;
-          printingPayment.value = null;
-          window.removeEventListener('afterprint', cleanup);
-        };
-        window.addEventListener('afterprint', cleanup);
-        window.print();
+        await printPaymentReceipt(paymentDoc);
 
         // Refresh data
         fetchOrders();
