@@ -6881,9 +6881,9 @@ select.select-pill {
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.8) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -6893,15 +6893,15 @@ select.select-pill {
 
 .modal-box,
 .modal-content {
-  background: #0f172a !important;
-  color: #f8fafc !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 18px !important;
   width: 100%;
   max-width: 550px;
   max-height: 90vh;
   padding: 24px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75) !important;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15) !important;
   overflow-y: auto;
   position: relative;
   z-index: 1001;
@@ -6929,7 +6929,7 @@ select.select-pill {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #f1f3f5 !important;
   padding-bottom: 14px;
 }
 
@@ -6937,21 +6937,21 @@ select.select-pill {
 .modal-title {
   font-size: 1.2rem;
   font-weight: 800;
-  color: #f8fafc !important;
+  color: #1e3a5f !important;
   margin: 0;
 }
 
 .modal-subtitle {
   display: block;
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: #64748b !important;
   margin-top: 4px;
   font-weight: 500;
 }
 
 .modal-close-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -6960,14 +6960,14 @@ select.select-pill {
   justify-content: center;
   font-size: 1rem;
   cursor: pointer;
-  color: #cbd5e1;
+  color: #64748b !important;
   transition: all 0.2s ease;
 }
 
 .modal-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.4);
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+  border-color: #fca5a5 !important;
 }
 
 .form-group {
@@ -6980,11 +6980,11 @@ select.select-pill {
 .form-group label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: #334155;
   text-align: right;
 }
 
-/* Modal Form Labels & Inputs Contrast Fixes */
+/* Modal Form Labels & Inputs Clean Light Theme */
 .modal-box .form-group label,
 .modal-content .form-group label,
 .modal-box label,
@@ -6993,16 +6993,16 @@ select.select-pill {
 .modal-content .form-label {
   font-size: 0.88rem !important;
   font-weight: 700 !important;
-  color: #e2e8f0 !important;
+  color: #334155 !important;
   text-align: right !important;
   margin-bottom: 6px !important;
 }
 
 .modal-box .form-control,
 .modal-content .form-control {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: #f8fafc !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
   border-radius: 10px !important;
   padding: 10px 14px !important;
   font-size: 0.92rem !important;
@@ -7011,30 +7011,30 @@ select.select-pill {
 
 .modal-box .form-control::placeholder,
 .modal-content .form-control::placeholder {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
 .modal-box .form-control:focus,
 .modal-content .form-control:focus {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+  background: #ffffff !important;
+  border-color: var(--primary-color, #d97706) !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15) !important;
   outline: none !important;
 }
 
 .modal-box select.form-control,
 .modal-content select.form-control {
-  color: #f8fafc !important;
-  background-color: rgba(15, 23, 42, 0.9) !important;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
 }
 
 .modal-box select.form-control option,
 .modal-content select.form-control option {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
-/* Modal Footer & Buttons Placement Fixes */
+/* Modal Footer & Buttons Placement Fixes (RTL Order) */
 .modal-box .modal-footer,
 .modal-content .modal-footer {
   display: flex !important;
@@ -7043,21 +7043,21 @@ select.select-pill {
   gap: 12px !important;
   margin-top: 24px !important;
   padding-top: 16px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top: 1px solid #f1f3f5 !important;
 }
 
 .modal-box .btn-modal-save,
 .modal-content .btn-modal-save,
 .modal-box .btn-primary,
 .modal-content .btn-primary {
-  background: linear-gradient(135deg, #10b981, #059669) !important;
+  background: linear-gradient(135deg, var(--primary-color, #d97706), #b45309) !important;
   color: #ffffff !important;
   border: none !important;
   font-weight: 700 !important;
   padding: 10px 22px !important;
   border-radius: 10px !important;
   cursor: pointer !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25) !important;
   transition: all 0.2s ease !important;
 }
 
@@ -7066,16 +7066,16 @@ select.select-pill {
 .modal-box .btn-primary:hover,
 .modal-content .btn-primary:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35) !important;
 }
 
 .modal-box .btn-modal-cancel,
 .modal-content .btn-modal-cancel,
 .modal-box .btn-outline,
 .modal-content .btn-outline {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: #cbd5e1 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  border: 1.5px solid #cbd5e1 !important;
   font-weight: 600 !important;
   padding: 10px 18px !important;
   border-radius: 10px !important;
@@ -7087,9 +7087,9 @@ select.select-pill {
 .modal-content .btn-modal-cancel:hover,
 .modal-box .btn-outline:hover,
 .modal-content .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
 }
 
 .form-group-row {
@@ -9812,38 +9812,38 @@ select.select-pill {
 }
 
 .balance-outstanding {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
 }
 
 .balance-outstanding .balance-label {
   font-size: 0.8rem;
-  color: #ef4444;
+  color: #dc2626 !important;
   font-weight: 600;
 }
 
 .balance-outstanding .balance-value {
   font-size: 1.3rem;
   font-weight: 800;
-  color: #dc2626;
+  color: #b91c1c !important;
   font-family: 'Fira Code', 'Cairo', monospace;
 }
 
 .balance-after {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: #ecfdf5 !important;
+  border: 1px solid #a7f3d0 !important;
 }
 
 .balance-after .balance-label {
   font-size: 0.8rem;
-  color: #059669;
+  color: #059669 !important;
   font-weight: 600;
 }
 
 .balance-after .balance-value {
   font-size: 1.3rem;
   font-weight: 800;
-  color: #059669;
+  color: #047857 !important;
   font-family: 'Fira Code', 'Cairo', monospace;
 }
 
@@ -9852,7 +9852,7 @@ select.select-pill {
   font-size: 0.92rem;
   font-weight: 700;
   margin: 0 0 10px 0;
-  color: #e2e8f0;
+  color: #1e3a5f !important;
 }
 
 /* Unpaid Orders List */
@@ -9874,33 +9874,34 @@ select.select-pill {
   grid-template-columns: 80px 100px 1fr 1fr 1fr;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 8px;
   font-size: 0.84rem;
+  color: #1e293b !important;
 }
 
 .unpaid-order-id {
   font-weight: 700;
   font-family: monospace;
-  color: #38bdf8;
+  color: #0284c7 !important;
 }
 
 .payment-no-debt {
   text-align: center;
   padding: 30px 16px;
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px dashed rgba(16, 185, 129, 0.2);
+  background: #ecfdf5 !important;
+  border: 1px dashed #a7f3d0 !important;
   border-radius: 12px;
   margin-bottom: 20px;
-  color: #10b981;
+  color: #059669 !important;
   font-weight: 600;
 }
 
 /* Payment Form Grid */
 .payment-input-section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 12px;
   padding: 16px;
 }
@@ -9919,7 +9920,7 @@ select.select-pill {
 .payment-amount-input {
   font-size: 1.1rem !important;
   font-weight: 800 !important;
-  color: #10b981 !important;
+  color: #059669 !important;
 }
 
 .payment-quick-amounts {
@@ -9928,11 +9929,26 @@ select.select-pill {
   margin-top: 6px;
 }
 
+.payment-quick-amounts .btn {
+  background: rgba(217, 119, 6, 0.1) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(217, 119, 6, 0.3) !important;
+  font-weight: 700 !important;
+  border-radius: 20px !important;
+  padding: 3px 10px !important;
+  font-size: 0.76rem !important;
+}
+
+.payment-quick-amounts .btn:hover {
+  background: rgba(217, 119, 6, 0.2) !important;
+  color: #92400e !important;
+}
+
 /* FIFO Preview */
 .fifo-preview {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  border-top: 1px dashed #cbd5e1 !important;
 }
 
 .fifo-preview-list {
@@ -9946,33 +9962,35 @@ select.select-pill {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 700;
+  color: #b45309 !important;
 }
 
 .fifo-preview-item.fully-paid {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.3);
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
 }
 
 .fifo-order-id {
-  color: #94a3b8;
+  color: #64748b !important;
 }
 
 .fifo-applied {
-  color: #f59e0b;
+  color: #d97706 !important;
 }
 
 .fifo-preview-item.fully-paid .fifo-applied {
-  color: #10b981;
+  color: #059669 !important;
 }
 
 .fifo-status {
   font-size: 0.72rem;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 /* Payment History */
@@ -9986,9 +10004,10 @@ select.select-pill {
 
 .payment-history-item {
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 10px;
+  color: #1e293b !important;
 }
 
 .payment-history-header {
@@ -10001,26 +10020,27 @@ select.select-pill {
 
 .payment-history-amount {
   font-weight: 800;
-  color: #10b981;
+  color: #059669 !important;
   font-family: monospace;
 }
 
 .payment-history-method {
   font-size: 0.76rem;
   padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: #e2e8f0 !important;
   border-radius: 4px;
-  color: #cbd5e1;
+  color: #334155 !important;
+  font-weight: 600;
 }
 
 .payment-history-date {
   font-size: 0.76rem;
-  color: #94a3b8;
+  color: #64748b !important;
 }
 
 .payment-history-note {
   font-size: 0.8rem;
-  color: #cbd5e1;
+  color: #475569 !important;
   margin-bottom: 6px;
   font-style: italic;
 }
@@ -10034,10 +10054,11 @@ select.select-pill {
 .payment-dist-chip {
   font-size: 0.72rem;
   padding: 2px 6px;
-  background: rgba(56, 189, 248, 0.1);
-  color: #38bdf8;
+  background: #e0f2fe !important;
+  color: #0284c7 !important;
   border-radius: 4px;
   font-family: monospace;
+  font-weight: 600;
 }
 
 /* Print Payment Receipt Styles */
