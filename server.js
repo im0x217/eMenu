@@ -1811,7 +1811,7 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
 
 // Record a payment (FIFO distribution)
 app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
-  const { customerPhone, customerName, amount, shop: reqShop, note, method } = req.body;
+  const { customerPhone, customerName, amount, shop: reqShop, note, method, targetOrderId } = req.body;
   const shop = reqShop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
 
@@ -1828,7 +1828,7 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
 
   try {
     // Fetch unpaid/partial orders sorted oldest first (FIFO)
-    const unpaidOrders = await ordColl.find({
+    let unpaidOrders = await ordColl.find({
       "customerInfo.phone": customerPhone.trim(),
       status: { $ne: "cancelled" },
       $or: [
@@ -1836,6 +1836,15 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
         { paymentStatus: { $exists: false } }
       ]
     }).sort({ createdAt: 1 }).toArray();
+
+    // If targetOrderId is specified, move target order to the front of the allocation list
+    if (targetOrderId && ObjectId.isValid(targetOrderId)) {
+      const targetIdx = unpaidOrders.findIndex(o => o._id.toString() === targetOrderId.toString());
+      if (targetIdx > 0) {
+        const targetOrder = unpaidOrders.splice(targetIdx, 1)[0];
+        unpaidOrders.unshift(targetOrder);
+      }
+    }
 
     // Calculate total outstanding
     const totalOutstanding = unpaidOrders.reduce((sum, o) => {

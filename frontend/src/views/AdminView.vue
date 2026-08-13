@@ -2119,15 +2119,46 @@
 
         <!-- Payment Input Section -->
         <div v-if="paymentTarget.outstandingBalance > 0" class="payment-input-section">
-          <h4 class="payment-section-title">تفاصيل الدفعة</h4>
+          <!-- Allocation Mode Selector -->
+          <div class="payment-mode-selector">
+            <label class="form-label">طريقة تخصيص الدفعة:</label>
+            <div class="payment-mode-pills">
+              <button 
+                v-if="paymentTarget.targetOrderId" 
+                type="button" 
+                class="mode-pill" 
+                :class="{ active: paymentTarget.mode === 'target' }" 
+                @click="setPaymentMode('target')"
+              >
+                🔒 مخصص للطلب #{{ paymentTarget.targetOrderShort }}
+              </button>
+              <button 
+                type="button" 
+                class="mode-pill" 
+                :class="{ active: paymentTarget.mode === 'fifo' }" 
+                @click="setPaymentMode('fifo')"
+              >
+                ⏳ الأقدم فأحدث (توزيع تلقائي)
+              </button>
+              <button 
+                type="button" 
+                class="mode-pill" 
+                :class="{ active: paymentTarget.mode === 'full' }" 
+                @click="setPaymentMode('full')"
+              >
+                💰 كامل المستحقات ({{ formatCurrency(paymentTarget.outstandingBalance) }})
+              </button>
+            </div>
+          </div>
 
           <div class="payment-form-grid">
             <div class="form-group">
               <label class="form-label">المبلغ (د.ل)</label>
               <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" autofocus />
               <div class="payment-quick-amounts">
-                <button type="button" class="btn btn-outline btn-xs" @click="paymentTarget.amount = paymentTarget.outstandingBalance">كامل المبلغ</button>
-                <button v-if="paymentTarget.unpaidOrders.length && paymentTarget.unpaidOrders[0].remaining > 0" type="button" class="btn btn-outline btn-xs" @click="paymentTarget.amount = paymentTarget.unpaidOrders[0].remaining">أقدم طلب</button>
+                <button v-if="paymentTarget.targetOrderId" type="button" class="btn btn-outline btn-xs" @click="setPaymentMode('target')">الطلب #{{ paymentTarget.targetOrderShort }}</button>
+                <button type="button" class="btn btn-outline btn-xs" @click="setPaymentMode('fifo')">الأقدم فأحدث</button>
+                <button type="button" class="btn btn-outline btn-xs" @click="setPaymentMode('full')">كامل المبلغ</button>
               </div>
             </div>
 
@@ -2146,14 +2177,21 @@
             </div>
           </div>
 
-          <!-- FIFO Preview -->
+          <!-- Distribution Preview -->
           <div v-if="paymentFifoPreview.length" class="fifo-preview">
-            <h4 class="payment-section-title">معاينة التوزيع التلقائي (من الأقدم للأحدث)</h4>
+            <h4 class="payment-section-title">
+              <template v-if="paymentTarget.mode === 'target'">معاينة التوزيع (تخصيص للطلب #{{ paymentTarget.targetOrderShort }})</template>
+              <template v-else-if="paymentTarget.mode === 'full'">معاينة التوزيع (تسديد كامل المستحقات)</template>
+              <template v-else>معاينة التوزيع التلقائي (من الأقدم للأحدث)</template>
+            </h4>
             <div class="fifo-preview-list">
-              <div v-for="item in paymentFifoPreview" :key="item.orderId" class="fifo-preview-item" :class="{ 'fully-paid': item.fullyPaid }">
+              <div v-for="item in paymentFifoPreview" :key="item.orderId" class="fifo-preview-item" :class="{ 'fully-paid': item.fullyPaid, 'target-order': item.isTarget }">
                 <span class="fifo-order-id">#{{ item.orderIdShort }}</span>
                 <span class="fifo-applied">{{ formatCurrency(item.applied) }}</span>
-                <span class="fifo-status">{{ item.fullyPaid ? '✓ مسدد بالكامل' : 'تسديد جزئي' }}</span>
+                <span class="fifo-status">
+                  <template v-if="item.isTarget">🎯 الطلب المخصص</template>
+                  <template v-else>{{ item.fullyPaid ? '✓ مسدد بالكامل' : 'تسديد جزئي' }}</template>
+                </span>
               </div>
             </div>
           </div>
@@ -3904,17 +3942,42 @@ export default {
       recentPayments: [],
       amount: '',
       note: '',
-      method: 'cash'
+      method: 'cash',
+      targetOrderId: null,
+      targetOrderShort: '',
+      mode: 'fifo' // 'target' | 'fifo' | 'full'
     });
+
+    const setPaymentMode = (mode) => {
+      paymentTarget.mode = mode;
+      if (mode === 'target' && paymentTarget.targetOrderId) {
+        const targetOrder = paymentTarget.unpaidOrders.find(o => o._id.toString() === paymentTarget.targetOrderId.toString());
+        if (targetOrder) {
+          paymentTarget.amount = Math.max(0, targetOrder.remaining || (targetOrder.totalPrice - targetOrder.paidAmount));
+        }
+      } else if (mode === 'full') {
+        paymentTarget.amount = paymentTarget.outstandingBalance;
+      }
+    };
 
     const paymentFifoPreview = computed(() => {
       const amount = Number(paymentTarget.amount) || 0;
       if (amount <= 0 || !paymentTarget.unpaidOrders.length) return [];
+      
+      let ordersList = [...paymentTarget.unpaidOrders];
+      if (paymentTarget.mode === 'target' && paymentTarget.targetOrderId) {
+        const targetIdx = ordersList.findIndex(o => o._id.toString() === paymentTarget.targetOrderId.toString());
+        if (targetIdx > 0) {
+          const targetOrder = ordersList.splice(targetIdx, 1)[0];
+          ordersList.unshift(targetOrder);
+        }
+      }
+
       let remaining = amount;
       const preview = [];
-      for (const order of paymentTarget.unpaidOrders) {
+      for (const order of ordersList) {
         if (remaining <= 0) break;
-        const orderRemaining = order.remaining;
+        const orderRemaining = order.remaining !== undefined ? order.remaining : ((order.totalPrice || 0) - (order.paidAmount || 0));
         if (orderRemaining <= 0) continue;
         const applied = Math.min(remaining, orderRemaining);
         preview.push({
@@ -3924,7 +3987,8 @@ export default {
           previousPaid: order.paidAmount,
           applied,
           newPaidAmount: order.paidAmount + applied,
-          fullyPaid: (order.paidAmount + applied) >= order.totalPrice
+          fullyPaid: (order.paidAmount + applied) >= order.totalPrice,
+          isTarget: paymentTarget.targetOrderId && order._id.toString() === paymentTarget.targetOrderId.toString()
         });
         remaining -= applied;
       }
@@ -3958,6 +4022,17 @@ export default {
       paymentTarget.outstandingBalance = 0;
       paymentTarget.unpaidOrders = [];
       paymentTarget.recentPayments = [];
+
+      if (targetOrder) {
+        paymentTarget.targetOrderId = targetOrder._id ? targetOrder._id.toString() : null;
+        paymentTarget.targetOrderShort = targetOrder._id ? targetOrder._id.toString().slice(-6) : '';
+        paymentTarget.mode = 'target';
+      } else {
+        paymentTarget.targetOrderId = null;
+        paymentTarget.targetOrderShort = '';
+        paymentTarget.mode = 'fifo';
+      }
+
       paymentModalOpen.value = true;
       paymentLoading.value = true;
 
@@ -3969,7 +4044,8 @@ export default {
 
         // If opened from a specific order, pre-fill remaining balance for that order
         if (targetOrder) {
-          const remaining = (targetOrder.totalPrice || 0) - (targetOrder.paidAmount || 0);
+          const matchingOrder = data.unpaidOrders.find(o => o._id.toString() === targetOrder._id.toString());
+          const remaining = matchingOrder ? matchingOrder.remaining : ((targetOrder.totalPrice || 0) - (targetOrder.paidAmount || 0));
           if (remaining > 0) {
             paymentTarget.amount = remaining;
           }
@@ -3999,7 +4075,8 @@ export default {
             amount,
             shop: activeShop.value,
             note: paymentTarget.note,
-            method: paymentTarget.method
+            method: paymentTarget.method,
+            targetOrderId: paymentTarget.mode === 'target' ? paymentTarget.targetOrderId : null
           })
         });
 
@@ -10028,9 +10105,47 @@ select.select-pill {
   color: #059669 !important;
 }
 
-.fifo-status {
-  font-size: 0.72rem;
-  opacity: 0.85;
+/* Mode Selector Pills */
+.payment-mode-selector {
+  margin-bottom: 14px;
+}
+
+.payment-mode-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.mode-pill {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.mode-pill:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.mode-pill.active {
+  background: rgba(217, 119, 6, 0.1) !important;
+  color: #b45309 !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
+}
+
+.fifo-preview-item.target-order {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
 }
 
 /* Payment History */
