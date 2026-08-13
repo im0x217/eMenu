@@ -2177,32 +2177,38 @@
             </div>
           </div>
 
-          <!-- Distribution Preview -->
+          <!-- Distribution Preview Table -->
           <div v-if="paymentFifoPreview.length" class="fifo-preview">
             <h4 class="payment-section-title">
-              <template v-if="paymentTarget.mode === 'target'">معاينة التوزيع (تخصيص للطلب #{{ paymentTarget.targetOrderShort }})</template>
-              <template v-else-if="paymentTarget.mode === 'full'">معاينة التوزيع (تسديد كامل المستحقات)</template>
+              <template v-if="paymentTarget.mode === 'target'">معاينة تخصيص الدفعة للطلب #{{ paymentTarget.targetOrderShort }}</template>
+              <template v-else-if="paymentTarget.mode === 'full'">معاينة تسديد كامل المستحقات</template>
               <template v-else>معاينة التوزيع التلقائي (من الأقدم للأحدث)</template>
             </h4>
-            <div class="fifo-preview-list">
-              <div v-for="item in paymentFifoPreview" :key="item.orderId" class="fifo-preview-item" :class="{ 'fully-paid': item.fullyPaid, 'target-order': item.isTarget }">
-                <span class="fifo-order-id">#{{ item.orderIdShort }}</span>
-                <span class="fifo-applied">{{ formatCurrency(item.applied) }}</span>
-                <span class="fifo-status">
-                  <template v-if="item.isTarget">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
-                    <span>الطلب المخصص</span>
-                  </template>
-                  <template v-else-if="item.fullyPaid">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>مسدد بالكامل</span>
-                  </template>
-                  <template v-else>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>تسديد جزئي</span>
-                  </template>
-                </span>
-              </div>
+            
+            <div class="fifo-preview-table-wrapper">
+              <table class="fifo-preview-table">
+                <thead>
+                  <tr>
+                    <th>رقم الطلب</th>
+                    <th>المبلغ المخصص</th>
+                    <th>حالة الطلب بعد الدفع</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in paymentFifoPreview" :key="item.orderId" :class="{ 'target-row': item.isTarget }">
+                    <td class="text-mono text-bold">
+                      #{{ item.orderIdShort }}
+                      <span v-if="item.isTarget" class="target-tag ms-1">🎯 مخصص</span>
+                    </td>
+                    <td class="text-bold text-success text-mono">{{ formatCurrency(item.applied) }}</td>
+                    <td>
+                      <span class="allocation-badge" :class="item.fullyPaid ? 'badge-paid' : 'badge-partial'">
+                        {{ item.fullyPaid ? 'مسدد بالكامل ✓' : 'تسديد جزئي' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -10122,18 +10128,80 @@ select.select-pill {
   box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
 }
 
-.fifo-status {
+/* Allocation Preview Table */
+.fifo-preview {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.fifo-preview-table-wrapper {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.fifo-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.fifo-preview-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+}
+
+.fifo-preview-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f3f5;
+  color: #1e293b;
+}
+
+.fifo-preview-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fifo-preview-table tr.target-row {
+  background: #f0f9ff !important;
+}
+
+.target-tag {
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 4px;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.allocation-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
   font-size: 0.76rem;
   font-weight: 700;
 }
 
-.fifo-preview-item.target-order {
-  border-color: #3b82f6 !important;
-  background: #eff6ff !important;
-  color: #1d4ed8 !important;
+.allocation-badge.badge-paid {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.allocation-badge.badge-partial {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 /* Payment History */
