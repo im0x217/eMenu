@@ -1842,7 +1842,7 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   if (!paymentAmount || paymentAmount <= 0) {
     return res.status(400).json({ error: "Invalid payment amount" });
   }
-  if (method && !['cash', 'bank_transfer', 'other'].includes(method)) {
+  if (method && !['cash', 'card', 'bank_transfer'].includes(method)) {
     return res.status(400).json({ error: "Invalid payment method" });
   }
 
@@ -1901,7 +1901,7 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
 
       await ordColl.updateOne(
         { _id: order._id },
-        { $set: { paidAmount: newPaidAmount, paymentStatus: newStatus } }
+        { $set: { paidAmount: newPaidAmount, paymentStatus: newStatus, paymentMethod: method || 'cash' } }
       );
 
       distributedTo.push({
@@ -2345,6 +2345,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       totalPrice: Math.round(Number(totalPrice) * 100) / 100,
       paidAmount: 0,
       paymentStatus: 'unpaid',
+      paymentMethod: 'cash',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
@@ -2402,6 +2403,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       totalPrice: Math.round(Number(totalPrice) * 100) / 100,
       paidAmount: 0,
       paymentStatus: 'unpaid',
+      paymentMethod: 'cash',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',

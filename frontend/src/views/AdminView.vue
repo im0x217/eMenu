@@ -2105,8 +2105,18 @@
           <span class="receipt-value">{{ printingOrder.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}</span>
         </div>
         <div class="receipt-meta-row">
-          <span class="receipt-label">الحالة:</span>
-          <span class="receipt-value">{{ printingOrder.status === 'ready' ? 'جاهز للاستلام' : printingOrder.status === 'received' ? 'تم الاستلام' : printingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار' }}</span>
+          <span class="receipt-label">حالة الدفع:</span>
+          <span class="receipt-value" :class="printingOrder.paymentStatus || 'unpaid'">
+            <template v-if="printingOrder.paymentStatus === 'paid'">مدفوع بالكامل ✓</template>
+            <template v-else-if="printingOrder.paymentStatus === 'partial'">جزئي (المتبقي: {{ formatCurrency((printingOrder.totalPrice || 0) - (printingOrder.paidAmount || 0)) }})</template>
+            <template v-else>غير مدفوع</template>
+          </span>
+        </div>
+        <div class="receipt-meta-row">
+          <span class="receipt-label">طريقة الدفع:</span>
+          <span class="receipt-value">
+            {{ printingOrder.paymentMethod === 'card' ? 'بطاقة مصرفية' : printingOrder.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'نقدي' }}
+          </span>
         </div>
       </div>
 
@@ -2263,8 +2273,8 @@
               <label class="form-label">طريقة الدفع</label>
               <select v-model="paymentTarget.method" class="form-control">
                 <option value="cash">نقدي</option>
+                <option value="card">بطاقة مصرفية</option>
                 <option value="bank_transfer">تحويل بنكي</option>
-                <option value="other">أخرى</option>
               </select>
             </div>
 
@@ -2354,7 +2364,7 @@
           <div v-for="payment in paymentTarget.recentPayments" :key="payment._id" class="payment-history-item">
             <div class="payment-history-header">
               <span class="payment-history-amount">{{ formatCurrency(payment.amount) }}</span>
-              <span class="payment-history-method">{{ payment.method === 'cash' ? 'نقدي' : payment.method === 'bank_transfer' ? 'تحويل بنكي' : 'أخرى' }}</span>
+              <span class="payment-history-method">{{ payment.method === 'cash' ? 'نقدي' : payment.method === 'card' ? 'بطاقة مصرفية' : payment.method === 'bank_transfer' ? 'تحويل بنكي' : 'نقدي' }}</span>
               <span class="payment-history-date">{{ new Date(payment.createdAt).toLocaleString('ar-LY') }}</span>
             </div>
             <div v-if="payment.note" class="payment-history-note">{{ payment.note }}</div>
@@ -2417,7 +2427,7 @@
         </div>
         <div class="receipt-meta-row">
           <span class="receipt-label">طريقة الدفع:</span>
-          <span class="receipt-value">{{ printingPayment.method === 'cash' ? 'نقدي' : printingPayment.method === 'bank_transfer' ? 'تحويل بنكي' : 'أخرى' }}</span>
+          <span class="receipt-value">{{ printingPayment.method === 'cash' ? 'نقدي' : printingPayment.method === 'card' ? 'بطاقة مصرفية' : printingPayment.method === 'bank_transfer' ? 'تحويل بنكي' : 'نقدي' }}</span>
         </div>
       </div>
 
