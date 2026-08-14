@@ -8381,20 +8381,31 @@ select.select-pill {
     display: none !important;
   }
 
-  /* Default page size for order receipts */
+  /* Suppress browser print headers & footers (URL link in bottom-left corner, page numbers, date) */
   @page {
     size: A5 portrait;
-    margin: 4mm 6mm;
+    margin: 0 !important;
   }
 
-  /* Named page for reconciliation — A4 portrait layout */
+  /* Named page for reconciliation — A4 portrait layout without browser headers/footers */
   @page reconciliation {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 0 !important;
+  }
+
+  /* Suppress link URL text insertion when printing */
+  a[href]:after {
+    content: none !important;
+  }
+  a[href] {
+    text-decoration: none !important;
+    color: inherit !important;
   }
 
   .reconciliation-page {
     page: reconciliation;
+    padding: 8mm 10mm;
+    box-sizing: border-box;
   }
 
   /* Order Receipt Print Styles (A5) */
@@ -8414,7 +8425,8 @@ select.select-pill {
   .print-receipt {
     display: block !important;
     width: 100%;
-    padding: 0;
+    box-sizing: border-box;
+    padding: 5mm 7mm;
     margin: 0;
     background: #ffffff !important;
     color: #111111 !important;
@@ -10612,10 +10624,26 @@ select.select-pill {
     background: transparent;
   }
 
+  /* Suppress browser print headers & footers for payment receipt */
+  @page {
+    size: A5 portrait;
+    margin: 0 !important;
+  }
+
+  /* Suppress link URL text insertion */
+  a[href]:after {
+    content: none !important;
+  }
+  a[href] {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
   .print-payment-receipt {
     display: block !important;
     width: 100%;
-    padding: 16px;
+    box-sizing: border-box;
+    padding: 5mm 7mm;
     margin: 0;
     background: #ffffff !important;
     color: #111111 !important;
