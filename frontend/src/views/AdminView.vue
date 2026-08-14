@@ -2106,10 +2106,8 @@
         </div>
         <div class="receipt-meta-row">
           <span class="receipt-label">حالة الدفع:</span>
-          <span class="receipt-value" :class="printingOrder.paymentStatus || 'unpaid'">
-            <template v-if="printingOrder.paymentStatus === 'paid'">مدفوع بالكامل ✓</template>
-            <template v-else-if="printingOrder.paymentStatus === 'partial'">جزئي (المتبقي: {{ formatCurrency((printingOrder.totalPrice || 0) - (printingOrder.paidAmount || 0)) }})</template>
-            <template v-else>غير مدفوع</template>
+          <span class="receipt-value" :class="printingOrder.paymentStatus === 'paid' ? 'paid' : 'unpaid'">
+            {{ printingOrder.paymentStatus === 'paid' ? 'مدفوع' : 'غير مدفوع' }}
           </span>
         </div>
         <div class="receipt-meta-row">
