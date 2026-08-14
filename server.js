@@ -1259,6 +1259,28 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       priceModeSplit[key] = { revenue: m.revenue, count: m.count };
     });
     
+    // Payment Methods breakdown (Cash, Card, Bank Transfer)
+    const paymentMethodsRaw = await ordColl.aggregate([
+      { $match: matchStage },
+      { $group: {
+          _id: { $ifNull: ["$paymentMethod", "cash"] },
+          revenue: { $sum: "$totalPrice" },
+          count: { $sum: 1 }
+      } }
+    ]).toArray();
+
+    const paymentMethodsSplit = {
+      cash: { revenue: 0, count: 0 },
+      card: { revenue: 0, count: 0 },
+      bank_transfer: { revenue: 0, count: 0 }
+    };
+
+    paymentMethodsRaw.forEach(pm => {
+      const key = pm._id === 'card' ? 'card' : pm._id === 'bank_transfer' ? 'bank_transfer' : 'cash';
+      paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + (pm.revenue || 0)) * 100) / 100;
+      paymentMethodsSplit[key].count += (pm.count || 0);
+    });
+    
     // Fetch all products for this shop to evaluate real-time availability in-memory
     const allShopProducts = await prodColl.find({}).toArray();
     const isProductAvailable = (p) => {
@@ -1390,6 +1412,7 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       kpi,
       revenueTrend,
       priceModeSplit,
+      paymentMethodsSplit,
       topProducts: topProductsFormatted,
       topCustomers,
       categorySales,

@@ -296,6 +296,54 @@
                 </div>
               </div>
 
+              <!-- Payment Methods Distribution Card -->
+              <div class="chart-card glass-panel">
+                <h3 class="chart-title">توزيع طرق الدفع (نقدي / بطاقة / تحويل)</h3>
+                <div class="payment-methods-breakdown">
+                  <!-- Cash Row -->
+                  <div class="pm-breakdown-row pm-cash">
+                    <div class="pm-icon-title">
+                      <div class="pm-badge cash-badge">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                      </div>
+                      <div class="pm-details">
+                        <span class="pm-name">نقدي (Cash)</span>
+                        <span class="pm-count">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.cash.count, 'order') }}</span>
+                      </div>
+                    </div>
+                    <div class="pm-amount">{{ formatCurrency(analyticsData.paymentMethodsSplit.cash.revenue) }}</div>
+                  </div>
+
+                  <!-- Card Row -->
+                  <div class="pm-breakdown-row pm-card">
+                    <div class="pm-icon-title">
+                      <div class="pm-badge card-badge">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                      </div>
+                      <div class="pm-details">
+                        <span class="pm-name">بطاقة مصرفية (Card)</span>
+                        <span class="pm-count">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.card.count, 'order') }}</span>
+                      </div>
+                    </div>
+                    <div class="pm-amount">{{ formatCurrency(analyticsData.paymentMethodsSplit.card.revenue) }}</div>
+                  </div>
+
+                  <!-- Bank Transfer Row -->
+                  <div class="pm-breakdown-row pm-bank">
+                    <div class="pm-icon-title">
+                      <div class="pm-badge bank-badge">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path></svg>
+                      </div>
+                      <div class="pm-details">
+                        <span class="pm-name">تحويل بنكي (Bank)</span>
+                        <span class="pm-count">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.bank_transfer.count, 'order') }}</span>
+                      </div>
+                    </div>
+                    <div class="pm-amount">{{ formatCurrency(analyticsData.paymentMethodsSplit.bank_transfer.revenue) }}</div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Category Sales Share Card -->
               <div class="chart-card glass-panel span-2">
                 <h3 class="chart-title">أداء الفئات والأصناف</h3>
@@ -2581,6 +2629,7 @@ export default {
       kpi: { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 },
       revenueTrend: [],
       priceModeSplit: { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } },
+      paymentMethodsSplit: { cash: { revenue: 0, count: 0 }, card: { revenue: 0, count: 0 }, bank_transfer: { revenue: 0, count: 0 } },
       topProducts: [],
       topCustomers: [],
       categorySales: [],
@@ -4004,6 +4053,7 @@ export default {
           analyticsData.kpi = data.kpi || { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 };
           analyticsData.revenueTrend = data.revenueTrend || [];
           analyticsData.priceModeSplit = data.priceModeSplit || { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } };
+          analyticsData.paymentMethodsSplit = data.paymentMethodsSplit || { cash: { revenue: 0, count: 0 }, card: { revenue: 0, count: 0 }, bank_transfer: { revenue: 0, count: 0 } };
           analyticsData.topProducts = data.topProducts || [];
           analyticsData.topCustomers = data.topCustomers || [];
           analyticsData.categorySales = data.categorySales || [];
@@ -10367,6 +10417,88 @@ select.select-pill {
   border-radius: 4px;
   color: #334155 !important;
   font-weight: 600;
+}
+
+/* ==========================================================================
+   ANALYTICS PAYMENT METHODS BREAKDOWN STYLES
+   ========================================================================== */
+
+.payment-methods-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pm-breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.pm-breakdown-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.pm-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pm-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.pm-badge.cash-badge {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.pm-badge.card-badge {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.pm-badge.bank-badge {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.pm-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.pm-name {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pm-count {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.pm-amount {
+  font-family: 'Cairo', 'Fira Code', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .payment-history-date {
