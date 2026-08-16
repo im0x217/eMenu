@@ -2196,8 +2196,12 @@
 
         <div class="receipt-total-section">
           <div class="receipt-grand-total">
-            <span>الإجمالي الكلي</span>
+            <span>إجمالي الطلب</span>
             <span class="receipt-grand-value">{{ Number(printingOrder.totalPrice).toFixed(2) }} د.ل</span>
+          </div>
+          <div v-if="printingOrderCustomerBalance !== null" class="receipt-customer-balance-row">
+            <span>إجمالي رصيد العميل (المستحق)</span>
+            <span class="receipt-balance-value">{{ formatCurrency(printingOrderCustomerBalance) }}</span>
           </div>
         </div>
 
@@ -4550,8 +4554,24 @@ export default {
       window.print();
     };
 
+    const printingOrderCustomerBalance = ref(null);
+
     const printOrder = async (order) => {
       printingOrder.value = order;
+      printingOrderCustomerBalance.value = null;
+
+      if (order && order.customerInfo && order.customerInfo.phone) {
+        const data = await fetchCustomerBalance(order.customerInfo.phone);
+        if (data && data.outstandingBalance !== undefined) {
+          printingOrderCustomerBalance.value = data.outstandingBalance;
+        } else {
+          const custMatch = customers.value.find(c => c.phone === order.customerInfo.phone);
+          if (custMatch) {
+            printingOrderCustomerBalance.value = custMatch.outstandingBalance;
+          }
+        }
+      }
+
       await nextTick();
 
       const orderIdStr = order._id ? order._id.toString() : '';
@@ -4564,6 +4584,7 @@ export default {
 
       const cleanup = () => {
         printingOrder.value = null;
+        printingOrderCustomerBalance.value = null;
         window.removeEventListener('afterprint', cleanup);
       };
 
@@ -5274,6 +5295,7 @@ export default {
       exportReport,
       printReport,
       printingOrder,
+      printingOrderCustomerBalance,
       printingReconciliation,
       reconciliationData,
       printReconciliation,
@@ -8617,6 +8639,26 @@ select.select-pill {
   .receipt-grand-value {
     font-family: 'Fira Code', monospace;
     color: #0f172a;
+  }
+
+  .receipt-customer-balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    margin-top: 4px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 10.5pt;
+    color: #991b1b;
+  }
+
+  .receipt-balance-value {
+    font-family: 'Fira Code', monospace;
+    font-weight: 800;
+    color: #dc2626;
   }
 
   .receipt-notes {
