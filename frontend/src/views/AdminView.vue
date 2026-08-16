@@ -1179,26 +1179,30 @@
                 <table class="admin-table">
                   <thead>
                     <tr>
-                      <th>الاسم</th>
-                      <th>رقم الهاتف</th>
-                      <th>تاريخ التسجيل</th>
-                      <th>آخر نشاط</th>
+                      <th>العميل</th>
                       <th>إجمالي الطلبات</th>
-                      <th>إجمالي الإنفاق</th>
+                      <th>إجمالي المشتريات</th>
                       <th>الرصيد المستحق</th>
-                      <th>خيارات</th>
+                      <th>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="filteredCustomers.length === 0">
-                      <td colspan="8" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
+                      <td colspan="5" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
                     <tr v-for="cust in paginatedCustomers" :key="cust._id">
-                      <td class="text-bold">{{ cust.name }}</td>
-                      <td class="text-mono">{{ cust.phone }}</td>
-                      <td class="text-mono text-small">{{ cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</td>
-                      <td class="text-mono text-small">{{ cust.lastActive ? new Date(cust.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</td>
-                      <td class="text-mono text-bold">{{ formatArabicPlural(cust.orderCount, 'order') }}</td>
+                      <td>
+                        <div class="customer-profile-cell" @click="openCustomerDetails(cust)" title="انقر لعرض الملف التعريفي الكامل">
+                          <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
+                          <div class="customer-names-group">
+                            <span class="customer-name-text">{{ cust.name }}</span>
+                            <span class="customer-phone-subtext text-mono">{{ cust.phone }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="orders-count-badge">{{ formatArabicPlural(cust.orderCount, 'order') }}</span>
+                      </td>
                       <td class="text-bold text-primary text-mono">{{ formatCurrency(cust.totalSpent) }}</td>
                       <td>
                         <span class="customer-balance-cell" :style="{ color: (cust.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
@@ -1206,8 +1210,7 @@
                         </span>
                       </td>
                       <td>
-                        <!-- Desktop Action Bar -->
-                        <div class="customer-actions-bar desktop-actions">
+                        <div class="customer-table-actions">
                           <button 
                             type="button" 
                             @click="openPaymentModal(cust)" 
@@ -1220,95 +1223,13 @@
                           
                           <button 
                             type="button" 
-                            @click="openPaymentHistory(cust)" 
-                            class="cust-btn btn-history" 
-                            title="عرض سجل المدفوعات"
+                            @click="openCustomerDetails(cust)" 
+                            class="cust-btn btn-details" 
+                            title="عرض الملف التعريفي والخيارات"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            <span>السجل</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            <span>التفاصيل</span>
                           </button>
-
-                          <button 
-                            type="button" 
-                            @click="openCustomerFavsModal(cust)" 
-                            class="cust-btn btn-favs" 
-                            :disabled="!cust.favorites || !cust.favorites.length"
-                            title="عرض المفضلة"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                            <span>المفضلة</span>
-                          </button>
-
-                          <button 
-                            type="button" 
-                            @click="openCustomerEditModal(cust)" 
-                            class="cust-btn btn-edit" 
-                            title="تعديل بيانات العميل"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            <span>تعديل</span>
-                          </button>
-
-                          <button 
-                            type="button" 
-                            @click="deleteCustomer(cust._id)" 
-                            class="cust-btn btn-delete" 
-                            title="حذف العميل وكافة بياناته"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            <span>حذف</span>
-                          </button>
-                        </div>
-
-                        <!-- Mobile Action Bar -->
-                        <div class="customer-actions-bar mobile-actions">
-                          <button 
-                            type="button" 
-                            @click="openPaymentModal(cust)" 
-                            class="cust-btn-mobile btn-pay-mobile"
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                            <span>تسجيل دفعة</span>
-                          </button>
-
-                          <div class="mobile-actions-row">
-                            <button 
-                              type="button" 
-                              @click="openPaymentHistory(cust)" 
-                              class="cust-btn-mobile btn-sub"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                              <span>السجل</span>
-                            </button>
-
-                            <button 
-                              type="button" 
-                              @click="openCustomerFavsModal(cust)" 
-                              class="cust-btn-mobile btn-sub"
-                              :disabled="!cust.favorites || !cust.favorites.length"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                              <span>المفضلة</span>
-                            </button>
-
-                            <button 
-                              type="button" 
-                              @click="openCustomerEditModal(cust)" 
-                              class="cust-btn-mobile btn-sub"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                              <span>تعديل</span>
-                            </button>
-
-                            <button 
-                              type="button" 
-                              @click="deleteCustomer(cust._id)" 
-                              class="cust-btn-mobile btn-delete-sub"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                              <span>حذف</span>
-                            </button>
-                          </div>
                         </div>
                       </td>
                     </tr>
@@ -1716,6 +1637,117 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Customer Profile Details Modal Hub -->
+    <div v-if="customerDetailsModalOpen && selectedCustomer" class="modal-overlay animate-fade-in" @click.self="customerDetailsModalOpen = false">
+      <div class="modal-content modal-md customer-profile-modal">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h2 class="modal-title">الملف التعريفي للعميل</h2>
+            <span class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
+          </div>
+          <button @click="customerDetailsModalOpen = false" class="modal-close-btn">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Profile Hero Card -->
+          <div class="profile-hero-card">
+            <div class="profile-avatar">{{ (selectedCustomer.name || 'ع').charAt(0) }}</div>
+            <div class="profile-info">
+              <h3 class="profile-name">{{ selectedCustomer.name }}</h3>
+              <div class="profile-phone-row">
+                <span class="text-mono text-muted" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
+                <a :href="'https://wa.me/' + (selectedCustomer.phone.replace(/[^0-9]/g, ''))" target="_blank" class="profile-action-icon whatsapp-icon" title="مراسلة عبر واتساب">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </a>
+                <a :href="'tel:' + selectedCustomer.phone" class="profile-action-icon call-icon" title="اتصال بالعميل">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Metrics Stats Grid -->
+          <div class="profile-stats-grid">
+            <div class="profile-stat-box balance-box">
+              <span class="stat-label">الرصيد المستحق</span>
+              <span class="stat-value text-mono" :style="{ color: (selectedCustomer.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
+                {{ (selectedCustomer.outstandingBalance || 0) > 0 ? formatCurrency(selectedCustomer.outstandingBalance) : 'مُسدد ✓' }}
+              </span>
+            </div>
+
+            <div class="profile-stat-box">
+              <span class="stat-label">إجمالي المشتريات</span>
+              <span class="stat-value text-mono text-primary">{{ formatCurrency(selectedCustomer.totalSpent) }}</span>
+            </div>
+
+            <div class="profile-stat-box">
+              <span class="stat-label">إجمالي الطلبات</span>
+              <span class="stat-value text-mono">{{ formatArabicPlural(selectedCustomer.orderCount, 'order') }}</span>
+            </div>
+
+            <div class="profile-stat-box">
+              <span class="stat-label">تاريخ التسجيل</span>
+              <span class="stat-value-sub text-mono">{{ selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString('ar-LY') : 'غير متوفر' }}</span>
+            </div>
+          </div>
+
+          <div class="profile-meta-bar">
+            <span class="meta-label">آخر نشاط مسجل:</span>
+            <span class="meta-val text-mono">{{ selectedCustomer.lastActive ? new Date(selectedCustomer.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</span>
+          </div>
+
+          <!-- Quick Action Buttons Hub -->
+          <div class="profile-actions-hub">
+            <button 
+              type="button" 
+              @click="openPaymentModal(selectedCustomer); customerDetailsModalOpen = false;" 
+              class="btn-hub-action btn-hub-pay"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              <span>تسجيل دفعة</span>
+            </button>
+
+            <button 
+              type="button" 
+              @click="openPaymentHistory(selectedCustomer); customerDetailsModalOpen = false;" 
+              class="btn-hub-action btn-hub-history"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>سجل المدفوعات</span>
+            </button>
+
+            <button 
+              type="button" 
+              @click="openCustomerFavsModal(selectedCustomer); customerDetailsModalOpen = false;" 
+              class="btn-hub-action btn-hub-favs"
+              :disabled="!selectedCustomer.favorites || !selectedCustomer.favorites.length"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              <span>المفضلة ({{ selectedCustomer.favorites ? selectedCustomer.favorites.length : 0 }})</span>
+            </button>
+
+            <button 
+              type="button" 
+              @click="openCustomerEditModal(selectedCustomer); customerDetailsModalOpen = false;" 
+              class="btn-hub-action btn-hub-edit"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>تعديل البيانات</span>
+            </button>
+
+            <button 
+              type="button" 
+              @click="deleteCustomer(selectedCustomer._id); customerDetailsModalOpen = false;" 
+              class="btn-hub-action btn-hub-delete"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>حذف العميل</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2761,6 +2793,8 @@ export default {
     const categoryModalOpen = ref(false);
     const tagModalOpen = ref(false);
     const customerModalOpen = ref(false);
+    const customerDetailsModalOpen = ref(false);
+    const selectedCustomer = ref(null);
     const customerFavsModalOpen = ref(false);
     const orderEditModalOpen = ref(false);
 
@@ -4833,6 +4867,11 @@ export default {
       }
     };
 
+    const openCustomerDetails = (cust) => {
+      selectedCustomer.value = cust;
+      customerDetailsModalOpen.value = true;
+    };
+
     const openCustomerEditModal = (cust) => {
       editingCustomer._id = cust._id;
       editingCustomer.name = cust.name;
@@ -5363,6 +5402,9 @@ export default {
       deleteUser,
       editingCustomer,
       customerModalOpen,
+      customerDetailsModalOpen,
+      selectedCustomer,
+      openCustomerDetails,
       customerFavsModalOpen,
       viewingCustomerFavs,
       viewingCustomer,
@@ -10608,183 +10650,345 @@ select.select-pill {
 }
 
 /* ==========================================================================
-   CUSTOMER TABLE OPTIONS / ACTION BUTTONS LAYOUT (DESKTOP & MOBILE)
+   STREAMLINED CUSTOMER TABLE & PROFILE DETAILS MODAL
    ========================================================================== */
 
-.customer-actions-bar {
+.customer-profile-cell {
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  transition: opacity 0.15s ease;
 }
 
-@media (min-width: 769px) {
-  .customer-actions-bar.desktop-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap !important;
-  }
-
-  .customer-actions-bar.mobile-actions {
-    display: none !important;
-  }
-
-  .cust-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    height: 30px;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    font-family: 'Cairo', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-    outline: none;
-    user-select: none;
-    line-height: 1;
-  }
-
-  .cust-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  .cust-btn:active {
-    transform: scale(0.96);
-  }
-
-  .cust-btn.btn-pay {
-    background: #ecfdf5 !important;
-    color: #059669 !important;
-    border-color: #a7f3d0 !important;
-  }
-
-  .cust-btn.btn-pay:hover {
-    background: #d1fae5 !important;
-    color: #047857 !important;
-  }
-
-  .cust-btn.btn-history {
-    background: #f8fafc !important;
-    color: #334155 !important;
-    border-color: #cbd5e1 !important;
-  }
-
-  .cust-btn.btn-history:hover {
-    background: #f1f5f9 !important;
-    border-color: #94a3b8 !important;
-  }
-
-  .cust-btn.btn-favs {
-    background: #fff1f2 !important;
-    color: #e11d48 !important;
-    border-color: #fecdd3 !important;
-  }
-
-  .cust-btn.btn-favs:hover:not(:disabled) {
-    background: #ffe4e6 !important;
-  }
-
-  .cust-btn.btn-favs:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    filter: grayscale(100%);
-  }
-
-  .cust-btn.btn-edit {
-    background: #eff6ff !important;
-    color: #2563eb !important;
-    border-color: #bfdbfe !important;
-  }
-
-  .cust-btn.btn-edit:hover {
-    background: #dbeafe !important;
-  }
-
-  .cust-btn.btn-delete {
-    background: #fef2f2 !important;
-    color: #dc2626 !important;
-    border-color: #fecaca !important;
-  }
-
-  .cust-btn.btn-delete:hover {
-    background: #fee2e2 !important;
-  }
+.customer-profile-cell:hover .customer-name-text {
+  color: var(--primary);
+  text-decoration: underline;
 }
 
-@media (max-width: 768px) {
-  .customer-actions-bar.desktop-actions {
-    display: none !important;
-  }
+.customer-avatar-badge {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(253, 181, 24, 0.2), rgba(253, 181, 24, 0.4));
+  color: #b45309;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(253, 181, 24, 0.3);
+}
 
-  .customer-actions-bar.mobile-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    min-width: 220px;
-    padding: 4px 0;
-  }
+.customer-names-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
 
-  .cust-btn-mobile {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    outline: none;
-    touch-action: manipulation;
-  }
+.customer-name-text {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-dark, #1e293b);
+  transition: color 0.15s ease;
+}
 
-  .btn-pay-mobile {
-    width: 100%;
-    height: 36px;
-    background: linear-gradient(135deg, #059669, #047857) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
-  }
+.customer-phone-subtext {
+  font-size: 0.76rem;
+  color: var(--text-muted, #64748b);
+  direction: ltr;
+  display: inline-block;
+  text-align: right;
+}
 
-  .btn-pay-mobile:active {
-    transform: scale(0.98);
-  }
+.orders-count-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-dark, #334155);
+  font-weight: 700;
+  font-size: 0.8rem;
+  font-family: 'Cairo', 'Fira Code', monospace;
+}
 
-  .mobile-actions-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    width: 100%;
-  }
+.customer-table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  .cust-btn-mobile.btn-sub {
-    height: 32px;
-    padding: 0 4px;
-    background: #f1f5f9 !important;
-    color: #334155 !important;
-    border: 1px solid #cbd5e1 !important;
-    font-size: 0.74rem;
-  }
+.cust-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Cairo', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  outline: none;
+  user-select: none;
+}
 
-  .cust-btn-mobile.btn-sub:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
+.cust-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
 
-  .cust-btn-mobile.btn-delete-sub {
-    height: 32px;
-    padding: 0 4px;
-    background: #fef2f2 !important;
-    color: #dc2626 !important;
-    border: 1px solid #fecaca !important;
-    font-size: 0.74rem;
-  }
+.cust-btn:active {
+  transform: scale(0.96);
+}
+
+.cust-btn.btn-pay {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.cust-btn.btn-pay:hover {
+  background: #d1fae5 !important;
+  color: #047857 !important;
+}
+
+.cust-btn.btn-details {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.cust-btn.btn-details:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* Customer Profile Modal Elements */
+.customer-profile-modal {
+  width: 95%;
+  max-width: 520px;
+  padding: 24px !important;
+}
+
+.profile-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #e6a100);
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(253, 181, 24, 0.3);
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-dark, #0f172a);
+}
+
+.profile-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.profile-action-icon.whatsapp-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.profile-action-icon.whatsapp-icon:hover {
+  background: #bbf7d0;
+  transform: scale(1.1);
+}
+
+.profile-action-icon.call-icon {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.profile-action-icon.call-icon:hover {
+  background: #bae6fd;
+  transform: scale(1.1);
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.profile-stat-box {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.profile-stat-box.balance-box {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.profile-stat-box .stat-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.profile-stat-box .stat-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.profile-stat-box .stat-value-sub {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.profile-meta-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  margin-bottom: 18px;
+  border: 1px dashed #cbd5e1;
+}
+
+.profile-meta-bar .meta-label {
+  color: #64748b;
+}
+
+.profile-meta-bar .meta-val {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.profile-actions-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-hub-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  touch-action: manipulation;
+}
+
+.btn-hub-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-hub-action:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-hub-action.btn-hub-pay {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.25);
+}
+
+.btn-hub-action.btn-hub-history {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.btn-hub-action.btn-hub-history:hover {
+  background: #f1f5f9;
+}
+
+.btn-hub-action.btn-hub-favs {
+  background: #fff1f2;
+  color: #e11d48;
+  border-color: #fecdd3;
+}
+
+.btn-hub-action.btn-hub-favs:hover:not(:disabled) {
+  background: #ffe4e6;
+}
+
+.btn-hub-action.btn-hub-favs:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-hub-action.btn-hub-edit {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.btn-hub-action.btn-hub-edit:hover {
+  background: #dbeafe;
+}
+
+.btn-hub-action.btn-hub-delete {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+  margin-top: 4px;
+}
+
+.btn-hub-action.btn-hub-delete:hover {
+  background: #fee2e2;
 }
 
 /* Print Payment Receipt Styles */
