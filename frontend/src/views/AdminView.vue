@@ -1648,7 +1648,7 @@
             <h2 class="modal-title">الملف التعريفي للعميل</h2>
             <span class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
           </div>
-          <button @click="customerDetailsModalOpen = false" class="modal-close-btn">✕</button>
+          <button @click="customerDetailsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
 
         <div class="modal-body">
@@ -1658,34 +1658,36 @@
             <div class="profile-info">
               <h3 class="profile-name">{{ selectedCustomer.name }}</h3>
               <div class="profile-phone-row">
-                <span class="text-mono text-muted" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
-                <a :href="'https://wa.me/' + (selectedCustomer.phone.replace(/[^0-9]/g, ''))" target="_blank" class="profile-action-icon whatsapp-icon" title="مراسلة عبر واتساب">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                </a>
-                <a :href="'tel:' + selectedCustomer.phone" class="profile-action-icon call-icon" title="اتصال بالعميل">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                </a>
+                <span class="profile-phone-text text-mono">{{ selectedCustomer.phone }}</span>
+                <div class="profile-quick-actions">
+                  <a :href="'https://wa.me/' + (selectedCustomer.phone.replace(/[^0-9]/g, ''))" target="_blank" class="profile-action-icon whatsapp-icon" title="مراسلة عبر واتساب">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  </a>
+                  <a :href="'tel:' + selectedCustomer.phone" class="profile-action-icon call-icon" title="اتصال بالعميل">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Key Metrics Stats Grid -->
           <div class="profile-stats-grid">
-            <div class="profile-stat-box balance-box">
+            <div class="profile-stat-box" :class="(selectedCustomer.outstandingBalance || 0) > 0 ? 'balance-due-box' : 'balance-clear-box'">
               <span class="stat-label">الرصيد المستحق</span>
-              <span class="stat-value text-mono" :style="{ color: (selectedCustomer.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
-                {{ (selectedCustomer.outstandingBalance || 0) > 0 ? formatCurrency(selectedCustomer.outstandingBalance) : 'مُسدد ✓' }}
+              <span class="stat-value text-mono">
+                {{ (selectedCustomer.outstandingBalance || 0) > 0 ? formatCurrency(selectedCustomer.outstandingBalance) : 'مُسدد بالكامل ✓' }}
               </span>
             </div>
 
-            <div class="profile-stat-box">
+            <div class="profile-stat-box primary-stat-box">
               <span class="stat-label">إجمالي المشتريات</span>
               <span class="stat-value text-mono text-primary">{{ formatCurrency(selectedCustomer.totalSpent) }}</span>
             </div>
 
             <div class="profile-stat-box">
               <span class="stat-label">إجمالي الطلبات</span>
-              <span class="stat-value text-mono">{{ formatArabicPlural(selectedCustomer.orderCount, 'order') }}</span>
+              <span class="stat-value text-mono text-dark">{{ formatArabicPlural(selectedCustomer.orderCount, 'order') }}</span>
             </div>
 
             <div class="profile-stat-box">
@@ -1706,8 +1708,8 @@
               @click="openPaymentModal(selectedCustomer); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-pay"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-              <span>تسجيل دفعة</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              <span>تسجيل دفعة نقدية / تحصيل</span>
             </button>
 
             <button 
@@ -1715,8 +1717,8 @@
               @click="openPaymentHistory(selectedCustomer); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-history"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span>سجل المدفوعات</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>سجل المدفوعات والإيصالات</span>
             </button>
 
             <button 
@@ -1725,8 +1727,8 @@
               class="btn-hub-action btn-hub-favs"
               :disabled="!selectedCustomer.favorites || !selectedCustomer.favorites.length"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-              <span>المفضلة ({{ selectedCustomer.favorites ? selectedCustomer.favorites.length : 0 }})</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              <span>المنتجات المفضلة ({{ selectedCustomer.favorites ? selectedCustomer.favorites.length : 0 }})</span>
             </button>
 
             <button 
@@ -1734,8 +1736,8 @@
               @click="openCustomerEditModal(selectedCustomer); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-edit"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              <span>تعديل البيانات</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>تعديل بيانات العميل</span>
             </button>
 
             <button 
@@ -1743,8 +1745,8 @@
               @click="deleteCustomer(selectedCustomer._id); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-delete"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              <span>حذف العميل</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>حذف العميل نهائياً</span>
             </button>
           </div>
         </div>
@@ -10811,166 +10813,227 @@ select.select-pill {
   width: 95%;
   max-width: 520px;
   padding: 24px !important;
+  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
 }
 
 .profile-hero-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.025);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 14px;
+  gap: 16px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .profile-avatar {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), #e6a100);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(253, 181, 24, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+  user-select: none;
 }
 
 .profile-info {
   flex: 1;
+  min-width: 0;
 }
 
 .profile-name {
   margin: 0 0 4px 0;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: var(--text-dark, #0f172a);
+  color: #0f172a;
+  line-height: 1.3;
 }
 
 .profile-phone-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.profile-phone-text {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #475569;
+  direction: ltr;
+  display: inline-block;
+}
+
+.profile-quick-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .profile-action-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
 }
 
 .profile-action-icon.whatsapp-icon {
   background: #dcfce7;
-  color: #16a34a;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
 .profile-action-icon.whatsapp-icon:hover {
-  background: #bbf7d0;
-  transform: scale(1.1);
+  background: #16a34a;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
 }
 
 .profile-action-icon.call-icon {
   background: #e0f2fe;
-  color: #0284c7;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
 }
 
 .profile-action-icon.call-icon:hover {
-  background: #bae6fd;
-  transform: scale(1.1);
+  background: #0284c7;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
 }
 
 .profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 14px;
 }
 
 .profile-stat-box {
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 14px 16px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 14px;
+  transition: transform 0.15s ease;
 }
 
-.profile-stat-box.balance-box {
+.profile-stat-box.balance-due-box {
   background: #fef2f2;
   border-color: #fecaca;
 }
 
+.profile-stat-box.balance-due-box .stat-value {
+  color: #dc2626;
+}
+
+.profile-stat-box.balance-clear-box {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.profile-stat-box.balance-clear-box .stat-value {
+  color: #15803d;
+  font-size: 1.05rem;
+}
+
+.profile-stat-box.primary-stat-box {
+  background: #fefce8;
+  border-color: #fef08a;
+}
+
+.profile-stat-box.primary-stat-box .stat-value {
+  color: #b45309;
+}
+
 .profile-stat-box .stat-label {
-  font-size: 0.72rem;
-  color: #64748b;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 0.78rem;
+  color: #475569;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: block;
 }
 
 .profile-stat-box .stat-value {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 800;
+  line-height: 1.2;
+}
+
+.profile-stat-box .stat-value.text-dark {
+  color: #0f172a;
 }
 
 .profile-stat-box .stat-value-sub {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #334155;
+  color: #1e293b;
+  line-height: 1.2;
 }
 
 .profile-meta-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: #f8fafc;
-  border-radius: 8px;
-  font-size: 0.78rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
   margin-bottom: 18px;
-  border: 1px dashed #cbd5e1;
+  border: 1px solid #e2e8f0;
 }
 
 .profile-meta-bar .meta-label {
-  color: #64748b;
+  color: #475569;
+  font-weight: 600;
 }
 
 .profile-meta-bar .meta-val {
-  font-weight: 700;
-  color: #1e293b;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .profile-actions-hub {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .btn-hub-action {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  height: 40px;
-  border-radius: 10px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 0.88rem;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-family: 'Cairo', system-ui, sans-serif;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
   touch-action: manipulation;
+  user-select: none;
 }
 
 .btn-hub-action:hover:not(:disabled) {
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .btn-hub-action:active:not(:disabled) {
@@ -10980,23 +11043,29 @@ select.select-pill {
 .btn-hub-action.btn-hub-pay {
   background: linear-gradient(135deg, #059669, #047857);
   color: #ffffff;
-  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.25);
+  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.28);
+}
+
+.btn-hub-action.btn-hub-pay:hover {
+  background: linear-gradient(135deg, #047857, #065f46);
 }
 
 .btn-hub-action.btn-hub-history {
-  background: #f8fafc;
+  background: #ffffff;
   color: #334155;
-  border-color: #cbd5e1;
+  border: 1px solid #cbd5e1;
 }
 
 .btn-hub-action.btn-hub-history:hover {
-  background: #f1f5f9;
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
 }
 
 .btn-hub-action.btn-hub-favs {
   background: #fff1f2;
-  color: #e11d48;
-  border-color: #fecdd3;
+  color: #be123c;
+  border: 1px solid #fecdd3;
 }
 
 .btn-hub-action.btn-hub-favs:hover:not(:disabled) {
@@ -11004,14 +11073,15 @@ select.select-pill {
 }
 
 .btn-hub-action.btn-hub-favs:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  filter: grayscale(80%);
 }
 
 .btn-hub-action.btn-hub-edit {
   background: #eff6ff;
-  color: #2563eb;
-  border-color: #bfdbfe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 .btn-hub-action.btn-hub-edit:hover {
@@ -11020,8 +11090,8 @@ select.select-pill {
 
 .btn-hub-action.btn-hub-delete {
   background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
   margin-top: 4px;
 }
 
