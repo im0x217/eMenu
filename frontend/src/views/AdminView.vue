@@ -4560,12 +4560,13 @@ export default {
       printingOrder.value = order;
       printingOrderCustomerBalance.value = null;
 
-      if (order && order.customerInfo && order.customerInfo.phone) {
-        const data = await fetchCustomerBalance(order.customerInfo.phone);
+      const phone = (order?.customerInfo?.phone || order?.customerPhone || order?.phone || '').trim();
+      if (phone) {
+        const data = await fetchCustomerBalance(phone);
         if (data && data.outstandingBalance !== undefined) {
           printingOrderCustomerBalance.value = data.outstandingBalance;
         } else {
-          const custMatch = customers.value.find(c => c.phone === order.customerInfo.phone);
+          const custMatch = customers.value.find(c => c.phone === phone);
           if (custMatch) {
             printingOrderCustomerBalance.value = custMatch.outstandingBalance;
           }
@@ -4573,6 +4574,7 @@ export default {
       }
 
       await nextTick();
+      await new Promise(r => setTimeout(r, 60));
 
       const orderIdStr = order._id ? order._id.toString() : '';
       const orderShortNum = orderIdStr.slice(-6);
