@@ -135,6 +135,7 @@ const generateWhatsAppMessage = (order) => {
   const priceLabel = order.priceMode === 'bulk' ? 'سعر جملة' : 'سعر عادي';
   
   let text = `*طلب جديد من تطبيق المنيو الإلكتروني*\n`;
+  text += `*رقم الطلب:* #${order.orderNumber || order._id.slice(-6)}\n`;
   text += `*المحل:* ${shopName} (${priceLabel})\n`;
   text += `--------------------------------\n`;
   text += `*العميل:* ${order.customerInfo?.name || authStore.customerName}\n`;
@@ -269,7 +270,10 @@ const validateProfileOnBlur = () => {
         <div v-for="order in orders" :key="order._id" class="order-card">
           <!-- Order Header -->
           <div class="order-header">
-            <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+            <div class="order-header-left">
+              <span class="order-num-badge">#{{ order.orderNumber || order._id.slice(-6) }}</span>
+              <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+            </div>
             <span class="order-status" :class="order.status || 'pending'">
               {{ getStatusLabel(order.status) }}
             </span>
@@ -503,6 +507,22 @@ const validateProfileOnBlur = () => {
   border-bottom: 1px dashed rgba(255,255,255,0.05);
   padding-bottom: 6px;
   margin-bottom: 6px;
+}
+
+.order-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-num-badge {
+  font-family: 'Cairo', 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(253, 181, 24, 0.15);
+  color: #d97706;
 }
 
 .order-date {

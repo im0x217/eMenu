@@ -929,7 +929,7 @@
                     </tr>
                     <tr v-for="order in paginatedOrders" :key="order._id">
                       <td class="text-bold text-mono">
-                        <span class="order-id-pill">#{{ order._id.toString().slice(-6) }}</span>
+                        <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
                       </td>
                       <td class="text-mono text-small">{{ new Date(order.createdAt).toLocaleString('ar-LY') }}</td>
                       <td>
@@ -1046,7 +1046,7 @@
     <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in">
       <div class="modal-content glass-panel" style="width: 95%; max-width: 950px; padding: 30px;">
         <div class="modal-header">
-          <h3>تعديل محتويات الطلب #{{ editingOrder._id.toString().slice(-6) }}</h3>
+          <h3>تعديل محتويات الطلب #{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</h3>
           <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <form @submit.prevent="saveOrder">
@@ -2130,7 +2130,7 @@
       <div class="receipt-meta">
         <div class="receipt-meta-row">
           <span class="receipt-label">رقم الطلب:</span>
-          <span class="receipt-value">#{{ printingOrder._id.toString().slice(-6) }}</span>
+          <span class="receipt-value">#{{ printingOrder.orderNumber || printingOrder._id.toString().slice(-6) }}</span>
         </div>
         <div class="receipt-meta-row">
           <span class="receipt-label">التاريخ:</span>
@@ -2261,7 +2261,7 @@
           <div class="unpaid-orders-scroll-wrapper">
             <div class="unpaid-orders-list">
               <div v-for="order in paymentTarget.unpaidOrders" :key="order._id" class="unpaid-order-item">
-                <div class="unpaid-order-id">#{{ order._id.toString().slice(-6) }}</div>
+                <div class="unpaid-order-id">#{{ order.orderNumber || order._id.toString().slice(-6) }}</div>
                 <div class="unpaid-order-date">{{ new Date(order.createdAt).toLocaleDateString('ar-LY') }}</div>
                 <div class="unpaid-order-total">{{ formatCurrency(order.totalPrice) }}</div>
                 <div class="unpaid-order-paid">مدفوع: {{ formatCurrency(order.paidAmount) }}</div>
@@ -2420,7 +2420,7 @@
             <div v-if="payment.note" class="payment-history-note">{{ payment.note }}</div>
             <div class="payment-history-distribution">
               <span v-for="d in payment.distributedTo" :key="d.orderId" class="payment-dist-chip">
-                #{{ d.orderId.toString().slice(-6) }}: {{ formatCurrency(d.applied) }}
+                #{{ d.orderNumber || (d.orderId ? d.orderId.toString().slice(-6) : '') }}: {{ formatCurrency(d.applied) }}
               </span>
             </div>
             <div class="payment-history-footer mt-2">
@@ -2514,7 +2514,7 @@
           </thead>
           <tbody>
             <tr v-for="d in printingPayment.distributedTo" :key="d.orderId">
-              <td>#{{ d.orderId.toString().slice(-6) }}</td>
+              <td>#{{ d.orderNumber || (d.orderId ? d.orderId.toString().slice(-6) : '') }}</td>
               <td>{{ Number(d.applied).toFixed(2) }} د.ل</td>
               <td>{{ d.newStatus === 'paid' ? 'مسدد' : 'جزئي' }}</td>
             </tr>
@@ -4164,7 +4164,8 @@ export default {
         const fullyPaid = (order.totalPrice - newPaid) <= 0.009;
         preview.push({
           orderId: order._id,
-          orderIdShort: order._id.toString().slice(-6),
+          orderNumber: order.orderNumber || null,
+          orderIdShort: order.orderNumber ? order.orderNumber.toString() : (order._id ? order._id.toString().slice(-6) : ''),
           orderTotal: order.totalPrice,
           previousPaid: order.paidAmount,
           applied,
@@ -4207,7 +4208,7 @@ export default {
 
       if (targetOrder) {
         paymentTarget.targetOrderId = targetOrder._id ? targetOrder._id.toString() : null;
-        paymentTarget.targetOrderShort = targetOrder._id ? targetOrder._id.toString().slice(-6) : '';
+        paymentTarget.targetOrderShort = targetOrder.orderNumber ? targetOrder.orderNumber.toString() : (targetOrder._id ? targetOrder._id.toString().slice(-6) : '');
         paymentTarget.mode = 'target';
       } else {
         paymentTarget.targetOrderId = null;
@@ -4583,7 +4584,7 @@ export default {
       await new Promise(r => setTimeout(r, 100));
 
       const orderIdStr = order._id ? order._id.toString() : '';
-      const orderShortNum = orderIdStr.slice(-6);
+      const orderShortNum = order.orderNumber ? order.orderNumber.toString() : orderIdStr.slice(-6);
       paginatedOrderPages.value.forEach((_, idx) => {
         renderBarcode(`#barcode-order-${idx}`, orderIdStr || 'ORDER', {
           text: `طلب: #${orderShortNum}`
@@ -4922,6 +4923,7 @@ export default {
         const orderIdShort = orderIdStr.slice(-6);
 
         const matchesSearch = !query || 
+                              (o.orderNumber && o.orderNumber.toString().includes(query)) ||
                               orderIdStr.includes(query) ||
                               orderIdShort.includes(query) ||
                               toEan13(o._id).includes(query) ||

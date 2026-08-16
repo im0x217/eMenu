@@ -125,11 +125,14 @@ export const useCartStore = defineStore('cart', () => {
     persist();
   };
 
-  const constructWhatsAppMessage = () => {
+  const constructWhatsAppMessage = (orderNumber = null) => {
     const shopName = getShopType.value === 'shop1' ? 'المتجر الرئيسي (حلويات)' : 'قسم النواشف';
     const priceLabel = getPriceMode.value === 'bulk' ? 'سعر جملة' : 'سعر عادي';
     
     let text = `*طلب جديد من تطبيق المنيو الإلكتروني*\n`;
+    if (orderNumber) {
+      text += `*رقم الطلب:* #${orderNumber}\n`;
+    }
     text += `*المحل:* ${shopName} (${priceLabel})\n`;
     text += `--------------------------------\n`;
     text += `*العميل:* ${authStore.customerName}\n`;
@@ -191,6 +194,7 @@ export const useCartStore = defineStore('cart', () => {
 
     // Save order to server database
     const endpoint = shopId === 'shop2' ? '/api/shop2/orders' : '/api/orders';
+    let assignedOrderNumber = null;
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -200,6 +204,8 @@ export const useCartStore = defineStore('cart', () => {
       if (!res.ok) {
         throw new Error('Server returned an error');
       }
+      const data = await res.json();
+      assignedOrderNumber = data.orderNumber || null;
     } catch (e) {
       console.error('Order submission failed:', e);
       throw new Error('عذراً، فشل إرسال الطلب بسبب مشكلة في الخادم. يرجى المحاولة مرة أخرى.');
@@ -207,7 +213,7 @@ export const useCartStore = defineStore('cart', () => {
 
     // Track GA4 Purchase Event
     trackEvent('purchase', {
-      transaction_id: `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      transaction_id: assignedOrderNumber ? `order_${assignedOrderNumber}` : `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       value: cartTotal.value,
       currency: 'LYD',
       items: items.value.map(item => ({
@@ -221,7 +227,7 @@ export const useCartStore = defineStore('cart', () => {
 
     // Launch WhatsApp redirect
     const number = getWhatsAppNumber();
-    const message = constructWhatsAppMessage();
+    const message = constructWhatsAppMessage(assignedOrderNumber);
     const url = `https://wa.me/${number.replace('+', '')}?text=${message}`;
     
     // Clear cart on success

@@ -171,8 +171,18 @@ console.log("[INIT] Registering API routes...");
 // ============ STATE ============
 let db, productsCollection, categoriesCollection, tagsCollection;
 let db2, productsCollection2, categoriesCollection2, tagsCollection2;
-let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection, paymentsCollection;
+let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection, paymentsCollection, countersCollection;
 let mongoConnected = false;
+
+// Helper: Atomic Sequential Order Number Generator
+const getNextOrderNumber = async () => {
+  const result = await countersCollection.findOneAndUpdate(
+    { _id: "orderNumber" },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after" }
+  );
+  return result.seq;
+};
 
 // ============ MIDDLEWARE ============
 const checkMongoDB = (req, res, next) => {
@@ -1833,6 +1843,7 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
     // For legacy orders without paymentStatus, treat as unpaid
     const normalizedOrders = unpaidOrders.map(o => ({
       _id: o._id,
+      orderNumber: o.orderNumber || null,
       totalPrice: o.totalPrice || 0,
       paidAmount: o.paidAmount || 0,
       remaining: (o.totalPrice || 0) - (o.paidAmount || 0),
@@ -1942,6 +1953,7 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
 
       distributedTo.push({
         orderId: order._id,
+        orderNumber: order.orderNumber || null,
         applied: applied,
         orderTotal: order.totalPrice,
         previousPaid: order.paidAmount || 0,
@@ -2392,7 +2404,9 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       { upsert: true }
     );
     
+    const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
+      orderNumber: nextOrderNumber,
       customerInfo: {
         name: normalizedName,
         phone: normalizedPhone
@@ -2418,7 +2432,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
     };
     
     const result = await ordersCollection.insertOne(orderDoc);
-    res.status(201).json({ success: true, orderId: result.insertedId });
+    res.status(201).json({ success: true, orderId: result.insertedId, orderNumber: nextOrderNumber });
   } catch (err) {
     console.error("Save order error:", err);
     res.status(500).json({ error: "Failed to save order" });
@@ -2450,7 +2464,9 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       { upsert: true }
     );
     
+    const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
+      orderNumber: nextOrderNumber,
       customerInfo: {
         name: normalizedName,
         phone: normalizedPhone
@@ -2476,7 +2492,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     };
     
     const result = await ordersCollection2.insertOne(orderDoc);
-    res.status(201).json({ success: true, orderId: result.insertedId });
+    res.status(201).json({ success: true, orderId: result.insertedId, orderNumber: nextOrderNumber });
   } catch (err) {
     console.error("Save shop2 order error:", err);
     res.status(500).json({ error: "Failed to save order" });
@@ -2644,6 +2660,7 @@ const connectWithRetry = async () => {
     carouselCollection = db.collection("marketing_carousel");
     adminUsersCollection = db.collection("admin_users");
     paymentsCollection = db.collection("payments");
+    countersCollection = db.collection("counters");
     mongoConnected = true;
     
     productsCollection.createIndex({ category: 1 });
@@ -2655,8 +2672,38 @@ const connectWithRetry = async () => {
     customersCollection.createIndex({ phone: 1 }, { unique: true });
     favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
     ordersCollection.createIndex({ "customerInfo.phone": 1 });
+    ordersCollection.createIndex({ orderNumber: 1 });
     ordersCollection2.createIndex({ "customerInfo.phone": 1 });
+    ordersCollection2.createIndex({ orderNumber: 1 });
     adminUsersCollection.createIndex({ username: 1 }, { unique: true });
+
+    // Initialize order counter and backfill legacy orders without orderNumber
+    try {
+      const counterDoc = await countersCollection.findOne({ _id: "orderNumber" });
+      if (!counterDoc) {
+        const shop1Legacy = await ordersCollection.find({ orderNumber: { $exists: false } }).sort({ createdAt: 1 }).toArray();
+        const shop2Legacy = await ordersCollection2.find({ orderNumber: { $exists: false } }).sort({ createdAt: 1 }).toArray();
+
+        const allUnassigned = [...shop1Legacy.map(o => ({ ...o, _src: 'shop1' })), ...shop2Legacy.map(o => ({ ...o, _src: 'shop2' }))]
+          .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+
+        let currentSeq = 1000;
+        for (const ord of allUnassigned) {
+          currentSeq++;
+          const targetColl = ord._src === 'shop2' ? ordersCollection2 : ordersCollection;
+          await targetColl.updateOne({ _id: ord._id }, { $set: { orderNumber: currentSeq } });
+        }
+
+        await countersCollection.updateOne(
+          { _id: "orderNumber" },
+          { $set: { seq: currentSeq } },
+          { upsert: true }
+        );
+        console.log(`✓ Initialized orderNumber counter at #${currentSeq} (backfilled ${allUnassigned.length} orders)`);
+      }
+    } catch (counterErr) {
+      console.error("Order counter initialization warning:", counterErr);
+    }
 
     // Seed default admin user if empty
     const userCount = await adminUsersCollection.countDocuments();
