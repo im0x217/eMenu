@@ -2665,23 +2665,6 @@ const connectWithRetry = async () => {
       console.log("✓ Default admin user initialized");
     }
 
-    // Auto-migrate legacy/existing unpaid orders to set paymentMethod: ''
-    try {
-      const migrateQuery = {
-        $or: [
-          { paymentStatus: 'unpaid' },
-          { paymentStatus: { $exists: false } },
-          { paidAmount: 0 },
-          { paidAmount: { $exists: false } }
-        ]
-      };
-      await ordersCollection.updateMany(migrateQuery, { $set: { paymentMethod: '' } });
-      await ordersCollection2.updateMany(migrateQuery, { $set: { paymentMethod: '' } });
-      console.log("✓ Unpaid orders paymentMethod migration completed safely");
-    } catch (migErr) {
-      console.error("Unpaid orders migration warning:", migErr);
-    }
-
     const count = await categoriesCollection.countDocuments();
     if (count === 0) {
       console.log("Initializing categories...");
