@@ -4558,23 +4558,29 @@ export default {
 
     const printOrder = async (order) => {
       printingOrder.value = order;
-      printingOrderCustomerBalance.value = null;
 
       const phone = (order?.customerInfo?.phone || order?.customerPhone || order?.phone || '').trim();
+      let balance = null;
+
+      const custMatch = customers.value.find(c => c.phone === phone);
+      if (custMatch && custMatch.outstandingBalance !== undefined) {
+        balance = custMatch.outstandingBalance;
+      }
+      printingOrderCustomerBalance.value = balance;
+
       if (phone) {
-        const data = await fetchCustomerBalance(phone);
-        if (data && data.outstandingBalance !== undefined) {
-          printingOrderCustomerBalance.value = data.outstandingBalance;
-        } else {
-          const custMatch = customers.value.find(c => c.phone === phone);
-          if (custMatch) {
-            printingOrderCustomerBalance.value = custMatch.outstandingBalance;
+        try {
+          const data = await fetchCustomerBalance(phone);
+          if (data && data.outstandingBalance !== undefined) {
+            printingOrderCustomerBalance.value = data.outstandingBalance;
           }
+        } catch (err) {
+          console.error('Fetch balance error during print:', err);
         }
       }
 
       await nextTick();
-      await new Promise(r => setTimeout(r, 60));
+      await new Promise(r => setTimeout(r, 100));
 
       const orderIdStr = order._id ? order._id.toString() : '';
       const orderShortNum = orderIdStr.slice(-6);
