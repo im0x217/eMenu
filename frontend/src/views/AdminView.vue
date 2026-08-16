@@ -2591,9 +2591,33 @@ export default {
     const loading = ref(false);
     const isAuthenticated = ref(false);
     const sidebarOpen = ref(false);
-    const activeTab = ref('analytics');
+
+    // Persistent Active Tab Management across page reloads
+    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'carousel', 'users'];
+    const getInitialTab = () => {
+      try {
+        const hash = window.location.hash.replace(/^#/, '');
+        if (VALID_TABS.includes(hash)) return hash;
+        const saved = localStorage.getItem('emenu_admin_active_tab');
+        if (VALID_TABS.includes(saved)) return saved;
+      } catch (e) {}
+      return 'analytics';
+    };
+
+    const activeTab = ref(getInitialTab());
     const activeShop = ref('shop1');
     const loginShop = ref('shop1');
+
+    watch(activeTab, (newTab) => {
+      if (newTab && VALID_TABS.includes(newTab)) {
+        try {
+          localStorage.setItem('emenu_admin_active_tab', newTab);
+          if (window.location.hash.replace(/^#/, '') !== newTab) {
+            window.location.hash = newTab;
+          }
+        } catch (e) {}
+      }
+    });
 
     // Login Data
     const loginForm = reactive({ username: '', password: '' });
@@ -5072,14 +5096,27 @@ export default {
       }
     };
 
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#/, '');
+      if (VALID_TABS.includes(hash) && activeTab.value !== hash) {
+        if (userRole.value === 'order_manager' && hash !== 'orders') {
+          activeTab.value = 'orders';
+        } else {
+          activeTab.value = hash;
+        }
+      }
+    };
+
     onMounted(() => {
       window.addEventListener('resize', handleResize);
       window.addEventListener('keydown', handleGlobalKeydown);
+      window.addEventListener('hashchange', handleHashChange);
     });
 
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
+      window.removeEventListener('hashchange', handleHashChange);
     });
 
     // =========================================================================
