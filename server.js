@@ -1259,12 +1259,17 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       priceModeSplit[key] = { revenue: m.revenue, count: m.count };
     });
     
-    // Payment Methods breakdown (Cash, Card, Bank Transfer)
-    const paymentMethodsRaw = await ordColl.aggregate([
-      { $match: matchStage },
+    // Payment Methods breakdown (Actual paid values from paymentsCollection)
+    const paymentMatchStage = { shop };
+    if (startDate && endDate) {
+      paymentMatchStage.createdAt = { $gte: startDate, $lte: endDate };
+    }
+
+    const paymentMethodsRaw = await paymentsCollection.aggregate([
+      { $match: paymentMatchStage },
       { $group: {
-          _id: { $ifNull: ["$paymentMethod", "cash"] },
-          revenue: { $sum: "$totalPrice" },
+          _id: "$method",
+          revenue: { $sum: "$amount" },
           count: { $sum: 1 }
       } }
     ]).toArray();
@@ -2368,7 +2373,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       totalPrice: Math.round(Number(totalPrice) * 100) / 100,
       paidAmount: 0,
       paymentStatus: 'unpaid',
-      paymentMethod: 'cash',
+      paymentMethod: '',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
@@ -2426,7 +2431,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       totalPrice: Math.round(Number(totalPrice) * 100) / 100,
       paidAmount: 0,
       paymentStatus: 'unpaid',
-      paymentMethod: 'cash',
+      paymentMethod: '',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',

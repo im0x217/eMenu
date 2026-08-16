@@ -2158,12 +2158,6 @@
             {{ printingOrder.paymentStatus === 'paid' ? 'مدفوع' : 'غير مدفوع' }}
           </span>
         </div>
-        <div class="receipt-meta-row">
-          <span class="receipt-label">طريقة الدفع:</span>
-          <span class="receipt-value">
-            {{ printingOrder.paymentMethod === 'card' ? 'بطاقة مصرفية' : printingOrder.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'نقدي' }}
-          </span>
-        </div>
       </div>
 
       <div class="receipt-divider"></div>
