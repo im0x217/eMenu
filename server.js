@@ -156,7 +156,15 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.includes('assets')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 console.log("[INIT] Registering API routes...");
 
