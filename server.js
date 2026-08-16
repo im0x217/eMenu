@@ -1678,9 +1678,9 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const customers = await customersCollection.find().toArray();
     
-    // Batch fetch all orders stats by phone
+    // Batch fetch all orders stats by phone (all active non-cancelled orders)
     const allOrderStats = await ordColl.aggregate([
-      { $match: { status: { $in: ["received", "completed"] } } },
+      { $match: { status: { $ne: "cancelled" } } },
       { $group: {
           _id: "$customerInfo.phone",
           totalSpent: { $sum: "$totalPrice" },
