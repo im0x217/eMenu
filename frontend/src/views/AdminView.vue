@@ -962,9 +962,9 @@
                             <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                           </span>
                           <span class="badge-text">
-                            <template v-if="order.paymentStatus === 'paid'">مدفوع</template>
+                            <template v-if="order.paymentStatus === 'paid'">خالص</template>
                             <template v-else-if="order.paymentStatus === 'partial'">جزئي {{ formatCurrency(order.paidAmount || 0) }}</template>
-                            <template v-else>غير مدفوع</template>
+                            <template v-else>غير خالص</template>
                           </span>
                         </button>
                       </td>
@@ -2155,7 +2155,7 @@
         <div class="receipt-meta-row">
           <span class="receipt-label">حالة الدفع:</span>
           <span class="receipt-value" :class="printingOrder.paymentStatus === 'paid' ? 'paid' : 'unpaid'">
-            {{ printingOrder.paymentStatus === 'paid' ? 'مدفوع' : 'غير مدفوع' }}
+            {{ printingOrder.paymentStatus === 'paid' ? 'خالص' : 'غير خالص' }}
           </span>
         </div>
         <div class="receipt-meta-row" v-if="printingOrder.paymentMethod">
