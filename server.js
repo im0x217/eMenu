@@ -1975,6 +1975,33 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
+// Admin endpoint to safely migrate unpaid orders paymentMethod to empty string
+app.post("/api/admin/migrate-unpaid-orders", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const query = {
+      $or: [
+        { paymentStatus: 'unpaid' },
+        { paymentStatus: { $exists: false } },
+        { paidAmount: 0 },
+        { paidAmount: { $exists: false } }
+      ]
+    };
+
+    const res1 = await ordersCollection.updateMany(query, { $set: { paymentMethod: '' } });
+    const res2 = await ordersCollection2.updateMany(query, { $set: { paymentMethod: '' } });
+
+    res.json({
+      success: true,
+      shop1Modified: res1.modifiedCount,
+      shop2Modified: res2.modifiedCount,
+      message: `Migrated ${res1.modifiedCount + res2.modifiedCount} unpaid orders successfully.`
+    });
+  } catch (err) {
+    console.error("Migration error:", err);
+    res.status(500).json({ error: "Failed to migrate unpaid orders" });
+  }
+});
+
 // Get payment history for a customer
 app.get("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   const { phone, shop: reqShop, limit: reqLimit } = req.query;
@@ -2636,6 +2663,23 @@ const connectWithRetry = async () => {
         createdAt: new Date()
       });
       console.log("✓ Default admin user initialized");
+    }
+
+    // Auto-migrate legacy/existing unpaid orders to set paymentMethod: ''
+    try {
+      const migrateQuery = {
+        $or: [
+          { paymentStatus: 'unpaid' },
+          { paymentStatus: { $exists: false } },
+          { paidAmount: 0 },
+          { paidAmount: { $exists: false } }
+        ]
+      };
+      await ordersCollection.updateMany(migrateQuery, { $set: { paymentMethod: '' } });
+      await ordersCollection2.updateMany(migrateQuery, { $set: { paymentMethod: '' } });
+      console.log("✓ Unpaid orders paymentMethod migration completed safely");
+    } catch (migErr) {
+      console.error("Unpaid orders migration warning:", migErr);
     }
 
     const count = await categoriesCollection.countDocuments();
