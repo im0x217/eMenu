@@ -8559,10 +8559,10 @@ select.select-pill {
     margin: 0 !important;
   }
 
-  /* Named page for reconciliation — A4 portrait layout without browser headers/footers */
+  /* Named page for reconciliation — A4 portrait layout with comfortable margins on every page */
   @page reconciliation {
     size: A4 portrait;
-    margin: 0 !important;
+    margin: 12mm 14mm;
   }
 
   /* Suppress link URL text insertion when printing */
@@ -8801,7 +8801,7 @@ select.select-pill {
   .reconciliation-page {
     display: block !important;
     width: 100%;
-    padding: 12mm 14mm;
+    padding: 0;
     margin: 0;
     background: #ffffff !important;
     color: #000000 !important;
