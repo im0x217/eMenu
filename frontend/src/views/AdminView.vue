@@ -498,16 +498,10 @@
                     <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
                   </div>
-                  <div class="toolbar-actions-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button @click="bulkAutoTranslateCatalog" class="btn btn-outline" :disabled="isBulkTranslating" title="ترجمة جميع المنتجات والأصناف التي تنقصها ترجمة إنجليزية بنقرة واحدة">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
-                      <span>{{ isBulkTranslating ? 'جاري الترجمة التلقائية…' : '✨ ترجمة الكتالوج كاملاً' }}</span>
-                    </button>
-                    <button @click="openProductModal()" class="btn btn-primary">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      إضافة منتج جديد
-                    </button>
-                  </div>
+                  <button @click="openProductModal()" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    إضافة منتج جديد
+                  </button>
                 </div>
                 <div class="card-toolbar-bottom">
                   <div class="search-input-wrapper">
@@ -1414,35 +1408,14 @@
             </div>
           </div>
 
-          <div class="form-group mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label mb-0">اسم المنتج بالعربية *</label>
-              <button 
-                type="button" 
-                @click="autoTranslateProductForm" 
-                class="btn btn-sm btn-outline-info" 
-                style="padding: 2px 8px; font-size: 0.75rem; border-radius: 6px;"
-                :disabled="!editingProduct.name || isTranslatingForm"
-              >
-                {{ isTranslatingForm ? 'جاري الترجمة...' : '✨ ترجمة للإنجليزية' }}
-              </button>
-            </div>
+          <div class="form-group">
+            <label>اسم المنتج *</label>
             <input v-model="editingProduct.name" type="text" required placeholder="مثال: غريبة باللوز" class="form-control" />
           </div>
 
-          <div class="form-group mb-3">
-            <label class="form-label mb-1">اسم المنتج بالإنجليزية (Product Name in English)</label>
-            <input v-model="editingProduct.name_en" type="text" placeholder="e.g. Almond Ghorayeba" class="form-control" style="direction: ltr;" />
-          </div>
-
-          <div class="form-group mb-3">
-            <label class="form-label mb-1">الوصف بالعربية</label>
+          <div class="form-group">
+            <label>الوصف</label>
             <textarea v-model="editingProduct.desc" rows="2" placeholder="أدخل وصفاً مشوقاً للمنتج..." class="form-control"></textarea>
-          </div>
-
-          <div class="form-group mb-3">
-            <label class="form-label mb-1">الوصف بالإنجليزية (Description in English)</label>
-            <textarea v-model="editingProduct.desc_en" rows="2" placeholder="Product description in English..." class="form-control" style="direction: ltr;"></textarea>
           </div>
 
           <div class="form-group-row">
@@ -2893,9 +2866,7 @@ export default {
     const editingProduct = reactive({
       _id: '',
       name: '',
-      name_en: '',
       desc: '',
-      desc_en: '',
       category: '',
       subCategory: '',
       purchaseType: 'both',
@@ -2905,65 +2876,6 @@ export default {
       img: '',
       tags: []
     });
-
-    const isTranslatingForm = ref(false);
-    const isBulkTranslating = ref(false);
-
-    const autoTranslateProductForm = async () => {
-      if (!editingProduct.name) return;
-      isTranslatingForm.value = true;
-      try {
-        const nameRes = await adminFetch('/api/admin/translate-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: editingProduct.name, from: 'ar', to: 'en' })
-        });
-        if (nameRes.ok) {
-          const data = await nameRes.json();
-          if (data.translation) editingProduct.name_en = data.translation;
-        }
-
-        if (editingProduct.desc) {
-          const descRes = await adminFetch('/api/admin/translate-text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: editingProduct.desc, from: 'ar', to: 'en' })
-          });
-          if (descRes.ok) {
-            const data = await descRes.json();
-            if (data.translation) editingProduct.desc_en = data.translation;
-          }
-        }
-        toast.show('تمت الترجمة التلقائية للإنجليزية ✓', 'success');
-      } catch (err) {
-        toast.show('تعذر الترجمة التلقائية حالياً', 'danger');
-      } finally {
-        isTranslatingForm.value = false;
-      }
-    };
-
-    const bulkAutoTranslateCatalog = async () => {
-      if (isBulkTranslating.value) return;
-      isBulkTranslating.value = true;
-      try {
-        const res = await adminFetch('/api/admin/auto-translate-catalog', {
-          method: 'POST'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          toast.show(`تمت ترجمة ${data.totalTranslated} صنف ومنتج بنجاح ✓`, 'success');
-          await fetchProducts();
-          await fetchCategories();
-          await fetchTags();
-        } else {
-          toast.show('فشل في إجراء الترجمة الشاملة', 'danger');
-        }
-      } catch (err) {
-        toast.show('حدث خطأ في الاتصال بالخادم', 'danger');
-      } finally {
-        isBulkTranslating.value = false;
-      }
-    };
 
     const toggleProductTag = (tagName) => {
       if (!editingProduct.tags) editingProduct.tags = [];
@@ -3139,9 +3051,7 @@ export default {
         // Edit Mode
         editingProduct._id = prod._id;
         editingProduct.name = prod.name;
-        editingProduct.name_en = prod.name_en || '';
         editingProduct.desc = prod.desc || '';
-        editingProduct.desc_en = prod.desc_en || '';
         editingProduct.category = prod.category;
         editingProduct.subCategory = prod.subCategory || '';
         editingProduct.purchaseType = prod.purchaseType || 'both';
@@ -3159,9 +3069,7 @@ export default {
         // Create Mode
         editingProduct._id = '';
         editingProduct.name = '';
-        editingProduct.name_en = '';
         editingProduct.desc = '';
-        editingProduct.desc_en = '';
         editingProduct.category = '';
         editingProduct.subCategory = '';
         editingProduct.purchaseType = 'both';
@@ -3191,9 +3099,7 @@ export default {
 
       const formData = new FormData();
       formData.append('name', editingProduct.name);
-      formData.append('name_en', editingProduct.name_en || '');
       formData.append('desc', editingProduct.desc);
-      formData.append('desc_en', editingProduct.desc_en || '');
       formData.append('category', editingProduct.category);
       formData.append('subCategory', editingProduct.subCategory);
       formData.append('purchaseType', editingProduct.purchaseType);

@@ -3,14 +3,11 @@ import { computed, ref, onMounted } from 'vue';
 import { useShopStore } from '../stores/shop';
 import { useFavoritesStore } from '../stores/favorites';
 import { useAuthStore } from '../stores/auth';
-import { useLanguageStore } from '../stores/language';
 import ProductCard from '../components/ProductCard.vue';
-import LanguageToggle from '../components/LanguageToggle.vue';
 
 const shopStore = useShopStore();
 const favoritesStore = useFavoritesStore();
 const authStore = useAuthStore();
-const langStore = useLanguageStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isLoggedIn = computed(() => authStore.isIdentified());
@@ -46,17 +43,14 @@ const closeZoomModal = () => {
     <!-- View Header -->
     <header class="favorites-header glass-panel">
       <div class="header-main">
-        <router-link to="/" class="back-home-btn" :aria-label="langStore.t('nav.home')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="rtl-flip">
+        <router-link to="/" class="back-home-btn" aria-label="الرجوع للمتجر">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 19 12 12 5"></polyline>
           </svg>
         </router-link>
-        <h1 class="header-title">{{ langStore.t('favorites.title') }}</h1>
-        <div class="header-actions-group">
-          <LanguageToggle />
-          <span class="favorites-count-badge">{{ favoriteProducts.length }}</span>
-        </div>
+        <h1 class="header-title">المنتجات المفضلة</h1>
+        <span class="favorites-count-badge">{{ favoriteProducts.length }}</span>
       </div>
     </header>
 
@@ -100,8 +94,8 @@ const closeZoomModal = () => {
           <line x1="2" y1="2" x2="22" y2="22"/>
         </svg>
       </div>
-      <h2 class="empty-title">{{ langStore.t('favorites.emptyTitle') }}</h2>
-      <p class="empty-desc">{{ langStore.t('favorites.emptySubtitle') }}</p>
+      <h2 class="empty-title">المفضلة فارغة</h2>
+      <p class="empty-desc">اضغط على زر القلب في بطاقات المنتجات لإضافتها هنا والوصول إليها بسرعة لاحقاً.</p>
     </div>
 
     <!-- Image Zoom Modal -->

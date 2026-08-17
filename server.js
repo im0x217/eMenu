@@ -184,23 +184,6 @@ const getNextOrderNumber = async () => {
   return result.seq;
 };
 
-// Helper: Free Google Translate Integration for Arabic ⇄ English
-const translateText = async (text, from = 'ar', to = 'en') => {
-  if (!text || typeof text !== 'string' || !text.trim()) return '';
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text.trim())}`;
-    const res = await fetch(url);
-    if (!res.ok) return '';
-    const data = await res.json();
-    if (Array.isArray(data) && Array.isArray(data[0])) {
-      return data[0].map(item => item[0]).filter(Boolean).join('');
-    }
-  } catch (err) {
-    console.error("Auto-translate warning for text:", text, err.message);
-  }
-  return '';
-};
-
 // ============ MIDDLEWARE ============
 const checkMongoDB = (req, res, next) => {
   if (!mongoConnected) {
@@ -472,7 +455,7 @@ app.post("/api/verify-bulk-code", (req, res) => {
 });
 
 app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, name_en, desc, desc_en, price_regular, price_bulk, category, category_en, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
   
   let parsedTags = [];
   try {
@@ -500,6 +483,10 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
     console.log("[UPLOAD WARNING] POST /api/products - No file received, using placeholder");
   }
   
+  console.log("[UPLOAD DEBUG] POST /api/products");
+  console.log("  File received:", req.file ? "Yes" : "No");
+  console.log("  Form data:", { name, category, price_regular, price_bulk });
+  
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
@@ -511,24 +498,18 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
     !category ||
     !hasSomePrice
   ) {
+    console.log("[UPLOAD ERROR] Missing required fields - name:", name, "category:", category);
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
   try {
-    const finalNameEn = name_en ? name_en.trim() : (await translateText(name) || name);
-    const finalDescEn = desc_en !== undefined ? desc_en.trim() : (desc ? await translateText(desc) : '');
-    const finalCatEn = category_en ? category_en.trim() : (category ? await translateText(category) : '');
-
     await productsCollection.insertOne({
       name,
-      name_en: finalNameEn,
       desc,
-      desc_en: finalDescEn,
       price_regular: parsedPriceRegular,
       price_bulk: parsedPriceBulk,
       price: parsedPrice,
       img,
       category,
-      category_en: finalCatEn,
       subCategory,
       available: available === "false" ? false : true,
       allowFloat: isFloat,
@@ -544,7 +525,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, name_en, desc, desc_en, price_regular, price_bulk, category, category_en, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
@@ -559,22 +540,17 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
   
   let updateData = {
       name,
-      name_en: name_en !== undefined ? name_en.trim() : undefined,
       desc,
-      desc_en: desc_en !== undefined ? desc_en.trim() : undefined,
       price_regular: parsedPriceRegular,
       price_bulk: parsedPriceBulk,
       price: parsedPrice,
       category,
-      category_en: category_en !== undefined ? category_en.trim() : undefined,
       subCategory,
       available: available === "false" ? false : true,
       allowFloat: isFloat,
       purchaseType: purchaseType || 'both',
       tags: parsedTags
   };
-  // Remove undefined fields
-  Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
   let uploadWarning = null;
   
@@ -930,7 +906,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
 });
 
 app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, name_en, desc, desc_en, price_regular, price_bulk, category, category_en, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
   
   let parsedTags = [];
   try {
@@ -970,21 +946,14 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
   try {
-    const finalNameEn = name_en ? name_en.trim() : (await translateText(name) || name);
-    const finalDescEn = desc_en !== undefined ? desc_en.trim() : (desc ? await translateText(desc) : '');
-    const finalCatEn = category_en ? category_en.trim() : (category ? await translateText(category) : '');
-
     await productsCollection2.insertOne({
       name,
-      name_en: finalNameEn,
       desc,
-      desc_en: finalDescEn,
       price_regular: parsedPriceRegular,
       price_bulk: parsedPriceBulk,
       price: parsedPrice,
       img,
       category,
-      category_en: finalCatEn,
       subCategory,
       available: available !== "false",
       allowFloat: isFloat,
@@ -1005,7 +974,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
 
 app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
-    const { name, name_en, desc, desc_en, price_regular, price_bulk, category, category_en, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
+    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
     }
@@ -1850,115 +1819,6 @@ app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res
   } catch (err) {
     console.error("Delete customer error:", err);
     res.status(500).json({ error: "Failed to delete customer" });
-  }
-});
-
-// ============ TRANSLATION & LOCALIZATION APIs ============
-
-// Instant single text translation helper
-app.post("/api/admin/translate-text", checkMongoDB, checkAdmin, async (req, res) => {
-  const { text, from, to } = req.body;
-  if (!text) return res.json({ translation: '' });
-  const translation = await translateText(text, from || 'ar', to || 'en');
-  res.json({ translation });
-});
-
-// Bulk auto-translate all catalog items (products, categories, tags)
-app.post("/api/admin/auto-translate-catalog", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    let translatedProducts = 0;
-    let translatedCategories = 0;
-    let translatedTags = 0;
-
-    // 1. Shop1 & Shop2 Products
-    const colls = [
-      { coll: productsCollection, name: 'shop1' },
-      { coll: productsCollection2, name: 'shop2' }
-    ];
-
-    for (const { coll } of colls) {
-      if (!coll) continue;
-      const prods = await coll.find({
-        $or: [
-          { name_en: { $exists: false } },
-          { name_en: '' },
-          { name_en: null }
-        ]
-      }).toArray();
-
-      for (const prod of prods) {
-        const name_en = await translateText(prod.name);
-        const desc_en = prod.desc ? await translateText(prod.desc) : '';
-        const category_en = prod.category ? await translateText(prod.category) : '';
-        
-        await coll.updateOne(
-          { _id: prod._id },
-          { 
-            $set: { 
-              name_en: name_en || prod.name, 
-              desc_en: desc_en || '',
-              category_en: category_en || ''
-            } 
-          }
-        );
-        translatedProducts++;
-      }
-    }
-
-    // 2. Categories (Shop1 & Shop2)
-    const catColls = [categoriesCollection, categoriesCollection2];
-    for (const catColl of catColls) {
-      if (!catColl) continue;
-      const cats = await catColl.find({
-        $or: [
-          { name_en: { $exists: false } },
-          { name_en: '' },
-          { name_en: null }
-        ]
-      }).toArray();
-
-      for (const cat of cats) {
-        const name_en = await translateText(cat.name);
-        await catColl.updateOne(
-          { _id: cat._id },
-          { $set: { name_en: name_en || cat.name } }
-        );
-        translatedCategories++;
-      }
-    }
-
-    // 3. Tags (Shop1 & Shop2)
-    const tagColls = [tagsCollection, tagsCollection2];
-    for (const tagColl of tagColls) {
-      if (!tagColl) continue;
-      const tags = await tagColl.find({
-        $or: [
-          { name_en: { $exists: false } },
-          { name_en: '' },
-          { name_en: null }
-        ]
-      }).toArray();
-
-      for (const tag of tags) {
-        const name_en = await translateText(tag.name);
-        await tagColl.updateOne(
-          { _id: tag._id },
-          { $set: { name_en: name_en || tag.name } }
-        );
-        translatedTags++;
-      }
-    }
-
-    res.json({
-      success: true,
-      translatedProducts,
-      translatedCategories,
-      translatedTags,
-      totalTranslated: translatedProducts + translatedCategories + translatedTags
-    });
-  } catch (err) {
-    console.error("Auto-translate catalog error:", err);
-    res.status(500).json({ error: "Failed to auto-translate catalog" });
   }
 });
 

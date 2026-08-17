@@ -3,12 +3,10 @@ import { computed, ref } from 'vue';
 import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
-import { useLanguageStore } from '../stores/language';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const toastStore = useToastStore();
-const langStore = useLanguageStore();
 
 // Guest checkout details (Name and Phone)
 const nameInput = ref(authStore.customerName);
@@ -123,8 +121,8 @@ const handleClearCart = () => {
           <path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
       </div>
-      <h2 class="empty-title">{{ langStore.t('cart.emptyTitle') }}</h2>
-      <p class="empty-desc">{{ langStore.t('cart.emptySubtitle') }}</p>
+      <h2 class="empty-title">السلة فارغة حالياً</h2>
+      <p class="empty-desc">اذهب لقسم المنتجات وأضف ما ترغب به لتجده هنا.</p>
     </div>
 
     <!-- Active Cart Content -->
@@ -133,9 +131,9 @@ const handleClearCart = () => {
       <!-- Cart Items List -->
       <div class="cart-items-section glass-panel">
         <div class="cart-section-header">
-          <h3 class="section-title">{{ langStore.t('cart.orderSummary') }}</h3>
-          <button class="clear-cart-btn" @click="handleClearCart" :class="{ confirming: isConfirmingClear }" :title="langStore.t('cart.clearCart')">
-            <span>{{ isConfirmingClear ? (langStore.isEn ? 'Confirm Clear?' : 'تأكيد الإفراغ؟') : langStore.t('cart.clearCart') }}</span>
+          <h3 class="section-title">الأصناف المختارة</h3>
+          <button class="clear-cart-btn" @click="handleClearCart" :class="{ confirming: isConfirmingClear }" title="إفراغ السلة">
+            <span>{{ isConfirmingClear ? 'تأكيد الإفراغ؟' : 'إفراغ السلة' }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -147,12 +145,12 @@ const handleClearCart = () => {
           <div v-for="item in cartStore.items" :key="item._id" class="cart-item">
             <!-- Details -->
             <div class="item-main">
-              <img :src="item.img || '/res/logo.jpg'" :alt="langStore.getLocalizedName(item)" class="item-img" @error="$event.target.src = '/res/logo.jpg'" />
+              <img :src="item.img || '/res/logo.jpg'" :alt="item.name" class="item-img" @error="$event.target.src = '/res/logo.jpg'" />
               <div class="item-details">
-                <h4 class="item-title">{{ langStore.getLocalizedName(item) }}</h4>
+                <h4 class="item-title">{{ item.name }}</h4>
                 <div class="item-price-info">
-                  <span class="price-val">{{ getItemPrice(item) }} {{ langStore.getCurrency() }}</span>
-                  <span v-if="item.priceMode === 'bulk'" class="bulk-label">{{ langStore.t('common.bulkPrice') }}</span>
+                  <span class="price-val">{{ getItemPrice(item) }} د.ل</span>
+                  <span v-if="item.priceMode === 'bulk'" class="bulk-label">سعر جملة</span>
                 </div>
               </div>
               
@@ -258,10 +256,10 @@ const handleClearCart = () => {
       <!-- Total Price and Submit -->
       <div class="checkout-footer glass-panel">
         <div class="total-row">
-          <span class="label">{{ langStore.t('cart.total') }}:</span>
+          <span class="label">إجمالي الحساب:</span>
           <div class="price-wrapper">
             <span class="value">{{ cartStore.cartTotal }}</span>
-            <span class="unit">{{ langStore.getCurrency() }}</span>
+            <span class="unit">د.ل</span>
           </div>
         </div>
         <button 
@@ -269,7 +267,7 @@ const handleClearCart = () => {
           @click="handleCheckout"
           :disabled="isSubmitting"
         >
-          <span>{{ isSubmitting ? langStore.t('cart.submitting') : langStore.t('cart.checkoutWhatsApp') }}</span>
+          <span>إرسال الطلب عبر الواتساب</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.977 0c3.222.001 6.252 1.256 8.529 3.536 2.277 2.278 3.53 5.31 3.528 8.53-.005 6.655-5.33 11.98-11.979 11.98-2.002-.001-3.97-.497-5.714-1.442L0 24zm6.59-4.846c1.666.988 3.311 1.485 5.32 1.488 5.626 0 10.201-4.576 10.205-10.2.002-2.724-1.056-5.285-2.977-7.208C17.279 1.312 14.72 .253 12 .25c-5.631 0-10.21 4.579-10.213 10.21-.002 1.902.485 3.759 1.411 5.389l-1.017 3.72 3.823-1.002zM17.065 14.1c-.277-.139-1.64-.81-1.895-.902-.255-.092-.441-.139-.626.139-.185.277-.718.902-.88 1.088-.163.186-.325.208-.602.069-.277-.14-1.17-.431-2.228-1.376-.824-.735-1.38-1.644-1.542-1.922-.163-.277-.018-.427.121-.566.125-.125.277-.324.417-.486.139-.162.186-.277.277-.462.093-.185.047-.348-.023-.487-.07-.139-.626-1.507-.858-2.064-.226-.543-.454-.47-.626-.478-.162-.007-.347-.007-.532-.007-.185 0-.486.07-.74.348-.255.277-.973.95-973 2.315 0 1.365.992 2.68 1.13 2.865.139.186 1.953 2.982 4.73 4.181.66.285 1.176.455 1.579.583.664.211 1.269.181 1.748.11.534-.08 1.64-.67 1.872-1.318.232-.647.232-1.203.163-1.318-.07-.115-.255-.162-.532-.3z"/>
           </svg>

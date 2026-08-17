@@ -1,12 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from './auth';
-import { useLanguageStore } from './language';
 import { trackEvent } from '../utils/analytics';
 
 export const useCartStore = defineStore('cart', () => {
   const authStore = useAuthStore();
-  const langStore = useLanguageStore();
   const items = ref(JSON.parse(localStorage.getItem('cart_items') || '[]'));
   // Default to tomorrow's date if no saved date exists or if saved date is in the past
   const getDefaultDeliveryDate = () => {
@@ -49,18 +47,12 @@ export const useCartStore = defineStore('cart', () => {
   const addToCart = (product, shopId, priceMode, qty = 1, notes = '') => {
     // 1. Check shop consistency
     if (getShopType.value && getShopType.value !== shopId) {
-      const msg = langStore.isEn
-        ? 'Cannot mix items from Main Pastry and Dry Bakery in the same cart. Please complete or clear your current cart.'
-        : 'لا يمكن خلط منتجات من المتجر الرئيسي وقسم النواشف في نفس السلة. يرجى إتمام الطلب الحالي أو إفراغ السلة.';
-      throw new Error(msg);
+      throw new Error('لا يمكن خلط منتجات من المتجر الرئيسي وقسم النواشف في نفس السلة. يرجى إتمام الطلب الحالي أو إفراغ السلة.');
     }
 
     // 2. Check price mode consistency (bulk vs regular)
     if (getPriceMode.value && getPriceMode.value !== priceMode) {
-      const msg = langStore.isEn
-        ? 'Cannot mix wholesale and regular items in the same cart. Please match the pricing type for all items.'
-        : 'لا يمكن خلط طلب الجملة والطلب العادي في نفس السلة. يرجى مطابقة نوع السعر لجميع المنتجات.';
-      throw new Error(msg);
+      throw new Error('لا يمكن خلط طلب الجملة والطلب العادي في نفس السلة. يرجى مطابقة نوع السعر لجميع المنتجات.');
     }
 
     const existingIndex = items.value.findIndex(i => i._id === product._id);
@@ -134,42 +126,34 @@ export const useCartStore = defineStore('cart', () => {
   };
 
   const constructWhatsAppMessage = (orderNumber = null) => {
-    const isEn = langStore.isEn;
-    const isShop2 = getShopType.value === 'shop2';
-    const shopName = isShop2 
-      ? (isEn ? 'Dry Bakery Division' : 'قسم النواشف') 
-      : (isEn ? 'Main Pastry Store' : 'المتجر الرئيسي');
-    const priceLabel = getPriceMode.value === 'bulk' 
-      ? (isEn ? 'Wholesale' : 'سعر جملة') 
-      : (isEn ? 'Regular' : 'سعر عادي');
-    const currency = isEn ? 'LYD' : 'د.ل';
+    const shopName = getShopType.value === 'shop1' ? 'المتجر الرئيسي (حلويات)' : 'قسم النواشف';
+    const priceLabel = getPriceMode.value === 'bulk' ? 'سعر جملة' : 'سعر عادي';
     
-    let text = isEn ? `*New Order from e-Menu App*\n` : `*طلب جديد من تطبيق المنيو الإلكتروني*\n`;
+    let text = `*طلب جديد من تطبيق المنيو الإلكتروني*\n`;
     if (orderNumber) {
-      text += isEn ? `*Order #:* #${orderNumber}\n` : `*رقم الطلب:* #${orderNumber}\n`;
+      text += `*رقم الطلب:* #${orderNumber}\n`;
     }
-    text += isEn ? `*Store:* ${shopName} (${priceLabel})\n` : `*المحل:* ${shopName} (${priceLabel})\n`;
+    text += `*المحل:* ${shopName} (${priceLabel})\n`;
     text += `--------------------------------\n`;
-    text += isEn ? `*Customer:* ${authStore.customerName}\n` : `*العميل:* ${authStore.customerName}\n`;
-    text += isEn ? `*Phone:* ${authStore.customerPhone}\n` : `*الهاتف:* ${authStore.customerPhone}\n`;
+    text += `*العميل:* ${authStore.customerName}\n`;
+    text += `*الهاتف:* ${authStore.customerPhone}\n`;
     if (deliveryDate.value) {
-      text += isEn ? `*Pickup Date:* ${deliveryDate.value}\n` : `*تاريخ الاستلام:* ${deliveryDate.value}\n`;
+      text += `*تاريخ الاستلام:* ${deliveryDate.value}\n`;
     }
     text += `--------------------------------\n`;
     
     items.value.forEach((item) => {
       const price = item.priceMode === 'bulk' ? item.price_bulk : (item.price_regular || item.price);
-      const itemName = isEn && item.name_en ? item.name_en : item.name;
-      text += `• *${itemName}* (${item.quantity} × ${price} ${currency})\n`;
+      text += `• *${item.name}* (${item.quantity} × ${price} د.ل)\n`;
       if (item.itemNotes) {
-        text += isEn ? `  Note: ${item.itemNotes}\n` : `  ملاحظة: ${item.itemNotes}\n`;
+        text += `  ملاحظة: ${item.itemNotes}\n`;
       }
     });
     
     text += `--------------------------------\n`;
-    text += isEn ? `*Total Amount:* ${cartTotal.value} ${currency}\n` : `*الإجمالي الكلي:* ${cartTotal.value} ${currency}\n`;
+    text += `*الإجمالي الكلي:* ${cartTotal.value} د.ل\n`;
     if (orderNotes.value) {
-      text += isEn ? `*Special Notes:* ${orderNotes.value}\n` : `*ملاحظات إضافية:* ${orderNotes.value}\n`;
+      text += `*ملاحظات إضافية:* ${orderNotes.value}\n`;
     }
     return encodeURIComponent(text);
   };
