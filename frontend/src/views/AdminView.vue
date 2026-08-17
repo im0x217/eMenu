@@ -8559,10 +8559,10 @@ select.select-pill {
     margin: 0 !important;
   }
 
-  /* Named page for reconciliation — A4 portrait layout with comfortable margins on every page */
+  /* Named page for reconciliation — A4 portrait layout without browser headers/footers */
   @page reconciliation {
     size: A4 portrait;
-    margin: 12mm 14mm;
+    margin: 0 !important;
   }
 
   /* Suppress link URL text insertion when printing */
@@ -8801,7 +8801,8 @@ select.select-pill {
   .reconciliation-page {
     display: block !important;
     width: 100%;
-    padding: 0;
+    padding: 10mm 12mm;
+    box-sizing: border-box;
     margin: 0;
     background: #ffffff !important;
     color: #000000 !important;
@@ -8962,12 +8963,14 @@ select.select-pill {
 
   /* Level 1: Main Category Block */
   .recon-cat-block {
-    margin-top: 8px;
+    margin-top: 10px;
     margin-bottom: 10px;
     border: 1.5px solid #000000 !important;
     border-radius: 6px;
     overflow: hidden;
     background: #ffffff !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .recon-cat-header {
@@ -9054,7 +9057,7 @@ select.select-pill {
 
   .recon-col-header-row th {
     background: #f0f0f0 !important;
-    padding: 4px 6px;
+    padding: 8px 6px 5px 6px;
     font-weight: 800;
     font-size: 8.5pt;
     color: #000000 !important;
