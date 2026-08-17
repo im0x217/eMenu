@@ -8801,7 +8801,7 @@ select.select-pill {
   .reconciliation-page {
     display: block !important;
     width: 100%;
-    padding: 0;
+    padding: 12mm 14mm;
     margin: 0;
     background: #ffffff !important;
     color: #000000 !important;
