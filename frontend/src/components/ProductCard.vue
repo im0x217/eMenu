@@ -5,6 +5,7 @@ import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
 import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
+import { useLanguageStore } from '../stores/language';
 import CategoryIcon from './CategoryIcon.vue';
 import { gsap } from 'gsap';
 
@@ -31,6 +32,7 @@ const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
 const toastStore = useToastStore();
 const authStore = useAuthStore();
+const langStore = useLanguageStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isBulkMode = computed(() => shopStore.isBulkVerified);
@@ -241,15 +243,15 @@ const activeTagsList = computed(() => {
         @error="handleImageError"
       />
       <div v-if="product.available === false" class="not-available-overlay">
-        <span>غير متوفر</span>
+        <span>{{ langStore.t('common.unavailable') }}</span>
       </div>
     </div>
 
     <!-- Product Details Content -->
     <div class="product-info">
       <div class="info-body">
-        <h3 class="product-title" :title="product.name">{{ product.name }}</h3>
-        <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
+        <h3 class="product-title" :title="langStore.getLocalizedName(product)">{{ langStore.getLocalizedName(product) }}</h3>
+        <p class="product-desc" v-if="langStore.getLocalizedDesc(product)">{{ langStore.getLocalizedDesc(product) }}</p>
 
         <!-- Inline Tags Row -->
         <div v-if="activeTagsList.length > 0" class="product-inline-tags">
@@ -262,7 +264,7 @@ const activeTagsList = computed(() => {
             <span class="tag-icon-badge">
               <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="12" stroke-width="2.3" />
             </span>
-            <span class="tag-text">{{ tagItem.name }}</span>
+            <span class="tag-text">{{ langStore.getLocalizedName(tagItem) || tagItem.name }}</span>
           </div>
         </div>
 
@@ -271,14 +273,14 @@ const activeTagsList = computed(() => {
           <!-- Regular Price -->
           <div v-if="showRegularPrice" class="price-pill regular-price" :class="{ active: !isBulkMode }">
             <span class="price-val">{{ product.price_regular || product.price }}</span>
-            <span class="price-unit">د.ل</span>
+            <span class="price-unit">{{ langStore.getCurrency() }}</span>
           </div>
 
           <!-- Bulk Price -->
           <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode }">
-            <span class="price-label">جملة:</span>
+            <span class="price-label">{{ langStore.t('common.bulkPrice') }}:</span>
             <span class="price-val">{{ product.price_bulk }}</span>
-            <span class="price-unit">د.ل</span>
+            <span class="price-unit">{{ langStore.getCurrency() }}</span>
           </div>
         </div>
       </div>
@@ -296,7 +298,7 @@ const activeTagsList = computed(() => {
             <circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
           </svg>
-          <span>أضف للسلة</span>
+          <span>{{ langStore.t('common.addToCart') }}</span>
         </button>
       </div>
     </div>

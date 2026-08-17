@@ -4,12 +4,14 @@ import { useRouter, useRoute } from 'vue-router';
 import { useShopStore } from '../stores/shop';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
+import { useLanguageStore } from '../stores/language';
 
 const router = useRouter();
 const route = useRoute();
 const shopStore = useShopStore();
 const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
+const langStore = useLanguageStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 
@@ -38,7 +40,7 @@ const navToShop = () => {
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
-      <span class="tab-label">الرئيسية</span>
+      <span class="tab-label">{{ langStore.t('nav.home') }}</span>
     </button>
 
     <!-- Favorites Tab -->
@@ -53,7 +55,7 @@ const navToShop = () => {
         </svg>
         <span v-if="totalFavorites > 0" class="badge-count">{{ totalFavorites }}</span>
       </div>
-      <span class="tab-label">المفضلة</span>
+      <span class="tab-label">{{ langStore.t('nav.favorites') }}</span>
     </button>
 
     <!-- Cart Tab -->
@@ -70,7 +72,7 @@ const navToShop = () => {
         </svg>
         <span v-if="totalCartItems > 0" class="badge-count">{{ totalCartItems }}</span>
       </div>
-      <span class="tab-label">السلة</span>
+      <span class="tab-label">{{ langStore.t('nav.cart') }}</span>
     </button>
 
     <!-- Account Tab -->
@@ -83,7 +85,7 @@ const navToShop = () => {
         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
-      <span class="tab-label">حسابي</span>
+      <span class="tab-label">{{ langStore.t('nav.account') }}</span>
     </button>
   </nav>
 </template>

@@ -384,3 +384,26 @@ button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
     color: #000000 !important;
   }
 }
+
+/* ==========================================================================
+   Bilingual & Directional Support (RTL / LTR)
+   ========================================================================== */
+[dir="ltr"] {
+  font-family: 'Cairo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  text-align: left;
+}
+
+[dir="ltr"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .rtl-flip {
+  transform: none;
+}
+
+.header-actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+

@@ -1,11 +1,14 @@
 <script setup>
 import { computed, ref, onMounted, watch, onUnmounted, nextTick } from 'vue';
 import { useShopStore } from '../stores/shop';
+import { useLanguageStore } from '../stores/language';
 import ProductCard from '../components/ProductCard.vue';
 import CategoryIcon from '../components/CategoryIcon.vue';
+import LanguageToggle from '../components/LanguageToggle.vue';
 import { gsap } from 'gsap';
 
 const shopStore = useShopStore();
+const langStore = useLanguageStore();
 
 // Search and filtering state
 const searchQuery = ref('');
@@ -260,7 +263,7 @@ const closeZoomModal = () => {
 
 // Header information
 const shopTitle = computed(() => {
-  return shopStore.activeShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي';
+  return shopStore.activeShop === 'shop2' ? langStore.t('common.shop2Name') : langStore.t('common.shop1Name');
 });
 
 const hasBulkProducts = computed(() => {
@@ -401,15 +404,18 @@ watch(carouselItems, (newItems) => {
     <!-- Header -->
     <header class="shop-header glass-panel">
       <div class="header-main">
-        <a href="/" class="back-home-btn" aria-label="الرجوع للرئيسية">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <a href="/" class="back-home-btn" :aria-label="langStore.t('nav.home')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="rtl-flip">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 19 12 12 5"></polyline>
           </svg>
         </a>
         <h1 class="shop-title">{{ shopTitle }}</h1>
-        <div class="logo-placeholder">
-          <img :src="shopStore.activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="shop-logo" />
+        <div class="header-actions-group">
+          <LanguageToggle />
+          <div class="logo-placeholder">
+            <img :src="shopStore.activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="shop-logo" />
+          </div>
         </div>
       </div>
       
@@ -424,7 +430,7 @@ watch(carouselItems, (newItems) => {
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
         </svg>
-        <span>أسعار الجملة: {{ shopStore.isBulkVerified ? 'مفعّلة' : 'معطّلة' }}</span>
+        <span>{{ langStore.t('shop.priceBulkLabel') }}: {{ shopStore.isBulkVerified ? (langStore.isEn ? 'Active' : 'مفعّلة') : (langStore.isEn ? 'Inactive' : 'معطّلة') }}</span>
         <svg v-if="shopStore.isBulkVerified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
@@ -493,7 +499,7 @@ watch(carouselItems, (newItems) => {
         name="search"
         autocomplete="off"
         v-model="searchQuery" 
-        placeholder="ابحث عن منتج…" 
+        :placeholder="langStore.t('shop.searchPlaceholder')" 
         class="search-input" 
       />
       <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">✕</button>
@@ -519,7 +525,7 @@ watch(carouselItems, (newItems) => {
           @click="selectCategory(cat.name)"
         >
           <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
-          <span class="cat-name">{{ cat.name }}</span>
+          <span class="cat-name">{{ langStore.getLocalizedCategory(cat) }}</span>
         </button>
       </div>
     </div>
