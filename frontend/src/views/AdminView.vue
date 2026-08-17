@@ -2099,7 +2099,7 @@
 
           <!-- Subcategories -->
           <div v-for="subCat in mainCat.subCategories" :key="subCat.name" class="recon-subcat-block">
-            <div class="recon-subcat-title-container" v-if="subCat.name !== 'عام' || mainCat.subCategories.length > 1">
+            <div class="recon-subcat-title-container" v-if="mainCat.subCategories.length > 1 && subCat.name !== 'عام'">
               <span class="recon-subcat-title">{{ subCat.name }}</span>
             </div>
 
@@ -9080,7 +9080,7 @@ select.select-pill {
 
   /* Clean bottom line on last body row */
   .recon-detail-table tbody tr:last-child td {
-    border-bottom: 1.5px solid #000000;
+    border-bottom: 1px solid #e0e0e0;
   }
 
   .recon-subtotal-row {
