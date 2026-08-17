@@ -8559,10 +8559,10 @@ select.select-pill {
     margin: 0 !important;
   }
 
-  /* Named page for reconciliation — A4 portrait layout with consistent top/bottom margins for all pages */
+  /* Named page for reconciliation — A4 portrait layout without browser headers/footers */
   @page reconciliation {
     size: A4 portrait;
-    margin: 12mm 10mm 10mm 10mm;
+    margin: 0 !important;
   }
 
   /* Suppress link URL text insertion when printing */
@@ -8572,6 +8572,12 @@ select.select-pill {
   a[href] {
     text-decoration: none !important;
     color: inherit !important;
+  }
+
+  .reconciliation-page {
+    page: reconciliation;
+    padding: 8mm 10mm;
+    box-sizing: border-box;
   }
 
   /* Order Receipt Print Styles (A5) */
@@ -8793,10 +8799,9 @@ select.select-pill {
   }
 
   .reconciliation-page {
-    page: reconciliation;
     display: block !important;
     width: 100%;
-    padding: 0;
+    padding: 10mm 12mm;
     box-sizing: border-box;
     margin: 0;
     background: #ffffff !important;
