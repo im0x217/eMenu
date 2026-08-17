@@ -2106,26 +2106,26 @@
             <table class="recon-detail-table">
               <thead>
                 <tr class="recon-col-header-row">
-                  <th style="width: 42%;">اسم المنتج</th>
-                  <th style="width: 18%; text-align: center;">الكمية المباعة</th>
-                  <th style="width: 18%; text-align: center;">سعر الوحدة</th>
-                  <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
+                  <th style="width: 44%; text-align: right; padding: 7px 10px 5px 10px;">اسم المنتج</th>
+                  <th style="width: 16%; text-align: center; padding: 7px 8px 5px 8px;">الكمية المباعة</th>
+                  <th style="width: 18%; text-align: center; padding: 7px 10px 5px 10px;">سعر الوحدة</th>
+                  <th style="width: 22%; text-align: left; padding: 7px 10px 5px 10px;">إجمالي المبيعات</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
-                  <td style="width: 42%;" class="recon-bold">{{ prod.name }}</td>
-                  <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ prod.quantity }}</td>
-                  <td style="width: 18%;" class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
-                  <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
+                  <td style="width: 44%; text-align: right; padding: 5px 10px;" class="recon-bold">{{ prod.name }}</td>
+                  <td style="width: 16%; text-align: center; padding: 5px 8px;" class="recon-mono recon-bold">{{ prod.quantity }}</td>
+                  <td style="width: 18%; text-align: center; padding: 5px 10px;" class="recon-mono">{{ prod.unitPriceFormatted }}</td>
+                  <td style="width: 22%; text-align: left; padding: 5px 10px;" class="recon-mono recon-bold">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
               </tbody>
               <tfoot v-if="mainCat.subCategories.length > 1 && subCat.products.length > 1">
                 <tr class="recon-subtotal-row">
-                  <td style="width: 42%;">مجموع فرعي ({{ subCat.name }})</td>
-                  <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ subCat.totalQty }}</td>
-                  <td style="width: 18%; text-align: center;" class="recon-mono">—</td>
-                  <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ subCat.totalRevenueFormatted }}</td>
+                  <td style="width: 44%; text-align: right; padding: 5px 10px;">مجموع فرعي ({{ subCat.name }})</td>
+                  <td style="width: 16%; text-align: center; padding: 5px 8px;" class="recon-mono recon-bold">{{ subCat.totalQty }}</td>
+                  <td style="width: 18%; text-align: center; padding: 5px 10px;" class="recon-mono">—</td>
+                  <td style="width: 22%; text-align: left; padding: 5px 10px;" class="recon-mono recon-bold">{{ subCat.totalRevenueFormatted }}</td>
                 </tr>
               </tfoot>
             </table>
