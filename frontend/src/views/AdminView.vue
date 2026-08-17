@@ -2107,23 +2107,24 @@
               <thead>
                 <tr class="recon-col-header-row">
                   <th style="width: 42%;">اسم المنتج</th>
-                  <th style="width: 18%; text-align: center;">سعر الوحدة</th>
                   <th style="width: 18%; text-align: center;">الكمية المباعة</th>
+                  <th style="width: 18%; text-align: center;">سعر الوحدة</th>
                   <th style="width: 22%; text-align: left;">إجمالي المبيعات</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
                   <td style="width: 42%;" class="recon-bold">{{ prod.name }}</td>
-                  <td style="width: 18%;" class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
                   <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ prod.quantity }}</td>
+                  <td style="width: 18%;" class="recon-mono text-center">{{ prod.unitPriceFormatted }}</td>
                   <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
               </tbody>
               <tfoot v-if="mainCat.subCategories.length > 1 && subCat.products.length > 1">
                 <tr class="recon-subtotal-row">
-                  <td colspan="2">مجموع فرعي ({{ subCat.name }})</td>
+                  <td style="width: 42%;">مجموع فرعي ({{ subCat.name }})</td>
                   <td style="width: 18%;" class="recon-mono recon-bold text-center">{{ subCat.totalQty }}</td>
+                  <td style="width: 18%; text-align: center;" class="recon-mono">—</td>
                   <td style="width: 22%;" class="recon-mono recon-bold text-left">{{ subCat.totalRevenueFormatted }}</td>
                 </tr>
               </tfoot>
