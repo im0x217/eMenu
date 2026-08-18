@@ -162,23 +162,134 @@
           </div>
         </div>
 
-        <!-- Custom Date Range Bar -->
+        <!-- Custom Date Range Bar (Standardized Order Management Design) -->
         <div v-if="activeTab === 'analytics' && analyticsPeriod === 'custom'" class="date-range-bar no-print animate-fade-in">
-          <div class="date-range-inner">
-            <div class="date-field">
-              <span class="date-field-label">من</span>
-              <input v-model="analyticsStartDate" type="date" class="date-field-input" :disabled="analyticsLoading" />
+          <div class="date-filter-group">
+            <!-- From Date Trigger -->
+            <div class="position-relative">
+              <button 
+                type="button" 
+                class="btn-datepicker-trigger" 
+                :class="{ active: analyticsFromOpen || analyticsStartDate }"
+                @click.stop="openAnalyticsFromPicker"
+                title="تاريخ البداية (من)"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>{{ analyticsStartDate ? ('من: ' + formatArabicDate(analyticsStartDate)) : 'من تاريخ' }}</span>
+              </button>
+
+              <!-- From Date Popover -->
+              <div v-if="analyticsFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
+                <div class="datepicker-header">
+                  <button type="button" class="dp-nav-btn" @click="analyticsFromPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                  <span class="dp-month-title">{{ analyticsFromMonthYearLabel }}</span>
+                  <button type="button" class="dp-nav-btn" @click="analyticsFromNextMonth" title="الشهر التالي">&rsaquo;</button>
+                </div>
+
+                <div class="dp-weekdays">
+                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                </div>
+
+                <div class="dp-days-grid">
+                  <button 
+                    type="button"
+                    v-for="(dayObj, idx) in analyticsFromCalendarDays" 
+                    :key="idx"
+                    class="dp-day-cell"
+                    :class="{ 
+                      'other-month': !dayObj.inMonth,
+                      'is-today': dayObj.isToday,
+                      'is-selected': analyticsStartDate === dayObj.dateStr
+                    }"
+                    @click="selectAnalyticsFrom(dayObj.dateStr)"
+                  >
+                    {{ dayObj.dayNum }}
+                  </button>
+                </div>
+
+                <div class="datepicker-footer">
+                  <button type="button" class="btn-dp-show-all" @click="selectAnalyticsFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                </div>
+              </div>
             </div>
-            <span class="date-range-sep">←</span>
-            <div class="date-field">
-              <span class="date-field-label">إلى</span>
-              <input v-model="analyticsEndDate" type="date" class="date-field-input" :disabled="analyticsLoading" />
+
+            <!-- To Date Trigger -->
+            <div class="position-relative">
+              <button 
+                type="button" 
+                class="btn-datepicker-trigger" 
+                :class="{ active: analyticsToOpen || analyticsEndDate }"
+                @click.stop="openAnalyticsToPicker"
+                title="تاريخ النهاية (إلى)"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>{{ analyticsEndDate ? ('إلى: ' + formatArabicDate(analyticsEndDate)) : 'إلى تاريخ' }}</span>
+              </button>
+
+              <!-- To Date Popover -->
+              <div v-if="analyticsToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
+                <div class="datepicker-header">
+                  <button type="button" class="dp-nav-btn" @click="analyticsToPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                  <span class="dp-month-title">{{ analyticsToMonthYearLabel }}</span>
+                  <button type="button" class="dp-nav-btn" @click="analyticsToNextMonth" title="الشهر التالي">&rsaquo;</button>
+                </div>
+
+                <div class="dp-weekdays">
+                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                </div>
+
+                <div class="dp-days-grid">
+                  <button 
+                    type="button"
+                    v-for="(dayObj, idx) in analyticsToCalendarDays" 
+                    :key="idx"
+                    class="dp-day-cell"
+                    :class="{ 
+                      'other-month': !dayObj.inMonth,
+                      'is-today': dayObj.isToday,
+                      'is-selected': analyticsEndDate === dayObj.dateStr
+                    }"
+                    @click="selectAnalyticsTo(dayObj.dateStr)"
+                  >
+                    {{ dayObj.dayNum }}
+                  </button>
+                </div>
+
+                <div class="datepicker-footer">
+                  <button type="button" class="btn-dp-show-all" @click="selectAnalyticsTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                </div>
+              </div>
             </div>
-            <button @click="fetchAnalytics" class="date-apply-btn" :disabled="analyticsLoading || !analyticsStartDate || !analyticsEndDate" :class="{ 'is-loading': analyticsLoading }">
-              <svg v-if="!analyticsLoading" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <svg v-else class="btn-spinner" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
-              <span>{{ analyticsLoading ? 'جاري التحميل…' : 'تطبيق' }}</span>
-            </button>
+
+            <!-- Quick Preset Shortcuts -->
+            <button 
+              type="button" 
+              class="btn-today-shortcut" 
+              :class="{ active: isAnalyticsToday }" 
+              @click="setAnalyticsShortcut('today')"
+              title="تحليلات اليوم فقط"
+            >اليوم</button>
+
+            <button 
+              type="button" 
+              class="btn-today-shortcut" 
+              :class="{ active: isAnalytics7d }" 
+              @click="setAnalyticsShortcut('7d')"
+              title="تحليلات آخر 7 أيام"
+            >آخر 7 أيام</button>
+
+            <button 
+              type="button" 
+              class="btn-today-shortcut" 
+              :class="{ active: isAnalyticsMonth }" 
+              @click="setAnalyticsShortcut('month')"
+              title="تحليلات هذا الشهر"
+            >هذا الشهر</button>
+
+            <!-- Selected Date Range Display Badge -->
+            <div v-if="analyticsStartDate && analyticsEndDate" class="selected-date-badge animate-fade-in">
+              <span class="date-text">{{ formatArabicDate(analyticsStartDate) + ' ← ' + formatArabicDate(analyticsEndDate) }}</span>
+            </div>
           </div>
         </div>
 
@@ -1187,11 +1298,56 @@
                       <div class="pos-field-header-row">
                         <label class="pos-label mb-0">تاريخ الاستلام</label>
                         <div class="date-quick-shortcuts-inline">
-                          <button type="button" class="date-quick-btn-mini" @click="setNewOrderDateShortcut(0)">اليوم</button>
-                          <button type="button" class="date-quick-btn-mini" @click="setNewOrderDateShortcut(1)">غداً</button>
+                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(-1) }" @click="setNewOrderDateShortcut(-1)">أمس</button>
+                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(0) }" @click="setNewOrderDateShortcut(0)">اليوم</button>
+                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(1) }" @click="setNewOrderDateShortcut(1)">غداً</button>
                         </div>
                       </div>
-                      <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
+                      <div class="position-relative">
+                        <button 
+                          type="button" 
+                          class="form-control pos-control btn-standard-datepicker-trigger" 
+                          :class="{ active: posDatePickerOpen }"
+                          @click.stop="posDatePickerOpen = !posDatePickerOpen"
+                        >
+                          <span class="font-bold">{{ newOrder.deliveryDate ? formatArabicDate(newOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        </button>
+
+                        <!-- Standardized Popover Calendar for POS Modal -->
+                        <div v-if="posDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1200;">
+                          <div class="datepicker-header">
+                            <button type="button" class="dp-nav-btn" @click="posPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                            <span class="dp-month-title">{{ posCurrentMonthYearLabel }}</span>
+                            <button type="button" class="dp-nav-btn" @click="posNextMonth" title="الشهر التالي">&rsaquo;</button>
+                          </div>
+
+                          <div class="dp-weekdays">
+                            <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                          </div>
+
+                          <div class="dp-days-grid">
+                            <button 
+                              type="button"
+                              v-for="(dayObj, idx) in posCalendarDays" 
+                              :key="idx"
+                              class="dp-day-cell"
+                              :class="{ 
+                                'other-month': !dayObj.inMonth,
+                                'is-today': dayObj.isToday,
+                                'is-selected': newOrder.deliveryDate === dayObj.dateStr
+                              }"
+                              @click="selectPosDateFromPicker(dayObj.dateStr)"
+                            >
+                              {{ dayObj.dayNum }}
+                            </button>
+                          </div>
+
+                          <div class="datepicker-footer">
+                            <button type="button" class="btn-dp-show-all" @click="setNewOrderDateShortcut(0); posDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div class="pos-field">
@@ -3305,6 +3461,144 @@ export default {
     const analyticsStartDate = ref('');
     const analyticsEndDate = ref('');
     const analyticsLoading = ref(false);
+
+    // Standardized Analytics Date Range Popover Logic
+    const analyticsFromOpen = ref(false);
+    const analyticsToOpen = ref(false);
+    const analyticsFromYear = ref(new Date().getFullYear());
+    const analyticsFromMonth = ref(new Date().getMonth());
+    const analyticsToYear = ref(new Date().getFullYear());
+    const analyticsToMonth = ref(new Date().getMonth());
+
+    const analyticsFromMonthYearLabel = computed(() => {
+      const d = new Date(analyticsFromYear.value, analyticsFromMonth.value, 1);
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const analyticsToMonthYearLabel = computed(() => {
+      const d = new Date(analyticsToYear.value, analyticsToMonth.value, 1);
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const analyticsFromPrevMonth = () => {
+      if (analyticsFromMonth.value === 0) { analyticsFromMonth.value = 11; analyticsFromYear.value--; }
+      else { analyticsFromMonth.value--; }
+    };
+    const analyticsFromNextMonth = () => {
+      if (analyticsFromMonth.value === 11) { analyticsFromMonth.value = 0; analyticsFromYear.value++; }
+      else { analyticsFromMonth.value++; }
+    };
+
+    const analyticsToPrevMonth = () => {
+      if (analyticsToMonth.value === 0) { analyticsToMonth.value = 11; analyticsToYear.value--; }
+      else { analyticsToMonth.value--; }
+    };
+    const analyticsToNextMonth = () => {
+      if (analyticsToMonth.value === 11) { analyticsToMonth.value = 0; analyticsToYear.value++; }
+      else { analyticsToMonth.value++; }
+    };
+
+    const analyticsFromCalendarDays = computed(() => buildCalendarMatrix(analyticsFromYear.value, analyticsFromMonth.value));
+    const analyticsToCalendarDays = computed(() => buildCalendarMatrix(analyticsToYear.value, analyticsToMonth.value));
+
+    const openAnalyticsFromPicker = () => {
+      analyticsToOpen.value = false;
+      analyticsFromOpen.value = !analyticsFromOpen.value;
+    };
+    const openAnalyticsToPicker = () => {
+      analyticsFromOpen.value = false;
+      analyticsToOpen.value = !analyticsToOpen.value;
+    };
+
+    const selectAnalyticsFrom = async (dateStr) => {
+      analyticsStartDate.value = dateStr;
+      analyticsFromOpen.value = false;
+      if (!analyticsEndDate.value || analyticsEndDate.value < dateStr) {
+        analyticsEndDate.value = dateStr;
+      }
+      await fetchAnalytics();
+    };
+
+    const selectAnalyticsTo = async (dateStr) => {
+      analyticsEndDate.value = dateStr;
+      analyticsToOpen.value = false;
+      if (!analyticsStartDate.value || analyticsStartDate.value > dateStr) {
+        analyticsStartDate.value = dateStr;
+      }
+      await fetchAnalytics();
+    };
+
+    const setAnalyticsShortcut = async (type) => {
+      const today = new Date();
+      const todayStr = today.toLocaleDateString('en-CA');
+      analyticsFromOpen.value = false;
+      analyticsToOpen.value = false;
+
+      if (type === 'today') {
+        analyticsStartDate.value = todayStr;
+        analyticsEndDate.value = todayStr;
+      } else if (type === '7d') {
+        const past = new Date();
+        past.setDate(past.getDate() - 6);
+        analyticsStartDate.value = past.toLocaleDateString('en-CA');
+        analyticsEndDate.value = todayStr;
+      } else if (type === 'month') {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        analyticsStartDate.value = firstDay.toLocaleDateString('en-CA');
+        analyticsEndDate.value = todayStr;
+      }
+      await fetchAnalytics();
+    };
+
+    const isAnalyticsToday = computed(() => {
+      const todayStr = getTodayStr();
+      return analyticsStartDate.value === todayStr && analyticsEndDate.value === todayStr;
+    });
+
+    const isAnalytics7d = computed(() => {
+      const todayStr = getTodayStr();
+      const past = new Date();
+      past.setDate(past.getDate() - 6);
+      return analyticsStartDate.value === past.toLocaleDateString('en-CA') && analyticsEndDate.value === todayStr;
+    });
+
+    const isAnalyticsMonth = computed(() => {
+      const today = new Date();
+      const firstDayStr = new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString('en-CA');
+      return analyticsStartDate.value === firstDayStr && analyticsEndDate.value === today.toLocaleDateString('en-CA');
+    });
+
+    // POS Modal Standardized DatePicker State & Logic
+    const posDatePickerOpen = ref(false);
+    const posPickerYear = ref(new Date().getFullYear());
+    const posPickerMonth = ref(new Date().getMonth());
+
+    const posCurrentMonthYearLabel = computed(() => {
+      const d = new Date(posPickerYear.value, posPickerMonth.value, 1);
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const posPrevMonth = () => {
+      if (posPickerMonth.value === 0) { posPickerMonth.value = 11; posPickerYear.value--; }
+      else { posPickerMonth.value--; }
+    };
+    const posNextMonth = () => {
+      if (posPickerMonth.value === 11) { posPickerMonth.value = 0; posPickerYear.value++; }
+      else { posPickerMonth.value++; }
+    };
+
+    const posCalendarDays = computed(() => buildCalendarMatrix(posPickerYear.value, posPickerMonth.value));
+
+    const selectPosDateFromPicker = (dateStr) => {
+      newOrder.deliveryDate = dateStr;
+      posDatePickerOpen.value = false;
+    };
+
+    const isPosDateRelative = (offsetDays) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return newOrder.deliveryDate === d.toLocaleDateString('en-CA');
+    };
     const periods = [
       { val: '7d', label: 'آخر 7 أيام' },
       { val: '30d', label: 'آخر 30 يوم' },
@@ -6741,6 +7035,37 @@ const closeSuggestionsWithDelay = () => {
       analyticsStartDate,
       analyticsEndDate,
       analyticsLoading,
+      analyticsFromOpen,
+      analyticsToOpen,
+      analyticsFromYear,
+      analyticsFromMonth,
+      analyticsToYear,
+      analyticsToMonth,
+      analyticsFromMonthYearLabel,
+      analyticsToMonthYearLabel,
+      analyticsFromPrevMonth,
+      analyticsFromNextMonth,
+      analyticsToPrevMonth,
+      analyticsToNextMonth,
+      analyticsFromCalendarDays,
+      analyticsToCalendarDays,
+      openAnalyticsFromPicker,
+      openAnalyticsToPicker,
+      selectAnalyticsFrom,
+      selectAnalyticsTo,
+      setAnalyticsShortcut,
+      isAnalyticsToday,
+      isAnalytics7d,
+      isAnalyticsMonth,
+      posDatePickerOpen,
+      posPickerYear,
+      posPickerMonth,
+      posCurrentMonthYearLabel,
+      posPrevMonth,
+      posNextMonth,
+      posCalendarDays,
+      selectPosDateFromPicker,
+      isPosDateRelative,
       periods,
       analyticsData,
       products,
