@@ -1345,17 +1345,25 @@
                   </button>
                 </div>
 
-                <!-- Quick Products Grid (Visual Product Catalog Browsing) -->
-                <div v-if="filteredNewOrderProducts.length > 0" class="quick-products-grid">
+                <!-- Quick Products Grid (Visual Product Catalog Browsing with Progressive Scroll Loading) -->
+                <div 
+                  v-if="filteredNewOrderProducts.length > 0" 
+                  class="quick-products-grid"
+                  @scroll.passive="onPosProductsScroll"
+                >
                   <div 
-                    v-for="prod in filteredNewOrderProducts" 
+                    v-for="prod in displayedNewOrderProducts" 
                     :key="'grid-'+prod._id" 
                     class="quick-prod-card" 
                     :class="{ 'is-in-cart': getItemQtyInCart(prod._id) > 0 }"
                     @click="addProductToNewOrder(prod)"
                     title="انقر للإضافة للطلب"
                   >
-                    <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="quick-prod-thumb" />
+                    <img 
+                      :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" 
+                      class="quick-prod-thumb" 
+                      loading="lazy" 
+                    />
                     <div class="quick-prod-meta">
                       <div class="quick-prod-header-row">
                         <span class="quick-prod-name">{{ prod.name }}</span>
@@ -1373,6 +1381,12 @@
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </button>
+                  </div>
+
+                  <!-- Scroll Loading Indicator -->
+                  <div v-if="displayedNewOrderProducts.length < filteredNewOrderProducts.length" class="pos-scroll-loader-hint">
+                    <span class="pos-scroll-loader-dots">•••</span>
+                    <span>عرض {{ displayedNewOrderProducts.length }} من {{ filteredNewOrderProducts.length }} (مرر للأسفل للمزيد)</span>
                   </div>
                 </div>
                 <div v-else class="pos-catalog-empty">
@@ -5527,6 +5541,26 @@ const closeSuggestionsWithDelay = () => {
       return list;
     });
 
+    // Progressive Chunked Scroll-Loading for Smooth Rendering
+    const posProductDisplayLimit = ref(24);
+    const displayedNewOrderProducts = computed(() => {
+      return filteredNewOrderProducts.value.slice(0, posProductDisplayLimit.value);
+    });
+
+    const onPosProductsScroll = (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.scrollTop + target.clientHeight >= target.scrollHeight - 70) {
+        if (posProductDisplayLimit.value < filteredNewOrderProducts.value.length) {
+          posProductDisplayLimit.value += 24;
+        }
+      }
+    };
+
+    watch([newOrderProductSearch, newOrderCategoryFilter], () => {
+      posProductDisplayLimit.value = 24;
+    });
+
     const getItemQtyInCart = (productId) => {
       if (!productId) return 0;
       const item = newOrder.items.find(i => i.productId && i.productId.toString() === productId.toString());
@@ -5561,6 +5595,7 @@ const closeSuggestionsWithDelay = () => {
       showNewOrderProductSuggestions.value = false;
       highlightedCustomerIndex.value = 0;
       highlightedProductIndex.value = 0;
+      posProductDisplayLimit.value = 24;
 
       newOrderModalOpen.value = true;
 
@@ -6535,6 +6570,9 @@ const closeSuggestionsWithDelay = () => {
       newOrder,
       filteredNewOrderCustomers,
       filteredNewOrderProducts,
+      displayedNewOrderProducts,
+      posProductDisplayLimit,
+      onPosProductsScroll,
       getItemQtyInCart,
       decrementProductInCart,
       toggleProductInNewOrder,
@@ -12997,6 +13035,33 @@ select.pos-control {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.pos-scroll-loader-hint {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  background: rgba(241, 245, 249, 0.6);
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  margin-top: 4px;
+}
+.pos-scroll-loader-dots {
+  letter-spacing: 4px;
+  color: #3b82f6;
+  font-size: 1rem;
+  animation: pulseDots 1.5s infinite ease-in-out;
+}
+@keyframes pulseDots {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 .pos-catalog-empty {
   padding: 24px;
