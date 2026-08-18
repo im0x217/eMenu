@@ -1128,8 +1128,7 @@
                       class="form-control search-input" 
                       placeholder="البحث برقم الهاتف أو اسم العميل…" 
                       @focus="showNewOrderCustomerSuggestions = true" @click="showNewOrderCustomerSuggestions = true"
-                      @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0"
-                      @keydown.down.prevent="navigateCustomerSuggestions(1)"
+                      @blur="closeNewOrderCustomerSuggestionsWithDelay" @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0" @keydown.esc.prevent="showNewOrderCustomerSuggestions = false" @keydown.tab="showNewOrderCustomerSuggestions = false" @keydown.down.prevent="navigateCustomerSuggestions(1)"
                       @keydown.up.prevent="navigateCustomerSuggestions(-1)"
                       @keydown.enter.prevent="selectHighlightedCustomerOrNext"
                     />
@@ -1263,8 +1262,7 @@
                         class="form-control search-input" 
                         placeholder="ابحث باسم المنتج أو التصنيف لإضافته فوراً…" 
                         @focus="showNewOrderProductSuggestions = true" @click="showNewOrderProductSuggestions = true"
-                        @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0"
-                        @keydown="handleProductSearchKeydown"
+                        @blur="closeNewOrderProductSuggestionsWithDelay" @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0" @keydown="handleProductSearchKeydown"
                       />
                       <button v-if="newOrderProductSearch" type="button" @click="newOrderProductSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
                     </div>
@@ -5340,7 +5338,19 @@ const navigateSuggestions = (dir) => {
       showSuggestions.value = false;
     };
 
-    const closeSuggestionsWithDelay = () => {
+        const closeNewOrderCustomerSuggestionsWithDelay = () => {
+      setTimeout(() => {
+        showNewOrderCustomerSuggestions.value = false;
+      }, 200);
+    };
+
+    const closeNewOrderProductSuggestionsWithDelay = () => {
+      setTimeout(() => {
+        showNewOrderProductSuggestions.value = false;
+      }, 200);
+    };
+
+const closeSuggestionsWithDelay = () => {
       setTimeout(() => {
         showSuggestions.value = false;
       }, 200);
@@ -5512,7 +5522,6 @@ const navigateSuggestions = (dir) => {
     };
 
     const focusProductSearch = () => {
-      showNewOrderProductSuggestions.value = true;
       nextTick(() => {
         if (newOrderProductInputRef.value) {
           newOrderProductInputRef.value.focus();
@@ -5626,6 +5635,18 @@ const navigateSuggestions = (dir) => {
     };
 
     const handleProductSearchKeydown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        showNewOrderProductSuggestions.value = false;
+        if (newOrderProductInputRef.value) {
+          newOrderProductInputRef.value.blur();
+        }
+        return;
+      }
+      if (e.key === 'Tab') {
+        showNewOrderProductSuggestions.value = false;
+        return;
+      }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         navigateProductSuggestions(1);
@@ -5638,11 +5659,27 @@ const navigateSuggestions = (dir) => {
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        addHighlightedProductToNewOrder();
+        const query = newOrderProductSearch.value.trim();
+        if (query && filteredNewOrderProducts.value.length > 0) {
+          const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length)
+            ? highlightedProductIndex.value
+            : 0;
+          const prod = filteredNewOrderProducts.value[idx];
+          if (prod) {
+            addProductToNewOrder(prod, true);
+          }
+          showNewOrderProductSuggestions.value = false;
+        } else {
+          // If query is empty, pressing Enter leaves suggestions
+          showNewOrderProductSuggestions.value = false;
+          if (newOrderProductInputRef.value) {
+            newOrderProductInputRef.value.blur();
+          }
+        }
         return;
       }
       if (e.key === ' ' || e.code === 'Space') {
-        if (showNewOrderProductSuggestions.value && filteredNewOrderProducts.value.length > 0) {
+        if (showNewOrderProductSuggestions.value && filteredNewOrderProducts.value.length > 0 && newOrderProductSearch.value.trim() !== '') {
           e.preventDefault();
           const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length) 
             ? highlightedProductIndex.value 
@@ -6486,6 +6523,8 @@ const navigateSuggestions = (dir) => {
       newOrderCategoryFilter,
       showNewOrderCustomerSuggestions,
       showNewOrderProductSuggestions,
+      closeNewOrderCustomerSuggestionsWithDelay,
+      closeNewOrderProductSuggestionsWithDelay,
       highlightedCustomerIndex,
       highlightedProductIndex,
       newOrderCustomerInputRef,
