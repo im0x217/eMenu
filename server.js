@@ -1675,12 +1675,20 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
 
+  let orderDateFilter = {};
+  if (req.query.startDate && req.query.endDate) {
+    const startDate = new Date(req.query.startDate);
+    const endDate = new Date(req.query.endDate);
+    endDate.setHours(23, 59, 59, 999);
+    orderDateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+  }
+
   try {
     const customers = await customersCollection.find().toArray();
     
     // Batch fetch all orders stats by phone (all active non-cancelled orders)
     const allOrderStats = await ordColl.aggregate([
-      { $match: { status: { $ne: "cancelled" } } },
+      { $match: { status: { $ne: "cancelled" }, ...orderDateFilter } },
       { $group: {
           _id: "$customerInfo.phone",
           totalSpent: { $sum: "$totalPrice" },
@@ -1693,6 +1701,7 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
       { 
         $match: { 
           status: { $ne: "cancelled" },
+          ...orderDateFilter,
           $or: [
             { paymentStatus: { $in: ["unpaid", "partial"] } },
             { paymentStatus: { $exists: false } }

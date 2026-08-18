@@ -167,16 +167,17 @@
           <div class="date-range-inner">
             <div class="date-field">
               <span class="date-field-label">من</span>
-              <input v-model="analyticsStartDate" type="date" class="date-field-input" />
+              <input v-model="analyticsStartDate" type="date" class="date-field-input" :disabled="analyticsLoading" />
             </div>
             <span class="date-range-sep">←</span>
             <div class="date-field">
               <span class="date-field-label">إلى</span>
-              <input v-model="analyticsEndDate" type="date" class="date-field-input" />
+              <input v-model="analyticsEndDate" type="date" class="date-field-input" :disabled="analyticsLoading" />
             </div>
-            <button @click="fetchAnalytics" class="date-apply-btn">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              تطبيق
+            <button @click="fetchAnalytics" class="date-apply-btn" :disabled="analyticsLoading || !analyticsStartDate || !analyticsEndDate" :class="{ 'is-loading': analyticsLoading }">
+              <svg v-if="!analyticsLoading" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else class="btn-spinner" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+              <span>{{ analyticsLoading ? 'جاري التحميل…' : 'تطبيق' }}</span>
             </button>
           </div>
         </div>
@@ -1171,10 +1172,31 @@
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredCustomers.length, 'customer') }}</span>
                   </div>
                 </div>
-                <div class="card-toolbar-bottom">
-                  <div class="search-input-wrapper w-100">
+                <div class="card-toolbar-bottom customer-toolbar-filters">
+                  <div class="search-input-wrapper flex-grow-1">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control search-input" />
+                  </div>
+
+                  <!-- Date Range Filter for Balances & Orders -->
+                  <div class="date-range-inner customer-date-filter" title="فلترة حسب فترة الطلبات والأرصدة المستحقة">
+                    <div class="date-field">
+                      <span class="date-field-label">من</span>
+                      <input v-model="customersDateFrom" type="date" class="date-field-input" :disabled="customersDateLoading" />
+                    </div>
+                    <span class="date-range-sep">←</span>
+                    <div class="date-field">
+                      <span class="date-field-label">إلى</span>
+                      <input v-model="customersDateTo" type="date" class="date-field-input" :disabled="customersDateLoading" />
+                    </div>
+                    <button @click="applyCustomersDateFilter" class="date-apply-btn" :disabled="customersDateLoading || !customersDateFrom || !customersDateTo" :class="{ 'is-loading': customersDateLoading }">
+                      <svg v-if="!customersDateLoading" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <svg v-else class="btn-spinner" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+                      <span>{{ customersDateLoading ? 'جاري الفلترة…' : 'تطبيق' }}</span>
+                    </button>
+                    <button v-if="customersDateFrom || customersDateTo" @click="resetCustomersDateFilter" class="date-reset-btn" title="إعادة تعيين الفترة" :disabled="customersDateLoading">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2699,6 +2721,7 @@ export default {
     const analyticsPeriod = ref('30d');
     const analyticsStartDate = ref('');
     const analyticsEndDate = ref('');
+    const analyticsLoading = ref(false);
     const periods = [
       { val: '7d', label: 'آخر 7 أيام' },
       { val: '30d', label: 'آخر 30 يوم' },
@@ -4119,6 +4142,7 @@ export default {
     };
 
     const fetchAnalytics = async () => {
+      analyticsLoading.value = true;
       try {
         let url = `/api/admin/analytics?shop=${activeShop.value}`;
         if (analyticsPeriod.value === 'custom') {
@@ -4146,6 +4170,8 @@ export default {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        analyticsLoading.value = false;
       }
     };
 
@@ -4154,10 +4180,8 @@ export default {
       if (p !== 'custom') {
         analyticsStartDate.value = '';
         analyticsEndDate.value = '';
+        await fetchAnalytics();
       }
-      loading.value = true;
-      await fetchAnalytics();
-      loading.value = false;
     };
 
     const exportReport = (type) => {
@@ -4716,9 +4740,17 @@ export default {
       }
     };
 
+    // Customer date filter
+    const customersDateFrom = ref('');
+    const customersDateTo = ref('');
+    const customersDateLoading = ref(false);
+
     const fetchCustomers = async () => {
       try {
-        const url = `/api/admin/customers?shop=${activeShop.value}`;
+        let url = `/api/admin/customers?shop=${activeShop.value}`;
+        if (customersDateFrom.value && customersDateTo.value) {
+          url += `&startDate=${customersDateFrom.value}&endDate=${customersDateTo.value}`;
+        }
         const res = await adminFetch(url);
         if (res.ok) {
           customers.value = await res.json();
@@ -4726,6 +4758,20 @@ export default {
       } catch (err) {
         console.error(err);
       }
+    };
+
+    const applyCustomersDateFilter = async () => {
+      customersDateLoading.value = true;
+      await fetchCustomers();
+      customersDateLoading.value = false;
+    };
+
+    const resetCustomersDateFilter = async () => {
+      customersDateFrom.value = '';
+      customersDateTo.value = '';
+      customersDateLoading.value = true;
+      await fetchCustomers();
+      customersDateLoading.value = false;
     };
 
     const deleteCustomer = async (id) => {
@@ -5347,6 +5393,7 @@ export default {
       analyticsPeriod,
       analyticsStartDate,
       analyticsEndDate,
+      analyticsLoading,
       periods,
       analyticsData,
       products,
@@ -5432,6 +5479,11 @@ export default {
       isTodaySelected,
       setOrderTodayDate,
       customerFilters,
+      customersDateFrom,
+      customersDateTo,
+      customersDateLoading,
+      applyCustomersDateFilter,
+      resetCustomersDateFilter,
       filteredOrders,
       filteredCustomers,
       activeLowPerformingProducts,
@@ -8604,14 +8656,70 @@ select.select-pill {
   white-space: nowrap;
 }
 
-.date-apply-btn:hover {
+.date-apply-btn:hover:not(:disabled) {
   opacity: 0.88;
   transform: translateY(-1px);
 }
 
-.date-apply-btn:active {
+.date-apply-btn:active:not(:disabled) {
   transform: translateY(0);
   opacity: 1;
+}
+
+.date-apply-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.date-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.date-reset-btn:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.date-reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  animation: admin-spin 0.75s linear infinite;
+}
+
+@keyframes admin-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.customer-toolbar-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.customer-date-filter {
+  flex-shrink: 0;
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
 }
 
 /* Reconciliation print button styling */
