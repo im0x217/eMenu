@@ -14348,7 +14348,7 @@ select.pos-control {
 }
 
 /* ==========================================================================
-   FAST ORDER (POS) DATE PICKER & 50/50 SHORTCUT BUTTONS STYLING
+   FAST ORDER (POS) DATE PICKER & 50/50 SHORTCUT BUTTONS STYLING (BRAND ORANGE)
    ========================================================================== */
 .pos-date-shortcuts-split {
   display: grid !important;
@@ -14368,9 +14368,9 @@ select.pos-control {
   width: 100% !important;
   padding: 0 10px !important;
   background: #ffffff !important;
-  border: 1.5px solid #cbd5e1 !important;
+  border: 1.5px solid #e2e8f0 !important;
   border-radius: 10px !important;
-  color: #334155 !important;
+  color: #475569 !important;
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.88rem !important;
   font-weight: 800 !important;
@@ -14387,9 +14387,9 @@ select.pos-control {
 }
 
 .pos-date-shortcut-btn:hover {
-  border-color: var(--primary-color, #fdb518) !important;
-  color: #0f172a !important;
-  background: var(--primary-glow, rgba(253, 181, 24, 0.15)) !important;
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+  background: rgba(245, 158, 11, 0.08) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -14398,11 +14398,15 @@ select.pos-control {
 }
 
 .pos-date-shortcut-btn.active {
-  background: linear-gradient(135deg, #fdb518, #f59e0b) !important;
-  color: #0f172a !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #ffffff !important;
   border-color: #d97706 !important;
   font-weight: 900 !important;
-  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 3px 12px rgba(217, 119, 6, 0.35) !important;
+}
+
+.pos-date-shortcut-btn.active svg {
+  stroke: #ffffff !important;
 }
 
 .btn-standard-datepicker-trigger {
@@ -14415,7 +14419,7 @@ select.pos-control {
   color: #0f172a !important;
   height: 40px !important;
   width: 100% !important;
-  border: 1.5px solid #cbd5e1 !important;
+  border: 1.5px solid #e2e8f0 !important;
   border-radius: 10px !important;
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.9rem !important;
@@ -14425,12 +14429,13 @@ select.pos-control {
 }
 
 .btn-standard-datepicker-trigger:hover {
-  border-color: var(--primary-color, #fdb518) !important;
-  box-shadow: 0 0 0 3px var(--primary-glow, rgba(253, 181, 24, 0.15)) !important;
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+  background: rgba(245, 158, 11, 0.04) !important;
 }
 
 .btn-standard-datepicker-trigger.active {
-  border-color: var(--primary-color, #fdb518) !important;
-  box-shadow: 0 0 0 3px var(--primary-glow, rgba(253, 181, 24, 0.2)) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
 }
 </style>
