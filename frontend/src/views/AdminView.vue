@@ -1244,39 +1244,6 @@
                 </div>
               </div>
 
-                <div class="pos-fields-stack">
-                  <div class="pos-input-grid">
-                    <div class="pos-field">
-                      <label class="pos-label">حالة السداد</label>
-                      <select v-model="newOrder.paymentStatus" class="form-control pos-control" @change="onNewOrderPaymentStatusChange">
-                        <option value="unpaid">غير مسدد (آجل)</option>
-                        <option value="paid">مسدد بالكامل</option>
-                        <option value="partial">دفعة جزئية</option>
-                      </select>
-                    </div>
-
-                    <div class="pos-field" v-if="newOrder.paymentStatus !== 'unpaid'">
-                      <label class="pos-label">طريقة الدفع</label>
-                      <select v-model="newOrder.paymentMethod" class="form-control pos-control">
-                        <option value="cash">نقداً</option>
-                        <option value="card">بطاقة مصرفية</option>
-                        <option value="bank_transfer">تحويل بنكي</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div v-if="newOrder.paymentStatus === 'partial'" class="pos-field">
-                    <label class="pos-label">المبلغ المسدد حالياً (د.ل)</label>
-                    <input v-model.number="newOrder.paidAmount" type="number" step="0.01" min="0" placeholder="0.00" class="form-control pos-control text-mono" />
-                  </div>
-
-                  <div class="pos-field">
-                    <label class="pos-label">ملاحظات إضافية</label>
-                    <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، تفاصيل العنوان…" />
-                  </div>
-                </div>
-              </div>
-
             </div>
 
             <!-- LEFT COLUMN: Product Catalog & Selected Items (RTL Second) -->
