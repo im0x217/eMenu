@@ -609,3 +609,43 @@ button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
   font-weight: 500;
 }
 
+/* ==========================================================================
+   STANDARDIZED MODAL COMPONENTS DESIGN SYSTEM
+   ========================================================================== */
+
+.modal-overlay,
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(8px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content,
+.modal-box {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-family: 'Cairo', sans-serif !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(15, 23, 42, 0.04) !important;
+  animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
