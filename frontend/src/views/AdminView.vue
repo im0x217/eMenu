@@ -14071,7 +14071,7 @@ select.pos-control {
     justify-content: center;
   }
 }
-</style>
+
 
 
   /* ==========================================================================
@@ -14346,3 +14346,91 @@ select.pos-control {
   border-color: var(--primary-color, #1e3a5f) !important;
   box-shadow: 0 0 0 3px var(--primary-glow, rgba(30, 58, 95, 0.15)) !important;
 }
+
+/* ==========================================================================
+   FAST ORDER (POS) DATE PICKER & 50/50 SHORTCUT BUTTONS STYLING
+   ========================================================================== */
+.pos-date-shortcuts-split {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+  box-sizing: border-box !important;
+}
+
+.pos-date-shortcut-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 38px !important;
+  width: 100% !important;
+  padding: 0 10px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  color: #334155 !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  touch-action: manipulation !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+}
+
+.pos-date-shortcut-btn svg {
+  flex-shrink: 0 !important;
+  stroke: currentColor !important;
+}
+
+.pos-date-shortcut-btn:hover {
+  border-color: var(--primary-color, #fdb518) !important;
+  color: #0f172a !important;
+  background: var(--primary-glow, rgba(253, 181, 24, 0.15)) !important;
+  transform: translateY(-1px) !important;
+}
+
+.pos-date-shortcut-btn:active {
+  transform: scale(0.97) !important;
+}
+
+.pos-date-shortcut-btn.active {
+  background: linear-gradient(135deg, #fdb518, #f59e0b) !important;
+  color: #0f172a !important;
+  border-color: #d97706 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35) !important;
+}
+
+.btn-standard-datepicker-trigger {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+  padding: 8px 14px !important;
+  color: #0f172a !important;
+  height: 40px !important;
+  width: 100% !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.9rem !important;
+  text-align: right !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-sizing: border-box !important;
+}
+
+.btn-standard-datepicker-trigger:hover {
+  border-color: var(--primary-color, #fdb518) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(253, 181, 24, 0.15)) !important;
+}
+
+.btn-standard-datepicker-trigger.active {
+  border-color: var(--primary-color, #fdb518) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(253, 181, 24, 0.2)) !important;
+}
+</style>
