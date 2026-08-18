@@ -10126,7 +10126,7 @@ select.form-control:focus {
     margin-top: 2px;
   }
 
-  /* === Sales Reconciliation Report Print Styles (B/W Printing Optimized) === */
+  /* === Sales Reconciliation Report Print Styles (Compact & Zero-Gap A4) === */
   .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
     visibility: visible;
   }
@@ -10143,36 +10143,38 @@ select.form-control:focus {
   .reconciliation-page {
     display: block !important;
     width: 100%;
-    padding: 10mm 12mm;
+    max-width: 210mm;
+    padding: 6mm 8mm;
     box-sizing: border-box;
-    margin: 0;
+    margin: 0 auto;
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Cairo', 'Fira Code', sans-serif;
     direction: rtl;
-    font-size: 9.5pt;
-    line-height: 1.4;
+    font-size: 8.5pt;
+    line-height: 1.3;
   }
 
   .recon-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 8px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
   }
 
   .recon-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
   .recon-logo {
-    width: 52px;
-    height: 52px;
+    width: 36px;
+    height: 36px;
     object-fit: cover;
-    border-radius: 6px;
-    border: 1.5px solid #000000;
+    border-radius: 4px;
+    border: 1px solid #000000;
   }
 
   .recon-brand-text {
@@ -10181,44 +10183,45 @@ select.form-control:focus {
   }
 
   .recon-shop-name {
-    font-size: 16pt;
+    font-size: 13pt;
     font-weight: 800;
     margin: 0;
     color: #000000 !important;
-    line-height: 1.2;
+    line-height: 1.1;
   }
 
   .recon-subtitle {
-    font-size: 10pt;
+    font-size: 8pt;
     font-weight: 700;
-    color: #222222 !important;
-    margin: 2px 0 0 0;
+    color: #333333 !important;
+    margin: 1px 0 0 0;
   }
 
   .recon-header-badge {
     background: #ffffff;
     color: #000000 !important;
-    border: 2px solid #000000;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 9pt;
+    border: 1.5px solid #000000;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8pt;
     font-weight: 800;
   }
 
   .recon-divider {
-    border-bottom: 2px solid #000000;
-    margin: 8px 0;
+    border-bottom: 1.5px solid #000000;
+    margin: 3px 0 5px 0;
   }
 
   .recon-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px 16px;
+    gap: 4px 12px;
     background: #ffffff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1.5px solid #000000;
-    font-size: 9.5pt;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #000000;
+    font-size: 8pt;
+    margin-bottom: 4px;
   }
 
   .recon-meta-row {
@@ -10239,23 +10242,23 @@ select.form-control:focus {
 
   .recon-date-pill {
     background: #f2f2f2;
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 1px 6px;
+    border-radius: 3px;
     border: 1px solid #000000;
   }
 
   .recon-kpi-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin: 6px 0 8px 0;
+    gap: 6px;
+    margin: 4px 0 6px 0;
   }
 
   .recon-kpi-card {
     text-align: center;
-    padding: 8px 6px;
-    border: 2px solid #000000 !important;
-    border-radius: 8px;
+    padding: 4px 6px;
+    border: 1.5px solid #000000 !important;
+    border-radius: 6px;
     background: #ffffff !important;
   }
 
@@ -10266,17 +10269,18 @@ select.form-control:focus {
 
   .recon-kpi-label {
     display: block;
-    font-size: 9pt;
-    color: #222222 !important;
+    font-size: 7.5pt;
+    color: #333333 !important;
     font-weight: 700;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
 
   .recon-kpi-value {
     display: block;
-    font-size: 15pt;
+    font-size: 11pt;
     font-weight: 800;
     color: #000000 !important;
+    line-height: 1.1;
   }
 
   .recon-kpi-money {
@@ -10286,29 +10290,31 @@ select.form-control:focus {
 
   .recon-section {
     margin: 4px 0 0 0;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   .recon-section-header {
     background: #000000 !important;
     color: #ffffff !important;
-    padding: 6px 12px;
-    border-radius: 6px 6px 0 0;
+    padding: 4px 10px;
+    border-radius: 4px 4px 0 0;
     margin-bottom: 0;
   }
 
   .recon-section-title {
-    font-size: 10pt;
+    font-size: 8.5pt;
     font-weight: 800;
     margin: 0;
     color: #ffffff !important;
   }
 
-  /* Level 1: Main Category Block (Seamless pagination without blank gaps) */
+  /* Level 1: Main Category Block (Seamless Continuous Flow) */
   .recon-cat-block {
-    margin-top: 8px;
-    margin-bottom: 8px;
-    border: 1.5px solid #000000 !important;
-    border-radius: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border: 1px solid #000000 !important;
+    border-radius: 4px;
     background: #ffffff !important;
     page-break-inside: auto !important;
     break-inside: auto !important;
@@ -10316,37 +10322,35 @@ select.form-control:focus {
 
   .recon-cat-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: space-between;
     background: #e6e6e6 !important;
     color: #000000 !important;
-    padding: 6px 12px;
-    border-bottom: 1.5px solid #000000;
+    padding: 3px 8px;
+    border-bottom: 1px solid #000000;
     page-break-after: avoid;
     break-after: avoid;
   }
 
   .recon-cat-title {
     font-weight: 800;
-    font-size: 10.5pt;
+    font-size: 9pt;
     color: #000000 !important;
-    text-align: center;
   }
 
   .recon-cat-stats {
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     color: #222222 !important;
     font-weight: 700;
-    text-align: center;
-    margin-top: 1px;
   }
 
   /* Level 2: Sub-Category Block */
   .recon-subcat-block {
-    padding: 6px 8px;
+    padding: 2px 4px;
     border-bottom: 1px solid #e0e0e0;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   .recon-subcat-block:last-child {
@@ -10354,9 +10358,8 @@ select.form-control:focus {
   }
 
   .recon-subcat-title-container {
-    text-align: center;
-    margin-bottom: 4px;
-    margin-top: 2px;
+    text-align: right;
+    margin: 2px 0;
     page-break-after: avoid;
     break-after: avoid;
   }
@@ -10364,25 +10367,26 @@ select.form-control:focus {
   .recon-subcat-title {
     display: inline-block;
     font-weight: 800;
-    font-size: 9.5pt;
+    font-size: 8pt;
     color: #000000 !important;
-    padding: 2px 8px;
-    border-bottom: 1px dashed #999999;
-    text-align: center;
+    padding: 1px 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
   }
 
   /* Level 3: Products Table */
   .recon-detail-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 9pt;
+    font-size: 8pt;
     margin-bottom: 2px;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   .recon-detail-table thead {
     display: table-header-group;
-    page-break-after: avoid;
-    break-after: avoid;
   }
 
   .recon-detail-table tfoot {
@@ -10391,24 +10395,19 @@ select.form-control:focus {
     break-inside: avoid;
   }
 
-  .recon-col-header-row {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
   .recon-col-header-row th {
     background: #f0f0f0 !important;
-    padding: 8px 6px 5px 6px;
+    padding: 4px 6px;
     font-weight: 800;
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     color: #000000 !important;
-    border-bottom: 1.5px solid #000000;
+    border-bottom: 1px solid #000000;
     text-align: right;
   }
 
   .recon-detail-table tr {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .recon-detail-table tr:nth-child(even) {
@@ -10416,45 +10415,44 @@ select.form-control:focus {
   }
 
   .recon-detail-table td {
-    padding: 4px 6px;
+    padding: 3px 6px;
     border-bottom: 1px solid #e0e0e0;
     vertical-align: middle;
     color: #000000 !important;
   }
 
-  /* Clean bottom line on last body row */
   .recon-detail-table tbody tr:last-child td {
     border-bottom: 1px solid #e0e0e0;
   }
 
   .recon-subtotal-row {
     background: #e6e6e6 !important;
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 800;
-    border-top: 1.5px solid #000000;
-    border-bottom: 1.5px solid #000000;
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
     color: #000000 !important;
   }
 
   .recon-subtotal-row td {
-    padding: 4px 6px;
+    padding: 3px 6px;
   }
 
   .recon-grand-total-card {
-    margin-top: 12px;
+    margin-top: 6px;
     background: #f2f2f2 !important;
-    border: 2.5px solid #000000 !important;
-    border-radius: 8px;
-    padding: 10px 14px;
-    page-break-inside: avoid;
-    break-inside: avoid;
+    border: 1.5px solid #000000 !important;
+    border-radius: 6px;
+    padding: 6px 10px;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .recon-gt-title {
-    font-size: 10pt;
+    font-size: 8.5pt;
     font-weight: 800;
     color: #000000 !important;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
     text-align: center;
   }
 
@@ -10462,7 +10460,7 @@ select.form-control:focus {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    font-size: 11.5pt;
+    font-size: 9.5pt;
   }
 
   .gt-metric {
@@ -10472,8 +10470,10 @@ select.form-control:focus {
 
   .gt-metric.highlight {
     color: #000000 !important;
-    font-size: 13pt;
-    font-weight: 800;
+  }
+
+  .recon-bold {
+    font-weight: 700;
   }
 
   .recon-mono {
@@ -10481,41 +10481,28 @@ select.form-control:focus {
     font-weight: 700;
   }
 
-  .recon-bold {
-    font-weight: 800;
-    color: #000000 !important;
-  }
-
   .recon-empty-text {
     text-align: center;
-    padding: 16px;
-    color: #000000 !important;
-    font-weight: 700;
-  }
-
-  .text-center {
-    text-align: center !important;
-  }
-
-  .text-left {
-    text-align: left !important;
+    padding: 14px;
+    color: #555555 !important;
+    font-size: 8pt;
   }
 
   .recon-footer {
     text-align: center;
-    margin-top: 12px;
-    padding-top: 8px;
-    border-top: 2px solid #000000;
-    font-size: 9pt;
-    font-weight: 800;
-    color: #000000 !important;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #cccccc;
+    font-size: 7.5pt;
+    color: #333333 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .recon-footer-sub {
-    font-size: 8pt;
-    color: #333333 !important;
-    font-weight: 600;
-    margin-top: 2px;
+    font-size: 7pt;
+    color: #555555 !important;
+    margin-top: 1px;
   }
 }
 
