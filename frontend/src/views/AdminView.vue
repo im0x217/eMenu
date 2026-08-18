@@ -2537,7 +2537,7 @@
 
   <!-- Hidden Print Sales Reconciliation Report (A4 Portrait) -->
   <div class="print-reconciliation-wrapper" v-if="printingReconciliation">
-    <div class="reconciliation-page">
+    <div class="reconciliation-page" :class="['recon-density-' + reconDensity]">
       <!-- Header Banner -->
       <div class="recon-header">
         <div class="recon-brand">
@@ -5133,6 +5133,38 @@ export default {
       };
     });
 
+    // Dynamic Adaptive Density Engine for A4 Space Optimization
+    const reconDensity = computed(() => {
+      if (!reconciliationData.value || !reconciliationData.value.categoryProductBreakdown) {
+        return 'spacious';
+      }
+      
+      const cats = reconciliationData.value.categoryProductBreakdown;
+      const catCount = cats.length;
+      let subcatCount = 0;
+      let totalProdRows = 0;
+      
+      cats.forEach(c => {
+        subcatCount += (c.subCategories || []).length;
+        (c.subCategories || []).forEach(sub => {
+          totalProdRows += (sub.products || []).length;
+        });
+      });
+      
+      // Compute total visual units score
+      const visualScore = totalProdRows + (subcatCount * 1.5) + (catCount * 2.5);
+      
+      if (visualScore <= 12) {
+        return 'spacious'; // 1-12 rows: spacious luxury single-page layout
+      } else if (visualScore <= 28) {
+        return 'balanced'; // 13-28 rows: clean 1-page / tight 2-page layout
+      } else if (visualScore <= 52) {
+        return 'dense'; // 29-52 rows: dense 2-page layout
+      } else {
+        return 'ultra-dense'; // 52+ rows: max compressed multi-page layout
+      }
+    });
+
     const printReconciliation = async () => {
       setPrintPageSize('A4 portrait', '6mm 8mm');
       printingReconciliation.value = true;
@@ -6496,6 +6528,7 @@ const closeSuggestionsWithDelay = () => {
       printingOrderCustomerBalance,
       printingReconciliation,
       reconciliationData,
+      reconDensity,
       printReconciliation,
       paginatedOrderPages,
       printOrder,
@@ -13421,3 +13454,125 @@ select.pos-control {
 }
 </style>
 
+
+  /* ==========================================================================
+     ADAPTIVE A4 DENSITY TIERS (Dynamically Scaled Based on Items & Category Count)
+     ========================================================================== */
+
+  /* Tier 1: Spacious (Small Catalogs <= 12 visual units -> Fills 1 A4 page beautifully) */
+  .reconciliation-page.recon-density-spacious {
+    padding: 10mm 12mm;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+  .recon-density-spacious .recon-logo { width: 48px; height: 48px; }
+  .recon-density-spacious .recon-shop-name { font-size: 15pt; }
+  .recon-density-spacious .recon-subtitle { font-size: 9.5pt; }
+  .recon-density-spacious .recon-header-badge { font-size: 9pt; padding: 4px 10px; }
+  .recon-density-spacious .recon-meta { padding: 6px 12px; font-size: 9pt; gap: 6px 14px; margin-bottom: 6px; }
+  .recon-density-spacious .recon-kpi-grid { gap: 8px; margin: 6px 0 8px 0; }
+  .recon-density-spacious .recon-kpi-card { padding: 6px 8px; }
+  .recon-density-spacious .recon-kpi-label { font-size: 8.5pt; }
+  .recon-density-spacious .recon-kpi-value { font-size: 14pt; }
+  .recon-density-spacious .recon-section-header { padding: 6px 12px; font-size: 9.5pt; }
+  .recon-density-spacious .recon-cat-block { margin: 8px 0; border-width: 1.5px !important; }
+  .recon-density-spacious .recon-cat-header { padding: 5px 12px; font-size: 10.5pt; }
+  .recon-density-spacious .recon-cat-title { font-size: 10.5pt; }
+  .recon-density-spacious .recon-cat-stats { font-size: 8.5pt; }
+  .recon-density-spacious .recon-subcat-block { padding: 4px 8px; }
+  .recon-density-spacious .recon-subcat-title { font-size: 9pt; padding: 2px 8px; }
+  .recon-density-spacious .recon-detail-table { font-size: 9pt; }
+  .recon-density-spacious .recon-col-header-row th { padding: 6px 8px; font-size: 8.5pt; }
+  .recon-density-spacious .recon-detail-table td { padding: 5px 8px; }
+  .recon-density-spacious .recon-subtotal-row { font-size: 9pt; }
+  .recon-density-spacious .recon-subtotal-row td { padding: 5px 8px; }
+  .recon-density-spacious .recon-grand-total-card { margin-top: 10px; padding: 8px 14px; font-size: 11pt; }
+  .recon-density-spacious .recon-gt-metrics { font-size: 11pt; }
+
+  /* Tier 2: Balanced (Medium Catalogs 13-28 visual units -> Compact & Balanced) */
+  .reconciliation-page.recon-density-balanced {
+    padding: 7mm 9mm;
+    font-size: 8.5pt;
+    line-height: 1.35;
+  }
+  .recon-density-balanced .recon-logo { width: 38px; height: 38px; }
+  .recon-density-balanced .recon-shop-name { font-size: 13.5pt; }
+  .recon-density-balanced .recon-subtitle { font-size: 8.2pt; }
+  .recon-density-balanced .recon-header-badge { font-size: 8.2pt; padding: 3px 8px; }
+  .recon-density-balanced .recon-meta { padding: 4px 8px; font-size: 8.2pt; gap: 4px 10px; margin-bottom: 4px; }
+  .recon-density-balanced .recon-kpi-grid { gap: 6px; margin: 4px 0 6px 0; }
+  .recon-density-balanced .recon-kpi-card { padding: 4px 6px; }
+  .recon-density-balanced .recon-kpi-label { font-size: 7.8pt; }
+  .recon-density-balanced .recon-kpi-value { font-size: 12pt; }
+  .recon-density-balanced .recon-section-header { padding: 4px 10px; font-size: 8.8pt; }
+  .recon-density-balanced .recon-cat-block { margin: 5px 0; border-width: 1px !important; }
+  .recon-density-balanced .recon-cat-header { padding: 3.5px 8px; font-size: 9.5pt; }
+  .recon-density-balanced .recon-cat-title { font-size: 9.5pt; }
+  .recon-density-balanced .recon-cat-stats { font-size: 7.8pt; }
+  .recon-density-balanced .recon-subcat-block { padding: 3px 6px; }
+  .recon-density-balanced .recon-subcat-title { font-size: 8.2pt; padding: 1.5px 6px; }
+  .recon-density-balanced .recon-detail-table { font-size: 8.2pt; }
+  .recon-density-balanced .recon-col-header-row th { padding: 4.5px 6px; font-size: 7.8pt; }
+  .recon-density-balanced .recon-detail-table td { padding: 3.5px 6px; }
+  .recon-density-balanced .recon-subtotal-row { font-size: 8.2pt; }
+  .recon-density-balanced .recon-subtotal-row td { padding: 3.5px 6px; }
+  .recon-density-balanced .recon-grand-total-card { margin-top: 6px; padding: 6px 10px; }
+  .recon-density-balanced .recon-gt-metrics { font-size: 9.5pt; }
+
+  /* Tier 3: Dense (Large Catalogs 29-52 visual units -> High Space Compression) */
+  .reconciliation-page.recon-density-dense {
+    padding: 5mm 7mm;
+    font-size: 7.8pt;
+    line-height: 1.25;
+  }
+  .recon-density-dense .recon-logo { width: 32px; height: 32px; }
+  .recon-density-dense .recon-shop-name { font-size: 12pt; }
+  .recon-density-dense .recon-subtitle { font-size: 7.5pt; }
+  .recon-density-dense .recon-header-badge { font-size: 7.5pt; padding: 2px 6px; }
+  .recon-density-dense .recon-meta { padding: 3px 6px; font-size: 7.5pt; gap: 3px 8px; margin-bottom: 3px; }
+  .recon-density-dense .recon-kpi-grid { gap: 5px; margin: 3px 0 5px 0; }
+  .recon-density-dense .recon-kpi-card { padding: 3px 5px; }
+  .recon-density-dense .recon-kpi-label { font-size: 7.2pt; }
+  .recon-density-dense .recon-kpi-value { font-size: 10.5pt; }
+  .recon-density-dense .recon-section-header { padding: 3px 8px; font-size: 8pt; }
+  .recon-density-dense .recon-cat-block { margin: 3.5px 0; }
+  .recon-density-dense .recon-cat-header { padding: 2.5px 6px; font-size: 8.5pt; }
+  .recon-density-dense .recon-cat-title { font-size: 8.5pt; }
+  .recon-density-dense .recon-cat-stats { font-size: 7.2pt; }
+  .recon-density-dense .recon-subcat-block { padding: 2px 4px; }
+  .recon-density-dense .recon-subcat-title { font-size: 7.5pt; padding: 1px 5px; }
+  .recon-density-dense .recon-detail-table { font-size: 7.5pt; }
+  .recon-density-dense .recon-col-header-row th { padding: 3px 5px; font-size: 7.2pt; }
+  .recon-density-dense .recon-detail-table td { padding: 2.5px 5px; }
+  .recon-density-dense .recon-subtotal-row td { padding: 2.5px 5px; font-size: 7.5pt; }
+  .recon-density-dense .recon-grand-total-card { margin-top: 5px; padding: 5px 8px; }
+  .recon-density-dense .recon-gt-metrics { font-size: 8.8pt; }
+
+  /* Tier 4: Ultra-Dense (Massive Catalogs > 52 visual units -> Ultra Compact Multi-Page) */
+  .reconciliation-page.recon-density-ultra-dense {
+    padding: 4mm 6mm;
+    font-size: 7.2pt;
+    line-height: 1.2;
+  }
+  .recon-density-ultra-dense .recon-logo { width: 26px; height: 26px; }
+  .recon-density-ultra-dense .recon-shop-name { font-size: 11pt; }
+  .recon-density-ultra-dense .recon-subtitle { font-size: 7pt; }
+  .recon-density-ultra-dense .recon-header-badge { font-size: 7pt; padding: 1.5px 5px; }
+  .recon-density-ultra-dense .recon-meta { padding: 2px 5px; font-size: 7pt; gap: 2px 6px; margin-bottom: 2px; }
+  .recon-density-ultra-dense .recon-kpi-grid { gap: 4px; margin: 2px 0 4px 0; }
+  .recon-density-ultra-dense .recon-kpi-card { padding: 2px 4px; }
+  .recon-density-ultra-dense .recon-kpi-label { font-size: 6.8pt; }
+  .recon-density-ultra-dense .recon-kpi-value { font-size: 9.5pt; }
+  .recon-density-ultra-dense .recon-section-header { padding: 2px 6px; font-size: 7.5pt; }
+  .recon-density-ultra-dense .recon-cat-block { margin: 2.5px 0; }
+  .recon-density-ultra-dense .recon-cat-header { padding: 2px 5px; font-size: 7.8pt; }
+  .recon-density-ultra-dense .recon-cat-title { font-size: 7.8pt; }
+  .recon-density-ultra-dense .recon-cat-stats { font-size: 6.8pt; }
+  .recon-density-ultra-dense .recon-subcat-block { padding: 1.5px 3px; }
+  .recon-density-ultra-dense .recon-subcat-title { font-size: 7pt; padding: 1px 4px; }
+  .recon-density-ultra-dense .recon-detail-table { font-size: 7pt; }
+  .recon-density-ultra-dense .recon-col-header-row th { padding: 2.5px 4px; font-size: 6.8pt; }
+  .recon-density-ultra-dense .recon-detail-table td { padding: 2px 4px; }
+  .recon-density-ultra-dense .recon-subtotal-row td { padding: 2px 4px; font-size: 7pt; }
+  .recon-density-ultra-dense .recon-grand-total-card { margin-top: 4px; padding: 4px 6px; }
+  .recon-density-ultra-dense .recon-gt-metrics { font-size: 8.2pt; }
