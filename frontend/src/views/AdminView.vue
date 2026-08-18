@@ -13955,26 +13955,66 @@ select.pos-control {
 .pos-btn-cancel {
   padding: 11px 22px !important;
   font-size: 0.9rem !important;
+  font-weight: 700 !important;
   border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #475569 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+}
+
+.pos-btn-cancel:hover:not(:disabled) {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
 }
 
 .pos-btn-submit {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 26px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 11px 28px !important;
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   border-radius: 12px !important;
-  background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
-  border: none !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25) !important;
+  border: 1px solid #d97706 !important;
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.32) !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  font-family: 'Cairo', sans-serif !important;
+  user-select: none !important;
+}
+
+.pos-btn-submit svg {
+  stroke: #ffffff !important;
 }
 
 .pos-btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.35) !important;
+  transform: translateY(-2px) !important;
+  background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.45) !important;
+}
+
+.pos-btn-submit:active:not(:disabled) {
+  transform: scale(0.98) !important;
+}
+
+.pos-btn-submit:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+  background: #cbd5e1 !important;
+  color: #64748b !important;
+  border-color: #cbd5e1 !important;
+}
+
+.pos-btn-submit:disabled svg {
+  stroke: #64748b !important;
 }
 
 .suggestion-item.highlighted,
