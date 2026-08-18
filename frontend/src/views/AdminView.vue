@@ -823,9 +823,10 @@
                     <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
                   </div>
-                  <button @click="openNewOrderModal" class="btn btn-primary btn-make-order" title="إنشاء طلب جديد للعميل">
+                  <button @click="openNewOrderModal" class="btn btn-primary btn-make-order" title="إنشاء طلب جديد للعميل (F2 / Ctrl+N)">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>إنشاء طلب جديد</span>
+                    <kbd class="btn-kbd-shortcut">F2</kbd>
                   </button>
                 </div>
 
@@ -1081,6 +1082,7 @@
               class="price-mode-pill" 
               :class="{ active: newOrder.priceMode === 'regular' }" 
               @click="onNewOrderPriceModeChange('regular')"
+              title="تسعير قطاعي مفرد (Alt+W للتبديل)"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
               <span>تسعير مفرد</span>
@@ -1090,13 +1092,27 @@
               class="price-mode-pill" 
               :class="{ active: newOrder.priceMode === 'bulk' }" 
               @click="onNewOrderPriceModeChange('bulk')"
+              title="تسعير جملة (Alt+W للتبديل)"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               <span>تسعير جملة</span>
             </button>
           </div>
 
-          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
+          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق (Esc)">✕</button>
+        </div>
+
+        <!-- Keyboard Flow Shortcuts Hint Bar -->
+        <div class="pos-keyboard-shortcuts-bar">
+          <div class="pos-shortcut-badge"><kbd>F2</kbd> <span>طلب جديد</span></div>
+          <div class="pos-shortcut-badge"><kbd>Enter</kbd> <span>إضافة صنف</span></div>
+          <div class="pos-shortcut-badge"><kbd>↑↓</kbd> <span>تنقل</span></div>
+          <div class="pos-shortcut-badge"><kbd>Alt+W</kbd> <span>جملة / مفرد</span></div>
+          <div class="pos-shortcut-badge"><kbd>Alt+1/2/3</kbd> <span>تاريخ التسليم</span></div>
+          <div class="pos-shortcut-badge"><kbd>F4</kbd> <span>التصنيفات</span></div>
+          <div class="pos-shortcut-badge"><kbd>F8</kbd> <span>الجدول</span></div>
+          <div class="pos-shortcut-badge highlight"><kbd>Ctrl+Enter / F9</kbd> <span>حفظ وإنشاء</span></div>
+          <div class="pos-shortcut-badge"><kbd>Esc</kbd> <span>إغلاق</span></div>
         </div>
 
         <form @submit.prevent="submitNewOrder" class="fast-order-form-body">
@@ -1122,23 +1138,29 @@
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input 
+                      ref="newOrderCustomerInputRef"
                       v-model="newOrderCustomerSearch" 
                       type="text" 
                       class="form-control search-input" 
-                      placeholder="البحث برقم الهاتف أو الاسم…" 
+                      placeholder="البحث برقم الهاتف أو الاسم (↓↑ للتحرك، Enter للاختيار)…" 
                       @focus="showNewOrderCustomerSuggestions = true"
-                      @input="showNewOrderCustomerSuggestions = true"
+                      @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0"
+                      @keydown.down.prevent="navigateCustomerSuggestions(1)"
+                      @keydown.up.prevent="navigateCustomerSuggestions(-1)"
+                      @keydown.enter.prevent="selectHighlightedCustomerOrNext"
                     />
-                    <button v-if="newOrderCustomerSearch" type="button" @click="clearSelectedCustomerForNewOrder" class="btn-clear-search">&times;</button>
+                    <button v-if="newOrderCustomerSearch" type="button" @click="clearSelectedCustomerForNewOrder" class="btn-clear-search" tabindex="-1">&times;</button>
                   </div>
 
                   <!-- Dropdown Suggestions -->
                   <div v-if="showNewOrderCustomerSuggestions && filteredNewOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in">
                     <div 
-                      v-for="cust in filteredNewOrderCustomers" 
+                      v-for="(cust, cIdx) in filteredNewOrderCustomers" 
                       :key="cust._id" 
                       class="suggestion-item customer-suggestion-item"
-                      @mousedown="selectCustomerForNewOrder(cust)"
+                      :class="{ highlighted: cIdx === highlightedCustomerIndex }"
+                      @mousedown="selectCustomerForNewOrder(cust); focusProductSearch();"
+                      @mouseenter="highlightedCustomerIndex = cIdx"
                     >
                       <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
                       <div class="cust-info-group">
@@ -1180,9 +1202,9 @@
                     <label class="pos-label">تاريخ الاستلام</label>
                     <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
                     <div class="date-quick-shortcuts">
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)">اليوم</button>
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)">غداً</button>
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)">بعد غد</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)" title="Alt+1">اليوم</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)" title="Alt+2">غداً</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)" title="Alt+3">بعد غد</button>
                     </div>
                   </div>
 
@@ -1251,23 +1273,29 @@
                     <div class="search-input-wrapper">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                       <input 
+                        ref="newOrderProductInputRef"
                         v-model="newOrderProductSearch" 
                         type="text" 
                         class="form-control search-input" 
-                        placeholder="ابحث باسم المنتج لإضافته فوراً (Enter للإضافة السريعة)…" 
+                        placeholder="ابحث عن صنف لإضافته مباشرة (↓↑ للتنقل، Enter للإضافة السريعة)…" 
                         @focus="showNewOrderProductSuggestions = true"
-                        @blur="setTimeout(() => showNewOrderProductSuggestions = false, 250)"
-                        @keydown.enter.prevent="addFirstFilteredProductToNewOrder"
+                        @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0"
+                        @keydown.down.prevent="navigateProductSuggestions(1)"
+                        @keydown.up.prevent="navigateProductSuggestions(-1)"
+                        @keydown.enter.prevent="addHighlightedProductToNewOrder"
                       />
+                      <button v-if="newOrderProductSearch" type="button" @click="newOrderProductSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
                     </div>
 
                     <!-- Autocomplete Dropdown -->
                     <div v-if="showNewOrderProductSuggestions && newOrderProductSearch" class="autocomplete-suggestions-dropdown animate-fade-in">
                       <div 
-                        v-for="prod in filteredNewOrderProducts" 
+                        v-for="(prod, pIdx) in filteredNewOrderProducts" 
                         :key="prod._id" 
                         class="suggestion-item"
-                        @mousedown="addProductToNewOrder(prod)"
+                        :class="{ highlighted: pIdx === highlightedProductIndex }"
+                        @mousedown="addProductToNewOrder(prod); focusProductSearch();"
+                        @mouseenter="highlightedProductIndex = pIdx"
                       >
                         <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
                         <div class="suggestion-info">
@@ -1373,9 +1401,22 @@
                         </td>
                         <td style="width: 130px;">
                           <div class="qty-stepper-control">
-                            <button type="button" class="stepper-btn btn-minus" @click="adjustNewOrderItemQty(item, -1)">-</button>
-                            <input v-model.number="item.quantity" type="number" :step="item.allowFloat ? 0.25 : 1" min="0.1" class="form-control stepper-input text-mono text-center" @input="recalcNewOrderTotal" @change="recalcNewOrderTotal" required />
-                            <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)">+</button>
+                            <button type="button" class="stepper-btn btn-minus" @click="adjustNewOrderItemQty(item, -1)" tabindex="-1">-</button>
+                            <input 
+                              v-model.number="item.quantity" 
+                              type="number" 
+                              :step="item.allowFloat ? 0.25 : 1" 
+                              min="0.1" 
+                              class="form-control stepper-input text-mono text-center" 
+                              @input="recalcNewOrderTotal" 
+                              @change="recalcNewOrderTotal" 
+                              @keydown.up.prevent="adjustNewOrderItemQty(item, 1)"
+                              @keydown.down.prevent="adjustNewOrderItemQty(item, -1)"
+                              @keydown.delete.prevent="removeNewOrderItem(idx)"
+                              @keydown.esc.prevent="focusProductSearch"
+                              required 
+                            />
+                            <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)" tabindex="-1">+</button>
                           </div>
                         </td>
                         <td style="width: 120px;">
@@ -1388,7 +1429,7 @@
                           {{ formatCurrency(item.quantity * item.price) }}
                         </td>
                         <td style="width: 44px; text-align: center;">
-                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" title="حذف الصنف">
+                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" title="حذف الصنف (Delete)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
                         </td>
@@ -1414,17 +1455,18 @@
           </div>
 
           <div class="fast-order-footer-actions">
-            <label class="auto-print-checkbox-label" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
+            <label class="auto-print-checkbox-label" title="طباعة إيصال الطلب تلقائياً بعد الحفظ (Alt+P)">
               <input type="checkbox" v-model="newOrderAutoPrint" />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
               <span>طباعة الإيصال فوراً</span>
             </label>
 
-            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
-            <button type="button" @click="submitNewOrder" class="btn btn-primary pos-btn-submit" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone">
+            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء (Esc)</button>
+            <button type="button" @click="submitNewOrder" class="btn btn-primary pos-btn-submit" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone" title="حفظ وإنشاء الطلب (Ctrl+Enter / F9)">
               <svg v-if="!newOrderLoading" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
               <span>{{ newOrderLoading ? 'جاري الحفظ…' : 'تأكيد وإنشاء الطلب' }}</span>
+              <kbd class="btn-kbd-submit-shortcut">F9</kbd>
             </button>
           </div>
         </div>
@@ -5360,6 +5402,10 @@ export default {
     const newOrderCategoryFilter = ref('');
     const showNewOrderCustomerSuggestions = ref(false);
     const showNewOrderProductSuggestions = ref(false);
+    const highlightedCustomerIndex = ref(0);
+    const highlightedProductIndex = ref(0);
+    const newOrderCustomerInputRef = ref(null);
+    const newOrderProductInputRef = ref(null);
 
     const newOrder = reactive({
       customerName: '',
@@ -5401,6 +5447,14 @@ export default {
       return list.slice(0, 16);
     });
 
+    const focusProductSearch = () => {
+      nextTick(() => {
+        if (newOrderProductInputRef.value) {
+          newOrderProductInputRef.value.focus();
+        }
+      });
+    };
+
     const openNewOrderModal = () => {
       newOrder.customerName = '';
       newOrder.customerPhone = '';
@@ -5419,8 +5473,36 @@ export default {
       newOrderCategoryFilter.value = '';
       showNewOrderCustomerSuggestions.value = false;
       showNewOrderProductSuggestions.value = false;
+      highlightedCustomerIndex.value = 0;
+      highlightedProductIndex.value = 0;
 
       newOrderModalOpen.value = true;
+
+      nextTick(() => {
+        if (newOrderCustomerInputRef.value) {
+          newOrderCustomerInputRef.value.focus();
+        }
+      });
+    };
+
+    const navigateCustomerSuggestions = (delta) => {
+      const max = filteredNewOrderCustomers.value.length;
+      if (max === 0) return;
+      showNewOrderCustomerSuggestions.value = true;
+      let next = highlightedCustomerIndex.value + delta;
+      if (next < 0) next = max - 1;
+      if (next >= max) next = 0;
+      highlightedCustomerIndex.value = next;
+    };
+
+    const selectHighlightedCustomerOrNext = () => {
+      if (showNewOrderCustomerSuggestions.value && filteredNewOrderCustomers.value.length > 0) {
+        const idx = (highlightedCustomerIndex.value >= 0 && highlightedCustomerIndex.value < filteredNewOrderCustomers.value.length) 
+          ? highlightedCustomerIndex.value 
+          : 0;
+        selectCustomerForNewOrder(filteredNewOrderCustomers.value[idx]);
+      }
+      focusProductSearch();
     };
 
     const selectCustomerForNewOrder = (cust) => {
@@ -5434,6 +5516,44 @@ export default {
       newOrder.customerName = '';
       newOrder.customerPhone = '';
       newOrderCustomerSearch.value = '';
+    };
+
+    const navigateProductSuggestions = (delta) => {
+      const max = filteredNewOrderProducts.value.length;
+      if (max === 0) return;
+      showNewOrderProductSuggestions.value = true;
+      let next = highlightedProductIndex.value + delta;
+      if (next < 0) next = max - 1;
+      if (next >= max) next = 0;
+      highlightedProductIndex.value = next;
+    };
+
+    const addHighlightedProductToNewOrder = () => {
+      if (filteredNewOrderProducts.value && filteredNewOrderProducts.value.length > 0) {
+        const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length)
+          ? highlightedProductIndex.value
+          : 0;
+        addProductToNewOrder(filteredNewOrderProducts.value[idx]);
+        highlightedProductIndex.value = 0;
+      }
+      focusProductSearch();
+    };
+
+    const cycleNewOrderCategory = () => {
+      const allCats = [{ name: '' }, ...(categories.value || [])];
+      const curIdx = allCats.findIndex(c => c.name === newOrderCategoryFilter.value);
+      const nextIdx = (curIdx + 1) % allCats.length;
+      newOrderCategoryFilter.value = allCats[nextIdx].name;
+    };
+
+    const focusFirstCartItem = () => {
+      nextTick(() => {
+        const firstStepper = document.querySelector('.fast-order-modal .stepper-input');
+        if (firstStepper) {
+          firstStepper.focus();
+          firstStepper.select();
+        }
+      });
     };
 
     const addProductToNewOrder = (prod) => {
@@ -5728,17 +5848,98 @@ export default {
     let scanTimeout = null;
 
     const handleGlobalKeydown = (e) => {
+      // 1. Modal Close / Cancel with Escape
       if (e.key === 'Escape') {
-        if (paymentModalOpen.value) paymentModalOpen.value = false;
-        if (paymentHistoryModalOpen.value) paymentHistoryModalOpen.value = false;
-        if (customerModalOpen.value) customerModalOpen.value = false;
-        if (customerFavsModalOpen.value) customerFavsModalOpen.value = false;
-        if (orderEditModalOpen.value) orderEditModalOpen.value = false;
-        if (productModalOpen.value) productModalOpen.value = false;
-        if (categoryModalOpen.value) categoryModalOpen.value = false;
-        if (tagModalOpen.value) tagModalOpen.value = false;
-        if (cropperModalOpen.value) cropperModalOpen.value = false;
+        if (newOrderModalOpen.value) {
+          if (showNewOrderCustomerSuggestions.value || showNewOrderProductSuggestions.value) {
+            showNewOrderCustomerSuggestions.value = false;
+            showNewOrderProductSuggestions.value = false;
+            return;
+          }
+          newOrderModalOpen.value = false;
+          return;
+        }
+        if (paymentModalOpen.value) { paymentModalOpen.value = false; return; }
+        if (paymentHistoryModalOpen.value) { paymentHistoryModalOpen.value = false; return; }
+        if (customerModalOpen.value) { customerModalOpen.value = false; return; }
+        if (customerFavsModalOpen.value) { customerFavsModalOpen.value = false; return; }
+        if (customerDetailsModalOpen.value) { customerDetailsModalOpen.value = false; return; }
+        if (orderEditModalOpen.value) { orderEditModalOpen.value = false; return; }
+        if (productModalOpen.value) { productModalOpen.value = false; return; }
+        if (categoryModalOpen.value) { categoryModalOpen.value = false; return; }
+        if (tagModalOpen.value) { tagModalOpen.value = false; return; }
+        if (cropperModalOpen.value) { cropperModalOpen.value = false; return; }
         return;
+      }
+
+      // 2. F2 or Ctrl+N / Alt+N: Open Fast Order Modal (POS Mode)
+      if ((e.key === 'F2' || ((e.ctrlKey || e.altKey) && (e.key === 'n' || e.key === 'N' || e.key === 'ى'))) && !newOrderModalOpen.value) {
+        e.preventDefault();
+        openNewOrderModal();
+        return;
+      }
+
+      // 3. Inside Fast Order Modal Keyboards Flow
+      if (newOrderModalOpen.value) {
+        // Ctrl+Enter or F9 or Alt+S: Submit Order
+        if ((e.ctrlKey && e.key === 'Enter') || e.key === 'F9' || (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س'))) {
+          e.preventDefault();
+          if (!newOrderLoading.value && newOrder.items.length > 0 && newOrder.customerName && newOrder.customerPhone) {
+            submitNewOrder();
+          } else if (newOrder.items.length === 0) {
+            toast.show('يرجى إضافة صنف واحد على الأقل للطلب قبل الحفظ', 'warning');
+          } else if (!newOrder.customerName || !newOrder.customerPhone) {
+            toast.show('يرجى إدخال اسم العميل ورقم هاتفه', 'warning');
+          }
+          return;
+        }
+
+        // Alt+W: Toggle Wholesale / Retail price mode
+        if (e.altKey && (e.key === 'w' || e.key === 'W' || e.key === 'ص')) {
+          e.preventDefault();
+          onNewOrderPriceModeChange(newOrder.priceMode === 'regular' ? 'bulk' : 'regular');
+          toast.show(`تم التحويل إلى: ${newOrder.priceMode === 'bulk' ? 'تسعير جملة' : 'تسعير مفرد'}`, 'info');
+          return;
+        }
+
+        // Alt+P: Toggle Auto Print
+        if (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
+          e.preventDefault();
+          newOrderAutoPrint.value = !newOrderAutoPrint.value;
+          toast.show(`الطباعة التلقائية: ${newOrderAutoPrint.value ? 'مفعلة' : 'معطلة'}`, 'info');
+          return;
+        }
+
+        // Alt+1 / Alt+2 / Alt+3: Date Shortcuts
+        if (e.altKey && e.key === '1') {
+          e.preventDefault();
+          setNewOrderDateShortcut(0);
+          return;
+        }
+        if (e.altKey && e.key === '2') {
+          e.preventDefault();
+          setNewOrderDateShortcut(1);
+          return;
+        }
+        if (e.altKey && e.key === '3') {
+          e.preventDefault();
+          setNewOrderDateShortcut(2);
+          return;
+        }
+
+        // F4 or Alt+C: Cycle Categories
+        if (e.key === 'F4' || (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ'))) {
+          e.preventDefault();
+          cycleNewOrderCategory();
+          return;
+        }
+
+        // F8 or Alt+K: Focus Cart Items
+        if (e.key === 'F8' || (e.altKey && (e.key === 'k' || e.key === 'K' || e.key === 'ن'))) {
+          e.preventDefault();
+          focusFirstCartItem();
+          return;
+        }
       }
 
       // Check if user is typing into modal inputs or form inputs
@@ -6140,10 +6341,21 @@ export default {
       newOrderCategoryFilter,
       showNewOrderCustomerSuggestions,
       showNewOrderProductSuggestions,
+      highlightedCustomerIndex,
+      highlightedProductIndex,
+      newOrderCustomerInputRef,
+      newOrderProductInputRef,
       newOrder,
       filteredNewOrderCustomers,
       filteredNewOrderProducts,
       openNewOrderModal,
+      focusProductSearch,
+      focusFirstCartItem,
+      navigateCustomerSuggestions,
+      selectHighlightedCustomerOrNext,
+      navigateProductSuggestions,
+      addHighlightedProductToNewOrder,
+      cycleNewOrderCategory,
       selectCustomerForNewOrder,
       clearSelectedCustomerForNewOrder,
       addProductToNewOrder,
@@ -12758,6 +12970,82 @@ select.pos-control {
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.35) !important;
 }
 
+.btn-kbd-shortcut {
+  background: rgba(0, 0, 0, 0.15);
+  color: #111827;
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  margin-right: 4px;
+}
+
+.btn-kbd-submit-shortcut {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  margin-right: 6px;
+}
+
+.pos-keyboard-shortcuts-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+
+.pos-shortcut-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pos-shortcut-badge kbd {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-family: monospace;
+  font-weight: 800;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pos-shortcut-badge.highlight {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.pos-shortcut-badge.highlight kbd {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.suggestion-item.highlighted,
+.customer-suggestion-item.highlighted {
+  background: rgba(30, 58, 95, 0.08) !important;
+  outline: 1.5px solid var(--primary-color, #1e3a5f);
+  border-radius: 8px;
+}
+
 @media (max-width: 960px) {
   .fast-order-modal {
     width: 98% !important;
@@ -12769,6 +13057,9 @@ select.pos-control {
   }
   .fast-order-header {
     flex-wrap: wrap;
+  }
+  .pos-keyboard-shortcuts-bar {
+    display: none;
   }
   .fast-order-price-mode-switch {
     width: 100%;
