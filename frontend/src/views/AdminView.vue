@@ -1268,7 +1268,7 @@
                     </div>
 
                     <!-- Autocomplete Dropdown (Live Initial Suggestions) -->
-                    <div v-if="showNewOrderProductSuggestions && filteredNewOrderProducts.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in">
+                    <div v-if="showNewOrderProductSuggestions && newOrderProductSearch.trim() && filteredNewOrderProducts.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in">
                       <div 
                         v-for="(prod, pIdx) in filteredNewOrderProducts" 
                         :key="prod._id" 
@@ -1347,8 +1347,7 @@
 
                 <!-- Quick Products Grid -->
                 <div v-if="filteredNewOrderProducts.length > 0" class="quick-products-grid">
-                  <div 
-                    v-for="prod in filteredNewOrderProducts.slice(0, 8)" 
+                  <div v-for="prod in filteredNewOrderProducts" 
                     :key="'grid-'+prod._id" 
                     class="quick-prod-card" 
                     @click="addProductToNewOrder(prod)"
@@ -5512,7 +5511,7 @@ const closeSuggestionsWithDelay = () => {
           (p.subCategory && p.subCategory.toLowerCase().includes(q))
         );
       }
-      return list.slice(0, 20);
+      return list;
     });
 
     const getItemQtyInCart = (productId) => {
@@ -12943,7 +12942,7 @@ select.pos-control {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 10px;
-  max-height: 165px;
+  max-height: 200px;
   overflow-y: auto;
   padding-top: 6px;
 }
