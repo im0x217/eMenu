@@ -535,6 +535,7 @@
                       <th>الصنف</th>
                       <th>السعر مفرد</th>
                       <th>السعر جملة</th>
+                      <th>سعر التكلفة</th>
                       <th>العلامات</th>
                       <th>نوع البيع</th>
                       <th>حالة التوفر</th>
@@ -543,7 +544,7 @@
                   </thead>
                   <tbody>
                     <tr v-if="filteredProducts.length === 0">
-                      <td colspan="8" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
+                      <td colspan="10" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
                     </tr>
                     <tr v-for="prod in paginatedProducts" :key="prod._id">
                       <td>
@@ -568,6 +569,7 @@
                       </td>
                       <td class="text-mono text-bold">{{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</td>
                       <td class="text-mono text-bold">{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
+                      <td class="text-mono text-bold text-muted">{{ prod.makingCost !== undefined && prod.makingCost !== null ? formatCurrency(prod.makingCost) : formatCurrency(0) }}</td>
                       <td>
                         <div class="tags-container-small">
                           <span 
@@ -1512,6 +1514,10 @@
             <div class="form-group">
               <label>سعر البيع بالجملة (د.ل) *</label>
               <input v-model.number="editingProduct.price_bulk" type="number" step="0.01" :disabled="editingProduct.purchaseType === 'regular'" :required="editingProduct.purchaseType !== 'regular'" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>سعر التكلفة / التصنيع (د.ل)</label>
+              <input v-model.number="editingProduct.makingCost" type="number" step="0.01" min="0" placeholder="0.00" class="form-control" />
             </div>
           </div>
 
@@ -2900,6 +2906,7 @@ export default {
       purchaseType: 'both',
       price_regular: null,
       price_bulk: null,
+      makingCost: 0,
       allowFloat: false,
       img: '',
       tags: []
@@ -3085,6 +3092,7 @@ export default {
         editingProduct.purchaseType = prod.purchaseType || 'both';
         editingProduct.price_regular = prod.price_regular || null;
         editingProduct.price_bulk = prod.price_bulk || null;
+        editingProduct.makingCost = prod.makingCost !== undefined && prod.makingCost !== null ? prod.makingCost : 0;
         editingProduct.allowFloat = !!prod.allowFloat;
         editingProduct.img = prod.img || '';
         modalFilePreview.value = prod.img || '';
@@ -3103,6 +3111,7 @@ export default {
         editingProduct.purchaseType = 'both';
         editingProduct.price_regular = null;
         editingProduct.price_bulk = null;
+        editingProduct.makingCost = 0;
         editingProduct.allowFloat = false;
         editingProduct.img = '';
         modalFilePreview.value = '';
@@ -3133,6 +3142,7 @@ export default {
       formData.append('purchaseType', editingProduct.purchaseType);
       formData.append('allowFloat', editingProduct.allowFloat ? 'true' : 'false');
       formData.append('tags', JSON.stringify(editingProduct.tags));
+      formData.append('makingCost', editingProduct.makingCost !== null && editingProduct.makingCost !== undefined ? editingProduct.makingCost : 0);
       
       if (editingProduct.purchaseType !== 'bulk' && editingProduct.price_regular) {
         formData.append('price_regular', editingProduct.price_regular);

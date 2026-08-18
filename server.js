@@ -411,6 +411,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           price: 1,
           price_regular: 1,
           price_bulk: 1,
+          makingCost: 1,
           img: 1,
           category: 1,
           subCategory: 1,
@@ -455,7 +456,7 @@ app.post("/api/verify-bulk-code", (req, res) => {
 });
 
 app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
   
   let parsedTags = [];
   try {
@@ -491,6 +492,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
+  const parsedMakingCost = Number(makingCost) || 0;
 
   const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
@@ -508,6 +510,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
       price_regular: parsedPriceRegular,
       price_bulk: parsedPriceBulk,
       price: parsedPrice,
+      makingCost: parsedMakingCost,
       img,
       category,
       subCategory,
@@ -525,11 +528,12 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
+  const parsedMakingCost = Number(makingCost) || 0;
   
   let parsedTags = [];
   try {
@@ -544,6 +548,7 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
       price_regular: parsedPriceRegular,
       price_bulk: parsedPriceBulk,
       price: parsedPrice,
+      makingCost: parsedMakingCost,
       category,
       subCategory,
       available: available === "false" ? false : true,
@@ -872,6 +877,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           price: 1,
           price_regular: 1,
           price_bulk: 1,
+          makingCost: 1,
           img: 1,
           category: 1,
           subCategory: 1,
@@ -906,7 +912,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
 });
 
 app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
   
   let parsedTags = [];
   try {
@@ -936,6 +942,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
+  const parsedMakingCost = Number(makingCost) || 0;
 
   const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
@@ -952,6 +959,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
       price_regular: parsedPriceRegular,
       price_bulk: parsedPriceBulk,
       price: parsedPrice,
+      makingCost: parsedMakingCost,
       img,
       category,
       subCategory,
@@ -974,7 +982,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
 
 app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
-    const { name, desc, price_regular, price_bulk, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
+    const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
     }
@@ -1011,6 +1019,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
     const parsedPriceRegular = parsePrice(price_regular, isFloat);
     const parsedPriceBulk = parsePrice(price_bulk, isFloat);
     const parsedPrice = parsePrice(price, isFloat);
+    const parsedMakingCost = Number(makingCost) || 0;
 
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -1021,6 +1030,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
           price_regular: parsedPriceRegular,
           price_bulk: parsedPriceBulk,
           price: parsedPrice,
+          makingCost: parsedMakingCost,
           img,
           category,
           subCategory,
@@ -2712,6 +2722,21 @@ const connectWithRetry = async () => {
       }
     } catch (counterErr) {
       console.error("Order counter initialization warning:", counterErr);
+    }
+
+    // Migrate existing products to have makingCost: 0 if not present
+    try {
+      await productsCollection.updateMany(
+        { $or: [{ makingCost: { $exists: false } }, { makingCost: null }] },
+        { $set: { makingCost: 0 } }
+      );
+      await productsCollection2.updateMany(
+        { $or: [{ makingCost: { $exists: false } }, { makingCost: null }] },
+        { $set: { makingCost: 0 } }
+      );
+      console.log("✓ Products makingCost migration check completed");
+    } catch (migErr) {
+      console.warn("Product makingCost migration warning:", migErr.message);
     }
 
     // Seed default admin user if empty
