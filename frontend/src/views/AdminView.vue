@@ -162,18 +162,22 @@
           </div>
         </div>
 
-        <!-- Custom Date Range Form -->
-        <div v-if="activeTab === 'analytics' && analyticsPeriod === 'custom'" class="custom-date-container glass-panel no-print mb-4 animate-fade-in">
-          <div class="date-picker-row">
-            <div class="date-input-group">
-              <label>تاريخ البدء:</label>
-              <input v-model="analyticsStartDate" type="date" class="form-control" />
+        <!-- Custom Date Range Bar -->
+        <div v-if="activeTab === 'analytics' && analyticsPeriod === 'custom'" class="date-range-bar no-print animate-fade-in">
+          <div class="date-range-inner">
+            <div class="date-field">
+              <span class="date-field-label">من</span>
+              <input v-model="analyticsStartDate" type="date" class="date-field-input" />
             </div>
-            <div class="date-input-group">
-              <label>تاريخ الانتهاء:</label>
-              <input v-model="analyticsEndDate" type="date" class="form-control" />
+            <span class="date-range-sep">←</span>
+            <div class="date-field">
+              <span class="date-field-label">إلى</span>
+              <input v-model="analyticsEndDate" type="date" class="date-field-input" />
             </div>
-            <button @click="fetchAnalytics" class="btn btn-primary btn-apply">تطبيق الفلتر</button>
+            <button @click="fetchAnalytics" class="date-apply-btn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              تطبيق
+            </button>
           </div>
         </div>
 
@@ -8526,6 +8530,88 @@ select.select-pill {
 .print-receipt-wrapper,
 .print-reconciliation-wrapper {
   display: none;
+}
+
+/* Custom Date Range Bar */
+.date-range-bar {
+  margin-bottom: 20px;
+}
+
+.date-range-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 6px 10px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-field-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.date-field-input {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #212529;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.date-field-input:focus {
+  border-color: var(--primary-color, #1e3a5f);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.date-range-sep {
+  font-size: 0.9rem;
+  color: #adb5bd;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.date-apply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--primary-color, #1e3a5f);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.date-apply-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.date-apply-btn:active {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 /* Reconciliation print button styling */
