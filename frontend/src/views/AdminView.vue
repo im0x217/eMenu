@@ -5659,21 +5659,13 @@ const closeSuggestionsWithDelay = () => {
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        const query = newOrderProductSearch.value.trim();
-        if (query && filteredNewOrderProducts.value.length > 0) {
+        if (filteredNewOrderProducts.value.length > 0) {
           const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length)
             ? highlightedProductIndex.value
             : 0;
           const prod = filteredNewOrderProducts.value[idx];
           if (prod) {
             addProductToNewOrder(prod, true);
-          }
-          showNewOrderProductSuggestions.value = false;
-        } else {
-          // If query is empty, pressing Enter leaves suggestions
-          showNewOrderProductSuggestions.value = false;
-          if (newOrderProductInputRef.value) {
-            newOrderProductInputRef.value.blur();
           }
         }
         return;
