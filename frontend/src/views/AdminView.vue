@@ -1646,24 +1646,23 @@
                     <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control search-input" />
                   </div>
 
-                  <!-- Modern Date Range Filter Group (From / To with Order Management Styling) -->
-                  <div class="cust-date-range-group">
+                  <!-- Custom Date Filter Component Group (Standardized with Order Management Design) -->
+                  <div class="date-filter-group">
                     <!-- From Date Trigger -->
-                    <div class="date-field-trigger-wrapper position-relative">
+                    <div class="position-relative">
                       <button 
                         type="button" 
-                        class="btn-datepicker-trigger btn-range-trigger" 
+                        class="btn-datepicker-trigger" 
                         :class="{ active: custDateFromOpen || customerFilters.dateFrom }"
                         @click.stop="openCustDateFromPicker"
                         title="تاريخ البداية (من)"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        <span class="range-label-prefix">من:</span>
-                        <span class="range-date-val font-bold">{{ customerFilters.dateFrom ? formatArabicDate(customerFilters.dateFrom) : 'اختر…' }}</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>{{ customerFilters.dateFrom ? ('من: ' + formatArabicDate(customerFilters.dateFrom)) : 'من تاريخ' }}</span>
                       </button>
 
                       <!-- From Date Popover -->
-                      <div v-if="custDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
+                      <div v-if="custDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                         <div class="datepicker-header">
                           <button type="button" class="dp-nav-btn" @click="custFromPrevMonth" title="الشهر السابق">&lsaquo;</button>
                           <span class="dp-month-title">{{ custFromMonthYearLabel }}</span>
@@ -1697,24 +1696,21 @@
                       </div>
                     </div>
 
-                    <span class="range-arrow-separator">←</span>
-
                     <!-- To Date Trigger -->
-                    <div class="date-field-trigger-wrapper position-relative">
+                    <div class="position-relative">
                       <button 
                         type="button" 
-                        class="btn-datepicker-trigger btn-range-trigger" 
+                        class="btn-datepicker-trigger" 
                         :class="{ active: custDateToOpen || customerFilters.dateTo }"
                         @click.stop="openCustDateToPicker"
                         title="تاريخ النهاية (إلى)"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        <span class="range-label-prefix">إلى:</span>
-                        <span class="range-date-val font-bold">{{ customerFilters.dateTo ? formatArabicDate(customerFilters.dateTo) : 'اختر…' }}</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>{{ customerFilters.dateTo ? ('إلى: ' + formatArabicDate(customerFilters.dateTo)) : 'إلى تاريخ' }}</span>
                       </button>
 
                       <!-- To Date Popover -->
-                      <div v-if="custDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
+                      <div v-if="custDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                         <div class="datepicker-header">
                           <button type="button" class="dp-nav-btn" @click="custToPrevMonth" title="الشهر السابق">&lsaquo;</button>
                           <span class="dp-month-title">{{ custToMonthYearLabel }}</span>
@@ -1748,35 +1744,37 @@
                       </div>
                     </div>
 
-                    <!-- Quick Relative Shortcut Pills (Today, 7 Days, Month) -->
-                    <div class="quick-date-pills-group">
-                      <button 
-                        type="button" 
-                        class="btn-quick-date-pill" 
-                        :class="{ active: isCustRangeToday }" 
-                        @click="setCustRangeShortcut('today')"
-                        title="تحديد تاريخ اليوم"
-                      >اليوم</button>
-                      <button 
-                        type="button" 
-                        class="btn-quick-date-pill" 
-                        :class="{ active: isCustRange7d }" 
-                        @click="setCustRangeShortcut('7d')"
-                        title="آخر 7 أيام"
-                      >آخر 7 أيام</button>
-                      <button 
-                        type="button" 
-                        class="btn-quick-date-pill" 
-                        :class="{ active: isCustRangeMonth }" 
-                        @click="setCustRangeShortcut('month')"
-                        title="هذا الشهر الحالي"
-                      >هذا الشهر</button>
-                    </div>
+                    <!-- Today Shortcut Button (Order Management Style) -->
+                    <button 
+                      type="button" 
+                      class="btn-today-shortcut" 
+                      :class="{ active: isCustRangeToday }" 
+                      @click="setCustRangeShortcut('today')"
+                      title="عرض عملاء وطلبات اليوم"
+                    >اليوم</button>
 
-                    <!-- Clear Active Range Filter Button -->
+                    <!-- Last 7 Days Shortcut Button (Order Management Style) -->
+                    <button 
+                      type="button" 
+                      class="btn-today-shortcut" 
+                      :class="{ active: isCustRange7d }" 
+                      @click="setCustRangeShortcut('7d')"
+                      title="عرض عملاء وطلبات آخر 7 أيام"
+                    >آخر 7 أيام</button>
+
+                    <!-- This Month Shortcut Button (Order Management Style) -->
+                    <button 
+                      type="button" 
+                      class="btn-today-shortcut" 
+                      :class="{ active: isCustRangeMonth }" 
+                      @click="setCustRangeShortcut('month')"
+                      title="عرض عملاء وطلبات هذا الشهر"
+                    >هذا الشهر</button>
+
+                    <!-- Selected Date Range Display Badge -->
                     <div v-if="customerFilters.dateFrom || customerFilters.dateTo" class="selected-date-badge animate-fade-in">
-                      <span class="date-text">فترة محددة</span>
-                      <button type="button" class="btn-remove-date" @click="clearCustDateRange" title="إلغاء التصفية وعرض جميع التواريخ">&times;</button>
+                      <span class="date-text">{{ customerFilters.dateFrom && customerFilters.dateTo ? (formatArabicDate(customerFilters.dateFrom) + ' ← ' + formatArabicDate(customerFilters.dateTo)) : formatArabicDate(customerFilters.dateFrom || customerFilters.dateTo) }}</span>
+                      <button type="button" class="btn-remove-date" @click="clearCustDateRange" title="إلغاء التصفية بالتاريخ">&times;</button>
                     </div>
                   </div>
                 </div>
