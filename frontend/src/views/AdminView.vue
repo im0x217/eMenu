@@ -1496,19 +1496,23 @@
           <div class="form-group">
             <div class="order-items-header mb-3">
               <span class="section-title">إدارة محتويات الطلب</span>
-              <div class="product-search-autocomplete-container">
-                <input 
-                  v-model="productSearchQuery" 
-                  type="text" 
-                  class="form-control product-search-input" 
-                  placeholder="🔍 ابحث باسم منتج لإضافته مباشرة للطلب…" 
-                  @focus="showSuggestions = productSearchQuery.length > 0"
-                  @blur="closeSuggestionsWithDelay"
-                  @keydown.down.prevent="navigateSuggestions(1)"
-                  @keydown.up.prevent="navigateSuggestions(-1)"
-                  @keydown.enter.prevent="selectHighlightedSuggestion"
-                />
-                <div v-if="showSuggestions" class="autocomplete-suggestions-dropdown">
+              <div class="product-search-autocomplete-container position-relative flex-grow-1">
+                <div class="search-input-wrapper">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input 
+                    v-model="productSearchQuery" 
+                    type="text" 
+                    class="form-control search-input" 
+                    placeholder="ابحث باسم المنتج لإضافته مباشرة للطلب…" 
+                    @focus="showSuggestions = productSearchQuery.length > 0"
+                    @blur="closeSuggestionsWithDelay"
+                    @keydown.down.prevent="navigateSuggestions(1)"
+                    @keydown.up.prevent="navigateSuggestions(-1)"
+                    @keydown.enter.prevent="selectHighlightedSuggestion"
+                  />
+                  <button v-if="productSearchQuery" type="button" @click="productSearchQuery = ''" class="btn-clear-search" tabindex="-1">&times;</button>
+                </div>
+                <div v-if="showSuggestions" class="autocomplete-suggestions-dropdown animate-fade-in">
                   <div 
                     v-for="(prod, index) in filteredSuggestions" 
                     :key="prod._id" 
@@ -1516,17 +1520,23 @@
                     :class="{ highlighted: index === highlightedSuggestionIndex }"
                     @mousedown="addSelectedProduct(prod)"
                   >
-                    <img :src="prod.img" alt="" class="suggestion-img" v-if="prod.img" />
+                    <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
                     <div class="suggestion-info">
                       <span class="suggestion-name">{{ prod.name }}</span>
                       <span class="suggestion-category">{{ prod.category }}</span>
                     </div>
-                    <span class="suggestion-price">
-                      {{ editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price) }} د.ل
-                    </span>
+                    <div class="suggestion-pricing">
+                      <span class="suggestion-price text-mono font-bold">
+                        {{ formatCurrency(editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                      </span>
+                      <span class="btn-quick-add">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        إضافة
+                      </span>
+                    </div>
                   </div>
                   <div v-if="filteredSuggestions.length === 0" class="suggestion-no-results">
-                    لا توجد نتائج مطابقة
+                    لا توجد نتائج مطابقة لـ "{{ productSearchQuery }}"
                   </div>
                 </div>
               </div>
