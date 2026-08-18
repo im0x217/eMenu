@@ -1171,45 +1171,78 @@
                 </div>
               </div>
 
-              <!-- Delivery & Status Card -->
-              <div class="pos-section-card">
+              <!-- Delivery & Payment Card (Clean & Minimized) -->
+              <div class="pos-section-card pos-delivery-payment-card">
                 <div class="pos-card-header">
                   <div class="pos-card-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <span>التسليم والحالة</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span>التسليم والحالة والسداد</span>
                   </div>
                 </div>
 
                 <div class="pos-fields-stack">
-                  <div class="pos-field">
-                    <label class="pos-label">تاريخ الاستلام</label>
-                    <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
-                    <div class="date-quick-shortcuts">
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)">اليوم</button>
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)">غداً</button>
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)">بعد غد</button>
+                  <!-- Row 1: Delivery Date & Order Status -->
+                  <div class="pos-input-grid">
+                    <div class="pos-field">
+                      <div class="pos-field-header-row">
+                        <label class="pos-label mb-0">تاريخ الاستلام</label>
+                        <div class="date-quick-shortcuts-inline">
+                          <button type="button" class="date-quick-btn-mini" @click="setNewOrderDateShortcut(0)">اليوم</button>
+                          <button type="button" class="date-quick-btn-mini" @click="setNewOrderDateShortcut(1)">غداً</button>
+                        </div>
+                      </div>
+                      <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
+                    </div>
+
+                    <div class="pos-field">
+                      <label class="pos-label">حالة الطلب</label>
+                      <select v-model="newOrder.status" class="form-control pos-control">
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="ready">جاهز للاستلام</option>
+                        <option value="received">تم الاستلام</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div class="pos-field">
-                    <label class="pos-label">حالة الطلب</label>
-                    <select v-model="newOrder.status" class="form-control pos-control">
-                      <option value="pending">قيد الانتظار</option>
-                      <option value="ready">جاهز للاستلام</option>
-                      <option value="received">تم الاستلام</option>
-                    </select>
+                  <!-- Row 2: Payment Status & Method / Notes -->
+                  <div class="pos-input-grid">
+                    <div class="pos-field">
+                      <label class="pos-label">حالة السداد</label>
+                      <select v-model="newOrder.paymentStatus" class="form-control pos-control" @change="onNewOrderPaymentStatusChange">
+                        <option value="unpaid">غير مسدد (آجل)</option>
+                        <option value="paid">مسدد بالكامل</option>
+                        <option value="partial">دفعة جزئية</option>
+                      </select>
+                    </div>
+
+                    <div class="pos-field" v-if="newOrder.paymentStatus !== 'unpaid'">
+                      <label class="pos-label">طريقة الدفع</label>
+                      <select v-model="newOrder.paymentMethod" class="form-control pos-control">
+                        <option value="cash">نقداً</option>
+                        <option value="card">بطاقة مصرفية</option>
+                        <option value="bank_transfer">تحويل بنكي</option>
+                      </select>
+                    </div>
+
+                    <div v-if="newOrder.paymentStatus === 'unpaid'" class="pos-field">
+                      <label class="pos-label">ملاحظات إضافية</label>
+                      <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، العنوان…" />
+                    </div>
+                  </div>
+
+                  <!-- Row 3 (Conditional Partial Amount or Notes when paid) -->
+                  <div v-if="newOrder.paymentStatus !== 'unpaid'" class="pos-input-grid">
+                    <div v-if="newOrder.paymentStatus === 'partial'" class="pos-field">
+                      <label class="pos-label">المبلغ المسدد (د.ل)</label>
+                      <input v-model.number="newOrder.paidAmount" type="number" step="0.01" min="0" placeholder="0.00" class="form-control pos-control text-mono" />
+                    </div>
+                    <div class="pos-field" :style="newOrder.paymentStatus !== 'partial' ? 'grid-column: 1 / -1;' : ''">
+                      <label class="pos-label">ملاحظات إضافية</label>
+                      <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، العنوان…" />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Payment & Notes Card -->
-              <div class="pos-section-card">
-                <div class="pos-card-header">
-                  <div class="pos-card-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                    <span>الدفع والملاحظات</span>
-                  </div>
-                </div>
 
                 <div class="pos-fields-stack">
                   <div class="pos-input-grid">
@@ -12915,6 +12948,34 @@ select.pos-control {
   font-weight: 700;
 }
 
+.pos-field-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.date-quick-shortcuts-inline {
+  display: inline-flex;
+  gap: 4px;
+}
+.date-quick-btn-mini {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: #475569;
+  padding: 1px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.3;
+}
+.date-quick-btn-mini:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
 .date-quick-shortcuts {
   display: flex;
   gap: 6px;
