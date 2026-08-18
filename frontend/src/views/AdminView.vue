@@ -1298,9 +1298,8 @@
                       <div class="pos-field-header-row">
                         <label class="pos-label mb-0">تاريخ الاستلام</label>
                         <div class="date-quick-shortcuts-inline">
-                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(-1) }" @click="setNewOrderDateShortcut(-1)">أمس</button>
-                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(0) }" @click="setNewOrderDateShortcut(0)">اليوم</button>
-                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(1) }" @click="setNewOrderDateShortcut(1)">غداً</button>
+                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(0) }" @click="setNewOrderDateShortcut(0)" title="تحديد تاريخ اليوم">اليوم</button>
+                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(1) }" @click="setNewOrderDateShortcut(1)" title="تحديد تاريخ الغد">غداً</button>
                         </div>
                       </div>
                       <div class="position-relative">
@@ -14210,4 +14209,46 @@ select.pos-control {
   font-weight: 800;
   font-size: 0.9rem;
   user-select: none;
+}
+
+.pos-field-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.date-quick-shortcuts-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.date-quick-btn-mini {
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.date-quick-btn-mini:hover {
+  background: var(--primary-glow, rgba(253, 181, 24, 0.15));
+  color: #0f172a;
+  border-color: var(--primary-color, #fdb518);
+}
+
+.date-quick-btn-mini.active {
+  background: var(--primary-color, #fdb518) !important;
+  color: #111827 !important;
+  border-color: var(--primary-color, #fdb518) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
