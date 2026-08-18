@@ -1345,25 +1345,38 @@
                   </button>
                 </div>
 
-                <!-- Quick Products Grid -->
+                <!-- Quick Products Grid (Visual Product Catalog Browsing) -->
                 <div v-if="filteredNewOrderProducts.length > 0" class="quick-products-grid">
-                  <div v-for="prod in filteredNewOrderProducts" 
+                  <div 
+                    v-for="prod in filteredNewOrderProducts" 
                     :key="'grid-'+prod._id" 
                     class="quick-prod-card" 
+                    :class="{ 'is-in-cart': getItemQtyInCart(prod._id) > 0 }"
                     @click="addProductToNewOrder(prod)"
                     title="انقر للإضافة للطلب"
                   >
                     <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="quick-prod-thumb" />
                     <div class="quick-prod-meta">
-                      <span class="quick-prod-name">{{ prod.name }}</span>
+                      <div class="quick-prod-header-row">
+                        <span class="quick-prod-name">{{ prod.name }}</span>
+                        <span v-if="getItemQtyInCart(prod._id) > 0" class="sugg-in-cart-badge">×{{ getItemQtyInCart(prod._id) }}</span>
+                      </div>
                       <span class="quick-prod-price text-mono">
                         {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
                       </span>
                     </div>
-                    <button type="button" class="quick-prod-add-btn" aria-label="إضافة">
+                    <button 
+                      type="button" 
+                      class="quick-prod-add-btn" 
+                      :class="{ 'btn-quick-add-active': getItemQtyInCart(prod._id) > 0 }"
+                      aria-label="إضافة"
+                    >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </button>
                   </div>
+                </div>
+                <div v-else class="pos-catalog-empty">
+                  <span>لا توجد منتجات مطابقة في هذا التصنيف</span>
                 </div>
               </div>
 
@@ -12980,6 +12993,24 @@ select.pos-control {
   min-width: 0;
 }
 
+.quick-prod-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pos-catalog-empty {
+  padding: 24px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.86rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+}
+.quick-prod-card.is-in-cart {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
 .quick-prod-name {
   font-size: 0.82rem;
   font-weight: 700;
