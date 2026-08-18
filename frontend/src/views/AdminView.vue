@@ -1105,8 +1105,10 @@
         <!-- Keyboard Flow Shortcuts Hint Bar -->
         <div class="pos-keyboard-shortcuts-bar">
           <div class="pos-shortcut-badge"><kbd>F2</kbd> <span>طلب جديد</span></div>
-          <div class="pos-shortcut-badge"><kbd>Enter</kbd> <span>إضافة صنف</span></div>
+          <div class="pos-shortcut-badge"><kbd>Enter</kbd> <span>اختيار / إضافة سريعة</span></div>
+          <div class="pos-shortcut-badge"><kbd>Space</kbd> <span>إدراج مستمر</span></div>
           <div class="pos-shortcut-badge"><kbd>↑↓</kbd> <span>تنقل</span></div>
+          <div class="pos-shortcut-badge"><kbd>+ / -</kbd> <span>تعديل الكمية</span></div>
           <div class="pos-shortcut-badge"><kbd>Alt+W</kbd> <span>جملة / مفرد</span></div>
           <div class="pos-shortcut-badge"><kbd>Alt+1/2/3</kbd> <span>تاريخ التسليم</span></div>
           <div class="pos-shortcut-badge"><kbd>F4</kbd> <span>التصنيفات</span></div>
@@ -1277,39 +1279,63 @@
                         v-model="newOrderProductSearch" 
                         type="text" 
                         class="form-control search-input" 
-                        placeholder="ابحث عن صنف لإضافته مباشرة (↓↑ للتنقل، Enter للإضافة السريعة)…" 
+                        placeholder="ابحث عن صنف لإضافته فوراً (↓↑ للتنقل، Space/Enter للإضافة، +/- للكمية)…" 
                         @focus="showNewOrderProductSuggestions = true"
                         @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0"
-                        @keydown.down.prevent="navigateProductSuggestions(1)"
-                        @keydown.up.prevent="navigateProductSuggestions(-1)"
-                        @keydown.enter.prevent="addHighlightedProductToNewOrder"
+                        @keydown="handleProductSearchKeydown"
                       />
                       <button v-if="newOrderProductSearch" type="button" @click="newOrderProductSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
                     </div>
 
-                    <!-- Autocomplete Dropdown -->
-                    <div v-if="showNewOrderProductSuggestions && newOrderProductSearch" class="autocomplete-suggestions-dropdown animate-fade-in">
+                    <!-- Autocomplete Dropdown (Live Initial Suggestions) -->
+                    <div v-if="showNewOrderProductSuggestions && filteredNewOrderProducts.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in">
                       <div 
                         v-for="(prod, pIdx) in filteredNewOrderProducts" 
                         :key="prod._id" 
                         class="suggestion-item"
-                        :class="{ highlighted: pIdx === highlightedProductIndex }"
-                        @mousedown="addProductToNewOrder(prod); focusProductSearch();"
+                        :class="{ 
+                          highlighted: pIdx === highlightedProductIndex,
+                          'is-in-cart': getItemQtyInCart(prod._id) > 0 
+                        }"
+                        @mousedown="addProductToNewOrder(prod, false); focusProductSearch();"
                         @mouseenter="highlightedProductIndex = pIdx"
                       >
                         <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
                         <div class="suggestion-info">
-                          <span class="suggestion-name">{{ prod.name }}</span>
+                          <div class="suggestion-name-row">
+                            <span class="suggestion-name">{{ prod.name }}</span>
+                            <span v-if="getItemQtyInCart(prod._id) > 0" class="sugg-in-cart-badge">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              في السلة ×{{ getItemQtyInCart(prod._id) }}
+                            </span>
+                          </div>
                           <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
                         </div>
                         <div class="suggestion-pricing">
                           <span class="suggestion-price text-mono font-bold">
                             {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
                           </span>
-                          <span class="btn-quick-add">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            إضافة
-                          </span>
+                          <div class="suggestion-item-btns" @click.stop>
+                            <button 
+                              v-if="getItemQtyInCart(prod._id) > 0" 
+                              type="button" 
+                              class="btn-sugg-qty-minus" 
+                              @click="decrementProductInCart(prod)" 
+                              title="إنقاص الكمية (-)"
+                              tabindex="-1"
+                            >-</button>
+                            <button 
+                              type="button" 
+                              class="btn-quick-add" 
+                              :class="{ 'btn-quick-add-active': getItemQtyInCart(prod._id) > 0 }"
+                              @click="toggleProductInNewOrder(prod)"
+                              title="إضافة / زيادة الكمية (Space / +)"
+                              tabindex="-1"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              <span>{{ getItemQtyInCart(prod._id) > 0 ? '+1' : 'إضافة' }}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <div v-if="filteredNewOrderProducts.length === 0" class="suggestion-no-results">
@@ -5423,7 +5449,9 @@ export default {
 
     const filteredNewOrderCustomers = computed(() => {
       const q = newOrderCustomerSearch.value.trim().toLowerCase();
-      if (!q) return [];
+      if (!q) {
+        return (customers.value || []).slice(0, 8);
+      }
       return (customers.value || []).filter(c => 
         (c.name && c.name.toLowerCase().includes(q)) || 
         (c.phone && c.phone.includes(q))
@@ -5444,8 +5472,14 @@ export default {
           (p.subCategory && p.subCategory.toLowerCase().includes(q))
         );
       }
-      return list.slice(0, 16);
+      return list.slice(0, 20);
     });
+
+    const getItemQtyInCart = (productId) => {
+      if (!productId) return 0;
+      const item = newOrder.items.find(i => i.productId && i.productId.toString() === productId.toString());
+      return item ? item.quantity : 0;
+    };
 
     const focusProductSearch = () => {
       nextTick(() => {
@@ -5471,7 +5505,7 @@ export default {
       newOrderCustomerSearch.value = '';
       newOrderProductSearch.value = '';
       newOrderCategoryFilter.value = '';
-      showNewOrderCustomerSuggestions.value = false;
+      showNewOrderCustomerSuggestions.value = true;
       showNewOrderProductSuggestions.value = false;
       highlightedCustomerIndex.value = 0;
       highlightedProductIndex.value = 0;
@@ -5502,6 +5536,7 @@ export default {
           : 0;
         selectCustomerForNewOrder(filteredNewOrderCustomers.value[idx]);
       }
+      showNewOrderProductSuggestions.value = true;
       focusProductSearch();
     };
 
@@ -5533,10 +5568,85 @@ export default {
         const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length)
           ? highlightedProductIndex.value
           : 0;
-        addProductToNewOrder(filteredNewOrderProducts.value[idx]);
+        addProductToNewOrder(filteredNewOrderProducts.value[idx], true);
         highlightedProductIndex.value = 0;
       }
       focusProductSearch();
+    };
+
+    const decrementProductInCart = (prod) => {
+      if (!prod) return;
+      const idx = newOrder.items.findIndex(i => i.productId && i.productId.toString() === prod._id.toString());
+      if (idx !== -1) {
+        const item = newOrder.items[idx];
+        if (item.quantity <= (item.allowFloat ? 0.25 : 1)) {
+          removeNewOrderItem(idx);
+        } else {
+          adjustNewOrderItemQty(item, -1);
+        }
+      }
+    };
+
+    const toggleProductInNewOrder = (prod) => {
+      if (!prod) return;
+      addProductToNewOrder(prod, false);
+    };
+
+    const handleProductSearchKeydown = (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateProductSuggestions(1);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateProductSuggestions(-1);
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addHighlightedProductToNewOrder();
+        return;
+      }
+      if (e.key === ' ' || e.code === 'Space') {
+        if (showNewOrderProductSuggestions.value && filteredNewOrderProducts.value.length > 0) {
+          e.preventDefault();
+          const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length) 
+            ? highlightedProductIndex.value 
+            : 0;
+          const prod = filteredNewOrderProducts.value[idx];
+          if (prod) {
+            addProductToNewOrder(prod, false);
+          }
+          return;
+        }
+      }
+      if (e.key === '+' || e.key === 'ArrowRight') {
+        if (showNewOrderProductSuggestions.value && filteredNewOrderProducts.value.length > 0) {
+          const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length) 
+            ? highlightedProductIndex.value 
+            : 0;
+          const prod = filteredNewOrderProducts.value[idx];
+          if (prod && getItemQtyInCart(prod._id) > 0) {
+            e.preventDefault();
+            addProductToNewOrder(prod, false);
+            return;
+          }
+        }
+      }
+      if (e.key === '-' || e.key === 'ArrowLeft') {
+        if (showNewOrderProductSuggestions.value && filteredNewOrderProducts.value.length > 0) {
+          const idx = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < filteredNewOrderProducts.value.length) 
+            ? highlightedProductIndex.value 
+            : 0;
+          const prod = filteredNewOrderProducts.value[idx];
+          if (prod && getItemQtyInCart(prod._id) > 0) {
+            e.preventDefault();
+            decrementProductInCart(prod);
+            return;
+          }
+        }
+      }
     };
 
     const cycleNewOrderCategory = () => {
@@ -5556,7 +5666,7 @@ export default {
       });
     };
 
-    const addProductToNewOrder = (prod) => {
+    const addProductToNewOrder = (prod, resetSearch = true) => {
       const price = newOrder.priceMode === 'bulk'
         ? (prod.price_bulk !== undefined && prod.price_bulk !== null ? prod.price_bulk : (prod.price_regular || prod.price || 0))
         : (prod.price_regular !== undefined && prod.price_regular !== null ? prod.price_regular : (prod.price || 0));
@@ -5576,8 +5686,10 @@ export default {
         });
       }
       recalcNewOrderTotal();
-      newOrderProductSearch.value = '';
-      showNewOrderProductSuggestions.value = false;
+      if (resetSearch) {
+        newOrderProductSearch.value = '';
+        showNewOrderProductSuggestions.value = false;
+      }
     };
 
     const addFirstFilteredProductToNewOrder = () => {
@@ -6348,6 +6460,10 @@ export default {
       newOrder,
       filteredNewOrderCustomers,
       filteredNewOrderProducts,
+      getItemQtyInCart,
+      decrementProductInCart,
+      toggleProductInNewOrder,
+      handleProductSearchKeydown,
       openNewOrderModal,
       focusProductSearch,
       focusFirstCartItem,
@@ -13044,6 +13160,63 @@ select.pos-control {
   background: rgba(30, 58, 95, 0.08) !important;
   outline: 1.5px solid var(--primary-color, #1e3a5f);
   border-radius: 8px;
+}
+
+.suggestion-item.is-in-cart {
+  border-right: 3px solid #16a34a;
+}
+
+.suggestion-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sugg-in-cart-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+
+.suggestion-item-btns {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-sugg-qty-minus {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #ef4444;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sugg-qty-minus:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.btn-quick-add-active {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
 }
 
 @media (max-width: 960px) {
