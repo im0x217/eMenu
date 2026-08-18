@@ -1175,7 +1175,7 @@
                   </div>
                 </div>
 
-                <div class="pos-input-grid">
+                <div class="pos-fields-stack">
                   <div class="pos-field">
                     <label class="pos-label">تاريخ الاستلام</label>
                     <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
@@ -1189,9 +1189,9 @@
                   <div class="pos-field">
                     <label class="pos-label">حالة الطلب</label>
                     <select v-model="newOrder.status" class="form-control pos-control">
-                      <option value="pending">قيد الانتظار (Pending)</option>
-                      <option value="ready">جاهز للاستلام (Ready)</option>
-                      <option value="received">تم الاستلام (Received)</option>
+                      <option value="pending">قيد الانتظار</option>
+                      <option value="ready">جاهز للاستلام</option>
+                      <option value="received">تم الاستلام</option>
                     </select>
                   </div>
                 </div>
@@ -1206,34 +1206,36 @@
                   </div>
                 </div>
 
-                <div class="pos-input-grid">
+                <div class="pos-fields-stack">
+                  <div class="pos-input-grid">
+                    <div class="pos-field">
+                      <label class="pos-label">حالة السداد</label>
+                      <select v-model="newOrder.paymentStatus" class="form-control pos-control" @change="onNewOrderPaymentStatusChange">
+                        <option value="unpaid">غير مسدد (آجل)</option>
+                        <option value="paid">مسدد بالكامل</option>
+                        <option value="partial">دفعة جزئية</option>
+                      </select>
+                    </div>
+
+                    <div class="pos-field" v-if="newOrder.paymentStatus !== 'unpaid'">
+                      <label class="pos-label">طريقة الدفع</label>
+                      <select v-model="newOrder.paymentMethod" class="form-control pos-control">
+                        <option value="cash">نقداً</option>
+                        <option value="card">بطاقة مصرفية</option>
+                        <option value="bank_transfer">تحويل بنكي</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div v-if="newOrder.paymentStatus === 'partial'" class="pos-field">
+                    <label class="pos-label">المبلغ المسدد حالياً (د.ل)</label>
+                    <input v-model.number="newOrder.paidAmount" type="number" step="0.01" min="0" placeholder="0.00" class="form-control pos-control text-mono" />
+                  </div>
+
                   <div class="pos-field">
-                    <label class="pos-label">حالة السداد</label>
-                    <select v-model="newOrder.paymentStatus" class="form-control pos-control" @change="onNewOrderPaymentStatusChange">
-                      <option value="unpaid">غير مسدد (آجل)</option>
-                      <option value="paid">مسدد بالكامل</option>
-                      <option value="partial">دفعة جزئية</option>
-                    </select>
+                    <label class="pos-label">ملاحظات إضافية</label>
+                    <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، تفاصيل العنوان…" />
                   </div>
-
-                  <div class="pos-field" v-if="newOrder.paymentStatus !== 'unpaid'">
-                    <label class="pos-label">طريقة الدفع</label>
-                    <select v-model="newOrder.paymentMethod" class="form-control pos-control">
-                      <option value="cash">نقداً (Cash)</option>
-                      <option value="card">بطاقة مصرفية</option>
-                      <option value="bank_transfer">تحويل بنكي</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div v-if="newOrder.paymentStatus === 'partial'" class="pos-field mt-2">
-                  <label class="pos-label">المبلغ المسدد حالياً (د.ل)</label>
-                  <input v-model.number="newOrder.paidAmount" type="number" step="0.01" min="0" placeholder="0.00" class="form-control pos-control text-mono" />
-                </div>
-
-                <div class="pos-field mt-2">
-                  <label class="pos-label">ملاحظات إضافية</label>
-                  <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، تفاصيل العنوان…" />
                 </div>
               </div>
 
@@ -7519,38 +7521,46 @@ export default {
 }
 
 .order-status-select {
-  height: 38px !important;
-  min-width: 160px;
+  height: 40px !important;
+  min-width: 185px !important;
 }
 
 .search-input-wrapper {
   position: relative;
   flex: 1 1 240px;
   min-width: 200px;
-  height: 38px;
+  height: 40px;
   display: flex;
   align-items: center;
 }
 
 .search-input-wrapper .search-icon {
   position: absolute;
-  right: 12px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
   pointer-events: none;
+  width: 18px;
+  height: 18px;
+  z-index: 5;
 }
 
-.search-input-wrapper .search-input {
-  height: 38px !important;
+.search-input-wrapper .search-input,
+.search-input-wrapper input.form-control {
+  height: 40px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  padding-right: 36px !important;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  width: 100%;
+  padding-right: 44px !important;
+  padding-left: 38px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  font-size: 0.9rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  color: #0f172a !important;
+  font-family: inherit !important;
 }
 
 .filters-inline {
@@ -7565,12 +7575,12 @@ export default {
 
 .select-pill {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #cbd5e1 !important;
   border-radius: 10px;
-  padding: 0 12px;
-  height: 38px !important;
+  padding: 0 14px;
+  height: 40px !important;
   font-size: 0.88rem;
-  color: #334155;
+  color: #0f172a;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -7581,22 +7591,33 @@ export default {
 select,
 select.form-control,
 select.select-pill {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: left 12px center;
-  background-size: 14px 14px;
-  padding-left: 34px !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: left 14px center !important;
+  background-size: 14px 14px !important;
+  padding-left: 40px !important;
   padding-right: 14px !important;
-  text-align: right;
-  direction: rtl;
+  text-align: right !important;
+  direction: rtl !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
 }
 
-.select-pill:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+.select-pill:focus,
+select:focus,
+select.form-control:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12) !important;
+  outline: none !important;
 }
 
 /* Custom Date Filter Component & Popover Panel */
@@ -8088,6 +8109,14 @@ select.select-pill {
   font-family: inherit !important;
 }
 
+.modal-box .search-input-wrapper .form-control,
+.modal-content .search-input-wrapper .form-control,
+.modal-box .search-input-wrapper .search-input,
+.modal-content .search-input-wrapper .search-input {
+  padding-right: 44px !important;
+  padding-left: 38px !important;
+}
+
 .modal-box .form-control::placeholder,
 .modal-content .form-control::placeholder {
   color: #94a3b8 !important;
@@ -8102,15 +8131,20 @@ select.select-pill {
 }
 
 .modal-box select.form-control,
-.modal-content select.form-control {
+.modal-content select.form-control,
+.modal-box select,
+.modal-content select {
   color: #0f172a !important;
   background-color: #ffffff !important;
+  padding-left: 40px !important;
+  padding-right: 14px !important;
 }
 
 .modal-box select.form-control option,
 .modal-content select.form-control option {
   background-color: #ffffff !important;
   color: #0f172a !important;
+  padding: 10px 14px !important;
 }
 
 /* Modal Footer & Buttons Placement Fixes (RTL Order) */
@@ -8651,18 +8685,18 @@ select.select-pill {
 }
 
 .status-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: left 8px center !important;
-  background-size: 12px 12px;
-  padding: 0 12px !important;
-  padding-left: 26px !important;
-  height: 34px !important;
-  min-width: 140px;
-  font-size: 0.84rem;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: left 10px center !important;
+  background-size: 13px 13px !important;
+  padding-left: 34px !important;
+  padding-right: 14px !important;
+  height: 38px !important;
+  min-width: 155px;
+  font-size: 0.86rem;
   border-radius: 8px;
   cursor: pointer;
   outline: none;
@@ -12247,6 +12281,12 @@ select.select-pill {
   color: #64748b;
 }
 
+.pos-fields-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .pos-input-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -12269,9 +12309,16 @@ select.select-pill {
   font-size: 0.88rem !important;
   padding: 8px 12px !important;
   border-radius: 10px !important;
-  border-color: #cbd5e1 !important;
+  border: 1.5px solid #cbd5e1 !important;
   height: 40px !important;
   transition: all 0.2s ease;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+select.pos-control {
+  padding-left: 40px !important;
+  padding-right: 14px !important;
 }
 
 .pos-control:focus {
