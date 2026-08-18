@@ -10289,16 +10289,15 @@ select.form-control:focus {
     color: #ffffff !important;
   }
 
-  /* Level 1: Main Category Block */
+  /* Level 1: Main Category Block (Seamless pagination without blank gaps) */
   .recon-cat-block {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
     border: 1.5px solid #000000 !important;
     border-radius: 6px;
-    overflow: hidden;
     background: #ffffff !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   .recon-cat-header {
