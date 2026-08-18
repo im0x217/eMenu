@@ -4674,7 +4674,18 @@ export default {
       window.open(url, '_blank');
     };
 
+    const setPrintPageSize = (size = 'A5 portrait', margin = '4mm 6mm') => {
+      let styleTag = document.getElementById('forced-print-page-size-style');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'forced-print-page-size-style';
+        document.head.appendChild(styleTag);
+      }
+      styleTag.innerHTML = `@media print { @page { size: ${size} !important; margin: ${margin} !important; } }`;
+    };
+
     const printReport = () => {
+      setPrintPageSize('A4 portrait', '8mm 10mm');
       window.print();
     };
 
@@ -4943,6 +4954,7 @@ export default {
     };
 
     const printPaymentReceipt = async (payment) => {
+      setPrintPageSize('A5 portrait', '4mm 6mm');
       printingPayment.value = payment;
       printingPaymentReceipt.value = true;
       await nextTick();
@@ -5122,6 +5134,7 @@ export default {
     });
 
     const printReconciliation = async () => {
+      setPrintPageSize('A4 portrait', '6mm 8mm');
       printingReconciliation.value = true;
       await nextTick();
 
@@ -5137,6 +5150,7 @@ export default {
     const printingOrderCustomerBalance = ref(null);
 
     const printOrder = async (order) => {
+      setPrintPageSize('A5 portrait', '4mm 6mm');
       printingOrder.value = order;
 
       const phone = (order?.customerInfo?.phone || order?.customerPhone || order?.phone || '').trim();
