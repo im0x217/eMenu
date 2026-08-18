@@ -1502,7 +1502,7 @@
                     type="text" 
                     class="form-control search-input" 
                     placeholder="ابحث باسم المنتج لإضافته مباشرة للطلب…" 
-                    @focus="showSuggestions = productSearchQuery.length > 0"
+                    @focus="showSuggestions = true" @click="showSuggestions = true" @keydown.esc.prevent="showSuggestions = false" @keydown.tab="showSuggestions = false"
                     @blur="closeSuggestionsWithDelay"
                     @keydown.down.prevent="navigateSuggestions(1)"
                     @keydown.up.prevent="navigateSuggestions(-1)"
@@ -5545,8 +5545,8 @@ const closeSuggestionsWithDelay = () => {
       newOrderCustomerSearch.value = '';
       newOrderProductSearch.value = '';
       newOrderCategoryFilter.value = '';
-      showNewOrderCustomerSuggestions.value = true;
-      showNewOrderProductSuggestions.value = true;
+      showNewOrderCustomerSuggestions.value = false;
+      showNewOrderProductSuggestions.value = false;
       highlightedCustomerIndex.value = 0;
       highlightedProductIndex.value = 0;
 
@@ -5758,7 +5758,6 @@ const closeSuggestionsWithDelay = () => {
       recalcNewOrderTotal();
       if (resetSearch) {
         newOrderProductSearch.value = '';
-        showNewOrderProductSuggestions.value = false;
       }
     };
 
