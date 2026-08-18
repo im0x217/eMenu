@@ -1686,8 +1686,15 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
 
   let orderDateFilter = {};
-  if (req.query.startDate && req.query.endDate) {
+  if (req.query.selectedDate) {
+    const startDate = new Date(req.query.selectedDate);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(req.query.selectedDate);
+    endDate.setHours(23, 59, 59, 999);
+    orderDateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+  } else if (req.query.startDate && req.query.endDate) {
     const startDate = new Date(req.query.startDate);
+    startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(req.query.endDate);
     endDate.setHours(23, 59, 59, 999);
     orderDateFilter = { createdAt: { $gte: startDate, $lte: endDate } };

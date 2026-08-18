@@ -1646,25 +1646,71 @@
                     <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control search-input" />
                   </div>
 
-                  <!-- Date Range Filter for Balances & Orders -->
-                  <div class="date-range-inner customer-date-filter" title="فلترة حسب فترة الطلبات والأرصدة المستحقة">
-                    <div class="date-field">
-                      <span class="date-field-label">من</span>
-                      <input v-model="customersDateFrom" type="date" class="date-field-input" :disabled="customersDateLoading" />
-                    </div>
-                    <span class="date-range-sep">←</span>
-                    <div class="date-field">
-                      <span class="date-field-label">إلى</span>
-                      <input v-model="customersDateTo" type="date" class="date-field-input" :disabled="customersDateLoading" />
-                    </div>
-                    <button @click="applyCustomersDateFilter" class="date-apply-btn" :disabled="customersDateLoading || !customersDateFrom || !customersDateTo" :class="{ 'is-loading': customersDateLoading }">
-                      <svg v-if="!customersDateLoading" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      <svg v-else class="btn-spinner" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
-                      <span>{{ customersDateLoading ? 'جاري الفلترة…' : 'تطبيق' }}</span>
+                  <!-- Custom Date Filter Component Group (Standardized with Order Management Design) -->
+                  <div class="date-filter-group">
+                    <!-- Date Picker Trigger Button -->
+                    <button 
+                      type="button" 
+                      class="btn-datepicker-trigger" 
+                      :class="{ active: custDatePickerOpen || customerFilters.selectedDate }"
+                      @click.stop="custDatePickerOpen = !custDatePickerOpen"
+                      title="تصفية بيانات العملاء بحسب تاريخ الطلبات"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <span>{{ customerFilters.selectedDate ? formatArabicDate(customerFilters.selectedDate) : 'تاريخ الطلبات' }}</span>
                     </button>
-                    <button v-if="customersDateFrom || customersDateTo" @click="resetCustomersDateFilter" class="date-reset-btn" title="إعادة تعيين الفترة" :disabled="customersDateLoading">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
+
+                    <!-- Today Shortcut Button -->
+                    <button 
+                      type="button" 
+                      class="btn-today-shortcut" 
+                      :class="{ active: isCustTodaySelected }" 
+                      @click="setCustTodayDate"
+                      title="عرض عملاء وطلبات اليوم فقط"
+                    >اليوم</button>
+
+                    <!-- Selected Date Display Badge (with remove button) -->
+                    <div v-if="customerFilters.selectedDate" class="selected-date-badge animate-fade-in">
+                      <span class="date-text">{{ formatArabicDate(customerFilters.selectedDate) }}</span>
+                      <button type="button" class="btn-remove-date" @click="clearCustDateFilter" title="إلغاء التصفية بالتاريخ">&times;</button>
+                    </div>
+
+                    <!-- Custom Date Picker Popover Panel (Identical Order Management Design) -->
+                    <div v-if="custDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                      <div class="datepicker-header">
+                        <button type="button" class="dp-nav-btn" @click="custPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                        <span class="dp-month-title">{{ custCurrentMonthYearLabel }}</span>
+                        <button type="button" class="dp-nav-btn" @click="custNextMonth" title="الشهر التالي">&rsaquo;</button>
+                      </div>
+
+                      <!-- Weekday headers (Arabic) -->
+                      <div class="dp-weekdays">
+                        <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                      </div>
+
+                      <!-- Day grid -->
+                      <div class="dp-days-grid">
+                        <button 
+                          type="button"
+                          v-for="(dayObj, idx) in custCalendarDays" 
+                          :key="idx"
+                          class="dp-day-cell"
+                          :class="{ 
+                            'other-month': !dayObj.inMonth,
+                            'is-today': dayObj.isToday,
+                            'is-selected': customerFilters.selectedDate === dayObj.dateStr
+                          }"
+                          @click="selectCustDateFromPicker(dayObj.dateStr)"
+                        >
+                          {{ dayObj.dayNum }}
+                        </button>
+                      </div>
+
+                      <!-- Popover Footer -->
+                      <div class="datepicker-footer">
+                        <button type="button" class="btn-dp-show-all" @click="clearCustDateFilter">عرض جميع التواريخ</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3223,7 +3269,7 @@ export default {
 
     const filters = reactive({ search: '', category: '', subCategory: '' });
     const orderFilters = reactive({ search: '', status: '', selectedDate: '' });
-    const customerFilters = reactive({ search: '' });
+    const customerFilters = reactive({ search: '', selectedDate: '' });
 
     // Custom DatePicker State & Calendar Logic
     const datePickerOpen = ref(false);
@@ -5262,38 +5308,99 @@ export default {
       }
     };
 
-    // Customer date filter
-    const customersDateFrom = ref('');
-    const customersDateTo = ref('');
-    const customersDateLoading = ref(false);
+    // Standardized Customer Date Filter State & Calendar Logic (Matching Order Management)
+    const custDatePickerOpen = ref(false);
+    const custPickerYear = ref(new Date().getFullYear());
+    const custPickerMonth = ref(new Date().getMonth());
+
+    const custCurrentMonthYearLabel = computed(() => {
+      const d = new Date(custPickerYear.value, custPickerMonth.value, 1);
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const custPrevMonth = () => {
+      if (custPickerMonth.value === 0) {
+        custPickerMonth.value = 11;
+        custPickerYear.value--;
+      } else {
+        custPickerMonth.value--;
+      }
+    };
+
+    const custNextMonth = () => {
+      if (custPickerMonth.value === 11) {
+        custPickerMonth.value = 0;
+        custPickerYear.value++;
+      } else {
+        custPickerMonth.value++;
+      }
+    };
+
+    const custCalendarDays = computed(() => {
+      const year = custPickerYear.value;
+      const month = custPickerMonth.value;
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      const daysInMonth = lastDayOfMonth.getDate();
+      const startDayOfWeek = firstDayOfMonth.getDay();
+      
+      const days = [];
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const pDay = prevMonthLastDay - i;
+        const pDate = new Date(year, month - 1, pDay);
+        days.push({ dayNum: pDay, dateStr: pDate.toLocaleDateString('en-CA'), inMonth: false, isToday: false });
+      }
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cDate = new Date(year, month, d);
+        const dateStr = cDate.toLocaleDateString('en-CA');
+        days.push({ dayNum: d, dateStr, inMonth: true, isToday: dateStr === todayStr });
+      }
+      const remaining = (7 - (days.length % 7)) % 7;
+      for (let n = 1; n <= remaining; n++) {
+        const nDate = new Date(year, month + 1, n);
+        days.push({ dayNum: n, dateStr: nDate.toLocaleDateString('en-CA'), inMonth: false, isToday: false });
+      }
+      return days;
+    });
+
+    const selectCustDateFromPicker = async (dateStr) => {
+      customerFilters.selectedDate = dateStr;
+      custDatePickerOpen.value = false;
+      await fetchCustomers();
+    };
+
+    const setCustTodayDate = async () => {
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      customerFilters.selectedDate = customerFilters.selectedDate === todayStr ? '' : todayStr;
+      await fetchCustomers();
+    };
+
+    const clearCustDateFilter = async () => {
+      customerFilters.selectedDate = '';
+      custDatePickerOpen.value = false;
+      await fetchCustomers();
+    };
+
+    const isCustTodaySelected = computed(() => {
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      return customerFilters.selectedDate === todayStr;
+    });
 
     const fetchCustomers = async () => {
       try {
         let url = `/api/admin/customers?shop=${activeShop.value}`;
-        if (customersDateFrom.value && customersDateTo.value) {
-          url += `&startDate=${customersDateFrom.value}&endDate=${customersDateTo.value}`;
+        if (customerFilters.selectedDate) {
+          url += `&selectedDate=${customerFilters.selectedDate}`;
         }
         const res = await adminFetch(url);
         if (res.ok) {
           customers.value = await res.json();
         }
       } catch (err) {
-        console.error(err);
+        console.error('Fetch customers error:', err);
       }
-    };
-
-    const applyCustomersDateFilter = async () => {
-      customersDateLoading.value = true;
-      await fetchCustomers();
-      customersDateLoading.value = false;
-    };
-
-    const resetCustomersDateFilter = async () => {
-      customersDateFrom.value = '';
-      customersDateTo.value = '';
-      customersDateLoading.value = true;
-      await fetchCustomers();
-      customersDateLoading.value = false;
     };
 
     const deleteCustomer = async (id) => {
@@ -6134,6 +6241,7 @@ const closeSuggestionsWithDelay = () => {
         if (productModalOpen.value) { productModalOpen.value = false; return; }
         if (categoryModalOpen.value) { categoryModalOpen.value = false; return; }
         if (tagModalOpen.value) { tagModalOpen.value = false; return; }
+        if (custDatePickerOpen.value) { custDatePickerOpen.value = false; return; }
         if (cropperModalOpen.value) { cropperModalOpen.value = false; return; }
         return;
       }
