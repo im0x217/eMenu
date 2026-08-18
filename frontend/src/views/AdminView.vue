@@ -8355,7 +8355,8 @@ select.form-control:focus {
 .modal-box,
 .modal-content {
   background: #ffffff !important;
-  color: #1e293b !important;
+  color: #0f172a !important;
+  font-family: 'Cairo', system-ui, -apple-system, sans-serif !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 18px !important;
   width: 100%;
@@ -8396,18 +8397,22 @@ select.form-control:focus {
 
 .modal-header h3,
 .modal-title {
-  font-size: 1.2rem;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 1.22rem;
   font-weight: 800;
-  color: #1e3a5f !important;
+  color: #0f172a !important;
   margin: 0;
+  line-height: 1.45;
 }
 
 .modal-subtitle {
   display: block;
-  font-size: 0.85rem;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.86rem;
   color: #64748b !important;
   margin-top: 4px;
   font-weight: 500;
+  line-height: 1.45;
 }
 
 .modal-close-btn {
@@ -8439,10 +8444,12 @@ select.form-control:focus {
 }
 
 .form-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #334155;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1e293b;
   text-align: right;
+  line-height: 1.45;
 }
 
 /* Modal Form Labels & Inputs Clean Light Theme */
@@ -8452,11 +8459,13 @@ select.form-control:focus {
 .modal-content label,
 .modal-box .form-label,
 .modal-content .form-label {
+  font-family: 'Cairo', sans-serif !important;
   font-size: 0.88rem !important;
   font-weight: 700 !important;
-  color: #334155 !important;
+  color: #1e293b !important;
   text-align: right !important;
   margin-bottom: 6px !important;
+  line-height: 1.45 !important;
 }
 
 .modal-box .form-control,
@@ -8467,7 +8476,8 @@ select.form-control:focus {
   border-radius: 10px !important;
   padding: 10px 14px !important;
   font-size: 0.92rem !important;
-  font-family: inherit !important;
+  font-family: 'Cairo', sans-serif !important;
+  line-height: 1.45 !important;
 }
 
 .modal-box .search-input-wrapper .form-control,
@@ -8481,13 +8491,14 @@ select.form-control:focus {
 .modal-box .form-control::placeholder,
 .modal-content .form-control::placeholder {
   color: #94a3b8 !important;
+  font-family: 'Cairo', sans-serif !important;
 }
 
 .modal-box .form-control:focus,
 .modal-content .form-control:focus {
   background: #ffffff !important;
-  border-color: var(--primary-color, #d97706) !important;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15) !important;
+  border-color: var(--primary-color, #1e3a5f) !important;
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12) !important;
   outline: none !important;
 }
 
@@ -8499,6 +8510,7 @@ select.form-control:focus {
   background-color: #ffffff !important;
   padding-left: 40px !important;
   padding-right: 14px !important;
+  font-family: 'Cairo', sans-serif !important;
 }
 
 .modal-box select.form-control option,
@@ -8506,6 +8518,7 @@ select.form-control:focus {
   background-color: #ffffff !important;
   color: #0f172a !important;
   padding: 10px 14px !important;
+  font-family: 'Cairo', sans-serif !important;
 }
 
 /* Modal Footer & Buttons Placement Fixes (RTL Order) */
@@ -8524,14 +8537,15 @@ select.form-control:focus {
 .modal-content .btn-modal-save,
 .modal-box .btn-primary,
 .modal-content .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color, #d97706), #b45309) !important;
+  background: linear-gradient(135deg, var(--primary-color, #1e3a5f), #0f172a) !important;
   color: #ffffff !important;
   border: none !important;
+  font-family: 'Cairo', sans-serif !important;
   font-weight: 700 !important;
   padding: 10px 22px !important;
   border-radius: 10px !important;
   cursor: pointer !important;
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
   transition: all 0.2s ease !important;
 }
 
@@ -8540,7 +8554,7 @@ select.form-control:focus {
 .modal-box .btn-primary:hover,
 .modal-content .btn-primary:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3) !important;
 }
 
 .modal-box .btn-modal-cancel,
@@ -8550,6 +8564,7 @@ select.form-control:focus {
   background: #ffffff !important;
   color: #374151 !important;
   border: 1.5px solid #cbd5e1 !important;
+  font-family: 'Cairo', sans-serif !important;
   font-weight: 600 !important;
   padding: 10px 18px !important;
   border-radius: 10px !important;
