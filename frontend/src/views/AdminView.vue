@@ -1295,13 +1295,7 @@
                   <!-- Row 1: Delivery Date & Order Status -->
                   <div class="pos-input-grid">
                     <div class="pos-field">
-                      <div class="pos-field-header-row">
-                        <label class="pos-label mb-0">تاريخ الاستلام</label>
-                        <div class="date-quick-shortcuts-inline">
-                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(0) }" @click="setNewOrderDateShortcut(0)" title="تحديد تاريخ اليوم">اليوم</button>
-                          <button type="button" class="date-quick-btn-mini" :class="{ active: isPosDateRelative(1) }" @click="setNewOrderDateShortcut(1)" title="تحديد تاريخ الغد">غداً</button>
-                        </div>
-                      </div>
+                      <label class="pos-label">تاريخ الاستلام</label>
                       <div class="position-relative">
                         <button 
                           type="button" 
@@ -1346,6 +1340,30 @@
                             <button type="button" class="btn-dp-show-all" @click="setNewOrderDateShortcut(0); posDatePickerOpen = false;">تحديد تاريخ اليوم</button>
                           </div>
                         </div>
+                      </div>
+
+                      <!-- Touch-Friendly 50/50 Dual Shortcut Buttons (Under the Date Picker) -->
+                      <div class="pos-date-shortcuts-split">
+                        <button 
+                          type="button" 
+                          class="pos-date-shortcut-btn" 
+                          :class="{ active: isPosDateRelative(0) }" 
+                          @click="setNewOrderDateShortcut(0)" 
+                          title="تحديد تاريخ اليوم"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <span>اليوم</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          class="pos-date-shortcut-btn" 
+                          :class="{ active: isPosDateRelative(1) }" 
+                          @click="setNewOrderDateShortcut(1)" 
+                          title="تحديد تاريخ الغد"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                          <span>غداً</span>
+                        </button>
                       </div>
                     </div>
 
@@ -14251,4 +14269,51 @@ select.pos-control {
   border-color: var(--primary-color, #fdb518) !important;
   font-weight: 900 !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.pos-date-shortcuts-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.pos-date-shortcut-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  color: #334155;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.pos-date-shortcut-btn:hover {
+  background: var(--primary-glow, rgba(253, 181, 24, 0.15));
+  border-color: var(--primary-color, #fdb518);
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.pos-date-shortcut-btn:active {
+  transform: scale(0.97);
+}
+
+.pos-date-shortcut-btn.active {
+  background: var(--primary-color, #fdb518) !important;
+  color: #111827 !important;
+  border-color: var(--primary-color, #fdb518) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 8px rgba(253, 181, 24, 0.35);
 }
