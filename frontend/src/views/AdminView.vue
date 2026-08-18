@@ -823,10 +823,9 @@
                     <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
                   </div>
-                  <button @click="openNewOrderModal" class="btn btn-primary btn-make-order" title="إنشاء طلب جديد للعميل (F2 / Ctrl+N)">
+                  <button @click="openNewOrderModal" class="btn btn-primary btn-make-order" title="إنشاء طلب جديد للعميل">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>إنشاء طلب جديد</span>
-                    <kbd class="btn-kbd-shortcut">F2</kbd>
                   </button>
                 </div>
 
@@ -1082,7 +1081,6 @@
               class="price-mode-pill" 
               :class="{ active: newOrder.priceMode === 'regular' }" 
               @click="onNewOrderPriceModeChange('regular')"
-              title="تسعير قطاعي مفرد (Alt+W للتبديل)"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
               <span>تسعير مفرد</span>
@@ -1092,29 +1090,13 @@
               class="price-mode-pill" 
               :class="{ active: newOrder.priceMode === 'bulk' }" 
               @click="onNewOrderPriceModeChange('bulk')"
-              title="تسعير جملة (Alt+W للتبديل)"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               <span>تسعير جملة</span>
             </button>
           </div>
 
-          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق (Esc)">✕</button>
-        </div>
-
-        <!-- Keyboard Flow Shortcuts Hint Bar -->
-        <div class="pos-keyboard-shortcuts-bar">
-          <div class="pos-shortcut-badge"><kbd>F2</kbd> <span>طلب جديد</span></div>
-          <div class="pos-shortcut-badge"><kbd>Enter</kbd> <span>اختيار / إضافة سريعة</span></div>
-          <div class="pos-shortcut-badge"><kbd>Space</kbd> <span>إدراج مستمر</span></div>
-          <div class="pos-shortcut-badge"><kbd>↑↓</kbd> <span>تنقل</span></div>
-          <div class="pos-shortcut-badge"><kbd>+ / -</kbd> <span>تعديل الكمية</span></div>
-          <div class="pos-shortcut-badge"><kbd>Alt+W</kbd> <span>جملة / مفرد</span></div>
-          <div class="pos-shortcut-badge"><kbd>Alt+1/2/3</kbd> <span>تاريخ التسليم</span></div>
-          <div class="pos-shortcut-badge"><kbd>F4</kbd> <span>التصنيفات</span></div>
-          <div class="pos-shortcut-badge"><kbd>F8</kbd> <span>الجدول</span></div>
-          <div class="pos-shortcut-badge highlight"><kbd>Ctrl+Enter / F9</kbd> <span>حفظ وإنشاء</span></div>
-          <div class="pos-shortcut-badge"><kbd>Esc</kbd> <span>إغلاق</span></div>
+          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
 
         <form @submit.prevent="submitNewOrder" class="fast-order-form-body">
@@ -1144,7 +1126,7 @@
                       v-model="newOrderCustomerSearch" 
                       type="text" 
                       class="form-control search-input" 
-                      placeholder="البحث برقم الهاتف أو الاسم (↓↑ للتحرك، Enter للاختيار)…" 
+                      placeholder="البحث برقم الهاتف أو اسم العميل…" 
                       @focus="showNewOrderCustomerSuggestions = true"
                       @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0"
                       @keydown.down.prevent="navigateCustomerSuggestions(1)"
@@ -1204,9 +1186,9 @@
                     <label class="pos-label">تاريخ الاستلام</label>
                     <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
                     <div class="date-quick-shortcuts">
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)" title="Alt+1">اليوم</button>
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)" title="Alt+2">غداً</button>
-                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)" title="Alt+3">بعد غد</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)">اليوم</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)">غداً</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)">بعد غد</button>
                     </div>
                   </div>
 
@@ -1279,7 +1261,7 @@
                         v-model="newOrderProductSearch" 
                         type="text" 
                         class="form-control search-input" 
-                        placeholder="ابحث عن صنف لإضافته فوراً (↓↑ للتنقل، Space/Enter للإضافة، +/- للكمية)…" 
+                        placeholder="ابحث باسم المنتج أو التصنيف لإضافته فوراً…" 
                         @focus="showNewOrderProductSuggestions = true"
                         @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0"
                         @keydown="handleProductSearchKeydown"
@@ -1455,7 +1437,7 @@
                           {{ formatCurrency(item.quantity * item.price) }}
                         </td>
                         <td style="width: 44px; text-align: center;">
-                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" title="حذف الصنف (Delete)">
+                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" title="حذف الصنف">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
                         </td>
@@ -1481,18 +1463,17 @@
           </div>
 
           <div class="fast-order-footer-actions">
-            <label class="auto-print-checkbox-label" title="طباعة إيصال الطلب تلقائياً بعد الحفظ (Alt+P)">
+            <label class="auto-print-checkbox-label" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
               <input type="checkbox" v-model="newOrderAutoPrint" />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
               <span>طباعة الإيصال فوراً</span>
             </label>
 
-            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء (Esc)</button>
-            <button type="button" @click="submitNewOrder" class="btn btn-primary pos-btn-submit" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone" title="حفظ وإنشاء الطلب (Ctrl+Enter / F9)">
+            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
+            <button type="button" @click="submitNewOrder" class="btn btn-primary pos-btn-submit" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone" title="تأكيد وإنشاء الطلب">
               <svg v-if="!newOrderLoading" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
               <span>{{ newOrderLoading ? 'جاري الحفظ…' : 'تأكيد وإنشاء الطلب' }}</span>
-              <kbd class="btn-kbd-submit-shortcut">F9</kbd>
             </button>
           </div>
         </div>
@@ -13086,75 +13067,6 @@ select.pos-control {
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.35) !important;
 }
 
-.btn-kbd-shortcut {
-  background: rgba(0, 0, 0, 0.15);
-  color: #111827;
-  font-family: monospace;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  margin-right: 4px;
-}
-
-.btn-kbd-submit-shortcut {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-family: monospace;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  margin-right: 6px;
-}
-
-.pos-keyboard-shortcuts-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 8px 14px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  margin-top: 12px;
-  flex-shrink: 0;
-}
-
-.pos-shortcut-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.pos-shortcut-badge kbd {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 5px;
-  padding: 2px 6px;
-  font-size: 0.72rem;
-  font-family: monospace;
-  font-weight: 800;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.pos-shortcut-badge.highlight {
-  color: #0f172a;
-  font-weight: 700;
-}
-
-.pos-shortcut-badge.highlight kbd {
-  background: #0f172a;
-  color: #ffffff;
-  border-color: #0f172a;
-}
-
 .suggestion-item.highlighted,
 .customer-suggestion-item.highlighted {
   background: rgba(30, 58, 95, 0.08) !important;
@@ -13230,9 +13142,6 @@ select.pos-control {
   }
   .fast-order-header {
     flex-wrap: wrap;
-  }
-  .pos-keyboard-shortcuts-bar {
-    display: none;
   }
   .fast-order-price-mode-switch {
     width: 100%;
