@@ -5282,10 +5282,32 @@ export default {
       highlightedSuggestionIndex.value = -1;
     });
 
-    const navigateSuggestions = (dir) => {
+        const scrollDropdownItemIntoView = (containerSelector, itemIndex) => {
+      nextTick(() => {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        const items = container.querySelectorAll('.suggestion-item');
+        if (itemIndex >= 0 && itemIndex < items.length) {
+          const item = items[itemIndex];
+          const containerTop = container.scrollTop;
+          const containerBottom = containerTop + container.clientHeight;
+          const itemTop = item.offsetTop;
+          const itemBottom = itemTop + item.offsetHeight;
+
+          if (itemTop < containerTop) {
+            container.scrollTop = itemTop;
+          } else if (itemBottom > containerBottom) {
+            container.scrollTop = itemBottom - container.clientHeight;
+          }
+        }
+      });
+    };
+
+const navigateSuggestions = (dir) => {
       const len = filteredSuggestions.value.length;
       if (len === 0) return;
       highlightedSuggestionIndex.value = (highlightedSuggestionIndex.value + dir + len) % len;
+      scrollDropdownItemIntoView('.product-search-autocomplete-container .autocomplete-suggestions-dropdown', highlightedSuggestionIndex.value);
     };
 
     const selectHighlightedSuggestion = () => {
@@ -5536,6 +5558,7 @@ export default {
       if (next < 0) next = max - 1;
       if (next >= max) next = 0;
       highlightedCustomerIndex.value = next;
+      scrollDropdownItemIntoView('.customer-suggestions-dropdown', next);
     };
 
     const selectHighlightedCustomerOrNext = () => {
@@ -5570,6 +5593,7 @@ export default {
       if (next < 0) next = max - 1;
       if (next >= max) next = 0;
       highlightedProductIndex.value = next;
+      scrollDropdownItemIntoView('.pos-catalog-card .autocomplete-suggestions-dropdown', next);
     };
 
     const addHighlightedProductToNewOrder = () => {
