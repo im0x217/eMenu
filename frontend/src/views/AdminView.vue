@@ -12043,18 +12043,18 @@ select.select-pill {
 }
 
 /* ==========================================================================
-   FAST ORDER CREATION (POS MODE) STYLES
+   FAST ORDER CREATION (POS MODE) STYLES - EXPANDED ROOMY LAYOUT
    ========================================================================== */
 .btn-make-order {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: linear-gradient(135deg, var(--primary-color, #fdb518), #d97706);
   color: #111827;
   font-weight: 700;
-  font-size: 0.88rem;
-  border-radius: 10px;
-  padding: 8px 16px;
+  font-size: 0.9rem;
+  border-radius: 12px;
+  padding: 9px 18px;
   border: none;
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
   cursor: pointer;
@@ -12063,23 +12063,23 @@ select.select-pill {
 
 .btn-make-order:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);
   filter: brightness(1.05);
 }
 
 .fast-order-modal {
   width: 96% !important;
-  max-width: 1140px !important;
-  height: 90vh !important;
-  max-height: 900px !important;
-  padding: 22px 26px !important;
+  max-width: 1420px !important;
+  height: 93vh !important;
+  max-height: 960px !important;
+  padding: 26px 32px !important;
   display: flex !important;
   flex-direction: column !important;
   background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2) !important;
-  border-radius: 20px !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.22) !important;
+  border-radius: 24px !important;
   overflow: hidden !important;
 }
 
@@ -12087,8 +12087,8 @@ select.select-pill {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 16px;
+  gap: 20px;
+  padding-bottom: 18px;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
@@ -12096,14 +12096,14 @@ select.select-pill {
 .fast-order-title-group {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .new-order-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(253, 181, 24, 0.15);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(253, 181, 24, 0.16);
   color: #b45309;
   display: flex;
   align-items: center;
@@ -12114,26 +12114,27 @@ select.select-pill {
 .fast-order-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .fast-order-title-row h3 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
 .fast-order-subtitle {
-  margin: 2px 0 0 0;
-  font-size: 0.82rem;
+  margin: 3px 0 0 0;
+  font-size: 0.85rem;
   color: #64748b;
 }
 
 .shop-badge-indicator {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 3px 12px;
   border-radius: 20px;
 }
 
@@ -12152,24 +12153,24 @@ select.select-pill {
 .fast-order-price-mode-switch {
   display: inline-flex;
   background: #f1f5f9;
-  padding: 3px;
-  border-radius: 10px;
-  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 6px;
   border: 1px solid #e2e8f0;
 }
 
 .price-mode-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: none;
   background: transparent;
-  padding: 6px 14px;
-  font-size: 0.82rem;
+  padding: 8px 16px;
+  font-size: 0.86rem;
   font-weight: 700;
   font-family: inherit;
   color: #64748b;
-  border-radius: 7px;
+  border-radius: 9px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -12177,20 +12178,20 @@ select.select-pill {
 .price-mode-pill.active {
   background: #ffffff;
   color: #0f172a;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .fast-order-form-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 2px;
+  padding: 20px 4px 10px 4px;
   min-height: 0;
 }
 
 .fast-order-grid-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 18px;
+  grid-template-columns: 430px 1fr;
+  gap: 24px;
   align-items: start;
 }
 
@@ -12198,30 +12199,30 @@ select.select-pill {
 .fast-order-side-col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .pos-section-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .pos-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .pos-card-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.88rem;
-  font-weight: 700;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 800;
   color: #1e293b;
 }
 
@@ -12230,9 +12231,9 @@ select.select-pill {
 }
 
 .pos-cust-status-badge {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 12px;
 }
 
@@ -12249,42 +12250,43 @@ select.select-pill {
 .pos-input-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 .pos-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .pos-label {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: #475569;
 }
 
 .pos-control {
-  font-size: 0.84rem !important;
-  padding: 7px 10px !important;
-  border-radius: 8px !important;
+  font-size: 0.88rem !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
   border-color: #cbd5e1 !important;
-  height: 36px !important;
+  height: 40px !important;
+  transition: all 0.2s ease;
 }
 
 .pos-control:focus {
   border-color: var(--primary-color, #1e3a5f) !important;
-  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12) !important;
 }
 
 .btn-clear-search {
   position: absolute;
-  left: 10px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: #94a3b8;
   cursor: pointer;
   padding: 0;
@@ -12293,23 +12295,23 @@ select.select-pill {
 
 .customer-suggestions-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   right: 0;
   left: 0;
   z-index: 120;
-  max-height: 220px;
+  max-height: 240px;
   overflow-y: auto;
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid #cbd5e1;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
 }
 
 .customer-suggestion-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 12px;
+  padding: 10px 14px;
   cursor: pointer;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.15s;
@@ -12320,8 +12322,8 @@ select.select-pill {
 }
 
 .cust-avatar-sm {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: #1e293b;
   color: #fff;
@@ -12329,7 +12331,7 @@ select.select-pill {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   flex-shrink: 0;
 }
 
@@ -12342,12 +12344,12 @@ select.select-pill {
 
 .cust-sugg-name {
   font-weight: 700;
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   color: #0f172a;
 }
 
 .cust-sugg-phone {
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   color: #64748b;
 }
 
@@ -12355,39 +12357,39 @@ select.select-pill {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 3px;
 }
 
 .badge-orders {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: #475569;
   background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
 .badge-balance-debt {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: #dc2626;
   font-weight: 700;
 }
 
 .date-quick-shortcuts {
   display: flex;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .date-quick-btn {
   flex: 1;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
   font-family: inherit;
   color: #475569;
-  padding: 3px 0;
-  border-radius: 6px;
+  padding: 5px 0;
+  border-radius: 8px;
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
@@ -12402,23 +12404,23 @@ select.select-pill {
 .fast-order-main-col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .pos-catalog-card {
-  padding-bottom: 12px;
+  padding-bottom: 16px;
 }
 
 .product-picker-toolbar {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .category-quick-chips-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -12426,10 +12428,10 @@ select.select-pill {
   white-space: nowrap;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  border-radius: 24px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
   font-family: inherit;
   color: #475569;
   cursor: pointer;
@@ -12448,21 +12450,21 @@ select.select-pill {
 
 .quick-products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 8px;
-  max-height: 140px;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 10px;
+  max-height: 165px;
   overflow-y: auto;
-  padding-top: 4px;
+  padding-top: 6px;
 }
 
 .quick-prod-card {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 6px 8px;
+  border-radius: 12px;
+  padding: 8px 10px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -12470,13 +12472,13 @@ select.select-pill {
 .quick-prod-card:hover {
   background: #ffffff;
   border-color: #cbd5e1;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .quick-prod-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -12489,7 +12491,7 @@ select.select-pill {
 }
 
 .quick-prod-name {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -12498,15 +12500,15 @@ select.select-pill {
 }
 
 .quick-prod-price {
-  font-size: 0.74rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: #047857;
 }
 
 .quick-prod-add-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   color: #0f172a;
@@ -12527,25 +12529,25 @@ select.select-pill {
 .btn-quick-add {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.74rem;
+  gap: 5px;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #fff;
   background: #0f172a;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 7px;
 }
 
 /* Cart Items Table */
 .pos-items-card {
   flex: 1;
-  min-height: 220px;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
 }
 
 .pos-empty-cart-msg {
-  padding: 30px 16px !important;
+  padding: 45px 16px !important;
   text-align: center;
   color: #94a3b8;
 }
@@ -12554,31 +12556,31 @@ select.select-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  font-size: 0.84rem;
+  gap: 10px;
+  font-size: 0.88rem;
 }
 
 .qty-stepper-control {
   display: inline-flex;
   align-items: center;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   overflow: hidden;
-  height: 32px;
+  height: 36px;
   width: 100%;
 }
 
 .stepper-btn {
   border: none;
   background: #f8fafc;
-  width: 28px;
-  height: 32px;
+  width: 32px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #334155;
   cursor: pointer;
   transition: background 0.15s;
@@ -12591,28 +12593,28 @@ select.select-pill {
 .stepper-input {
   border: none !important;
   box-shadow: none !important;
-  height: 32px !important;
+  height: 36px !important;
   width: 100% !important;
-  padding: 0 4px !important;
-  font-size: 0.84rem !important;
+  padding: 0 6px !important;
+  font-size: 0.88rem !important;
   font-weight: 700 !important;
 }
 
 .item-note-input {
-  font-size: 0.74rem !important;
-  padding: 3px 6px !important;
-  height: 26px !important;
-  border-radius: 5px !important;
-  margin-top: 4px;
+  font-size: 0.76rem !important;
+  padding: 4px 8px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  margin-top: 5px;
 }
 
 .btn-item-delete {
   background: transparent;
   border: none;
   color: #94a3b8;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -12630,7 +12632,7 @@ select.select-pill {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 14px;
+  padding-top: 18px;
   border-top: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
@@ -12641,40 +12643,40 @@ select.select-pill {
 }
 
 .total-summary-label {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .total-summary-val-group {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 10px;
 }
 
 .total-summary-val {
-  font-size: 1.45rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.1;
 }
 
 .total-summary-count {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
 }
 
 .fast-order-footer-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .auto-print-checkbox-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
   color: #475569;
   cursor: pointer;
   user-select: none;
@@ -12685,35 +12687,35 @@ select.select-pill {
 }
 
 .pos-btn-cancel {
-  padding: 9px 18px !important;
-  font-size: 0.86rem !important;
-  border-radius: 9px !important;
+  padding: 11px 22px !important;
+  font-size: 0.9rem !important;
+  border-radius: 12px !important;
 }
 
 .pos-btn-submit {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 22px !important;
-  font-size: 0.9rem !important;
-  font-weight: 700 !important;
-  border-radius: 9px !important;
+  gap: 8px;
+  padding: 11px 26px !important;
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
   background: linear-gradient(135deg, #0f172a, #1e293b) !important;
   color: #ffffff !important;
   border: none !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25) !important;
 }
 
 .pos-btn-submit:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.35) !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .fast-order-modal {
     width: 98% !important;
-    height: 94vh !important;
-    padding: 16px !important;
+    height: 96vh !important;
+    padding: 18px !important;
   }
   .fast-order-grid-layout {
     grid-template-columns: 1fr;
@@ -12727,7 +12729,7 @@ select.select-pill {
   }
   .fast-order-modal-footer {
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     align-items: stretch;
   }
   .fast-order-footer-actions {
