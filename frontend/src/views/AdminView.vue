@@ -1660,10 +1660,10 @@
           </div>
 
           <div class="fast-order-footer-actions">
-            <label class="auto-print-checkbox-label" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
-              <input type="checkbox" v-model="newOrderAutoPrint" />
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              <span>طباعة الإيصال فوراً</span>
+            <label class="auto-print-checkbox-label" :class="{ 'is-checked': newOrderAutoPrint }" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
+              <input type="checkbox" v-model="newOrderAutoPrint" class="auto-print-checkbox-input" />
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="auto-print-icon"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span class="auto-print-text">طباعة الإيصال فوراً</span>
             </label>
 
             <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
@@ -13937,19 +13937,66 @@ select.pos-control {
   gap: 14px;
 }
 
-.auto-print-checkbox-label {
-  display: inline-flex;
+.fast-order-footer-actions {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: #475569;
-  cursor: pointer;
-  user-select: none;
+  gap: 12px;
+  flex-wrap: nowrap;
 }
 
-.auto-print-checkbox-label input {
-  cursor: pointer;
+.auto-print-checkbox-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 14px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: #475569 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.auto-print-checkbox-label:hover {
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.05) !important;
+  color: #0f172a !important;
+}
+
+.auto-print-checkbox-label.is-checked {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+
+.auto-print-checkbox-input {
+  width: 17px !important;
+  height: 17px !important;
+  accent-color: #d97706 !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+.auto-print-icon {
+  flex-shrink: 0 !important;
+  stroke: currentColor !important;
+  transition: transform 0.2s ease !important;
+}
+
+.auto-print-checkbox-label:hover .auto-print-icon {
+  transform: scale(1.1) !important;
+}
+
+.auto-print-text {
+  font-family: 'Cairo', sans-serif !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
 }
 
 .pos-btn-cancel {
