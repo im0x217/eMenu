@@ -2400,7 +2400,7 @@ app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, asyn
 
 app.post("/api/orders", checkMongoDB, async (req, res) => {
   try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode } = req.body;
+    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod } = req.body;
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
@@ -2423,6 +2423,10 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       { upsert: true }
     );
     
+    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
+    const parsedPaid = Number(paidAmount) || 0;
+    const parsedPaymentStatus = paymentStatus || (parsedPaid >= parsedTotal && parsedTotal > 0 ? 'paid' : (parsedPaid > 0 ? 'partial' : 'unpaid'));
+
     const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
       orderNumber: nextOrderNumber,
@@ -2438,20 +2442,25 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
         allowFloat: !!item.allowFloat,
         notes: item.notes || ''
       })),
-      totalPrice: Math.round(Number(totalPrice) * 100) / 100,
-      paidAmount: 0,
-      paymentStatus: 'unpaid',
-      paymentMethod: '',
+      totalPrice: parsedTotal,
+      paidAmount: parsedPaid,
+      paymentStatus: parsedPaymentStatus,
+      paymentMethod: paymentMethod || '',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
-      status: 'pending',
+      status: status && ['pending', 'ready', 'received', 'cancelled'].includes(status) ? status : 'pending',
       whatsappSent: true,
       createdAt: new Date()
     };
     
     const result = await ordersCollection.insertOne(orderDoc);
-    res.status(201).json({ success: true, orderId: result.insertedId, orderNumber: nextOrderNumber });
+    res.status(201).json({ 
+      success: true, 
+      orderId: result.insertedId, 
+      orderNumber: nextOrderNumber,
+      order: { ...orderDoc, _id: result.insertedId }
+    });
   } catch (err) {
     console.error("Save order error:", err);
     res.status(500).json({ error: "Failed to save order" });
@@ -2460,7 +2469,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
 
 app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
   try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode } = req.body;
+    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod } = req.body;
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
@@ -2483,6 +2492,10 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       { upsert: true }
     );
     
+    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
+    const parsedPaid = Number(paidAmount) || 0;
+    const parsedPaymentStatus = paymentStatus || (parsedPaid >= parsedTotal && parsedTotal > 0 ? 'paid' : (parsedPaid > 0 ? 'partial' : 'unpaid'));
+
     const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
       orderNumber: nextOrderNumber,
@@ -2498,20 +2511,25 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
         allowFloat: !!item.allowFloat,
         notes: item.notes || ''
       })),
-      totalPrice: Math.round(Number(totalPrice) * 100) / 100,
-      paidAmount: 0,
-      paymentStatus: 'unpaid',
-      paymentMethod: '',
+      totalPrice: parsedTotal,
+      paidAmount: parsedPaid,
+      paymentStatus: parsedPaymentStatus,
+      paymentMethod: paymentMethod || '',
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
-      status: 'pending',
+      status: status && ['pending', 'ready', 'received', 'cancelled'].includes(status) ? status : 'pending',
       whatsappSent: true,
       createdAt: new Date()
     };
     
     const result = await ordersCollection2.insertOne(orderDoc);
-    res.status(201).json({ success: true, orderId: result.insertedId, orderNumber: nextOrderNumber });
+    res.status(201).json({ 
+      success: true, 
+      orderId: result.insertedId, 
+      orderNumber: nextOrderNumber,
+      order: { ...orderDoc, _id: result.insertedId }
+    });
   } catch (err) {
     console.error("Save shop2 order error:", err);
     res.status(500).json({ error: "Failed to save order" });
