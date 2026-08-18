@@ -1055,22 +1055,22 @@
 
     <!-- New Fast Order Modal (POS Mode) -->
     <div v-if="newOrderModalOpen" class="modal-overlay animate-fade-in" @click.self="newOrderModalOpen = false">
-      <div class="modal-content glass-panel fast-order-modal" style="width: 96%; max-width: 1050px; padding: 26px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-content glass-panel fast-order-modal">
         
         <!-- Modal Header -->
-        <div class="modal-header fast-order-header pb-3 border-bottom">
+        <div class="fast-order-header">
           <div class="fast-order-title-group">
-            <div class="modal-title-icon new-order-icon">
+            <div class="new-order-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             </div>
             <div>
-              <div class="fast-order-title-row flex items-center gap-2">
-                <h3 class="m-0 font-bold">إنشاء طلب جديد</h3>
+              <div class="fast-order-title-row">
+                <h3>إنشاء طلب جديد</h3>
                 <span class="shop-badge-indicator" :class="activeShop === 'shop2' ? 'shop2-badge' : 'shop1-badge'">
                   {{ activeShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}
                 </span>
               </div>
-              <p class="text-muted text-small m-0 mt-1">إدخال سريع لطلبات الزبائن مع تسعير فوري وخيارات تسليم ودفع مرنة</p>
+              <p class="fast-order-subtitle">إدخال سريع لطلبات الزبائن مع تسعير فوري وخيارات تسليم ودفع مرنة</p>
             </div>
           </div>
 
@@ -1082,7 +1082,8 @@
               :class="{ active: newOrder.priceMode === 'regular' }" 
               @click="onNewOrderPriceModeChange('regular')"
             >
-              <span>🛒 تسعير مفرد</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <span>تسعير مفرد</span>
             </button>
             <button 
               type="button" 
@@ -1090,295 +1091,338 @@
               :class="{ active: newOrder.priceMode === 'bulk' }" 
               @click="onNewOrderPriceModeChange('bulk')"
             >
-              <span>📦 تسعير جملة</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <span>تسعير جملة</span>
             </button>
           </div>
 
-          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
 
-        <form @submit.prevent="submitNewOrder" class="fast-order-form-body py-3" style="overflow-y: auto; flex: 1; padding-right: 4px;">
-          
-          <!-- Top Row: Customer Selection & Details -->
-          <div class="fast-order-section glass-card mb-3 p-3 rounded-xl">
-            <div class="section-title-sm mb-2 flex items-center justify-between">
-              <span class="flex items-center gap-2 font-bold text-dark">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                بيانات العميل
-              </span>
-              <span v-if="newOrder.customerName" class="text-xs text-muted">
-                {{ customers.find(c => c.phone === newOrder.customerPhone) ? '✓ عميل مسجل بالمنظومة' : 'عميل جديد' }}
-              </span>
-            </div>
-
-            <!-- Fast Customer Search & Auto-Suggest -->
-            <div class="customer-search-autocomplete-wrapper mb-3 position-relative">
-              <div class="search-input-wrapper w-100">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input 
-                  v-model="newOrderCustomerSearch" 
-                  type="text" 
-                  class="form-control search-input" 
-                  placeholder="🔍 ابحث في قائمة العملاء السابقة (بالاسم أو رقم الهاتف)…" 
-                  @focus="showNewOrderCustomerSuggestions = true"
-                  @input="showNewOrderCustomerSuggestions = true"
-                />
-                <button v-if="newOrderCustomerSearch" type="button" @click="clearSelectedCustomerForNewOrder" class="btn-clear-input" title="مسح">&times;</button>
-              </div>
-
-              <!-- Customer Dropdown Suggestions -->
-              <div v-if="showNewOrderCustomerSuggestions && filteredNewOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in">
-                <div 
-                  v-for="cust in filteredNewOrderCustomers" 
-                  :key="cust._id" 
-                  class="suggestion-item customer-suggestion-item"
-                  @mousedown="selectCustomerForNewOrder(cust)"
-                >
-                  <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
-                  <div class="cust-info-group">
-                    <span class="cust-sugg-name">{{ cust.name }}</span>
-                    <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+        <form @submit.prevent="submitNewOrder" class="fast-order-form-body">
+          <div class="fast-order-grid-layout">
+            
+            <!-- RIGHT COLUMN: Customer & Order Details (RTL First) -->
+            <div class="fast-order-side-col">
+              
+              <!-- Customer Section -->
+              <div class="pos-section-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>بيانات العميل</span>
                   </div>
-                  <div class="cust-badge-stats">
-                    <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
-                    <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">مستحق: {{ formatCurrency(cust.outstandingBalance) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Customer Direct Inputs (Phone + Name) -->
-            <div class="form-group-row grid-2-col">
-              <div class="form-group mb-0">
-                <label class="form-label text-bold">اسم العميل *</label>
-                <input v-model="newOrder.customerName" type="text" class="form-control" placeholder="مثال: محمد علي" required />
-              </div>
-              <div class="form-group mb-0">
-                <label class="form-label text-bold">رقم الهاتف *</label>
-                <input v-model="newOrder.customerPhone" type="tel" dir="ltr" class="form-control text-mono text-center" placeholder="09xxxxxxxx" required />
-              </div>
-            </div>
-          </div>
-
-          <!-- Middle Section: Product Search & Order Items -->
-          <div class="fast-order-section glass-card mb-3 p-3 rounded-xl">
-            <div class="section-title-sm mb-2 flex items-center justify-between">
-              <span class="flex items-center gap-2 font-bold text-dark">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                أصناف ومنتجات الطلب
-              </span>
-              <span class="toolbar-badge">{{ formatArabicPlural(newOrder.items.length, 'product') }}</span>
-            </div>
-
-            <!-- Product Quick Search + Category Chips -->
-            <div class="product-picker-toolbar mb-3">
-              <div class="product-search-autocomplete-container position-relative flex-grow-1">
-                <input 
-                  v-model="newOrderProductSearch" 
-                  type="text" 
-                  class="form-control product-search-input" 
-                  placeholder="🔍 اكتب اسم المنتج لإضافته فوراً للطلب (أو اختر من الأصناف أدناه)…" 
-                  @focus="showNewOrderProductSuggestions = true"
-                  @blur="setTimeout(() => showNewOrderProductSuggestions = false, 250)"
-                  @keydown.enter.prevent="addFirstFilteredProductToNewOrder"
-                />
-
-                <!-- Product Autocomplete Dropdown -->
-                <div v-if="showNewOrderProductSuggestions && newOrderProductSearch" class="autocomplete-suggestions-dropdown animate-fade-in">
-                  <div 
-                    v-for="prod in filteredNewOrderProducts" 
-                    :key="prod._id" 
-                    class="suggestion-item"
-                    @mousedown="addProductToNewOrder(prod)"
-                  >
-                    <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
-                    <div class="suggestion-info">
-                      <span class="suggestion-name">{{ prod.name }}</span>
-                      <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
-                    </div>
-                    <div class="suggestion-pricing">
-                      <span class="suggestion-price text-mono font-bold">
-                        {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
-                      </span>
-                      <span class="btn-quick-add">+ إضافة</span>
-                    </div>
-                  </div>
-                  <div v-if="filteredNewOrderProducts.length === 0" class="suggestion-no-results">
-                    لا توجد منتجات مطابقة لـ "{{ newOrderProductSearch }}"
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Category Quick Filter Chips -->
-            <div class="category-quick-chips-row mb-3">
-              <button 
-                type="button" 
-                class="cat-chip-btn" 
-                :class="{ active: !newOrderCategoryFilter }" 
-                @click="newOrderCategoryFilter = ''"
-              >الكل</button>
-              <button 
-                type="button" 
-                v-for="cat in categories" 
-                :key="cat._id" 
-                class="cat-chip-btn" 
-                :class="{ active: newOrderCategoryFilter === cat.name }" 
-                @click="newOrderCategoryFilter = (newOrderCategoryFilter === cat.name ? '' : cat.name)"
-              >
-                {{ cat.name }}
-              </button>
-            </div>
-
-            <!-- Quick Add Product Grid (when category is selected) -->
-            <div v-if="newOrderCategoryFilter && filteredNewOrderProducts.length > 0" class="quick-products-grid mb-3">
-              <div 
-                v-for="prod in filteredNewOrderProducts" 
-                :key="'grid-'+prod._id" 
-                class="quick-prod-card" 
-                @click="addProductToNewOrder(prod)"
-                title="انقر للإضافة للطلب"
-              >
-                <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="quick-prod-thumb" />
-                <div class="quick-prod-meta">
-                  <span class="quick-prod-name">{{ prod.name }}</span>
-                  <span class="quick-prod-price text-mono">
-                    {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone === newOrder.customerPhone) ? 'is-registered' : 'is-new'">
+                    {{ customers.find(c => c.phone === newOrder.customerPhone) ? 'عميل مسجل' : 'عميل جديد' }}
                   </span>
                 </div>
-                <span class="quick-prod-add-btn">+</span>
-              </div>
-            </div>
 
-            <!-- Selected Order Items Table -->
-            <div class="edit-order-table-container">
-              <table class="edit-order-table">
-                <thead>
-                  <tr>
-                    <th>المنتج</th>
-                    <th style="width: 140px; text-align: center;">الكمية</th>
-                    <th style="width: 130px; text-align: center;">سعر الوحدة</th>
-                    <th style="width: 110px; text-align: center;">المجموع</th>
-                    <th style="width: 50px; text-align: center;">حذف</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="newOrder.items.length === 0">
-                    <td colspan="5" class="text-center p-4 text-muted">
-                      لم يتم إضافة أصناف بعد. ابحث عن اسم المنتج أعلاه أو اختر صنفاً لإضافته فوراً.
-                    </td>
-                  </tr>
-                  <tr v-for="(item, idx) in newOrder.items" :key="'item-'+idx">
-                    <td>
-                      <div class="edit-item-name-cell">
-                        <span class="db-product-name text-bold">{{ item.name }}</span>
-                        <input v-model="item.notes" type="text" class="form-control form-control-sm item-note-input mt-1" placeholder="ملاحظة للصنف (اختياري)..." />
-                      </div>
-                    </td>
-                    <td style="width: 140px;">
-                      <div class="qty-stepper-control">
-                        <button type="button" class="stepper-btn btn-minus" @click="adjustNewOrderItemQty(item, -1)">-</button>
-                        <input v-model.number="item.quantity" type="number" :step="item.allowFloat ? 0.25 : 1" min="0.1" class="form-control stepper-input text-mono text-center" @input="recalcNewOrderTotal" @change="recalcNewOrderTotal" required />
-                        <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)">+</button>
-                      </div>
-                    </td>
-                    <td style="width: 130px;">
-                      <div class="edit-price-input-wrapper">
-                        <input v-model.number="item.price" type="number" step="0.01" min="0" class="form-control edit-price-input text-mono" @input="recalcNewOrderTotal" @change="recalcNewOrderTotal" required />
-                        <span class="currency-label">د.ل</span>
-                      </div>
-                    </td>
-                    <td class="text-bold text-dark text-center text-mono">
-                      {{ formatCurrency(item.quantity * item.price) }}
-                    </td>
-                    <td style="width: 50px; text-align: center;">
-                      <button type="button" @click="removeNewOrderItem(idx)" class="btn btn-danger btn-xs btn-remove-item" title="حذف الصنف">&times;</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                <!-- Customer Quick Search -->
+                <div class="customer-search-autocomplete-wrapper position-relative">
+                  <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input 
+                      v-model="newOrderCustomerSearch" 
+                      type="text" 
+                      class="form-control search-input" 
+                      placeholder="البحث برقم الهاتف أو الاسم…" 
+                      @focus="showNewOrderCustomerSuggestions = true"
+                      @input="showNewOrderCustomerSuggestions = true"
+                    />
+                    <button v-if="newOrderCustomerSearch" type="button" @click="clearSelectedCustomerForNewOrder" class="btn-clear-search">&times;</button>
+                  </div>
 
-          <!-- Bottom Section: Order Details (Date, Status, Notes, Payment) -->
-          <div class="fast-order-section glass-card mb-3 p-3 rounded-xl">
-            <div class="section-title-sm mb-2 flex items-center gap-2 font-bold text-dark">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              تفاصيل التسليم والدفع
-            </div>
+                  <!-- Dropdown Suggestions -->
+                  <div v-if="showNewOrderCustomerSuggestions && filteredNewOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in">
+                    <div 
+                      v-for="cust in filteredNewOrderCustomers" 
+                      :key="cust._id" 
+                      class="suggestion-item customer-suggestion-item"
+                      @mousedown="selectCustomerForNewOrder(cust)"
+                    >
+                      <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
+                      <div class="cust-info-group">
+                        <span class="cust-sugg-name">{{ cust.name }}</span>
+                        <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                      </div>
+                      <div class="cust-badge-stats">
+                        <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
+                        <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(cust.outstandingBalance) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-            <div class="form-group-row grid-3-col mb-3">
-              <!-- Delivery Date with Quick Pills -->
-              <div class="form-group mb-0">
-                <label class="form-label text-bold">تاريخ الاستلام / التوصيل</label>
-                <div class="delivery-date-input-group">
-                  <input v-model="newOrder.deliveryDate" type="date" class="form-control" />
-                  <div class="date-quick-shortcuts mt-1">
-                    <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)">اليوم</button>
-                    <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)">غداً</button>
-                    <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)">بعد غد</button>
+                <!-- Inputs Row -->
+                <div class="pos-input-grid">
+                  <div class="pos-field">
+                    <label class="pos-label">اسم العميل *</label>
+                    <input v-model="newOrder.customerName" type="text" class="form-control pos-control" placeholder="محمد علي" required />
+                  </div>
+                  <div class="pos-field">
+                    <label class="pos-label">رقم الهاتف *</label>
+                    <input v-model="newOrder.customerPhone" type="tel" dir="ltr" class="form-control pos-control text-mono text-center" placeholder="09xxxxxxxx" required />
                   </div>
                 </div>
               </div>
 
-              <!-- Order Initial Status -->
-              <div class="form-group mb-0">
-                <label class="form-label text-bold">حالة الطلب الأولية</label>
-                <select v-model="newOrder.status" class="form-control">
-                  <option value="pending">قيد الانتظار (Pending)</option>
-                  <option value="ready">جاهز للاستلام (Ready)</option>
-                  <option value="received">تم الاستلام (Received)</option>
-                </select>
-              </div>
+              <!-- Delivery & Status Card -->
+              <div class="pos-section-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>التسليم والحالة</span>
+                  </div>
+                </div>
 
-              <!-- Payment Status & Method -->
-              <div class="form-group mb-0">
-                <label class="form-label text-bold">حالة السداد</label>
-                <select v-model="newOrder.paymentStatus" class="form-control" @change="onNewOrderPaymentStatusChange">
-                  <option value="unpaid">غير مسدد (آجل)</option>
-                  <option value="paid">مسدد بالكامل ✓</option>
-                  <option value="partial">دفعة جزئية</option>
-                </select>
-                <div v-if="newOrder.paymentStatus !== 'unpaid'" class="payment-extra-row mt-1 flex gap-2">
-                  <select v-model="newOrder.paymentMethod" class="form-control form-control-sm">
-                    <option value="cash">نقداً (Cash)</option>
-                    <option value="card">بطاقة مصرفية</option>
-                    <option value="bank_transfer">تحويل بنكي</option>
-                  </select>
-                  <input v-if="newOrder.paymentStatus === 'partial'" v-model.number="newOrder.paidAmount" type="number" step="0.01" min="0" placeholder="المبلغ المسدد" class="form-control form-control-sm text-mono" />
+                <div class="pos-input-grid">
+                  <div class="pos-field">
+                    <label class="pos-label">تاريخ الاستلام</label>
+                    <input v-model="newOrder.deliveryDate" type="date" class="form-control pos-control" />
+                    <div class="date-quick-shortcuts">
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(0)">اليوم</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(1)">غداً</button>
+                      <button type="button" class="date-quick-btn" @click="setNewOrderDateShortcut(2)">بعد غد</button>
+                    </div>
+                  </div>
+
+                  <div class="pos-field">
+                    <label class="pos-label">حالة الطلب</label>
+                    <select v-model="newOrder.status" class="form-control pos-control">
+                      <option value="pending">قيد الانتظار (Pending)</option>
+                      <option value="ready">جاهز للاستلام (Ready)</option>
+                      <option value="received">تم الاستلام (Received)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
+
+              <!-- Payment & Notes Card -->
+              <div class="pos-section-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span>الدفع والملاحظات</span>
+                  </div>
+                </div>
+
+                <div class="pos-input-grid">
+                  <div class="pos-field">
+                    <label class="pos-label">حالة السداد</label>
+                    <select v-model="newOrder.paymentStatus" class="form-control pos-control" @change="onNewOrderPaymentStatusChange">
+                      <option value="unpaid">غير مسدد (آجل)</option>
+                      <option value="paid">مسدد بالكامل</option>
+                      <option value="partial">دفعة جزئية</option>
+                    </select>
+                  </div>
+
+                  <div class="pos-field" v-if="newOrder.paymentStatus !== 'unpaid'">
+                    <label class="pos-label">طريقة الدفع</label>
+                    <select v-model="newOrder.paymentMethod" class="form-control pos-control">
+                      <option value="cash">نقداً (Cash)</option>
+                      <option value="card">بطاقة مصرفية</option>
+                      <option value="bank_transfer">تحويل بنكي</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div v-if="newOrder.paymentStatus === 'partial'" class="pos-field mt-2">
+                  <label class="pos-label">المبلغ المسدد حالياً (د.ل)</label>
+                  <input v-model.number="newOrder.paidAmount" type="number" step="0.01" min="0" placeholder="0.00" class="form-control pos-control text-mono" />
+                </div>
+
+                <div class="pos-field mt-2">
+                  <label class="pos-label">ملاحظات إضافية</label>
+                  <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، تفاصيل العنوان…" />
+                </div>
+              </div>
+
             </div>
 
-            <!-- Notes -->
-            <div class="form-group mb-0">
-              <label class="form-label text-bold">ملاحظات الطلب الإضافية</label>
-              <input v-model="newOrder.notes" type="text" class="form-control" placeholder="تعليمات خاصة، نوع التغليف، أو تفاصيل العنوان…" />
+            <!-- LEFT COLUMN: Product Catalog & Selected Items (RTL Second) -->
+            <div class="fast-order-main-col">
+              
+              <!-- Product Search & Category Filters -->
+              <div class="pos-section-card pos-catalog-card">
+                <div class="product-picker-toolbar">
+                  <div class="product-search-autocomplete-container position-relative flex-grow-1">
+                    <div class="search-input-wrapper">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <input 
+                        v-model="newOrderProductSearch" 
+                        type="text" 
+                        class="form-control search-input" 
+                        placeholder="ابحث باسم المنتج لإضافته فوراً (Enter للإضافة السريعة)…" 
+                        @focus="showNewOrderProductSuggestions = true"
+                        @blur="setTimeout(() => showNewOrderProductSuggestions = false, 250)"
+                        @keydown.enter.prevent="addFirstFilteredProductToNewOrder"
+                      />
+                    </div>
+
+                    <!-- Autocomplete Dropdown -->
+                    <div v-if="showNewOrderProductSuggestions && newOrderProductSearch" class="autocomplete-suggestions-dropdown animate-fade-in">
+                      <div 
+                        v-for="prod in filteredNewOrderProducts" 
+                        :key="prod._id" 
+                        class="suggestion-item"
+                        @mousedown="addProductToNewOrder(prod)"
+                      >
+                        <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
+                        <div class="suggestion-info">
+                          <span class="suggestion-name">{{ prod.name }}</span>
+                          <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
+                        </div>
+                        <div class="suggestion-pricing">
+                          <span class="suggestion-price text-mono font-bold">
+                            {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                          </span>
+                          <span class="btn-quick-add">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            إضافة
+                          </span>
+                        </div>
+                      </div>
+                      <div v-if="filteredNewOrderProducts.length === 0" class="suggestion-no-results">
+                        لا توجد منتجات مطابقة لـ "{{ newOrderProductSearch }}"
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Category Chips -->
+                <div class="category-quick-chips-row">
+                  <button 
+                    type="button" 
+                    class="cat-chip-btn" 
+                    :class="{ active: !newOrderCategoryFilter }" 
+                    @click="newOrderCategoryFilter = ''"
+                  >الكل</button>
+                  <button 
+                    type="button" 
+                    v-for="cat in categories" 
+                    :key="cat._id" 
+                    class="cat-chip-btn" 
+                    :class="{ active: newOrderCategoryFilter === cat.name }" 
+                    @click="newOrderCategoryFilter = (newOrderCategoryFilter === cat.name ? '' : cat.name)"
+                  >
+                    {{ cat.name }}
+                  </button>
+                </div>
+
+                <!-- Quick Products Grid -->
+                <div v-if="filteredNewOrderProducts.length > 0" class="quick-products-grid">
+                  <div 
+                    v-for="prod in filteredNewOrderProducts.slice(0, 8)" 
+                    :key="'grid-'+prod._id" 
+                    class="quick-prod-card" 
+                    @click="addProductToNewOrder(prod)"
+                    title="انقر للإضافة للطلب"
+                  >
+                    <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" class="quick-prod-thumb" />
+                    <div class="quick-prod-meta">
+                      <span class="quick-prod-name">{{ prod.name }}</span>
+                      <span class="quick-prod-price text-mono">
+                        {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                      </span>
+                    </div>
+                    <button type="button" class="quick-prod-add-btn" aria-label="إضافة">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Items Cart Table -->
+              <div class="pos-section-card pos-items-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    <span>أصناف الطلب</span>
+                  </div>
+                  <span class="toolbar-badge">{{ formatArabicPlural(newOrder.items.length, 'product') }}</span>
+                </div>
+
+                <div class="edit-order-table-container">
+                  <table class="edit-order-table">
+                    <thead>
+                      <tr>
+                        <th>المنتج</th>
+                        <th style="width: 130px; text-align: center;">الكمية</th>
+                        <th style="width: 120px; text-align: center;">سعر الوحدة</th>
+                        <th style="width: 110px; text-align: center;">المجموع</th>
+                        <th style="width: 44px; text-align: center;"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="newOrder.items.length === 0">
+                        <td colspan="5" class="pos-empty-cart-msg">
+                          <div class="pos-empty-cart-inner">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            <span>لم يتم إضافة أصناف بعد. ابحث عن المنتجات أو انقر عليها أعلاه لإضافتها للطلب.</span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-for="(item, idx) in newOrder.items" :key="'item-'+idx">
+                        <td>
+                          <div class="edit-item-name-cell">
+                            <span class="db-product-name font-bold">{{ item.name }}</span>
+                            <input v-model="item.notes" type="text" class="form-control form-control-sm item-note-input" placeholder="ملاحظة للصنف…" />
+                          </div>
+                        </td>
+                        <td style="width: 130px;">
+                          <div class="qty-stepper-control">
+                            <button type="button" class="stepper-btn btn-minus" @click="adjustNewOrderItemQty(item, -1)">-</button>
+                            <input v-model.number="item.quantity" type="number" :step="item.allowFloat ? 0.25 : 1" min="0.1" class="form-control stepper-input text-mono text-center" @input="recalcNewOrderTotal" @change="recalcNewOrderTotal" required />
+                            <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)">+</button>
+                          </div>
+                        </td>
+                        <td style="width: 120px;">
+                          <div class="edit-price-input-wrapper">
+                            <input v-model.number="item.price" type="number" step="0.01" min="0" class="form-control edit-price-input text-mono" @input="recalcNewOrderTotal" @change="recalcNewOrderTotal" required />
+                            <span class="currency-label">د.ل</span>
+                          </div>
+                        </td>
+                        <td class="font-bold text-dark text-center text-mono">
+                          {{ formatCurrency(item.quantity * item.price) }}
+                        </td>
+                        <td style="width: 44px; text-align: center;">
+                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" title="حذف الصنف">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
+
           </div>
         </form>
 
         <!-- Modal Footer: Summary & Submission Bar -->
-        <div class="fast-order-modal-footer pt-3 border-top flex items-center justify-between">
+        <div class="fast-order-modal-footer">
           <div class="fast-order-totals-summary">
-            <div class="total-summary-label">إجمالي قيمة الطلب:</div>
-            <div class="total-summary-val text-primary text-mono font-bold">{{ formatCurrency(newOrder.totalPrice) }}</div>
-            <div class="total-summary-count text-muted text-xs">
-              {{ newOrder.items.length }} أصناف (إجمالي الكمية: {{ newOrder.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0) }})
+            <div class="total-summary-label">إجمالي قيمة الطلب</div>
+            <div class="total-summary-val-group">
+              <span class="total-summary-val text-mono">{{ formatCurrency(newOrder.totalPrice) }}</span>
+              <span class="total-summary-count text-muted">({{ newOrder.items.length }} أصناف • الكمية: {{ newOrder.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0) }})</span>
             </div>
           </div>
 
-          <div class="fast-order-footer-actions flex items-center gap-3">
-            <label class="auto-print-checkbox-label flex items-center gap-2 cursor-pointer" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
+          <div class="fast-order-footer-actions">
+            <label class="auto-print-checkbox-label" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
               <input type="checkbox" v-model="newOrderAutoPrint" />
-              <span class="text-sm">🖨️ طباعة الإيصال فوراً</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>طباعة الإيصال فوراً</span>
             </label>
 
-            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline" :disabled="newOrderLoading">إلغاء</button>
-            <button type="button" @click="submitNewOrder" class="btn btn-primary btn-submit-new-order" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone">
-              <svg v-if="!newOrderLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
-              <span>{{ newOrderLoading ? 'جاري إنشاء الطلب…' : 'تأكيد وحفظ الطلب' }}</span>
+            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
+            <button type="button" @click="submitNewOrder" class="btn btn-primary pos-btn-submit" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone">
+              <svg v-if="!newOrderLoading" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+              <span>{{ newOrderLoading ? 'جاري الحفظ…' : 'تأكيد وإنشاء الطلب' }}</span>
             </button>
           </div>
         </div>
@@ -12005,26 +12049,38 @@ select.select-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--primary-color, #1e3a5f);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color, #fdb518), #d97706);
+  color: #111827;
   font-weight: 700;
+  font-size: 0.88rem;
   border-radius: 10px;
   padding: 8px 16px;
-  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
+  border: none;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+  cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-make-order:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(30, 58, 95, 0.3);
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35);
+  filter: brightness(1.05);
 }
 
 .fast-order-modal {
-  background: rgba(255, 255, 255, 0.92) !important;
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  width: 96% !important;
+  max-width: 1140px !important;
+  height: 90vh !important;
+  max-height: 900px !important;
+  padding: 22px 26px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2) !important;
   border-radius: 20px !important;
+  overflow: hidden !important;
 }
 
 .fast-order-header {
@@ -12032,117 +12088,248 @@ select.select-pill {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .fast-order-title-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .new-order-icon {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(30, 58, 95, 0.08);
-  color: var(--primary-color, #1e3a5f);
+  background: rgba(253, 181, 24, 0.15);
+  color: #b45309;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+.fast-order-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fast-order-title-row h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fast-order-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
 .shop-badge-indicator {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 10px;
+  padding: 3px 10px;
   border-radius: 20px;
 }
 
 .shop1-badge {
   background: rgba(253, 181, 24, 0.15);
-  color: #b45309;
-  border: 1px solid rgba(253, 181, 24, 0.3);
+  color: #92400e;
+  border: 1px solid rgba(253, 181, 24, 0.4);
 }
 
 .shop2-badge {
-  background: rgba(30, 58, 95, 0.1);
+  background: rgba(30, 58, 95, 0.12);
   color: #1e3a5f;
-  border: 1px solid rgba(30, 58, 95, 0.2);
+  border: 1px solid rgba(30, 58, 95, 0.25);
 }
 
 .fast-order-price-mode-switch {
   display: inline-flex;
-  background: rgba(0, 0, 0, 0.06);
-  padding: 4px;
-  border-radius: 12px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 10px;
   gap: 4px;
+  border: 1px solid #e2e8f0;
 }
 
 .price-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: none;
   background: transparent;
   padding: 6px 14px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   font-family: inherit;
-  color: #495057;
-  border-radius: 8px;
+  color: #64748b;
+  border-radius: 7px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .price-mode-pill.active {
   background: #ffffff;
-  color: var(--primary-color, #1e3a5f);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.fast-order-section {
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+.fast-order-form-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 2px;
+  min-height: 0;
+}
+
+.fast-order-grid-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+/* Side Column Cards */
+.fast-order-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pos-section-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.pos-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pos-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pos-card-title svg {
+  color: var(--primary-color, #1e3a5f);
+}
+
+.pos-cust-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.pos-cust-status-badge.is-registered {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.pos-cust-status-badge.is-new {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+.pos-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pos-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pos-control {
+  font-size: 0.84rem !important;
+  padding: 7px 10px !important;
+  border-radius: 8px !important;
+  border-color: #cbd5e1 !important;
+  height: 36px !important;
+}
+
+.pos-control:focus {
+  border-color: var(--primary-color, #1e3a5f) !important;
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1) !important;
+}
+
+.btn-clear-search {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
 
 .customer-suggestions-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   right: 0;
   left: 0;
-  z-index: 110;
-  max-height: 240px;
+  z-index: 120;
+  max-height: 220px;
   overflow-y: auto;
   background: #ffffff;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-  margin-top: 4px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
 .customer-suggestion-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid #f1f5f9;
   transition: background 0.15s;
 }
 
 .customer-suggestion-item:hover {
-  background: rgba(30, 58, 95, 0.05);
+  background: #f8fafc;
 }
 
 .cust-avatar-sm {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--primary-color, #1e3a5f);
+  background: #1e293b;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   flex-shrink: 0;
 }
 
@@ -12150,17 +12337,18 @@ select.select-pill {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 .cust-sugg-name {
   font-weight: 700;
-  font-size: 0.9rem;
-  color: #212529;
+  font-size: 0.84rem;
+  color: #0f172a;
 }
 
 .cust-sugg-phone {
-  font-size: 0.78rem;
-  color: #6c757d;
+  font-size: 0.74rem;
+  color: #64748b;
 }
 
 .cust-badge-stats {
@@ -12171,17 +12359,58 @@ select.select-pill {
 }
 
 .badge-orders {
-  font-size: 0.75rem;
-  color: #495057;
-  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.7rem;
+  color: #475569;
+  background: #f1f5f9;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .badge-balance-debt {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #dc2626;
   font-weight: 700;
+}
+
+.date-quick-shortcuts {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.date-quick-btn {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #475569;
+  padding: 3px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.date-quick-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Main Column: Catalog & Cart */
+.fast-order-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pos-catalog-card {
+  padding-bottom: 12px;
+}
+
+.product-picker-toolbar {
+  margin-bottom: 10px;
 }
 
 .category-quick-chips-row {
@@ -12189,49 +12418,49 @@ select.select-pill {
   align-items: center;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
 }
 
 .cat-chip-btn {
   white-space: nowrap;
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 4px 12px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   font-family: inherit;
-  color: #495057;
+  color: #475569;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .cat-chip-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: #e2e8f0;
 }
 
 .cat-chip-btn.active {
-  background: var(--primary-color, #1e3a5f);
+  background: #0f172a;
   color: #ffffff;
-  border-color: var(--primary-color, #1e3a5f);
+  border-color: #0f172a;
 }
 
 .quick-products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 8px;
-  max-height: 190px;
+  max-height: 140px;
   overflow-y: auto;
-  padding: 4px;
+  padding-top: 4px;
 }
 
 .quick-prod-card {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 6px 8px;
   cursor: pointer;
@@ -12239,14 +12468,14 @@ select.select-pill {
 }
 
 .quick-prod-card:hover {
-  border-color: var(--primary-color, #1e3a5f);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
 }
 
 .quick-prod-thumb {
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
@@ -12260,107 +12489,150 @@ select.select-pill {
 }
 
 .quick-prod-name {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #212529;
+  color: #1e293b;
 }
 
 .quick-prod-price {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  color: var(--primary-color, #1e3a5f);
+  color: #047857;
 }
 
 .quick-prod-add-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(30, 58, 95, 0.08);
-  color: var(--primary-color, #1e3a5f);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.quick-prod-card:hover .quick-prod-add-btn {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
 }
 
 .btn-quick-add {
-  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #fff;
-  background: var(--primary-color, #1e3a5f);
-  padding: 3px 8px;
+  background: #0f172a;
+  padding: 4px 8px;
   border-radius: 6px;
+}
+
+/* Cart Items Table */
+.pos-items-card {
+  flex: 1;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-empty-cart-msg {
+  padding: 30px 16px !important;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.pos-empty-cart-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
 }
 
 .qty-stepper-control {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #fff;
   overflow: hidden;
+  height: 32px;
   width: 100%;
 }
 
 .stepper-btn {
   border: none;
-  background: rgba(0, 0, 0, 0.04);
-  width: 32px;
-  height: 34px;
+  background: #f8fafc;
+  width: 28px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #333;
+  font-size: 1rem;
+  color: #334155;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .stepper-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: #e2e8f0;
 }
 
 .stepper-input {
   border: none !important;
   box-shadow: none !important;
-  height: 34px;
-  width: 100%;
-  padding: 0 4px;
-  font-weight: 700;
+  height: 32px !important;
+  width: 100% !important;
+  padding: 0 4px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
 }
 
 .item-note-input {
-  font-size: 0.78rem !important;
-  padding: 4px 8px !important;
-  height: 28px !important;
-  border-radius: 6px !important;
+  font-size: 0.74rem !important;
+  padding: 3px 6px !important;
+  height: 26px !important;
+  border-radius: 5px !important;
+  margin-top: 4px;
 }
 
-.date-quick-shortcuts {
-  display: flex;
-  gap: 4px;
-}
-
-.date-quick-btn {
+.btn-item-delete {
+  background: transparent;
   border: none;
-  background: rgba(0, 0, 0, 0.05);
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: inherit;
-  color: #495057;
-  padding: 3px 8px;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 
-.date-quick-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+.btn-item-delete:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Modal Footer */
+.fast-order-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .fast-order-totals-summary {
@@ -12369,36 +12641,82 @@ select.select-pill {
 }
 
 .total-summary-label {
-  font-size: 0.8rem;
-  color: #6c757d;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.total-summary-val-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .total-summary-val {
-  font-size: 1.35rem;
-  line-height: 1.2;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.total-summary-count {
+  font-size: 0.78rem;
+}
+
+.fast-order-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .auto-print-checkbox-label {
-  user-select: none;
-  font-weight: 600;
-  color: #495057;
-}
-
-.btn-submit-new-order {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 22px;
-  font-weight: 700;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
 }
 
-@media (max-width: 768px) {
+.auto-print-checkbox-label input {
+  cursor: pointer;
+}
+
+.pos-btn-cancel {
+  padding: 9px 18px !important;
+  font-size: 0.86rem !important;
+  border-radius: 9px !important;
+}
+
+.pos-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 22px !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  border-radius: 9px !important;
+  background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25) !important;
+}
+
+.pos-btn-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35) !important;
+}
+
+@media (max-width: 900px) {
   .fast-order-modal {
     width: 98% !important;
+    height: 94vh !important;
     padding: 16px !important;
-    max-height: 96vh !important;
+  }
+  .fast-order-grid-layout {
+    grid-template-columns: 1fr;
   }
   .fast-order-header {
     flex-wrap: wrap;
@@ -12407,20 +12725,18 @@ select.select-pill {
     width: 100%;
     justify-content: center;
   }
-  .grid-2-col, .grid-3-col {
-    grid-template-columns: 1fr !important;
-  }
   .fast-order-modal-footer {
     flex-direction: column;
     gap: 12px;
-    align-items: stretch !important;
+    align-items: stretch;
   }
   .fast-order-footer-actions {
     flex-direction: column;
-    width: 100%;
   }
-  .fast-order-footer-actions button {
+  .fast-order-footer-actions button,
+  .fast-order-footer-actions .auto-print-checkbox-label {
     width: 100%;
+    justify-content: center;
   }
 }
 </style>
