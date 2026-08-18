@@ -395,11 +395,11 @@ button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
   top: calc(100% + 6px);
   right: 0;
   left: 0;
-  z-index: 150;
-  background: #ffffff;
+  z-index: 9999 !important;
+  background: #ffffff !important;
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 6px 16px -2px rgba(15, 23, 42, 0.06);
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.22), 0 6px 16px -2px rgba(15, 23, 42, 0.1);
   max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;

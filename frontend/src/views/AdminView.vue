@@ -1127,7 +1127,7 @@
                       type="text" 
                       class="form-control search-input" 
                       placeholder="البحث برقم الهاتف أو اسم العميل…" 
-                      @focus="showNewOrderCustomerSuggestions = true"
+                      @focus="showNewOrderCustomerSuggestions = true" @click="showNewOrderCustomerSuggestions = true"
                       @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0"
                       @keydown.down.prevent="navigateCustomerSuggestions(1)"
                       @keydown.up.prevent="navigateCustomerSuggestions(-1)"
@@ -1262,7 +1262,7 @@
                         type="text" 
                         class="form-control search-input" 
                         placeholder="ابحث باسم المنتج أو التصنيف لإضافته فوراً…" 
-                        @focus="showNewOrderProductSuggestions = true"
+                        @focus="showNewOrderProductSuggestions = true" @click="showNewOrderProductSuggestions = true"
                         @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0"
                         @keydown="handleProductSearchKeydown"
                       />
@@ -5440,10 +5440,27 @@ export default {
 
     const filteredNewOrderCustomers = computed(() => {
       const q = newOrderCustomerSearch.value.trim().toLowerCase();
+      const list = customers.value || [];
       if (!q) {
-        return (customers.value || []).slice(0, 8);
+        if (list.length > 0) return list.slice(0, 8);
+        const fromOrders = [];
+        const seenPhones = new Set();
+        for (const o of (orders.value || [])) {
+          if (o.customerInfo && o.customerInfo.phone && !seenPhones.has(o.customerInfo.phone)) {
+            seenPhones.add(o.customerInfo.phone);
+            fromOrders.push({
+              _id: o._id,
+              name: o.customerInfo.name || 'عميل',
+              phone: o.customerInfo.phone,
+              orderCount: 1,
+              outstandingBalance: 0
+            });
+            if (fromOrders.length >= 8) break;
+          }
+        }
+        return fromOrders;
       }
-      return (customers.value || []).filter(c => 
+      return list.filter(c => 
         (c.name && c.name.toLowerCase().includes(q)) || 
         (c.phone && c.phone.includes(q))
       ).slice(0, 8);
@@ -5473,6 +5490,7 @@ export default {
     };
 
     const focusProductSearch = () => {
+      showNewOrderProductSuggestions.value = true;
       nextTick(() => {
         if (newOrderProductInputRef.value) {
           newOrderProductInputRef.value.focus();
@@ -5497,7 +5515,7 @@ export default {
       newOrderProductSearch.value = '';
       newOrderCategoryFilter.value = '';
       showNewOrderCustomerSuggestions.value = true;
-      showNewOrderProductSuggestions.value = false;
+      showNewOrderProductSuggestions.value = true;
       highlightedCustomerIndex.value = 0;
       highlightedProductIndex.value = 0;
 
@@ -12553,6 +12571,44 @@ select.form-control:focus {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
+  z-index: 30;
+}
+
+.fast-order-side-col > .pos-section-card:first-child {
+  position: relative;
+  z-index: 40;
+}
+
+.fast-order-side-col > .pos-section-card:nth-child(2) {
+  position: relative;
+  z-index: 20;
+}
+
+.fast-order-side-col > .pos-section-card:nth-child(3) {
+  position: relative;
+  z-index: 10;
+}
+
+.fast-order-main-col {
+  position: relative;
+  z-index: 20;
+}
+
+.pos-catalog-card {
+  position: relative;
+  z-index: 40;
+}
+
+.pos-items-card {
+  position: relative;
+  z-index: 10;
+}
+
+.customer-search-autocomplete-wrapper,
+.product-search-autocomplete-container {
+  position: relative;
+  z-index: 100;
 }
 
 .pos-section-card {
