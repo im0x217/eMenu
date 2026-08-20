@@ -4,9 +4,12 @@ import { useRoute } from 'vue-router';
 import BottomNav from './components/BottomNav.vue';
 import BottomCartBar from './components/BottomCartBar.vue';
 import Toast from './components/Toast.vue';
+import SetPasswordModal from './components/SetPasswordModal.vue';
 import { useFavoritesStore } from './stores/favorites';
+import { useAuthStore } from './stores/auth';
 
 const favoritesStore = useFavoritesStore();
+const authStore = useAuthStore();
 const route = useRoute();
 
 const showCustomerNav = computed(() => {
@@ -14,8 +17,9 @@ const showCustomerNav = computed(() => {
 });
 
 onMounted(() => {
-  // Silent load of synced customer favorites if identified
+  // Silent load of synced customer favorites and profile password verification
   favoritesStore.loadFavoritesFromBackend();
+  authStore.checkProfileStatus();
 });
 </script>
 
@@ -47,6 +51,9 @@ onMounted(() => {
 
     <!-- Global non-blocking Toast Notifications -->
     <Toast />
+
+    <!-- Global Modern Set Password Popup Alert Modal -->
+    <SetPasswordModal v-if="showCustomerNav" />
   </div>
 </template>
 

@@ -225,10 +225,13 @@ const handleClearCart = () => {
       <!-- Logged-in info preview -->
       <div v-else class="identity-preview glass-panel">
         <div class="preview-text">
-          <p class="name">الاسم: <strong>{{ authStore.customerName }}</strong></p>
-          <p class="phone">رقم الهاتف: <strong>{{ authStore.customerPhone }}</strong></p>
+          <div class="preview-name-row">
+            <p class="name">الاسم: <strong>{{ authStore.customerName }}</strong></p>
+            <span class="preview-badge">✓ حساب موثق</span>
+          </div>
+          <p class="phone" dir="ltr">الهاتف: <strong class="text-mono">{{ authStore.customerPhone }}</strong></p>
         </div>
-        <button class="change-btn" @click="authStore.clearIdentity()">تعديل البيانات</button>
+        <button type="button" class="change-btn" @click="authStore.clearIdentity()" title="تسجيل الدخول بحساب آخر">تبديل الحساب</button>
       </div>
 
       <!-- Checkout Options -->

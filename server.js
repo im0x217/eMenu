@@ -14,6 +14,29 @@ const crypto = require("crypto");
 const SESSION_TOKEN_SHOP1 = crypto.randomBytes(32).toString('hex');
 const SESSION_TOKEN_SHOP2 = crypto.randomBytes(32).toString('hex');
 
+// ============ PASSWORD & CUSTOMER AUTH HELPERS ============
+function hashCustomerPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyCustomerPassword(password, storedHash) {
+  if (!storedHash || !storedHash.includes(':')) return false;
+  const [salt, originalHash] = storedHash.split(':');
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return hash === originalHash;
+}
+
+function generateCustomerToken(phone) {
+  const payload = `${phone}:${Date.now()}:${crypto.randomBytes(16).toString('hex')}`;
+  const signature = crypto.createHmac('sha256', process.env.ADMIN_SESSION_SECRET || 'emenu-customer-secret-key-2026')
+    .update(payload)
+    .digest('hex');
+  return Buffer.from(`${payload}:${signature}`).toString('base64');
+}
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -2254,6 +2277,251 @@ function arrayToCSV(headers, rows) {
   return '\uFEFF' + csvRows.join('\r\n');
 }
 
+// ============ CUSTOMER AUTHENTICATION & PASSWORD APIs ============
+
+// Register new customer account
+app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { name, phone, password } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: "يرجى كتابة الاسم بالكامل" });
+    }
+    if (!phone || typeof phone !== 'string' || phone.trim().length < 9) {
+      return res.status(400).json({ error: "يرجى إدخال رقم هاتف صحيح" });
+    }
+    if (!password || typeof password !== 'string' || password.length < 4) {
+      return res.status(400).json({ error: "كلمة المرور يجب أن لا تقل عن 4 خانات" });
+    }
+
+    const normalizedPhone = phone.trim();
+    const normalizedName = name.trim();
+
+    // Check if phone already registered
+    const existing = await customersCollection.findOne({ phone: normalizedPhone });
+    if (existing) {
+      if (existing.passwordHash) {
+        return res.status(409).json({ error: "رقم الهاتف مسجل مسبقاً، يرجى تسجيل الدخول بدلاً من ذلك" });
+      } else {
+        // Legacy customer without password: set password and activate account
+        const passwordHash = hashCustomerPassword(password);
+        await customersCollection.updateOne(
+          { _id: existing._id },
+          { 
+            $set: { 
+              name: existing.name || normalizedName,
+              passwordHash,
+              lastActive: new Date()
+            } 
+          }
+        );
+        const token = generateCustomerToken(normalizedPhone);
+        return res.json({
+          success: true,
+          token,
+          customer: {
+            name: existing.name || normalizedName,
+            phone: normalizedPhone,
+            hasPassword: true
+          }
+        });
+      }
+    }
+
+    // New customer registration
+    const passwordHash = hashCustomerPassword(password);
+    const newCustomerDoc = {
+      name: normalizedName,
+      phone: normalizedPhone,
+      passwordHash,
+      createdAt: new Date(),
+      lastActive: new Date()
+    };
+
+    await customersCollection.insertOne(newCustomerDoc);
+    const token = generateCustomerToken(normalizedPhone);
+
+    res.status(201).json({
+      success: true,
+      token,
+      customer: {
+        name: normalizedName,
+        phone: normalizedPhone,
+        hasPassword: true
+      }
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "رقم الهاتف مسجل مسبقاً" });
+    }
+    console.error("Customer register error:", err);
+    res.status(500).json({ error: "فشل إنشاء الحساب، يرجى المحاولة لاحقاً" });
+  }
+});
+
+// Login to customer account
+app.post("/api/customer/login", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      return res.status(400).json({ error: "يرجى إدخال رقم الهاتف" });
+    }
+
+    const normalizedPhone = phone.trim();
+    const customer = await customersCollection.findOne({ phone: normalizedPhone });
+
+    if (!customer) {
+      return res.status(404).json({ error: "رقم الهاتف غير مسجل، يرجى إنشاء حساب جديد" });
+    }
+
+    // If customer has no password (legacy profile from guest ordering)
+    if (!customer.passwordHash) {
+      return res.json({
+        success: true,
+        requiresPasswordSetup: true,
+        customer: {
+          name: customer.name,
+          phone: customer.phone,
+          hasPassword: false
+        }
+      });
+    }
+
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ error: "يرجى إدخال كلمة المرور" });
+    }
+
+    const isValid = verifyCustomerPassword(password, customer.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
+    }
+
+    await customersCollection.updateOne(
+      { _id: customer._id },
+      { $set: { lastActive: new Date() } }
+    );
+
+    const token = generateCustomerToken(normalizedPhone);
+    res.json({
+      success: true,
+      token,
+      customer: {
+        name: customer.name,
+        phone: customer.phone,
+        hasPassword: true
+      }
+    });
+  } catch (err) {
+    console.error("Customer login error:", err);
+    res.status(500).json({ error: "فشل تسجيل الدخول" });
+  }
+});
+
+// Set password for account (for legacy accounts or password updates)
+app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { phone, password, oldPassword } = req.body;
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      return res.status(400).json({ error: "رقم الهاتف مطلوب" });
+    }
+    if (!password || typeof password !== 'string' || password.length < 4) {
+      return res.status(400).json({ error: "كلمة المرور يجب أن لا تقل عن 4 خانات" });
+    }
+
+    const normalizedPhone = phone.trim();
+    const customer = await customersCollection.findOne({ phone: normalizedPhone });
+
+    if (!customer) {
+      return res.status(404).json({ error: "الحساب غير موجود" });
+    }
+
+    // If already has password, verify old password first
+    if (customer.passwordHash && oldPassword) {
+      const isOldValid = verifyCustomerPassword(oldPassword, customer.passwordHash);
+      if (!isOldValid) {
+        return res.status(401).json({ error: "كلمة المرور الحالية غير صحيحة" });
+      }
+    }
+
+    const newHash = hashCustomerPassword(password);
+    await customersCollection.updateOne(
+      { _id: customer._id },
+      { 
+        $set: { 
+          passwordHash: newHash,
+          lastActive: new Date()
+        } 
+      }
+    );
+
+    const token = generateCustomerToken(normalizedPhone);
+    res.json({
+      success: true,
+      token,
+      customer: {
+        name: customer.name,
+        phone: customer.phone,
+        hasPassword: true
+      }
+    });
+  } catch (err) {
+    console.error("Set customer password error:", err);
+    res.status(500).json({ error: "فشل تعيين كلمة المرور" });
+  }
+});
+
+// Get customer profile and password status
+app.get("/api/customer/profile", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { phone } = req.query;
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ error: "Missing phone parameter" });
+    }
+    const customer = await customersCollection.findOne({ phone: phone.trim() });
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    res.json({
+      name: customer.name,
+      phone: customer.phone,
+      hasPassword: !!customer.passwordHash,
+      createdAt: customer.createdAt
+    });
+  } catch (err) {
+    console.error("Get customer profile error:", err);
+    res.status(500).json({ error: "Failed to get profile" });
+  }
+});
+
+// Admin reset customer password
+app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid customer ID" });
+    }
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 4) {
+      return res.status(400).json({ error: "كلمة المرور يجب أن لا تقل عن 4 خانات" });
+    }
+
+    const customer = await customersCollection.findOne({ _id: new ObjectId(id) });
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const passwordHash = hashCustomerPassword(newPassword);
+    await customersCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { passwordHash, lastActive: new Date() } }
+    );
+
+    res.json({ success: true, message: "تم إعادة تعيين كلمة المرور بنجاح" });
+  } catch (err) {
+    console.error("Admin reset customer password error:", err);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
 // ============ CUSTOMER & FAVORITES APIs ============
 
 app.post("/api/customer/identify", checkMongoDB, customerLimiter, async (req, res) => {
@@ -2415,12 +2683,15 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
     const normalizedPhone = customer.phone.trim();
     const normalizedName = customer.name.trim();
 
-    // Upsert customer profile
+    // Upsert customer profile (preserve registered name)
+    const existingCust = await customersCollection.findOne({ phone: normalizedPhone });
+    const finalCustName = (existingCust && existingCust.name) ? existingCust.name : normalizedName;
+
     await customersCollection.updateOne(
       { phone: normalizedPhone },
       { 
         $set: { 
-          name: normalizedName, 
+          name: finalCustName, 
           lastActive: new Date() 
         },
         $setOnInsert: {
@@ -2484,12 +2755,15 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     const normalizedPhone = customer.phone.trim();
     const normalizedName = customer.name.trim();
 
-    // Upsert customer profile
+    // Upsert customer profile (preserve registered name)
+    const existingCust = await customersCollection.findOne({ phone: normalizedPhone });
+    const finalCustName = (existingCust && existingCust.name) ? existingCust.name : normalizedName;
+
     await customersCollection.updateOne(
       { phone: normalizedPhone },
       { 
         $set: { 
-          name: normalizedName, 
+          name: finalCustName, 
           lastActive: new Date() 
         },
         $setOnInsert: {
