@@ -23,38 +23,60 @@ const showRegisterPassword = ref(false);
 const authLoading = ref(false);
 const authError = ref('');
 
-// Order History State
+// Balance & Order History State
 const orders = ref([]);
 const isLoadingOrders = ref(false);
+const balanceData = ref({
+  outstandingBalance: 0,
+  unpaidOrdersCount: 0,
+  lifetimeTotal: 0
+});
+const isLoadingBalance = ref(false);
 
-const loadOrderHistory = async () => {
+const displayedOrders = computed(() => {
+  return orders.value.slice(0, 5);
+});
+
+const loadCustomerData = async () => {
   if (!authStore.customerPhone) {
     orders.value = [];
+    balanceData.value = { outstandingBalance: 0, unpaidOrdersCount: 0, lifetimeTotal: 0 };
     return;
   }
+  
   isLoadingOrders.value = true;
+  isLoadingBalance.value = true;
+
   try {
-    const res = await fetch(`/api/customer/orders?phone=${encodeURIComponent(authStore.customerPhone)}`);
-    if (res.ok) {
-      orders.value = await res.json();
+    const [ordersRes, balanceRes] = await Promise.all([
+      fetch(`/api/customer/orders?phone=${encodeURIComponent(authStore.customerPhone)}`),
+      fetch(`/api/customer/balance?phone=${encodeURIComponent(authStore.customerPhone)}`)
+    ]);
+
+    if (ordersRes.ok) {
+      orders.value = await ordersRes.json();
+    }
+    if (balanceRes.ok) {
+      balanceData.value = await balanceRes.json();
     }
   } catch (e) {
-    console.error('Failed to load customer orders', e);
+    console.error('Failed to load customer orders/balance', e);
   } finally {
     isLoadingOrders.value = false;
+    isLoadingBalance.value = false;
   }
 };
 
 onMounted(() => {
-  loadOrderHistory();
+  loadCustomerData();
   if (authStore.customerPhone) {
     authStore.checkProfileStatus();
   }
 });
 
-// Watch phone number changes to refetch history
+// Watch phone number changes to refetch history & balance
 watch(() => authStore.customerPhone, () => {
-  loadOrderHistory();
+  loadCustomerData();
 });
 
 const handleLogin = async () => {
@@ -75,7 +97,7 @@ const handleLogin = async () => {
       loginPhone.value = '';
       loginPassword.value = '';
       await favoritesStore.loadFavoritesFromBackend();
-      loadOrderHistory();
+      loadCustomerData();
     }
   } catch (err) {
     authError.value = err.message || 'فشل تسجيل الدخول';
@@ -108,7 +130,7 @@ const handleRegister = async () => {
     registerPhone.value = '';
     registerPassword.value = '';
     await favoritesStore.loadFavoritesFromBackend();
-    loadOrderHistory();
+    loadCustomerData();
   } catch (err) {
     authError.value = err.message || 'فشل إنشاء الحساب';
   } finally {
@@ -120,6 +142,7 @@ const handleSignOut = () => {
   if (confirm('هل أنت متأكد من تسجيل الخروج من هذا الحساب؟')) {
     authStore.clearIdentity();
     orders.value = [];
+    balanceData.value = { outstandingBalance: 0, unpaidOrdersCount: 0, lifetimeTotal: 0 };
     activeAuthTab.value = 'login';
     toastStore.show('تم تسجيل الخروج بنجاح', 'info');
   }
@@ -128,6 +151,7 @@ const handleSignOut = () => {
 const handleSwitchAccount = () => {
   authStore.clearIdentity();
   orders.value = [];
+  balanceData.value = { outstandingBalance: 0, unpaidOrdersCount: 0, lifetimeTotal: 0 };
   activeAuthTab.value = 'login';
 };
 
@@ -406,7 +430,7 @@ const handleResendWhatsApp = () => {
               required
             />
             <button type="button" class="btn-pwd-eye" @click="showRegisterPassword = !showRegisterPassword" tabindex="-1">
-              <svg v-if="!showRegisterPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg v-if="!showRegisterPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </button>
           </div>
@@ -423,13 +447,49 @@ const handleResendWhatsApp = () => {
       </form>
     </div>
 
-    <!-- 3. ORDER HISTORY SECTION -->
+    <!-- 3. CUSTOMER CURRENT BALANCE SECTION (WHEN LOGGED IN) -->
+    <div v-if="authStore.isIdentified" class="customer-balance-section glass-panel animate-fade-in">
+      <div class="balance-header-row">
+        <div class="balance-title-group">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="balance-icon">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+          <h3 class="section-title">كشف الرصيد والمستحقات</h3>
+        </div>
+        <span class="balance-status-badge" :class="balanceData.outstandingBalance > 0 ? 'has-debt' : 'paid-up'">
+          {{ balanceData.outstandingBalance > 0 ? 'مبالغ غير مسددة' : '✓ الحساب مسدد' }}
+        </span>
+      </div>
+
+      <div class="balance-hero-card" :class="balanceData.outstandingBalance > 0 ? 'is-debt' : 'is-clear'">
+        <div class="balance-main-amount">
+          <span class="balance-amount-label">الرصيد المستحق الحالي:</span>
+          <div class="balance-amount-val text-mono">
+            <span class="num font-bold">{{ balanceData.outstandingBalance.toFixed(2) }}</span>
+            <span class="curr">د.ل</span>
+          </div>
+        </div>
+        <div class="balance-sub-stats">
+          <div class="sub-stat-item">
+            <span class="sub-stat-label">فواتير معلقة:</span>
+            <span class="sub-stat-val text-mono font-bold">{{ balanceData.unpaidOrdersCount }}</span>
+          </div>
+          <div class="sub-stat-item">
+            <span class="sub-stat-label">إجمالي المشتريات:</span>
+            <span class="sub-stat-val text-mono font-bold">{{ balanceData.lifetimeTotal.toFixed(2) }} د.ل</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. ORDERS HISTORY SECTION (RESTORED ORIGINAL DESIGN & LIMITED TO LAST 5) -->
     <div class="orders-history-section glass-panel">
       <div class="orders-header-row">
-        <h3 class="section-title">سجل الطلبات</h3>
-        <span v-if="orders.length" class="orders-count-badge">{{ orders.length }} طلب</span>
+        <h3 class="section-title">الطلبات السابقة</h3>
+        <span v-if="orders.length" class="orders-count-badge">آخر {{ displayedOrders.length }} طلبات</span>
       </div>
-      <p class="section-desc">تظهر هنا جميع الطلبات المسجلة برقم هاتفك.</p>
+      <p class="section-desc">ملاحظة: تظهر هنا الطلبات المرتبطة برقم هاتفك الحالي والمحفوظة في قاعدة البيانات.</p>
 
       <!-- Loading State -->
       <div v-if="isLoadingOrders" class="loading-orders">
@@ -447,36 +507,47 @@ const handleResendWhatsApp = () => {
         <p>لا توجد طلبات مسجلة برقم هاتفك حتى الآن.</p>
       </div>
 
-      <!-- Orders List -->
+      <!-- Restored Original Orders Cards List (Last 5) -->
       <div v-else class="orders-list">
-        <div v-for="order in orders" :key="order._id" class="order-card glass-panel">
+        <div v-for="order in displayedOrders" :key="order._id" class="order-card glass-panel">
+          <!-- Order Header -->
           <div class="order-header">
-            <div class="order-id-group">
-              <span class="order-number">طلب #{{ order.orderNumber || order._id.slice(-6) }}</span>
+            <div class="order-header-left">
+              <span class="order-num-badge">#{{ order.orderNumber || order._id.slice(-6) }}</span>
               <span class="order-shop-badge" :class="order.shop || 'shop1'">
                 {{ order.shop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}
               </span>
+              <span class="order-date">{{ formatDate(order.createdAt) }}</span>
             </div>
             <span class="order-status" :class="order.status || 'pending'">
               {{ getStatusLabel(order.status) }}
             </span>
           </div>
 
-          <div class="order-meta-info">
-            <span class="meta-date">{{ formatDate(order.createdAt) }}</span>
-            <span v-if="order.deliveryDate" class="meta-delivery">استلام: {{ order.deliveryDate }}</span>
+          <!-- Order Summary Details -->
+          <div class="order-summary-details">
+            <span class="items-count">{{ order.items ? order.items.length : 0 }} أصناف</span>
+            <span v-if="order.deliveryDate" class="delivery-badge">استلام: {{ order.deliveryDate }}</span>
+            <span v-if="order.priceMode === 'bulk'" class="price-mode-badge">سعر جملة</span>
           </div>
 
-          <div class="order-items-preview">
-            <div v-for="(item, idx) in order.items" :key="idx" class="preview-item">
-              <span class="item-name">{{ item.name }}</span>
-              <span class="item-qty">× {{ item.quantity }}</span>
-              <span class="item-price">{{ item.price * item.quantity }} د.ل</span>
+          <!-- Order Items List -->
+          <div class="order-items-list">
+            <div v-for="(item, idx) in order.items" :key="idx" class="order-item-row">
+              <div class="item-main-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span v-if="item.notes" class="item-note-pill">ملاحظة: {{ item.notes }}</span>
+              </div>
+              <div class="item-pricing">
+                <span class="item-qty">× {{ item.quantity }}</span>
+                <span class="item-total-price">{{ item.price * item.quantity }} د.ل</span>
+              </div>
             </div>
           </div>
 
+          <!-- Order Total Row -->
           <div class="order-total-row">
-            <span class="total-label">الإجمالي:</span>
+            <span class="total-label">الإجمالي الكلي:</span>
             <span class="total-value">{{ order.totalPrice }} د.ل</span>
           </div>
 
@@ -725,6 +796,128 @@ const handleResendWhatsApp = () => {
   transform: translateY(-1px);
 }
 
+/* Customer Balance Section */
+.customer-balance-section {
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.balance-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.balance-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.balance-icon {
+  color: #f59e0b;
+}
+
+.balance-status-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+.balance-status-badge.paid-up {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.balance-status-badge.has-debt {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.balance-hero-card {
+  padding: 16px 18px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.balance-hero-card.is-clear {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04));
+  border: 1.5px solid rgba(16, 185, 129, 0.25);
+}
+
+.balance-hero-card.is-debt {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.06));
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+}
+
+.balance-main-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.balance-amount-label {
+  font-size: 0.9rem;
+  font-weight: 750;
+  color: #475569;
+}
+
+.balance-amount-val {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.balance-amount-val .num {
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.balance-hero-card.is-debt .balance-amount-val .num {
+  color: #d97706;
+}
+
+.balance-hero-card.is-clear .balance-amount-val .num {
+  color: #059669;
+}
+
+.balance-amount-val .curr {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.balance-sub-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.sub-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.sub-stat-label {
+  color: #64748b;
+}
+
+.sub-stat-val {
+  color: #0f172a;
+}
+
 /* Auth Section (Login / Register Tabs) */
 .auth-section {
   padding: 20px;
@@ -865,7 +1058,7 @@ const handleResendWhatsApp = () => {
   color: #b91c1c;
 }
 
-/* Orders History Section */
+/* Orders History Section (Original Design Restored) */
 .orders-history-section {
   padding: 20px;
   border-radius: 18px;
@@ -926,15 +1119,21 @@ const handleResendWhatsApp = () => {
 .orders-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .order-card {
-  padding: 14px;
-  border-radius: 14px;
+  padding: 16px;
+  border-radius: 16px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.order-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
 .order-header {
@@ -944,25 +1143,35 @@ const handleResendWhatsApp = () => {
   margin-bottom: 8px;
 }
 
-.order-id-group {
+.order-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.order-number {
+.order-num-badge {
+  font-family: 'Cairo', 'Fira Code', monospace;
+  font-size: 0.78rem;
   font-weight: 850;
-  font-size: 0.95rem;
-  color: #0f172a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
 }
 
 .order-shop-badge {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 750;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 6px;
   background: #f1f5f9;
   color: #475569;
+}
+
+.order-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 .order-status {
@@ -993,40 +1202,90 @@ const handleResendWhatsApp = () => {
   color: #dc2626;
 }
 
-.order-meta-info {
+.order-summary-details {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.78rem;
-  color: #94a3b8;
+  gap: 6px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
-.order-items-preview {
+.items-count,
+.delivery-badge,
+.price-mode-badge {
+  font-size: 0.74rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-weight: 700;
+}
+
+.delivery-badge {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.price-mode-badge {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  color: #7e22ce;
+}
+
+.order-items-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 0;
+  gap: 6px;
+  padding: 10px 0;
   border-top: 1px dashed #e2e8f0;
   border-bottom: 1px dashed #e2e8f0;
   margin-bottom: 10px;
 }
 
-.preview-item {
+.order-item-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.82rem;
-  color: #334155;
+  font-size: 0.84rem;
+  gap: 8px;
+}
+
+.item-main-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.item-name {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.item-note-pill {
+  font-size: 0.72rem;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.item-pricing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .item-qty {
   color: #64748b;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.item-price {
-  font-weight: 750;
+.item-total-price {
+  font-weight: 850;
   color: #0f172a;
 }
 
@@ -1037,7 +1296,7 @@ const handleResendWhatsApp = () => {
   font-weight: 850;
   font-size: 0.95rem;
   color: #0f172a;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .confirm-received-row {
@@ -1051,13 +1310,13 @@ const handleResendWhatsApp = () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 9px 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #10b981, #059669);
   color: #ffffff;
   font-family: inherit;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1073,20 +1332,21 @@ const handleResendWhatsApp = () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
   color: #334155;
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 750;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-resend-whatsapp:hover {
-  background: #f1f5f9;
+  background: #f8fafc;
+  border-color: #94a3b8;
   color: #0f172a;
 }
 

@@ -2522,6 +2522,58 @@ app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkAdmin, asy
   }
 });
 
+
+// Get customer balance for customer view (combines both shops)
+app.get("/api/customer/balance", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { phone } = req.query;
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ error: "Missing phone parameter" });
+    }
+
+    const normalizedPhone = phone.trim();
+
+    // Query unpaid orders across both shops
+    const unpaid1 = await ordersCollection.find({
+      "customerInfo.phone": normalizedPhone,
+      status: { $ne: "cancelled" },
+      $or: [
+        { paymentStatus: { $in: ["unpaid", "partial"] } },
+        { paymentStatus: { $exists: false } }
+      ]
+    }).toArray();
+
+    const unpaid2 = await ordersCollection2.find({
+      "customerInfo.phone": normalizedPhone,
+      status: { $ne: "cancelled" },
+      $or: [
+        { paymentStatus: { $in: ["unpaid", "partial"] } },
+        { paymentStatus: { $exists: false } }
+      ]
+    }).toArray();
+
+    const allUnpaid = [...unpaid1, ...unpaid2];
+    const totalOwed = Math.round(allUnpaid.reduce((sum, o) => sum + (o.totalPrice || 0), 0) * 100) / 100;
+    const totalPaid = Math.round(allUnpaid.reduce((sum, o) => sum + (o.paidAmount || 0), 0) * 100) / 100;
+    const outstandingBalance = Math.round(Math.max(0, totalOwed - totalPaid) * 100) / 100;
+
+    // Fetch all completed/received orders to get lifetime totals
+    const allCompleted1 = await ordersCollection.find({ "customerInfo.phone": normalizedPhone, status: { $in: ["ready", "received", "completed"] } }).toArray();
+    const allCompleted2 = await ordersCollection2.find({ "customerInfo.phone": normalizedPhone, status: { $in: ["ready", "received", "completed"] } }).toArray();
+    const lifetimeTotal = Math.round([...allCompleted1, ...allCompleted2].reduce((sum, o) => sum + (o.totalPrice || 0), 0) * 100) / 100;
+
+    res.json({
+      outstandingBalance,
+      unpaidOrdersCount: allUnpaid.length,
+      lifetimeTotal,
+      currency: "د.ل"
+    });
+  } catch (err) {
+    console.error("Fetch customer balance error:", err);
+    res.status(500).json({ error: "Failed to fetch customer balance" });
+  }
+});
+
 // ============ CUSTOMER & FAVORITES APIs ============
 
 app.post("/api/customer/identify", checkMongoDB, customerLimiter, async (req, res) => {
