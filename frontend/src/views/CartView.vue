@@ -56,7 +56,7 @@ const handleCheckout = async () => {
   try {
     const result = await cartStore.submitOrder();
     if (result && result.isEdit) {
-      toastStore.show('تم حفظ وتحديث طلبك بنجاح! ✓', 'success');
+      toastStore.show('تم حفظ وتحديث طلبك بنجاح!', 'success');
     }
   } catch (err) {
     toastStore.show(err.message, 'error');
@@ -131,7 +131,8 @@ const handleClearCart = () => {
           <span class="edit-order-number-tag">#{{ cartStore.editingOrderNumber }}</span>
         </div>
         <button type="button" class="btn-cancel-edit-mode" @click="handleCancelEditMode" title="إلغاء وضع التعديل">
-          إلغاء التعديل ✕
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>إلغاء التعديل</span>
         </button>
       </div>
       <p class="edit-banner-instructions">
@@ -268,7 +269,10 @@ const handleClearCart = () => {
         <div class="preview-text">
           <div class="preview-name-row">
             <p class="name">الاسم: <strong>{{ authStore.customerName }}</strong></p>
-            <span class="preview-badge">✓ حساب موثق</span>
+            <span class="preview-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>حساب موثق</span>
+            </span>
           </div>
           <p class="phone" dir="ltr">الهاتف: <strong class="text-mono">{{ authStore.customerPhone }}</strong></p>
         </div>
@@ -318,7 +322,7 @@ const handleClearCart = () => {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
-            <span>{{ isSubmitting ? 'جاري حفظ التعديل…' : 'حفظ وتحديث الطلب ✓' }}</span>
+            <span>{{ isSubmitting ? 'جاري حفظ التعديل…' : 'حفظ وتحديث الطلب' }}</span>
           </template>
           <template v-else>
             <span>{{ isSubmitting ? 'جاري إرسال الطلب…' : 'إرسال الطلب عبر الواتساب' }}</span>

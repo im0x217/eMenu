@@ -148,13 +148,13 @@ const toggleSave = () => {
   
   if (!authStore.isIdentified()) {
     if (isNowFav) {
-      toastStore.show('تم الحفظ محلياً! يرجى تسجيل الدخول باسمك ورقم نشاطك التجاري من صفحة "حسابي" لتفعيل وحفظ المفضلة سحابياً ⚠️');
+      toastStore.show('تم الحفظ محلياً! يرجى تسجيل الدخول باسمك ورقم نشاطك التجاري من صفحة "حسابي" لتفعيل وحفظ المفضلة سحابياً');
     } else {
       toastStore.show('تم إزالة المنتج من المفضلة');
     }
   } else {
     if (isNowFav) {
-      toastStore.show('تم إضافة المنتج إلى المفضلة ❤️');
+      toastStore.show('تم إضافة المنتج إلى المفضلة');
     } else {
       toastStore.show('تم إزالة المنتج من المفضلة');
     }
@@ -178,7 +178,7 @@ const handleAddToCart = () => {
   
   try {
     cartStore.addToCart(props.product, activeShop.value, mode, 1);
-    toastStore.show('تم إضافة المنتج إلى السلة بنجاح! 🛒');
+    toastStore.show('تم إضافة المنتج إلى السلة بنجاح!');
   } catch (err) {
     toastStore.show(err.message, 'error');
   }

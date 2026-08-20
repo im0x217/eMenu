@@ -32,7 +32,7 @@ const handleSubmit = async () => {
 
   try {
     await authStore.setPassword(authStore.customerPhone, newPassword.value);
-    toastStore.show('تم تأمين حسابك بكلمة المرور بنجاح! 🔒', 'success');
+    toastStore.show('تم تأمين حسابك بكلمة المرور بنجاح!', 'success');
     newPassword.value = '';
     confirmPassword.value = '';
   } catch (err) {
@@ -67,7 +67,10 @@ const handleDismiss = () => {
           <span class="identity-name font-bold">{{ authStore.customerName || 'عميل مسجل' }}</span>
           <span class="identity-phone text-mono font-bold" dir="ltr">{{ authStore.customerPhone }}</span>
         </div>
-        <span class="identity-verified-tag">✓ مسجل</span>
+        <span class="identity-verified-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>مسجل</span>
+        </span>
       </div>
 
       <form @submit.prevent="handleSubmit" class="modal-form">

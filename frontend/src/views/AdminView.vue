@@ -22,7 +22,7 @@
               <select v-model="loginForm.username" required class="form-control login-user-select">
                 <option value="" disabled>اختر حساب المستخدم…</option>
                 <option v-for="u in publicAdminUsers" :key="u.username" :value="u.username">
-                  👤 {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'مدير الطلبات' : 'مستخدم' }})
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'مدير الطلبات' : 'مستخدم' }})
                 </option>
               </select>
             </div>
@@ -1754,7 +1754,7 @@
                   <tr v-for="(item, idx) in editingOrder.items" :key="idx">
                     <td>
                       <div class="edit-item-name-cell">
-                        <span v-if="item.productId" class="db-product-name" title="منتج مسجل بالمنظومة">✓ {{ item.name }}</span>
+                        <span v-if="item.productId" class="db-product-name" title="منتج مسجل بالمنظومة"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display: inline-block; vertical-align: middle; margin-left: 2px;"><polyline points="20 6 9 17 4 12"/></svg> {{ item.name }}</span>
                         <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
                         <div v-if="item.notes" class="order-item-static-note" title="ملاحظة الزبون">
                           * {{ item.notes }}
@@ -1984,7 +1984,7 @@
                       <td class="text-bold text-primary text-mono">{{ formatCurrency(cust.totalSpent) }}</td>
                       <td>
                         <span class="customer-balance-cell" :style="{ color: (cust.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
-                          {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : 'مُسدد ✓' }}
+                          {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : 'مُسدد بالكامل' }}
                         </span>
                       </td>
                       <td>
@@ -2458,7 +2458,7 @@
             <div class="profile-stat-box" :class="(selectedCustomer.outstandingBalance || 0) > 0 ? 'balance-due-box' : 'balance-clear-box'">
               <span class="stat-label">الرصيد المستحق</span>
               <span class="stat-value text-mono">
-                {{ (selectedCustomer.outstandingBalance || 0) > 0 ? formatCurrency(selectedCustomer.outstandingBalance) : 'مُسدد بالكامل ✓' }}
+                {{ (selectedCustomer.outstandingBalance || 0) > 0 ? formatCurrency(selectedCustomer.outstandingBalance) : 'مُسدد بالكامل' }}
               </span>
             </div>
 
@@ -3035,7 +3035,7 @@
 
       <div class="receipt-footer">
         <p v-if="paginatedOrderPages.length > 1" class="receipt-page-num">صفحة {{ pageIndex + 1 }} من {{ paginatedOrderPages.length }}</p>
-        <p>شكراً لتعاملكم معنا ❤</p>
+        <p>شكراً لتعاملكم معنا</p>
         <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
       </div>
     </div>
@@ -3172,12 +3172,12 @@
                   <tr v-for="item in paymentFifoPreview" :key="item.orderId" :class="{ 'target-row': item.isTarget }">
                     <td class="text-mono text-bold">
                       #{{ item.orderIdShort }}
-                      <span v-if="item.isTarget" class="target-tag ms-1">🎯 مخصص</span>
+                      <span v-if="item.isTarget" class="target-tag ms-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 2px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> مخصص</span>
                     </td>
                     <td class="text-bold text-success text-mono">{{ formatCurrency(item.applied) }}</td>
                     <td>
                       <span class="allocation-badge" :class="item.fullyPaid ? 'badge-paid' : 'badge-partial'">
-                        {{ item.fullyPaid ? 'مسدد بالكامل ✓' : 'تسديد جزئي' }}
+                        {{ item.fullyPaid ? 'مسدد بالكامل' : 'تسديد جزئي' }}
                       </span>
                     </td>
                   </tr>
@@ -3350,7 +3350,7 @@
       </div>
 
       <div class="receipt-footer">
-        <p>شكراً لتعاملكم معنا ❤</p>
+        <p>شكراً لتعاملكم معنا</p>
         <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
       </div>
     </div>
@@ -4146,7 +4146,7 @@ export default {
       const { file: compressedFile, preview, sizeKb } = await compressProductFileToWebp(file);
       modalFile.value = compressedFile;
       modalFilePreview.value = preview;
-      toast.show(`تم ضغط وتسريع صورة المنتج بنجاح ✓ (${sizeKb} KB)`, 'success');
+      toast.show(`تم ضغط وتسريع صورة المنتج بنجاح (${sizeKb} KB)`, 'success');
     };
 
     // Helper: compress any product image URL to high-efficiency WebP
@@ -4285,7 +4285,7 @@ export default {
           }
         }
 
-        toast.show(`⚡ تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${items.length} صورة منتج بنجاح عبر جميع المتاجر!`, 'success');
+        toast.show(`تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${items.length} صورة منتج بنجاح عبر جميع المتاجر!`, 'success');
         await fetchProducts();
       } catch (err) {
         console.error('Batch product image recompression error:', err);
@@ -4695,7 +4695,7 @@ export default {
         cropperModalOpen.value = false;
         cropperInstance.destroy();
         cropperInstance = null;
-        toast.show(`تم ضغط البنر وقصه بنجاح ✓ (${sizeKb} KB)`, 'success');
+        toast.show(`تم ضغط البنر وقصه بنجاح (${sizeKb} KB)`, 'success');
       }, 'image/webp', 0.78);
     };
 
@@ -6529,7 +6529,7 @@ const closeSuggestionsWithDelay = () => {
 
         if (res.ok) {
           const data = await res.json();
-          toast.show(`تم إنشاء الطلب #${data.orderNumber || ''} بنجاح ✓`, 'success');
+          toast.show(`تم إنشاء الطلب #${data.orderNumber || ''} بنجاح`, 'success');
           newOrderModalOpen.value = false;
           await Promise.all([fetchOrders(), fetchCustomers(), fetchAnalytics()]);
 

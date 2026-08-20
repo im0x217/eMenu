@@ -99,9 +99,9 @@ const handleLogin = async () => {
   try {
     const res = await authStore.login(loginPhone.value.trim(), loginPassword.value);
     if (res.requiresPasswordSetup) {
-      toastStore.show('يرجى تعيين كلمة مرور لحسابك للمتابعة 🔒', 'warning');
+      toastStore.show('يرجى تعيين كلمة مرور لحسابك للمتابعة', 'warning');
     } else {
-      toastStore.show('مرحباً بك مجدداً! ✓', 'success');
+      toastStore.show('مرحباً بك مجدداً!', 'success');
       loginPhone.value = '';
       loginPassword.value = '';
       await favoritesStore.loadFavoritesFromBackend();
@@ -133,7 +133,7 @@ const handleRegister = async () => {
 
   try {
     await authStore.register(registerName.value.trim(), registerPhone.value.trim(), registerPassword.value);
-    toastStore.show('تم إنشاء الحساب وتأمينه بنجاح! 🎉', 'success');
+    toastStore.show('تم إنشاء الحساب وتأمينه بنجاح!', 'success');
     registerName.value = '';
     registerPhone.value = '';
     registerPassword.value = '';
@@ -199,7 +199,7 @@ const confirmReceived = async (order) => {
     });
     if (res.ok) {
       order.status = 'received';
-      toastStore.show('تم تأكيد استلام الطلب بنجاح ✓', 'success');
+      toastStore.show('تم تأكيد استلام الطلب بنجاح', 'success');
     } else {
       const data = await res.json();
       toastStore.show(data.error || 'فشل تأكيد الاستلام', 'danger');
@@ -215,12 +215,12 @@ const confirmReceived = async (order) => {
 // Import order into Cart for editing
 const handleEditOrderInCart = (order) => {
   if (order.printed) {
-    toastStore.show('تمت طباعة هذا الطلب في المحل ولا يمكن تعديله 🔒', 'warning');
+    toastStore.show('تمت طباعة هذا الطلب في المحل ولا يمكن تعديله', 'warning');
     return;
   }
 
   cartStore.importOrderForEditing(order);
-  toastStore.show(`تم استيراد الطلب #${order.orderNumber || ''} إلى السلة للتعديل 🛒`, 'info');
+  toastStore.show(`تم استيراد الطلب #${order.orderNumber || ''} إلى السلة للتعديل`, 'info');
   router.push('/cart');
 };
 
@@ -287,7 +287,7 @@ const closeModal = () => {
 const handleCopyMessage = async () => {
   try {
     await navigator.clipboard.writeText(whatsappMessageText.value);
-    toastStore.show('تم نسخ نص الرسالة بنجاح! 📋');
+    toastStore.show('تم نسخ نص الرسالة بنجاح!');
   } catch (err) {
     toastStore.show('فشل نسخ النص، يرجى المحاولة يدوياً', 'error');
   }
@@ -316,7 +316,10 @@ const handleResendWhatsApp = () => {
         <div class="profile-header-info">
           <div class="profile-name-row">
             <h3 class="profile-name">{{ authStore.customerName }}</h3>
-            <span class="verified-badge">✓ حساب موثق</span>
+            <span class="verified-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>حساب موثق</span>
+            </span>
           </div>
           <span class="profile-phone text-mono" dir="ltr">{{ authStore.customerPhone }}</span>
         </div>
@@ -329,7 +332,8 @@ const handleResendWhatsApp = () => {
           <span>حسابك غير مؤمن بكلمة مرور خاصة بك حتى الآن.</span>
         </div>
         <button type="button" class="btn-set-pwd-quick" @click="authStore.showSetPasswordModal = true">
-          تعيين كلمة مرور الآن 🔒
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>تعيين كلمة مرور الآن</span>
         </button>
       </div>
 
@@ -465,7 +469,10 @@ const handleResendWhatsApp = () => {
         </div>
 
         <button type="submit" class="btn-auth-submit" :disabled="authLoading">
-          <span v-if="!authLoading">إنشاء الحساب وتأمينه ✓</span>
+          <span v-if="!authLoading" style="display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>إنشاء الحساب وتأمينه</span>
+          </span>
           <span v-else>جاري الإنشاء…</span>
         </button>
       </form>
@@ -482,7 +489,7 @@ const handleResendWhatsApp = () => {
           <h3 class="section-title">كشف الرصيد والمستحقات</h3>
         </div>
         <span class="balance-status-badge" :class="balanceData.outstandingBalance > 0 ? 'has-debt' : 'paid-up'">
-          {{ balanceData.outstandingBalance > 0 ? 'مبالغ غير مسددة' : '✓ الحساب مسدد' }}
+          {{ balanceData.outstandingBalance > 0 ? 'مبالغ غير مسددة' : 'الحساب مسدد بالكامل' }}
         </span>
       </div>
 
@@ -544,7 +551,10 @@ const handleResendWhatsApp = () => {
               <span class="order-date">{{ formatDate(order.createdAt) }}</span>
             </div>
             <div class="order-header-right">
-              <span v-if="order.printed" class="order-printed-tag" title="تمت طباعة الطلب في المحل">🖨️ تمت الطباعة</span>
+              <span v-if="order.printed" class="order-printed-tag" title="تمت طباعة الطلب في المحل">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>تمت الطباعة</span>
+              </span>
               <span class="order-status" :class="order.status || 'pending'">
                 {{ getStatusLabel(order.status) }}
               </span>
@@ -587,7 +597,7 @@ const handleResendWhatsApp = () => {
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
-                <span>تعديل الطلب في السلة 🛒</span>
+                <span>تعديل الطلب في السلة</span>
               </button>
             </div>
             <div v-else-if="order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled'" class="order-locked-notice">
