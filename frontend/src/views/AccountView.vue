@@ -244,7 +244,11 @@ const generateWhatsAppMessage = (order) => {
   }
   text += `--------------------------------\n`;
   
-  order.items.forEach((item) => {
+  const sortedItems = [...(order.items || [])].sort((a, b) => 
+    (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+  );
+
+  sortedItems.forEach((item) => {
     text += `• *${item.name}* (${item.quantity} × ${item.price} د.ل)\n`;
     if (item.notes) {
       text += `  ملاحظة: ${item.notes}\n`;

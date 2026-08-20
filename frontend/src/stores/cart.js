@@ -195,7 +195,12 @@ export const useCartStore = defineStore('cart', () => {
     }
     text += `--------------------------------\n`;
     
-    items.value.forEach((item) => {
+    // Sort products alphabetically by name (Arabic locale)
+    const sortedItems = [...items.value].sort((a, b) => 
+      (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+    );
+
+    sortedItems.forEach((item) => {
       const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price);
       text += `• *${item.name}* (${item.quantity} × ${price} د.ل)\n`;
       if (item.itemNotes) {
