@@ -559,10 +559,11 @@ const activeTagsList = computed(() => {
   font-weight: 800;
   color: var(--text-color, #2c2520);
   margin-bottom: 2px;
-  line-height: 1.25;
-  white-space: nowrap;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .product-desc {

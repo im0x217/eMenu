@@ -589,6 +589,7 @@ const handleClearCart = () => {
 
 .item-details {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -598,6 +599,11 @@ const handleClearCart = () => {
   font-size: 0.88rem;
   font-weight: 750;
   margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .item-price-info {
@@ -629,6 +635,7 @@ const handleClearCart = () => {
   border-radius: 8px;
   padding: 2px;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .qty-btn {

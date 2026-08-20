@@ -143,7 +143,8 @@ const navToShop = () => {
 
 .tab-label {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .icon-wrapper {

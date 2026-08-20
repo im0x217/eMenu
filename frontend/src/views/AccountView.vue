@@ -722,6 +722,7 @@ const handleResendWhatsApp = () => {
   font-weight: 850;
   color: #0f172a;
   margin: 0;
+  word-break: break-word;
 }
 
 .verified-badge {
@@ -731,6 +732,7 @@ const handleResendWhatsApp = () => {
   color: #059669;
   padding: 2px 8px;
   border-radius: 6px;
+  white-space: nowrap;
 }
 
 .profile-phone {
@@ -1338,6 +1340,8 @@ const handleResendWhatsApp = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .item-qty {
