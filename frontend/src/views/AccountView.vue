@@ -1,11 +1,15 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useFavoritesStore } from '../stores/favorites';
+import { useCartStore } from '../stores/cart';
 import { useToastStore } from '../stores/toast';
 
+const router = useRouter();
 const authStore = useAuthStore();
 const favoritesStore = useFavoritesStore();
+const cartStore = useCartStore();
 const toastStore = useToastStore();
 
 // Auth form tabs: 'login' | 'register'
@@ -208,117 +212,16 @@ const confirmReceived = async (order) => {
   }
 };
 
-// ============ CUSTOMER ORDER EDIT MODAL STATE & METHODS ============
-const isEditModalOpen = ref(false);
-const editingOrder = ref(null);
-const editItems = ref([]);
-const editDeliveryDate = ref('');
-const editNotes = ref('');
-const isSavingEdit = ref(false);
-const editError = ref('');
-
-const openEditOrderModal = (order) => {
+// Import order into Cart for editing
+const handleEditOrderInCart = (order) => {
   if (order.printed) {
     toastStore.show('تمت طباعة هذا الطلب في المحل ولا يمكن تعديله 🔒', 'warning');
     return;
   }
-  editingOrder.value = order;
-  editItems.value = JSON.parse(JSON.stringify(order.items || []));
-  editDeliveryDate.value = order.deliveryDate || '';
-  editNotes.value = order.notes || '';
-  editError.value = '';
-  isEditModalOpen.value = true;
-};
 
-const closeEditOrderModal = () => {
-  isEditModalOpen.value = false;
-  editingOrder.value = null;
-  editItems.value = [];
-  editDeliveryDate.value = '';
-  editNotes.value = '';
-  editError.value = '';
-};
-
-const editCalculatedTotal = computed(() => {
-  return editItems.value.reduce((sum, item) => {
-    return sum + (Number(item.price) || 0) * (Number(item.quantity) || 0);
-  }, 0);
-});
-
-const handleIncreaseQty = (item) => {
-  if (item.allowFloat) {
-    item.quantity = Math.round((Number(item.quantity) + 0.5) * 10) / 10;
-  } else {
-    item.quantity = Number(item.quantity) + 1;
-  }
-};
-
-const handleDecreaseQty = (item, idx) => {
-  const step = item.allowFloat ? 0.5 : 1;
-  const current = Number(item.quantity);
-  if (current > step) {
-    item.quantity = item.allowFloat ? Math.round((current - 0.5) * 10) / 10 : current - 1;
-  } else {
-    if (editItems.value.length === 1) {
-      toastStore.show('يجب أن يحتوي الطلب على صنف واحد على الأقل', 'warning');
-      return;
-    }
-    editItems.value.splice(idx, 1);
-  }
-};
-
-const handleRemoveItem = (idx) => {
-  if (editItems.value.length === 1) {
-    toastStore.show('يجب أن يحتوي الطلب على صنف واحد على الأقل', 'warning');
-    return;
-  }
-  editItems.value.splice(idx, 1);
-};
-
-const handleSaveOrderEdit = async () => {
-  if (!editingOrder.value) return;
-  if (editItems.value.length === 0) {
-    editError.value = 'يجب أن يحتوي الطلب على صنف واحد على الأقل';
-    return;
-  }
-
-  isSavingEdit.value = true;
-  editError.value = '';
-
-  try {
-    const res = await fetch(`/api/customer/orders/${editingOrder.value._id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: authStore.customerPhone,
-        shop: editingOrder.value.shop,
-        items: editItems.value,
-        deliveryDate: editDeliveryDate.value,
-        notes: editNotes.value
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'فشل حفظ تعديل الطلب');
-    }
-
-    const targetIdx = orders.value.findIndex(o => o._id === editingOrder.value._id);
-    if (targetIdx !== -1) {
-      orders.value[targetIdx].items = JSON.parse(JSON.stringify(editItems.value));
-      orders.value[targetIdx].totalPrice = editCalculatedTotal.value;
-      orders.value[targetIdx].deliveryDate = editDeliveryDate.value;
-      orders.value[targetIdx].notes = editNotes.value;
-    }
-
-    toastStore.show('تم تحديث الطلب بنجاح! ✓', 'success');
-    closeEditOrderModal();
-    loadCustomerData();
-  } catch (err) {
-    editError.value = err.message || 'فشل حفظ التعديلات';
-  } finally {
-    isSavingEdit.value = false;
-  }
+  cartStore.importOrderForEditing(order);
+  toastStore.show(`تم استيراد الطلب #${order.orderNumber || ''} إلى السلة للتعديل 🛒`, 'info');
+  router.push('/cart');
 };
 
 // Resend Modal State
@@ -547,7 +450,7 @@ const handleResendWhatsApp = () => {
               required
             />
             <button type="button" class="btn-pwd-eye" @click="showRegisterPassword = !showRegisterPassword" tabindex="-1">
-              <svg v-if="!showRegisterPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg v-if="!showRegisterPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </button>
           </div>
@@ -673,14 +576,14 @@ const handleResendWhatsApp = () => {
 
           <!-- Order Actions Grid (Edit / Confirm Received / WhatsApp) -->
           <div class="order-action-buttons-stack">
-            <!-- Edit Order Button (Active only if NOT printed yet & not completed/cancelled) -->
+            <!-- Edit Order Button (Imports to Cart) -->
             <div v-if="!order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled'" class="order-edit-action-row">
-              <button class="btn-customer-edit-order" @click="openEditOrderModal(order)" title="تعديل أصناف أو تفاصيل الطلب">
+              <button class="btn-customer-edit-order" @click="handleEditOrderInCart(order)" title="استيراد وتعديل الطلب في السلة">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
-                <span>تعديل الطلب</span>
+                <span>تعديل الطلب في السلة 🛒</span>
               </button>
             </div>
             <div v-else-if="order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled'" class="order-locked-notice">
@@ -709,85 +612,6 @@ const handleResendWhatsApp = () => {
             </div>
           </div>
 
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. EDIT ORDER MODAL (FOR CUSTOMER) -->
-    <div v-if="isEditModalOpen" class="modal-backdrop animate-fade-in" @click.self="closeEditOrderModal">
-      <div class="modal-content edit-order-modal-card glass-panel" role="dialog" aria-modal="true">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <h4 class="modal-title">تعديل الطلب #{{ editingOrder?.orderNumber || editingOrder?._id?.slice(-6) }}</h4>
-            <span class="modal-subtitle">يمكنك تعديل الكميات، الملاحظات، أو تاريخ الاستلام</span>
-          </div>
-          <button class="btn-close" @click="closeEditOrderModal">✕</button>
-        </div>
-
-        <div class="modal-body edit-modal-body">
-          <!-- Items List Editor -->
-          <div class="edit-items-scroll-list">
-            <div v-for="(item, idx) in editItems" :key="idx" class="edit-item-row">
-              <div class="edit-item-top">
-                <span class="edit-item-name">{{ item.name }}</span>
-                <button type="button" class="btn-remove-item" @click="handleRemoveItem(idx)" title="حذف الصنف">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-              </div>
-
-              <div class="edit-item-bottom">
-                <div class="edit-qty-stepper">
-                  <button type="button" class="btn-qty-step" @click="handleDecreaseQty(item, idx)">−</button>
-                  <span class="qty-display text-mono font-bold">{{ item.quantity }}</span>
-                  <button type="button" class="btn-qty-step" @click="handleIncreaseQty(item)">+</button>
-                </div>
-                <div class="edit-item-price-preview">
-                  <span class="text-mono font-bold">{{ (item.price * item.quantity).toFixed(2) }} د.ل</span>
-                </div>
-              </div>
-
-              <input 
-                v-model="item.notes" 
-                type="text" 
-                placeholder="ملاحظات على هذا الصنف (اختياري)…" 
-                class="edit-item-note-input"
-              />
-            </div>
-          </div>
-
-          <!-- Edit Delivery Date & Order Notes -->
-          <div class="edit-extra-fields">
-            <div class="form-group">
-              <label class="form-label">تاريخ الاستلام</label>
-              <input v-model="editDeliveryDate" type="date" class="form-input" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">ملاحظات إضافية على الطلب</label>
-              <textarea v-model="editNotes" placeholder="اكتب أي ملاحظات عامة…" rows="2" class="form-input text-area"></textarea>
-            </div>
-          </div>
-
-          <!-- Total Calculation Banner -->
-          <div class="edit-total-banner">
-            <span class="label">الإجمالي المعدل:</span>
-            <span class="value text-mono font-bold">{{ editCalculatedTotal.toFixed(2) }} د.ل</span>
-          </div>
-
-          <div v-if="editError" class="alert-msg danger animate-fade-in">
-            {{ editError }}
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-modal-action btn-save-edit" @click="handleSaveOrderEdit" :disabled="isSavingEdit">
-            <svg v-if="!isSavingEdit" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span v-if="!isSavingEdit">حفظ التعديلات ✓</span>
-            <span v-else>جاري الحفظ…</span>
-          </button>
-          <button type="button" class="btn-modal-action btn-cancel-edit" @click="closeEditOrderModal" :disabled="isSavingEdit">
-            إلغاء
-          </button>
         </div>
       </div>
     </div>
@@ -1625,174 +1449,6 @@ const handleResendWhatsApp = () => {
   background: #f8fafc;
   border-color: #94a3b8;
   color: #0f172a;
-}
-
-/* Edit Order Modal Styling */
-.edit-order-modal-card {
-  max-width: 520px;
-  width: 100%;
-}
-
-.edit-modal-body {
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.edit-items-scroll-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.edit-item-row {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.edit-item-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.edit-item-name {
-  font-weight: 800;
-  font-size: 0.9rem;
-  color: #0f172a;
-}
-
-.btn-remove-item {
-  background: transparent;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: background 0.15s ease;
-}
-
-.btn-remove-item:hover {
-  background: #fee2e2;
-}
-
-.edit-item-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.edit-qty-stepper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 2px 4px;
-}
-
-.btn-qty-step {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: #f1f5f9;
-  color: #0f172a;
-  font-size: 1rem;
-  font-weight: 800;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.btn-qty-step:hover {
-  background: #e2e8f0;
-}
-
-.qty-display {
-  min-width: 32px;
-  text-align: center;
-  font-size: 0.92rem;
-  color: #0f172a;
-}
-
-.edit-item-price-preview {
-  font-size: 0.9rem;
-  color: #0f172a;
-}
-
-.edit-item-note-input {
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.78rem;
-  background: #ffffff;
-  box-sizing: border-box;
-}
-
-.edit-extra-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-.edit-total-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.18));
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-
-.edit-total-banner .label {
-  font-weight: 800;
-  font-size: 0.92rem;
-  color: #92400e;
-}
-
-.edit-total-banner .value {
-  font-size: 1.15rem;
-  color: #b45309;
-}
-
-.btn-save-edit {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  border: 1px solid #d97706;
-  color: #ffffff;
-  font-weight: 850;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
-}
-
-.btn-save-edit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #fbbf24, #ea580c);
-  transform: translateY(-1px);
-}
-
-.btn-cancel-edit {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-}
-
-.btn-cancel-edit:hover:not(:disabled) {
-  background: #e2e8f0;
 }
 
 /* WhatsApp Details Modal */
