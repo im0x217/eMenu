@@ -263,6 +263,8 @@ body {
 /* Inputs and Forms styling */
 .form-input {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 0.75rem 1rem;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -271,6 +273,44 @@ body {
   font-family: 'Cairo', sans-serif;
   font-size: 0.95rem;
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* iOS Safari Date Picker Full-Width & Containment Fix */
+input[type="date"],
+input[type="date"].form-input,
+.date-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  min-height: 42px;
+  background-color: var(--bg-card, #ffffff);
+  color: #2c2520;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.92rem;
+  direction: rtl;
+  text-align: right;
+  position: relative;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: right !important;
+  direction: rtl !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 1.4em !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 4px;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .form-input:focus {

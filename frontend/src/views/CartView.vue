@@ -740,6 +740,9 @@ const handleClearCart = () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .form-label {
@@ -749,13 +752,39 @@ const handleClearCart = () => {
 }
 
 .form-input {
-  height: 40px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 42px;
   padding: 6px 10px;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   font-family: inherit;
   font-size: 0.88rem;
   box-sizing: border-box;
+  display: block;
+}
+
+.date-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-color: #ffffff;
+  color: #0f172a;
+  direction: rtl;
+  text-align: right;
+}
+
+.date-input::-webkit-date-and-time-value {
+  text-align: right !important;
+  direction: rtl !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 1.4em !important;
 }
 
 .text-area {
