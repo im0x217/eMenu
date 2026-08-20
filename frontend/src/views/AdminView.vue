@@ -5607,6 +5607,20 @@ export default {
       setPrintPageSize('A5 portrait', '4mm 6mm');
       printingOrder.value = order;
 
+      // Mark order as printed on backend
+      if (order && order._id) {
+        try {
+          adminFetch(`/api/admin/orders/${order._id}/printed`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shop: activeShop.value })
+          });
+          order.printed = true;
+        } catch (err) {
+          console.warn('Failed to mark order as printed', err);
+        }
+      }
+
       const phone = (order?.customerInfo?.phone || order?.customerPhone || order?.phone || '').trim();
       let balance = null;
 

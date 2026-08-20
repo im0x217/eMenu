@@ -1871,6 +1871,27 @@ app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res
   }
 });
 
+
+// Mark order as printed by admin
+app.put("/api/admin/orders/:id/printed", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { shop } = req.body;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid order ID" });
+    }
+    const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
+    await ordColl.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { printed: true, printedAt: new Date() } }
+    );
+    res.json({ success: true, printed: true });
+  } catch (err) {
+    console.error("Mark order printed error:", err);
+    res.status(500).json({ error: "Failed to mark order as printed" });
+  }
+});
+
 // ============ CUSTOMER PAYMENTS & BALANCES ============
 
 // Get customer balance & unpaid orders
@@ -2685,6 +2706,86 @@ app.get("/api/customer/orders", checkMongoDB, customerLimiter, async (req, res) 
   }
 });
 
+
+// Customer edits their order (allowed ONLY if admin has not printed the order yet)
+app.put("/api/customer/orders/:id", checkMongoDB, customerLimiter, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phone, shop, items, deliveryDate, notes } = req.body;
+
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ error: "رقم الهاتف مطلوب" });
+    }
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف الطلب غير صالح" });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "يجب أن يحتوي الطلب على صنف واحد على الأقل" });
+    }
+
+    const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
+    const order = await ordColl.findOne({ _id: new ObjectId(id) });
+
+    if (!order) {
+      return res.status(404).json({ error: "الطلب غير موجود" });
+    }
+
+    if (order.customerInfo?.phone !== phone.trim()) {
+      return res.status(403).json({ error: "لا يمكنك تعديل هذا الطلب" });
+    }
+
+    // CRITICAL CHECK: Customer cannot edit if order has already been printed by admin!
+    if (order.printed) {
+      return res.status(403).json({ error: "تمت طباعة هذا الطلب في المحل ولا يمكن تعديله. يرجى التواصل مع الإدارة." });
+    }
+
+    if (['received', 'completed', 'cancelled'].includes(order.status)) {
+      return res.status(400).json({ error: "لا يمكن تعديل طلب مكتمل أو ملغي" });
+    }
+
+    // Calculate new total price
+    let newTotal = 0;
+    const updatedItems = items.map(item => {
+      const qty = Math.max(0.1, Number(item.quantity) || 1);
+      const price = Number(item.price) || 0;
+      newTotal += price * qty;
+      return {
+        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
+        name: item.name,
+        price: price,
+        quantity: item.allowFloat ? Math.round(qty * 10) / 10 : Math.round(qty),
+        allowFloat: !!item.allowFloat,
+        notes: (item.notes || '').trim()
+      };
+    });
+
+    newTotal = Math.round(newTotal * 100) / 100;
+
+    const paidAmount = order.paidAmount || 0;
+    const newPaymentStatus = paidAmount >= newTotal && newTotal > 0 ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid');
+
+    await ordColl.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          items: updatedItems,
+          totalPrice: newTotal,
+          deliveryDate: deliveryDate !== undefined ? deliveryDate : order.deliveryDate,
+          notes: notes !== undefined ? notes : order.notes,
+          paymentStatus: newPaymentStatus,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    const updatedOrder = await ordColl.findOne({ _id: new ObjectId(id) });
+    res.json({ success: true, order: { ...updatedOrder, shop } });
+  } catch (err) {
+    console.error("Customer edit order error:", err);
+    res.status(500).json({ error: "فشل تعديل الطلب" });
+  }
+});
+
 // Customer confirms order received
 app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, async (req, res) => {
   try {
@@ -2780,6 +2881,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       notes: notes || '',
       priceMode: priceMode || 'regular',
       status: status && ['pending', 'ready', 'received', 'cancelled'].includes(status) ? status : 'pending',
+      printed: false,
       whatsappSent: true,
       createdAt: new Date()
     };
@@ -2852,6 +2954,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       notes: notes || '',
       priceMode: priceMode || 'regular',
       status: status && ['pending', 'ready', 'received', 'cancelled'].includes(status) ? status : 'pending',
+      printed: false,
       whatsappSent: true,
       createdAt: new Date()
     };
