@@ -9,12 +9,13 @@ export const useAuthStore = defineStore('auth', () => {
   const showSetPasswordModal = ref(false);
   const showLoginModal = ref(false);
 
-  const isIdentified = computed(() => {
-    return customerName.value.length > 0 && customerPhone.value.length > 0;
-  });
+  // Keep isIdentified as a callable function for full backwards compatibility
+  const isIdentified = () => {
+    return (customerName.value || '').trim().length > 0 && (customerPhone.value || '').trim().length > 0;
+  };
 
   const isLoggedIn = computed(() => {
-    return customerPhone.value.length > 0 && (customerToken.value.length > 0 || hasPassword.value);
+    return (customerPhone.value || '').trim().length > 0 && ((customerToken.value || '').trim().length > 0 || hasPassword.value);
   });
 
   const setSession = (name, phone, token = '', passwordFlag = true) => {
@@ -27,6 +28,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('customer_phone', customerPhone.value);
     if (token) localStorage.setItem('customer_token', token);
     localStorage.setItem('customer_has_password', hasPassword.value ? 'true' : 'false');
+  };
+
+  // Backwards compatibility alias for setIdentity
+  const setIdentity = (name, phone) => {
+    setSession(name, phone, '', false);
   };
 
   const clearIdentity = () => {
@@ -125,6 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
     isIdentified,
     isLoggedIn,
     setSession,
+    setIdentity,
     clearIdentity,
     login,
     register,

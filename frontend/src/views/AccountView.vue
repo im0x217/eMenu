@@ -33,6 +33,10 @@ const balanceData = ref({
 });
 const isLoadingBalance = ref(false);
 
+const isUserIdentified = computed(() => {
+  return authStore.isIdentified();
+});
+
 const displayedOrders = computed(() => {
   return orders.value.slice(0, 5);
 });
@@ -255,7 +259,6 @@ const handleDecreaseQty = (item, idx) => {
   if (current > step) {
     item.quantity = item.allowFloat ? Math.round((current - 0.5) * 10) / 10 : current - 1;
   } else {
-    // Confirm item removal if reducing below minimum
     if (editItems.value.length === 1) {
       toastStore.show('يجب أن يحتوي الطلب على صنف واحد على الأقل', 'warning');
       return;
@@ -300,7 +303,6 @@ const handleSaveOrderEdit = async () => {
       throw new Error(data.error || 'فشل حفظ تعديل الطلب');
     }
 
-    // Update in local orders array
     const targetIdx = orders.value.findIndex(o => o._id === editingOrder.value._id);
     if (targetIdx !== -1) {
       orders.value[targetIdx].items = JSON.parse(JSON.stringify(editItems.value));
@@ -311,7 +313,7 @@ const handleSaveOrderEdit = async () => {
 
     toastStore.show('تم تحديث الطلب بنجاح! ✓', 'success');
     closeEditOrderModal();
-    loadCustomerData(); // refresh balance
+    loadCustomerData();
   } catch (err) {
     editError.value = err.message || 'فشل حفظ التعديلات';
   } finally {
@@ -396,7 +398,7 @@ const handleResendWhatsApp = () => {
   <div class="account-view-container animate-fade-in">
     
     <!-- 1. VERIFIED PROFILE CARD (WHEN LOGGED IN) -->
-    <div v-if="authStore.isIdentified" class="verified-profile-card glass-panel animate-fade-in">
+    <div v-if="isUserIdentified" class="verified-profile-card glass-panel animate-fade-in">
       <div class="profile-card-header">
         <div class="profile-avatar-badge">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -563,7 +565,7 @@ const handleResendWhatsApp = () => {
     </div>
 
     <!-- 3. CUSTOMER CURRENT BALANCE SECTION (WHEN LOGGED IN) -->
-    <div v-if="authStore.isIdentified" class="customer-balance-section glass-panel animate-fade-in">
+    <div v-if="isUserIdentified" class="customer-balance-section glass-panel animate-fade-in">
       <div class="balance-header-row">
         <div class="balance-title-group">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="balance-icon">
@@ -820,7 +822,7 @@ const handleResendWhatsApp = () => {
           </button>
           <button class="btn-modal-action btn-send-wa" @click="handleResendWhatsApp">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
             إعادة الإرسال عبر واتساب
           </button>
