@@ -14763,7 +14763,6 @@ select.pos-control {
   border-color: #f59e0b !important;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
 }
-</style>
 
 /* ==========================================================================
    MOBILE ADAPTIVE CARD-VIEW & POS ERGONOMICS (HABIT 15)
@@ -15160,3 +15159,4 @@ select.pos-control {
     100% { transform: translateY(0); }
   }
 }
+</style>
