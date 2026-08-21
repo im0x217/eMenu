@@ -15159,4 +15159,161 @@ select.pos-control {
     100% { transform: translateY(0); }
   }
 }
+
+/* ==========================================================================
+   MOBILE CONTROLS & DATEPICKER OVERFLOW FIX
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Prevent any toolbar or filter container from overflowing horizontally */
+  .card-toolbar,
+  .card-toolbar-split,
+  .orders-toolbar-container,
+  .card-toolbar-top,
+  .card-toolbar-bottom,
+  .orders-search-print-row,
+  .orders-filters-row,
+  .card-toolbar-split .card-toolbar-bottom,
+  .filters-inline,
+  .date-range-bar,
+  .analytics-header-actions,
+  .cust-date-range-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .card-toolbar-top {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  .toolbar-title-group {
+    margin-bottom: 2px !important;
+  }
+
+  .search-input-wrapper {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .search-input-wrapper .search-input,
+  .search-input-wrapper input.form-control {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .order-status-select,
+  .select-pill,
+  select.form-control {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .btn-datepicker-trigger,
+  .btn-standard-datepicker-trigger,
+  .btn-range-trigger {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    justify-content: space-between !important;
+  }
+
+  .btn-make-order,
+  .reconciliation-print-btn,
+  .card-toolbar-top .btn-primary {
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .date-filter-group {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .date-filter-group > .position-relative {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .btn-today-shortcut {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    font-size: 0.85rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .selected-date-badge {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    margin-top: 2px !important;
+  }
+
+  .table-card {
+    padding: 12px 10px !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Center DatePicker Popover as a clean modal on mobile viewports */
+  .datepicker-popover {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 320px !important;
+    z-index: 99999 !important;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.4) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 20px !important;
+    box-sizing: border-box !important;
+    animation: datePickerModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  @keyframes datePickerModalPop {
+    0% { transform: translate(-50%, -46%) scale(0.95); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+
+  .autocomplete-suggestions-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
 </style>
