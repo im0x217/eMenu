@@ -638,7 +638,8 @@
               </div>
 
               <div class="table-container">
-                <table class="admin-table">
+                <!-- Desktop Orders Table -->
+                <table class="admin-table desktop-orders-table">
                   <thead>
                     <tr>
                       <th>الصورة</th>
@@ -714,6 +715,63 @@
                     </tr>
                   </tbody>
                 </table>
+
+                <!-- Mobile Products Cards Grid (Active on screens <= 768px) -->
+                <div class="mobile-products-cards-grid">
+                  <div v-if="filteredProducts.length === 0" class="mobile-empty-card glass-panel">
+                    <span>لا توجد منتجات مطابقة لخيارات التصفية.</span>
+                  </div>
+                  <div 
+                    v-for="prod in paginatedProducts" 
+                    :key="'mob-prod-' + prod._id"
+                    class="mobile-product-card glass-panel"
+                  >
+                    <div class="mob-prod-main">
+                      <div class="admin-table-img-wrapper mob-prod-img-box" @click="zoomImage(prod.img)" title="تكبير الصورة">
+                        <img 
+                          :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" 
+                          class="table-prod-img" 
+                          loading="lazy" 
+                          decoding="async"
+                          @error="$event.target.src = activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'"
+                        />
+                      </div>
+                      <div class="mob-prod-info">
+                        <div class="mob-prod-title-row">
+                          <span class="mob-prod-name font-bold">{{ prod.name }}</span>
+                          <span class="badge-sub">{{ prod.category }}</span>
+                        </div>
+                        <div class="mob-prod-prices">
+                          <span class="mob-price-pill regular text-mono">مفرد: {{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</span>
+                          <span v-if="prod.price_bulk" class="mob-price-pill bulk text-mono">جملة: {{ formatCurrency(prod.price_bulk) }}</span>
+                        </div>
+                        <div v-if="prod.tags && prod.tags.length" class="tags-container-small mt-1">
+                          <span 
+                            v-for="(tagName, index) in prod.tags.slice(0, 2)" 
+                            :key="index" 
+                            class="tag-pill tag-pill-table inline-flex items-center gap-1"
+                            :class="'tag-' + (getTagDetails(tagName).color || 'default')"
+                          >
+                            <span>{{ tagName }}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mob-prod-footer">
+                      <div class="mob-avail-switch">
+                        <span class="mob-avail-label">{{ prod.available ? 'متوفر' : 'غير متوفر' }}</span>
+                        <div class="toggle-switch">
+                          <input type="checkbox" :id="'mob-avail-'+prod._id" :checked="prod.available" @change="toggleProductAvailability(prod)" />
+                          <label :for="'mob-avail-'+prod._id"></label>
+                        </div>
+                      </div>
+                      <div class="btn-group-row">
+                        <button @click="openProductModal(prod)" class="btn btn-sm btn-outline">تعديل</button>
+                        <button @click="deleteProduct(prod._id)" class="btn btn-sm btn-danger">حذف</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Products Table Numbered Pagination Bar -->
@@ -1118,6 +1176,116 @@
                     </tr>
                   </tbody>
                 </table>
+
+                <!-- Mobile Orders Cards Grid (Active on screens <= 768px) -->
+                <div class="mobile-orders-cards-grid">
+                  <div v-if="filteredOrders.length === 0" class="mobile-empty-card glass-panel">
+                    <span>لا توجد طلبات متطابقة.</span>
+                  </div>
+                  <div 
+                    v-for="order in paginatedOrders" 
+                    :key="'mob-ord-' + order._id"
+                    class="mobile-order-card glass-panel"
+                    :class="'border-status-' + order.status"
+                  >
+                    <!-- Card Top Header -->
+                    <div class="mob-card-header">
+                      <div class="mob-card-id-group">
+                        <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
+                        <span class="price-mode-badge" :class="order.priceMode">
+                          {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
+                        </span>
+                        <span v-if="order.printed" class="order-printed-tag" title="تمت الطباعة">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          <span>مطبوع</span>
+                        </span>
+                      </div>
+                      <span class="mob-card-time text-mono">{{ new Date(order.createdAt).toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }) }}</span>
+                    </div>
+
+                    <!-- Customer Row with Fast Actions -->
+                    <div class="mob-card-customer-row">
+                      <div class="mob-cust-details">
+                        <span class="mob-cust-name font-bold">{{ order.customerInfo.name }}</span>
+                        <span class="mob-cust-phone text-mono" dir="ltr">{{ order.customerInfo.phone }}</span>
+                      </div>
+                      <div class="mob-cust-quick-actions">
+                        <a :href="'https://wa.me/' + (order.customerInfo.phone.replace(/[^0-9]/g, ''))" target="_blank" class="mob-action-circle whatsapp-circle" title="مراسلة عبر واتساب">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        </a>
+                        <a :href="'tel:' + order.customerInfo.phone" class="mob-action-circle call-circle" title="اتصال">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        </a>
+                      </div>
+                    </div>
+
+                    <!-- Items List Summary -->
+                    <div class="mob-card-items-list">
+                      <div v-for="(item, idx) in order.items" :key="idx" class="mob-item-chip">
+                        <span class="mob-item-name">{{ item.name }}</span>
+                        <span class="mob-item-qty">× {{ item.quantity }}</span>
+                        <span v-if="item.notes" class="mob-item-note">({{ item.notes }})</span>
+                      </div>
+                    </div>
+
+                    <!-- Delivery Date & Notes if exists -->
+                    <div v-if="order.deliveryDate || order.notes" class="mob-card-meta-row">
+                      <span v-if="order.deliveryDate" class="mob-meta-delivery">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>استلام: {{ formatArabicDate(order.deliveryDate) }}</span>
+                      </span>
+                      <span v-if="order.notes" class="mob-meta-note">
+                        <span>ملاحظة: {{ order.notes }}</span>
+                      </span>
+                    </div>
+
+                    <!-- Price & Payment Summary Row -->
+                    <div class="mob-card-price-row">
+                      <div class="mob-price-group">
+                        <span class="mob-price-label">المجموع:</span>
+                        <span class="mob-price-val text-mono font-bold">{{ formatCurrency(order.totalPrice) }}</span>
+                      </div>
+                      <button 
+                        type="button" 
+                        class="payment-status-badge" 
+                        :class="[order.paymentStatus || 'unpaid', { 'is-cancelled': order.status === 'cancelled' }]" 
+                        @click="order.status !== 'cancelled' && openPaymentModal(order.customerInfo, order)"
+                      >
+                        <span class="badge-icon">
+                          <svg v-if="order.paymentStatus === 'paid'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          <svg v-else-if="order.paymentStatus === 'partial'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                          <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </span>
+                        <span class="badge-text">
+                          <template v-if="order.paymentStatus === 'paid'">خالص</template>
+                          <template v-else-if="order.paymentStatus === 'partial'">جزئي {{ formatCurrency(order.paidAmount || 0) }}</template>
+                          <template v-else>غير خالص</template>
+                        </span>
+                      </button>
+                    </div>
+
+                    <!-- Card Action Buttons & Status Selector -->
+                    <div class="mob-card-footer-actions">
+                      <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select mob-status-select" :class="'status-' + order.status">
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="ready">جاهز للاستلام</option>
+                        <option value="received">تم الاستلام</option>
+                        <option value="cancelled">ملغي</option>
+                      </select>
+
+                      <div class="mob-action-buttons-group">
+                        <button @click="openOrderEditModal(order)" class="btn-table-action btn-action-edit" title="تعديل">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          <span>تعديل</span>
+                        </button>
+                        <button @click="printOrder(order)" class="btn-table-action btn-action-print" title="طباعة">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                          <span>طباعة</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Orders Table Numbered Pagination Bar -->
@@ -1954,7 +2122,7 @@
               </div>
 
               <div class="table-container">
-                <table class="admin-table">
+                <table class="admin-table desktop-customers-table">
                   <thead>
                     <tr>
                       <th>العميل</th>
@@ -2013,6 +2181,62 @@
                     </tr>
                   </tbody>
                 </table>
+
+                <!-- Mobile Customers Cards Grid (Active on screens <= 768px) -->
+                <div class="mobile-customers-cards-grid">
+                  <div v-if="filteredCustomers.length === 0" class="mobile-empty-card glass-panel">
+                    <span>لا توجد سجلات عملاء متطابقة.</span>
+                  </div>
+                  <div 
+                    v-for="cust in paginatedCustomers" 
+                    :key="'mob-cust-' + cust._id"
+                    class="mobile-customer-card glass-panel"
+                  >
+                    <div class="mob-cust-card-header" @click="openCustomerDetails(cust)">
+                      <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
+                      <div class="mob-cust-card-info">
+                        <span class="customer-name-text font-bold">{{ cust.name }}</span>
+                        <span class="customer-phone-subtext text-mono" dir="ltr">{{ cust.phone }}</span>
+                      </div>
+                      <span class="customer-balance-cell font-bold" :style="{ color: (cust.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
+                        {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : 'مُسدد بالكامل' }}
+                      </span>
+                    </div>
+
+                    <div class="mob-cust-stats-row">
+                      <div class="mob-cust-stat">
+                        <span class="stat-lbl">الطلبات:</span>
+                        <span class="stat-val font-bold">{{ cust.orderCount || 0 }}</span>
+                      </div>
+                      <div class="mob-cust-stat">
+                        <span class="stat-lbl">المشتريات:</span>
+                        <span class="stat-val font-bold text-mono">{{ formatCurrency(cust.totalSpent || 0) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="mob-cust-card-actions">
+                      <button 
+                        type="button" 
+                        @click="openPaymentModal(cust)" 
+                        class="cust-btn btn-pay" 
+                        title="تسجيل دفعة جديدة"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        <span>تسجيل دفعة</span>
+                      </button>
+                      
+                      <button 
+                        type="button" 
+                        @click="openCustomerDetails(cust)" 
+                        class="cust-btn btn-details" 
+                        title="عرض الملف التعريفي والخيارات"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>الملف والتفاصيل</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Customers Table Numbered Pagination Bar -->
@@ -14540,3 +14764,399 @@ select.pos-control {
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
 }
 </style>
+
+/* ==========================================================================
+   MOBILE ADAPTIVE CARD-VIEW & POS ERGONOMICS (HABIT 15)
+   ========================================================================== */
+
+.mobile-orders-cards-grid,
+.mobile-products-cards-grid,
+.mobile-customers-cards-grid {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide heavy desktop multi-column tables on phone screens */
+  .desktop-orders-table,
+  .desktop-products-table,
+  .desktop-customers-table {
+    display: none !important;
+  }
+
+  /* Show touch-first mobile cards */
+  .mobile-orders-cards-grid,
+  .mobile-products-cards-grid,
+  .mobile-customers-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 4px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobile-empty-card {
+    padding: 30px 16px;
+    text-align: center;
+    color: var(--text-muted, #64748b);
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  /* --- Mobile Order Card --- */
+  .mobile-order-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mobile-order-card.border-status-pending { border-right: 4px solid #f59e0b; }
+  .mobile-order-card.border-status-ready { border-right: 4px solid #3b82f6; }
+  .mobile-order-card.border-status-received { border-right: 4px solid #10b981; }
+  .mobile-order-card.border-status-cancelled { border-right: 4px solid #ef4444; }
+
+  .mob-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mob-card-id-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .mob-card-time {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .mob-card-customer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+
+  .mob-cust-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mob-cust-name {
+    font-size: 0.95rem;
+    color: #0f172a;
+  }
+
+  .mob-cust-phone {
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+
+  .mob-cust-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mob-action-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .mob-action-circle.whatsapp-circle {
+    background: rgba(37, 211, 102, 0.12);
+    color: #25d366;
+    border: 1px solid rgba(37, 211, 102, 0.25);
+  }
+
+  .mob-action-circle.call-circle {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+  }
+
+  .mob-card-items-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mob-item-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #334155;
+  }
+
+  .mob-item-qty {
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .mob-item-note {
+    color: #d97706;
+    font-size: 0.74rem;
+  }
+
+  .mob-card-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #64748b;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 6px;
+  }
+
+  .mob-meta-delivery {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #2563eb;
+    font-weight: 700;
+  }
+
+  .mob-card-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+  }
+
+  .mob-price-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mob-price-label {
+    font-size: 0.86rem;
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .mob-price-val {
+    font-size: 1.15rem;
+    color: var(--primary-color, #d97706);
+  }
+
+  .mob-card-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+  }
+
+  .mob-status-select {
+    flex: 1;
+    min-width: 0 !important;
+    height: 40px !important;
+    font-size: 0.84rem !important;
+  }
+
+  .mob-action-buttons-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .mob-action-buttons-group .btn-table-action {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 0.84rem;
+    border-radius: 8px;
+  }
+
+  /* --- Mobile Product Card --- */
+  .mobile-product-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .mob-prod-main {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .mob-prod-img-box {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  .mob-prod-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .mob-prod-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .mob-prod-name {
+    font-size: 0.95rem;
+    color: #0f172a;
+    line-height: 1.3;
+  }
+
+  .mob-prod-prices {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .mob-price-pill {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+
+  .mob-price-pill.regular {
+    background: #e7f5ff;
+    color: #228be6;
+  }
+
+  .mob-price-pill.bulk {
+    background: #fff4e6;
+    color: #fd7e14;
+  }
+
+  .mob-prod-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+  }
+
+  .mob-avail-switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mob-avail-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+
+  /* --- Mobile Customer Card --- */
+  .mobile-customer-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .mob-cust-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .mob-cust-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mob-cust-stats-row {
+    display: flex;
+    gap: 14px;
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+  }
+
+  .mob-cust-stat {
+    display: flex;
+    gap: 4px;
+  }
+
+  .mob-cust-stat .stat-lbl {
+    color: #64748b;
+  }
+
+  .mob-cust-card-actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+  }
+
+  .mob-cust-card-actions .cust-btn {
+    flex: 1;
+    justify-content: center;
+    height: 38px;
+    font-size: 0.84rem;
+  }
+
+  /* Adaptive Bottom-Sheet Modals on Mobile */
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-box,
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 20px 16px !important;
+    margin: 0 !important;
+    animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  @keyframes slideUpMobile {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+}
