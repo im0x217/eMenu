@@ -1,4 +1,5 @@
 <script setup>
+import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl } from '../utils/phone';
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -296,7 +297,7 @@ const handleCopyMessage = async () => {
 const handleResendWhatsApp = () => {
   if (!selectedOrder.value) return;
   const number = getWhatsAppNumber(selectedOrder.value);
-  const url = `https://wa.me/${number.replace('+', '')}?text=${encodeURIComponent(whatsappMessageText.value)}`;
+  const url = `https://wa.me/${formatLibyanWhatsappNumber(number)}?text=${encodeURIComponent(whatsappMessageText.value)}`
   window.location.href = url;
 };
 </script>

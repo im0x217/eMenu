@@ -1210,7 +1210,7 @@
                         <span class="mob-cust-phone text-mono" dir="ltr">{{ order.customerInfo.phone }}</span>
                       </div>
                       <div class="mob-cust-quick-actions">
-                        <a :href="'https://wa.me/' + (order.customerInfo.phone.replace(/[^0-9]/g, ''))" target="_blank" class="mob-action-circle whatsapp-circle" title="مراسلة عبر واتساب">
+                        <a :href="getLibyanWhatsAppUrl(order.customerInfo.phone)" target="_blank" class="mob-action-circle whatsapp-circle" title="مراسلة عبر واتساب">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         </a>
                         <a :href="'tel:' + order.customerInfo.phone" class="mob-action-circle call-circle" title="اتصال">
@@ -2666,7 +2666,7 @@
               <div class="profile-phone-row">
                 <span class="profile-phone-text text-mono">{{ selectedCustomer.phone }}</span>
                 <div class="profile-quick-actions">
-                  <a :href="'https://wa.me/' + (selectedCustomer.phone.replace(/[^0-9]/g, ''))" target="_blank" class="profile-action-icon whatsapp-icon" title="مراسلة عبر واتساب">
+                  <a :href="getLibyanWhatsAppUrl(selectedCustomer.phone)" target="_blank" class="profile-action-icon whatsapp-icon" title="مراسلة عبر واتساب">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                   </a>
                   <a :href="'tel:' + selectedCustomer.phone" class="profile-action-icon call-icon" title="اتصال بالعميل">
@@ -3590,6 +3590,7 @@ import CategoryIcon from '../components/CategoryIcon.vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import JsBarcode from 'jsbarcode';
+import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl } from '../utils/phone';
 
 export default {
   name: 'AdminView',
@@ -7275,6 +7276,8 @@ const closeSuggestionsWithDelay = () => {
     });
 
     return {
+      formatLibyanWhatsappNumber,
+      getLibyanWhatsAppUrl,
       loading,
       isAuthenticated,
       sidebarOpen,

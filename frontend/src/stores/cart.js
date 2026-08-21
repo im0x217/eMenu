@@ -1,3 +1,4 @@
+import { formatLibyanWhatsappNumber } from '../utils/phone';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from './auth';
@@ -266,7 +267,7 @@ export const useCartStore = defineStore('cart', () => {
       const assignedNum = editingOrderNumber.value;
       const number = getWhatsAppNumber();
       const message = constructWhatsAppMessage(assignedNum, true);
-      const url = `https://wa.me/${number.replace('+', '')}?text=${message}`;
+      const url = `https://wa.me/${formatLibyanWhatsappNumber(number)}?text=${message}`;
 
       clearCart();
       window.location.href = url;
@@ -328,7 +329,7 @@ export const useCartStore = defineStore('cart', () => {
 
     const number = getWhatsAppNumber();
     const message = constructWhatsAppMessage(assignedOrderNumber, false);
-    const url = `https://wa.me/${number.replace('+', '')}?text=${message}`;
+    const url = `https://wa.me/${formatLibyanWhatsappNumber(number)}?text=${message}`;
     
     clearCart();
     window.location.href = url;
