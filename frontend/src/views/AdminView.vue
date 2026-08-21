@@ -639,7 +639,7 @@
 
               <div class="table-container">
                 <!-- Desktop Orders Table -->
-                <table class="admin-table desktop-orders-table">
+                <table class="admin-table desktop-products-table">
                   <thead>
                     <tr>
                       <th>الصورة</th>
@@ -1089,7 +1089,7 @@
               </div>
 
               <div class="table-container">
-                <table class="admin-table">
+                <table class="admin-table desktop-orders-table">
                   <thead>
                     <tr>
                       <th>رقم الطلب</th>
