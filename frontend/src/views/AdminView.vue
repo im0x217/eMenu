@@ -2395,14 +2395,6 @@
                       <div class="chef-assigned-products-box">
                         <div class="assigned-box-header">
                           <span class="assigned-title font-bold">الأصناف المسندة ({{ getChefAssignedProducts(chef._id).length }}):</span>
-                          <button 
-                            type="button" 
-                            @click="openAssignProductsModal(chef)" 
-                            class="btn-edit-assign-inline"
-                            title="تعديل الأصناف المسندة"
-                          >
-                            تعديل
-                          </button>
                         </div>
 
                         <div v-if="getChefAssignedProducts(chef._id).length > 0" class="assigned-chips-list">
