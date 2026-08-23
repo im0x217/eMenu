@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v18';
+const CACHE_NAME = 'emenu-cache-v19';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -39,11 +39,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Skip caching for non-GET requests, API routes, app assets, or different origins
+  // Skip caching for non-GET requests, API routes, /app SPA, or different origins
   if (
     event.request.method !== 'GET' || 
     url.pathname.startsWith('/api') || 
-    url.pathname.startsWith('/app/assets') ||
+    url.pathname.startsWith('/app') ||
     !event.request.url.startsWith(self.location.origin)
   ) {
     return;

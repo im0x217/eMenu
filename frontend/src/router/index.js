@@ -3,6 +3,7 @@ import ShopView from '../views/ShopView.vue';
 import FavoritesView from '../views/FavoritesView.vue';
 import CartView from '../views/CartView.vue';
 import AccountView from '../views/AccountView.vue';
+import AdminView from '../views/AdminView.vue';
 
 import { useShopStore } from '../stores/shop';
 
@@ -52,7 +53,7 @@ const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: () => import('../views/AdminView.vue')
+    component: AdminView
   },
   {
     path: '/:catchAll(.*)',
@@ -70,6 +71,17 @@ import { trackPageView } from '../utils/analytics';
 // Auto-track page views on route change
 router.afterEach((to) => {
   trackPageView(to.fullPath, to.name ? String(to.name) : '');
+});
+
+// Auto-reload on chunk loading failure
+router.onError((error) => {
+  if (
+    /loading chunk \d+ failed/i.test(error.message) || 
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('Importing a module script failed')
+  ) {
+    window.location.reload();
+  }
 });
 
 export default router;
