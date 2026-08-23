@@ -2456,57 +2456,169 @@
               </div>
             </div>
 
-            <!-- SUB-TAB 2: PRODUCTION & SALES REPORT (ORGANIZED COHESIVE CONTAINER CARD) -->
+            <!-- SUB-TAB 2: PRODUCTION & SALES REPORT (STANDARDIZED DATE PICKER, MATCHED BUTTONS & SKELETON LOADER) -->
             <div v-else-if="productionSubTab === 'report'" class="production-report-section animate-fade-in">
               <div class="table-card glass-panel overflow-hidden">
-                <!-- Toolbar Header with Title & Action Buttons -->
+                <!-- Toolbar Header with Title & Matched Action Buttons -->
                 <div class="card-toolbar card-toolbar-split">
                   <div class="card-toolbar-top">
                     <div class="toolbar-title-group">
                       <h3 class="toolbar-title">تقرير مبيعات وإنتاج الشيفات</h3>
                       <span class="toolbar-badge">{{ productionReportData.chefReport ? productionReportData.chefReport.length : 0 }} شيف منتج</span>
                     </div>
-                    <div class="d-flex gap-2 align-items-center">
-                      <button @click="printProductionReport" class="btn btn-outline btn-sm flex-center" title="طباعة كشف الإنتاج الرسمي بصيغة A4">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span>طباعة التقرير (A4)</span>
+                    <!-- Matched Action Buttons -->
+                    <div class="report-header-actions-row">
+                      <button @click="printProductionReport" class="btn btn-outline btn-report-action" title="طباعة كشف الإنتاج الرسمي بصيغة A4">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span>طباعة التقرير</span>
                       </button>
-                      <button @click="loadProductionReport" class="btn btn-primary btn-sm flex-center" :disabled="isLoadingReport" title="تحديث بيانات التقرير">
+                      <button @click="loadProductionReport" class="btn btn-primary btn-report-action" :disabled="isLoadingReport" title="تحديث بيانات التقرير">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                        <span>تحديث</span>
+                        <span>تحديث البيانات</span>
                       </button>
                     </div>
                   </div>
 
-                  <!-- Integrated Filter Controls Bar -->
+                  <!-- Standardized Arabic Date Picker & Filter Controls Bar (Habit 6) -->
                   <div class="card-toolbar-bottom report-filter-bar">
-                    <div class="report-filters-grid">
-                      <!-- Date From -->
-                      <div class="filter-field-box">
-                        <label class="filter-field-label">من تاريخ:</label>
-                        <input type="date" v-model="productionReportFilters.dateFrom" @change="loadProductionReport" class="form-control form-control-sm" />
-                      </div>
-
-                      <!-- Date To -->
-                      <div class="filter-field-box">
-                        <label class="filter-field-label">إلى تاريخ:</label>
-                        <input type="date" v-model="productionReportFilters.dateTo" @change="loadProductionReport" class="form-control form-control-sm" />
-                      </div>
-
-                      <!-- Chef Selector -->
-                      <div class="filter-field-box flex-grow-1" style="min-width: 180px;">
-                        <label class="filter-field-label">تصفية بالشيف:</label>
-                        <select v-model="productionReportFilters.chefId" @change="loadProductionReport" class="form-control form-control-sm">
+                    <div class="report-standard-filters-row">
+                      <!-- Chef Selector Dropdown -->
+                      <div class="report-chef-select-box">
+                        <label class="filter-field-label">الشيف:</label>
+                        <select v-model="productionReportFilters.chefId" @change="loadProductionReport" class="form-control form-control-sm select-chef-control">
                           <option value="">جميع الشيفات المسجلين</option>
                           <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }}</option>
                         </select>
                       </div>
 
-                      <!-- Quick Shortcuts -->
-                      <div class="filter-shortcuts-group">
-                        <button type="button" @click="setProductionDateShortcut('today')" class="btn-filter-shortcut">اليوم</button>
-                        <button type="button" @click="setProductionDateShortcut('7d')" class="btn-filter-shortcut">7 أيام</button>
-                        <button type="button" @click="setProductionDateShortcut('month')" class="btn-filter-shortcut">هذا الشهر</button>
+                      <!-- Standard Date Filter Component Group -->
+                      <div class="date-filter-group">
+                        <!-- From Date Trigger -->
+                        <div class="position-relative">
+                          <button 
+                            type="button" 
+                            class="btn-datepicker-trigger" 
+                            :class="{ active: prodDateFromOpen || productionReportFilters.dateFrom }"
+                            @click.stop="openProdDateFromPicker"
+                            title="تاريخ البداية (من)"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span>{{ productionReportFilters.dateFrom ? ('من: ' + formatArabicDate(productionReportFilters.dateFrom)) : 'من تاريخ' }}</span>
+                          </button>
+
+                          <!-- From Date Popover -->
+                          <div v-if="prodDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                            <div class="datepicker-header">
+                              <button type="button" class="dp-nav-btn" @click="prodFromPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                              <span class="dp-month-title">{{ prodFromMonthYearLabel }}</span>
+                              <button type="button" class="dp-nav-btn" @click="prodFromNextMonth" title="الشهر التالي">&rsaquo;</button>
+                            </div>
+
+                            <div class="dp-weekdays">
+                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                            </div>
+
+                            <div class="dp-days-grid">
+                              <button 
+                                type="button"
+                                v-for="(dayObj, idx) in prodFromCalendarDays" 
+                                :key="idx"
+                                class="dp-day-cell"
+                                :class="{ 
+                                  'other-month': !dayObj.inMonth,
+                                  'is-today': dayObj.isToday,
+                                  'is-selected': productionReportFilters.dateFrom === dayObj.dateStr
+                                }"
+                                @click="selectProdDateFrom(dayObj.dateStr)"
+                              >
+                                {{ dayObj.dayNum }}
+                              </button>
+                            </div>
+
+                            <div class="datepicker-footer">
+                              <button type="button" class="btn-dp-show-all" @click="selectProdDateFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- To Date Trigger -->
+                        <div class="position-relative">
+                          <button 
+                            type="button" 
+                            class="btn-datepicker-trigger" 
+                            :class="{ active: prodDateToOpen || productionReportFilters.dateTo }"
+                            @click.stop="openProdDateToPicker"
+                            title="تاريخ النهاية (إلى)"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span>{{ productionReportFilters.dateTo ? ('إلى: ' + formatArabicDate(productionReportFilters.dateTo)) : 'إلى تاريخ' }}</span>
+                          </button>
+
+                          <!-- To Date Popover -->
+                          <div v-if="prodDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                            <div class="datepicker-header">
+                              <button type="button" class="dp-nav-btn" @click="prodToPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                              <span class="dp-month-title">{{ prodToMonthYearLabel }}</span>
+                              <button type="button" class="dp-nav-btn" @click="prodToNextMonth" title="الشهر التالي">&rsaquo;</button>
+                            </div>
+
+                            <div class="dp-weekdays">
+                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                            </div>
+
+                            <div class="dp-days-grid">
+                              <button 
+                                type="button"
+                                v-for="(dayObj, idx) in prodToCalendarDays" 
+                                :key="idx"
+                                class="dp-day-cell"
+                                :class="{ 
+                                  'other-month': !dayObj.inMonth,
+                                  'is-today': dayObj.isToday,
+                                  'is-selected': productionReportFilters.dateTo === dayObj.dateStr
+                                }"
+                                @click="selectProdDateTo(dayObj.dateStr)"
+                              >
+                                {{ dayObj.dayNum }}
+                              </button>
+                            </div>
+
+                            <div class="datepicker-footer">
+                              <button type="button" class="btn-dp-show-all" @click="selectProdDateTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Date Shortcuts -->
+                        <button 
+                          type="button" 
+                          class="btn-today-shortcut" 
+                          :class="{ active: isProdRangeToday }" 
+                          @click="setProductionDateShortcut('today')"
+                          title="عرض مبيعات وإنتاج اليوم"
+                        >اليوم</button>
+
+                        <button 
+                          type="button" 
+                          class="btn-today-shortcut" 
+                          :class="{ active: isProdRange7d }" 
+                          @click="setProductionDateShortcut('7d')"
+                          title="عرض آخر 7 أيام"
+                        >آخر 7 أيام</button>
+
+                        <button 
+                          type="button" 
+                          class="btn-today-shortcut" 
+                          :class="{ active: isProdRangeMonth }" 
+                          @click="setProductionDateShortcut('month')"
+                          title="عرض هذا الشهر"
+                        >هذا الشهر</button>
+
+                        <!-- Selected Date Range Display Badge -->
+                        <div v-if="productionReportFilters.dateFrom || productionReportFilters.dateTo" class="selected-date-badge animate-fade-in">
+                          <span class="date-text">{{ productionReportFilters.dateFrom && productionReportFilters.dateTo ? (formatArabicDate(productionReportFilters.dateFrom) + ' ← ' + formatArabicDate(productionReportFilters.dateTo)) : formatArabicDate(productionReportFilters.dateFrom || productionReportFilters.dateTo) }}</span>
+                          <button type="button" class="btn-remove-date" @click="clearProdDateRange" title="إلغاء التصفية بالتاريخ">&times;</button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2514,10 +2626,40 @@
 
                 <!-- Report Content Body -->
                 <div class="p-4">
-                  <!-- Loading State -->
-                  <div v-if="isLoadingReport" class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted">جاري تحليل بيانات الإنتاج والمبيعات…</p>
+                  <!-- Shimmering Skeleton Loader State -->
+                  <div v-if="isLoadingReport" class="report-skeleton-container animate-fade-in">
+                    <!-- Skeleton KPI Cards -->
+                    <div class="report-kpi-cards-grid mb-4">
+                      <div v-for="i in 4" :key="'sk-kpi-' + i" class="report-kpi-box skeleton-box">
+                        <div class="skeleton-shimmer-circle"></div>
+                        <div class="kpi-box-content flex-grow-1">
+                          <div class="skeleton-shimmer-line sm mb-2" style="width: 55%;"></div>
+                          <div class="skeleton-shimmer-line lg" style="width: 40%;"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Skeleton Breakdown Tables -->
+                    <div v-for="i in 2" :key="'sk-card-' + i" class="chef-breakdown-card skeleton-box mb-4">
+                      <div class="chef-breakdown-header">
+                        <div class="d-flex align-items-center gap-3">
+                          <div class="skeleton-shimmer-circle sm"></div>
+                          <div>
+                            <div class="skeleton-shimmer-line md mb-2" style="width: 140px;"></div>
+                            <div class="skeleton-shimmer-line sm" style="width: 90px;"></div>
+                          </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                          <div class="skeleton-shimmer-pill" style="width: 70px;"></div>
+                          <div class="skeleton-shimmer-pill" style="width: 90px;"></div>
+                        </div>
+                      </div>
+                      <div class="p-3">
+                        <div class="skeleton-shimmer-line sm mb-3"></div>
+                        <div class="skeleton-shimmer-line sm mb-3"></div>
+                        <div class="skeleton-shimmer-line sm"></div>
+                      </div>
+                    </div>
                   </div>
 
                   <div v-else>
@@ -4859,6 +5001,112 @@ export default {
       dateTo: '',
       chefId: ''
     });
+    const prodDateFromOpen = ref(false);
+    const prodDateToOpen = ref(false);
+    const prodFromCurrentMonth = ref(new Date());
+    const prodToCurrentMonth = ref(new Date());
+
+    const openProdDateFromPicker = () => {
+      prodDateFromOpen.value = !prodDateFromOpen.value;
+      if (prodDateFromOpen.value) {
+        prodDateToOpen.value = false;
+        if (productionReportFilters.dateFrom) {
+          prodFromCurrentMonth.value = new Date(productionReportFilters.dateFrom);
+        }
+      }
+    };
+
+    const openProdDateToPicker = () => {
+      prodDateToOpen.value = !prodDateToOpen.value;
+      if (prodDateToOpen.value) {
+        prodDateFromOpen.value = false;
+        if (productionReportFilters.dateTo) {
+          prodToCurrentMonth.value = new Date(productionReportFilters.dateTo);
+        }
+      }
+    };
+
+    const prodFromPrevMonth = () => {
+      const d = new Date(prodFromCurrentMonth.value);
+      d.setMonth(d.getMonth() - 1);
+      prodFromCurrentMonth.value = d;
+    };
+
+    const prodFromNextMonth = () => {
+      const d = new Date(prodFromCurrentMonth.value);
+      d.setMonth(d.getMonth() + 1);
+      prodFromCurrentMonth.value = d;
+    };
+
+    const prodToPrevMonth = () => {
+      const d = new Date(prodToCurrentMonth.value);
+      d.setMonth(d.getMonth() - 1);
+      prodToCurrentMonth.value = d;
+    };
+
+    const prodToNextMonth = () => {
+      const d = new Date(prodToCurrentMonth.value);
+      d.setMonth(d.getMonth() + 1);
+      prodToCurrentMonth.value = d;
+    };
+
+    const prodFromMonthYearLabel = computed(() => {
+      const d = prodFromCurrentMonth.value;
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const prodToMonthYearLabel = computed(() => {
+      const d = prodToCurrentMonth.value;
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const prodFromCalendarDays = computed(() => {
+      return buildCalendarDays(prodFromCurrentMonth.value);
+    });
+
+    const prodToCalendarDays = computed(() => {
+      return buildCalendarDays(prodToCurrentMonth.value);
+    });
+
+    const selectProdDateFrom = (dateStr) => {
+      productionReportFilters.dateFrom = dateStr;
+      prodDateFromOpen.value = false;
+      loadProductionReport();
+    };
+
+    const selectProdDateTo = (dateStr) => {
+      productionReportFilters.dateTo = dateStr;
+      prodDateToOpen.value = false;
+      loadProductionReport();
+    };
+
+    const clearProdDateRange = () => {
+      productionReportFilters.dateFrom = '';
+      productionReportFilters.dateTo = '';
+      loadProductionReport();
+    };
+
+    const isProdRangeToday = computed(() => {
+      const today = getTodayStr();
+      return productionReportFilters.dateFrom === today && productionReportFilters.dateTo === today;
+    });
+
+    const isProdRange7d = computed(() => {
+      const today = getTodayStr();
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      const start7d = d.toISOString().split('T')[0];
+      return productionReportFilters.dateFrom === start7d && productionReportFilters.dateTo === today;
+    });
+
+    const isProdRangeMonth = computed(() => {
+      const today = getTodayStr();
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const startMonth = `${y}-${m}-01`;
+      return productionReportFilters.dateFrom === startMonth && productionReportFilters.dateTo === today;
+    });
     const productionReportData = ref({
       chefReport: [],
       unassigned: [],
@@ -6890,12 +7138,17 @@ export default {
     };
 
     const getChefAssignedProducts = (chefId) => {
-      return products.value.filter(p => p.chefId === chefId);
+      if (!chefId) return [];
+      const idStr = String(chefId);
+      return products.value.filter(p => String(p.chefId) === idStr);
     };
 
     const openAssignProductsModal = (chef) => {
       selectedChefForAssign.value = chef;
-      selectedProductIdsForChef.value = products.value.filter(p => p.chefId === chef._id).map(p => p._id);
+      const idStr = String(chef._id);
+      selectedProductIdsForChef.value = products.value
+        .filter(p => String(p.chefId) === idStr)
+        .map(p => String(p._id));
       assignProductSearch.value = '';
       assignProductsModalOpen.value = true;
     };
@@ -6911,11 +7164,12 @@ export default {
     };
 
         const toggleProductAssignment = (prodId) => {
-      const idx = selectedProductIdsForChef.value.indexOf(prodId);
+      const pIdStr = String(prodId);
+      const idx = selectedProductIdsForChef.value.findIndex(id => String(id) === pIdStr);
       if (idx > -1) {
         selectedProductIdsForChef.value.splice(idx, 1);
       } else {
-        selectedProductIdsForChef.value.push(prodId);
+        selectedProductIdsForChef.value.push(pIdStr);
       }
     };
 
@@ -8619,6 +8873,24 @@ const closeSuggestionsWithDelay = () => {
       loadProductionReport,
       setProductionDateShortcut,
       printProductionReport,
+      prodDateFromOpen,
+      prodDateToOpen,
+      openProdDateFromPicker,
+      openProdDateToPicker,
+      prodFromPrevMonth,
+      prodFromNextMonth,
+      prodToPrevMonth,
+      prodToNextMonth,
+      prodFromMonthYearLabel,
+      prodToMonthYearLabel,
+      prodFromCalendarDays,
+      prodToCalendarDays,
+      selectProdDateFrom,
+      selectProdDateTo,
+      clearProdDateRange,
+      isProdRangeToday,
+      isProdRange7d,
+      isProdRangeMonth,
       editingCustomer,
       customerModalOpen,
       customerDetailsModalOpen,
@@ -17933,6 +18205,137 @@ select.pos-control {
   padding: 14px 18px;
   background: #fffaf5;
   border-bottom: 1px solid #fed7aa;
+}
+
+
+/* ==========================================================================
+   PRODUCTION REPORT MATCHED BUTTONS & SKELETON LOADER (HABIT 6 & HABIT 17)
+   ========================================================================== */
+
+.report-header-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-report-action {
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  font-weight: 750 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  transition: all 0.2s ease !important;
+}
+
+.report-standard-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.report-chef-select-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-chef-control {
+  min-width: 170px;
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+/* Skeleton Loading Shimmer Animation */
+.report-skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton-box {
+  position: relative;
+  overflow: hidden;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.skeleton-shimmer-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.skeleton-shimmer-circle.sm {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.skeleton-shimmer-line {
+  background: #e2e8f0;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer-line.sm {
+  height: 12px;
+}
+
+.skeleton-shimmer-line.md {
+  height: 16px;
+}
+
+.skeleton-shimmer-line.lg {
+  height: 22px;
+}
+
+.skeleton-shimmer-pill {
+  height: 28px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer-circle::after,
+.skeleton-shimmer-line::after,
+.skeleton-shimmer-pill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.55) 20%,
+    rgba(255, 255, 255, 0.7) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: skeletonShimmer 1.5s infinite;
+}
+
+@keyframes skeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 </style>

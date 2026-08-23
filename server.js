@@ -3273,7 +3273,7 @@ app.delete("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) =>
   }
 });
 
-// Bulk assign products to a chef
+// Bulk assign products to a chef (robust ObjectId and string matching)
 app.put("/api/admin/chefs/:id/assign-products", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -3291,22 +3291,28 @@ app.put("/api/admin/chefs/:id/assign-products", checkMongoDB, checkAdmin, async 
     if (!chef) {
       return res.status(404).json({ error: "Chef not found" });
     }
+
+    const chefIdStr = String(id);
+    const validObjectIds = productIds.filter(pid => ObjectId.isValid(pid)).map(pid => new ObjectId(pid));
     
-    // First, unassign any products currently assigned to this chef that are NOT in the new list
+    // 1. Unassign all products currently assigned to this chef that are NOT in the new selection
     await prodColl.updateMany(
-      { chefId: id, _id: { $nin: productIds.map(pid => new ObjectId(pid)) } },
+      { 
+        $or: [{ chefId: chefIdStr }, { chefId: new ObjectId(id) }],
+        _id: { $nin: validObjectIds } 
+      },
       { $set: { chefId: '', chefName: '' } }
     );
     
-    // Then, assign the specified products to this chef
-    if (productIds.length > 0) {
+    // 2. Assign the specified products to this chef
+    if (validObjectIds.length > 0) {
       await prodColl.updateMany(
-        { _id: { $in: productIds.map(pid => new ObjectId(pid)) } },
-        { $set: { chefId: id, chefName: chef.name } }
+        { _id: { $in: validObjectIds } },
+        { $set: { chefId: chefIdStr, chefName: chef.name } }
       );
     }
     
-    res.json({ success: true, assignedCount: productIds.length });
+    res.json({ success: true, assignedCount: validObjectIds.length });
   } catch (err) {
     console.error("Assign products to chef error:", err);
     res.status(500).json({ error: "Failed to assign products" });
