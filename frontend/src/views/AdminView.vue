@@ -2679,32 +2679,49 @@
 
     <!-- Chef Create/Edit Modal -->
     <div v-if="chefModalOpen" class="modal-overlay animate-fade-in" @click.self="chefModalOpen = false">
-      <div class="modal-content modal-md">
+      <div class="modal-content modal-md chef-form-modal">
         <div class="modal-header">
           <div class="modal-title-group">
-            <h2 class="modal-title">{{ editingChef._id ? 'تعديل بيانات الشيف' : 'إضافة شيف جديد' }}</h2>
+            <div class="d-flex align-items-center gap-3">
+              <div class="modal-title-icon-chef">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+              </div>
+              <div>
+                <h2 class="modal-title">{{ editingChef._id ? 'تعديل بيانات الشيف' : 'إضافة شيف جديد' }}</h2>
+                <span class="modal-subtitle">إدارة وتعيين بيانات الشيف ومتابعة أصنافه المسندة</span>
+              </div>
+            </div>
           </div>
-          <button @click="chefModalOpen = false" class="modal-close-btn">✕</button>
+          <button @click="chefModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
         <form @submit.prevent="saveChef" class="modal-form">
-          <div class="modal-body">
+          <div class="modal-body py-2">
             <div class="form-group mb-3">
-              <label class="form-label">اسم الشيف *</label>
+              <label class="form-label font-bold">اسم الشيف *</label>
               <input v-model="editingChef.name" type="text" required class="form-control" placeholder="مثال: الشيف أحمد..." />
+              <small class="form-text text-muted mt-1 d-block">الاسم الذي سيظهر في بطاقات المنتجات وتقارير الإنتاج.</small>
             </div>
 
             <div class="form-group mb-3">
-              <label class="form-label">رقم الهاتف (اختياري)</label>
+              <label class="form-label font-bold">رقم الهاتف (اختياري)</label>
               <input v-model="editingChef.phone" type="text" class="form-control text-mono" placeholder="0910000000..." />
+              <small class="form-text text-muted mt-1 d-block">للتواصل السريع والمباشر مع الشيف عبر واتساب أو الاتصال.</small>
             </div>
 
-            <div class="form-check form-switch mb-3" v-if="editingChef._id">
-              <input class="form-check-input" type="checkbox" id="chefActiveSwitch" v-model="editingChef.active">
-              <label class="form-check-label" for="chefActiveSwitch">حالة الشيف (نشط في العمل)</label>
+            <div class="chef-status-switch-card mb-2" v-if="editingChef._id">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="font-bold text-dark d-block">حالة عمل الشيف</span>
+                  <small class="text-muted">عند الإيقاف، يظل سجل إنتاجه محفوظاً دون ظهوره كشيف نشط</small>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" id="chefActiveSwitch" v-model="editingChef.active" style="cursor: pointer; transform: scale(1.2);">
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="modal-footer mt-4">
+          <div class="modal-footer mt-3">
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>{{ editingChef._id ? 'حفظ التعديلات' : 'إضافة الشيف' }}</span>
@@ -2717,26 +2734,42 @@
       </div>
     </div>
 
-    <!-- Assign Products to Chef Modal (Card Picker) -->
+    <!-- Assign Products to Chef Modal (Spacious Card Picker) -->
     <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay animate-fade-in" @click.self="assignProductsModalOpen = false">
-      <div class="modal-content modal-lg">
+      <div class="modal-content modal-lg assign-products-modal-box">
         <div class="modal-header">
           <div class="modal-title-group">
-            <h2 class="modal-title">تخصيص وإسناد الأصناف للشيف</h2>
-            <span class="modal-subtitle font-bold text-primary">{{ selectedChefForAssign.name }}</span>
+            <div class="d-flex align-items-center gap-3">
+              <div class="modal-title-icon-chef">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              </div>
+              <div>
+                <h2 class="modal-title">تخصيص وإسناد الأصناف للشيف</h2>
+                <span class="modal-subtitle">اختر الأصناف التي يتولى إنتاجها الشيف <strong class="text-primary">{{ selectedChefForAssign.name }}</strong></span>
+              </div>
+            </div>
           </div>
-          <button @click="assignProductsModalOpen = false" class="modal-close-btn">✕</button>
+          <button @click="assignProductsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
 
-        <div class="modal-body py-3">
-          <!-- Search & Counter Toolbar -->
-          <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-            <div class="search-input-wrapper flex-grow-1" style="max-width: 320px;">
+        <div class="modal-body py-2">
+          <!-- Filter & Bulk Actions Toolbar -->
+          <div class="assign-toolbar-container mb-3">
+            <div class="search-input-wrapper flex-grow-1">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input v-model="assignProductSearch" type="text" placeholder="البحث في الأصناف..." class="form-control search-input" />
+              <input v-model="assignProductSearch" type="text" placeholder="البحث باسم الصنف أو التصنيف..." class="form-control search-input" />
             </div>
-            <div class="selected-counter-badge">
-              <span>المحدد: <strong>{{ selectedProductIdsForChef.length }}</strong> من أصل {{ products.length }} صنف</span>
+
+            <div class="assign-toolbar-actions">
+              <button type="button" @click="selectAllProductsForChef" class="btn-bulk-pick" title="تحديد جميع الأصناف المعروضة">
+                تحديد الكل
+              </button>
+              <button type="button" @click="deselectAllProductsForChef" class="btn-bulk-pick" title="إلغاء تحديد الكل">
+                إلغاء التحديد
+              </button>
+              <div class="selected-counter-badge">
+                <span>المحدد: <strong class="text-primary text-mono">{{ selectedProductIdsForChef.length }}</strong> / {{ products.length }}</span>
+              </div>
             </div>
           </div>
 
@@ -2745,18 +2778,18 @@
             <div 
               v-for="prod in filteredProductsForAssign" 
               :key="prod._id"
-              class="assign-product-card glass-panel"
+              class="assign-product-card"
               :class="{ 'is-selected': selectedProductIdsForChef.includes(prod._id) }"
               @click="toggleProductAssignment(prod._id)"
             >
-              <div class="card-checkbox">
-                <input type="checkbox" :checked="selectedProductIdsForChef.includes(prod._id)" @click.stop="toggleProductAssignment(prod._id)" />
+              <div class="card-selection-check">
+                <svg v-if="selectedProductIdsForChef.includes(prod._id)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <img :src="prod.img || '/res/logo.jpg'" :alt="prod.name" class="assign-prod-img" />
               <div class="assign-prod-info">
-                <h5 class="assign-prod-title font-bold mb-1">{{ prod.name }}</h5>
-                <span class="assign-prod-cat text-small text-muted">{{ prod.category }}</span>
-                <span class="assign-prod-price text-mono font-bold text-primary">{{ formatCurrency(prod.price_regular || prod.price || 0) }}</span>
+                <h5 class="assign-prod-title font-bold">{{ prod.name }}</h5>
+                <span class="assign-prod-cat-pill">{{ prod.category }}</span>
+                <span class="assign-prod-price text-mono font-bold">{{ formatCurrency(prod.price_regular || prod.price || 0) }}</span>
               </div>
             </div>
           </div>
@@ -2765,7 +2798,7 @@
         <div class="modal-footer mt-3">
           <button type="button" @click="saveProductAssignments" class="btn btn-primary btn-modal-save" :disabled="loading">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>حفظ تخصيص الأصناف ({{ selectedProductIdsForChef.length }})</span>
+            <span>حفظ تخصيص الأصناف ({{ selectedProductIdsForChef.length }} صنف)</span>
           </button>
           <button type="button" @click="assignProductsModalOpen = false" class="btn btn-outline btn-modal-cancel">
             <span>إلغاء</span>
@@ -2846,14 +2879,14 @@
 
           <div class="form-group-row">
             <div class="form-group">
-              <label>الصنف الرئيسي *</label>
+              <label class="form-label font-bold">الصنف الرئيسي *</label>
               <select v-model="editingProduct.category" @change="onProductCategoryChange" required class="form-control">
                 <option value="">اختر الصنف...</option>
                 <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label>الصنف الفرعي</label>
+              <label class="form-label font-bold">الصنف الفرعي</label>
               <select v-model="editingProduct.subCategory" :disabled="!subCategoriesForEditing.length" class="form-control">
                 <option value="">لا يوجد صنف فرعي</option>
                 <option v-for="sub in subCategoriesForEditing" :key="sub" :value="sub">{{ sub }}</option>
@@ -2861,13 +2894,22 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>الشيف المسؤول عن الإنتاج</label>
-            <select v-model="editingProduct.chefId" class="form-control">
-              <option value="">-- بدون شيف محدد --</option>
-              <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }} {{ c.phone ? ('(' + c.phone + ')') : '' }}</option>
-            </select>
-            <small class="form-text text-muted">تحديد الشيف المسؤول يتيح احتساب مبيعات وإنتاج هذا الصنف في تقارير الشيفات.</small>
+          <div class="form-group-row">
+            <div class="form-group">
+              <label class="form-label font-bold">الشيف المسؤول عن الإنتاج</label>
+              <select v-model="editingProduct.chefId" class="form-control">
+                <option value="">-- بدون شيف محدد --</option>
+                <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }} {{ c.phone ? ('(' + c.phone + ')') : '' }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold">نوع البيع المتاح</label>
+              <select v-model="editingProduct.purchaseType" class="form-control">
+                <option value="both">مفرد وجملة معاً</option>
+                <option value="regular">مفرد فقط</option>
+                <option value="bulk">جملة فقط</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
@@ -6799,7 +6841,17 @@ export default {
       assignProductsModalOpen.value = true;
     };
 
-    const toggleProductAssignment = (prodId) => {
+    const selectAllProductsForChef = () => {
+      const currentIds = filteredProductsForAssign.value.map(p => p._id);
+      const union = Array.from(new Set([...selectedProductIdsForChef.value, ...currentIds]));
+      selectedProductIdsForChef.value = union;
+    };
+
+    const deselectAllProductsForChef = () => {
+      selectedProductIdsForChef.value = [];
+    };
+
+        const toggleProductAssignment = (prodId) => {
       const idx = selectedProductIdsForChef.value.indexOf(prodId);
       if (idx > -1) {
         selectedProductIdsForChef.value.splice(idx, 1);
@@ -8502,6 +8554,8 @@ const closeSuggestionsWithDelay = () => {
       getChefAssignedProducts,
       openAssignProductsModal,
       toggleProductAssignment,
+      selectAllProductsForChef,
+      deselectAllProductsForChef,
       saveProductAssignments,
       loadProductionReport,
       setProductionDateShortcut,
@@ -17233,6 +17287,182 @@ select.pos-control {
     padding: 8mm 10mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
+  }
+}
+
+
+/* ==========================================================================
+   REFINED MODAL SPACING & CRAMMING ADJUSTMENTS (HABIT 15)
+   ========================================================================== */
+
+.modal-title-icon-chef {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.25));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chef-status-switch-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.assign-products-modal-box {
+  max-width: 840px !important;
+}
+
+.assign-toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.assign-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-bulk-pick {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-bulk-pick:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.selected-counter-badge {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.assign-products-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.assign-product-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  user-select: none;
+}
+
+.assign-product-card:hover {
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.assign-product-card.is-selected {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.07);
+  box-shadow: 0 0 0 1px #f59e0b;
+}
+
+.card-selection-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.assign-product-card.is-selected .card-selection-check {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.assign-prod-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.assign-prod-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.assign-prod-title {
+  font-size: 0.92rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.assign-prod-cat-pill {
+  font-size: 0.74rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.assign-prod-price {
+  font-size: 0.84rem;
+  color: #d97706;
+}
+
+@media (max-width: 640px) {
+  .assign-products-picker-grid {
+    grid-template-columns: 1fr;
+    max-height: 48vh;
   }
 }
 
