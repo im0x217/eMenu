@@ -7152,6 +7152,19 @@ export default {
       return products.value.filter(p => String(p.chefId) === idStr);
     };
 
+    const isProductAssignedToOtherChef = (prod) => {
+      if (!prod || !prod.chefId) return false;
+      if (!selectedChefForAssign.value) return false;
+      return String(prod.chefId) !== String(selectedChefForAssign.value._id);
+    };
+
+    const getOtherChefName = (prod) => {
+      if (!prod || !prod.chefId) return '';
+      if (prod.chefName) return prod.chefName;
+      const matched = chefs.value.find(c => String(c._id) === String(prod.chefId));
+      return matched ? matched.name : 'شيف آخر';
+    };
+
     const openAssignProductsModal = (chef) => {
       selectedChefForAssign.value = chef;
       const idStr = String(chef._id);
@@ -7163,8 +7176,11 @@ export default {
     };
 
     const selectAllProductsForChef = () => {
-      const currentIds = filteredProductsForAssign.value.map(p => p._id);
-      const union = Array.from(new Set([...selectedProductIdsForChef.value, ...currentIds]));
+      // Only select unassigned products or products already assigned to this current chef
+      const selectableIds = filteredProductsForAssign.value
+        .filter(p => !isProductAssignedToOtherChef(p))
+        .map(p => String(p._id));
+      const union = Array.from(new Set([...selectedProductIdsForChef.value, ...selectableIds]));
       selectedProductIdsForChef.value = union;
     };
 
@@ -7172,7 +7188,12 @@ export default {
       selectedProductIdsForChef.value = [];
     };
 
-        const toggleProductAssignment = (prodId) => {
+    const toggleProductAssignment = (prodId) => {
+      const prod = products.value.find(p => String(p._id) === String(prodId));
+      if (prod && isProductAssignedToOtherChef(prod)) {
+        toast.show(`هذا الصنف مخصص بالفعل للشيف: ${getOtherChefName(prod)}`, 'warning');
+        return; // Guard: locked product cannot be toggled
+      }
       const pIdStr = String(prodId);
       const idx = selectedProductIdsForChef.value.findIndex(id => String(id) === pIdStr);
       if (idx > -1) {
