@@ -2974,22 +2974,32 @@
             </div>
           </div>
 
-          <!-- Product Card Picker Grid -->
+          <!-- Product Card Picker Grid with Locked Items for Other Chefs -->
           <div class="assign-products-picker-grid">
             <div 
               v-for="prod in filteredProductsForAssign" 
               :key="prod._id"
               class="assign-product-card"
-              :class="{ 'is-selected': selectedProductIdsForChef.includes(prod._id) }"
+              :class="{ 
+                'is-selected': selectedProductIdsForChef.includes(String(prod._id)),
+                'is-locked': isProductAssignedToOtherChef(prod)
+              }"
               @click="toggleProductAssignment(prod._id)"
+              :title="isProductAssignedToOtherChef(prod) ? ('هذا الصنف مخصص ومقفل للشيف: ' + getOtherChefName(prod)) : ''"
             >
-              <div class="card-selection-check">
-                <svg v-if="selectedProductIdsForChef.includes(prod._id)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              <div class="card-selection-check" :class="{ 'is-lock-badge': isProductAssignedToOtherChef(prod) }">
+                <svg v-if="isProductAssignedToOtherChef(prod)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg v-else-if="selectedProductIdsForChef.includes(String(prod._id))" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <img :src="prod.img || '/res/logo.jpg'" :alt="prod.name" class="assign-prod-img" />
               <div class="assign-prod-info">
                 <h5 class="assign-prod-title font-bold">{{ prod.name }}</h5>
-                <span class="assign-prod-cat-pill">{{ prod.category }}</span>
+                <div class="d-flex align-items-center gap-1 flex-wrap my-1">
+                  <span class="assign-prod-cat-pill">{{ prod.category }}</span>
+                  <span v-if="isProductAssignedToOtherChef(prod)" class="assign-prod-locked-pill">
+                    🔒 مخصص لـ {{ getOtherChefName(prod) }}
+                  </span>
+                </div>
                 <span class="assign-prod-price text-mono font-bold">{{ formatCurrency(prod.price_regular || prod.price || 0) }}</span>
               </div>
             </div>
@@ -8878,6 +8888,8 @@ const closeSuggestionsWithDelay = () => {
       toggleProductAssignment,
       selectAllProductsForChef,
       deselectAllProductsForChef,
+      isProductAssignedToOtherChef,
+      getOtherChefName,
       saveProductAssignments,
       loadProductionReport,
       setProductionDateShortcut,
@@ -18345,6 +18357,128 @@ select.pos-control {
   100% {
     transform: translateX(100%);
   }
+}
+
+
+/* ==========================================================================
+   LOCKED ASSIGNED PRODUCTS & ENHANCED CONTAINER MARGINS (HABIT 15)
+   ========================================================================== */
+
+/* Spacing and Layout Margins */
+.production-tab-content {
+  margin-bottom: 36px;
+}
+
+.production-subnav-bar {
+  margin-bottom: 24px !important;
+  padding: 10px 14px;
+}
+
+.production-tab-content .table-card {
+  margin-bottom: 32px;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.production-tab-content .card-toolbar {
+  padding: 18px 24px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.production-tab-content .card-toolbar-bottom.report-filter-bar {
+  padding: 16px 24px;
+  margin-top: 0;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.production-tab-content .p-4 {
+  padding: 28px !important;
+}
+
+.chefs-cards-grid {
+  gap: 20px !important;
+}
+
+.chef-card {
+  padding: 22px !important;
+  border-radius: 18px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.chef-card:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.report-kpi-cards-grid {
+  gap: 20px !important;
+  margin-bottom: 32px !important;
+}
+
+.report-kpi-box {
+  padding: 20px 22px !important;
+  border-radius: 16px !important;
+  border: 1.5px solid #e2e8f0 !important;
+}
+
+.chef-breakdown-card {
+  margin-bottom: 32px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.chef-breakdown-header {
+  padding: 18px 24px !important;
+}
+
+.unassigned-breakdown-card {
+  margin-top: 36px !important;
+  margin-bottom: 32px !important;
+  border: 1.5px solid #fed7aa !important;
+  border-radius: 18px !important;
+}
+
+.unassigned-header-box {
+  padding: 18px 24px !important;
+}
+
+/* Locked Product Card Styling in Picker Modal */
+.assign-product-card.is-locked {
+  opacity: 0.7;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  cursor: not-allowed !important;
+}
+
+.assign-product-card.is-locked:hover {
+  transform: none !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.card-selection-check.is-lock-badge {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+.assign-prod-locked-pill {
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 1px 7px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 </style>
