@@ -5063,11 +5063,13 @@ export default {
     });
 
     const prodFromCalendarDays = computed(() => {
-      return buildCalendarDays(prodFromCurrentMonth.value);
+      const d = prodFromCurrentMonth.value;
+      return buildCalendarMatrix(d.getFullYear(), d.getMonth());
     });
 
     const prodToCalendarDays = computed(() => {
-      return buildCalendarDays(prodToCurrentMonth.value);
+      const d = prodToCurrentMonth.value;
+      return buildCalendarMatrix(d.getFullYear(), d.getMonth());
     });
 
     const selectProdDateFrom = (dateStr) => {
@@ -7350,32 +7352,7 @@ export default {
       else { custToPickerMonth.value++; }
     };
 
-    const buildCalendarMatrix = (yearVal, monthVal) => {
-      const firstDayOfMonth = new Date(yearVal, monthVal, 1);
-      const lastDayOfMonth = new Date(yearVal, monthVal + 1, 0);
-      const daysInMonth = lastDayOfMonth.getDate();
-      const startDayOfWeek = firstDayOfMonth.getDay();
-      
-      const days = [];
-      const prevMonthLastDay = new Date(yearVal, monthVal, 0).getDate();
-      for (let i = startDayOfWeek - 1; i >= 0; i--) {
-        const pDay = prevMonthLastDay - i;
-        const pDate = new Date(yearVal, monthVal - 1, pDay);
-        days.push({ dayNum: pDay, dateStr: pDate.toLocaleDateString('en-CA'), inMonth: false, isToday: false });
-      }
-      const todayStr = getTodayStr();
-      for (let d = 1; d <= daysInMonth; d++) {
-        const cDate = new Date(yearVal, monthVal, d);
-        const dateStr = cDate.toLocaleDateString('en-CA');
-        days.push({ dayNum: d, dateStr, inMonth: true, isToday: dateStr === todayStr });
-      }
-      const remaining = (7 - (days.length % 7)) % 7;
-      for (let n = 1; n <= remaining; n++) {
-        const nDate = new Date(yearVal, monthVal + 1, n);
-        days.push({ dayNum: n, dateStr: nDate.toLocaleDateString('en-CA'), inMonth: false, isToday: false });
-      }
-      return days;
-    };
+// buildCalendarMatrix defined at top of setup
 
     const custFromCalendarDays = computed(() => buildCalendarMatrix(custFromPickerYear.value, custFromPickerMonth.value));
     const custToCalendarDays = computed(() => buildCalendarMatrix(custToPickerYear.value, custToPickerMonth.value));
