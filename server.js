@@ -37,6 +37,33 @@ function generateCustomerToken(phone) {
   return Buffer.from(`${payload}:${signature}`).toString('base64');
 }
 
+// Helper to look up customer by phone with flexible Libyan formatting (09..., 218..., +218...)
+const findCustomerByPhone = async (phone) => {
+  if (!phone) return null;
+  const raw = phone.toString().trim();
+  const digits = raw.replace(/[^0-9]/g, '');
+  const variants = [raw];
+  if (digits) {
+    variants.push(digits);
+    if (digits.startsWith('00218')) variants.push(digits.slice(2));
+    if (digits.startsWith('218')) {
+      variants.push('0' + digits.slice(3));
+      variants.push(digits.slice(3));
+      variants.push('+' + digits);
+    } else if (digits.startsWith('0')) {
+      variants.push('218' + digits.slice(1));
+      variants.push('+218' + digits.slice(1));
+      variants.push(digits.slice(1));
+    } else if (digits.startsWith('9')) {
+      variants.push('0' + digits);
+      variants.push('218' + digits);
+      variants.push('+218' + digits);
+    }
+  }
+  const uniqueVariants = [...new Set(variants.filter(Boolean))];
+  return await customersCollection.findOne({ phone: { $in: uniqueVariants } });
+};
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;

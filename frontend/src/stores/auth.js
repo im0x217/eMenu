@@ -21,18 +21,18 @@ export const useAuthStore = defineStore('auth', () => {
   const setSession = (name, phone, token = '', passwordFlag = true) => {
     customerName.value = (name || '').trim();
     customerPhone.value = (phone || '').trim();
-    customerToken.value = token || '';
+    if (token) customerToken.value = token;
     hasPassword.value = !!passwordFlag;
 
     localStorage.setItem('customer_name', customerName.value);
     localStorage.setItem('customer_phone', customerPhone.value);
-    if (token) localStorage.setItem('customer_token', token);
+    if (token) localStorage.setItem('customer_token', customerToken.value);
     localStorage.setItem('customer_has_password', hasPassword.value ? 'true' : 'false');
   };
 
   // Backwards compatibility alias for setIdentity
   const setIdentity = (name, phone) => {
-    setSession(name, phone, '', false);
+    setSession(name, phone, '', hasPassword.value);
   };
 
   const clearIdentity = () => {
@@ -85,11 +85,16 @@ export const useAuthStore = defineStore('auth', () => {
     return { success: true, customer: data.customer };
   };
 
-  const setPassword = async (phone, password, oldPassword = '') => {
+  const setPassword = async (phone, password, oldPassword = '', name = '') => {
     const res = await fetch('/api/customer/set-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password, oldPassword })
+      body: JSON.stringify({ 
+        phone: (phone || customerPhone.value).trim(), 
+        name: (name || customerName.value).trim(),
+        password, 
+        oldPassword 
+      })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -106,14 +111,20 @@ export const useAuthStore = defineStore('auth', () => {
       const res = await fetch(`/api/customer/profile?phone=${encodeURIComponent(customerPhone.value)}`);
       if (res.ok) {
         const data = await res.json();
-        customerName.value = data.name || customerName.value;
-        hasPassword.value = !!data.hasPassword;
-        localStorage.setItem('customer_name', customerName.value);
-        localStorage.setItem('customer_has_password', hasPassword.value ? 'true' : 'false');
+        if (data.exists) {
+          if (data.name) {
+            customerName.value = data.name;
+            localStorage.setItem('customer_name', data.name);
+          }
+          hasPassword.value = !!data.hasPassword;
+          localStorage.setItem('customer_has_password', hasPassword.value ? 'true' : 'false');
 
-        // If user is currently identified in localStorage but has NO password set, prompt password setup
-        if (!data.hasPassword && customerPhone.value) {
-          showSetPasswordModal.value = true;
+          // If user has NO password set in database, prompt password setup
+          if (!data.hasPassword && customerPhone.value) {
+            showSetPasswordModal.value = true;
+          } else {
+            showSetPasswordModal.value = false;
+          }
         }
       }
     } catch (e) {
