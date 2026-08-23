@@ -223,6 +223,7 @@ console.log("[INIT] Registering API routes...");
 let db, productsCollection, categoriesCollection, tagsCollection;
 let db2, productsCollection2, categoriesCollection2, tagsCollection2;
 let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection, paymentsCollection, countersCollection;
+let chefsCollection, chefsCollection2;
 let mongoConnected = false;
 
 // Helper: Atomic Sequential Order Number Generator
@@ -507,7 +508,7 @@ app.post("/api/verify-bulk-code", (req, res) => {
 });
 
 app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags, chefId, chefName } = req.body;
   
   let parsedTags = [];
   try {
@@ -568,7 +569,9 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
       available: available === "false" ? false : true,
       allowFloat: isFloat,
       purchaseType: purchaseType || 'both',
-      tags: parsedTags
+      tags: parsedTags,
+      chefId: chefId || '',
+      chefName: chefName || ''
     });
     console.log("[UPLOAD SUCCESS] Product saved with image:", img);
     res.json({ success: true });
@@ -579,7 +582,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
 });
 
 app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags, chefId, chefName } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
@@ -605,7 +608,9 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
       available: available === "false" ? false : true,
       allowFloat: isFloat,
       purchaseType: purchaseType || 'both',
-      tags: parsedTags
+      tags: parsedTags,
+      chefId: chefId || '',
+      chefName: chefName || ''
   };
 
   let uploadWarning = null;
@@ -963,7 +968,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
 });
 
 app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags, chefId, chefName } = req.body;
   
   let parsedTags = [];
   try {
@@ -1017,7 +1022,9 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
       available: available !== "false",
       allowFloat: isFloat,
       purchaseType: purchaseType || "both",
-      tags: parsedTags
+      tags: parsedTags,
+      chefId: chefId || '',
+      chefName: chefName || ''
     });
     console.log("[UPLOAD SUCCESS] Shop2 product saved with image:", img);
     const response = { success: true };
@@ -1033,7 +1040,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
 
 app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
-    const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags } = req.body;
+    const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags, chefId, chefName } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
     }
@@ -1089,6 +1096,8 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
           allowFloat: isFloat,
           purchaseType: purchaseType || "both",
           tags: parsedTags,
+          chefId: chefId || '',
+          chefName: chefName || '',
         },
       }
     );
@@ -3164,6 +3173,267 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
+// ============ CHEF MANAGEMENT & PRODUCTION REPORT ============
+
+// Get all chefs for active shop
+app.get("/api/admin/chefs", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const shop = req.query.shop || 'shop1';
+    const chefColl = shop === 'shop2' ? chefsCollection2 : chefsCollection;
+    const chefs = await chefColl.find().sort({ name: 1 }).toArray();
+    res.json(chefs);
+  } catch (err) {
+    console.error("Fetch chefs error:", err);
+    res.status(500).json({ error: "Failed to fetch chefs" });
+  }
+});
+
+// Create a new chef
+app.post("/api/admin/chefs", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name, phone, shop } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: "اسم الشيف مطلوب" });
+    }
+    const chefColl = shop === 'shop2' ? chefsCollection2 : chefsCollection;
+    const newChef = {
+      name: name.trim(),
+      phone: (phone || '').trim(),
+      active: true,
+      createdAt: new Date(),
+      lastActive: new Date()
+    };
+    const result = await chefColl.insertOne(newChef);
+    res.status(201).json({ success: true, _id: result.insertedId, ...newChef });
+  } catch (err) {
+    console.error("Create chef error:", err);
+    res.status(500).json({ error: "Failed to create chef" });
+  }
+});
+
+// Update chef details
+app.put("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone, active, shop } = req.body;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid chef ID" });
+    }
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: "اسم الشيف مطلوب" });
+    }
+    const chefColl = shop === 'shop2' ? chefsCollection2 : chefsCollection;
+    const prodColl = shop === 'shop2' ? productsCollection2 : productsCollection;
+    
+    const oldChef = await chefColl.findOne({ _id: new ObjectId(id) });
+    const newName = name.trim();
+    
+    await chefColl.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { name: newName, phone: (phone || '').trim(), active: active !== false, lastActive: new Date() } }
+    );
+    
+    // If name changed, cascade update to all assigned products
+    if (oldChef && oldChef.name !== newName) {
+      await prodColl.updateMany(
+        { chefId: id },
+        { $set: { chefName: newName } }
+      );
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update chef error:", err);
+    res.status(500).json({ error: "Failed to update chef" });
+  }
+});
+
+// Delete chef (and unlink products)
+app.delete("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const shop = req.query.shop || 'shop1';
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid chef ID" });
+    }
+    const chefColl = shop === 'shop2' ? chefsCollection2 : chefsCollection;
+    const prodColl = shop === 'shop2' ? productsCollection2 : productsCollection;
+    
+    await chefColl.deleteOne({ _id: new ObjectId(id) });
+    // Unlink all products from this chef
+    await prodColl.updateMany(
+      { chefId: id },
+      { $set: { chefId: '', chefName: '' } }
+    );
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete chef error:", err);
+    res.status(500).json({ error: "Failed to delete chef" });
+  }
+});
+
+// Bulk assign products to a chef
+app.put("/api/admin/chefs/:id/assign-products", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { productIds, shop } = req.body;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid chef ID" });
+    }
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ error: "productIds must be an array" });
+    }
+    const chefColl = shop === 'shop2' ? chefsCollection2 : chefsCollection;
+    const prodColl = shop === 'shop2' ? productsCollection2 : productsCollection;
+    
+    const chef = await chefColl.findOne({ _id: new ObjectId(id) });
+    if (!chef) {
+      return res.status(404).json({ error: "Chef not found" });
+    }
+    
+    // First, unassign any products currently assigned to this chef that are NOT in the new list
+    await prodColl.updateMany(
+      { chefId: id, _id: { $nin: productIds.map(pid => new ObjectId(pid)) } },
+      { $set: { chefId: '', chefName: '' } }
+    );
+    
+    // Then, assign the specified products to this chef
+    if (productIds.length > 0) {
+      await prodColl.updateMany(
+        { _id: { $in: productIds.map(pid => new ObjectId(pid)) } },
+        { $set: { chefId: id, chefName: chef.name } }
+      );
+    }
+    
+    res.json({ success: true, assignedCount: productIds.length });
+  } catch (err) {
+    console.error("Assign products to chef error:", err);
+    res.status(500).json({ error: "Failed to assign products" });
+  }
+});
+
+// Production report: aggregate order items by chef via product→chef mapping
+app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { shop, startDate, endDate, chefId } = req.query;
+    const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
+    const prodColl = shop === 'shop2' ? productsCollection2 : productsCollection;
+    
+    // Build date filter for orders
+    let dateFilter = {};
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter = { createdAt: { $gte: start, $lte: end } };
+    } else if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    } else if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter = { createdAt: { $lte: end } };
+    }
+    
+    // Get all products with chef assignments
+    const allProducts = await prodColl.find().toArray();
+    const productMap = {};
+    for (const p of allProducts) {
+      productMap[p._id.toString()] = {
+        name: p.name,
+        category: p.category || '',
+        chefId: p.chefId || '',
+        chefName: p.chefName || '',
+        makingCost: p.makingCost || 0,
+        price_regular: p.price_regular || p.price || 0
+      };
+    }
+    
+    // Get orders in range (exclude cancelled)
+    const orders = await ordColl.find({
+      status: { $ne: "cancelled" },
+      ...dateFilter
+    }).toArray();
+    
+    // Aggregate: for each order item, map to its chef via product
+    const chefAgg = {};  // chefId -> { name, products: { productId -> { name, qty, revenue, cost } } }
+    const unassignedProducts = {}; // productId -> { name, qty, revenue }
+    
+    for (const order of orders) {
+      const items = order.items || [];
+      for (const item of items) {
+        const pid = (item.productId || item._id || '').toString();
+        const pInfo = productMap[pid];
+        const qty = Number(item.quantity) || 1;
+        const itemPrice = Number(item.price) || 0;
+        const revenue = itemPrice * qty;
+        
+        if (pInfo && pInfo.chefId) {
+          // Filter by chefId if specified
+          if (chefId && pInfo.chefId !== chefId) continue;
+          
+          if (!chefAgg[pInfo.chefId]) {
+            chefAgg[pInfo.chefId] = {
+              chefId: pInfo.chefId,
+              chefName: pInfo.chefName,
+              totalQty: 0,
+              totalRevenue: 0,
+              totalCost: 0,
+              products: {}
+            };
+          }
+          const chef = chefAgg[pInfo.chefId];
+          chef.totalQty += qty;
+          chef.totalRevenue += revenue;
+          chef.totalCost += (pInfo.makingCost || 0) * qty;
+          
+          if (!chef.products[pid]) {
+            chef.products[pid] = { name: pInfo.name, category: pInfo.category, qty: 0, revenue: 0, cost: 0 };
+          }
+          chef.products[pid].qty += qty;
+          chef.products[pid].revenue += revenue;
+          chef.products[pid].cost += (pInfo.makingCost || 0) * qty;
+        } else if (!chefId) {
+          // Unassigned product
+          const pName = pInfo ? pInfo.name : (item.name || 'منتج غير معروف');
+          if (!unassignedProducts[pid]) {
+            unassignedProducts[pid] = { name: pName, qty: 0, revenue: 0 };
+          }
+          unassignedProducts[pid].qty += qty;
+          unassignedProducts[pid].revenue += revenue;
+        }
+      }
+    }
+    
+    // Convert to arrays for response
+    const chefReport = Object.values(chefAgg).map(c => ({
+      ...c,
+      products: Object.values(c.products).sort((a, b) => b.qty - a.qty)
+    })).sort((a, b) => b.totalRevenue - a.totalRevenue);
+    
+    const unassigned = Object.values(unassignedProducts).sort((a, b) => b.qty - a.qty);
+    
+    const grandTotalQty = chefReport.reduce((s, c) => s + c.totalQty, 0) + unassigned.reduce((s, p) => s + p.qty, 0);
+    const grandTotalRevenue = chefReport.reduce((s, c) => s + c.totalRevenue, 0) + unassigned.reduce((s, p) => s + p.revenue, 0);
+    const grandTotalCost = chefReport.reduce((s, c) => s + c.totalCost, 0);
+    
+    res.json({
+      chefReport,
+      unassigned,
+      totalOrders: orders.length,
+      grandTotalQty,
+      grandTotalRevenue: Math.round(grandTotalRevenue * 100) / 100,
+      grandTotalCost: Math.round(grandTotalCost * 100) / 100
+    });
+  } catch (err) {
+    console.error("Production report error:", err);
+    res.status(500).json({ error: "Failed to generate production report" });
+  }
+});
+
 // ============ CONNECT TO MONGODB ============
 const connectWithRetry = async () => {
   try {
@@ -3185,6 +3455,8 @@ const connectWithRetry = async () => {
     adminUsersCollection = db.collection("admin_users");
     paymentsCollection = db.collection("payments");
     countersCollection = db.collection("counters");
+    chefsCollection = db.collection("chefs");
+    chefsCollection2 = db2.collection("chefs");
     mongoConnected = true;
     
     productsCollection.createIndex({ category: 1 });
@@ -3200,6 +3472,8 @@ const connectWithRetry = async () => {
     ordersCollection2.createIndex({ "customerInfo.phone": 1 });
     ordersCollection2.createIndex({ orderNumber: 1 });
     adminUsersCollection.createIndex({ username: 1 }, { unique: true });
+    chefsCollection.createIndex({ name: 1 });
+    chefsCollection2.createIndex({ name: 1 });
 
     // Initialize order counter and backfill legacy orders without orderNumber
     try {

@@ -104,6 +104,10 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             <span>العملاء والمفضلات</span>
           </button>
+          <button class="menu-item" :class="{ active: activeTab === 'production' }" @click="setTab('production')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+            <span>إدارة الإنتاج</span>
+          </button>
           <button class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
@@ -2304,6 +2308,308 @@
             </div>
           </div>
 
+          <!-- PRODUCTION MANAGEMENT TAB -->
+          <div v-if="activeTab === 'production'" class="production-tab-content animate-fade-in">
+            <!-- Production Sub-Tab Switcher -->
+            <div class="production-nav-header glass-panel mb-4">
+              <div class="production-tabs-pills">
+                <button 
+                  type="button"
+                  class="prod-tab-pill" 
+                  :class="{ active: productionSubTab === 'chefs' }"
+                  @click="productionSubTab = 'chefs'"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+                  <span>الشيفات وتوزيع الأصناف</span>
+                  <span class="pill-badge">{{ chefs.length }}</span>
+                </button>
+
+                <button 
+                  type="button"
+                  class="prod-tab-pill" 
+                  :class="{ active: productionSubTab === 'report' }"
+                  @click="productionSubTab = 'report'; loadProductionReport();"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                  <span>تقرير الإنتاج والمبيعات</span>
+                </button>
+              </div>
+
+              <div class="production-header-actions" v-if="productionSubTab === 'chefs'">
+                <button @click="openAddChefModal" class="btn btn-primary btn-sm flex-center">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>إضافة شيف جديد</span>
+                </button>
+              </div>
+
+              <div class="production-header-actions" v-else-if="productionSubTab === 'report'">
+                <button @click="printProductionReport" class="btn btn-outline btn-sm flex-center" title="طباعة تقرير الإنتاج الرسمي">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  <span>طباعة التقرير (A4)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SUB-TAB 1: CHEFS & ASSIGNMENTS VIEW -->
+            <div v-if="productionSubTab === 'chefs'" class="chefs-view-section animate-fade-in">
+              <div v-if="chefs.length === 0" class="empty-chefs-placeholder glass-panel text-center py-5">
+                <div class="empty-icon-circle mx-auto mb-3">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+                </div>
+                <h4 class="text-bold mb-2">لا يوجد شيفات مسجلين حتى الآن</h4>
+                <p class="text-muted mb-3">أضف شيفات لتوزيع منتجات القائمة عليهم ومتابعة إنتاج ومبيعات كل شيف بدقة.</p>
+                <button @click="openAddChefModal" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  إضافة الشيف الأول
+                </button>
+              </div>
+
+              <!-- Chefs Grid -->
+              <div v-else class="chefs-cards-grid">
+                <div v-for="chef in chefs" :key="chef._id" class="chef-card glass-panel animate-scale-in">
+                  <div class="chef-card-header">
+                    <div class="chef-avatar">{{ (chef.name || 'ش').charAt(0) }}</div>
+                    <div class="chef-details">
+                      <h4 class="chef-name font-bold">{{ chef.name }}</h4>
+                      <div class="chef-phone-row" v-if="chef.phone">
+                        <span class="chef-phone text-mono" dir="ltr">{{ chef.phone }}</span>
+                        <div class="chef-quick-actions">
+                          <a :href="getLibyanWhatsAppUrl(chef.phone)" target="_blank" class="chef-icon-btn whatsapp" title="واتساب">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                          </a>
+                          <a :href="'tel:' + chef.phone" class="chef-icon-btn call" title="اتصال">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="chef-status-badge" :class="chef.active !== false ? 'active' : 'inactive'">
+                      {{ chef.active !== false ? 'نشط' : 'متوقف' }}
+                    </span>
+                  </div>
+
+                  <!-- Assigned Products Summary Section -->
+                  <div class="chef-assigned-products-box">
+                    <div class="assigned-box-header">
+                      <span class="assigned-title font-bold">الأصناف المسندة للشيف:</span>
+                      <span class="assigned-count-pill">{{ getChefAssignedProducts(chef._id).length }} صنف</span>
+                    </div>
+
+                    <div v-if="getChefAssignedProducts(chef._id).length > 0" class="assigned-chips-list">
+                      <span 
+                        v-for="p in getChefAssignedProducts(chef._id)" 
+                        :key="p._id" 
+                        class="assigned-chip"
+                      >
+                        {{ p.name }}
+                      </span>
+                    </div>
+                    <div v-else class="assigned-chips-empty">
+                      <span class="text-muted text-small">لم يتم تخصيص أي أصناف لهذا الشيف بعد.</span>
+                    </div>
+                  </div>
+
+                  <!-- Chef Card Actions -->
+                  <div class="chef-card-footer">
+                    <button 
+                      type="button" 
+                      @click="openAssignProductsModal(chef)" 
+                      class="btn-chef-action btn-chef-assign"
+                      title="تخصيص وإضافة أصناف للشيف"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                      <span>تخصيص الأصناف</span>
+                    </button>
+
+                    <button 
+                      type="button" 
+                      @click="openEditChefModal(chef)" 
+                      class="btn-chef-action btn-chef-edit"
+                      title="تعديل بيانات الشيف"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      <span>تعديل</span>
+                    </button>
+
+                    <button 
+                      type="button" 
+                      @click="deleteChef(chef._id)" 
+                      class="btn-chef-action btn-chef-delete"
+                      title="حذف الشيف"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-TAB 2: PRODUCTION & SALES REPORT VIEW -->
+            <div v-else-if="productionSubTab === 'report'" class="production-report-section animate-fade-in">
+              <!-- Report Filters Bar -->
+              <div class="report-filters-card glass-panel mb-4 p-3">
+                <div class="row g-3 align-items-center">
+                  <!-- Date From -->
+                  <div class="col-md-3 col-sm-6">
+                    <label class="form-label text-bold text-small mb-1">من تاريخ:</label>
+                    <input type="date" v-model="productionReportFilters.dateFrom" @change="loadProductionReport" class="form-control" />
+                  </div>
+
+                  <!-- Date To -->
+                  <div class="col-md-3 col-sm-6">
+                    <label class="form-label text-bold text-small mb-1">إلى تاريخ:</label>
+                    <input type="date" v-model="productionReportFilters.dateTo" @change="loadProductionReport" class="form-control" />
+                  </div>
+
+                  <!-- Chef Selector -->
+                  <div class="col-md-3 col-sm-6">
+                    <label class="form-label text-bold text-small mb-1">الشيف:</label>
+                    <select v-model="productionReportFilters.chefId" @change="loadProductionReport" class="form-control">
+                      <option value="">جميع الشيفات المسجلين</option>
+                      <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Quick Shortcuts & Refresh -->
+                  <div class="col-md-3 col-sm-6 d-flex gap-2 align-items-end" style="padding-top: 22px;">
+                    <button type="button" @click="setProductionDateShortcut('today')" class="btn btn-outline btn-sm flex-fill">اليوم</button>
+                    <button type="button" @click="setProductionDateShortcut('7d')" class="btn btn-outline btn-sm flex-fill">7 أيام</button>
+                    <button type="button" @click="setProductionDateShortcut('month')" class="btn btn-outline btn-sm flex-fill">هذا الشهر</button>
+                    <button type="button" @click="loadProductionReport" class="btn btn-primary btn-sm flex-center" :disabled="isLoadingReport">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading State -->
+              <div v-if="isLoadingReport" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">جاري تحليل بيانات الإنتاج والمبيعات…</p>
+              </div>
+
+              <div v-else>
+                <!-- Summary KPI Cards -->
+                <div class="row g-3 mb-4">
+                  <div class="col-md-3 col-sm-6">
+                    <div class="kpi-card glass-panel">
+                      <span class="kpi-label">إجمالي القطع المباعة</span>
+                      <span class="kpi-value text-mono text-primary">{{ productionReportData.grandTotalQty || 0 }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 col-sm-6">
+                    <div class="kpi-card glass-panel">
+                      <span class="kpi-label">إجمالي الإيرادات</span>
+                      <span class="kpi-value text-mono text-success">{{ formatCurrency(productionReportData.grandTotalRevenue || 0) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 col-sm-6">
+                    <div class="kpi-card glass-panel">
+                      <span class="kpi-label">إجمالي تكلفة الإنتاج</span>
+                      <span class="kpi-value text-mono text-danger">{{ formatCurrency(productionReportData.grandTotalCost || 0) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 col-sm-6">
+                    <div class="kpi-card glass-panel">
+                      <span class="kpi-label">صافي الأرباح التقديرية</span>
+                      <span class="kpi-value text-mono text-dark">{{ formatCurrency(Math.max(0, (productionReportData.grandTotalRevenue || 0) - (productionReportData.grandTotalCost || 0))) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Per-Chef Breakdown Sections -->
+                <div v-if="productionReportData.chefReport && productionReportData.chefReport.length > 0" class="chef-report-list mb-4">
+                  <div v-for="cReport in productionReportData.chefReport" :key="cReport.chefId" class="chef-report-card glass-panel mb-3">
+                    <div class="chef-report-header">
+                      <div class="chef-header-info">
+                        <div class="chef-avatar sm">{{ (cReport.chefName || 'ش').charAt(0) }}</div>
+                        <div>
+                          <h4 class="font-bold mb-0">{{ cReport.chefName }}</h4>
+                          <span class="text-small text-muted">{{ cReport.products.length }} صنف تم إنتاجه وبيعه</span>
+                        </div>
+                      </div>
+
+                      <div class="chef-header-stats">
+                        <div class="stat-pill">
+                          <span class="label">إجمالي القطع:</span>
+                          <strong class="text-mono">{{ cReport.totalQty }}</strong>
+                        </div>
+                        <div class="stat-pill">
+                          <span class="label">الإيرادات:</span>
+                          <strong class="text-mono text-success">{{ formatCurrency(cReport.totalRevenue) }}</strong>
+                        </div>
+                        <div class="stat-pill">
+                          <span class="label">التكلفة:</span>
+                          <strong class="text-mono text-danger">{{ formatCurrency(cReport.totalCost) }}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Products Table for this Chef -->
+                    <div class="table-responsive">
+                      <table class="admin-table sub-table">
+                        <thead>
+                          <tr>
+                            <th>اسم الصنف</th>
+                            <th>التصنيف</th>
+                            <th>الكمية المباعة</th>
+                            <th>تكلفة الإنتاج</th>
+                            <th>إجمالي المبيعات</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="p in cReport.products" :key="p.name">
+                            <td class="font-bold">{{ p.name }}</td>
+                            <td><span class="category-pill">{{ p.category || '-' }}</span></td>
+                            <td class="text-mono text-bold">{{ p.qty }}</td>
+                            <td class="text-mono text-danger">{{ formatCurrency(p.cost) }}</td>
+                            <td class="text-mono text-success text-bold">{{ formatCurrency(p.revenue) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unassigned Products (if any) -->
+                <div v-if="productionReportData.unassigned && productionReportData.unassigned.length > 0" class="unassigned-report-card glass-panel mb-3">
+                  <div class="unassigned-header p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                      <h4 class="font-bold mb-0 text-warning">أصناف مباعة بدون شيف مخصص</h4>
+                      <span class="text-small text-muted">يمكنك تخصيص هذه الأصناف لشيف لتظهر في تقريره</span>
+                    </div>
+                    <span class="badge bg-warning text-dark">{{ productionReportData.unassigned.length }} صنف</span>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="admin-table sub-table">
+                      <thead>
+                        <tr>
+                          <th>اسم الصنف</th>
+                          <th>الكمية المباعة</th>
+                          <th>إجمالي المبيعات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="u in productionReportData.unassigned" :key="u.name">
+                          <td class="font-bold">{{ u.name }}</td>
+                          <td class="text-mono text-bold">{{ u.qty }}</td>
+                          <td class="text-mono text-success text-bold">{{ formatCurrency(u.revenue) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div v-if="(!productionReportData.chefReport || productionReportData.chefReport.length === 0) && (!productionReportData.unassigned || productionReportData.unassigned.length === 0)" class="glass-panel text-center py-5">
+                  <p class="text-muted mb-0">لا توجد مبيعات مسجلة في نطاق التاريخ المحدد.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- USERS MANAGEMENT TAB -->
           <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
@@ -2369,6 +2675,103 @@
 
         </div>
       </main>
+    </div>
+
+    <!-- Chef Create/Edit Modal -->
+    <div v-if="chefModalOpen" class="modal-overlay animate-fade-in" @click.self="chefModalOpen = false">
+      <div class="modal-content modal-md">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h2 class="modal-title">{{ editingChef._id ? 'تعديل بيانات الشيف' : 'إضافة شيف جديد' }}</h2>
+          </div>
+          <button @click="chefModalOpen = false" class="modal-close-btn">✕</button>
+        </div>
+        <form @submit.prevent="saveChef" class="modal-form">
+          <div class="modal-body">
+            <div class="form-group mb-3">
+              <label class="form-label">اسم الشيف *</label>
+              <input v-model="editingChef.name" type="text" required class="form-control" placeholder="مثال: الشيف أحمد..." />
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">رقم الهاتف (اختياري)</label>
+              <input v-model="editingChef.phone" type="text" class="form-control text-mono" placeholder="0910000000..." />
+            </div>
+
+            <div class="form-check form-switch mb-3" v-if="editingChef._id">
+              <input class="form-check-input" type="checkbox" id="chefActiveSwitch" v-model="editingChef.active">
+              <label class="form-check-label" for="chefActiveSwitch">حالة الشيف (نشط في العمل)</label>
+            </div>
+          </div>
+
+          <div class="modal-footer mt-4">
+            <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>{{ editingChef._id ? 'حفظ التعديلات' : 'إضافة الشيف' }}</span>
+            </button>
+            <button type="button" @click="chefModalOpen = false" class="btn btn-outline btn-modal-cancel">
+              <span>إلغاء</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Assign Products to Chef Modal (Card Picker) -->
+    <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay animate-fade-in" @click.self="assignProductsModalOpen = false">
+      <div class="modal-content modal-lg">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h2 class="modal-title">تخصيص وإسناد الأصناف للشيف</h2>
+            <span class="modal-subtitle font-bold text-primary">{{ selectedChefForAssign.name }}</span>
+          </div>
+          <button @click="assignProductsModalOpen = false" class="modal-close-btn">✕</button>
+        </div>
+
+        <div class="modal-body py-3">
+          <!-- Search & Counter Toolbar -->
+          <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+            <div class="search-input-wrapper flex-grow-1" style="max-width: 320px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input v-model="assignProductSearch" type="text" placeholder="البحث في الأصناف..." class="form-control search-input" />
+            </div>
+            <div class="selected-counter-badge">
+              <span>المحدد: <strong>{{ selectedProductIdsForChef.length }}</strong> من أصل {{ products.length }} صنف</span>
+            </div>
+          </div>
+
+          <!-- Product Card Picker Grid -->
+          <div class="assign-products-picker-grid">
+            <div 
+              v-for="prod in filteredProductsForAssign" 
+              :key="prod._id"
+              class="assign-product-card glass-panel"
+              :class="{ 'is-selected': selectedProductIdsForChef.includes(prod._id) }"
+              @click="toggleProductAssignment(prod._id)"
+            >
+              <div class="card-checkbox">
+                <input type="checkbox" :checked="selectedProductIdsForChef.includes(prod._id)" @click.stop="toggleProductAssignment(prod._id)" />
+              </div>
+              <img :src="prod.img || '/res/logo.jpg'" :alt="prod.name" class="assign-prod-img" />
+              <div class="assign-prod-info">
+                <h5 class="assign-prod-title font-bold mb-1">{{ prod.name }}</h5>
+                <span class="assign-prod-cat text-small text-muted">{{ prod.category }}</span>
+                <span class="assign-prod-price text-mono font-bold text-primary">{{ formatCurrency(prod.price_regular || prod.price || 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer mt-3">
+          <button type="button" @click="saveProductAssignments" class="btn btn-primary btn-modal-save" :disabled="loading">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>حفظ تخصيص الأصناف ({{ selectedProductIdsForChef.length }})</span>
+          </button>
+          <button type="button" @click="assignProductsModalOpen = false" class="btn btn-outline btn-modal-cancel">
+            <span>إلغاء</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Product Modal Form -->
@@ -2456,6 +2859,15 @@
                 <option v-for="sub in subCategoriesForEditing" :key="sub" :value="sub">{{ sub }}</option>
               </select>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label>الشيف المسؤول عن الإنتاج</label>
+            <select v-model="editingProduct.chefId" class="form-control">
+              <option value="">-- بدون شيف محدد --</option>
+              <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }} {{ c.phone ? ('(' + c.phone + ')') : '' }}</option>
+            </select>
+            <small class="form-text text-muted">تحديد الشيف المسؤول يتيح احتساب مبيعات وإنتاج هذا الصنف في تقارير الشيفات.</small>
           </div>
 
           <div class="form-group">
@@ -3136,6 +3548,104 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Hidden Print Production & Chef Report (A4 Portrait) -->
+  <div class="print-production-report-wrapper" v-if="printingProductionReport">
+    <div class="production-report-page">
+      <!-- Header Banner -->
+      <div class="debt-header">
+        <div class="debt-brand">
+          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="debt-logo" />
+          <div class="debt-brand-text">
+            <h1 class="debt-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+            <p class="debt-subtitle">تقرير الإنتاج والمبيعات التفصيلي حسب الشيفات</p>
+          </div>
+        </div>
+        <div class="debt-header-badge">تقرير إنتاج معتمد</div>
+      </div>
+
+      <div class="debt-divider"></div>
+
+      <!-- Meta Info Bar -->
+      <div class="debt-meta">
+        <div class="debt-meta-row">
+          <span class="debt-meta-label">الفترة:</span>
+          <span class="debt-meta-val debt-date-pill">
+            {{ productionReportFilters.dateFrom && productionReportFilters.dateTo ? ('من ' + formatArabicDate(productionReportFilters.dateFrom) + ' إلى ' + formatArabicDate(productionReportFilters.dateTo)) : 'جميع المبيعات المسجلة' }}
+          </span>
+        </div>
+        <div class="debt-meta-row">
+          <span class="debt-meta-label">تاريخ الإصدار:</span>
+          <span class="debt-meta-val text-mono">{{ new Date().toLocaleString('ar-LY') }}</span>
+        </div>
+      </div>
+
+      <!-- Summary KPI Cards -->
+      <div class="debt-kpi-grid">
+        <div class="debt-kpi-card">
+          <span class="debt-kpi-label">إجمالي القطع المباعة</span>
+          <span class="debt-kpi-val text-mono text-primary">{{ productionReportData.grandTotalQty || 0 }}</span>
+        </div>
+        <div class="debt-kpi-card highlight-green">
+          <span class="debt-kpi-label">إجمالي الإيرادات</span>
+          <span class="debt-kpi-val text-mono text-success">{{ formatCurrency(productionReportData.grandTotalRevenue || 0) }}</span>
+        </div>
+        <div class="debt-kpi-card highlight-debt">
+          <span class="debt-kpi-label">إجمالي تكلفة الإنتاج</span>
+          <span class="debt-kpi-val text-mono text-danger">{{ formatCurrency(productionReportData.grandTotalCost || 0) }}</span>
+        </div>
+        <div class="debt-kpi-card">
+          <span class="debt-kpi-label">صافي الأرباح التقديرية</span>
+          <span class="debt-kpi-val text-mono">{{ formatCurrency(Math.max(0, (productionReportData.grandTotalRevenue || 0) - (productionReportData.grandTotalCost || 0))) }}</span>
+        </div>
+      </div>
+
+      <!-- Chef Breakdown Tables -->
+      <div v-for="cReport in productionReportData.chefReport" :key="cReport.chefId" class="mb-4" style="page-break-inside: avoid;">
+        <div class="d-flex justify-content-between align-items-center mb-2 pb-1" style="border-bottom: 2px solid #1e293b;">
+          <h3 class="font-bold mb-0" style="font-size: 11pt;">👨‍🍳 الشيف: {{ cReport.chefName }}</h3>
+          <span class="text-mono font-bold" style="font-size: 9pt;">إجمالي القطع: {{ cReport.totalQty }} | الإيراد: {{ formatCurrency(cReport.totalRevenue) }} | التكلفة: {{ formatCurrency(cReport.totalCost) }}</span>
+        </div>
+
+        <table class="debt-report-table">
+          <thead>
+            <tr>
+              <th style="width: 5%;">ت</th>
+              <th style="width: 45%;">اسم الصنف</th>
+              <th style="width: 15%;">الكمية المباعة</th>
+              <th style="width: 15%;">التكلفة الإجمالية</th>
+              <th style="width: 20%;">إجمالي المبيعات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(p, pIdx) in cReport.products" :key="p.name">
+              <td class="text-center text-mono text-muted">{{ pIdx + 1 }}</td>
+              <td class="font-bold">{{ p.name }}</td>
+              <td class="text-mono text-bold">{{ p.qty }}</td>
+              <td class="text-mono text-danger">{{ formatCurrency(p.cost) }}</td>
+              <td class="text-mono text-success text-bold">{{ formatCurrency(p.revenue) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Official Report Footer & Signatures -->
+      <div class="debt-report-footer">
+        <div class="debt-signature-block">
+          <span class="sig-label">المسؤول عن الإنتاج:</span>
+          <span class="sig-line">.....................................</span>
+        </div>
+        <div class="debt-stamp-block">
+          <span class="sig-label">خاتم وتوقيع الإدارة:</span>
+          <span class="sig-line">.....................................</span>
+        </div>
+      </div>
+      
+      <div class="debt-watermark-row">
+        <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — تقرير إنتاج الشيفات</span>
+      </div>
     </div>
   </div>
 
@@ -3822,7 +4332,7 @@ export default {
     const sidebarOpen = ref(false);
 
     // Persistent Active Tab Management across page reloads
-    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'carousel', 'users'];
+    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'carousel', 'users'];
     const getInitialTab = () => {
       try {
         const queryTab = route.query && route.query.tab ? String(route.query.tab) : '';
@@ -3910,6 +4420,7 @@ export default {
       tags: 'إدارة العلامات المميزة (Tags)',
       orders: 'سجل وإدارة طلبات العملاء',
       customers: 'قائمة العملاء والمنتجات المفضلة',
+      production: 'إدارة الإنتاج وتقارير الشيفات',
       carousel: 'إدارة بنرات العروض التسويقية',
       users: 'إدارة المستخدمين وصلاحيات النظام'
     };
@@ -4228,6 +4739,36 @@ export default {
     const zoomedImageSrc = ref(null);
     const isAdminZoomLoaded = ref(false);
 
+    // Chef and Production State
+    const chefs = ref([]);
+    const productionSubTab = ref('chefs');
+    const chefModalOpen = ref(false);
+    const editingChef = reactive({
+      _id: '',
+      name: '',
+      phone: '',
+      active: true
+    });
+    const assignProductsModalOpen = ref(false);
+    const selectedChefForAssign = ref(null);
+    const selectedProductIdsForChef = ref([]);
+    const assignProductSearch = ref('');
+    const productionReportFilters = reactive({
+      dateFrom: '',
+      dateTo: '',
+      chefId: ''
+    });
+    const productionReportData = ref({
+      chefReport: [],
+      unassigned: [],
+      totalOrders: 0,
+      grandTotalQty: 0,
+      grandTotalRevenue: 0,
+      grandTotalCost: 0
+    });
+    const isLoadingReport = ref(false);
+    const printingProductionReport = ref(false);
+
     // Product form bindings
     const editingProduct = reactive({
       _id: '',
@@ -4241,7 +4782,9 @@ export default {
       makingCost: 0,
       allowFloat: false,
       img: '',
-      tags: []
+      tags: [],
+      chefId: '',
+      chefName: ''
     });
 
     const toggleProductTag = (tagName) => {
@@ -4475,6 +5018,9 @@ export default {
       formData.append('allowFloat', editingProduct.allowFloat ? 'true' : 'false');
       formData.append('tags', JSON.stringify(editingProduct.tags));
       formData.append('makingCost', editingProduct.makingCost !== null && editingProduct.makingCost !== undefined ? editingProduct.makingCost : 0);
+      formData.append('chefId', editingProduct.chefId || '');
+      const matchedChef = chefs.value.find(c => c._id === editingProduct.chefId);
+      formData.append('chefName', matchedChef ? matchedChef.name : '');
       
       if (editingProduct.purchaseType !== 'bulk' && editingProduct.price_regular) {
         formData.append('price_regular', editingProduct.price_regular);
@@ -5469,6 +6015,7 @@ export default {
         await Promise.all([
           fetchAnalytics(),
           fetchProducts(),
+          fetchChefs(),
           fetchCategories(),
           fetchTags(),
           fetchOrders(),
@@ -6159,7 +6706,199 @@ export default {
       window.print();
     };
 
-    const fetchProducts = async () => {
+    // ============ CHEFS & PRODUCTION LOGIC ============
+    const fetchChefs = async () => {
+      try {
+        const res = await adminFetch(`/api/admin/chefs?shop=${activeShop.value}`);
+        if (res.ok) {
+          chefs.value = await res.json();
+        }
+      } catch (err) {
+        console.error('Fetch chefs error:', err);
+      }
+    };
+
+    const openAddChefModal = () => {
+      editingChef._id = '';
+      editingChef.name = '';
+      editingChef.phone = '';
+      editingChef.active = true;
+      chefModalOpen.value = true;
+    };
+
+    const openEditChefModal = (chef) => {
+      editingChef._id = chef._id;
+      editingChef.name = chef.name;
+      editingChef.phone = chef.phone || '';
+      editingChef.active = chef.active !== false;
+      chefModalOpen.value = true;
+    };
+
+    const saveChef = async () => {
+      if (!editingChef.name.trim()) {
+        toast.show('يرجى إدخال اسم الشيف', 'warning');
+        return;
+      }
+      loading.value = true;
+      try {
+        const url = editingChef._id ? `/api/admin/chefs/${editingChef._id}` : '/api/admin/chefs';
+        const method = editingChef._id ? 'PUT' : 'POST';
+        const res = await adminFetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: editingChef.name.trim(),
+            phone: editingChef.phone.trim(),
+            active: editingChef.active,
+            shop: activeShop.value
+          })
+        });
+        if (res.ok) {
+          toast.show(editingChef._id ? 'تم تعديل بيانات الشيف بنجاح' : 'تم إضافة الشيف بنجاح', 'success');
+          chefModalOpen.value = false;
+          await Promise.all([fetchChefs(), fetchProducts()]);
+        } else {
+          const data = await res.json();
+          toast.show(data.error || 'فشل حفظ الشيف', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const deleteChef = async (id) => {
+      if (!confirm('هل أنت متأكد من حذف هذا الشيف؟ سيتم إلغاء ربط جميع الأصناف المخصصة له.')) return;
+      loading.value = true;
+      try {
+        const res = await adminFetch(`/api/admin/chefs/${id}?shop=${activeShop.value}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          toast.show('تم حذف الشيف بنجاح', 'success');
+          await Promise.all([fetchChefs(), fetchProducts()]);
+        } else {
+          toast.show('فشل حذف الشيف', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const getChefAssignedProducts = (chefId) => {
+      return products.value.filter(p => p.chefId === chefId);
+    };
+
+    const openAssignProductsModal = (chef) => {
+      selectedChefForAssign.value = chef;
+      selectedProductIdsForChef.value = products.value.filter(p => p.chefId === chef._id).map(p => p._id);
+      assignProductSearch.value = '';
+      assignProductsModalOpen.value = true;
+    };
+
+    const toggleProductAssignment = (prodId) => {
+      const idx = selectedProductIdsForChef.value.indexOf(prodId);
+      if (idx > -1) {
+        selectedProductIdsForChef.value.splice(idx, 1);
+      } else {
+        selectedProductIdsForChef.value.push(prodId);
+      }
+    };
+
+    const filteredProductsForAssign = computed(() => {
+      if (!assignProductSearch.value.trim()) return products.value;
+      const q = assignProductSearch.value.trim().toLowerCase();
+      return products.value.filter(p => 
+        (p.name && p.name.toLowerCase().includes(q)) || 
+        (p.category && p.category.toLowerCase().includes(q))
+      );
+    });
+
+    const saveProductAssignments = async () => {
+      if (!selectedChefForAssign.value) return;
+      loading.value = true;
+      try {
+        const res = await adminFetch(`/api/admin/chefs/${selectedChefForAssign.value._id}/assign-products`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productIds: selectedProductIdsForChef.value,
+            shop: activeShop.value
+          })
+        });
+        if (res.ok) {
+          toast.show('تم تحديث إسناد الأصناف للشيف بنجاح', 'success');
+          assignProductsModalOpen.value = false;
+          await fetchProducts();
+        } else {
+          toast.show('فشل إسناد الأصناف', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال', 'danger');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const loadProductionReport = async () => {
+      isLoadingReport.value = true;
+      try {
+        const params = new URLSearchParams({
+          shop: activeShop.value
+        });
+        if (productionReportFilters.dateFrom) params.append('startDate', productionReportFilters.dateFrom);
+        if (productionReportFilters.dateTo) params.append('endDate', productionReportFilters.dateTo);
+        if (productionReportFilters.chefId) params.append('chefId', productionReportFilters.chefId);
+
+        const res = await adminFetch(`/api/admin/production/report?${params.toString()}`);
+        if (res.ok) {
+          productionReportData.value = await res.json();
+        }
+      } catch (err) {
+        console.error('Failed to load production report:', err);
+      } finally {
+        isLoadingReport.value = false;
+      }
+    };
+
+    const setProductionDateShortcut = (type) => {
+      const today = getTodayStr();
+      if (type === 'today') {
+        productionReportFilters.dateFrom = today;
+        productionReportFilters.dateTo = today;
+      } else if (type === '7d') {
+        const d = new Date();
+        d.setDate(d.getDate() - 6);
+        productionReportFilters.dateFrom = d.toISOString().split('T')[0];
+        productionReportFilters.dateTo = today;
+      } else if (type === 'month') {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        productionReportFilters.dateFrom = `${y}-${m}-01`;
+        productionReportFilters.dateTo = today;
+      }
+      loadProductionReport();
+    };
+
+    const printProductionReport = async () => {
+      setPrintPageSize('A4 portrait', '6mm 8mm');
+      printingProductionReport.value = true;
+      await nextTick();
+
+      const cleanup = () => {
+        printingProductionReport.value = false;
+        window.removeEventListener('afterprint', cleanup);
+      };
+
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    };
+
+        const fetchProducts = async () => {
       const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
       const res = await adminFetch(url);
       if (res.ok) {
@@ -7743,6 +8482,30 @@ const closeSuggestionsWithDelay = () => {
       openUserModal,
       saveUser,
       deleteUser,
+      chefs,
+      productionSubTab,
+      chefModalOpen,
+      editingChef,
+      assignProductsModalOpen,
+      selectedChefForAssign,
+      selectedProductIdsForChef,
+      assignProductSearch,
+      filteredProductsForAssign,
+      productionReportFilters,
+      productionReportData,
+      isLoadingReport,
+      printingProductionReport,
+      openAddChefModal,
+      openEditChefModal,
+      saveChef,
+      deleteChef,
+      getChefAssignedProducts,
+      openAssignProductsModal,
+      toggleProductAssignment,
+      saveProductAssignments,
+      loadProductionReport,
+      setProductionDateShortcut,
+      printProductionReport,
       editingCustomer,
       customerModalOpen,
       customerDetailsModalOpen,
@@ -16065,6 +16828,411 @@ select.pos-control {
     border-top: 1px dashed #cbd5e1;
     padding-top: 6px;
     page-break-inside: avoid;
+  }
+}
+
+
+/* ==========================================================================
+   PRODUCTION MANAGEMENT & CHEFS TAB STYLES
+   ========================================================================== */
+
+.production-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.production-tabs-pills {
+  display: flex;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.05);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.prod-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prod-tab-pill.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.prod-tab-pill .pill-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.chefs-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.chef-card {
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.chef-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.chef-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.chef-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+
+.chef-avatar.sm {
+  width: 38px;
+  height: 38px;
+  font-size: 1rem;
+  border-radius: 10px;
+}
+
+.chef-details {
+  flex: 1;
+}
+
+.chef-name {
+  font-size: 1.05rem;
+  margin: 0 0 4px 0;
+  color: #0f172a;
+}
+
+.chef-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chef-phone {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.chef-quick-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.chef-icon-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.chef-icon-btn.whatsapp {
+  background: rgba(37, 211, 102, 0.15);
+  color: #25d366;
+}
+
+.chef-icon-btn.call {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.chef-status-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.chef-status-badge.active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.chef-status-badge.inactive {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+.chef-assigned-products-box {
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.assigned-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.assigned-title {
+  font-size: 0.84rem;
+  color: #334155;
+}
+
+.assigned-count-pill {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.assigned-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.assigned-chip {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.chef-card-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.btn-chef-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-chef-action.btn-chef-assign {
+  flex: 1;
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #d97706;
+}
+
+.btn-chef-action.btn-chef-assign:hover {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+
+.btn-chef-action.btn-chef-edit:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.btn-chef-action.btn-chef-delete {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-chef-action.btn-chef-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Assign Products Modal Grid */
+.assign-products-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.assign-product-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.assign-product-card:hover {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.assign-product-card.is-selected {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.assign-prod-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.assign-prod-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.assign-prod-title {
+  font-size: 0.86rem;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.assign-prod-cat {
+  font-size: 0.74rem;
+}
+
+.assign-prod-price {
+  font-size: 0.8rem;
+}
+
+/* Chef Report Section */
+.chef-report-card {
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.chef-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.chef-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chef-header-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-pill .label {
+  color: #64748b;
+}
+
+.sub-table {
+  font-size: 0.88rem;
+}
+
+.sub-table th {
+  background: #f8fafc;
+  font-size: 0.82rem;
+}
+
+.print-production-report-wrapper {
+  display: none;
+}
+
+@page productionReport {
+  size: A4 portrait;
+  margin: 0 !important;
+}
+
+@media print {
+  .print-production-report-wrapper, .print-production-report-wrapper * {
+    visibility: visible;
+  }
+
+  .print-production-report-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+  }
+
+  .production-report-page {
+    page: productionReport;
+    padding: 8mm 10mm;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
   }
 }
 
