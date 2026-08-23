@@ -1980,6 +1980,12 @@
                     <h3 class="toolbar-title">دليل وقائمة العملاء</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredCustomers.length, 'customer') }}</span>
                   </div>
+                  <div class="customer-toolbar-actions">
+                    <button @click="printCustomerDebtReport" class="btn btn-outline btn-sm flex-center cust-debt-print-btn" title="طباعة كشف مديونيات وحسابات العملاء">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                      <span>كشف المديونيات</span>
+                    </button>
+                  </div>
                 </div>
                 <div class="card-toolbar-bottom customer-toolbar-filters">
                   <div class="search-input-wrapper flex-grow-1">
@@ -3130,6 +3136,126 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Hidden Print Customer Debt Report (A4 Portrait) -->
+  <div class="print-debt-report-wrapper" v-if="printingCustomerDebtReport">
+    <div class="debt-report-page">
+      <!-- Header Banner -->
+      <div class="debt-header">
+        <div class="debt-brand">
+          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="debt-logo" />
+          <div class="debt-brand-text">
+            <h1 class="debt-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+            <p class="debt-subtitle">كشف حساب ومديونيات العملاء التفصيلي</p>
+          </div>
+        </div>
+        <div class="debt-header-badge">تقرير مالي معتمد</div>
+      </div>
+
+      <div class="debt-divider"></div>
+
+      <!-- Meta Info Bar -->
+      <div class="debt-meta">
+        <div class="debt-meta-row">
+          <span class="debt-meta-label">نطاق التقرير:</span>
+          <span class="debt-meta-val debt-date-pill">{{ customerDebtReportData.filterLabel }}</span>
+        </div>
+        <div class="debt-meta-row">
+          <span class="debt-meta-label">تاريخ الإصدار:</span>
+          <span class="debt-meta-val text-mono">{{ customerDebtReportData.generatedAt }}</span>
+        </div>
+      </div>
+
+      <!-- Summary KPI Cards -->
+      <div class="debt-kpi-grid">
+        <div class="debt-kpi-card">
+          <span class="debt-kpi-label">إجمالي المشتريات</span>
+          <span class="debt-kpi-val text-mono text-primary">{{ customerDebtReportData.totalPurchasesFormatted }}</span>
+        </div>
+        <div class="debt-kpi-card highlight-green">
+          <span class="debt-kpi-label">إجمالي المسدد</span>
+          <span class="debt-kpi-val text-mono text-success">{{ customerDebtReportData.totalPaidFormatted }}</span>
+        </div>
+        <div class="debt-kpi-card highlight-debt">
+          <span class="debt-kpi-label">إجمالي الديون المتبقية</span>
+          <span class="debt-kpi-val text-mono text-danger">{{ customerDebtReportData.totalDebtFormatted }}</span>
+        </div>
+        <div class="debt-kpi-card">
+          <span class="debt-kpi-label">العملاء المدينين</span>
+          <span class="debt-kpi-val text-mono">{{ customerDebtReportData.indebtedCount }} / {{ customerDebtReportData.totalCustomers }}</span>
+        </div>
+      </div>
+
+      <!-- Main Customers Debt Table with requested columns [العميل, إجمالي المشتريات, المدفوع, الديون] -->
+      <div class="debt-table-container">
+        <table class="debt-report-table">
+          <thead>
+            <tr>
+              <th style="width: 5%;">ت</th>
+              <th style="width: 35%;">العميل</th>
+              <th style="width: 20%;">إجمالي المشتريات</th>
+              <th style="width: 20%;">المدفوع</th>
+              <th style="width: 20%;">الديون المتبقية</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!customerDebtReportData.customers || customerDebtReportData.customers.length === 0">
+              <td colspan="5" class="text-center py-4 text-muted">لا توجد سجلات عملاء متطابقة في هذا النطاق.</td>
+            </tr>
+            <tr 
+              v-for="(cust, idx) in customerDebtReportData.customers" 
+              :key="cust._id"
+              :class="{ 'has-debt-row': (cust.outstandingBalance || 0) > 0 }"
+            >
+              <td class="text-center text-mono text-muted">{{ idx + 1 }}</td>
+              <td>
+                <div class="debt-cust-cell">
+                  <span class="debt-cust-name font-bold">{{ cust.name }}</span>
+                  <span class="debt-cust-phone text-mono text-muted" dir="ltr">{{ cust.phone }}</span>
+                </div>
+              </td>
+              <td class="text-bold text-mono">{{ formatCurrency(cust.totalSpent || 0) }}</td>
+              <td class="text-bold text-mono text-success">
+                {{ formatCurrency(Math.max(0, (cust.totalSpent || 0) - (cust.outstandingBalance || 0))) }}
+              </td>
+              <td>
+                <span 
+                  class="debt-val-pill text-mono font-bold" 
+                  :class="(cust.outstandingBalance || 0) > 0 ? 'is-debt' : 'is-clear'"
+                >
+                  {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : '0.00 د.ل (خالص)' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="debt-grand-total-row">
+              <td colspan="2" class="text-bold text-end">الإجمالي العام (Grand Total):</td>
+              <td class="text-bold text-mono text-primary">{{ customerDebtReportData.totalPurchasesFormatted }}</td>
+              <td class="text-bold text-mono text-success">{{ customerDebtReportData.totalPaidFormatted }}</td>
+              <td class="text-bold text-mono text-danger">{{ customerDebtReportData.totalDebtFormatted }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Official Report Footer & Signatures -->
+      <div class="debt-report-footer">
+        <div class="debt-signature-block">
+          <span class="sig-label">المحاسب المسؤول:</span>
+          <span class="sig-line">.....................................</span>
+        </div>
+        <div class="debt-stamp-block">
+          <span class="sig-label">خاتم وتوقيع الإدارة:</span>
+          <span class="sig-line">.....................................</span>
+        </div>
+      </div>
+      
+      <div class="debt-watermark-row">
+        <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — كشف مديونيات العملاء</span>
+      </div>
     </div>
   </div>
 
@@ -5431,6 +5557,59 @@ export default {
 
     const printingOrder = ref(null);
     const printingReconciliation = ref(false);
+    const printingCustomerDebtReport = ref(false);
+
+    const customerDebtReportData = computed(() => {
+      const list = filteredCustomers.value || [];
+      const totalPurchases = list.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0);
+      const totalDebt = list.reduce((sum, c) => sum + (Number(c.outstandingBalance) || 0), 0);
+      const totalPaid = Math.max(0, totalPurchases - totalDebt);
+      const indebtedCount = list.filter(c => (Number(c.outstandingBalance) || 0) > 0).length;
+      const collectionRate = totalPurchases > 0 ? ((totalPaid / totalPurchases) * 100).toFixed(1) : '100.0';
+
+      let filterLabel = 'جميع التواريخ المسجلة';
+      if (customerFilters.dateFrom && customerFilters.dateTo) {
+        filterLabel = `من ${formatArabicDate(customerFilters.dateFrom)} إلى ${formatArabicDate(customerFilters.dateTo)}`;
+      } else if (customerFilters.dateFrom) {
+        filterLabel = `من تاريخ ${formatArabicDate(customerFilters.dateFrom)}`;
+      } else if (customerFilters.dateTo) {
+        filterLabel = `حتى تاريخ ${formatArabicDate(customerFilters.dateTo)}`;
+      }
+
+      if (customerFilters.search && customerFilters.search.trim()) {
+        filterLabel += ` (بحث: "${customerFilters.search.trim()}")`;
+      }
+
+      return {
+        customers: list,
+        totalCustomers: list.length,
+        indebtedCount,
+        clearCount: list.length - indebtedCount,
+        totalPurchases,
+        totalPurchasesFormatted: formatCurrency(totalPurchases),
+        totalPaid,
+        totalPaidFormatted: formatCurrency(totalPaid),
+        totalDebt,
+        totalDebtFormatted: formatCurrency(totalDebt),
+        collectionRate,
+        filterLabel,
+        generatedAt: new Date().toLocaleString('ar-LY', { dateStyle: 'full', timeStyle: 'short' })
+      };
+    });
+
+    const printCustomerDebtReport = async () => {
+      setPrintPageSize('A4 portrait', '6mm 8mm');
+      printingCustomerDebtReport.value = true;
+      await nextTick();
+
+      const cleanup = () => {
+        printingCustomerDebtReport.value = false;
+        window.removeEventListener('afterprint', cleanup);
+      };
+
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    };
     const printingPaymentReceipt = ref(false);
     const printingPayment = ref(null);
     const ITEMS_PER_PAGE = 16; // 16 items per page for ultra-dense A5 layout
@@ -7485,6 +7664,9 @@ const closeSuggestionsWithDelay = () => {
       reconciliationData,
       reconDensity,
       printReconciliation,
+      printingCustomerDebtReport,
+      customerDebtReportData,
+      printCustomerDebtReport,
       paginatedOrderPages,
       printOrder,
       toggleProductAvailability,
@@ -15609,6 +15791,281 @@ select.pos-control {
   border-radius: 50%;
   background: rgba(99, 102, 241, 0.15);
   color: #4f46e5;
+}
+
+
+/* ==========================================================================
+   CUSTOMER DEBT REPORT PRINT STYLES (HABIT 17)
+   ========================================================================== */
+
+.cust-debt-print-btn {
+  height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  transition: all 0.2s ease !important;
+}
+
+.cust-debt-print-btn:hover {
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+  background: rgba(245, 158, 11, 0.05) !important;
+}
+
+.print-debt-report-wrapper {
+  display: none;
+}
+
+@page debtReport {
+  size: A4 portrait;
+  margin: 0 !important;
+}
+
+@media print {
+  .print-debt-report-wrapper, .print-debt-report-wrapper * {
+    visibility: visible;
+  }
+
+  .print-debt-report-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+  }
+
+  .debt-report-page {
+    page: debtReport;
+    padding: 8mm 10mm;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+  }
+
+  .debt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .debt-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .debt-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  .debt-shop-name {
+    font-size: 15pt;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .debt-subtitle {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #64748b;
+    margin: 2px 0 0 0;
+  }
+
+  .debt-header-badge {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #0f172a;
+    border: 1.5px solid #0f172a;
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+
+  .debt-divider {
+    height: 2px;
+    background: #0f172a;
+    margin: 8px 0;
+  }
+
+  .debt-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 8.5pt;
+    margin-bottom: 10px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-meta-label {
+    font-weight: 700;
+    color: #64748b;
+    margin-left: 6px;
+  }
+
+  .debt-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .debt-kpi-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 8px;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-kpi-card.highlight-green {
+    background: #f0fdf4 !important;
+    border-color: #86efac !important;
+  }
+
+  .debt-kpi-card.highlight-debt {
+    background: #fef2f2 !important;
+    border-color: #fca5a5 !important;
+  }
+
+  .debt-kpi-label {
+    font-size: 7.8pt;
+    font-weight: 750;
+    color: #475569;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .debt-kpi-val {
+    font-size: 11pt;
+    font-weight: 900;
+  }
+
+  .debt-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.8pt;
+    margin-bottom: 14px;
+  }
+
+  .debt-report-table th {
+    background: #1e293b !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    padding: 6px 8px;
+    text-align: right;
+    border: 1px solid #0f172a;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-report-table td {
+    padding: 5px 8px;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+  }
+
+  .debt-report-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-report-table tr.has-debt-row {
+    background: #fff5f5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-cust-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .debt-cust-name {
+    font-size: 9pt;
+    color: #0f172a;
+  }
+
+  .debt-cust-phone {
+    font-size: 7.8pt;
+  }
+
+  .debt-val-pill {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 8.5pt;
+  }
+
+  .debt-val-pill.is-debt {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-val-pill.is-clear {
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-grand-total-row td {
+    background: #f1f5f9 !important;
+    font-size: 9.5pt;
+    padding: 8px;
+    border-top: 2px solid #0f172a !important;
+    border-bottom: 2px solid #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .debt-report-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 10px;
+    page-break-inside: avoid;
+  }
+
+  .debt-signature-block, .debt-stamp-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 9pt;
+    font-weight: 750;
+    color: #334155;
+  }
+
+  .debt-watermark-row {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 7.5pt;
+    color: #94a3b8;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 6px;
+    page-break-inside: avoid;
+  }
 }
 
 </style>
