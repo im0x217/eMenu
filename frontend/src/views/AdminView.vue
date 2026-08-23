@@ -2126,6 +2126,7 @@
                   <thead>
                     <tr>
                       <th>العميل</th>
+                      <th>كلمة المرور</th>
                       <th>إجمالي الطلبات</th>
                       <th>إجمالي المشتريات</th>
                       <th>الرصيد المستحق</th>
@@ -2134,7 +2135,7 @@
                   </thead>
                   <tbody>
                     <tr v-if="filteredCustomers.length === 0">
-                      <td colspan="5" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
+                      <td colspan="6" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
                     <tr v-for="cust in paginatedCustomers" :key="cust._id">
                       <td>
@@ -2145,6 +2146,15 @@
                             <span class="customer-phone-subtext text-mono">{{ cust.phone }}</span>
                           </div>
                         </div>
+                      </td>
+                      <td>
+                        <span v-if="cust.password" class="cust-password-pill" :title="'كلمة المرور: ' + cust.password" @click="openCustomerDetails(cust)">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                          <span class="text-mono">{{ cust.password }}</span>
+                        </span>
+                        <span v-else class="cust-password-pill empty" @click="openCustomerEditModal(cust)" title="انقر لتعيين كلمة مرور">
+                          <span>غير معينة</span>
+                        </span>
                       </td>
                       <td>
                         <span class="orders-count-badge">{{ formatArabicPlural(cust.orderCount, 'order') }}</span>
@@ -2195,7 +2205,12 @@
                     <div class="mob-cust-card-header" @click="openCustomerDetails(cust)">
                       <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
                       <div class="mob-cust-card-info">
-                        <span class="customer-name-text font-bold">{{ cust.name }}</span>
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="customer-name-text font-bold">{{ cust.name }}</span>
+                          <span v-if="cust.password" class="cust-pass-dot-badge" :title="'كلمة السر: ' + cust.password">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                          </span>
+                        </div>
                         <span class="customer-phone-subtext text-mono" dir="ltr">{{ cust.phone }}</span>
                       </div>
                       <span class="customer-balance-cell font-bold" :style="{ color: (cust.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
@@ -2702,6 +2717,54 @@
             </div>
           </div>
 
+          <!-- Customer Password & Security Card -->
+          <div class="profile-security-card">
+            <div class="security-card-header">
+              <div class="security-title-group">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span class="security-title font-bold">كلمة مرور الحساب:</span>
+              </div>
+              <span v-if="selectedCustomer.password" class="badge-status-active">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                مفعّلة
+              </span>
+              <span v-else class="badge-status-inactive">
+                غير معينة
+              </span>
+            </div>
+
+            <div class="security-password-body">
+              <div v-if="selectedCustomer.password" class="password-display-box">
+                <span class="password-value text-mono font-bold">
+                  {{ showProfilePassword ? selectedCustomer.password : '••••••••' }}
+                </span>
+                <div class="password-actions-inline">
+                  <button 
+                    type="button" 
+                    @click="showProfilePassword = !showProfilePassword" 
+                    class="btn-pass-action btn-pass-toggle" 
+                    :title="showProfilePassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+                  >
+                    <svg v-if="showProfilePassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="copyCustomerPassword(selectedCustomer.password)" 
+                    class="btn-pass-action btn-pass-copy" 
+                    title="نسخ كلمة المرور"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span>نسخ</span>
+                  </button>
+                </div>
+              </div>
+              <div v-else class="password-empty-box">
+                <span class="text-muted">العميل لم يقم بتعيين كلمة مرور. يمكنك تعيين كلمة مرور له بالضغط على زر تعديل البيانات أدناه.</span>
+              </div>
+            </div>
+          </div>
+
           <div class="profile-meta-bar">
             <span class="meta-label">آخر نشاط مسجل:</span>
             <span class="meta-val text-mono">{{ selectedCustomer.lastActive ? new Date(selectedCustomer.lastActive).toLocaleString('ar-LY') : 'غير متوفر' }}</span>
@@ -2779,6 +2842,33 @@
             <div class="form-group mb-3">
               <label class="form-label">رقم الهاتف *</label>
               <input v-model="editingCustomer.phone" type="text" required class="form-control text-mono" placeholder="0910000000..." />
+            </div>
+
+            <div class="form-group mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0">كلمة مرور الحساب</label>
+                <span v-if="editingCustomer.password" class="text-small text-muted font-bold">({{ editingCustomer.password.length }} خانات)</span>
+              </div>
+              <div class="input-with-action-wrapper">
+                <input 
+                  v-model="editingCustomer.password" 
+                  :type="editingCustomer.showPassword ? 'text' : 'password'" 
+                  class="form-control text-mono" 
+                  placeholder="أدخل كلمة المرور (4 خانات على الأقل)..." 
+                />
+                <button 
+                  type="button" 
+                  @click="editingCustomer.showPassword = !editingCustomer.showPassword" 
+                  class="input-action-btn"
+                  :title="editingCustomer.showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+                >
+                  <svg v-if="editingCustomer.showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+              <small class="form-text text-muted mt-1 d-block">
+                يمكن للمدير تعيين أو تعديل كلمة مرور العميل مباشرة لتمكينه من تسجيل الدخول بحسابه.
+              </small>
             </div>
           </div>
 
@@ -3999,10 +4089,13 @@ export default {
     });
     
     // Customer form bindings
+    const showProfilePassword = ref(false);
     const editingCustomer = reactive({
       _id: '',
       name: '',
-      phone: ''
+      phone: '',
+      password: '',
+      showPassword: false
     });
     const viewingCustomerFavs = ref([]);
     const viewingCustomer = ref(null);
@@ -6775,6 +6868,7 @@ const closeSuggestionsWithDelay = () => {
 
     const openCustomerDetails = (cust) => {
       selectedCustomer.value = cust;
+      showProfilePassword.value = false;
       customerDetailsModalOpen.value = true;
     };
 
@@ -6782,7 +6876,19 @@ const closeSuggestionsWithDelay = () => {
       editingCustomer._id = cust._id;
       editingCustomer.name = cust.name;
       editingCustomer.phone = cust.phone;
+      editingCustomer.password = cust.password || '';
+      editingCustomer.showPassword = false;
       customerModalOpen.value = true;
+    };
+
+    const copyCustomerPassword = async (pass) => {
+      if (!pass) return;
+      try {
+        await navigator.clipboard.writeText(pass);
+        toast.show('تم نسخ كلمة المرور إلى الحافظة بنجاح', 'success');
+      } catch (e) {
+        toast.show('فشل نسخ كلمة المرور', 'danger');
+      }
     };
 
     const saveCustomerDetails = async () => {
@@ -6793,11 +6899,19 @@ const closeSuggestionsWithDelay = () => {
           method: 'PUT',
           body: JSON.stringify({
             name: editingCustomer.name,
-            phone: editingCustomer.phone
+            phone: editingCustomer.phone,
+            password: editingCustomer.password
           })
         });
         if (res.ok) {
-          toast.show('تم تحديث بيانات العميل بنجاح', 'success');
+          const data = await res.json();
+          toast.show('تم تحديث بيانات وكلمة مرور العميل بنجاح', 'success');
+          if (selectedCustomer.value && selectedCustomer.value._id === editingCustomer._id) {
+            selectedCustomer.value.name = editingCustomer.name;
+            selectedCustomer.value.phone = editingCustomer.phone;
+            selectedCustomer.value.password = editingCustomer.password;
+            selectedCustomer.value.hasPassword = !!editingCustomer.password;
+          }
           customerModalOpen.value = false;
           await Promise.all([fetchCustomers(), fetchOrders(), fetchAnalytics()]);
         } else {
@@ -15317,6 +15431,184 @@ select.pos-control {
     right: 0 !important;
     box-sizing: border-box !important;
   }
+}
+
+
+/* ==========================================================================
+   CUSTOMER PASSWORD & SECURITY CARD STYLES
+   ========================================================================== */
+
+.profile-security-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.security-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.security-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+.badge-status-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.badge-status-inactive {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.password-display-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.password-value {
+  font-size: 1.05rem;
+  color: #0f172a;
+  letter-spacing: 1px;
+}
+
+.password-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-pass-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-pass-action:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-pass-action.btn-pass-toggle {
+  padding: 5px 8px;
+}
+
+.password-empty-box {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.input-with-action-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-action-wrapper .form-control {
+  padding-left: 42px !important;
+}
+
+.input-action-btn {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.input-action-btn:hover {
+  color: #0f172a;
+}
+
+.cust-password-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cust-password-pill:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #4f46e5;
+}
+
+.cust-password-pill.empty {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.cust-pass-dot-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
 }
 
 </style>

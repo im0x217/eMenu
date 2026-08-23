@@ -21,7 +21,8 @@ function hashCustomerPassword(password) {
   return `${salt}:${hash}`;
 }
 
-function verifyCustomerPassword(password, storedHash) {
+function verifyCustomerPassword(password, storedHash, storedPlain) {
+  if (storedPlain && String(storedPlain).trim() === String(password).trim()) return true;
   if (!storedHash || !storedHash.includes(':')) return false;
   const [salt, originalHash] = storedHash.split(':');
   const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
@@ -1787,6 +1788,8 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
         _id: cust._id,
         name: cust.name,
         phone,
+        password: cust.password || cust.plainPassword || '',
+        hasPassword: !!(cust.password || cust.plainPassword || cust.passwordHash),
         lastActive: cust.lastActive,
         createdAt: cust.createdAt,
         totalSpent: stats.totalSpent,
@@ -1803,10 +1806,10 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-// Update customer details (with reference linkage preservation)
+// Update customer details (with reference linkage preservation & password management)
 app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, phone } = req.body;
+  const { name, phone, password } = req.body;
 
   if (!name || !phone) {
     return res.status(400).json({ error: "Name and phone are required" });
@@ -1821,9 +1824,26 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) =
     const oldPhone = customer.phone;
     const newPhone = phone.trim();
 
+    const updateDoc = { 
+      name: name.trim(), 
+      phone: newPhone, 
+      lastActive: new Date() 
+    };
+
+    if (password !== undefined) {
+      const cleanPass = String(password).trim();
+      if (cleanPass.length > 0) {
+        updateDoc.password = cleanPass;
+        updateDoc.passwordHash = hashCustomerPassword(cleanPass);
+      } else {
+        updateDoc.password = '';
+        updateDoc.passwordHash = '';
+      }
+    }
+
     await customersCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { name: name.trim(), phone: newPhone, lastActive: new Date() } }
+      { $set: updateDoc }
     );
 
     if (oldPhone !== newPhone) {
@@ -2330,6 +2350,7 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
           { 
             $set: { 
               name: existing.name || normalizedName,
+              password: password.trim(),
               passwordHash,
               lastActive: new Date()
             } 
@@ -2353,6 +2374,7 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
     const newCustomerDoc = {
       name: normalizedName,
       phone: normalizedPhone,
+      password: password.trim(),
       passwordHash,
       createdAt: new Date(),
       lastActive: new Date()
@@ -2411,7 +2433,7 @@ app.post("/api/customer/login", checkMongoDB, customerLimiter, async (req, res) 
       return res.status(400).json({ error: "يرجى إدخال كلمة المرور" });
     }
 
-    const isValid = verifyCustomerPassword(password, customer.passwordHash);
+    const isValid = verifyCustomerPassword(password, customer.passwordHash, customer.password);
     if (!isValid) {
       return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
     }
@@ -2456,8 +2478,8 @@ app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req
     }
 
     // If already has password, verify old password first
-    if (customer.passwordHash && oldPassword) {
-      const isOldValid = verifyCustomerPassword(oldPassword, customer.passwordHash);
+    if ((customer.passwordHash || customer.password) && oldPassword) {
+      const isOldValid = verifyCustomerPassword(oldPassword, customer.passwordHash, customer.password);
       if (!isOldValid) {
         return res.status(401).json({ error: "كلمة المرور الحالية غير صحيحة" });
       }
@@ -2468,6 +2490,7 @@ app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req
       { _id: customer._id },
       { 
         $set: { 
+          password: password.trim(),
           passwordHash: newHash,
           lastActive: new Date()
         } 
@@ -2530,13 +2553,14 @@ app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkAdmin, asy
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    const passwordHash = hashCustomerPassword(newPassword);
+    const cleanNewPass = newPassword.trim();
+    const passwordHash = hashCustomerPassword(cleanNewPass);
     await customersCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { passwordHash, lastActive: new Date() } }
+      { $set: { password: cleanNewPass, passwordHash, lastActive: new Date() } }
     );
 
-    res.json({ success: true, message: "تم إعادة تعيين كلمة المرور بنجاح" });
+    res.json({ success: true, password: cleanNewPass, message: "تم إعادة تعيين كلمة المرور بنجاح" });
   } catch (err) {
     console.error("Admin reset customer password error:", err);
     res.status(500).json({ error: "Failed to reset password" });
