@@ -472,6 +472,8 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           allowFloat: 1,
           purchaseType: 1,
           tags: 1,
+          chefId: 1,
+          chefName: 1,
         },
       })
       .sort({ name: 1 })
@@ -942,6 +944,8 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           allowFloat: 1,
           purchaseType: 1,
           tags: 1,
+          chefId: 1,
+          chefName: 1,
         },
       })
       .sort({ name: 1 })

@@ -5322,6 +5322,9 @@ export default {
         modalFilePreview.value = prod.img || '';
         editingProduct.tags = Array.isArray(prod.tags) ? [...prod.tags] : [];
         
+        editingProduct.chefId = prod.chefId ? String(prod.chefId) : '';
+        editingProduct.chefName = prod.chefName || '';
+        
         // Load subcategories for this category
         const cat = categories.value.find(c => c.name === prod.category);
         subCategoriesForEditing.value = cat ? (cat.subCategories || []) : [];
@@ -5340,6 +5343,8 @@ export default {
         editingProduct.img = '';
         modalFilePreview.value = '';
         editingProduct.tags = [];
+        editingProduct.chefId = '';
+        editingProduct.chefName = '';
         subCategoriesForEditing.value = [];
       }
       productModalOpen.value = true;
@@ -5367,8 +5372,8 @@ export default {
       formData.append('allowFloat', editingProduct.allowFloat ? 'true' : 'false');
       formData.append('tags', JSON.stringify(editingProduct.tags));
       formData.append('makingCost', editingProduct.makingCost !== null && editingProduct.makingCost !== undefined ? editingProduct.makingCost : 0);
-      formData.append('chefId', editingProduct.chefId || '');
-      const matchedChef = chefs.value.find(c => c._id === editingProduct.chefId);
+      formData.append('chefId', editingProduct.chefId ? String(editingProduct.chefId) : '');
+      const matchedChef = chefs.value.find(c => String(c._id) === String(editingProduct.chefId));
       formData.append('chefName', matchedChef ? matchedChef.name : '');
       
       if (editingProduct.purchaseType !== 'bulk' && editingProduct.price_regular) {
@@ -7190,16 +7195,20 @@ export default {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            productIds: selectedProductIdsForChef.value,
+            productIds: selectedProductIdsForChef.value.map(id => String(id)),
             shop: activeShop.value
           })
         });
         if (res.ok) {
           toast.show('تم تحديث إسناد الأصناف للشيف بنجاح', 'success');
           assignProductsModalOpen.value = false;
-          await fetchProducts();
+          await Promise.all([fetchProducts(), fetchChefs()]);
+          if (productionSubTab.value === 'report') {
+            loadProductionReport();
+          }
         } else {
-          toast.show('فشل إسناد الأصناف', 'danger');
+          const data = await res.json();
+          toast.show(data.error || 'فشل إسناد الأصناف', 'danger');
         }
       } catch (err) {
         toast.show('حدث خطأ بالاتصال', 'danger');
