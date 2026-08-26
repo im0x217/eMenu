@@ -11669,25 +11669,43 @@ select.form-control:focus {
 .modal-box .btn-modal-save,
 .modal-content .btn-modal-save,
 .modal-box .btn-primary,
-.modal-content .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color, #1e3a5f), #0f172a) !important;
+.modal-content .btn-primary,
+.modal-footer .btn-primary,
+.modal-content .btn-save,
+.modal-box .btn-save,
+.btn-submit-payment {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
-  border: none !important;
+  border: 1px solid #d97706 !important;
   font-family: 'Cairo', sans-serif !important;
   font-weight: 700 !important;
-  padding: 10px 22px !important;
+  padding: 10px 24px !important;
   border-radius: 10px !important;
   cursor: pointer !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
-  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .modal-box .btn-modal-save:hover,
 .modal-content .btn-modal-save:hover,
 .modal-box .btn-primary:hover,
-.modal-content .btn-primary:hover {
+.modal-content .btn-primary:hover,
+.modal-footer .btn-primary:hover,
+.modal-content .btn-save:hover,
+.modal-box .btn-save:hover,
+.btn-submit-payment:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3) !important;
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.38) !important;
+  background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
+}
+
+.modal-box .btn-modal-save:active,
+.modal-content .btn-modal-save:active,
+.modal-box .btn-primary:active,
+.modal-content .btn-primary:active,
+.modal-footer .btn-primary:active,
+.btn-submit-payment:active {
+  transform: scale(0.98) !important;
 }
 
 .modal-box .btn-modal-cancel,
@@ -12553,15 +12571,15 @@ select.form-control:focus {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 22px;
+  padding: 10px 24px;
   border-radius: 10px;
   font-weight: 800;
   font-size: 0.92rem;
-  background: linear-gradient(135deg, var(--primary-color), #e5a00d);
-  color: #ffffff;
-  border: none;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #ffffff !important;
+  border: 1px solid #d97706 !important;
   cursor: pointer;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28) !important;
   transition: all 0.2s ease;
   font-family: inherit;
 }
@@ -16225,9 +16243,9 @@ select.pos-control {
 }
 
 .quick-prod-card:hover .quick-prod-add-btn {
-  background: #0f172a;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
-  border-color: #0f172a;
+  border-color: #d97706;
 }
 
 .btn-quick-add {
@@ -16237,9 +16255,10 @@ select.pos-control {
   font-size: 0.78rem;
   font-weight: 700;
   color: #fff;
-  background: #0f172a;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   padding: 5px 10px;
   border-radius: 7px;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
 }
 
 /* Cart Items Table */
