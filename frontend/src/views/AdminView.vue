@@ -6737,7 +6737,13 @@ export default {
     const printingCustomerDebtReport = ref(false);
 
     const customerDebtReportData = computed(() => {
-      const list = filteredCustomers.value || [];
+      const rawList = filteredCustomers.value || [];
+      // Alphabetical sorting by Arabic customer name
+      const list = [...rawList].sort((a, b) => {
+        const nameA = (a.name || '').trim();
+        const nameB = (b.name || '').trim();
+        return nameA.localeCompare(nameB, 'ar', { sensitivity: 'base' });
+      });
       const totalPurchases = list.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0);
       const totalDebt = list.reduce((sum, c) => sum + (Number(c.outstandingBalance) || 0), 0);
       const totalPaid = Math.max(0, totalPurchases - totalDebt);
