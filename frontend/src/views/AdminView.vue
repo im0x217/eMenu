@@ -4776,60 +4776,6 @@ export default {
     const commandPaletteIndex = ref(0);
     const commandPaletteInputRef = ref(null);
 
-    // Available Commands in Command Palette
-    const availableCommands = computed(() => {
-      const q = commandPaletteQuery.value.trim().toLowerCase();
-      const allCmds = [
-        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'طلبات', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
-        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => { activeTab.value = 'orders'; } },
-        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => { activeTab.value = 'products'; } },
-        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => { activeTab.value = 'customers'; } },
-        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => { activeTab.value = 'production'; } },
-        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => { activeTab.value = 'analytics'; } },
-        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => { activeTab.value = 'categories'; } },
-        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => { activeTab.value = 'tags'; } },
-        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => { activeTab.value = 'carousel'; } },
-        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => { activeTab.value = 'users'; } },
-        { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
-        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
-        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
-        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
-        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'صلاحيات', shortcut: '', icon: 'user-check', action: () => openUserModal() },
-        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printAnalytics() },
-        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
-      ];
-      if (!q) return allCmds;
-      return allCmds.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
-    });
-
-    const openCommandPalette = () => {
-      commandPaletteQuery.value = '';
-      commandPaletteIndex.value = 0;
-      commandPaletteOpen.value = true;
-      nextTick(() => {
-        if (commandPaletteInputRef.value) commandPaletteInputRef.value.focus();
-      });
-    };
-
-    const executeCommand = (cmd) => {
-      commandPaletteOpen.value = false;
-      if (cmd && typeof cmd.action === 'function') {
-        cmd.action();
-      }
-    };
-
-    const navigateCommandPalette = (delta) => {
-      const total = availableCommands.value.length;
-      if (total === 0) return;
-      commandPaletteIndex.value = (commandPaletteIndex.value + delta + total) % total;
-      nextTick(() => {
-        const item = document.querySelector('.palette-item.highlighted');
-        if (item && typeof item.scrollIntoView === 'function') {
-          item.scrollIntoView({ block: 'nearest' });
-        }
-      });
-    };
-
     // Reset table row selection when tab or pagination changes
     watch([activeTab, ordersPage, productsPage, customersPage], () => {
       selectedTableRowIndex.value = 0;
@@ -8648,6 +8594,60 @@ const closeSuggestionsWithDelay = () => {
 
     let scanBuffer = '';
     let scanTimeout = null;
+
+    // Available Commands in Command Palette (Placed here so all modal functions and printReport are fully defined)
+    const availableCommands = computed(() => {
+      const q = commandPaletteQuery.value.trim().toLowerCase();
+      const allCmds = [
+        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'طلبات', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
+        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => { activeTab.value = 'orders'; } },
+        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => { activeTab.value = 'products'; } },
+        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => { activeTab.value = 'customers'; } },
+        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => { activeTab.value = 'production'; } },
+        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => { activeTab.value = 'analytics'; } },
+        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => { activeTab.value = 'categories'; } },
+        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => { activeTab.value = 'tags'; } },
+        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => { activeTab.value = 'carousel'; } },
+        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => { activeTab.value = 'users'; } },
+        { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
+        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
+        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
+        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
+        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'صلاحيات', shortcut: '', icon: 'user-check', action: () => openUserModal() },
+        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printReport() },
+        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
+      ];
+      if (!q) return allCmds;
+      return allCmds.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+    });
+
+    const openCommandPalette = () => {
+      commandPaletteQuery.value = '';
+      commandPaletteIndex.value = 0;
+      commandPaletteOpen.value = true;
+      nextTick(() => {
+        if (commandPaletteInputRef.value) commandPaletteInputRef.value.focus();
+      });
+    };
+
+    const executeCommand = (cmd) => {
+      commandPaletteOpen.value = false;
+      if (cmd && typeof cmd.action === 'function') {
+        cmd.action();
+      }
+    };
+
+    const navigateCommandPalette = (delta) => {
+      const total = availableCommands.value.length;
+      if (total === 0) return;
+      commandPaletteIndex.value = (commandPaletteIndex.value + delta + total) % total;
+      nextTick(() => {
+        const item = document.querySelector('.palette-item.highlighted');
+        if (item && typeof item.scrollIntoView === 'function') {
+          item.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    };
 
     // Helper: Check if any modal is currently open
     const anyModalOpen = () => {
