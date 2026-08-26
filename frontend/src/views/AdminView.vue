@@ -4533,9 +4533,20 @@
         </div>
 
         <div v-if="paymentTarget.recentPayments.length" class="payment-history-list">
-          <div v-for="payment in paymentTarget.recentPayments" :key="payment._id" class="payment-history-item">
+          <div 
+            v-for="payment in paymentTarget.recentPayments" 
+            :key="payment._id" 
+            class="payment-history-item"
+            :class="{ 'is-cancelled': payment.isCancelled || payment.status === 'cancelled' }"
+          >
             <div class="payment-history-header">
-              <span class="payment-history-amount">{{ formatCurrency(payment.amount) }}</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="payment-history-amount">{{ formatCurrency(payment.amount) }}</span>
+                <span v-if="payment.isCancelled || payment.status === 'cancelled'" class="payment-status-badge is-cancelled">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  دفعة ملغية ومسترجعة
+                </span>
+              </div>
               <span class="payment-history-method">{{ payment.method === 'cash' ? 'نقدي' : payment.method === 'card' ? 'بطاقة مصرفية' : payment.method === 'bank_transfer' ? 'تحويل بنكي' : 'نقدي' }}</span>
               <span class="payment-history-date">{{ new Date(payment.createdAt).toLocaleString('ar-LY') }}</span>
             </div>
@@ -4545,10 +4556,22 @@
                 #{{ d.orderNumber || (d.orderId ? d.orderId.toString().slice(-6) : '') }}: {{ formatCurrency(d.applied) }}
               </span>
             </div>
-            <div class="payment-history-footer mt-2">
+            <div class="payment-history-footer mt-2 d-flex align-items-center justify-content-between gap-2">
               <button @click="printPaymentReceipt(payment)" class="btn btn-outline btn-xs btn-payment-print" title="طباعة الإيصال">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 <span>طباعة الإيصال</span>
+              </button>
+
+              <button 
+                v-if="!payment.isCancelled && payment.status !== 'cancelled'"
+                type="button"
+                @click="cancelPayment(payment)" 
+                class="btn btn-payment-cancel"
+                :disabled="cancellingPaymentId === payment._id"
+                title="إلغاء واسترجاع هذه الدفعة وإعادة الرصيد للطلبات"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <span>{{ cancellingPaymentId === payment._id ? 'جاري الإلغاء…' : 'إلغاء واسترجاع الدفعة' }}</span>
               </button>
             </div>
           </div>
@@ -7232,6 +7255,45 @@ export default {
       paymentLoading.value = false;
     };
 
+    const cancellingPaymentId = ref(null);
+
+    const cancelPayment = async (payment) => {
+      if (!payment || !payment._id) return;
+      
+      const formattedAmt = formatCurrency(payment.amount);
+      const isConfirmed = window.confirm(`هل أنت متأكد من إلغاء واسترجاع هذه الدفعة بقيمة ${formattedAmt}؟\n\nسيتم خصم هذا المبلغ من مدفوعات الطلبات وإعادة الرصيد المستحق على العميل تلقائياً.`);
+      if (!isConfirmed) return;
+
+      cancellingPaymentId.value = payment._id;
+      try {
+        const res = await adminFetch(`/api/admin/payments/${payment._id}/cancel`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.show('تم إلغاء واسترجاع الدفعة بنجاح ✓', 'success');
+          payment.status = 'cancelled';
+          payment.isCancelled = true;
+          payment.cancelledAt = new Date();
+          
+          // Refresh customer balance & history
+          const balData = await fetchCustomerBalance(paymentTarget.customerPhone);
+          if (balData) {
+            paymentTarget.outstandingBalance = balData.outstandingBalance;
+            paymentTarget.recentPayments = balData.recentPayments;
+          }
+          await Promise.all([fetchCustomers(), fetchOrders(), fetchAnalytics()]);
+        } else {
+          toast.show(data.error || 'فشل إلغاء الدفعة', 'danger');
+        }
+      } catch (err) {
+        console.error('Cancel payment error:', err);
+        toast.show('حدث خطأ أثناء إلغاء الدفعة', 'danger');
+      } finally {
+        cancellingPaymentId.value = null;
+      }
+    };
+
     const printPaymentReceipt = async (payment) => {
       setPrintPageSize('A5 portrait', '4mm 6mm');
       printingPayment.value = payment;
@@ -9874,6 +9936,8 @@ const closeSuggestionsWithDelay = () => {
       executeCommand,
       navigateCommandPalette,
       openPaymentHistory,
+      cancelPayment,
+      cancellingPaymentId,
       printPaymentReceipt,
       printingPaymentReceipt,
       printingPayment,
@@ -19811,5 +19875,61 @@ select.pos-control {
   border-color: #f59e0b;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
   outline: none;
+}
+
+/* ================= PAYMENT CANCELLATION STYLES ================= */
+.payment-history-item.is-cancelled {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  opacity: 0.9;
+}
+
+.payment-history-item.is-cancelled .payment-history-amount {
+  text-decoration: line-through;
+  color: #dc2626 !important;
+}
+
+.payment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.payment-status-badge.is-cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.btn-payment-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #ffffff;
+  border: 1.5px solid #fca5a5;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-payment-cancel:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+
+.btn-payment-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

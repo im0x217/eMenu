@@ -2169,6 +2169,151 @@ app.get("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
+// Cancel / Reverse a payment
+app.post("/api/admin/payments/:id/cancel", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid payment ID" });
+  }
+
+  try {
+    const payment = await paymentsCollection.findOne({ _id: new ObjectId(id) });
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+    if (payment.status === 'cancelled' || payment.isCancelled) {
+      return res.status(400).json({ error: "هذه الدفعة ملغية بالفعل" });
+    }
+
+    const shop = payment.shop === "shop2" ? "shop2" : "shop1";
+    const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+
+    // Reverse distribution for each affected order
+    if (Array.isArray(payment.distributedTo)) {
+      for (const dist of payment.distributedTo) {
+        if (dist.orderId && ObjectId.isValid(dist.orderId)) {
+          const order = await ordColl.findOne({ _id: new ObjectId(dist.orderId) });
+          if (order) {
+            const applied = Number(dist.applied) || 0;
+            const newPaidAmount = Math.max(0, Math.round(((order.paidAmount || 0) - applied) * 100) / 100);
+            let newStatus = 'unpaid';
+            if (newPaidAmount >= (order.totalPrice || 0) - 0.009) {
+              newStatus = 'paid';
+            } else if (newPaidAmount > 0) {
+              newStatus = 'partial';
+            }
+            const updateDoc = {
+              paidAmount: newPaidAmount,
+              paymentStatus: newStatus
+            };
+            if (newPaidAmount === 0) {
+              updateDoc.paymentMethod = '';
+            }
+            await ordColl.updateOne(
+              { _id: new ObjectId(dist.orderId) },
+              { $set: updateDoc }
+            );
+          }
+        }
+      }
+    }
+
+    // Mark payment as cancelled in payments collection
+    await paymentsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          status: 'cancelled', 
+          isCancelled: true, 
+          cancelledAt: new Date(), 
+          cancelledBy: req.adminUser ? req.adminUser.username : 'admin' 
+        } 
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "تم إلغاء واسترجاع الدفعة بنجاح",
+      paymentId: id
+    });
+  } catch (err) {
+    console.error("Cancel payment error:", err);
+    res.status(500).json({ error: "فشل إلغاء الدفعة" });
+  }
+});
+
+// Also support DELETE method for payment cancellation
+app.delete("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid payment ID" });
+  }
+
+  try {
+    const payment = await paymentsCollection.findOne({ _id: new ObjectId(id) });
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+    if (payment.status === 'cancelled' || payment.isCancelled) {
+      return res.status(400).json({ error: "هذه الدفعة ملغية بالفعل" });
+    }
+
+    const shop = payment.shop === "shop2" ? "shop2" : "shop1";
+    const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+
+    // Reverse distribution
+    if (Array.isArray(payment.distributedTo)) {
+      for (const dist of payment.distributedTo) {
+        if (dist.orderId && ObjectId.isValid(dist.orderId)) {
+          const order = await ordColl.findOne({ _id: new ObjectId(dist.orderId) });
+          if (order) {
+            const applied = Number(dist.applied) || 0;
+            const newPaidAmount = Math.max(0, Math.round(((order.paidAmount || 0) - applied) * 100) / 100);
+            let newStatus = 'unpaid';
+            if (newPaidAmount >= (order.totalPrice || 0) - 0.009) {
+              newStatus = 'paid';
+            } else if (newPaidAmount > 0) {
+              newStatus = 'partial';
+            }
+            const updateDoc = {
+              paidAmount: newPaidAmount,
+              paymentStatus: newStatus
+            };
+            if (newPaidAmount === 0) {
+              updateDoc.paymentMethod = '';
+            }
+            await ordColl.updateOne(
+              { _id: new ObjectId(dist.orderId) },
+              { $set: updateDoc }
+            );
+          }
+        }
+      }
+    }
+
+    await paymentsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          status: 'cancelled', 
+          isCancelled: true, 
+          cancelledAt: new Date(), 
+          cancelledBy: req.adminUser ? req.adminUser.username : 'admin' 
+        } 
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "تم إلغاء واسترجاع الدفعة بنجاح",
+      paymentId: id
+    });
+  } catch (err) {
+    console.error("Delete payment error:", err);
+    res.status(500).json({ error: "فشل إلغاء الدفعة" });
+  }
+});
+
 // Get single payment receipt
 app.get("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res) => {
   const { id } = req.params;
