@@ -4822,6 +4822,21 @@ export default {
     const activeShop = ref('shop1');
     const loginShop = ref('shop1');
 
+    const scrollActiveTabIntoView = () => {
+      nextTick(() => {
+        // 1. Sidebar menu navigation item
+        const activeMenuItem = document.querySelector('.sidebar-menu .menu-item.active');
+        if (activeMenuItem && typeof activeMenuItem.scrollIntoView === 'function') {
+          activeMenuItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        }
+        // 2. Subnav horizontal tabs & pills (Production subnav, Analytics date shortcuts, etc.)
+        const activeSubnavItem = document.querySelector('.production-subnav-btn.active, .subnav-pill.active, .tab-pill.active');
+        if (activeSubnavItem && typeof activeSubnavItem.scrollIntoView === 'function') {
+          activeSubnavItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        }
+      });
+    };
+
     watch(activeTab, (newTab) => {
       if (newTab && VALID_TABS.includes(newTab)) {
         try {
@@ -4830,6 +4845,7 @@ export default {
             router.replace({ query: { ...route.query, tab: newTab } }).catch(() => {});
           }
         } catch (e) {}
+        scrollActiveTabIntoView();
       }
     });
 
@@ -9018,6 +9034,7 @@ const closeSuggestionsWithDelay = () => {
     onMounted(() => {
       window.addEventListener('resize', handleResize);
       window.addEventListener('keydown', handleGlobalKeydown);
+      scrollActiveTabIntoView();
     });
 
     onUnmounted(() => {
