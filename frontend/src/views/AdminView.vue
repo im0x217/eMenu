@@ -1858,8 +1858,65 @@
           <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <form @submit.prevent="saveOrder">
-          <div v-if="editingOrder.notes" class="order-notes-static-display mb-3">
-            <strong>ملاحظات العميل:</strong> {{ editingOrder.notes }}
+          <!-- Order Settings & Re-Date Bar -->
+          <div class="edit-order-meta-grid mb-3 glass-panel">
+            <div class="edit-meta-col">
+              <label class="edit-meta-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>تاريخ وموعد الاستلام (Re-Date):</span>
+              </label>
+              <div class="edit-date-input-group">
+                <input 
+                  v-model="editingOrder.deliveryDate" 
+                  type="date" 
+                  class="form-control edit-order-date-input" 
+                />
+                <div class="edit-date-shortcuts">
+                  <button type="button" class="btn-date-chip" :class="{ active: editingOrder.deliveryDate === getTodayStr() }" @click="setEditOrderDateShortcut(0)">اليوم</button>
+                  <button type="button" class="btn-date-chip" :class="{ active: editingOrder.deliveryDate === getDateOffsetStr(1) }" @click="setEditOrderDateShortcut(1)">غداً</button>
+                  <button type="button" class="btn-date-chip" :class="{ active: editingOrder.deliveryDate === getDateOffsetStr(2) }" @click="setEditOrderDateShortcut(2)">بعد غد</button>
+                  <button v-if="editingOrder.deliveryDate" type="button" class="btn-date-chip btn-clear-chip" @click="editingOrder.deliveryDate = ''" title="إلغاء التاريخ">&times;</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="edit-meta-col">
+              <label class="edit-meta-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>نوع التسعير:</span>
+              </label>
+              <div class="fast-order-price-mode-switch compact">
+                <button 
+                  type="button" 
+                  class="price-mode-pill" 
+                  :class="{ active: editingOrder.priceMode === 'bulk' }" 
+                  @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
+                >
+                  <span>جملة</span>
+                </button>
+                <button 
+                  type="button" 
+                  class="price-mode-pill" 
+                  :class="{ active: editingOrder.priceMode === 'regular' }" 
+                  @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
+                >
+                  <span>مفرد</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="edit-meta-col full-width">
+              <label class="edit-meta-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                <span>ملاحظات الطلب:</span>
+              </label>
+              <input 
+                v-model="editingOrder.notes" 
+                type="text" 
+                class="form-control edit-order-notes-input" 
+                placeholder="أدخل أي ملاحظات خاصة بالطلب أو مواعيد تسليم إضافية…" 
+              />
+            </div>
           </div>
 
           <div class="form-group">
@@ -7921,6 +7978,16 @@ const closeSuggestionsWithDelay = () => {
       }, 200);
     };
 
+    const getDateOffsetStr = (offsetDays) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return d.toLocaleDateString('en-CA');
+    };
+
+    const setEditOrderDateShortcut = (offsetDays) => {
+      editingOrder.deliveryDate = getDateOffsetStr(offsetDays);
+    };
+
     const openOrderEditModal = (order) => {
       editingOrder._id = order._id;
       editingOrder.customerName = order.customerInfo?.name || '';
@@ -7929,7 +7996,16 @@ const closeSuggestionsWithDelay = () => {
       editingOrder.totalPrice = order.totalPrice || 0;
       editingOrder.priceMode = order.priceMode || 'regular';
       editingOrder.status = order.status || 'pending';
-      editingOrder.deliveryDate = order.deliveryDate || '';
+      let dateVal = '';
+      if (order.deliveryDate) {
+        const d = new Date(order.deliveryDate);
+        if (!isNaN(d.getTime())) {
+          dateVal = d.toLocaleDateString('en-CA');
+        } else if (typeof order.deliveryDate === 'string') {
+          dateVal = order.deliveryDate.trim().slice(0, 10);
+        }
+      }
+      editingOrder.deliveryDate = dateVal;
       editingOrder.notes = order.notes || '';
       productSearchQuery.value = '';
       showSuggestions.value = false;
@@ -9516,6 +9592,9 @@ const closeSuggestionsWithDelay = () => {
       orderEditModalOpen,
       editingOrder,
       openOrderEditModal,
+      getDateOffsetStr,
+      setEditOrderDateShortcut,
+      onPriceModeChange,
       saveOrder,
       newOrderModalOpen,
       newOrderLoading,
@@ -19372,5 +19451,103 @@ select.pos-control {
   gap: 14px;
   font-size: 0.75rem;
   color: #64748b;
+}
+
+/* ================= ORDER EDIT META & RE-DATE STYLES ================= */
+.edit-order-meta-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.edit-order-meta-grid .edit-meta-col.full-width {
+  grid-column: 1 / -1;
+}
+
+.edit-meta-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.edit-date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.edit-order-date-input {
+  max-width: 170px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.88rem;
+  border: 1px solid #cbd5e1;
+}
+
+.edit-date-shortcuts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-date-chip {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-date-chip:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-date-chip.active {
+  background: #d97706;
+  border-color: #b45309;
+  color: #ffffff;
+}
+
+.btn-clear-chip {
+  color: #ef4444;
+  font-weight: 800;
+  padding: 2px 6px;
+}
+
+.fast-order-price-mode-switch.compact {
+  padding: 3px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.fast-order-price-mode-switch.compact .price-mode-pill {
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  border-radius: 6px;
+}
+
+.edit-order-notes-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.88rem;
 }
 </style>
