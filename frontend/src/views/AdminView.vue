@@ -9267,15 +9267,29 @@ const closeSuggestionsWithDelay = () => {
       }
     };
 
+    const closeAllDatePickers = () => {
+      if (analyticsFromOpen) analyticsFromOpen.value = false;
+      if (analyticsToOpen) analyticsToOpen.value = false;
+      if (datePickerOpen) datePickerOpen.value = false;
+      if (posDatePickerOpen) posDatePickerOpen.value = false;
+      if (editOrderDatePickerOpen) editOrderDatePickerOpen.value = false;
+      if (custDateFromOpen) custDateFromOpen.value = false;
+      if (custDateToOpen) custDateToOpen.value = false;
+      if (prodDateFromOpen) prodDateFromOpen.value = false;
+      if (prodDateToOpen) prodDateToOpen.value = false;
+    };
+
     onMounted(() => {
       window.addEventListener('resize', handleResize);
       window.addEventListener('keydown', handleGlobalKeydown);
+      document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
     });
 
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
+      document.removeEventListener('click', closeAllDatePickers);
     });
 
     // =========================================================================
@@ -11338,19 +11352,33 @@ select.form-control:focus {
   color: #ffffff;
 }
 
+/* Position Relative Helper */
+.position-relative {
+  position: relative !important;
+}
+
 /* DatePicker Popover Panel */
 .datepicker-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 1200;
-  width: 280px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.96);
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  z-index: 3000 !important;
+  width: 280px !important;
+  padding: 14px !important;
+  background: #ffffff !important;
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(44, 37, 32, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22) !important;
+  display: block !important;
+}
+
+.edit-order-meta-card {
+  overflow: visible !important;
+}
+
+.modal-content.glass-panel {
+  overflow: visible !important;
 }
 
 .datepicker-header {
