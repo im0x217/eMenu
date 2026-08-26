@@ -1362,20 +1362,20 @@
             <button 
               type="button" 
               class="price-mode-pill" 
-              :class="{ active: newOrder.priceMode === 'regular' }" 
-              @click="onNewOrderPriceModeChange('regular')"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-              <span>تسعير مفرد</span>
-            </button>
-            <button 
-              type="button" 
-              class="price-mode-pill" 
               :class="{ active: newOrder.priceMode === 'bulk' }" 
               @click="onNewOrderPriceModeChange('bulk')"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               <span>تسعير جملة</span>
+            </button>
+            <button 
+              type="button" 
+              class="price-mode-pill" 
+              :class="{ active: newOrder.priceMode === 'regular' }" 
+              @click="onNewOrderPriceModeChange('regular')"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <span>تسعير مفرد</span>
             </button>
           </div>
 
@@ -8029,7 +8029,7 @@ const closeSuggestionsWithDelay = () => {
       customerName: '',
       customerPhone: '',
       items: [],
-      priceMode: 'regular',
+      priceMode: 'bulk',
       status: 'pending',
       deliveryDate: '',
       notes: '',
@@ -8122,7 +8122,7 @@ const closeSuggestionsWithDelay = () => {
       newOrder.customerName = '';
       newOrder.customerPhone = '';
       newOrder.items = [];
-      newOrder.priceMode = 'regular';
+      newOrder.priceMode = 'bulk';
       newOrder.status = 'pending';
       newOrder.deliveryDate = new Date().toISOString().split('T')[0];
       newOrder.notes = '';
