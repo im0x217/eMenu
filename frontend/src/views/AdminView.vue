@@ -4776,11 +4776,6 @@ export default {
     const commandPaletteIndex = ref(0);
     const commandPaletteInputRef = ref(null);
 
-    // Reset table row selection when tab or pagination changes
-    watch([activeTab, ordersPage, productsPage, customersPage], () => {
-      selectedTableRowIndex.value = 0;
-    });
-
     // Global Standardized Date Matrix Helper
     const getTodayStr = () => new Date().toLocaleDateString('en-CA');
 
@@ -9098,6 +9093,11 @@ const closeSuggestionsWithDelay = () => {
     });
     watch(() => customerFilters.search, () => {
       customersPage.value = 1;
+    });
+
+    // Reset table row selection when tab or pagination changes
+    watch([activeTab, ordersPage, productsPage, customersPage], () => {
+      selectedTableRowIndex.value = 0;
     });
     watch(activeShop, () => {
       productsPage.value = 1;
