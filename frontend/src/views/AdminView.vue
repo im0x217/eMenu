@@ -4580,15 +4580,15 @@
           </div>
           <div class="shortcut-item-row">
             <span class="desc">التركيز على حقل البحث في التبويب الحالي</span>
-            <div class="keys"><kbd class="kbd-badge">/</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">K</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">/</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">فتح لوحة الأوامر السريعة (Command Palette)</span>
-            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Shift</kbd>+<kbd class="kbd-badge">P</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Space</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">/</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">عرض نافذة دليل الاختصارات هذه</span>
-            <div class="keys"><kbd class="kbd-badge">?</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">F1</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">?</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">H</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">إغلاق أي نافذة منبثقة أو إلغاء الإجراء</span>
@@ -4614,10 +4614,6 @@
             <span class="desc">طباعة فاتورة الطلب المحدد مباشرة (في الطلبات)</span>
             <div class="keys"><kbd class="kbd-badge">P</kbd></div>
           </div>
-          <div class="shortcut-item-row">
-            <span class="desc">الانتقال للصفحة التالية / السابقة</span>
-            <div class="keys"><kbd class="kbd-badge">PageDown</kbd> / <kbd class="kbd-badge">PageUp</kbd></div>
-          </div>
         </div>
 
         <!-- POS Flow -->
@@ -4628,7 +4624,7 @@
           </div>
           <div class="shortcut-item-row">
             <span class="desc">فتح نافذة إنشاء طلب كاشير فوري</span>
-            <div class="keys"><kbd class="kbd-badge">F2</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">N</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">F2</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">N</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">إضافة الصنف المحدد ومتابعة البحث الفوري</span>
@@ -4652,15 +4648,15 @@
           </div>
           <div class="shortcut-item-row">
             <span class="desc">تدوير وتصفية تصنيفات المنتجات</span>
-            <div class="keys"><kbd class="kbd-badge">F4</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">C</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">C</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">الانتقال للتحكم بكميات السلة</span>
-            <div class="keys"><kbd class="kbd-badge">F8</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">K</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">K</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">حفظ وطباعة الطلب فوراً</span>
-            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Enter</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">F9</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Enter</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">S</kbd></div>
           </div>
         </div>
 
@@ -4796,7 +4792,7 @@ export default {
         { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
         { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'صلاحيات', shortcut: '', icon: 'user-check', action: () => openUserModal() },
         { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printAnalytics() },
-        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: '?', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
+        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
       ];
       if (!q) return allCmds;
       return allCmds.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
@@ -8704,8 +8700,8 @@ const closeSuggestionsWithDelay = () => {
 
       // 3. Inside Fast Order Modal Keyboards Flow
       if (newOrderModalOpen.value) {
-        // Ctrl+Enter or F9 or Alt+S: Submit Order
-        if ((e.ctrlKey && e.key === 'Enter') || e.key === 'F9' || (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س'))) {
+        // Ctrl+Enter or Alt+S: Submit Order (Edge-safe)
+        if ((e.ctrlKey && e.key === 'Enter') || (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س'))) {
           e.preventDefault();
           if (!newOrderLoading.value && newOrder.items.length > 0 && newOrder.customerName && newOrder.customerPhone) {
             submitNewOrder();
@@ -8750,15 +8746,15 @@ const closeSuggestionsWithDelay = () => {
           return;
         }
 
-        // F4 or Alt+C: Cycle Categories
-        if (e.key === 'F4' || (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ'))) {
+        // Alt+C: Cycle Categories (Edge-safe)
+        if (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ')) {
           e.preventDefault();
           cycleNewOrderCategory();
           return;
         }
 
-        // F8 or Alt+K: Focus Cart Items
-        if (e.key === 'F8' || (e.altKey && (e.key === 'k' || e.key === 'K' || e.key === 'ن'))) {
+        // Alt+K: Focus Cart Items (Edge-safe)
+        if (e.altKey && (e.key === 'k' || e.key === 'K' || e.key === 'ن')) {
           e.preventDefault();
           focusFirstCartItem();
           return;
@@ -8802,50 +8798,21 @@ const closeSuggestionsWithDelay = () => {
         }
       }
 
-      // Open Command Palette: Ctrl+Shift+P or Ctrl+J
-      if (((e.ctrlKey && e.shiftKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) || (e.ctrlKey && (e.key === 'j' || e.key === 'J' || e.key === 'ت'))) && !commandPaletteOpen.value) {
+      // Open Command Palette: Ctrl+Space or Alt+/ (Zero Edge conflict)
+      if (((e.ctrlKey && (e.key === ' ' || e.code === 'Space')) || (e.altKey && e.key === '/')) && !commandPaletteOpen.value) {
         e.preventDefault();
         openCommandPalette();
         return;
       }
 
-      // Open Shortcuts Cheat Sheet: ? (when not typing) or F1
-      if ((e.key === 'F1' || (e.key === '?' && !isInputFocused)) && !anyModalOpen()) {
+      // Open Shortcuts Cheat Sheet: ? (when not typing) or Alt+H (Help)
+      if (((e.key === '?' && !isInputFocused) || (e.altKey && (e.key === 'h' || e.key === 'H' || e.key === 'ا'))) && !anyModalOpen()) {
         e.preventDefault();
         shortcutsModalOpen.value = true;
         return;
       }
 
-      // Table Pagination: PageDown / PageUp (or Alt+ArrowDown / Alt+ArrowUp)
       if (!isInputFocused && !anyModalOpen()) {
-        if (e.key === 'PageDown' || (e.altKey && e.key === 'ArrowDown')) {
-          e.preventDefault();
-          if (activeTab.value === 'orders' && ordersPage.value < ordersTotalPages.value) {
-            ordersPage.value++;
-            toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
-          } else if (activeTab.value === 'products' && productsPage.value < productsTotalPages.value) {
-            productsPage.value++;
-            toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
-          } else if (activeTab.value === 'customers' && customersPage.value < customersTotalPages.value) {
-            customersPage.value++;
-            toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
-          }
-          return;
-        }
-        if (e.key === 'PageUp' || (e.altKey && e.key === 'ArrowUp')) {
-          e.preventDefault();
-          if (activeTab.value === 'orders' && ordersPage.value > 1) {
-            ordersPage.value--;
-            toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
-          } else if (activeTab.value === 'products' && productsPage.value > 1) {
-            productsPage.value--;
-            toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
-          } else if (activeTab.value === 'customers' && customersPage.value > 1) {
-            customersPage.value--;
-            toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
-          }
-          return;
-        }
 
         // Table Row Navigation: ↑ / ↓ (or j / k)
         if (e.key === 'ArrowDown' || e.key === 'j') {
@@ -8918,7 +8885,7 @@ const closeSuggestionsWithDelay = () => {
 
       // Global search focus: / or Ctrl+K (when not typing in an input)
       if (!isInputFocused && !anyModalOpen()) {
-        if (e.key === '/' || (e.ctrlKey && (e.key === 'k' || e.key === 'K'))) {
+        if (e.key === '/') {
           e.preventDefault();
           const searchSelectors = {
             'orders': '#order-search-input',
