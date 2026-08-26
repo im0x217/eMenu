@@ -4576,7 +4576,7 @@
           </div>
           <div class="shortcut-item-row">
             <span class="desc">التبديل والتنقل بين التبويبات الرئيسية</span>
-            <div class="keys"><kbd class="kbd-badge">←</kbd> <kbd class="kbd-badge">→</kbd></div>
+            <div class="keys"><kbd class="kbd-badge">[</kbd> <kbd class="kbd-badge">]</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">←</kbd> <kbd class="kbd-badge">→</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">1..9</kbd></div>
           </div>
           <div class="shortcut-item-row">
             <span class="desc">التركيز على حقل البحث في التبويب الحالي</span>
@@ -4613,6 +4613,10 @@
           <div class="shortcut-item-row">
             <span class="desc">طباعة فاتورة الطلب المحدد مباشرة (في الطلبات)</span>
             <div class="keys"><kbd class="kbd-badge">P</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">الانتقال للصفحة التالية / السابقة في الجدول</span>
+            <div class="keys"><kbd class="kbd-badge">PageDown</kbd> / <kbd class="kbd-badge">PageUp</kbd></div>
           </div>
         </div>
 
@@ -8814,6 +8818,61 @@ const closeSuggestionsWithDelay = () => {
 
       if (!isInputFocused && !anyModalOpen()) {
 
+        // Table Pagination: PageDown / PageUp
+        if (e.key === 'PageDown') {
+          e.preventDefault();
+          if (activeTab.value === 'orders' && ordersPage.value < ordersTotalPages.value) {
+            ordersPage.value++;
+            toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'products' && productsPage.value < productsTotalPages.value) {
+            productsPage.value++;
+            toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'customers' && customersPage.value < customersTotalPages.value) {
+            customersPage.value++;
+            toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
+          }
+          return;
+        }
+        if (e.key === 'PageUp') {
+          e.preventDefault();
+          if (activeTab.value === 'orders' && ordersPage.value > 1) {
+            ordersPage.value--;
+            toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'products' && productsPage.value > 1) {
+            productsPage.value--;
+            toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'customers' && customersPage.value > 1) {
+            customersPage.value--;
+            toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
+          }
+          return;
+        }
+
+        // Direct Tab Switching via Alt+1..9 (outside modals)
+        if (e.altKey && ['1','2','3','4','5','6','7','8','9'].includes(e.key)) {
+          e.preventDefault();
+          const tabMap = {
+            '1': 'analytics',
+            '2': 'products',
+            '3': 'categories',
+            '4': 'tags',
+            '5': 'orders',
+            '6': 'customers',
+            '7': 'production',
+            '8': 'carousel',
+            '9': 'users'
+          };
+          const targetTab = tabMap[e.key];
+          if (targetTab) {
+            if (userRole.value === 'order_manager' && targetTab !== 'orders') {
+              toast.show('صلاحيتك تقتصر على إدارة الطلبات فقط', 'warning');
+              return;
+            }
+            activeTab.value = targetTab;
+          }
+          return;
+        }
+
         // Table Row Navigation: ↑ / ↓ (or j / k)
         if (e.key === 'ArrowDown' || e.key === 'j') {
           e.preventDefault();
@@ -8904,15 +8963,15 @@ const closeSuggestionsWithDelay = () => {
           return;
         }
 
-        // Arrow key tab traversal: ← → to navigate between admin tabs
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        // Tab traversal: [ / ] or ← / → to cycle between admin tabs
+        if (e.key === '[' || e.key === ']' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           e.preventDefault();
           const allowedTabs = userRole.value === 'order_manager' ? ['orders'] : VALID_TABS;
           const currentIdx = allowedTabs.indexOf(activeTab.value);
           if (currentIdx === -1) return;
           let newIdx;
-          // RTL layout: ArrowRight goes to previous tab, ArrowLeft goes to next tab
-          if (e.key === 'ArrowRight') {
+          // [ or ArrowRight goes to previous tab, ] or ArrowLeft goes to next tab (RTL aware)
+          if (e.key === '[' || e.key === 'ArrowRight') {
             newIdx = currentIdx <= 0 ? allowedTabs.length - 1 : currentIdx - 1;
           } else {
             newIdx = currentIdx >= allowedTabs.length - 1 ? 0 : currentIdx + 1;
