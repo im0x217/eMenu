@@ -662,7 +662,7 @@
                     <tr v-if="filteredProducts.length === 0">
                       <td colspan="10" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
                     </tr>
-                    <tr v-for="prod in paginatedProducts" :key="prod._id">
+                    <tr v-for="(prod, idx) in paginatedProducts" :key="prod._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td>
                         <div class="admin-table-img-wrapper" @click="zoomImage(prod.img)" title="تكبير الصورة">
                           <div class="admin-table-img-shimmer"></div>
@@ -1111,7 +1111,7 @@
                     <tr v-if="filteredOrders.length === 0">
                       <td colspan="9" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
-                    <tr v-for="order in paginatedOrders" :key="order._id">
+                    <tr v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td class="text-bold text-mono">
                         <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
                       </td>
@@ -2147,7 +2147,7 @@
                     <tr v-if="filteredCustomers.length === 0">
                       <td colspan="6" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
-                    <tr v-for="cust in paginatedCustomers" :key="cust._id">
+                    <tr v-for="(cust, idx) in paginatedCustomers" :key="cust._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td>
                         <div class="customer-profile-cell" @click="openCustomerDetails(cust)" title="انقر لعرض الملف التعريفي الكامل">
                           <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
@@ -4551,6 +4551,198 @@
     </div>
   </div>
 
+  <!-- KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
+  <div v-if="shortcutsModalOpen" class="modal-overlay animate-fade-in" @click.self="shortcutsModalOpen = false">
+    <div class="modal-content glass-panel shortcuts-modal-content" style="max-width: 820px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 28px;">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="shortcuts-header-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+          </div>
+          <div>
+            <h3 class="m-0 font-bold" style="font-size: 1.25rem;">دليل اختصارات لوحة المفاتيح (Keyboard Shortcuts)</h3>
+            <p class="text-muted m-0 text-small">تحكم كامل بالمنظومة وإدخال سريع للطلبات دون استخدام الفأرة</p>
+          </div>
+        </div>
+        <button @click="shortcutsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+      </div>
+
+      <div class="shortcuts-sections-grid">
+        <!-- Global & Navigation -->
+        <div class="shortcut-category-card">
+          <div class="cat-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            <span>التنقل العام والتنقل بين التبويبات</span>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">التبديل والتنقل بين التبويبات الرئيسية</span>
+            <div class="keys"><kbd class="kbd-badge">←</kbd> <kbd class="kbd-badge">→</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">التركيز على حقل البحث في التبويب الحالي</span>
+            <div class="keys"><kbd class="kbd-badge">/</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">K</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">فتح لوحة الأوامر السريعة (Command Palette)</span>
+            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Shift</kbd>+<kbd class="kbd-badge">P</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">عرض نافذة دليل الاختصارات هذه</span>
+            <div class="keys"><kbd class="kbd-badge">?</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">F1</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">إغلاق أي نافذة منبثقة أو إلغاء الإجراء</span>
+            <div class="keys"><kbd class="kbd-badge">Esc</kbd></div>
+          </div>
+        </div>
+
+        <!-- Table Row Navigation -->
+        <div class="shortcut-category-card">
+          <div class="cat-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <span>التنقل في الجداول والبيانات</span>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">التنقل بين صفوف الجدول لأعلى / لأسفل</span>
+            <div class="keys"><kbd class="kbd-badge">↑</kbd> <kbd class="kbd-badge">↓</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">j</kbd> <kbd class="kbd-badge">k</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">فتح وتعديل الصف المحدد حالياً</span>
+            <div class="keys"><kbd class="kbd-badge">Enter</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">طباعة فاتورة الطلب المحدد مباشرة (في الطلبات)</span>
+            <div class="keys"><kbd class="kbd-badge">P</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">الانتقال للصفحة التالية / السابقة</span>
+            <div class="keys"><kbd class="kbd-badge">PageDown</kbd> / <kbd class="kbd-badge">PageUp</kbd></div>
+          </div>
+        </div>
+
+        <!-- POS Flow -->
+        <div class="shortcut-category-card">
+          <div class="cat-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span>طلبات الكاشير السريعة (POS)</span>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">فتح نافذة إنشاء طلب كاشير فوري</span>
+            <div class="keys"><kbd class="kbd-badge">F2</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">N</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">إضافة الصنف المحدد ومتابعة البحث الفوري</span>
+            <div class="keys"><kbd class="kbd-badge">Enter</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">زيادة / إنقاص كمية الصنف</span>
+            <div class="keys"><kbd class="kbd-badge">+</kbd> <kbd class="kbd-badge">-</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Space</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">تعديل نوع السعر (جملة ⇄ مفرد)</span>
+            <div class="keys"><kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">W</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">تفعيل / تعطيل الطباعة التلقائية</span>
+            <div class="keys"><kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">P</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">تحديد تاريخ التسليم (اليوم / غداً / بعد غد)</span>
+            <div class="keys"><kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">1</kbd> / <kbd class="kbd-badge">2</kbd> / <kbd class="kbd-badge">3</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">تدوير وتصفية تصنيفات المنتجات</span>
+            <div class="keys"><kbd class="kbd-badge">F4</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">C</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">الانتقال للتحكم بكميات السلة</span>
+            <div class="keys"><kbd class="kbd-badge">F8</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">K</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">حفظ وطباعة الطلب فوراً</span>
+            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Enter</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">F9</kbd></div>
+          </div>
+        </div>
+
+        <!-- Modals & Editing -->
+        <div class="shortcut-category-card">
+          <div class="cat-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>النوافذ وتعديل الطلبات والمدفوعات</span>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">حفظ تعديلات الطلب</span>
+            <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Enter</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">S</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">تأكيد وحفظ الدفعة في نافذة الدفع</span>
+            <div class="keys"><kbd class="kbd-badge">Enter</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">تعديل كميات الأصناف في نافذة التعديل</span>
+            <div class="keys"><kbd class="kbd-badge">↑</kbd> <kbd class="kbd-badge">↓</kbd></div>
+          </div>
+          <div class="shortcut-item-row">
+            <span class="desc">حذف صنف من الطلب</span>
+            <div class="keys"><kbd class="kbd-badge">Delete</kbd></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer mt-4 text-center">
+        <button type="button" @click="shortcutsModalOpen = false" class="btn btn-primary px-5">
+          فهمت ذلك ✓
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND PALETTE MODAL -->
+  <div v-if="commandPaletteOpen" class="command-palette-backdrop animate-fade-in" @click.self="commandPaletteOpen = false">
+    <div class="command-palette-box glass-panel">
+      <div class="palette-input-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="palette-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input 
+          ref="commandPaletteInputRef"
+          v-model="commandPaletteQuery" 
+          type="text" 
+          class="palette-input" 
+          placeholder="اكتب أمراً للبحث والانتقال السريع (مثال: طلب جديد، المنتجات، طباعة…)" 
+          autocomplete="off"
+        />
+        <kbd class="kbd-badge kbd-esc-badge" @click="commandPaletteOpen = false">Esc</kbd>
+      </div>
+
+      <div class="palette-results-list">
+        <div 
+          v-for="(cmd, idx) in availableCommands" 
+          :key="cmd.id" 
+          class="palette-item" 
+          :class="{ highlighted: idx === commandPaletteIndex }"
+          @click="executeCommand(cmd)"
+          @mouseenter="commandPaletteIndex = idx"
+        >
+          <div class="palette-item-main">
+            <span class="palette-category-badge">{{ cmd.category }}</span>
+            <span class="palette-item-title">{{ cmd.title }}</span>
+          </div>
+          <kbd v-if="cmd.shortcut" class="kbd-badge">{{ cmd.shortcut }}</kbd>
+        </div>
+        <div v-if="availableCommands.length === 0" class="palette-no-results">
+          لا توجد أوامر مطابقة لـ "{{ commandPaletteQuery }}"
+        </div>
+      </div>
+
+      <div class="palette-footer">
+        <div class="palette-hints">
+          <span><kbd class="kbd-mini">↑</kbd><kbd class="kbd-mini">↓</kbd> للتنقل</span>
+          <span><kbd class="kbd-mini">Enter</kbd> للتنفيذ</span>
+          <span><kbd class="kbd-mini">Esc</kbd> للإغلاق</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <script>
@@ -4575,6 +4767,73 @@ export default {
     const loading = ref(false);
     const isAuthenticated = ref(false);
     const sidebarOpen = ref(false);
+
+    // ================= P3 KEYBOARD POWER-USER STATE =================
+    const selectedTableRowIndex = ref(0);
+    const shortcutsModalOpen = ref(false);
+    const commandPaletteOpen = ref(false);
+    const commandPaletteQuery = ref('');
+    const commandPaletteIndex = ref(0);
+    const commandPaletteInputRef = ref(null);
+
+    // Available Commands in Command Palette
+    const availableCommands = computed(() => {
+      const q = commandPaletteQuery.value.trim().toLowerCase();
+      const allCmds = [
+        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'طلبات', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
+        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => { activeTab.value = 'orders'; } },
+        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => { activeTab.value = 'products'; } },
+        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => { activeTab.value = 'customers'; } },
+        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => { activeTab.value = 'production'; } },
+        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => { activeTab.value = 'analytics'; } },
+        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => { activeTab.value = 'categories'; } },
+        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => { activeTab.value = 'tags'; } },
+        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => { activeTab.value = 'carousel'; } },
+        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => { activeTab.value = 'users'; } },
+        { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
+        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
+        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
+        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
+        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'صلاحيات', shortcut: '', icon: 'user-check', action: () => openUserModal() },
+        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printAnalytics() },
+        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: '?', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
+      ];
+      if (!q) return allCmds;
+      return allCmds.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+    });
+
+    const openCommandPalette = () => {
+      commandPaletteQuery.value = '';
+      commandPaletteIndex.value = 0;
+      commandPaletteOpen.value = true;
+      nextTick(() => {
+        if (commandPaletteInputRef.value) commandPaletteInputRef.value.focus();
+      });
+    };
+
+    const executeCommand = (cmd) => {
+      commandPaletteOpen.value = false;
+      if (cmd && typeof cmd.action === 'function') {
+        cmd.action();
+      }
+    };
+
+    const navigateCommandPalette = (delta) => {
+      const total = availableCommands.value.length;
+      if (total === 0) return;
+      commandPaletteIndex.value = (commandPaletteIndex.value + delta + total) % total;
+      nextTick(() => {
+        const item = document.querySelector('.palette-item.highlighted');
+        if (item && typeof item.scrollIntoView === 'function') {
+          item.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    };
+
+    // Reset table row selection when tab or pagination changes
+    watch([activeTab, ordersPage, productsPage, customersPage], () => {
+      selectedTableRowIndex.value = 0;
+    });
 
     // Global Standardized Date Matrix Helper
     const getTodayStr = () => new Date().toLocaleDateString('en-CA');
@@ -8396,7 +8655,7 @@ const closeSuggestionsWithDelay = () => {
         categoryModalOpen.value || tagModalOpen.value || paymentModalOpen.value ||
         paymentHistoryModalOpen.value || customerModalOpen.value || customerFavsModalOpen.value ||
         customerDetailsModalOpen.value || chefModalOpen.value || assignProductsModalOpen.value ||
-        userModalOpen.value || carouselModalOpen.value || cropperModalOpen.value || !!zoomedImageSrc.value;
+        userModalOpen.value || carouselModalOpen.value || cropperModalOpen.value || shortcutsModalOpen.value || commandPaletteOpen.value || !!zoomedImageSrc.value;
     };
 
     const handleGlobalKeydown = (e) => {
@@ -8425,6 +8684,8 @@ const closeSuggestionsWithDelay = () => {
         if (posDatePickerOpen.value) { posDatePickerOpen.value = false; return; }
         if (custDateFromOpen.value || custDateToOpen.value) { custDateFromOpen.value = false; custDateToOpen.value = false; return; }
         if (prodDateFromOpen.value || prodDateToOpen.value) { prodDateFromOpen.value = false; prodDateToOpen.value = false; return; }
+        if (commandPaletteOpen.value) { commandPaletteOpen.value = false; return; }
+        if (shortcutsModalOpen.value) { shortcutsModalOpen.value = false; return; }
         if (cropperModalOpen.value) { cropperModalOpen.value = false; return; }
         if (chefModalOpen.value) { chefModalOpen.value = false; return; }
         if (assignProductsModalOpen.value) { assignProductsModalOpen.value = false; return; }
@@ -8520,6 +8781,140 @@ const closeSuggestionsWithDelay = () => {
       const activeEl = document.activeElement;
       const activeTag = activeEl ? activeEl.tagName : '';
       const isInputFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+      // Command Palette Navigation (when palette is open)
+      if (commandPaletteOpen.value) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          navigateCommandPalette(1);
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          navigateCommandPalette(-1);
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const cmd = availableCommands.value[commandPaletteIndex.value];
+          if (cmd) executeCommand(cmd);
+          return;
+        }
+      }
+
+      // Open Command Palette: Ctrl+Shift+P or Ctrl+J
+      if (((e.ctrlKey && e.shiftKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) || (e.ctrlKey && (e.key === 'j' || e.key === 'J' || e.key === 'ت'))) && !commandPaletteOpen.value) {
+        e.preventDefault();
+        openCommandPalette();
+        return;
+      }
+
+      // Open Shortcuts Cheat Sheet: ? (when not typing) or F1
+      if ((e.key === 'F1' || (e.key === '?' && !isInputFocused)) && !anyModalOpen()) {
+        e.preventDefault();
+        shortcutsModalOpen.value = true;
+        return;
+      }
+
+      // Table Pagination: PageDown / PageUp (or Alt+ArrowDown / Alt+ArrowUp)
+      if (!isInputFocused && !anyModalOpen()) {
+        if (e.key === 'PageDown' || (e.altKey && e.key === 'ArrowDown')) {
+          e.preventDefault();
+          if (activeTab.value === 'orders' && ordersPage.value < ordersTotalPages.value) {
+            ordersPage.value++;
+            toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'products' && productsPage.value < productsTotalPages.value) {
+            productsPage.value++;
+            toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'customers' && customersPage.value < customersTotalPages.value) {
+            customersPage.value++;
+            toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
+          }
+          return;
+        }
+        if (e.key === 'PageUp' || (e.altKey && e.key === 'ArrowUp')) {
+          e.preventDefault();
+          if (activeTab.value === 'orders' && ordersPage.value > 1) {
+            ordersPage.value--;
+            toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'products' && productsPage.value > 1) {
+            productsPage.value--;
+            toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
+          } else if (activeTab.value === 'customers' && customersPage.value > 1) {
+            customersPage.value--;
+            toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
+          }
+          return;
+        }
+
+        // Table Row Navigation: ↑ / ↓ (or j / k)
+        if (e.key === 'ArrowDown' || e.key === 'j') {
+          e.preventDefault();
+          let maxLen = 0;
+          if (activeTab.value === 'orders') maxLen = paginatedOrders.value.length;
+          else if (activeTab.value === 'products') maxLen = paginatedProducts.value.length;
+          else if (activeTab.value === 'customers') maxLen = paginatedCustomers.value.length;
+
+          if (maxLen > 0) {
+            selectedTableRowIndex.value = (selectedTableRowIndex.value + 1) % maxLen;
+            nextTick(() => {
+              const row = document.querySelector('.keyboard-selected-row');
+              if (row && typeof row.scrollIntoView === 'function') {
+                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            });
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowUp' || e.key === 'k') {
+          e.preventDefault();
+          let maxLen = 0;
+          if (activeTab.value === 'orders') maxLen = paginatedOrders.value.length;
+          else if (activeTab.value === 'products') maxLen = paginatedProducts.value.length;
+          else if (activeTab.value === 'customers') maxLen = paginatedCustomers.value.length;
+
+          if (maxLen > 0) {
+            selectedTableRowIndex.value = (selectedTableRowIndex.value - 1 + maxLen) % maxLen;
+            nextTick(() => {
+              const row = document.querySelector('.keyboard-selected-row');
+              if (row && typeof row.scrollIntoView === 'function') {
+                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            });
+          }
+          return;
+        }
+
+        // Enter: Open / Edit selected table row
+        if (e.key === 'Enter') {
+          if (activeTab.value === 'orders' && paginatedOrders.value[selectedTableRowIndex.value]) {
+            e.preventDefault();
+            openOrderEditModal(paginatedOrders.value[selectedTableRowIndex.value]);
+            return;
+          }
+          if (activeTab.value === 'products' && paginatedProducts.value[selectedTableRowIndex.value]) {
+            e.preventDefault();
+            openProductModal(paginatedProducts.value[selectedTableRowIndex.value]);
+            return;
+          }
+          if (activeTab.value === 'customers' && paginatedCustomers.value[selectedTableRowIndex.value]) {
+            e.preventDefault();
+            openCustomerDetails(paginatedCustomers.value[selectedTableRowIndex.value]);
+            return;
+          }
+        }
+
+        // P key in Orders Tab: Direct Print Receipt for selected order
+        if ((e.key === 'p' || e.key === 'P' || e.key === 'ح') && activeTab.value === 'orders') {
+          const ord = paginatedOrders.value[selectedTableRowIndex.value];
+          if (ord) {
+            e.preventDefault();
+            printOrder(ord);
+            return;
+          }
+        }
+      }
 
       // Global search focus: / or Ctrl+K (when not typing in an input)
       if (!isInputFocused && !anyModalOpen()) {
@@ -9161,6 +9556,16 @@ const closeSuggestionsWithDelay = () => {
       setPaymentMode,
       openPaymentModal,
       recordPayment,
+      selectedTableRowIndex,
+      shortcutsModalOpen,
+      commandPaletteOpen,
+      commandPaletteQuery,
+      commandPaletteIndex,
+      commandPaletteInputRef,
+      availableCommands,
+      openCommandPalette,
+      executeCommand,
+      navigateCommandPalette,
       openPaymentHistory,
       printPaymentReceipt,
       printingPaymentReceipt,
@@ -18604,4 +19009,243 @@ select.pos-control {
   gap: 4px;
 }
 
+
+/* ================= P3 KEYBOARD POWER-USER STYLES ================= */
+.keyboard-selected-row {
+  background: rgba(245, 158, 11, 0.12) !important;
+  outline: 2px solid #f59e0b !important;
+  outline-offset: -2px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  transition: background 0.15s ease, outline 0.15s ease;
+}
+
+.kbd-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-bottom: 2px solid #94a3b8;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: monospace, system-ui, sans-serif;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  min-width: 22px;
+  text-align: center;
+}
+
+.kbd-mini {
+  display: inline-block;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin: 0 2px;
+}
+
+/* Shortcuts Cheat Sheet Modal */
+.shortcuts-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.shortcut-category-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.shortcut-category-card .cat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #d97706;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.shortcut-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #f1f5f9;
+  font-size: 0.85rem;
+}
+
+.shortcut-item-row:last-child {
+  border-bottom: none;
+}
+
+.shortcut-item-row .desc {
+  color: #334155;
+  font-weight: 500;
+}
+
+.shortcut-item-row .keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcut-item-row .or-text {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0 2px;
+}
+
+.shortcuts-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Command Palette Spotlight Box */
+.command-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 10500;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.command-palette-box {
+  width: 95%;
+  max-width: 640px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.palette-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 12px;
+  background: #ffffff;
+}
+
+.palette-search-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.palette-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+  color: #0f172a;
+  background: transparent;
+}
+
+.palette-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.kbd-esc-badge {
+  cursor: pointer;
+}
+
+.palette-results-list {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.palette-item.highlighted, .palette-item:hover {
+  background: rgba(245, 158, 11, 0.12);
+  transform: translateX(-2px);
+}
+
+.palette-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.palette-category-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.palette-item.highlighted .palette-category-badge {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.palette-item-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.palette-no-results {
+  padding: 28px;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.palette-footer {
+  padding: 10px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.palette-hints {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
 </style>
