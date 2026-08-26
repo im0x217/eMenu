@@ -4211,8 +4211,18 @@
             <span>إجمالي الطلب</span>
             <span class="receipt-grand-value">{{ Number(printingOrder.totalPrice).toFixed(2) }} د.ل</span>
           </div>
-          <div v-if="printingOrderCustomerBalance !== null" class="receipt-customer-balance-row">
-            <span>إجمالي رصيد العميل (المستحق)</span>
+          <div class="receipt-payment-breakdown">
+            <div class="receipt-breakdown-row receipt-paid-row">
+              <span>المدفوع:</span>
+              <span class="receipt-paid-value text-mono">{{ Number(getOrderPaidAmount(printingOrder)).toFixed(2) }} د.ل</span>
+            </div>
+            <div class="receipt-breakdown-row receipt-leftover-row" :class="{ 'has-leftover': getOrderRemaining(printingOrder) > 0 }">
+              <span>المتبقي:</span>
+              <span class="receipt-leftover-value text-mono">{{ Number(getOrderRemaining(printingOrder)).toFixed(2) }} د.ل</span>
+            </div>
+          </div>
+          <div v-if="printingOrderCustomerBalance !== null && printingOrderCustomerBalance > 0" class="receipt-customer-balance-row">
+            <span>إجمالي ديون العميل السابقة:</span>
             <span class="receipt-balance-value">{{ formatCurrency(printingOrderCustomerBalance) }}</span>
           </div>
         </div>
@@ -7267,6 +7277,19 @@ export default {
 
     const printingOrderCustomerBalance = ref(null);
 
+    const getOrderPaidAmount = (order) => {
+      if (!order) return 0;
+      if (order.paymentStatus === 'paid') return Number(order.totalPrice) || 0;
+      return Number(order.paidAmount) || 0;
+    };
+
+    const getOrderRemaining = (order) => {
+      if (!order) return 0;
+      const total = Number(order.totalPrice) || 0;
+      const paid = getOrderPaidAmount(order);
+      return Math.max(0, total - paid);
+    };
+
     const printOrder = async (order) => {
       setPrintPageSize('A5 portrait', '4mm 6mm');
       printingOrder.value = order;
@@ -9353,6 +9376,8 @@ const closeSuggestionsWithDelay = () => {
       printCustomerDebtReport,
       paginatedOrderPages,
       printOrder,
+      getOrderPaidAmount,
+      getOrderRemaining,
       toggleProductAvailability,
       deleteProduct,
       openProductModal,
@@ -13002,6 +13027,57 @@ select.form-control:focus {
   .receipt-grand-value {
     font-family: 'Fira Code', monospace;
     color: #0f172a;
+  }
+
+  .receipt-payment-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 5px;
+  }
+
+  .receipt-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 10pt;
+    font-weight: 700;
+  }
+
+  .receipt-paid-row {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+  }
+
+  .receipt-paid-value {
+    font-family: 'Fira Code', monospace;
+    font-weight: 800;
+    color: #15803d;
+  }
+
+  .receipt-leftover-row {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+  }
+
+  .receipt-leftover-row.has-leftover {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #c2410c;
+  }
+
+  .receipt-leftover-value {
+    font-family: 'Fira Code', monospace;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .receipt-leftover-row.has-leftover .receipt-leftover-value {
+    color: #ea580c;
   }
 
   .receipt-customer-balance-row {
