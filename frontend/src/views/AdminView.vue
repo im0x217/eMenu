@@ -1865,12 +1865,51 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>تاريخ وموعد الاستلام (Re-Date):</span>
               </label>
-              <div class="edit-date-input-group">
-                <input 
-                  v-model="editingOrder.deliveryDate" 
-                  type="date" 
-                  class="form-control edit-order-date-input" 
-                />
+              <div class="edit-date-input-group position-relative">
+                <button 
+                  type="button" 
+                  class="form-control edit-order-date-trigger btn-standard-datepicker-trigger" 
+                  :class="{ active: editOrderDatePickerOpen }"
+                  @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
+                >
+                  <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </button>
+
+                <!-- Standardized Popover Calendar for Order Edit Modal -->
+                <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
+                  <div class="datepicker-header">
+                    <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                    <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
+                    <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
+                  </div>
+
+                  <div class="dp-weekdays">
+                    <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                  </div>
+
+                  <div class="dp-days-grid">
+                    <button 
+                      type="button" 
+                      v-for="(dayObj, idx) in editOrderCalendarDays" 
+                      :key="idx" 
+                      class="dp-day-cell"
+                      :class="{ 
+                        'other-month': !dayObj.inMonth,
+                        'is-today': dayObj.isToday,
+                        'is-selected': editingOrder.deliveryDate === dayObj.dateStr
+                      }"
+                      @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
+                    >
+                      {{ dayObj.dayNum }}
+                    </button>
+                  </div>
+
+                  <div class="datepicker-footer">
+                    <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                  </div>
+                </div>
+
                 <div class="edit-date-shortcuts">
                   <button type="button" class="btn-date-chip" :class="{ active: editingOrder.deliveryDate === getTodayStr() }" @click="setEditOrderDateShortcut(0)">اليوم</button>
                   <button type="button" class="btn-date-chip" :class="{ active: editingOrder.deliveryDate === getDateOffsetStr(1) }" @click="setEditOrderDateShortcut(1)">غداً</button>
@@ -5095,6 +5134,32 @@ export default {
       return analyticsStartDate.value === firstDayStr && analyticsEndDate.value === today.toLocaleDateString('en-CA');
     });
 
+    // Order Edit Modal Standardized DatePicker State & Logic
+    const editOrderDatePickerOpen = ref(false);
+    const editOrderPickerYear = ref(new Date().getFullYear());
+    const editOrderPickerMonth = ref(new Date().getMonth());
+
+    const editOrderCurrentMonthYearLabel = computed(() => {
+      const d = new Date(editOrderPickerYear.value, editOrderPickerMonth.value, 1);
+      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
+    });
+
+    const editOrderPrevMonth = () => {
+      if (editOrderPickerMonth.value === 0) { editOrderPickerMonth.value = 11; editOrderPickerYear.value--; }
+      else { editOrderPickerMonth.value--; }
+    };
+    const editOrderNextMonth = () => {
+      if (editOrderPickerMonth.value === 11) { editOrderPickerMonth.value = 0; editOrderPickerYear.value++; }
+      else { editOrderPickerMonth.value++; }
+    };
+
+    const editOrderCalendarDays = computed(() => buildCalendarMatrix(editOrderPickerYear.value, editOrderPickerMonth.value));
+
+    const selectEditOrderDateFromPicker = (dateStr) => {
+      editingOrder.deliveryDate = dateStr;
+      editOrderDatePickerOpen.value = false;
+    };
+
     // POS Modal Standardized DatePicker State & Logic
     const posDatePickerOpen = ref(false);
     const posPickerYear = ref(new Date().getFullYear());
@@ -8006,6 +8071,14 @@ const closeSuggestionsWithDelay = () => {
         }
       }
       editingOrder.deliveryDate = dateVal;
+      editOrderDatePickerOpen.value = false;
+      if (dateVal) {
+        const d = new Date(dateVal);
+        if (!isNaN(d.getTime())) {
+          editOrderPickerYear.value = d.getFullYear();
+          editOrderPickerMonth.value = d.getMonth();
+        }
+      }
       editingOrder.notes = order.notes || '';
       productSearchQuery.value = '';
       showSuggestions.value = false;
@@ -8797,6 +8870,7 @@ const closeSuggestionsWithDelay = () => {
         if (tagModalOpen.value) { tagModalOpen.value = false; return; }
         if (analyticsFromOpen.value || analyticsToOpen.value) { analyticsFromOpen.value = false; analyticsToOpen.value = false; return; }
         if (datePickerOpen.value) { datePickerOpen.value = false; return; }
+        if (editOrderDatePickerOpen.value) { editOrderDatePickerOpen.value = false; return; }
         if (posDatePickerOpen.value) { posDatePickerOpen.value = false; return; }
         if (custDateFromOpen.value || custDateToOpen.value) { custDateFromOpen.value = false; custDateToOpen.value = false; return; }
         if (prodDateFromOpen.value || prodDateToOpen.value) { prodDateFromOpen.value = false; prodDateToOpen.value = false; return; }
@@ -9397,6 +9471,14 @@ const closeSuggestionsWithDelay = () => {
       isAnalyticsToday,
       isAnalytics7d,
       isAnalyticsMonth,
+      editOrderDatePickerOpen,
+      editOrderPickerYear,
+      editOrderPickerMonth,
+      editOrderCurrentMonthYearLabel,
+      editOrderPrevMonth,
+      editOrderNextMonth,
+      editOrderCalendarDays,
+      selectEditOrderDateFromPicker,
       posDatePickerOpen,
       posPickerYear,
       posPickerMonth,
@@ -19502,6 +19584,30 @@ select.pos-control {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+
+.edit-order-date-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 175px;
+  height: 38px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-order-date-trigger:hover,
+.edit-order-date-trigger.active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
 }
 
 .edit-order-date-input {
