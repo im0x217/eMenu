@@ -4576,6 +4576,36 @@ export default {
     const isAuthenticated = ref(false);
     const sidebarOpen = ref(false);
 
+    // Global Standardized Date Matrix Helper
+    const getTodayStr = () => new Date().toLocaleDateString('en-CA');
+
+    const buildCalendarMatrix = (yearVal, monthVal) => {
+      const firstDayOfMonth = new Date(yearVal, monthVal, 1);
+      const lastDayOfMonth = new Date(yearVal, monthVal + 1, 0);
+      const daysInMonth = lastDayOfMonth.getDate();
+      const startDayOfWeek = firstDayOfMonth.getDay();
+      
+      const days = [];
+      const prevMonthLastDay = new Date(yearVal, monthVal, 0).getDate();
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const pDay = prevMonthLastDay - i;
+        const pDate = new Date(yearVal, monthVal - 1, pDay);
+        days.push({ dayNum: pDay, dateStr: pDate.toLocaleDateString('en-CA'), inMonth: false, isToday: false });
+      }
+      const todayStr = getTodayStr();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cDate = new Date(yearVal, monthVal, d);
+        const dateStr = cDate.toLocaleDateString('en-CA');
+        days.push({ dayNum: d, dateStr, inMonth: true, isToday: dateStr === todayStr });
+      }
+      const remaining = (7 - (days.length % 7)) % 7;
+      for (let n = 1; n <= remaining; n++) {
+        const nDate = new Date(yearVal, monthVal + 1, n);
+        days.push({ dayNum: n, dateStr: nDate.toLocaleDateString('en-CA'), inMonth: false, isToday: false });
+      }
+      return days;
+    };
+
     // Persistent Active Tab Management across page reloads
     const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'carousel', 'users'];
     const getInitialTab = () => {
@@ -7343,7 +7373,6 @@ export default {
     const custToPickerYear = ref(todayDate.getFullYear());
     const custToPickerMonth = ref(todayDate.getMonth());
 
-    const getTodayStr = () => new Date().toLocaleDateString('en-CA');
 
     const custFromMonthYearLabel = computed(() => {
       const d = new Date(custFromPickerYear.value, custFromPickerMonth.value, 1);
@@ -7373,7 +7402,6 @@ export default {
       else { custToPickerMonth.value++; }
     };
 
-// buildCalendarMatrix defined at top of setup
 
     const custFromCalendarDays = computed(() => buildCalendarMatrix(custFromPickerYear.value, custFromPickerMonth.value));
     const custToCalendarDays = computed(() => buildCalendarMatrix(custToPickerYear.value, custToPickerMonth.value));
@@ -8347,7 +8375,11 @@ const closeSuggestionsWithDelay = () => {
         if (productModalOpen.value) { productModalOpen.value = false; return; }
         if (categoryModalOpen.value) { categoryModalOpen.value = false; return; }
         if (tagModalOpen.value) { tagModalOpen.value = false; return; }
-        if (custDatePickerOpen.value) { custDatePickerOpen.value = false; return; }
+        if (analyticsFromOpen.value || analyticsToOpen.value) { analyticsFromOpen.value = false; analyticsToOpen.value = false; return; }
+        if (datePickerOpen.value) { datePickerOpen.value = false; return; }
+        if (posDatePickerOpen.value) { posDatePickerOpen.value = false; return; }
+        if (custDateFromOpen.value || custDateToOpen.value) { custDateFromOpen.value = false; custDateToOpen.value = false; return; }
+        if (prodDateFromOpen.value || prodDateToOpen.value) { prodDateFromOpen.value = false; prodDateToOpen.value = false; return; }
         if (cropperModalOpen.value) { cropperModalOpen.value = false; return; }
         return;
       }
