@@ -1858,151 +1858,60 @@
           <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <form @submit.prevent="saveOrder">
-          <!-- Order Settings & Re-Date Bar -->
-          <div class="edit-order-meta-card mb-4 glass-panel">
-            <div class="edit-order-meta-grid">
-              
-              <!-- Column 1: Delivery Date (Re-Date) -->
-              <div class="edit-meta-col delivery-date-col">
-                <label class="edit-meta-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>تاريخ وموعد الاستلام</span>
-                </label>
+          <div v-if="editingOrder.notes" class="order-notes-static-display mb-3">
+            <strong>ملاحظات العميل:</strong> {{ editingOrder.notes }}
+          </div>
 
-                <!-- Date Picker Trigger & Popover -->
-                <div class="position-relative">
-                  <button 
-                    type="button" 
-                    class="form-control pos-control btn-standard-datepicker-trigger" 
-                    :class="{ active: editOrderDatePickerOpen }"
-                    @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
-                  >
-                    <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  </button>
+          <!-- Clean Delivery Date (Re-Date) Field -->
+          <div class="form-group mb-3">
+            <label class="form-label font-bold" style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem; margin-bottom: 6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>تاريخ الاستلام (Re-Date):</span>
+            </label>
+            <div class="position-relative" style="max-width: 320px;">
+              <button 
+                type="button" 
+                class="form-control pos-control btn-standard-datepicker-trigger" 
+                :class="{ active: editOrderDatePickerOpen }"
+                @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
+              >
+                <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </button>
 
-                  <!-- Standardized Popover Calendar for Order Edit Modal -->
-                  <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
-                    <div class="datepicker-header">
-                      <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
-                      <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
-                      <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
-                    </div>
-
-                    <div class="dp-weekdays">
-                      <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                    </div>
-
-                    <div class="dp-days-grid">
-                      <button 
-                        type="button" 
-                        v-for="(dayObj, idx) in editOrderCalendarDays" 
-                        :key="idx" 
-                        class="dp-day-cell"
-                        :class="{ 
-                          'other-month': !dayObj.inMonth,
-                          'is-today': dayObj.isToday,
-                          'is-selected': editingOrder.deliveryDate === dayObj.dateStr
-                        }"
-                        @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
-                      >
-                        {{ dayObj.dayNum }}
-                      </button>
-                    </div>
-
-                    <div class="datepicker-footer">
-                      <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
-                    </div>
-                  </div>
+              <!-- Standardized Popover Calendar for Order Edit Modal -->
+              <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
+                <div class="datepicker-header">
+                  <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                  <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
+                  <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
                 </div>
 
-                <!-- Unified Companion Shortcuts (Matching POS Exact Grid & Style) -->
-                <div class="pos-date-shortcuts-split edit-shortcuts-split">
+                <div class="dp-weekdays">
+                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                </div>
+
+                <div class="dp-days-grid">
                   <button 
                     type="button" 
-                    class="pos-date-shortcut-btn" 
-                    :class="{ active: isEditOrderDateRelative(0) }" 
-                    @click="setEditOrderDateShortcut(0)" 
-                    title="تحديد تاريخ اليوم"
+                    v-for="(dayObj, idx) in editOrderCalendarDays" 
+                    :key="idx" 
+                    class="dp-day-cell"
+                    :class="{ 
+                      'other-month': !dayObj.inMonth,
+                      'is-today': dayObj.isToday,
+                      'is-selected': editingOrder.deliveryDate === dayObj.dateStr
+                    }"
+                    @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>اليوم</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    class="pos-date-shortcut-btn" 
-                    :class="{ active: isEditOrderDateRelative(1) }" 
-                    @click="setEditOrderDateShortcut(1)" 
-                    title="تحديد تاريخ الغد"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                    <span>غداً</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    class="pos-date-shortcut-btn" 
-                    :class="{ active: isEditOrderDateRelative(2) }" 
-                    @click="setEditOrderDateShortcut(2)" 
-                    title="تحديد بعد غد"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
-                    <span>بعد غد</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    class="pos-date-shortcut-btn btn-clear-date" 
-                    :class="{ disabled: !editingOrder.deliveryDate }"
-                    @click="clearEditOrderDate" 
-                    title="إلغاء التاريخ"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    <span>مسح</span>
+                    {{ dayObj.dayNum }}
                   </button>
                 </div>
-              </div>
 
-              <!-- Column 2: Price Mode Switch -->
-              <div class="edit-meta-col price-mode-col">
-                <label class="edit-meta-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                  <span>نوع التسعير</span>
-                </label>
-                <div class="fast-order-price-mode-switch" style="margin-top: 0;">
-                  <button 
-                    type="button" 
-                    class="price-mode-pill" 
-                    :class="{ active: editingOrder.priceMode === 'bulk' }" 
-                    @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    <span>تسعير جملة</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    class="price-mode-pill" 
-                    :class="{ active: editingOrder.priceMode === 'regular' }" 
-                    @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                    <span>تسعير مفرد</span>
-                  </button>
+                <div class="datepicker-footer">
+                  <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
                 </div>
               </div>
-
-              <!-- Row 2: Editable Order Notes -->
-              <div class="edit-meta-col notes-col">
-                <label class="edit-meta-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                  <span>ملاحظات الطلب</span>
-                </label>
-                <input 
-                  v-model="editingOrder.notes" 
-                  type="text" 
-                  class="form-control edit-order-notes-input" 
-                  placeholder="أدخل أي ملاحظات خاصة بالطلب أو مواعيد تسليم إضافية…" 
-                />
-              </div>
-
             </div>
           </div>
 
