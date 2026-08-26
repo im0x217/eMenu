@@ -1935,7 +1935,7 @@
                     </td>
                     <td style="max-width: 120px;">
                       <div class="edit-qty-input-wrapper">
-                        <input v-model.number="item.quantity" type="number" step="0.01" min="0.01" class="form-control edit-qty-input" placeholder="الكمية" required @input="recalcOrderTotal" @change="recalcOrderTotal" />
+                        <input v-model.number="item.quantity" type="number" step="0.01" min="0.01" class="form-control edit-qty-input" placeholder="الكمية" required @input="recalcOrderTotal" @change="recalcOrderTotal" @keydown.up.prevent="item.quantity = Math.max(0.01, (item.quantity || 0) + (item.allowFloat ? 0.25 : 1)); recalcOrderTotal()" @keydown.down.prevent="item.quantity = Math.max(0.01, (item.quantity || 0) - (item.allowFloat ? 0.25 : 1)); recalcOrderTotal()" @keydown.delete.prevent="removeOrderItem(idx)" />
                       </div>
                     </td>
                     <td style="max-width: 140px;">
@@ -4328,7 +4328,7 @@
           <div class="payment-form-grid">
             <div class="form-group">
               <label class="form-label">المبلغ (د.ل)</label>
-              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" autofocus />
+              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" autofocus @keydown.enter.prevent="recordPayment" />
             </div>
 
             <div class="form-group">
@@ -5382,6 +5382,10 @@ export default {
         subCategoriesForEditing.value = [];
       }
       productModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const onProductCategoryChange = () => {
@@ -5753,6 +5757,10 @@ export default {
         categorySubcategoriesString.value = '';
       }
       categoryModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const saveCategory = async () => {
@@ -5828,6 +5836,10 @@ export default {
         editingTag.icon = 'trophy';
       }
       tagModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const saveTag = async () => {
@@ -6350,6 +6362,10 @@ export default {
         editingUser.shopAccess = 'all';
       }
       userModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const saveUser = async () => {
@@ -7112,6 +7128,10 @@ export default {
       editingChef.phone = '';
       editingChef.active = true;
       chefModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const openEditChefModal = (chef) => {
@@ -7120,6 +7140,10 @@ export default {
       editingChef.phone = chef.phone || '';
       editingChef.active = chef.active !== false;
       chefModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const saveChef = async () => {
@@ -7203,6 +7227,10 @@ export default {
         .map(p => String(p._id));
       assignProductSearch.value = '';
       assignProductsModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const selectAllProductsForChef = () => {
@@ -7662,6 +7690,10 @@ const closeSuggestionsWithDelay = () => {
       showSuggestions.value = false;
       orderEditModalOpen.value = true;
       recalcOrderTotal();
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay .product-search-autocomplete-container input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const recalcOrderTotal = () => {
@@ -8199,6 +8231,10 @@ const closeSuggestionsWithDelay = () => {
       editingCustomer.password = cust.password || '';
       editingCustomer.showPassword = false;
       customerModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('.modal-overlay input[type="text"]');
+        if (el) el.focus();
+      });
     };
 
     const copyCustomerPassword = async (pass) => {
@@ -8354,6 +8390,15 @@ const closeSuggestionsWithDelay = () => {
     let scanBuffer = '';
     let scanTimeout = null;
 
+    // Helper: Check if any modal is currently open
+    const anyModalOpen = () => {
+      return newOrderModalOpen.value || orderEditModalOpen.value || productModalOpen.value ||
+        categoryModalOpen.value || tagModalOpen.value || paymentModalOpen.value ||
+        paymentHistoryModalOpen.value || customerModalOpen.value || customerFavsModalOpen.value ||
+        customerDetailsModalOpen.value || chefModalOpen.value || assignProductsModalOpen.value ||
+        userModalOpen.value || carouselModalOpen.value || cropperModalOpen.value || !!zoomedImageSrc.value;
+    };
+
     const handleGlobalKeydown = (e) => {
       // 1. Modal Close / Cancel with Escape
       if (e.key === 'Escape') {
@@ -8381,6 +8426,11 @@ const closeSuggestionsWithDelay = () => {
         if (custDateFromOpen.value || custDateToOpen.value) { custDateFromOpen.value = false; custDateToOpen.value = false; return; }
         if (prodDateFromOpen.value || prodDateToOpen.value) { prodDateFromOpen.value = false; prodDateToOpen.value = false; return; }
         if (cropperModalOpen.value) { cropperModalOpen.value = false; return; }
+        if (chefModalOpen.value) { chefModalOpen.value = false; return; }
+        if (assignProductsModalOpen.value) { assignProductsModalOpen.value = false; return; }
+        if (userModalOpen.value) { userModalOpen.value = false; return; }
+        if (carouselModalOpen.value) { carouselModalOpen.value = false; return; }
+        if (zoomedImageSrc.value) { zoomedImageSrc.value = null; return; }
         return;
       }
 
@@ -8454,10 +8504,61 @@ const closeSuggestionsWithDelay = () => {
         }
       }
 
+      // 3b. Inside Order Edit Modal Keyboard Flow
+      if (orderEditModalOpen.value) {
+        // Ctrl+Enter or Alt+S: Save edited order
+        if ((e.ctrlKey && e.key === 'Enter') || (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س'))) {
+          e.preventDefault();
+          if (!loading.value && editingOrder.items.length > 0) {
+            saveOrder();
+          }
+          return;
+        }
+      }
+
       // Check if user is typing into modal inputs or form inputs
       const activeEl = document.activeElement;
       const activeTag = activeEl ? activeEl.tagName : '';
       const isInputFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+      // Global search focus: / or Ctrl+K (when not typing in an input)
+      if (!isInputFocused && !anyModalOpen()) {
+        if (e.key === '/' || (e.ctrlKey && (e.key === 'k' || e.key === 'K'))) {
+          e.preventDefault();
+          const searchSelectors = {
+            'orders': '#order-search-input',
+            'products': '.products-tab-content .search-input',
+            'customers': '.customers-tab-content .search-input'
+          };
+          const selector = searchSelectors[activeTab.value];
+          if (selector) {
+            nextTick(() => {
+              const el = document.querySelector(selector);
+              if (el) el.focus();
+            });
+          } else {
+            toast.show('لا يوجد حقل بحث في هذا التبويب', 'info');
+          }
+          return;
+        }
+
+        // Arrow key tab traversal: ← → to navigate between admin tabs
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          const allowedTabs = userRole.value === 'order_manager' ? ['orders'] : VALID_TABS;
+          const currentIdx = allowedTabs.indexOf(activeTab.value);
+          if (currentIdx === -1) return;
+          let newIdx;
+          // RTL layout: ArrowRight goes to previous tab, ArrowLeft goes to next tab
+          if (e.key === 'ArrowRight') {
+            newIdx = currentIdx <= 0 ? allowedTabs.length - 1 : currentIdx - 1;
+          } else {
+            newIdx = currentIdx >= allowedTabs.length - 1 ? 0 : currentIdx + 1;
+          }
+          activeTab.value = allowedTabs[newIdx];
+          return;
+        }
+      }
 
       // If user is focused on normal inputs OTHER than the order search input, ignore global scan buffer
       if (isInputFocused && activeEl.id !== 'order-search-input') {
