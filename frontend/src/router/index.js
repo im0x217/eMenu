@@ -68,9 +68,29 @@ const router = createRouter({
 
 import { trackPageView } from '../utils/analytics';
 
-// Auto-track page views on route change
+// Auto-track page views and update dynamic PWA manifest on route change
 router.afterEach((to) => {
   trackPageView(to.fullPath, to.name ? String(to.name) : '');
+
+  // Dynamic PWA Manifest & App Title for Edge & Chrome App Installation
+  try {
+    let manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) {
+      manifestLink = document.createElement('link');
+      manifestLink.setAttribute('rel', 'manifest');
+      document.head.appendChild(manifestLink);
+    }
+
+    if (to.name === 'admin' || to.path.includes('/admin')) {
+      document.title = 'لوحة إدارة عبمبر الزروق | POS & Dashboard';
+      manifestLink.setAttribute('href', '/manifest-admin.json');
+    } else {
+      document.title = 'منيو حلويات عبمبر الزروق';
+      manifestLink.setAttribute('href', '/manifest.json');
+    }
+  } catch (e) {
+    console.error('PWA manifest switch error:', e);
+  }
 });
 
 // Auto-reload on chunk loading failure

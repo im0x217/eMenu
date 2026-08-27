@@ -3195,6 +3195,11 @@ app.get("/apple-touch-icon.png", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "apple-touch-icon.png"));
 });
 
+app.get("/manifest-admin.json", (req, res) => {
+  res.setHeader("Content-Type", "application/manifest+json");
+  res.sendFile(path.join(__dirname, "public", "manifest-admin.json"));
+});
+
 // ============ CATCH-ALL ROUTE FOR VUE SPA ============
 app.get("/app/*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app", "index.html"));

@@ -1,0 +1,56 @@
+{
+  "id": "emenu-admin-app",
+  "name": "لوحة تحكم عبمبر الزروق",
+  "short_name": "إدارة الزروق",
+  "description": "لوحة تحكم الإدارة ونقاط البيع السريعة وإدارة الطلبات",
+  "start_url": "/app/#/admin",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/res/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "إنشاء طلب كاشير فوري",
+      "short_name": "طلب فوري",
+      "url": "/app/#/admin",
+      "icons": [
+        {
+          "src": "/favicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الطلبات والمبيعات",
+      "short_name": "الطلبات",
+      "url": "/app/#/admin",
+      "icons": [
+        {
+          "src": "/favicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
