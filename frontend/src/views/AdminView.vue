@@ -9350,8 +9350,8 @@ const closeSuggestionsWithDelay = () => {
           const currentIdx = allowedTabs.indexOf(activeTab.value);
           if (currentIdx === -1) return;
           let newIdx;
-          // [ or ArrowRight goes to previous tab, ] or ArrowLeft goes to next tab (RTL aware)
-          if (e.key === '[' || e.key === 'ArrowRight') {
+          // ArrowLeft (or [) goes to previous tab, ArrowRight (or ]) goes to next tab
+          if (e.key === '[' || e.key === 'ArrowLeft') {
             newIdx = currentIdx <= 0 ? allowedTabs.length - 1 : currentIdx - 1;
           } else {
             newIdx = currentIdx >= allowedTabs.length - 1 ? 0 : currentIdx + 1;
