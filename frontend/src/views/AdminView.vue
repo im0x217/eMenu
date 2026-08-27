@@ -9346,11 +9346,41 @@ const closeSuggestionsWithDelay = () => {
       if (prodDateToOpen) prodDateToOpen.value = false;
     };
 
+    const updateHeadIcon = () => {
+      const iconUrl = activeShop.value === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg';
+      let iconLink = document.querySelector("link[rel='icon']");
+      if (!iconLink) {
+        iconLink = document.createElement('link');
+        iconLink.rel = 'icon';
+        document.head.appendChild(iconLink);
+      }
+      iconLink.type = 'image/jpeg';
+      iconLink.href = iconUrl;
+
+      let shortcutLink = document.querySelector("link[rel='shortcut icon']");
+      if (!shortcutLink) {
+        shortcutLink = document.createElement('link');
+        shortcutLink.rel = 'shortcut icon';
+        document.head.appendChild(shortcutLink);
+      }
+      shortcutLink.type = 'image/jpeg';
+      shortcutLink.href = iconUrl;
+
+      let appleLink = document.querySelector("link[rel='apple-touch-icon']");
+      if (!appleLink) {
+        appleLink = document.createElement('link');
+        appleLink.rel = 'apple-touch-icon';
+        document.head.appendChild(appleLink);
+      }
+      appleLink.href = iconUrl;
+    };
+
     onMounted(() => {
       window.addEventListener('resize', handleResize);
       window.addEventListener('keydown', handleGlobalKeydown);
       document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
+      updateHeadIcon();
     });
 
     onUnmounted(() => {
@@ -9437,6 +9467,7 @@ const closeSuggestionsWithDelay = () => {
       productsPage.value = 1;
       ordersPage.value = 1;
       customersPage.value = 1;
+      updateHeadIcon();
     });
 
     const isProdDisabled = (p) => {

@@ -3181,6 +3181,20 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
   }
 });
 
+// ============ FAVICON & ICON ROUTES ============
+app.get("/favicon.ico", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "favicon.ico"));
+});
+
+app.get("/favicon.svg", (req, res) => {
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.sendFile(path.join(__dirname, "public", "favicon.svg"));
+});
+
+app.get("/apple-touch-icon.png", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "apple-touch-icon.png"));
+});
+
 // ============ CATCH-ALL ROUTE FOR VUE SPA ============
 app.get("/app/*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app", "index.html"));
