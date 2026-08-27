@@ -302,6 +302,71 @@
           
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics'" class="analytics-tab-content">
+            
+            <!-- SKELETON LOADER (Displayed during date filter and period loading) -->
+            <div v-if="analyticsLoading" class="analytics-skeleton-view animate-fade-in">
+              <!-- KPI Cards Skeleton -->
+              <div class="kpi-grid">
+                <div v-for="i in 4" :key="'kpi-skel-' + i" class="kpi-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-icon"></div>
+                  <div class="kpi-info" style="width: 100%;">
+                    <div class="skeleton-shimmer skeleton-line skeleton-title-line"></div>
+                    <div class="skeleton-shimmer skeleton-line skeleton-val-line"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Charts & Metrics Grid Skeleton -->
+              <div class="charts-grid mt-4">
+                <!-- Sales Trend Skeleton -->
+                <div class="chart-card glass-panel span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 180px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="skeleton-shimmer skeleton-chart-box"></div>
+                </div>
+
+                <!-- Price Mode Split Skeleton -->
+                <div class="chart-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 180px; gap: 16px;">
+                    <div class="skeleton-shimmer skeleton-circle"></div>
+                    <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 14px;"></div>
+                  </div>
+                </div>
+
+                <!-- Payment Methods Skeleton -->
+                <div class="chart-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 180px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="skeleton-shimmer skeleton-row-bar" v-for="i in 3" :key="'pm-skel-' + i"></div>
+                </div>
+
+                <!-- Category Sales Skeleton -->
+                <div class="chart-card glass-panel span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="skeleton-shimmer skeleton-row-bar" v-for="i in 4" :key="'cat-skel-' + i"></div>
+                </div>
+
+                <!-- Top Favorites Skeleton -->
+                <div class="chart-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="skeleton-shimmer skeleton-row-bar" v-for="i in 4" :key="'fav-skel-' + i"></div>
+                </div>
+
+                <!-- Top Products Skeleton -->
+                <div class="chart-card glass-panel span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
+                  <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'prod-skel-' + i"></div>
+                </div>
+
+                <!-- Top Customers Skeleton -->
+                <div class="chart-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 16px;"></div>
+                  <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'cust-skel-' + i"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- REAL ANALYTICS DATA CONTENT -->
+            <div v-else class="analytics-real-content animate-fade-in">
             <!-- KPI Cards Grid -->
             <div class="kpi-grid">
               <div class="kpi-card glass-panel">
@@ -606,6 +671,7 @@
                   </table>
                 </div>
               </div>
+            </div>
             </div>
           </div>
 
@@ -20314,6 +20380,81 @@ select.pos-control {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
+}
+
+
+/* ================= SKELETON LOADER STYLES ================= */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+  border-radius: 8px;
+}
+
+.shop-theme-shop2 .skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #dbeafe 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.skeleton-line {
+  border-radius: 6px;
+}
+
+.skeleton-title-line {
+  width: 45%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-val-line {
+  width: 70%;
+  height: 22px;
+}
+
+.skeleton-chart-box {
+  width: 100%;
+  height: 220px;
+  border-radius: 12px;
+}
+
+.skeleton-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+}
+
+.skeleton-row-bar {
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.skeleton-table-row {
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 </style>
