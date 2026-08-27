@@ -692,7 +692,17 @@
                 <div class="card-toolbar-bottom">
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="filters.search" type="text" name="search" autocomplete="off" placeholder="البحث بالاسم أو الوصف…" class="form-control search-input" />
+                    <input 
+                      v-model="filters.search" 
+                      type="text" 
+                      name="search" 
+                      autocomplete="off" 
+                      placeholder="البحث بالاسم أو الوصف… (اضغط Enter للتثبيت)" 
+                      class="form-control search-input" 
+                      @keydown.enter="handleSearchEnter('products', $event)"
+                      @keydown.down="handleSearchArrowDown($event)"
+                      @keydown.esc="filters.search = ''; $event.target.blur();"
+                    />
                   </div>
                   <div class="filters-inline">
                     <select v-model="filters.category" class="form-control select-pill">
@@ -1141,7 +1151,18 @@
                 <div class="orders-search-print-row">
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input id="order-search-input" v-model="orderFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل…" class="form-control search-input" />
+                    <input 
+                      id="order-search-input" 
+                      v-model="orderFilters.search" 
+                      type="text" 
+                      name="search" 
+                      autocomplete="off" 
+                      placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل… (اضغط Enter للتثبيت)" 
+                      class="form-control search-input" 
+                      @keydown.enter="handleSearchEnter('orders', $event)"
+                      @keydown.down="handleSearchArrowDown($event)"
+                      @keydown.esc="orderFilters.search = ''; $event.target.blur();"
+                    />
                   </div>
                   <button @click="printReconciliation" class="btn btn-outline btn-sm flex-center reconciliation-print-btn" title="طباعة كشف تسوية المبيعات للتاريخ المحدد">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -2249,7 +2270,17 @@
                 <div class="card-toolbar-bottom customer-toolbar-filters">
                   <div class="search-input-wrapper flex-grow-1">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="customerFilters.search" type="text" name="search" autocomplete="off" placeholder="البحث باسم العميل أو رقم الهاتف…" class="form-control search-input" />
+                    <input 
+                      v-model="customerFilters.search" 
+                      type="text" 
+                      name="search" 
+                      autocomplete="off" 
+                      placeholder="البحث باسم العميل أو رقم الهاتف… (اضغط Enter للتثبيت)" 
+                      class="form-control search-input" 
+                      @keydown.enter="handleSearchEnter('customers', $event)"
+                      @keydown.down="handleSearchArrowDown($event)"
+                      @keydown.esc="customerFilters.search = ''; $event.target.blur();"
+                    />
                   </div>
 
                   <!-- Custom Date Filter Component Group (Standardized with Order Management Design) -->
@@ -4949,6 +4980,10 @@
               <div class="keys"><kbd class="kbd-badge">/</kbd></div>
             </div>
             <div class="shortcut-item-row">
+              <span class="desc">تثبيت البحث والانتقال لأول نتيجة في الجدول</span>
+              <div class="keys"><kbd class="kbd-badge">Enter</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">↓</kbd></div>
+            </div>
+            <div class="shortcut-item-row">
               <span class="desc">فتح لوحة الأوامر السريعة (Command Palette)</span>
               <div class="keys"><kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">Space</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Alt</kbd>+<kbd class="kbd-badge">/</kbd></div>
             </div>
@@ -5919,6 +5954,53 @@ export default {
     ];
 
 
+
+    // Keyboard-First Search Navigation: Confirm search and focus table results
+    const handleSearchEnter = (tabType, event) => {
+      if (event) event.target?.blur();
+      selectedTableRowIndex.value = 0;
+
+      let resultCount = 0;
+      if (tabType === 'orders') resultCount = filteredOrders.value.length;
+      else if (tabType === 'products') resultCount = filteredProducts.value.length;
+      else if (tabType === 'customers') resultCount = filteredCustomers.value.length;
+
+      nextTick(() => {
+        const selectedRow = document.querySelector('.keyboard-selected-row');
+        if (selectedRow && typeof selectedRow.scrollIntoView === 'function') {
+          selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      });
+
+      if (resultCount === 1) {
+        if (tabType === 'orders') {
+          const ord = filteredOrders.value[0];
+          toast.show(`تم العثور على الطلب #${ord.orderNumber || ord._id.toString().slice(-6)} (اضغط P للطباعة أو Enter للتعديل)`, 'success');
+        } else if (tabType === 'products') {
+          toast.show(`تم تحديد المنتج: ${filteredProducts.value[0].name} (اضغط Enter للتعديل)`, 'info');
+        } else if (tabType === 'customers') {
+          toast.show(`تم تحديد العميل: ${filteredCustomers.value[0].name} (اضغط Enter للملف)`, 'info');
+        }
+      } else if (resultCount > 1) {
+        toast.show(`تم تثبيت البحث: ${resultCount} نتائج (استخدم ↑ ↓ للتنقل)`, 'info');
+      } else {
+        toast.show('لا توجد نتائج مطابقة لبحثك', 'warning');
+      }
+    };
+
+    const handleSearchArrowDown = (event) => {
+      if (event) {
+        event.preventDefault();
+        event.target?.blur();
+      }
+      selectedTableRowIndex.value = 0;
+      nextTick(() => {
+        const selectedRow = document.querySelector('.keyboard-selected-row');
+        if (selectedRow && typeof selectedRow.scrollIntoView === 'function') {
+          selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      });
+    };
 
     // Helper functions
     const formatArabicPlural = (count, nounType = 'order') => {
@@ -9929,6 +10011,8 @@ const closeSuggestionsWithDelay = () => {
       toggleProductTag,
 
       formatCurrency,
+      handleSearchEnter,
+      handleSearchArrowDown,
       formatArabicPlural,
       handleLogin,
       handleLogout,
