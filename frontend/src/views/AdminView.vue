@@ -725,10 +725,31 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="filteredProducts.length === 0">
+                    <!-- SKELETON ROWS (Products Loading) -->
+                    <template v-if="productsLoading">
+                      <tr v-for="i in 6" :key="'prod-skel-' + i" class="skeleton-table-row-wrapper">
+                        <td><div class="skeleton-shimmer" style="width: 44px; height: 44px; border-radius: 8px;"></div></td>
+                        <td>
+                          <div class="d-flex flex-column gap-1">
+                            <div class="skeleton-shimmer" style="width: 130px; height: 16px;"></div>
+                            <div class="skeleton-shimmer" style="width: 80px; height: 12px;"></div>
+                          </div>
+                        </td>
+                        <td><div class="skeleton-shimmer" style="width: 75px; height: 22px; border-radius: 12px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 70px; height: 18px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 70px; height: 18px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 70px; height: 18px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 60px; height: 20px; border-radius: 6px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 50px; height: 20px; border-radius: 6px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 70px; height: 26px; border-radius: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 90px; height: 30px; border-radius: 8px;"></div></td>
+                      </tr>
+                    </template>
+
+                    <tr v-else-if="filteredProducts.length === 0">
                       <td colspan="10" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
                     </tr>
-                    <tr v-for="(prod, idx) in paginatedProducts" :key="prod._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(prod, idx) in paginatedProducts" :key="prod._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td>
                         <div class="admin-table-img-wrapper" @click="zoomImage(prod.img)" title="تكبير الصورة">
                           <div class="admin-table-img-shimmer"></div>
@@ -1174,10 +1195,30 @@
 </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="filteredOrders.length === 0">
+                    <!-- SKELETON ROWS (Loading State) -->
+                    <template v-if="ordersLoading">
+                      <tr v-for="i in 6" :key="'order-skel-' + i" class="skeleton-table-row-wrapper">
+                        <td><div class="skeleton-shimmer" style="width: 65px; height: 26px; border-radius: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 90px; height: 16px;"></div></td>
+                        <td>
+                          <div class="d-flex flex-column gap-1">
+                            <div class="skeleton-shimmer" style="width: 110px; height: 16px;"></div>
+                            <div class="skeleton-shimmer" style="width: 85px; height: 12px;"></div>
+                          </div>
+                        </td>
+                        <td><div class="skeleton-shimmer" style="width: 140px; height: 22px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 75px; height: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 70px; height: 24px; border-radius: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 50px; height: 22px; border-radius: 6px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 100px; height: 32px; border-radius: 8px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 80px; height: 30px; border-radius: 8px;"></div></td>
+                      </tr>
+                    </template>
+
+                    <tr v-else-if="filteredOrders.length === 0">
                       <td colspan="9" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
-                    <tr v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td class="text-bold text-mono">
                         <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
                       </td>
@@ -2310,10 +2351,30 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="filteredCustomers.length === 0">
+                    <!-- SKELETON ROWS (Customers Loading) -->
+                    <template v-if="customersLoading">
+                      <tr v-for="i in 6" :key="'cust-skel-' + i" class="skeleton-table-row-wrapper">
+                        <td>
+                          <div class="d-flex align-items-center gap-3">
+                            <div class="skeleton-shimmer" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+                            <div class="d-flex flex-column gap-1">
+                              <div class="skeleton-shimmer" style="width: 120px; height: 16px;"></div>
+                              <div class="skeleton-shimmer" style="width: 90px; height: 12px;"></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td><div class="skeleton-shimmer" style="width: 75px; height: 22px; border-radius: 12px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 65px; height: 24px; border-radius: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 80px; height: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 85px; height: 20px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 90px; height: 32px; border-radius: 8px;"></div></td>
+                      </tr>
+                    </template>
+
+                    <tr v-else-if="filteredCustomers.length === 0">
                       <td colspan="6" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
-                    <tr v-for="(cust, idx) in paginatedCustomers" :key="cust._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(cust, idx) in paginatedCustomers" :key="cust._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td>
                         <div class="customer-profile-cell" @click="openCustomerDetails(cust)" title="انقر لعرض الملف التعريفي الكامل">
                           <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
@@ -4585,9 +4646,24 @@
         <button @click="paymentHistoryModalOpen = false" class="modal-close-btn">✕</button>
       </div>
 
-      <div v-if="paymentLoading" class="modal-body text-center p-4">
-        <div class="spinner"></div>
-        <p class="text-muted mt-2">جاري التحميل...</p>
+      <!-- SKELETON LOADER FOR PAYMENT HISTORY -->
+      <div v-if="paymentLoading" class="modal-body skeleton-card">
+        <div class="payment-balance-summary mb-4">
+          <div class="balance-card glass-panel p-3">
+            <div class="skeleton-shimmer mb-2" style="width: 130px; height: 14px;"></div>
+            <div class="skeleton-shimmer" style="width: 180px; height: 28px;"></div>
+          </div>
+        </div>
+        <div class="d-flex flex-column gap-3">
+          <div v-for="i in 3" :key="'pay-skel-' + i" class="glass-panel p-3" style="border-radius: 12px;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="skeleton-shimmer" style="width: 100px; height: 22px;"></div>
+              <div class="skeleton-shimmer" style="width: 80px; height: 16px;"></div>
+            </div>
+            <div class="skeleton-shimmer mb-2" style="width: 160px; height: 14px;"></div>
+            <div class="skeleton-shimmer" style="width: 120px; height: 20px; border-radius: 10px;"></div>
+          </div>
+        </div>
       </div>
 
       <div v-else class="modal-body">
@@ -5125,6 +5201,9 @@ export default {
     const analyticsStartDate = ref('');
     const analyticsEndDate = ref('');
     const analyticsLoading = ref(false);
+    const ordersLoading = ref(false);
+    const productsLoading = ref(false);
+    const customersLoading = ref(false);
 
     // Standardized Analytics Date Range Popover Logic
     const analyticsFromOpen = ref(false);
@@ -7935,6 +8014,7 @@ export default {
     };
 
     const fetchOrders = async () => {
+      ordersLoading.value = true;
       try {
         const url = `/api/admin/orders?shop=${activeShop.value}`;
         const res = await adminFetch(url);
@@ -7943,6 +8023,8 @@ export default {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        ordersLoading.value = false;
       }
     };
 
