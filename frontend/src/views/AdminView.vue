@@ -10250,17 +10250,41 @@ const closeSuggestionsWithDelay = () => {
 
 /* Define chart/theme palettes based on selected shop context */
 .shop-theme-shop1 {
-  --chart-primary: #fdb518;
-  --theme-btn-bg: #fdb518;
-  --theme-btn-hover: #e09e0a;
-  --theme-text-color: #0c0603;
+  --primary-color: #d97706;
+  --primary-color-rgb: 217, 119, 6;
+  --primary-accent: #f59e0b;
+  --primary-hover: #b45309;
+  --primary-dark: #92400e;
+  --primary-glow: rgba(245, 158, 11, 0.18);
+  --primary-subtle: rgba(245, 158, 11, 0.08);
+  --primary-gradient: linear-gradient(135deg, #f59e0b, #d97706);
+  --primary-gradient-hover: linear-gradient(135deg, #d97706, #b45309);
+  --primary-border: #f59e0b;
+  --chart-primary: #f59e0b;
+  --theme-btn-bg: #f59e0b;
+  --theme-btn-hover: #d97706;
+  --theme-text-color: #ffffff;
+  --shop-badge-bg: rgba(245, 158, 11, 0.14);
+  --shop-badge-color: #d97706;
 }
 
 .shop-theme-shop2 {
-  --chart-primary: #1e3a5f;
-  --theme-btn-bg: #1e3a5f;
-  --theme-btn-hover: #152943;
+  --primary-color: #2563eb;
+  --primary-color-rgb: 37, 99, 235;
+  --primary-accent: #3b82f6;
+  --primary-hover: #1d4ed8;
+  --primary-dark: #1e40af;
+  --primary-glow: rgba(37, 99, 235, 0.18);
+  --primary-subtle: rgba(37, 99, 235, 0.08);
+  --primary-gradient: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --primary-gradient-hover: linear-gradient(135deg, #2563eb, #1e40af);
+  --primary-border: #3b82f6;
+  --chart-primary: #2563eb;
+  --theme-btn-bg: #2563eb;
+  --theme-btn-hover: #1d4ed8;
   --theme-text-color: #ffffff;
+  --shop-badge-bg: rgba(37, 99, 235, 0.14);
+  --shop-badge-color: #1d4ed8;
 }
 
 /* Spinner Overlay */
@@ -20046,4 +20070,250 @@ select.pos-control {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ==========================================================================
+   SHOP 2 (قسم النواشف - BLUE THEME) COMPREHENSIVE OVERRIDES & CONSISTENCY
+   ========================================================================== */
+
+/* 1. Modal Submit & Primary Action Buttons */
+.shop-theme-shop2 .btn-primary,
+.shop-theme-shop2 .btn-modal-save,
+.shop-theme-shop2 .pos-btn-submit,
+.shop-theme-shop2 .btn-submit-payment,
+.shop-theme-shop2 .btn-save-order,
+.shop-theme-shop2 .btn-shortcuts-done,
+.shop-theme-shop2 .btn-confirm-save,
+.shop-theme-shop2 .btn-modal-primary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+}
+
+.shop-theme-shop2 .btn-primary:hover,
+.shop-theme-shop2 .btn-modal-save:hover,
+.shop-theme-shop2 .pos-btn-submit:hover,
+.shop-theme-shop2 .btn-submit-payment:hover,
+.shop-theme-shop2 .btn-save-order:hover,
+.shop-theme-shop2 .btn-shortcuts-done:hover,
+.shop-theme-shop2 .btn-confirm-save:hover,
+.shop-theme-shop2 .btn-modal-primary:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af) !important;
+  border-color: #1e40af !important;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* 2. Navigation Tabs & Active Indicators */
+.shop-theme-shop2 .admin-tab-btn.active,
+.shop-theme-shop2 .tab-pill.active,
+.shop-theme-shop2 .nav-pill.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28) !important;
+}
+
+.shop-theme-shop2 .admin-tab-btn.active svg,
+.shop-theme-shop2 .tab-pill.active svg {
+  stroke: #ffffff !important;
+}
+
+/* 3. Shop Switcher Pill */
+.shop-theme-shop2 .shop-pill.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* 4. Segmented Control Pills (Price Mode, Date Shortcuts, Filters) */
+.shop-theme-shop2 .price-mode-pill.active,
+.shop-theme-shop2 .fast-order-price-mode-switch .price-mode-pill.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+}
+
+.shop-theme-shop2 .price-mode-pill.active svg {
+  stroke: #ffffff !important;
+}
+
+.shop-theme-shop2 .pos-date-shortcut-btn.active,
+.shop-theme-shop2 .btn-date-chip.active {
+  background: #2563eb !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+.shop-theme-shop2 .pos-date-shortcut-btn.active svg {
+  stroke: #ffffff !important;
+}
+
+/* 5. Datepickers & Calendar in Shop 2 */
+.shop-theme-shop2 .dp-day-cell.is-selected {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+}
+
+.shop-theme-shop2 .dp-day-cell.is-today {
+  border-color: #3b82f6 !important;
+  color: #1d4ed8 !important;
+}
+
+.shop-theme-shop2 .dp-nav-btn:hover {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-color: #3b82f6 !important;
+  color: #1d4ed8 !important;
+}
+
+.shop-theme-shop2 .btn-standard-datepicker-trigger:hover,
+.shop-theme-shop2 .btn-standard-datepicker-trigger.active,
+.shop-theme-shop2 .btn-datepicker-trigger.active {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
+}
+
+.shop-theme-shop2 .btn-dp-show-all {
+  color: #2563eb !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+.shop-theme-shop2 .btn-dp-show-all:hover {
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: #2563eb !important;
+}
+
+/* 6. Form Inputs & Select Focus States */
+.shop-theme-shop2 input:focus,
+.shop-theme-shop2 select:focus,
+.shop-theme-shop2 textarea:focus,
+.shop-theme-shop2 .form-control:focus,
+.shop-theme-shop2 .edit-order-notes-input:focus,
+.shop-theme-shop2 .pos-control:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
+  outline: none !important;
+}
+
+/* 7. POS Fast Order Modal Elements */
+.shop-theme-shop2 .pos-search-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
+}
+
+.shop-theme-shop2 .pos-product-card:hover {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.16) !important;
+}
+
+.shop-theme-shop2 .pos-product-card.active,
+.shop-theme-shop2 .pos-product-card.is-in-cart {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px #2563eb !important;
+}
+
+.shop-theme-shop2 .pos-item-qty-badge,
+.shop-theme-shop2 .pos-cart-badge {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+}
+
+.shop-theme-shop2 .pos-quick-add-btn:hover {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+.shop-theme-shop2 .pos-btn-barcode.active {
+  background: #2563eb !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+.shop-theme-shop2 .pos-cart-summary-card {
+  border-color: rgba(37, 99, 235, 0.25) !important;
+  background: rgba(37, 99, 235, 0.03) !important;
+}
+
+.shop-theme-shop2 .pos-cart-total-badge {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+}
+
+/* 8. Table Active Row & Keyboard Selection */
+.shop-theme-shop2 .keyboard-selected-row,
+.shop-theme-shop2 tr.keyboard-selected-row td {
+  background: rgba(37, 99, 235, 0.07) !important;
+}
+
+.shop-theme-shop2 tr.keyboard-selected-row {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: -2px;
+}
+
+/* 9. Badges, Icons & Accents */
+.shop-theme-shop2 .badge-shop-current,
+.shop-theme-shop2 .shop2-badge {
+  background: rgba(37, 99, 235, 0.14) !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.3) !important;
+}
+
+.shop-theme-shop2 .edit-meta-label svg,
+.shop-theme-shop2 .shortcuts-header-icon svg,
+.shop-theme-shop2 .cat-header svg {
+  stroke: #2563eb !important;
+}
+
+.shop-theme-shop2 .shortcuts-header-icon {
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: #2563eb !important;
+}
+
+.shop-theme-shop2 .shortcut-category-card .cat-header {
+  color: #2563eb !important;
+}
+
+.shop-theme-shop2 .cust-btn.btn-pay {
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+}
+
+.shop-theme-shop2 .cust-btn.btn-pay:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+.shop-theme-shop2 .btn-hub-pay {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* 10. Command Palette & Autocomplete Selection */
+.shop-theme-shop2 .palette-item.active,
+.shop-theme-shop2 .suggestion-item.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+}
+
+.shop-theme-shop2 .palette-item.active .palette-item-icon,
+.shop-theme-shop2 .palette-item.active .palette-item-shortcut kbd {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 11. Pagination & Active Page Pill */
+.shop-theme-shop2 .pagination-btn.active,
+.shop-theme-shop2 .page-number-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
 </style>
