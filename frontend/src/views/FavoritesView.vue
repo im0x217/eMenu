@@ -386,4 +386,31 @@ const closeZoomModal = () => {
 .zoom-close-btn:active {
   transform: scale(0.9);
 }
+
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+}
+
+.skeleton-product-card {
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+  pointer-events: none;
+}
+
+.skeleton-prod-img {
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+}
+
 </style>

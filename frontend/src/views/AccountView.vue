@@ -523,10 +523,20 @@ const handleResendWhatsApp = () => {
       </div>
       <p class="section-desc">ملاحظة: تظهر هنا الطلبات المرتبطة برقم هاتفك الحالي والمحفوظة في قاعدة البيانات.</p>
 
-      <!-- Loading State -->
-      <div v-if="isLoadingOrders" class="loading-orders">
-        <div class="mini-spinner"></div>
-        <p>جاري جلب الطلبات…</p>
+      <!-- SKELETON LOADER (Orders Loading) -->
+      <div v-if="isLoadingOrders" class="orders-list animate-fade-in">
+        <div v-for="i in 3" :key="'acc-ord-skel-' + i" class="order-card glass-panel skeleton-card p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="skeleton-shimmer" style="width: 90px; height: 22px; border-radius: 12px;"></div>
+            <div class="skeleton-shimmer" style="width: 80px; height: 14px; border-radius: 4px;"></div>
+          </div>
+          <div class="skeleton-shimmer mb-2" style="width: 85%; height: 16px; border-radius: 4px;"></div>
+          <div class="skeleton-shimmer mb-3" style="width: 60%; height: 14px; border-radius: 4px;"></div>
+          <div class="d-flex justify-content-between align-items-center pt-2" style="border-top: 1px dashed rgba(255,255,255,0.08);">
+            <div class="skeleton-shimmer" style="width: 70px; height: 20px; border-radius: 4px;"></div>
+            <div class="skeleton-shimmer" style="width: 100px; height: 32px; border-radius: 8px;"></div>
+          </div>
+        </div>
       </div>
 
       <!-- No Phone State -->
@@ -1574,4 +1584,20 @@ const handleResendWhatsApp = () => {
 .btn-send-wa:hover {
   background: #20ba5a;
 }
+
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
 </style>
