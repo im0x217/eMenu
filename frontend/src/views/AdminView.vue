@@ -936,10 +936,30 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="categories.length === 0">
+                    <!-- SKELETON ROWS (Categories Loading) -->
+                    <template v-if="categoriesLoading">
+                      <tr v-for="i in 4" :key="'cat-skel-' + i" class="skeleton-table-row-wrapper">
+                        <td><div class="skeleton-shimmer mx-auto" style="width: 42px; height: 42px; border-radius: 12px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 120px; height: 18px;"></div></td>
+                        <td>
+                          <div class="d-flex gap-2">
+                            <div class="skeleton-shimmer" style="width: 65px; height: 22px; border-radius: 12px;"></div>
+                            <div class="skeleton-shimmer" style="width: 80px; height: 22px; border-radius: 12px;"></div>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="d-flex gap-2">
+                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
+                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
+
+                    <tr v-else-if="categories.length === 0">
                       <td colspan="4" class="text-center">لا توجد أصناف مدخلة.</td>
                     </tr>
-                    <tr v-for="cat in categories" :key="cat._id">
+                    <tr v-else v-for="cat in categories" :key="cat._id">
                       <td class="text-center">
                         <div class="cat-icon-badge">
                           <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
@@ -991,10 +1011,24 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="tags.length === 0">
+                    <!-- SKELETON ROWS (Tags Loading) -->
+                    <template v-if="tagsLoading">
+                      <tr v-for="i in 4" :key="'tag-skel-' + i" class="skeleton-table-row-wrapper">
+                        <td><div class="skeleton-shimmer" style="width: 110px; height: 18px;"></div></td>
+                        <td><div class="skeleton-shimmer" style="width: 130px; height: 28px; border-radius: 8px;"></div></td>
+                        <td>
+                          <div class="d-flex justify-content-center gap-2">
+                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
+                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
+
+                    <tr v-else-if="tags.length === 0">
                       <td colspan="3" class="text-center p-4">لا توجد علامات مميزة مدخلة.</td>
                     </tr>
-                    <tr v-for="t in tags" :key="t._id">
+                    <tr v-else v-for="t in tags" :key="t._id">
                       <td class="text-bold">{{ t.name }}</td>
                       <td>
                         <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
@@ -1040,7 +1074,21 @@
               </div>
 
               <div class="p-3">
-                <div v-if="carouselItems.length > 0" class="carousel-grid">
+                <!-- SKELETON CAROUSEL GRID -->
+                <div v-if="carouselLoading" class="carousel-grid">
+                  <div v-for="i in 3" :key="'car-skel-' + i" class="carousel-admin-card glass-panel skeleton-card">
+                    <div class="skeleton-shimmer" style="height: 180px; width: 100%; border-radius: 12px 12px 0 0;"></div>
+                    <div class="p-3 d-flex justify-content-between align-items-center">
+                      <div class="skeleton-shimmer" style="width: 100px; height: 14px;"></div>
+                      <div class="d-flex gap-2">
+                        <div class="skeleton-shimmer" style="width: 50px; height: 28px; border-radius: 6px;"></div>
+                        <div class="skeleton-shimmer" style="width: 50px; height: 28px; border-radius: 6px;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="carouselItems.length > 0" class="carousel-grid">
                   <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
                     <div class="card-image-wrapper">
                       <div class="admin-banner-shimmer"></div>
@@ -2594,8 +2642,30 @@
                     </button>
                   </div>
 
+                  <!-- SKELETON CHEFS GRID -->
+                  <div v-if="chefsLoading" class="chefs-cards-grid">
+                    <div v-for="i in 3" :key="'chef-skel-' + i" class="chef-card glass-panel skeleton-card p-3">
+                      <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="skeleton-shimmer" style="width: 48px; height: 48px; border-radius: 50%;"></div>
+                        <div class="d-flex flex-column gap-1 flex-grow-1">
+                          <div class="skeleton-shimmer" style="width: 110px; height: 18px;"></div>
+                          <div class="skeleton-shimmer" style="width: 80px; height: 14px;"></div>
+                        </div>
+                      </div>
+                      <div class="skeleton-shimmer mb-2" style="width: 40%; height: 14px;"></div>
+                      <div class="d-flex gap-1 mb-3 flex-wrap">
+                        <div class="skeleton-shimmer" style="width: 60px; height: 22px; border-radius: 12px;"></div>
+                        <div class="skeleton-shimmer" style="width: 75px; height: 22px; border-radius: 12px;"></div>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <div class="skeleton-shimmer flex-grow-1" style="height: 32px; border-radius: 8px;"></div>
+                        <div class="skeleton-shimmer flex-grow-1" style="height: 32px; border-radius: 8px;"></div>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Chefs Grid -->
-                  <div v-else class="chefs-cards-grid">
+                  <div v-else-if="chefs.length > 0" class="chefs-cards-grid">
                     <div v-for="chef in chefs" :key="chef._id" class="chef-card glass-panel animate-scale-in">
                       <div class="chef-card-header">
                         <div class="chef-avatar">{{ (chef.name || 'ش').charAt(0) }}</div>
@@ -4486,9 +4556,27 @@
         <button @click="paymentModalOpen = false" class="modal-close-btn">✕</button>
       </div>
 
-      <div v-if="paymentLoading" class="modal-body text-center p-4">
-        <div class="spinner"></div>
-        <p class="text-muted mt-2">جاري تحميل البيانات...</p>
+      <!-- SKELETON LOADER FOR PAYMENT RECORDING MODAL -->
+      <div v-if="paymentLoading" class="modal-body skeleton-card">
+        <div class="payment-balance-summary mb-4">
+          <div class="balance-card glass-panel p-3">
+            <div class="skeleton-shimmer mb-2" style="width: 120px; height: 14px;"></div>
+            <div class="skeleton-shimmer" style="width: 150px; height: 26px;"></div>
+          </div>
+          <div class="balance-card glass-panel p-3">
+            <div class="skeleton-shimmer mb-2" style="width: 120px; height: 14px;"></div>
+            <div class="skeleton-shimmer" style="width: 150px; height: 26px;"></div>
+          </div>
+        </div>
+        <div class="skeleton-shimmer mb-2" style="width: 140px; height: 16px;"></div>
+        <div class="d-flex flex-column gap-2 mb-4">
+          <div v-for="i in 2" :key="'unpaid-skel-' + i" class="glass-panel p-3" style="border-radius: 8px;">
+            <div class="d-flex justify-content-between">
+              <div class="skeleton-shimmer" style="width: 80px; height: 16px;"></div>
+              <div class="skeleton-shimmer" style="width: 90px; height: 16px;"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else class="modal-body">
@@ -5204,6 +5292,10 @@ export default {
     const ordersLoading = ref(false);
     const productsLoading = ref(false);
     const customersLoading = ref(false);
+    const chefsLoading = ref(false);
+    const categoriesLoading = ref(false);
+    const tagsLoading = ref(false);
+    const carouselLoading = ref(false);
 
     // Standardized Analytics Date Range Popover Logic
     const analyticsFromOpen = ref(false);
