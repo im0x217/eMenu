@@ -2778,7 +2778,7 @@
 
             <!-- SUB-TAB 2: PRODUCTION & SALES REPORT (STANDARDIZED DATE PICKER, MATCHED BUTTONS & SKELETON LOADER) -->
             <div v-else-if="productionSubTab === 'report'" class="production-report-section animate-fade-in">
-              <div class="table-card glass-panel overflow-hidden">
+              <div class="table-card glass-panel" style="overflow: visible;">
                 <!-- Toolbar Header with Title & Matched Action Buttons -->
                 <div class="card-toolbar card-toolbar-split">
                   <div class="card-toolbar-top">
@@ -5738,82 +5738,83 @@ export default {
     });
     const prodDateFromOpen = ref(false);
     const prodDateToOpen = ref(false);
-    const prodFromCurrentMonth = ref(new Date());
-    const prodToCurrentMonth = ref(new Date());
+    const prodFromYear = ref(new Date().getFullYear());
+    const prodFromMonth = ref(new Date().getMonth());
+    const prodToYear = ref(new Date().getFullYear());
+    const prodToMonth = ref(new Date().getMonth());
 
     const openProdDateFromPicker = () => {
+      prodDateToOpen.value = false;
       prodDateFromOpen.value = !prodDateFromOpen.value;
-      if (prodDateFromOpen.value) {
-        prodDateToOpen.value = false;
-        if (productionReportFilters.dateFrom) {
-          prodFromCurrentMonth.value = new Date(productionReportFilters.dateFrom);
+      if (prodDateFromOpen.value && productionReportFilters.dateFrom) {
+        const parts = productionReportFilters.dateFrom.split('-').map(Number);
+        if (parts[0] && parts[1]) {
+          prodFromYear.value = parts[0];
+          prodFromMonth.value = parts[1] - 1;
         }
       }
     };
 
     const openProdDateToPicker = () => {
+      prodDateFromOpen.value = false;
       prodDateToOpen.value = !prodDateToOpen.value;
-      if (prodDateToOpen.value) {
-        prodDateFromOpen.value = false;
-        if (productionReportFilters.dateTo) {
-          prodToCurrentMonth.value = new Date(productionReportFilters.dateTo);
+      if (prodDateToOpen.value && productionReportFilters.dateTo) {
+        const parts = productionReportFilters.dateTo.split('-').map(Number);
+        if (parts[0] && parts[1]) {
+          prodToYear.value = parts[0];
+          prodToMonth.value = parts[1] - 1;
         }
       }
     };
 
     const prodFromPrevMonth = () => {
-      const d = new Date(prodFromCurrentMonth.value);
-      d.setMonth(d.getMonth() - 1);
-      prodFromCurrentMonth.value = d;
+      if (prodFromMonth.value === 0) { prodFromMonth.value = 11; prodFromYear.value--; }
+      else { prodFromMonth.value--; }
     };
 
     const prodFromNextMonth = () => {
-      const d = new Date(prodFromCurrentMonth.value);
-      d.setMonth(d.getMonth() + 1);
-      prodFromCurrentMonth.value = d;
+      if (prodFromMonth.value === 11) { prodFromMonth.value = 0; prodFromYear.value++; }
+      else { prodFromMonth.value++; }
     };
 
     const prodToPrevMonth = () => {
-      const d = new Date(prodToCurrentMonth.value);
-      d.setMonth(d.getMonth() - 1);
-      prodToCurrentMonth.value = d;
+      if (prodToMonth.value === 0) { prodToMonth.value = 11; prodToYear.value--; }
+      else { prodToMonth.value--; }
     };
 
     const prodToNextMonth = () => {
-      const d = new Date(prodToCurrentMonth.value);
-      d.setMonth(d.getMonth() + 1);
-      prodToCurrentMonth.value = d;
+      if (prodToMonth.value === 11) { prodToMonth.value = 0; prodToYear.value++; }
+      else { prodToMonth.value++; }
     };
 
     const prodFromMonthYearLabel = computed(() => {
-      const d = prodFromCurrentMonth.value;
+      const d = new Date(prodFromYear.value, prodFromMonth.value, 1);
       return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
     });
 
     const prodToMonthYearLabel = computed(() => {
-      const d = prodToCurrentMonth.value;
+      const d = new Date(prodToYear.value, prodToMonth.value, 1);
       return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
     });
 
-    const prodFromCalendarDays = computed(() => {
-      const d = prodFromCurrentMonth.value;
-      return buildCalendarMatrix(d.getFullYear(), d.getMonth());
-    });
-
-    const prodToCalendarDays = computed(() => {
-      const d = prodToCurrentMonth.value;
-      return buildCalendarMatrix(d.getFullYear(), d.getMonth());
-    });
+    const prodFromCalendarDays = computed(() => buildCalendarMatrix(prodFromYear.value, prodFromMonth.value));
+    const prodToCalendarDays = computed(() => buildCalendarMatrix(prodToYear.value, prodToMonth.value));
 
     const selectProdDateFrom = (dateStr) => {
       productionReportFilters.dateFrom = dateStr;
       prodDateFromOpen.value = false;
+      if (!productionReportFilters.dateTo || productionReportFilters.dateTo < dateStr) {
+        productionReportFilters.dateTo = dateStr;
+      }
       loadProductionReport();
     };
 
     const selectProdDateTo = (dateStr) => {
       productionReportFilters.dateTo = dateStr;
       prodDateToOpen.value = false;
+      if (!productionReportFilters.dateFrom || productionReportFilters.dateFrom > dateStr) {
+        productionReportFilters.dateFrom = dateStr;
+      }
       loadProductionReport();
     };
 
@@ -5832,16 +5833,15 @@ export default {
       const today = getTodayStr();
       const d = new Date();
       d.setDate(d.getDate() - 6);
-      const start7d = d.toISOString().split('T')[0];
+      const start7d = d.toLocaleDateString('en-CA');
       return productionReportFilters.dateFrom === start7d && productionReportFilters.dateTo === today;
     });
 
     const isProdRangeMonth = computed(() => {
       const today = getTodayStr();
       const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const startMonth = `${y}-${m}-01`;
+      const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+      const startMonth = firstDay.toLocaleDateString('en-CA');
       return productionReportFilters.dateFrom === startMonth && productionReportFilters.dateTo === today;
     });
     const productionReportData = ref({
@@ -8130,21 +8130,22 @@ export default {
     };
 
     const setProductionDateShortcut = (type) => {
-      const today = getTodayStr();
+      const todayStr = getTodayStr();
+      prodDateFromOpen.value = false;
+      prodDateToOpen.value = false;
       if (type === 'today') {
-        productionReportFilters.dateFrom = today;
-        productionReportFilters.dateTo = today;
+        productionReportFilters.dateFrom = todayStr;
+        productionReportFilters.dateTo = todayStr;
       } else if (type === '7d') {
         const d = new Date();
         d.setDate(d.getDate() - 6);
-        productionReportFilters.dateFrom = d.toISOString().split('T')[0];
-        productionReportFilters.dateTo = today;
+        productionReportFilters.dateFrom = d.toLocaleDateString('en-CA');
+        productionReportFilters.dateTo = todayStr;
       } else if (type === 'month') {
         const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        productionReportFilters.dateFrom = `${y}-${m}-01`;
-        productionReportFilters.dateTo = today;
+        const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+        productionReportFilters.dateFrom = firstDay.toLocaleDateString('en-CA');
+        productionReportFilters.dateTo = todayStr;
       }
       loadProductionReport();
     };

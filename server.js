@@ -3494,23 +3494,46 @@ app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, re
     const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
     const prodColl = shop === 'shop2' ? productsCollection2 : productsCollection;
     
-    // Build date filter for orders
-    let dateFilter = {};
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      dateFilter = { createdAt: { $gte: start, $lte: end } };
-    } else if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      dateFilter = { createdAt: { $gte: start } };
-    } else if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      dateFilter = { createdAt: { $lte: end } };
-    }
+    // Helper to extract effective operational/production date in YYYY-MM-DD local format
+    const getOrderEffectiveDateStr = (order) => {
+      if (order.deliveryDate) {
+        if (typeof order.deliveryDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(order.deliveryDate.trim())) {
+          return order.deliveryDate.trim().slice(0, 10);
+        }
+        const d = new Date(order.deliveryDate);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('en-CA');
+        }
+      }
+      if (order.receivedAt) {
+        const d = new Date(order.receivedAt);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
+      }
+      if (order.createdAt) {
+        const d = new Date(order.createdAt);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
+      }
+      return '';
+    };
+
+    // Get all non-cancelled orders
+    const allOrders = await ordColl.find({
+      status: { $ne: "cancelled" }
+    }).toArray();
+
+    // Filter orders accurately by effective date range (time-zone immune YYYY-MM-DD comparison)
+    const orders = allOrders.filter(order => {
+      const effDate = getOrderEffectiveDateStr(order);
+      if (!effDate) return false;
+      if (startDate && endDate) {
+        return effDate >= startDate && effDate <= endDate;
+      } else if (startDate) {
+        return effDate >= startDate;
+      } else if (endDate) {
+        return effDate <= endDate;
+      }
+      return true;
+    });
     
     // Get all products with chef assignments
     const allProducts = await prodColl.find().toArray();
@@ -3524,13 +3547,7 @@ app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, re
         makingCost: p.makingCost || 0,
         price_regular: p.price_regular || p.price || 0
       };
-    }
-    
-    // Get orders in range (exclude cancelled)
-    const orders = await ordColl.find({
-      status: { $ne: "cancelled" },
-      ...dateFilter
-    }).toArray();
+    };
     
     // Aggregate: for each order item, map to its chef via product
     const chefAgg = {};  // chefId -> { name, products: { productId -> { name, qty, revenue, cost } } }
