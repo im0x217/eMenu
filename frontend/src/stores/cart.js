@@ -303,14 +303,14 @@ export const useCartStore = defineStore('cart', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error('Server returned an error');
+        throw new Error(data.error || 'عذراً، فشل إرسال الطلب. يرجى المحاولة مرة أخرى.');
       }
-      const data = await res.json();
       assignedOrderNumber = data.orderNumber || null;
     } catch (e) {
       console.error('Order submission failed:', e);
-      throw new Error('عذراً، فشل إرسال الطلب بسبب مشكلة في الخادم. يرجى المحاولة مرة أخرى.');
+      throw new Error(e.message || 'عذراً، فشل إرسال الطلب بسبب مشكلة في الاتصال.');
     }
 
     // Track GA4 Purchase Event

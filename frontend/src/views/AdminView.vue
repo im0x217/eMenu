@@ -9048,7 +9048,26 @@ const closeSuggestionsWithDelay = () => {
             printOrder(data.order);
           }
         } else {
-          const err = await res.json();
+          const err = await res.json().catch(() => ({}));
+          if (res.status === 409 && err.isDuplicate) {
+            const confirmForce = window.confirm(`${err.error}\n\nهل تريد بالتأكيد تسجيل هذا الطلب كطلب إضافي مكرر الآن؟`);
+            if (confirmForce) {
+              const forceRes = await adminFetch(url, {
+                method: 'POST',
+                body: JSON.stringify({ ...payload, force: true })
+              });
+              if (forceRes.ok) {
+                const forceData = await forceRes.json();
+                toast.show(`تم إنشاء الطلب المكرر #${forceData.orderNumber || ''} بنجاح`, 'success');
+                newOrderModalOpen.value = false;
+                await Promise.all([fetchOrders(), fetchCustomers(), fetchAnalytics()]);
+                if (newOrderAutoPrint.value && forceData.order) {
+                  printOrder(forceData.order);
+                }
+                return;
+              }
+            }
+          }
           toast.show(err.error || 'فشل في إنشاء الطلب', 'danger');
         }
       } catch (err) {

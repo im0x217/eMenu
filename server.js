@@ -3033,17 +3033,68 @@ app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, asyn
   }
 });
 
+// Helper function to check if two order item lists are identical
+const areOrderItemsEqual = (itemsA, itemsB) => {
+  if (!Array.isArray(itemsA) || !Array.isArray(itemsB)) return false;
+  if (itemsA.length !== itemsB.length) return false;
+  
+  const sortKey = item => `${item.productId || ''}_${(item.name || '').trim().toLowerCase()}_${Number(item.price)}_${Number(item.quantity)}`;
+  const sortedA = [...itemsA].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+  const sortedB = [...itemsB].sort((a, b) => sortKey(b).localeCompare(sortKey(b)));
+  
+  for (let i = 0; i < sortedA.length; i++) {
+    const a = sortedA[i];
+    const b = sortedB[i];
+    const nameMatch = (a.name || '').trim().toLowerCase() === (b.name || '').trim().toLowerCase();
+    const qtyMatch = Number(a.quantity) === Number(b.quantity);
+    const priceMatch = Math.abs((Number(a.price) || 0) - (Number(b.price) || 0)) < 0.05;
+    if (!nameMatch || !qtyMatch || !priceMatch) {
+      return false;
+    }
+  }
+  return true;
+};
+
 // ============ ORDER SUBMISSION APIs ============
 
 app.post("/api/orders", checkMongoDB, async (req, res) => {
   try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod } = req.body;
+    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod, force, bypassDuplicateCheck } = req.body;
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
 
     const normalizedPhone = customer.phone.trim();
     const normalizedName = customer.name.trim();
+    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
+
+    // 5-Minute Duplicate Order Prevention (Cooldown)
+    if (!force && !bypassDuplicateCheck) {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const recentOrders = await ordersCollection.find({
+        "customerInfo.phone": normalizedPhone,
+        status: { $ne: "cancelled" },
+        createdAt: { $gte: fiveMinutesAgo }
+      }).sort({ createdAt: -1 }).toArray();
+
+      for (const recent of recentOrders) {
+        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(items, recent.items)) {
+          const elapsedMs = Date.now() - new Date(recent.createdAt).getTime();
+          const remainingSeconds = Math.max(1, Math.ceil((5 * 60 * 1000 - elapsedMs) / 1000));
+          const remainingMinutes = Math.ceil(remainingSeconds / 60);
+          const existingNum = recent.orderNumber || (recent._id ? recent._id.toString().slice(-6) : '');
+          
+          return res.status(409).json({
+            error: `تم إرسال نفس هذا الطلب بالفعل برقم #${existingNum} منذ ${Math.round(elapsedMs / 60000) || 1} دقيقة. يرجى الانتظار ${remainingMinutes} دقيقة لتجنب التكرار.`,
+            isDuplicate: true,
+            existingOrderNumber: existingNum,
+            existingOrderId: recent._id,
+            remainingSeconds,
+            remainingMinutes
+          });
+        }
+      }
+    }
 
     // Upsert customer profile (preserve registered name)
     const existingCust = await customersCollection.findOne({ phone: normalizedPhone });
@@ -3110,13 +3161,42 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
 
 app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
   try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod } = req.body;
+    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod, force, bypassDuplicateCheck } = req.body;
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
 
     const normalizedPhone = customer.phone.trim();
     const normalizedName = customer.name.trim();
+    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
+
+    // 5-Minute Duplicate Order Prevention (Cooldown)
+    if (!force && !bypassDuplicateCheck) {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const recentOrders = await ordersCollection2.find({
+        "customerInfo.phone": normalizedPhone,
+        status: { $ne: "cancelled" },
+        createdAt: { $gte: fiveMinutesAgo }
+      }).sort({ createdAt: -1 }).toArray();
+
+      for (const recent of recentOrders) {
+        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(items, recent.items)) {
+          const elapsedMs = Date.now() - new Date(recent.createdAt).getTime();
+          const remainingSeconds = Math.max(1, Math.ceil((5 * 60 * 1000 - elapsedMs) / 1000));
+          const remainingMinutes = Math.ceil(remainingSeconds / 60);
+          const existingNum = recent.orderNumber || (recent._id ? recent._id.toString().slice(-6) : '');
+          
+          return res.status(409).json({
+            error: `تم إرسال نفس هذا الطلب بالفعل برقم #${existingNum} منذ ${Math.round(elapsedMs / 60000) || 1} دقيقة. يرجى الانتظار ${remainingMinutes} دقيقة لتجنب التكرار.`,
+            isDuplicate: true,
+            existingOrderNumber: existingNum,
+            existingOrderId: recent._id,
+            remainingSeconds,
+            remainingMinutes
+          });
+        }
+      }
+    }
 
     // Upsert customer profile (preserve registered name)
     const existingCust = await customersCollection.findOne({ phone: normalizedPhone });
