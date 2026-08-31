@@ -3114,7 +3114,6 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       { upsert: true }
     );
     
-    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
     const parsedPaid = Number(paidAmount) || 0;
     const parsedPaymentStatus = paymentStatus || (parsedPaid >= parsedTotal && parsedTotal > 0 ? 'paid' : (parsedPaid > 0 ? 'partial' : 'unpaid'));
 
@@ -3216,7 +3215,6 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       { upsert: true }
     );
     
-    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
     const parsedPaid = Number(paidAmount) || 0;
     const parsedPaymentStatus = paymentStatus || (parsedPaid >= parsedTotal && parsedTotal > 0 ? 'paid' : (parsedPaid > 0 ? 'partial' : 'unpaid'));
 
