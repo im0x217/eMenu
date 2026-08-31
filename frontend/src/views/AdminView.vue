@@ -7739,13 +7739,13 @@ export default {
       if (!printingOrder.value || !printingOrder.value.items) return [];
       const items = printingOrder.value.items;
       
-      // If order has up to 10 items, fit comfortably in 1 single A5 sheet
-      if (items.length <= 10) {
+      // Maximum safe item count for a single A5 sheet (up to 18 items fit comfortably)
+      if (items.length <= 18) {
         return [items];
       }
       
-      // For large orders with more than 10 items, chunk evenly across pages
-      const PAGE_CHUNK = 10;
+      // For very large orders (19+ items), maximize capacity per page (18 items/page) to prevent paper waste
+      const PAGE_CHUNK = 18;
       const pages = [];
       for (let i = 0; i < items.length; i += PAGE_CHUNK) {
         pages.push(items.slice(i, i + PAGE_CHUNK));
@@ -13819,40 +13819,41 @@ select.form-control:focus {
   .receipt-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 4px;
   }
 
   .receipt-logo {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .receipt-shop-name {
-    font-size: 14pt;
+    font-size: 12.5pt;
     font-weight: 800;
     margin: 0;
     color: #0f172a;
   }
 
   .receipt-tagline {
-    font-size: 8pt;
+    font-size: 7.5pt;
     color: #64748b;
     margin: 0;
   }
 
   .receipt-divider {
     border-bottom: 1px dashed #cbd5e1;
-    margin: 8px 0;
+    margin: 4px 0;
   }
 
   .receipt-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 12px;
-    font-size: 9.5pt;
+    gap: 2px 10px;
+    font-size: 8.5pt;
+    line-height: 1.25;
   }
 
   .receipt-meta-row {
@@ -13877,8 +13878,8 @@ select.form-control:focus {
   .receipt-items-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 8px 0;
-    font-size: 9.5pt;
+    margin: 4px 0;
+    font-size: 8.5pt;
   }
 
   .receipt-items-table th {
@@ -13922,7 +13923,7 @@ select.form-control:focus {
   }
 
   .receipt-total-section {
-    margin-top: 6px;
+    margin-top: 4px;
   }
 
   .receipt-grand-total {
@@ -13930,10 +13931,10 @@ select.form-control:focus {
     justify-content: space-between;
     align-items: center;
     background: #f8fafc;
-    padding: 8px 12px;
+    padding: 4px 8px;
     border-radius: 6px;
     font-weight: 800;
-    font-size: 12pt;
+    font-size: 10.5pt;
     border: 1px solid #e2e8f0;
   }
 
@@ -13945,17 +13946,17 @@ select.form-control:focus {
   .receipt-payment-breakdown {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-top: 5px;
+    gap: 4px;
+    margin-top: 3px;
   }
 
   .receipt-breakdown-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 10px;
+    padding: 3px 6px;
     border-radius: 6px;
-    font-size: 10pt;
+    font-size: 8.5pt;
     font-weight: 700;
   }
 
