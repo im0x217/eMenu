@@ -4397,7 +4397,7 @@
         </thead>
         <tbody>
           <tr v-if="!orderNotesReportData.rows || orderNotesReportData.rows.length === 0">
-            <td colspan="6" class="text-center" style="padding: 28px 12px; color: #64748b; font-size: 10pt; font-weight: 700; background: #f8fafc;">
+            <td colspan="6" class="notes-empty-state">
               لا توجد أي ملاحظات أو تعليقات خاصة مسجلة على طلبات الأصناف للتاريخ المحدد ({{ orderNotesReportData.dateLabel }}).
             </td>
           </tr>
@@ -13638,7 +13638,8 @@ select.form-control:focus {
 
 /* Screen: hide print-only wrappers */
 .print-receipt-wrapper,
-.print-reconciliation-wrapper {
+.print-reconciliation-wrapper,
+.print-order-notes-wrapper {
   display: none;
 }
 
@@ -14099,98 +14100,7 @@ select.form-control:focus {
     margin-top: 2px;
   }
 
-  /* === Order Notes Report Print Styles (A4 Portrait) === */
-  .print-order-notes-wrapper, .print-order-notes-wrapper * {
-    visibility: visible;
-  }
 
-  .print-order-notes-wrapper {
-    display: block !important;
-    position: relative;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    background: transparent;
-  }
-
-  .order-notes-page {
-    page: reconciliation;
-    display: block !important;
-    width: 100%;
-    max-width: 210mm;
-    padding: 6mm 8mm;
-    box-sizing: border-box;
-    margin: 0 auto;
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-family: 'Cairo', 'Fira Code', sans-serif;
-    direction: rtl;
-    font-size: 9pt;
-    line-height: 1.35;
-  }
-
-.notes-report-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 8px 0 12px 0;
-}
-
-.notes-report-table th {
-  background: #f8fafc;
-  border-bottom: 2px solid #cbd5e1;
-  border-top: 1px solid #e2e8f0;
-  padding: 6px 8px;
-  font-weight: 800;
-  font-size: 8.5pt;
-  color: #1e293b;
-}
-
-.notes-report-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #e2e8f0;
-  vertical-align: middle;
-  font-size: 8.5pt;
-}
-
-.notes-report-row:nth-child(even) {
-  background: #f8fafc;
-}
-
-.comment-highlight-box {
-  background: #fffbeb;
-  border: 1px solid #fef3c7;
-  border-right: 3px solid #f59e0b;
-  border-radius: 6px;
-  padding: 4px 8px;
-  color: #92400e;
-  font-weight: 700;
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-}
-
-.comment-highlight-box .comment-icon {
-  margin-top: 2px;
-  flex-shrink: 0;
-  color: #d97706;
-}
-
-.order-badge-pill {
-  display: inline-block;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Code', monospace;
-  font-weight: 700;
-  font-size: 8pt;
-}
-
-.delivery-date-mini {
-  font-size: 7.5pt;
-  margin-top: 2px;
-  color: #64748b;
-}
 
 /* === Sales Reconciliation Report Print Styles (Compact & Zero-Gap A4) === */
   .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
@@ -18697,6 +18607,111 @@ select.pos-control {
   border-color: #f59e0b !important;
   color: #d97706 !important;
   background: rgba(245, 158, 11, 0.05) !important;
+}
+
+/* === ORDER NOTES PRINT REPORT (A4 Portrait) === */
+@page notesReport {
+  size: A4 portrait;
+  margin: 0 !important;
+}
+
+@media print {
+  .print-order-notes-wrapper, .print-order-notes-wrapper * {
+    visibility: visible;
+  }
+
+  .print-order-notes-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+  }
+
+  .order-notes-page {
+    page: notesReport;
+    padding: 6mm 8mm;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  .notes-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+  }
+
+  .notes-report-table th {
+    background: #f0f0f0 !important;
+    border-bottom: 2px solid #333333;
+    border-top: 1px solid #333333;
+    padding: 6px 8px;
+    font-weight: 800;
+    font-size: 8.5pt;
+    color: #000000 !important;
+  }
+
+  .notes-report-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #cccccc;
+    vertical-align: middle;
+    font-size: 8.5pt;
+    color: #000000 !important;
+  }
+
+  .notes-report-row:nth-child(even) {
+    background: #f5f5f5 !important;
+  }
+
+  .comment-highlight-box {
+    background: #ffffff !important;
+    border: 1.5px solid #333333;
+    border-right: 3px solid #000000;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #000000 !important;
+    font-weight: 700;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .comment-highlight-box .comment-icon {
+    margin-top: 2px;
+    flex-shrink: 0;
+    color: #333333 !important;
+  }
+
+  .order-badge-pill {
+    display: inline-block;
+    background: #f0f0f0 !important;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Fira Code', monospace;
+    font-weight: 700;
+    font-size: 8pt;
+    color: #000000 !important;
+  }
+
+  .delivery-date-mini {
+    font-size: 7.5pt;
+    margin-top: 2px;
+    color: #333333 !important;
+  }
+
+  .notes-empty-state {
+    text-align: center;
+    padding: 28px 12px;
+    color: #333333 !important;
+    font-size: 10pt;
+    font-weight: 700;
+    background: #f5f5f5 !important;
+  }
 }
 
 .print-debt-report-wrapper {
