@@ -116,6 +116,10 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
             <span>إدارة المستخدمين</span>
           </button>
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'settings' }" @click="setTab('settings')">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>الإعدادات والنسخ الاحتياطي</span>
+          </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -754,7 +758,65 @@
                         <td><div class="skeleton-shimmer" style="width: 70px; height: 26px; border-radius: 20px;"></div></td>
                         <td><div class="skeleton-shimmer" style="width: 90px; height: 30px; border-radius: 8px;"></div></td>
                       </tr>
-                    </template>
+                    
+  <!-- RESET ORDERS CONFIRMATION MODAL -->
+  <div v-if="resetModalOpen" class="modal-overlay animate-fade-in" @click.self="resetModalOpen = false">
+    <div class="modal-content reset-confirm-modal-box">
+      <div class="modal-header reset-modal-header">
+        <div class="d-flex align-items-center gap-3">
+          <div class="reset-header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div>
+            <h3 class="m-0 font-bold text-danger">تأكيد مسح وتصفير سجل الطلبات</h3>
+            <p class="text-muted m-0 text-small">هذا الإجراء سيقوم بمسح بيانات الطلبات والمبيعات نهائياً</p>
+          </div>
+        </div>
+        <button @click="resetModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+      </div>
+
+      <div class="modal-body py-3">
+        <div class="alert-reset-warning mb-3">
+          <strong>تنبيه هام جداً:</strong> سيتم حذف جميع الطلبات وإعادة ضبط ترقيم الطلبات إلى <strong>#1001</strong>. تأكد من أنك قمت بأخذ نسخة احتياطية قبل المتابعة.
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="resetCustBalanceCheck" v-model="resetCustomerBalances">
+          <label class="form-check-label font-bold" for="resetCustBalanceCheck" style="cursor: pointer;">
+            تصفير مديونيات ومشتريات العملاء أيضاً (تصفير مالي شامل)
+          </label>
+        </div>
+
+        <div class="form-group mb-2">
+          <label class="form-label font-bold">للتأكيد، يرجى كتابة العبارة التالية في الحقل أدناه: <span class="text-danger font-bold">مسح البيانات</span></label>
+          <input 
+            v-model="resetConfirmText" 
+            type="text" 
+            class="form-control text-center font-bold" 
+            placeholder="اكتب: مسح البيانات"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          @click="confirmResetOrders" 
+          class="btn btn-danger d-flex align-items-center gap-2"
+          :disabled="resetConfirmText.trim() !== 'مسح البيانات' || resetLoading"
+        >
+          <span v-if="resetLoading" class="spinner-border spinner-border-sm"></span>
+          <span>{{ resetLoading ? 'جاري المسح...' : 'نعم، قم بالمسح النهائي' }}</span>
+        </button>
+        <button type="button" @click="resetModalOpen = false" class="btn btn-outline">
+          <span>إلغاء</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</template>
 
                     <tr v-else-if="filteredProducts.length === 0">
                       <td colspan="10" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
@@ -3200,6 +3262,133 @@
             </div>
           </div>
 
+          <!-- Settings & Backup Tab -->
+          <div v-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content animate-fade-in">
+            <div class="settings-grid">
+              
+              <!-- Backup Management Card -->
+              <div class="table-card glass-panel mb-4">
+                <div class="card-toolbar card-toolbar-split">
+                  <div class="card-toolbar-top">
+                    <div class="toolbar-title-group">
+                      <div class="d-flex align-items-center gap-2">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-primary"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <h3 class="toolbar-title">نظام النسخ الاحتياطي الشامل (Full Database Backup)</h3>
+                      </div>
+                      <span class="toolbar-badge">{{ backups.length }} نسخ محفوظة</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-3">
+                  <!-- Create Backup Bar -->
+                  <div class="backup-action-bar mb-3 d-flex gap-2 align-items-center">
+                    <input 
+                      v-model="newBackupLabel" 
+                      type="text" 
+                      placeholder="وصف اختياري للنسخة (مثال: قبل تصفير الطلبات)..." 
+                      class="form-control flex-grow-1" 
+                    />
+                    <button 
+                      @click="createBackup" 
+                      class="btn btn-primary d-flex align-items-center gap-2" 
+                      :disabled="backupLoading"
+                    >
+                      <svg v-if="!backupLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span v-if="backupLoading" class="spinner-border spinner-border-sm"></span>
+                      <span>{{ backupLoading ? 'جاري الإنشاء...' : 'إنشاء نسخة احتياطية الآن' }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Backups Table -->
+                  <div class="table-container">
+                    <table class="admin-table">
+                      <thead>
+                        <tr>
+                          <th>تاريخ ووقت النسخة</th>
+                          <th>وصف / عنوان النسخة</th>
+                          <th>إحصائيات البيانات المشمولة</th>
+                          <th>إجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-if="backups.length === 0">
+                          <td colspan="4" class="text-center p-4 text-muted">لا توجد نسخ احتياطية محفوظة بعد. انقر على "إنشاء نسخة احتياطية الآن" لحفظ قاعدة البيانات.</td>
+                        </tr>
+                        <tr v-for="b in backups" :key="b._id">
+                          <td class="text-mono font-bold">{{ new Date(b.createdAt).toLocaleString('ar-LY') }}</td>
+                          <td><span class="backup-label-pill">{{ b.label }}</span></td>
+                          <td>
+                            <div class="d-flex flex-wrap gap-1 align-items-center">
+                              <span class="badge-stat-pill" v-if="b.stats">الطلبات: {{ (b.stats['emenu.orders'] || 0) + (b.stats['emenu2.orders'] || 0) }}</span>
+                              <span class="badge-stat-pill" v-if="b.stats">الأصناف: {{ (b.stats['emenu.products'] || 0) + (b.stats['emenu2.products'] || 0) }}</span>
+                              <span class="badge-stat-pill" v-if="b.stats">العملاء: {{ b.stats['emenu.customers'] || 0 }}</span>
+                              <span class="badge-stat-pill" v-if="b.stats">الدفعات: {{ b.stats['emenu.payments'] || 0 }}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="order-actions-btns">
+                              <button @click="downloadBackup(b._id)" class="btn-table-action btn-action-edit" title="تحميل ملف JSON">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>تنزيل JSON</span>
+                              </button>
+                              <button @click="deleteBackup(b._id)" class="btn-table-action" style="color: #ef4444; border-color: #fca5a5;" title="حذف النسخة الاحتياطية">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <span>حذف</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Danger Zone Card: Reset Orders & Analytics -->
+              <div class="danger-zone-card mb-4">
+                <div class="danger-zone-header">
+                  <div class="d-flex align-items-center gap-2">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <h3 class="danger-zone-title">منطقة العمليات الحساسة وإعادة ضبط البيانات (Data Reset)</h3>
+                  </div>
+                </div>
+
+                <div class="danger-zone-body">
+                  <p class="danger-zone-desc">
+                    يمكنك من هنا تصفير سجل الطلبات والمبيعات والتحليلات للبدء بموسم عمل جديد. يُرجى التأكد من أخذ نسخة احتياطية أولاً.
+                  </p>
+                  <div class="danger-points-list">
+                    <div class="danger-point-item">
+                      <span class="danger-bullet">•</span>
+                      <span>سيتم مسح جميع سجلات الطلبات من المتجر الرئيسي وقسم النواشف.</span>
+                    </div>
+                    <div class="danger-point-item">
+                      <span class="danger-bullet">•</span>
+                      <span>سيتم مسح سجل الدفعات والتحصيلات بالكامل وتصفير مديونيات ومشتريات العملاء.</span>
+                    </div>
+                    <div class="danger-point-item">
+                      <span class="danger-bullet">•</span>
+                      <span>سيتم إعادة ترقيم الطلبات التلقائي ليبدأ من الرقم <strong>#1001</strong> مجدداً.</span>
+                    </div>
+                    <div class="danger-point-item safe-point">
+                      <span class="safe-bullet">✓</span>
+                      <span><strong>محفوظات آمنة:</strong> لن يتم حذف الأصناف، المنتجات، التصنيفات، حسابات العملاء، أو حسابات المدراء.</span>
+                    </div>
+                  </div>
+
+                  <div class="mt-3">
+                    <button @click="openResetModal" class="btn btn-danger btn-reset-trigger d-flex align-items-center gap-2">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      <span>مسح وتصفير سجل الطلبات والمبيعات...</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </main>
     </div>
@@ -5301,7 +5490,7 @@ export default {
     };
 
     // Persistent Active Tab Management across page reloads
-    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'carousel', 'users'];
+    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'carousel', 'users', 'settings'];
     const getInitialTab = () => {
       try {
         const queryTab = route.query && route.query.tab ? String(route.query.tab) : '';
@@ -7253,6 +7442,129 @@ export default {
       }
     };
 
+
+    // ============ BACKUP & DATA MANAGEMENT ============
+    const backups = ref([]);
+    const backupLoading = ref(false);
+    const newBackupLabel = ref('');
+    const resetModalOpen = ref(false);
+    const resetConfirmText = ref('');
+    const resetCustomerBalances = ref(true);
+    const resetLoading = ref(false);
+
+    const fetchBackups = async () => {
+      if (userRole.value !== 'admin') return;
+      try {
+        const res = await adminFetch('/api/admin/backups');
+        if (res.ok) {
+          const data = await res.json();
+          backups.value = data.backups || [];
+        }
+      } catch (e) {
+        console.error('Fetch backups error', e);
+      }
+    };
+
+    const createBackup = async () => {
+      backupLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/backup', {
+          method: 'POST',
+          body: JSON.stringify({ label: newBackupLabel.value.trim() })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.show('تم إنشاء النسخة الاحتياطية بنجاح ✓', 'success');
+          newBackupLabel.value = '';
+          await fetchBackups();
+        } else {
+          toast.show(data.error || 'فشل إنشاء النسخة الاحتياطية', 'danger');
+        }
+      } catch (e) {
+        console.error('Create backup error', e);
+        toast.show('حدث خطأ في إنشاء النسخة الاحتياطية', 'danger');
+      } finally {
+        backupLoading.value = false;
+      }
+    };
+
+    const downloadBackup = (id) => {
+      const url = `/api/admin/backup/${id}/download`;
+      adminFetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          const dlUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = dlUrl;
+          a.download = `emenu-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(dlUrl);
+          toast.show('تم بدء تنزيل النسخة الاحتياطية ✓', 'success');
+        })
+        .catch(err => {
+          console.error('Download backup error', err);
+          toast.show('فشل تنزيل النسخة الاحتياطية', 'danger');
+        });
+    };
+
+    const deleteBackup = async (id) => {
+      if (!window.confirm('هل أنت متأكد من رغبتك في حذف هذه النسخة الاحتياطية؟')) return;
+      try {
+        const res = await adminFetch(`/api/admin/backup/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          toast.show('تم حذف النسخة الاحتياطية بنجاح', 'success');
+          await fetchBackups();
+        } else {
+          const data = await res.json();
+          toast.show(data.error || 'فشل حذف النسخة الاحتياطية', 'danger');
+        }
+      } catch (e) {
+        console.error('Delete backup error', e);
+        toast.show('حدث خطأ في حذف النسخة الاحتياطية', 'danger');
+      }
+    };
+
+    const openResetModal = () => {
+      resetModalOpen.value = true;
+      resetConfirmText.value = '';
+      resetCustomerBalances.value = true;
+    };
+
+    const confirmResetOrders = async () => {
+      if (resetConfirmText.value.trim() !== 'مسح البيانات') return;
+      resetLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/reset/orders', {
+          method: 'POST',
+          body: JSON.stringify({
+            confirm: 'RESET_ALL_ORDERS',
+            resetCustomerBalances: resetCustomerBalances.value
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.show('تم مسح وإعادة ضبط سجل الطلبات والمبيعات بنجاح ✓', 'success');
+          resetModalOpen.value = false;
+          resetConfirmText.value = '';
+          await Promise.all([
+            fetchOrders(),
+            fetchCustomers(),
+            fetchAnalytics(),
+            fetchBackups()
+          ]);
+        } else {
+          toast.show(data.error || 'فشل مسح البيانات', 'danger');
+        }
+      } catch (e) {
+        console.error('Reset orders error', e);
+        toast.show('حدث خطأ في مسح البيانات', 'danger');
+      } finally {
+        resetLoading.value = false;
+      }
+    };
+
     // Load Data
     const loadAllData = async () => {
       loading.value = true;
@@ -7266,7 +7578,8 @@ export default {
           fetchOrders(),
           fetchCustomers(),
           fetchCarousel(),
-          fetchUsers()
+          fetchUsers(),
+          fetchBackups()
         ]);
       } catch (err) {
         toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
@@ -10318,6 +10631,19 @@ const closeSuggestionsWithDelay = () => {
       openUserModal,
       saveUser,
       deleteUser,
+      backups,
+      backupLoading,
+      newBackupLabel,
+      resetModalOpen,
+      resetConfirmText,
+      resetCustomerBalances,
+      resetLoading,
+      fetchBackups,
+      createBackup,
+      downloadBackup,
+      deleteBackup,
+      openResetModal,
+      confirmResetOrders,
       chefs,
       productionSubTab,
       chefModalOpen,
@@ -21079,3 +21405,154 @@ select.pos-control {
 }
 
 </style>
+
+
+/* ============ SETTINGS & BACKUP STYLES ============ */
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.backup-action-bar {
+  background: rgba(255, 255, 255, 0.6);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.backup-label-pill {
+  display: inline-block;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.badge-stat-pill {
+  display: inline-block;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.danger-zone-card {
+  background: #fff5f5;
+  border: 1.5px solid #fecaca;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.06);
+}
+
+.danger-zone-header {
+  border-bottom: 1px dashed #fca5a5;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.danger-zone-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #dc2626;
+}
+
+.danger-zone-desc {
+  color: #7f1d1d;
+  font-size: 0.92rem;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.danger-points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+}
+
+.danger-point-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #991b1b;
+}
+
+.danger-point-item.safe-point {
+  color: #15803d;
+  font-weight: 600;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.danger-bullet {
+  color: #ef4444;
+  font-weight: 900;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.safe-bullet {
+  color: #22c55e;
+  font-weight: 900;
+}
+
+.btn-reset-trigger {
+  font-weight: 800;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-reset-trigger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+/* Reset Modal Box */
+.reset-confirm-modal-box {
+  max-width: 520px;
+  border-radius: 18px;
+  border: 2px solid #ef4444;
+}
+
+.reset-modal-header {
+  border-bottom: 1px solid #fee2e2;
+  background: #fef2f2;
+}
+
+.reset-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alert-reset-warning {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-right: 4px solid #f43f5e;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #9f1239;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
