@@ -1147,7 +1147,7 @@
                   </button>
                 </div>
 
-                <!-- Row 1: Search Bar aligned with Print Button -->
+                <!-- Row 1: Search Bar aligned with Print Buttons -->
                 <div class="orders-search-print-row">
                   <div class="search-input-wrapper">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -1164,10 +1164,16 @@
                       @keydown.esc="orderFilters.search = ''; $event.target.blur();"
                     />
                   </div>
-                  <button @click="printReconciliation" class="btn btn-outline btn-sm flex-center reconciliation-print-btn" title="طباعة كشف تسوية المبيعات للتاريخ المحدد">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    <span>كشف التسوية</span>
-                  </button>
+                  <div class="orders-toolbar-actions-group">
+                    <button @click="printOrderNotesReport" class="btn btn-outline btn-sm flex-center order-notes-print-btn" title="طباعة كشف ملاحظات وتفاصيل الأصناف الخاصة">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                      <span>كشف الملاحظات</span>
+                    </button>
+                    <button @click="printReconciliation" class="btn btn-outline btn-sm flex-center reconciliation-print-btn" title="طباعة كشف تسوية المبيعات للتاريخ المحدد">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                      <span>كشف التسوية</span>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Row 2: Status Filter (under search bar) aligned with Date Buttons -->
@@ -4342,6 +4348,84 @@
     </div>
   </div>
 
+  <!-- Hidden Print Product Comments & Notes Report (A4 Portrait) -->
+  <div class="print-order-notes-wrapper" v-if="printingOrderNotesReport">
+    <div class="order-notes-page">
+      <!-- Header Banner -->
+      <div class="recon-header">
+        <div class="recon-brand">
+          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="recon-logo" />
+          <div class="recon-brand-text">
+            <h1 class="recon-shop-name">{{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }}</h1>
+            <p class="recon-subtitle">كشف وملاحظات طلبات الأصناف الخاصة وتفاصيل التجهيز</p>
+          </div>
+        </div>
+        <div class="recon-header-badge" style="background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d;">
+          كشف ملاحظات الأصناف
+        </div>
+      </div>
+
+      <div class="recon-divider"></div>
+
+      <!-- Meta Info Bar -->
+      <div class="recon-meta">
+        <div class="recon-meta-row">
+          <span class="recon-label">تاريخ الطلبات:</span>
+          <span class="recon-value recon-date-pill">{{ orderNotesReportData.dateLabel }}</span>
+        </div>
+        <div class="recon-meta-row">
+          <span class="recon-label">إجمالي الملاحظات:</span>
+          <span class="recon-value recon-mono font-bold" style="color: #d97706;">{{ orderNotesReportData.totalNotes }} صنف بملاحظات</span>
+        </div>
+        <div class="recon-meta-row">
+          <span class="recon-label">تاريخ الاستخراج:</span>
+          <span class="recon-value">{{ new Date().toLocaleString('ar-LY') }}</span>
+        </div>
+      </div>
+
+      <!-- Products Notes Table -->
+      <table class="notes-report-table">
+        <thead>
+          <tr>
+            <th style="width: 32px; text-align: center;">#</th>
+            <th style="width: 25%; text-align: right;">اسم المنتج</th>
+            <th style="width: 10%; text-align: center;">الكمية</th>
+            <th style="width: 33%; text-align: right;">الملاحظة / التعليق المطلوب</th>
+            <th style="width: 18%; text-align: right;">اسم العميل</th>
+            <th style="width: 14%; text-align: center;">رقم الطلب</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, idx) in orderNotesReportData.rows" :key="idx" class="notes-report-row">
+            <td class="text-center font-bold text-mono">{{ idx + 1 }}</td>
+            <td class="font-bold notes-product-cell">{{ row.productName }}</td>
+            <td class="text-center font-bold text-mono">{{ row.quantity }}</td>
+            <td class="notes-comment-cell">
+              <div class="comment-highlight-box">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="comment-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span>{{ row.note }}</span>
+              </div>
+            </td>
+            <td class="notes-customer-cell">
+              <div class="cust-name-line font-bold">{{ row.customerName }}</div>
+              <div v-if="row.customerPhone" class="cust-phone-line text-mono text-small text-muted" dir="ltr">{{ row.customerPhone }}</div>
+            </td>
+            <td class="text-center">
+              <span class="order-badge-pill">#{{ row.orderNumber }}</span>
+              <div v-if="row.deliveryDate" class="delivery-date-mini text-small text-muted">{{ row.deliveryDate }}</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Footer -->
+      <div class="recon-footer">
+        <p>كشف تشغيل وتجهيز الملاحظات الخاصة — {{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }} — طرابلس، ليبيا</p>
+        <p class="recon-footer-sub">تم استخراجه من لوحة التحكم الذكية e-Menu</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Hidden Print Sales Reconciliation Report (A4 Portrait) -->
   <div class="print-reconciliation-wrapper" v-if="printingReconciliation">
     <div class="reconciliation-page" :class="['recon-density-' + reconDensity]">
@@ -7260,6 +7344,7 @@ export default {
 
     const printingOrder = ref(null);
     const printingReconciliation = ref(false);
+    const printingOrderNotesReport = ref(false);
     const printingCustomerDebtReport = ref(false);
 
     const customerDebtReportData = computed(() => {
@@ -7848,6 +7933,68 @@ export default {
         return 'ultra-dense'; // 52+ rows: max compressed multi-page layout
       }
     });
+
+    // Product Comments / Notes Report Data (for filtered orders)
+    const orderNotesReportData = computed(() => {
+      const ordersList = filteredOrders.value;
+      const dateLabel = orderFilters.selectedDate
+        ? formatArabicDate(orderFilters.selectedDate)
+        : 'جميع التواريخ';
+
+      const rows = [];
+      ordersList.forEach(order => {
+        const orderNum = order.orderNumber || (order._id ? order._id.toString().slice(-6) : '');
+        const custName = (order.customerInfo && order.customerInfo.name) || order.customerName || 'عميل';
+        const custPhone = (order.customerInfo && order.customerInfo.phone) || order.customerPhone || '';
+        const deliveryDate = order.deliveryDate || '';
+        const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString('ar-LY') : '';
+
+        if (Array.isArray(order.items)) {
+          order.items.forEach(item => {
+            const note = (item.notes || item.itemNotes || '').trim();
+            if (note) {
+              rows.push({
+                orderId: order._id,
+                orderNumber: orderNum,
+                customerName: custName,
+                customerPhone: custPhone,
+                deliveryDate: deliveryDate,
+                createdAt: createdAt,
+                productName: item.name,
+                quantity: item.quantity,
+                note: note,
+                price: item.price
+              });
+            }
+          });
+        }
+      });
+
+      return {
+        dateLabel,
+        totalNotes: rows.length,
+        rows
+      };
+    });
+
+    const printOrderNotesReport = async () => {
+      if (orderNotesReportData.value.rows.length === 0) {
+        toast.show('لا توجد أي ملاحظات أو تعليقات مدونة على المنتجات في الطلبات المحددة', 'info');
+        return;
+      }
+
+      setPrintPageSize('A4 portrait', '6mm 8mm');
+      printingOrderNotesReport.value = true;
+      await nextTick();
+
+      const cleanup = () => {
+        printingOrderNotesReport.value = false;
+        window.removeEventListener('afterprint', cleanup);
+      };
+
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    };
 
     const printReconciliation = async () => {
       setPrintPageSize('A4 portrait', '6mm 8mm');
@@ -13897,7 +14044,119 @@ select.form-control:focus {
     margin-top: 2px;
   }
 
-  /* === Sales Reconciliation Report Print Styles (Compact & Zero-Gap A4) === */
+  /* === Order Notes Report Print Styles === */
+.orders-toolbar-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.orders-toolbar-actions-group .btn {
+  height: 38px !important;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.print-order-notes-wrapper, .print-order-notes-wrapper * {
+  visibility: visible;
+}
+
+.print-order-notes-wrapper {
+  display: block !important;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.order-notes-page {
+  display: block !important;
+  width: 100%;
+  max-width: 210mm;
+  padding: 6mm 8mm;
+  box-sizing: border-box;
+  margin: 0 auto;
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-family: 'Cairo', 'Fira Code', sans-serif;
+  direction: rtl;
+  font-size: 9pt;
+  line-height: 1.35;
+}
+
+.notes-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 12px 0;
+}
+
+.notes-report-table th {
+  background: #f8fafc;
+  border-bottom: 2px solid #cbd5e1;
+  border-top: 1px solid #e2e8f0;
+  padding: 6px 8px;
+  font-weight: 800;
+  font-size: 8.5pt;
+  color: #1e293b;
+}
+
+.notes-report-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+  font-size: 8.5pt;
+}
+
+.notes-report-row:nth-child(even) {
+  background: #f8fafc;
+}
+
+.comment-highlight-box {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-right: 3px solid #f59e0b;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: #92400e;
+  font-weight: 700;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.comment-highlight-box .comment-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: #d97706;
+}
+
+.order-badge-pill {
+  display: inline-block;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+  font-size: 8pt;
+}
+
+.delivery-date-mini {
+  font-size: 7.5pt;
+  margin-top: 2px;
+  color: #64748b;
+}
+
+/* === Sales Reconciliation Report Print Styles (Compact & Zero-Gap A4) === */
   .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
     visibility: visible;
   }
