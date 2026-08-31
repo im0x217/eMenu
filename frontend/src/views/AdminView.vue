@@ -4511,6 +4511,7 @@
       <table class="receipt-items-table">
         <thead>
           <tr>
+            <th class="receipt-th-num">#</th>
             <th class="receipt-th-name">المنتج</th>
             <th class="receipt-th-qty">الكمية</th>
             <th class="receipt-th-price">السعر</th>
@@ -4519,8 +4520,9 @@
         </thead>
         <tbody>
           <tr v-for="(item, idx) in pageChunk" :key="idx">
+            <td class="receipt-td-num">{{ getPrintItemIndex(pageIndex, idx) }}</td>
             <td class="receipt-td-name">
-              {{ item.name }}
+              <span class="receipt-item-title">{{ item.name }}</span>
               <span v-if="item.notes" class="receipt-item-note">{{ item.notes }}</span>
             </td>
             <td class="receipt-td-qty">{{ item.quantity }}</td>
@@ -7639,12 +7641,29 @@ export default {
       window.print();
     };
 
+    // Sequential Product Numbering for Printed Receipts
+    const getPrintItemIndex = (pageIndex, idx) => {
+      let priorCount = 0;
+      for (let p = 0; p < pageIndex; p++) {
+        priorCount += (paginatedOrderPages.value[p] || []).length;
+      }
+      return priorCount + idx + 1;
+    };
+
     const paginatedOrderPages = computed(() => {
       if (!printingOrder.value || !printingOrder.value.items) return [];
       const items = printingOrder.value.items;
+      
+      // If order has up to 10 items, fit comfortably in 1 single A5 sheet
+      if (items.length <= 10) {
+        return [items];
+      }
+      
+      // For large orders with more than 10 items, chunk evenly across pages
+      const PAGE_CHUNK = 10;
       const pages = [];
-      for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-        pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+      for (let i = 0; i < items.length; i += PAGE_CHUNK) {
+        pages.push(items.slice(i, i + PAGE_CHUNK));
       }
       return pages;
     });
@@ -10052,6 +10071,7 @@ const closeSuggestionsWithDelay = () => {
       customerDebtReportData,
       printCustomerDebtReport,
       paginatedOrderPages,
+      getPrintItemIndex,
       printOrder,
       getOrderPaidAmount,
       getOrderRemaining,
@@ -13630,13 +13650,14 @@ select.form-control:focus {
     display: block !important;
     width: 100%;
     box-sizing: border-box;
-    padding: 5mm 7mm;
+    padding: 3.5mm 5.5mm;
     margin: 0;
     background: #ffffff !important;
     color: #111111 !important;
     font-family: 'Cairo', 'Fira Code', sans-serif;
     direction: rtl;
-    font-size: 11pt;
+    font-size: 9.5pt;
+    line-height: 1.25;
     page-break-after: always;
     break-after: page;
     page-break-inside: avoid;
@@ -13644,8 +13665,8 @@ select.form-control:focus {
   }
 
   .print-receipt:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   .receipt-header {
@@ -13715,17 +13736,26 @@ select.form-control:focus {
 
   .receipt-items-table th {
     background: #f8fafc;
-    padding: 4px 6px;
+    padding: 3.5px 5px;
     text-align: right;
     border-bottom: 1.5px solid #cbd5e1;
     font-weight: 700;
-    font-size: 9pt;
+    font-size: 8.5pt;
+  }
+
+  .receipt-th-num, .receipt-td-num {
+    width: 22px;
+    text-align: center;
+    font-family: 'Fira Code', monospace;
+    font-weight: 700;
+    color: #475569;
   }
 
   .receipt-items-table td {
-    padding: 2.5px 6px;
+    padding: 2.5px 5px;
     border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
+    vertical-align: middle;
+    font-size: 8.5pt;
   }
 
   .receipt-td-qty, .receipt-td-price, .receipt-td-total {
