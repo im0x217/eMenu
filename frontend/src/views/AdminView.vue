@@ -4396,7 +4396,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, idx) in orderNotesReportData.rows" :key="idx" class="notes-report-row">
+          <tr v-if="!orderNotesReportData.rows || orderNotesReportData.rows.length === 0">
+            <td colspan="6" class="text-center" style="padding: 28px 12px; color: #64748b; font-size: 10pt; font-weight: 700; background: #f8fafc;">
+              لا توجد أي ملاحظات أو تعليقات خاصة مسجلة على طلبات الأصناف للتاريخ المحدد ({{ orderNotesReportData.dateLabel }}).
+            </td>
+          </tr>
+          <tr v-else v-for="(row, idx) in orderNotesReportData.rows" :key="idx" class="notes-report-row">
             <td class="text-center font-bold text-mono">{{ idx + 1 }}</td>
             <td class="font-bold notes-product-cell">{{ row.productName }}</td>
             <td class="text-center font-bold text-mono">{{ row.quantity }}</td>
@@ -7996,12 +8001,6 @@ export default {
     });
 
     const printOrderNotesReport = async () => {
-      const notesList = orderNotesReportData.value.rows;
-      if (!notesList || notesList.length === 0) {
-        toast.show('لا توجد أي ملاحظات أو تعليقات مسجلة على الطلبات المعروضة حالياً', 'warning');
-        return;
-      }
-
       setPrintPageSize('A4 portrait', '6mm 8mm');
       printingOrderNotesReport.value = true;
       await nextTick();
@@ -11798,6 +11797,41 @@ const closeSuggestionsWithDelay = () => {
   width: 100%;
 }
 
+.orders-toolbar-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.orders-toolbar-actions-group .btn {
+  height: 38px !important;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.order-notes-print-btn {
+  gap: 6px;
+  border-color: rgba(30, 58, 95, 0.2);
+  color: #1e3a5f;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.order-notes-print-btn:hover {
+  background: rgba(30, 58, 95, 0.08);
+  border-color: rgba(30, 58, 95, 0.35);
+}
+
 .orders-search-print-row .search-input-wrapper {
   flex: 1 1 240px;
   min-width: 200px;
@@ -14065,55 +14099,35 @@ select.form-control:focus {
     margin-top: 2px;
   }
 
-  /* === Order Notes Report Print Styles === */
-.orders-toolbar-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
+  /* === Order Notes Report Print Styles (A4 Portrait) === */
+  .print-order-notes-wrapper, .print-order-notes-wrapper * {
+    visibility: visible;
+  }
 
-.orders-toolbar-actions-group .btn {
-  height: 38px !important;
-  padding: 0 14px;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
+  .print-order-notes-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
 
-.print-order-notes-wrapper, .print-order-notes-wrapper * {
-  visibility: visible;
-}
-
-.print-order-notes-wrapper {
-  display: block !important;
-  position: relative;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-}
-
-.order-notes-page {
-  page: reconciliation;
-  display: block !important;
-  width: 100%;
-  max-width: 210mm;
-  padding: 6mm 8mm;
-  box-sizing: border-box;
-  margin: 0 auto;
-  background: #ffffff !important;
-  color: #000000 !important;
-  font-family: 'Cairo', 'Fira Code', sans-serif;
-  direction: rtl;
-  font-size: 9pt;
-  line-height: 1.35;
-}
+  .order-notes-page {
+    page: reconciliation;
+    display: block !important;
+    width: 100%;
+    max-width: 210mm;
+    padding: 6mm 8mm;
+    box-sizing: border-box;
+    margin: 0 auto;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Cairo', 'Fira Code', sans-serif;
+    direction: rtl;
+    font-size: 9pt;
+    line-height: 1.35;
+  }
 
 .notes-report-table {
   width: 100%;
