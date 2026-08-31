@@ -1165,7 +1165,7 @@
                     />
                   </div>
                   <div class="orders-toolbar-actions-group">
-                    <button @click="printOrderNotesReport" class="btn btn-outline btn-sm flex-center order-notes-print-btn" title="طباعة كشف ملاحظات وتفاصيل الأصناف الخاصة">
+                    <button type="button" @click.stop="printOrderNotesReport" class="btn btn-outline btn-sm flex-center order-notes-print-btn" title="طباعة كشف ملاحظات وتفاصيل الأصناف الخاصة">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                       <span>كشف الملاحظات</span>
                     </button>
@@ -7936,23 +7936,27 @@ export default {
 
     // Product Comments / Notes Report Data (for filtered orders)
     const orderNotesReportData = computed(() => {
-      const ordersList = filteredOrders.value;
+      const ordersList = filteredOrders.value || [];
       const dateLabel = orderFilters.selectedDate
         ? formatArabicDate(orderFilters.selectedDate)
         : 'جميع التواريخ';
 
       const rows = [];
       ordersList.forEach(order => {
+        if (!order) return;
         const orderNum = order.orderNumber || (order._id ? order._id.toString().slice(-6) : '');
         const custName = (order.customerInfo && order.customerInfo.name) || order.customerName || 'عميل';
         const custPhone = (order.customerInfo && order.customerInfo.phone) || order.customerPhone || '';
         const deliveryDate = order.deliveryDate || '';
         const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString('ar-LY') : '';
+        const orderNote = (order.notes || '').trim();
 
-        if (Array.isArray(order.items)) {
+        if (Array.isArray(order.items) && order.items.length > 0) {
           order.items.forEach(item => {
-            const note = (item.notes || item.itemNotes || '').trim();
-            if (note) {
+            const itemNote = (item.notes || item.itemNotes || '').trim();
+            // Capture specific item notes or general order notes
+            const finalNote = itemNote || (orderNote ? `${orderNote} (ملاحظة عامة على الطلب)` : '');
+            if (finalNote) {
               rows.push({
                 orderId: order._id,
                 orderNumber: orderNum,
@@ -7960,12 +7964,26 @@ export default {
                 customerPhone: custPhone,
                 deliveryDate: deliveryDate,
                 createdAt: createdAt,
-                productName: item.name,
-                quantity: item.quantity,
-                note: note,
-                price: item.price
+                productName: item.name || 'منتج بدون اسم',
+                quantity: item.quantity || 1,
+                note: finalNote,
+                price: item.price || 0
               });
             }
+          });
+        } else if (orderNote) {
+          // If items array is empty but order has a note
+          rows.push({
+            orderId: order._id,
+            orderNumber: orderNum,
+            customerName: custName,
+            customerPhone: custPhone,
+            deliveryDate: deliveryDate,
+            createdAt: createdAt,
+            productName: 'طلب عام',
+            quantity: 1,
+            note: orderNote,
+            price: order.totalPrice || 0
           });
         }
       });
@@ -7978,14 +7996,16 @@ export default {
     });
 
     const printOrderNotesReport = async () => {
-      if (orderNotesReportData.value.rows.length === 0) {
-        toast.show('لا توجد أي ملاحظات أو تعليقات مدونة على المنتجات في الطلبات المحددة', 'info');
+      const notesList = orderNotesReportData.value.rows;
+      if (!notesList || notesList.length === 0) {
+        toast.show('لا توجد أي ملاحظات أو تعليقات مسجلة على الطلبات المعروضة حالياً', 'warning');
         return;
       }
 
       setPrintPageSize('A4 portrait', '6mm 8mm');
       printingOrderNotesReport.value = true;
       await nextTick();
+      await new Promise(r => setTimeout(r, 150));
 
       const cleanup = () => {
         printingOrderNotesReport.value = false;
@@ -14080,6 +14100,7 @@ select.form-control:focus {
 }
 
 .order-notes-page {
+  page: reconciliation;
   display: block !important;
   width: 100%;
   max-width: 210mm;
