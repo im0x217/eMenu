@@ -5898,7 +5898,7 @@ export default {
     const availableSubcategories = computed(() => {
       if (!filters.category) return [];
       const catObj = categories.value.find(c => c.name === filters.category);
-      return catObj ? (catObj.subCategories || []) : [];
+      return catObj ? [...(catObj.subCategories || [])].sort((a, b) => String(a || '').localeCompare(String(b || ''), 'ar', { sensitivity: 'base' })) : [];
     });
 
     // Modals control
@@ -6308,7 +6308,7 @@ export default {
     };
 
 
-    // Filter Products
+    // Filter Products (Sorted Alphabetically by Arabic Name)
     const filteredProducts = computed(() => {
       return products.value.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || 
@@ -6316,7 +6316,7 @@ export default {
         const matchesCat = !filters.category || p.category === filters.category;
         const matchesSubCat = !filters.category || !filters.subCategory || p.subCategory === filters.subCategory;
         return matchesSearch && matchesCat && matchesSubCat;
-      });
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
     // Product Availability Toggle
@@ -7370,7 +7370,8 @@ export default {
         const res = await adminFetch('/api/admin/users');
         if (res.ok) {
           const data = await res.json();
-          adminUsers.value = data.users || [];
+          const list = data.users || [];
+          adminUsers.value = list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
         }
       } catch (e) {
         console.error('Fetch users error', e);
@@ -8055,7 +8056,7 @@ export default {
 
     const paginatedOrderPages = computed(() => {
       if (!printingOrder.value || !printingOrder.value.items) return [];
-      const items = printingOrder.value.items;
+      const items = [...printingOrder.value.items].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
       
       // Maximum safe item count for a single A5 sheet (up to 18 items fit comfortably)
       if (items.length <= 18) {
@@ -8190,22 +8191,28 @@ export default {
         });
       });
 
-      const categoryProductBreakdown = Object.values(catMap).map(c => ({
-        name: c.name,
-        totalQty: c.totalQty,
-        totalRevenueFormatted: formatCurrency(c.totalRevenue),
-        subCategories: Object.values(c.subCats).map(sub => ({
-          name: sub.name,
-          totalQty: sub.totalQty,
-          totalRevenueFormatted: formatCurrency(sub.totalRevenue),
-          products: Object.values(sub.products).map(p => ({
-            name: p.name,
-            unitPriceFormatted: formatCurrency(p.unitPrice),
-            quantity: p.quantity,
-            totalRevenueFormatted: formatCurrency(p.totalRevenue)
-          }))
-        }))
-      }));
+      const categoryProductBreakdown = Object.values(catMap)
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
+        .map(c => ({
+          name: c.name,
+          totalQty: c.totalQty,
+          totalRevenueFormatted: formatCurrency(c.totalRevenue),
+          subCategories: Object.values(c.subCats)
+            .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
+            .map(sub => ({
+              name: sub.name,
+              totalQty: sub.totalQty,
+              totalRevenueFormatted: formatCurrency(sub.totalRevenue),
+              products: Object.values(sub.products)
+                .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
+                .map(p => ({
+                  name: p.name,
+                  unitPriceFormatted: formatCurrency(p.unitPrice),
+                  quantity: p.quantity,
+                  totalRevenueFormatted: formatCurrency(p.totalRevenue)
+                }))
+            }))
+        }));
 
       return {
         dateLabel,
@@ -8305,6 +8312,9 @@ export default {
           });
         }
       });
+
+      // Sort rows alphabetically by product name
+      rows.sort((a, b) => (a.productName || '').localeCompare(b.productName || '', 'ar', { sensitivity: 'base' }));
 
       return {
         dateLabel,
@@ -8421,7 +8431,10 @@ export default {
       try {
         const res = await adminFetch(`/api/admin/chefs?shop=${activeShop.value}`);
         if (res.ok) {
-          chefs.value = await res.json();
+          const list = await res.json();
+          chefs.value = (Array.isArray(list) ? list : []).sort((a, b) => 
+            (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+          );
         }
       } catch (err) {
         console.error('Fetch chefs error:', err);
@@ -8568,12 +8581,14 @@ export default {
     };
 
     const filteredProductsForAssign = computed(() => {
-      if (!assignProductSearch.value.trim()) return products.value;
       const q = assignProductSearch.value.trim().toLowerCase();
-      return products.value.filter(p => 
-        (p.name && p.name.toLowerCase().includes(q)) || 
-        (p.category && p.category.toLowerCase().includes(q))
-      );
+      const list = !q
+        ? [...products.value]
+        : products.value.filter(p => 
+            (p.name && p.name.toLowerCase().includes(q)) || 
+            (p.category && p.category.toLowerCase().includes(q))
+          );
+      return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
     const saveProductAssignments = async () => {
@@ -8618,7 +8633,19 @@ export default {
 
         const res = await adminFetch(`/api/admin/production/report?${params.toString()}`);
         if (res.ok) {
-          productionReportData.value = await res.json();
+          const data = await res.json();
+          if (data && Array.isArray(data.chefReport)) {
+            data.chefReport.sort((a, b) => (a.chefName || '').localeCompare(b.chefName || '', 'ar', { sensitivity: 'base' }));
+            data.chefReport.forEach(cr => {
+              if (Array.isArray(cr.products)) {
+                cr.products.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
+              }
+            });
+          }
+          if (data && Array.isArray(data.unassigned)) {
+            data.unassigned.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
+          }
+          productionReportData.value = data;
         }
       } catch (err) {
         console.error('Failed to load production report:', err);
@@ -8666,7 +8693,10 @@ export default {
       const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
       const res = await adminFetch(url);
       if (res.ok) {
-        products.value = await res.json();
+        const list = await res.json();
+        products.value = (Array.isArray(list) ? list : []).sort((a, b) => 
+          (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+        );
       }
     };
 
@@ -8674,7 +8704,10 @@ export default {
       const url = activeShop.value === 'shop2' ? '/api/shop2/categories' : '/api/categories';
       const res = await adminFetch(url);
       if (res.ok) {
-        categories.value = await res.json();
+        const list = await res.json();
+        categories.value = (Array.isArray(list) ? list : []).sort((a, b) => 
+          (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+        );
       }
     };
 
@@ -8682,7 +8715,10 @@ export default {
       const url = activeShop.value === 'shop2' ? '/api/shop2/tags' : '/api/tags';
       const res = await adminFetch(url);
       if (res.ok) {
-        tags.value = await res.json();
+        const list = await res.json();
+        tags.value = (Array.isArray(list) ? list : []).sort((a, b) => 
+          (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+        );
       }
     };
 
@@ -8847,7 +8883,10 @@ export default {
         }
         const res = await adminFetch(url);
         if (res.ok) {
-          customers.value = await res.json();
+          const list = await res.json();
+          customers.value = (Array.isArray(list) ? list : []).sort((a, b) => 
+            (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })
+          );
         }
       } catch (err) {
         console.error('Fetch customers error:', err);
@@ -8902,7 +8941,10 @@ export default {
     const filteredSuggestions = computed(() => {
       const q = productSearchQuery.value.trim().toLowerCase();
       if (!q) return [];
-      return products.value.filter(p => p.name.toLowerCase().includes(q)).slice(0, 8);
+      return products.value
+        .filter(p => p.name.toLowerCase().includes(q))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
+        .slice(0, 8);
     });
 
     watch(productSearchQuery, (newVal) => {
@@ -9137,7 +9179,9 @@ const closeSuggestionsWithDelay = () => {
       const q = newOrderCustomerSearch.value.trim().toLowerCase();
       const list = customers.value || [];
       if (!q) {
-        if (list.length > 0) return list.slice(0, 8);
+        if (list.length > 0) {
+          return [...list].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })).slice(0, 8);
+        }
         const fromOrders = [];
         const seenPhones = new Set();
         for (const o of (orders.value || [])) {
@@ -9153,12 +9197,12 @@ const closeSuggestionsWithDelay = () => {
             if (fromOrders.length >= 8) break;
           }
         }
-        return fromOrders;
+        return fromOrders.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
       }
       return list.filter(c => 
         (c.name && c.name.toLowerCase().includes(q)) || 
         (c.phone && c.phone.includes(q))
-      ).slice(0, 8);
+      ).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })).slice(0, 8);
     });
 
     const filteredNewOrderProducts = computed(() => {
@@ -9175,7 +9219,7 @@ const closeSuggestionsWithDelay = () => {
           (p.subCategory && p.subCategory.toLowerCase().includes(q))
         );
       }
-      return list;
+      return [...list].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
     // Progressive Chunked Scroll-Loading for Smooth Rendering
@@ -9652,7 +9696,7 @@ const closeSuggestionsWithDelay = () => {
           console.warn(`[FAVORITES] Product not found in active list for ID: ${id}`);
         }
         return prod ? prod : { _id: id, name: 'منتج غير معروف', category: 'غير معروف', img: '' };
-      }).filter(Boolean);
+      }).filter(Boolean).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
       
       console.log("[FAVORITES] Mapped products for display:", viewingCustomerFavs.value);
       customerFavsModalOpen.value = true;
@@ -9736,7 +9780,7 @@ const closeSuggestionsWithDelay = () => {
       return customers.value.filter(c => {
         return c.name.toLowerCase().includes(customerFilters.search.toLowerCase()) || 
                c.phone.includes(customerFilters.search);
-      });
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
     // Responsive Mobile Viewport Tracking for Pagination
