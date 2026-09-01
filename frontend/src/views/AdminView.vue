@@ -1223,7 +1223,7 @@
                       type="text" 
                       name="search" 
                       autocomplete="off" 
-                      placeholder="البحث برقم الطلب، رقم الهاتف أو اسم العميل… (اضغط Enter للتثبيت)" 
+                      placeholder="البحث برقم الطلب، اسم العميل، الهاتف، أو اسم الصنف والملاحظات… (اضغط Enter للتثبيت)" 
                       class="form-control search-input" 
                       @keydown.enter="handleSearchEnter('orders', $event)"
                       @keydown.down="handleSearchArrowDown($event)"
@@ -9788,13 +9788,25 @@ const closeSuggestionsWithDelay = () => {
         const orderIdStr = o._id ? o._id.toString().toLowerCase() : '';
         const orderIdShort = orderIdStr.slice(-6);
 
+        const matchesItems = Array.isArray(o.items) && o.items.some(item => {
+          const itemName = (item.name || '').toLowerCase();
+          const itemNotes = (item.notes || item.itemNotes || '').toLowerCase();
+          const itemCat = (item.category || '').toLowerCase();
+          const itemSubCat = (item.subCategory || '').toLowerCase();
+          return itemName.includes(query) || itemNotes.includes(query) || itemCat.includes(query) || itemSubCat.includes(query);
+        });
+        const orderNotes = (o.notes || '').toLowerCase();
+        const matchesNotes = orderNotes.includes(query);
+
         const matchesSearch = !query || 
                               (o.orderNumber && o.orderNumber.toString().includes(query)) ||
                               orderIdStr.includes(query) ||
                               orderIdShort.includes(query) ||
                               toEan13(o._id).includes(query) ||
                               (o.customerInfo && o.customerInfo.name && o.customerInfo.name.toLowerCase().includes(query)) || 
-                              (o.customerInfo && o.customerInfo.phone && o.customerInfo.phone.includes(query));
+                              (o.customerInfo && o.customerInfo.phone && o.customerInfo.phone.includes(query)) ||
+                              matchesItems ||
+                              matchesNotes;
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
         const matchesPrint = !orderFilters.printStatus || 
                              (orderFilters.printStatus === 'printed' && Boolean(o.printed)) ||
