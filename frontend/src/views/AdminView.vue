@@ -1202,6 +1202,10 @@
                   <div class="toolbar-title-group">
                     <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
+                    <span v-if="unprintedOrdersCount > 0" class="unprinted-orders-alert-pill animate-fade-in" title="طلبات جديدة لم تتم طباعتها بعد">
+                      <span class="unprinted-pulse-dot"></span>
+                      <span>{{ unprintedOrdersCount }} بانتظار الطباعة</span>
+                    </span>
                   </div>
                   <button @click="openNewOrderModal" class="btn btn-primary btn-make-order" title="إنشاء طلب جديد للعميل">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -1247,6 +1251,11 @@
                       <option value="ready">جاهز للاستلام (Ready)</option>
                       <option value="received">تم الاستلام (Received)</option>
                       <option value="cancelled">ملغي (Cancelled)</option>
+                    </select>
+                    <select v-model="orderFilters.printStatus" class="form-control select-pill order-print-status-select" title="تصفية الطلبات حسب حالة الطباعة">
+                      <option value="">جميع حالات الطباعة</option>
+                      <option value="unprinted">بانتظار الطباعة (غير مطبوع)</option>
+                      <option value="printed">تمت الطباعة (مطبوع)</option>
                     </select>
 
                     <!-- Custom Date Filter Component Group -->
@@ -1357,7 +1366,23 @@
                     </tr>
                     <tr v-else v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td class="text-bold text-mono">
-                        <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
+                        <div class="order-id-cell-wrapper">
+                          <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
+                          <span 
+                            class="order-print-badge" 
+                            :class="order.printed ? 'is-printed' : 'is-unprinted'"
+                            :title="order.printed ? 'تمت طباعة الطلب في المحل' : 'الطلب جديد بانتظار الطباعة'"
+                          >
+                            <template v-if="order.printed">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              <span>مطبوع</span>
+                            </template>
+                            <template v-else>
+                              <span class="unprinted-pulse-dot"></span>
+                              <span>غير مطبوع</span>
+                            </template>
+                          </span>
+                        </div>
                       </td>
                       <td class="text-mono text-small">{{ new Date(order.createdAt).toLocaleString('ar-LY') }}</td>
                       <td>
@@ -1415,9 +1440,14 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             <span>تعديل</span>
                           </button>
-                          <button @click="printOrder(order)" class="btn-table-action btn-action-print" title="طباعة فاتورة الطلب">
+                          <button 
+                            @click="printOrder(order)" 
+                            class="btn-table-action btn-action-print" 
+                            :class="{ 'needs-print': !order.printed }"
+                            :title="order.printed ? 'إعادة طباعة فاتورة الطلب' : 'طباعة فاتورة الطلب (غير مطبوع)'"
+                          >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                            <span>طباعة</span>
+                            <span>{{ order.printed ? 'إعادة طباعة' : 'طباعة' }}</span>
                           </button>
                         </div>
                       </td>
@@ -1443,9 +1473,19 @@
                         <span class="price-mode-badge" :class="order.priceMode">
                           {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
                         </span>
-                        <span v-if="order.printed" class="order-printed-tag" title="تمت الطباعة">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                          <span>مطبوع</span>
+                        <span 
+                          class="order-print-badge" 
+                          :class="order.printed ? 'is-printed' : 'is-unprinted'"
+                          :title="order.printed ? 'تمت الطباعة' : 'بانتظار الطباعة'"
+                        >
+                          <template v-if="order.printed">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>مطبوع</span>
+                          </template>
+                          <template v-else>
+                            <span class="unprinted-pulse-dot"></span>
+                            <span>غير مطبوع</span>
+                          </template>
                         </span>
                       </div>
                       <span class="mob-card-time text-mono">{{ new Date(order.createdAt).toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }) }}</span>
@@ -1526,9 +1566,14 @@
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                           <span>تعديل</span>
                         </button>
-                        <button @click="printOrder(order)" class="btn-table-action btn-action-print" title="طباعة">
+                        <button 
+                          @click="printOrder(order)" 
+                          class="btn-table-action btn-action-print" 
+                          :class="{ 'needs-print': !order.printed }"
+                          :title="order.printed ? 'إعادة طباعة' : 'طباعة'"
+                        >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                          <span>طباعة</span>
+                          <span>{{ order.printed ? 'إعادة طباعة' : 'طباعة' }}</span>
                         </button>
                       </div>
                     </div>
@@ -5779,7 +5824,11 @@ export default {
     const customers = ref([]);
 
     const filters = reactive({ search: '', category: '', subCategory: '' });
-    const orderFilters = reactive({ search: '', status: '', selectedDate: '' });
+    const orderFilters = reactive({ search: '', status: '', printStatus: '', selectedDate: '' });
+
+    const unprintedOrdersCount = computed(() => {
+      return (orders.value || []).filter(o => !o.printed && o.status !== 'cancelled').length;
+    });
     const customerFilters = reactive({ search: '', dateFrom: '', dateTo: '' });
 
     // Custom DatePicker State & Calendar Logic
@@ -9747,6 +9796,9 @@ const closeSuggestionsWithDelay = () => {
                               (o.customerInfo && o.customerInfo.name && o.customerInfo.name.toLowerCase().includes(query)) || 
                               (o.customerInfo && o.customerInfo.phone && o.customerInfo.phone.includes(query));
         const matchesStatus = !orderFilters.status || o.status === orderFilters.status;
+        const matchesPrint = !orderFilters.printStatus || 
+                             (orderFilters.printStatus === 'printed' && Boolean(o.printed)) ||
+                             (orderFilters.printStatus === 'unprinted' && !o.printed);
         
         let matchesDate = true;
         if (orderFilters.selectedDate) {
@@ -9772,7 +9824,7 @@ const closeSuggestionsWithDelay = () => {
           matchesDate = receiveDateStr === orderFilters.selectedDate;
         }
         
-        return matchesSearch && matchesStatus && matchesDate;
+        return matchesSearch && matchesStatus && matchesPrint && matchesDate;
       });
     });
 
@@ -10336,7 +10388,7 @@ const closeSuggestionsWithDelay = () => {
     watch([() => filters.search, () => filters.category, () => filters.subCategory], () => {
       productsPage.value = 1;
     });
-    watch([() => orderFilters.search, () => orderFilters.status, () => orderFilters.selectedDate], () => {
+    watch([() => orderFilters.search, () => orderFilters.status, () => orderFilters.printStatus, () => orderFilters.selectedDate], () => {
       ordersPage.value = 1;
     });
     watch(() => customerFilters.search, () => {
@@ -10626,6 +10678,7 @@ const closeSuggestionsWithDelay = () => {
       orders,
       customers,
       orderFilters,
+      unprintedOrdersCount,
       datePickerOpen,
       pickerYear,
       pickerMonth,
@@ -21599,4 +21652,87 @@ select.pos-control {
   color: #9f1239;
   font-size: 0.88rem;
   line-height: 1.45;
+}
+
+
+/* ============ ORDER PRINT STATUS STYLES ============ */
+.order-id-cell-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.order-print-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+.order-print-badge.is-printed {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.order-print-badge.is-unprinted {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.unprinted-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  animation: unprintedPulse 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes unprintedPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+.btn-action-print.needs-print {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+  border-color: #f59e0b;
+  color: #d97706;
+  font-weight: 800;
+}
+
+.btn-action-print.needs-print:hover {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.unprinted-orders-alert-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
