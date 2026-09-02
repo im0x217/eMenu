@@ -22,7 +22,7 @@
               <select v-model="loginForm.username" required class="form-control login-user-select">
                 <option value="" disabled>اختر حساب المستخدم…</option>
                 <option v-for="u in publicAdminUsers" :key="u.username" :value="u.username">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'مدير الطلبات' : 'مستخدم' }})
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'إدارة الطلبات والإنتاج' : 'مستخدم' }})
                 </option>
               </select>
             </div>
@@ -80,19 +80,19 @@
         </div>
 
         <nav class="sidebar-menu">
-          <button class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
             <span>الإحصائيات والتقارير</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'products' }" @click="setTab('products')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'products' }" @click="setTab('products')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             <span>إدارة المنتجات</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'categories' }" @click="setTab('categories')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'categories' }" @click="setTab('categories')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             <span>إدارة الأصناف</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'tags' }" @click="setTab('tags')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'tags' }" @click="setTab('tags')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
             <span>العلامات المميزة</span>
           </button>
@@ -108,7 +108,7 @@
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             <span>إدارة الإنتاج</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
           </button>
@@ -305,7 +305,7 @@
         <div class="tab-content-wrapper animate-fade-in" :key="activeTab">
           
           <!-- ANALYTICS TAB -->
-          <div v-if="activeTab === 'analytics'" class="analytics-tab-content">
+          <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
             
             <!-- SKELETON LOADER (Displayed during date filter and period loading) -->
             <div v-if="analyticsLoading" class="analytics-skeleton-view animate-fade-in">
@@ -680,7 +680,7 @@
           </div>
 
           <!-- PRODUCTS CRUD TAB -->
-          <div v-if="activeTab === 'products'" class="products-tab-content">
+          <div v-if="activeTab === 'products' && userRole === 'admin'" class="products-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -982,7 +982,7 @@
           </div>
 
           <!-- CATEGORIES CRUD TAB -->
-          <div v-if="activeTab === 'categories'" class="categories-tab-content">
+          <div v-if="activeTab === 'categories' && userRole === 'admin'" class="categories-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1058,7 +1058,7 @@
           </div>
 
           <!-- TAGS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'tags'" class="tags-tab-content animate-fade-in">
+          <div v-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1130,7 +1130,7 @@
 
 
           <!-- MARKETING CAROUSEL TAB -->
-          <div v-if="activeTab === 'carousel'" class="carousel-tab-content animate-fade-in">
+          <div v-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content animate-fade-in">
             <div class="table-card glass-panel overflow-hidden p-0">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3279,7 +3279,7 @@
                       <td class="text-bold">{{ u.name }}</td>
                       <td>
                         <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
-                          {{ u.role === 'admin' ? 'مدير النظام (Admin)' : 'موظف إدارة الطلبات (Order Manager)' }}
+                          {{ u.role === 'admin' ? 'مدير النظام (Admin)' : 'إدارة الطلبات والإنتاج (Order & Production)' }}
                         </span>
                       </td>
                       <td>
@@ -4336,7 +4336,7 @@
           <div class="form-group">
             <label class="form-label">الدور وصلاحيات الوصول</label>
             <select v-model="editingUser.role" class="form-select user-form-select">
-              <option value="order_manager">موظف إدارة الطلبات (Order Manager - مقفل للطلبات)</option>
+              <option value="order_manager">موظف إدارة الطلبات والإنتاج (Order & Production Manager - طلبات، عملاء، إنتاج)</option>
               <option value="admin">مدير النظام (Admin - وصول كامل)</option>
             </select>
           </div>
@@ -5580,7 +5580,7 @@ export default {
     // Also watch route.query.tab if user clicks browser back/forward
     watch(() => route.query.tab, (qTab) => {
       if (qTab && VALID_TABS.includes(String(qTab)) && activeTab.value !== qTab) {
-        if (userRole.value === 'order_manager' && qTab !== 'orders') {
+        if (userRole.value === 'order_manager' && !['orders', 'customers', 'production'].includes(String(qTab))) {
           activeTab.value = 'orders';
         } else {
           activeTab.value = String(qTab);
@@ -7365,7 +7365,7 @@ export default {
           userRole.value = data.role || 'admin';
           userDisplayName.value = data.name || 'المدير العام';
 
-          if (userRole.value === 'order_manager') {
+          if (userRole.value === 'order_manager' && !['orders', 'customers', 'production'].includes(activeTab.value)) {
             activeTab.value = 'orders';
           }
 
@@ -7400,11 +7400,14 @@ export default {
       await checkAuthentication();
     };
 
-    // Tab switcher with locked routing for secondary order_manager role
+    // Tab switcher with locked routing for secondary order_manager role (Orders, Customers, Production)
     const setTab = (tab) => {
-      if (userRole.value === 'order_manager' && tab !== 'orders') {
-        toast.show('حسابك مخصص لمتابعة وإدارة الطلبات فقط', 'warning');
-        activeTab.value = 'orders';
+      const allowed = ['orders', 'customers', 'production'];
+      if (userRole.value === 'order_manager' && !allowed.includes(tab)) {
+        toast.show('صلاحيات حسابك تشمل إدارة الطلبات، العملاء، والإنتاج فقط', 'warning');
+        if (!allowed.includes(activeTab.value)) {
+          activeTab.value = 'orders';
+        }
         sidebarOpen.value = false;
         return;
       }
@@ -9878,8 +9881,12 @@ const closeSuggestionsWithDelay = () => {
         { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printReport() },
         { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
       ];
-      if (!q) return allCmds;
-      return allCmds.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+      const filteredByRole = userRole.value === 'order_manager'
+        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'new-chef', 'help-shortcuts'].includes(c.id))
+        : allCmds;
+
+      if (!q) return filteredByRole;
+      return filteredByRole.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
     });
 
     const openCommandPalette = () => {
@@ -10126,8 +10133,8 @@ const closeSuggestionsWithDelay = () => {
           };
           const targetTab = tabMap[e.key];
           if (targetTab) {
-            if (userRole.value === 'order_manager' && targetTab !== 'orders') {
-              toast.show('صلاحيتك تقتصر على إدارة الطلبات فقط', 'warning');
+            if (userRole.value === 'order_manager' && !['orders', 'customers', 'production'].includes(targetTab)) {
+              toast.show('صلاحيات حسابك تشمل إدارة الطلبات، العملاء، والإنتاج فقط', 'warning');
               return;
             }
             activeTab.value = targetTab;
@@ -10228,7 +10235,7 @@ const closeSuggestionsWithDelay = () => {
         // Tab traversal: [ / ] or ← / → to cycle between admin tabs
         if (e.key === '[' || e.key === ']' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           e.preventDefault();
-          const allowedTabs = userRole.value === 'order_manager' ? ['orders'] : VALID_TABS;
+          const allowedTabs = userRole.value === 'order_manager' ? ['orders', 'customers', 'production'] : VALID_TABS;
           const currentIdx = allowedTabs.indexOf(activeTab.value);
           if (currentIdx === -1) return;
           let newIdx;
