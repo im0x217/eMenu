@@ -4543,7 +4543,7 @@
               <td class="text-bold text-mono text-success">
                 {{ formatCurrency(Math.max(0, (cust.totalSpent || 0) - (cust.outstandingBalance || 0))) }}
               </td>
-              <td>
+              <td class="text-bold text-mono" style="color: #000000 !important; font-weight: 800 !important;">
                 <span 
                   class="debt-val-pill text-mono font-bold" 
                   :class="(cust.outstandingBalance || 0) > 0 ? 'is-debt' : 'is-clear'"
@@ -4558,7 +4558,7 @@
               <td colspan="2" class="text-bold text-end">الإجمالي العام (Grand Total):</td>
               <td class="text-bold text-mono text-primary">{{ customerDebtReportData.totalPurchasesFormatted }}</td>
               <td class="text-bold text-mono text-success">{{ customerDebtReportData.totalPaidFormatted }}</td>
-              <td class="text-bold text-mono text-danger">{{ customerDebtReportData.totalDebtFormatted }}</td>
+              <td class="text-bold text-mono text-dark" style="color: #000000 !important; font-weight: 900 !important;">{{ customerDebtReportData.totalDebtFormatted }}</td>
             </tr>
           </tfoot>
         </table>
@@ -19351,12 +19351,14 @@ select.pos-control {
     display: inline-block;
     padding: 2px 6px;
     border-radius: 6px;
-    font-size: 8.5pt;
+    font-size: 8.8pt;
+    font-weight: 800;
   }
 
   .debt-val-pill.is-debt {
-    color: #dc2626;
-    background: rgba(220, 38, 38, 0.1);
+    color: #000000 !important;
+    font-weight: 900 !important;
+    background: transparent !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -19368,6 +19370,11 @@ select.pos-control {
     print-color-adjust: exact;
   }
 
+  .debt-report-table td:nth-child(5) {
+    color: #000000 !important;
+    font-weight: 800 !important;
+  }
+
   .debt-grand-total-row td {
     background: #f1f5f9 !important;
     font-size: 9.5pt;
@@ -19376,6 +19383,11 @@ select.pos-control {
     border-bottom: 2px solid #0f172a !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .debt-grand-total-row td:last-child {
+    color: #000000 !important;
+    font-weight: 900 !important;
   }
 
   .debt-report-footer {
