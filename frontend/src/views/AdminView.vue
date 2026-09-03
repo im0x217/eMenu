@@ -4495,15 +4495,15 @@
       <div class="debt-kpi-grid">
         <div class="debt-kpi-card">
           <span class="debt-kpi-label">إجمالي المشتريات</span>
-          <span class="debt-kpi-val text-mono text-primary">{{ customerDebtReportData.totalPurchasesFormatted }}</span>
+          <span class="debt-kpi-val text-mono">{{ customerDebtReportData.totalPurchasesFormatted }}</span>
         </div>
-        <div class="debt-kpi-card highlight-green">
+        <div class="debt-kpi-card">
           <span class="debt-kpi-label">إجمالي المسدد</span>
-          <span class="debt-kpi-val text-mono text-success">{{ customerDebtReportData.totalPaidFormatted }}</span>
+          <span class="debt-kpi-val text-mono">{{ customerDebtReportData.totalPaidFormatted }}</span>
         </div>
-        <div class="debt-kpi-card highlight-debt">
+        <div class="debt-kpi-card">
           <span class="debt-kpi-label">إجمالي الديون المتبقية</span>
-          <span class="debt-kpi-val text-mono text-danger">{{ customerDebtReportData.totalDebtFormatted }}</span>
+          <span class="debt-kpi-val text-mono">{{ customerDebtReportData.totalDebtFormatted }}</span>
         </div>
         <div class="debt-kpi-card">
           <span class="debt-kpi-label">العملاء المدينين</span>
@@ -4525,25 +4525,25 @@
           </thead>
           <tbody>
             <tr v-if="!customerDebtReportData.customers || customerDebtReportData.customers.length === 0">
-              <td colspan="5" class="text-center py-4 text-muted">لا توجد سجلات عملاء متطابقة في هذا النطاق.</td>
+              <td colspan="5" class="text-center py-4">لا توجد سجلات عملاء متطابقة في هذا النطاق.</td>
             </tr>
             <tr 
               v-for="(cust, idx) in customerDebtReportData.customers" 
               :key="cust._id"
               :class="{ 'has-debt-row': (cust.outstandingBalance || 0) > 0 }"
             >
-              <td class="text-center text-mono text-muted">{{ idx + 1 }}</td>
+              <td class="text-center text-mono font-bold">{{ idx + 1 }}</td>
               <td>
                 <div class="debt-cust-cell">
                   <span class="debt-cust-name font-bold">{{ cust.name }}</span>
-                  <span class="debt-cust-phone text-mono text-muted" dir="ltr">{{ cust.phone }}</span>
+                  <span class="debt-cust-phone text-mono font-bold" dir="ltr">{{ cust.phone }}</span>
                 </div>
               </td>
               <td class="text-bold text-mono">{{ formatCurrency(cust.totalSpent || 0) }}</td>
-              <td class="text-bold text-mono text-success">
+              <td class="text-bold text-mono">
                 {{ formatCurrency(Math.max(0, (cust.totalSpent || 0) - (cust.outstandingBalance || 0))) }}
               </td>
-              <td class="text-bold text-mono" style="color: #000000 !important; font-weight: 800 !important;">
+              <td class="text-bold text-mono">
                 <span 
                   class="debt-val-pill text-mono font-bold" 
                   :class="(cust.outstandingBalance || 0) > 0 ? 'is-debt' : 'is-clear'"
@@ -4556,9 +4556,9 @@
           <tfoot>
             <tr class="debt-grand-total-row">
               <td colspan="2" class="text-bold text-end">الإجمالي العام (Grand Total):</td>
-              <td class="text-bold text-mono text-primary">{{ customerDebtReportData.totalPurchasesFormatted }}</td>
-              <td class="text-bold text-mono text-success">{{ customerDebtReportData.totalPaidFormatted }}</td>
-              <td class="text-bold text-mono text-dark" style="color: #000000 !important; font-weight: 900 !important;">{{ customerDebtReportData.totalDebtFormatted }}</td>
+              <td class="text-bold text-mono">{{ customerDebtReportData.totalPurchasesFormatted }}</td>
+              <td class="text-bold text-mono">{{ customerDebtReportData.totalPaidFormatted }}</td>
+              <td class="text-bold text-mono">{{ customerDebtReportData.totalDebtFormatted }}</td>
             </tr>
           </tfoot>
         </table>
@@ -19217,22 +19217,22 @@ select.pos-control {
   .debt-subtitle {
     font-size: 9.5pt;
     font-weight: 700;
-    color: #64748b;
+    color: #000000;
     margin: 2px 0 0 0;
   }
 
   .debt-header-badge {
     font-size: 9.5pt;
     font-weight: 800;
-    color: #0f172a;
-    border: 1.5px solid #0f172a;
+    color: #000000;
+    border: 1.5px solid #000000;
     padding: 4px 10px;
     border-radius: 8px;
   }
 
   .debt-divider {
     height: 2px;
-    background: #0f172a;
+    background: #000000;
     margin: 8px 0;
   }
 
@@ -19240,20 +19240,26 @@ select.pos-control {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border: 1.5px solid #000000;
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 8.5pt;
     margin-bottom: 10px;
+    color: #000000;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .debt-meta-label {
     font-weight: 700;
-    color: #64748b;
+    color: #000000;
     margin-left: 6px;
+  }
+
+  .debt-meta-val {
+    font-weight: 800;
+    color: #000000;
   }
 
   .debt-kpi-grid {
@@ -19264,8 +19270,8 @@ select.pos-control {
   }
 
   .debt-kpi-card {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
+    background: #ffffff !important;
+    border: 1.5px solid #000000 !important;
     border-radius: 8px;
     padding: 6px 8px;
     text-align: center;
@@ -19273,20 +19279,16 @@ select.pos-control {
     print-color-adjust: exact;
   }
 
-  .debt-kpi-card.highlight-green {
-    background: #f0fdf4 !important;
-    border-color: #86efac !important;
-  }
-
+  .debt-kpi-card.highlight-green,
   .debt-kpi-card.highlight-debt {
-    background: #fef2f2 !important;
-    border-color: #fca5a5 !important;
+    background: #ffffff !important;
+    border-color: #000000 !important;
   }
 
   .debt-kpi-label {
     font-size: 7.8pt;
-    font-weight: 750;
-    color: #475569;
+    font-weight: 800;
+    color: #000000 !important;
     display: block;
     margin-bottom: 2px;
   }
@@ -19294,6 +19296,7 @@ select.pos-control {
   .debt-kpi-val {
     font-size: 11pt;
     font-weight: 900;
+    color: #000000 !important;
   }
 
   .debt-report-table {
@@ -19301,33 +19304,32 @@ select.pos-control {
     border-collapse: collapse;
     font-size: 8.8pt;
     margin-bottom: 14px;
+    border: 1.5px solid #000000 !important;
   }
 
   .debt-report-table th {
-    background: #1e293b !important;
+    background: #000000 !important;
     color: #ffffff !important;
-    font-weight: 800;
+    font-weight: 900;
     padding: 6px 8px;
     text-align: right;
-    border: 1px solid #0f172a;
+    border: 1px solid #000000 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .debt-report-table td {
     padding: 5px 8px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #000000 !important;
     vertical-align: middle;
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 
-  .debt-report-table tbody tr:nth-child(even) {
-    background: #f8fafc;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
+  .debt-report-table tbody tr,
+  .debt-report-table tbody tr:nth-child(even),
   .debt-report-table tr.has-debt-row {
-    background: #fff5f5;
+    background: #ffffff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -19340,47 +19342,50 @@ select.pos-control {
 
   .debt-cust-name {
     font-size: 9pt;
-    color: #0f172a;
+    color: #000000 !important;
+    font-weight: 800;
   }
 
   .debt-cust-phone {
-    font-size: 7.8pt;
+    font-size: 8pt;
+    color: #000000 !important;
+    font-weight: 700;
   }
 
   .debt-val-pill {
     display: inline-block;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 0;
     font-size: 8.8pt;
     font-weight: 800;
+    background: transparent !important;
+    color: #000000 !important;
   }
 
   .debt-val-pill.is-debt {
     color: #000000 !important;
     font-weight: 900 !important;
     background: transparent !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
   }
 
   .debt-val-pill.is-clear {
-    color: #16a34a;
-    background: rgba(22, 163, 74, 0.1);
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    color: #000000 !important;
+    font-weight: 800 !important;
+    background: transparent !important;
   }
 
   .debt-report-table td:nth-child(5) {
     color: #000000 !important;
-    font-weight: 800 !important;
+    font-weight: 900 !important;
   }
 
   .debt-grand-total-row td {
-    background: #f1f5f9 !important;
+    background: #ffffff !important;
     font-size: 9.5pt;
     padding: 8px;
-    border-top: 2px solid #0f172a !important;
-    border-bottom: 2px solid #0f172a !important;
+    color: #000000 !important;
+    font-weight: 900 !important;
+    border-top: 2px solid #000000 !important;
+    border-bottom: 2px solid #000000 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -19403,16 +19408,16 @@ select.pos-control {
     flex-direction: column;
     gap: 16px;
     font-size: 9pt;
-    font-weight: 750;
-    color: #334155;
+    font-weight: 800;
+    color: #000000 !important;
   }
 
   .debt-watermark-row {
     margin-top: 14px;
     text-align: center;
     font-size: 7.5pt;
-    color: #94a3b8;
-    border-top: 1px dashed #cbd5e1;
+    color: #000000 !important;
+    border-top: 1px dashed #000000 !important;
     padding-top: 6px;
     page-break-inside: avoid;
   }
