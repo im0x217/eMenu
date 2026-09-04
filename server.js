@@ -3789,6 +3789,112 @@ app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, re
   }
 });
 
+// Production report: get all customer orders containing a specific product within the date range
+app.get("/api/admin/production/product-orders", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { shop, productName, productId, startDate, endDate } = req.query;
+    if (!productName && !productId) {
+      return res.status(400).json({ error: "Product name or ID is required" });
+    }
+    const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
+
+    // Get all non-cancelled orders
+    const allOrders = await ordColl.find({
+      status: { $ne: "cancelled" }
+    }).sort({ createdAt: -1 }).toArray();
+
+    // Filter orders accurately by effective date range (time-zone immune YYYY-MM-DD comparison)
+    const orders = allOrders.filter(order => {
+      const effDate = getOrderEffectiveDateStr(order);
+      if (!effDate) return false;
+      if (startDate && endDate) {
+        return effDate >= startDate && effDate <= endDate;
+      } else if (startDate) {
+        return effDate >= startDate;
+      } else if (endDate) {
+        return effDate <= endDate;
+      }
+      return true;
+    });
+
+    const targetName = productName ? productName.trim().toLowerCase() : '';
+    const targetId = productId ? productId.toString().trim() : '';
+
+    const orderResults = [];
+    for (const order of orders) {
+      const items = order.items || [];
+      // Match by productId or productName
+      const matchingItems = items.filter(item => {
+        const itemPid = (item.productId || item._id || '').toString().trim();
+        const itemName = (item.name || '').trim().toLowerCase();
+        if (targetId && itemPid && itemPid === targetId) return true;
+        if (targetName && itemName && itemName === targetName) return true;
+        return false;
+      });
+
+      if (matchingItems.length > 0) {
+        const productTotalQty = matchingItems.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0);
+        const productTotalPrice = matchingItems.reduce((sum, it) => sum + ((Number(it.price) || 0) * (Number(it.quantity) || 1)), 0);
+        const notesList = matchingItems.map(it => it.notes).filter(Boolean);
+
+        orderResults.push({
+          orderId: order._id,
+          orderNumber: order.orderNumber || (order._id ? order._id.toString().slice(-6) : ''),
+          customerName: order.customerInfo?.name || 'عميل نقدي',
+          customerPhone: order.customerInfo?.phone || '',
+          orderDate: order.createdAt,
+          deliveryDate: order.deliveryDate || '',
+          effectiveDate: getOrderEffectiveDateStr(order),
+          status: order.status || 'pending',
+          paymentStatus: order.paymentStatus || 'unpaid',
+          priceMode: order.priceMode || 'retail',
+          quantity: productTotalQty,
+          totalPrice: Math.round(productTotalPrice * 100) / 100,
+          unitPrice: matchingItems[0]?.price || 0,
+          notes: notesList.join(' ، ')
+        });
+      }
+    }
+
+    // Group by customer for aggregated customer-level view
+    const customerMap = {};
+    for (const ord of orderResults) {
+      const custKey = (ord.customerPhone ? ord.customerPhone.trim() : ord.customerName.trim());
+      if (!customerMap[custKey]) {
+        customerMap[custKey] = {
+          customerName: ord.customerName,
+          customerPhone: ord.customerPhone,
+          totalQty: 0,
+          totalAmount: 0,
+          ordersCount: 0,
+          orders: []
+        };
+      }
+      customerMap[custKey].totalQty += ord.quantity;
+      customerMap[custKey].totalAmount = Math.round((customerMap[custKey].totalAmount + ord.totalPrice) * 100) / 100;
+      customerMap[custKey].ordersCount += 1;
+      customerMap[custKey].orders.push(ord);
+    }
+
+    const customers = Object.values(customerMap).sort((a, b) => b.totalQty - a.totalQty);
+    const totalQty = orderResults.reduce((sum, o) => sum + o.quantity, 0);
+    const totalRevenue = Math.round(orderResults.reduce((sum, o) => sum + o.totalPrice, 0) * 100) / 100;
+
+    res.json({
+      productName: productName || (orderResults[0] ? orderResults[0].productName : ''),
+      totalQty,
+      totalRevenue,
+      ordersCount: orderResults.length,
+      customersCount: customers.length,
+      orders: orderResults,
+      customers
+    });
+  } catch (err) {
+    console.error("Product orders error:", err);
+    res.status(500).json({ error: "Failed to fetch product customer orders" });
+  }
+});
+
 // ============ BACKUP & DATA MANAGEMENT ============
 
 // Create a full backup of all collections

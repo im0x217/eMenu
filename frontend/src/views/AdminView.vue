@@ -3447,8 +3447,17 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr v-for="p in cReport.products" :key="p.name">
-                                <td class="font-bold">{{ p.name }}</td>
+                              <tr 
+                                v-for="p in cReport.products" 
+                                :key="p.name" 
+                                class="clickable-product-row"
+                                @click="openProductCustomersModal(p, cReport)"
+                                title="اضغط لعرض تفاصيل العملاء والطلبات لهذا الصنف"
+                              >
+                                <td class="font-bold product-cell-interactive">
+                                  <span class="product-name-text">{{ p.name }}</span>
+                                  <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </td>
                                 <td><span class="category-pill">{{ p.category || '-' }}</span></td>
                                 <td class="text-mono text-bold">{{ p.qty }}</td>
                                 <td class="text-mono text-danger">{{ formatCurrency(p.cost) }}</td>
@@ -3483,8 +3492,17 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="u in productionReportData.unassigned" :key="u.name">
-                              <td class="font-bold">{{ u.name }}</td>
+                            <tr 
+                              v-for="u in productionReportData.unassigned" 
+                              :key="u.name" 
+                              class="clickable-product-row"
+                              @click="openProductCustomersModal(u, null)"
+                              title="اضغط لعرض تفاصيل العملاء والطلبات لهذا الصنف"
+                            >
+                              <td class="font-bold product-cell-interactive">
+                                <span class="product-name-text">{{ u.name }}</span>
+                                <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                              </td>
                               <td class="text-mono text-bold">{{ u.qty }}</td>
                               <td class="text-mono text-success text-bold">{{ formatCurrency(u.revenue) }}</td>
                             </tr>
@@ -5157,6 +5175,296 @@
         <p v-if="paginatedOrderPages.length > 1" class="receipt-page-num">صفحة {{ pageIndex + 1 }} من {{ paginatedOrderPages.length }}</p>
         <p>شكراً لتعاملكم معنا</p>
         <p class="receipt-footer-sub">حلويات عبمبر الزروق — طرابلس، ليبيا</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PRODUCTION PRODUCT CUSTOMERS BREAKDOWN MODAL ============ -->
+  <div 
+    v-if="productCustomersModalOpen && selectedProductForCustomers" 
+    class="modal-overlay animate-fade-in" 
+    @click.self="closeProductCustomersModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="prod-cust-modal-title"
+  >
+    <div class="modal-box glass-panel max-w-2xl product-customers-modal animate-scale-in">
+      <!-- Modal Header -->
+      <div class="modal-header pb-3 mb-3">
+        <div class="modal-title-group">
+          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <span class="prod-badge-tag">{{ selectedProductForCustomers.category || 'صنف' }}</span>
+            <span v-if="selectedProductForCustomers.chefName" class="chef-badge-tag">
+              الشيف: {{ selectedProductForCustomers.chefName }}
+            </span>
+          </div>
+          <h3 id="prod-cust-modal-title" class="modal-title font-bold">
+            {{ selectedProductForCustomers.name }}
+          </h3>
+          <span class="modal-subtitle">
+            الفترة المحددة: <strong class="text-dark">{{ activeReportDateFilterLabel }}</strong>
+          </span>
+        </div>
+        <button 
+          type="button" 
+          @click="closeProductCustomersModal" 
+          class="modal-close-btn" 
+          aria-label="إغلاق النافذة"
+        >✕</button>
+      </div>
+
+      <!-- KPI Summary Cards Bar -->
+      <div class="prod-cust-kpi-bar mb-3">
+        <div class="prod-cust-kpi-item highlight">
+          <div class="kpi-icon-wrap" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
+          <div class="kpi-text-wrap">
+            <span class="kpi-lbl">إجمالي الكمية المطلوبة</span>
+            <strong class="kpi-val text-mono">{{ productCustomersData.totalQty }} قطعة</strong>
+          </div>
+        </div>
+
+        <div class="prod-cust-kpi-item">
+          <div class="kpi-icon-wrap" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <div class="kpi-text-wrap">
+            <span class="kpi-lbl">عدد العملاء</span>
+            <strong class="kpi-val text-mono">{{ productCustomersData.customersCount }}</strong>
+          </div>
+        </div>
+
+        <div class="prod-cust-kpi-item">
+          <div class="kpi-icon-wrap" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <div class="kpi-text-wrap">
+            <span class="kpi-lbl">عدد الطلبات</span>
+            <strong class="kpi-val text-mono">{{ productCustomersData.ordersCount }}</strong>
+          </div>
+        </div>
+
+        <div class="prod-cust-kpi-item">
+          <div class="kpi-icon-wrap text-success" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+          </div>
+          <div class="kpi-text-wrap">
+            <span class="kpi-lbl">إجمالي المبيعات</span>
+            <strong class="kpi-val text-mono text-success">{{ formatCurrency(productCustomersData.totalRevenue) }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Search Toolbar -->
+      <div class="prod-cust-toolbar mb-3">
+        <!-- Search Input -->
+        <div class="prod-cust-search-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input 
+            v-model="productCustomersSearch" 
+            type="text" 
+            class="form-control form-control-sm search-input" 
+            placeholder="بحث باسم العميل، الهاتف أو رقم الطلب…" 
+            aria-label="بحث في قائمة العملاء والطلبات"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button 
+            v-if="productCustomersSearch" 
+            type="button" 
+            class="btn-clear-search" 
+            @click="productCustomersSearch = ''" 
+            aria-label="مسح البحث"
+          >✕</button>
+        </div>
+
+        <!-- View Mode Switcher -->
+        <div class="prod-cust-view-switcher">
+          <button 
+            type="button" 
+            class="switcher-pill-btn" 
+            :class="{ active: productCustomersViewMode === 'customers' }" 
+            @click="productCustomersViewMode = 'customers'"
+            aria-label="عرض ملخص حسب العملاء"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <span>حسب العملاء ({{ filteredProductCustomersList.length }})</span>
+          </button>
+          <button 
+            type="button" 
+            class="switcher-pill-btn" 
+            :class="{ active: productCustomersViewMode === 'orders' }" 
+            @click="productCustomersViewMode = 'orders'"
+            aria-label="عرض تفصيلي حسب الطلبات"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>حسب الطلبات ({{ filteredProductOrdersList.length }})</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body Content -->
+      <div class="modal-body prod-cust-modal-body p-0">
+        <!-- Skeleton Loader State -->
+        <div v-if="productCustomersLoading" class="p-3" aria-live="polite">
+          <div v-for="i in 3" :key="'prod-skel-' + i" class="skeleton-shimmer-card mb-3 p-3 glass-panel">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="skeleton-shimmer" style="width: 140px; height: 18px;"></div>
+              <div class="skeleton-shimmer" style="width: 70px; height: 22px; border-radius: 12px;"></div>
+            </div>
+            <div class="skeleton-shimmer mb-2" style="width: 100px; height: 14px;"></div>
+            <div class="skeleton-shimmer" style="width: 60%; height: 16px;"></div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="(productCustomersViewMode === 'customers' && filteredProductCustomersList.length === 0) || (productCustomersViewMode === 'orders' && filteredProductOrdersList.length === 0)" class="text-center py-5">
+          <div class="empty-icon-circle mx-auto mb-3" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
+          <h4 class="font-bold mb-1 text-dark">لا توجد طلبات مطابقة</h4>
+          <p class="text-muted text-small mb-0">
+            {{ productCustomersSearch ? 'لم يتم العثور على عملاء أو طلبات مطابقة لكلمة البحث.' : 'لا توجد طلبات مسجلة تحتوي هذا الصنف خلال الفترة المحددة.' }}
+          </p>
+        </div>
+
+        <!-- View Mode 1: Grouped By Customer -->
+        <div v-else-if="productCustomersViewMode === 'customers'" class="prod-cust-list p-2">
+          <div 
+            v-for="(cust, cIdx) in filteredProductCustomersList" 
+            :key="cust.customerPhone || cust.customerName || cIdx" 
+            class="prod-cust-card glass-panel mb-2"
+          >
+            <div class="prod-cust-card-header">
+              <div class="cust-profile-side">
+                <div class="cust-avatar-circle" aria-hidden="true">{{ (cust.customerName || 'ع').charAt(0) }}</div>
+                <div class="cust-meta-text min-w-0">
+                  <h4 class="cust-name font-bold text-dark text-truncate mb-0">{{ cust.customerName }}</h4>
+                  <div class="cust-phone-actions-row" v-if="cust.customerPhone">
+                    <span class="cust-phone text-mono" dir="ltr">{{ cust.customerPhone }}</span>
+                    <div class="cust-action-buttons">
+                      <a 
+                        :href="getLibyanWhatsAppUrl(cust.customerPhone)" 
+                        target="_blank" 
+                        class="cust-icon-btn whatsapp" 
+                        title="واتساب" 
+                        aria-label="مراسلة العميل عبر واتساب"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                      </a>
+                      <a 
+                        :href="'tel:' + cust.customerPhone" 
+                        class="cust-icon-btn call" 
+                        title="اتصال" 
+                        aria-label="اتصال بالعميل هاتفياً"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cust-qty-summary-side">
+                <span class="cust-qty-badge text-mono font-bold">
+                  {{ cust.totalQty }} قطعة
+                </span>
+                <span class="cust-total-sales text-mono text-small text-muted mt-1">
+                  {{ formatCurrency(cust.totalAmount) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Customer Orders Breakdown Chips -->
+            <div class="cust-orders-list-row pt-2 mt-2 border-top">
+              <span class="cust-orders-title text-small text-muted mb-1 d-block">الطلبات ({{ cust.orders.length }}):</span>
+              <div class="d-flex flex-wrap gap-2">
+                <div 
+                  v-for="ord in cust.orders" 
+                  :key="ord.orderId" 
+                  class="cust-order-chip"
+                  :title="ord.notes ? ('ملاحظات: ' + ord.notes) : ''"
+                >
+                  <span class="chip-num font-bold">#{{ ord.orderNumber }}</span>
+                  <span class="chip-qty text-mono text-primary font-bold">{{ ord.quantity }} ق</span>
+                  <span class="chip-date text-mono text-muted">{{ ord.deliveryDate || ord.effectiveDate }}</span>
+                  <span 
+                    class="chip-status-dot" 
+                    :class="ord.status"
+                    :title="'الحالة: ' + (ord.status === 'received' ? 'تم الاستلام' : ord.status === 'ready' ? 'جاهز' : 'قيد الانتظار')"
+                  ></span>
+                  <span v-if="ord.notes" class="chip-note-tag" title="يوجد ملاحظة خاصة">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- View Mode 2: Detailed Orders Table -->
+        <div v-else-if="productCustomersViewMode === 'orders'" class="table-container p-2">
+          <table class="admin-table prod-cust-orders-table">
+            <thead>
+              <tr>
+                <th scope="col">رقم الطلب</th>
+                <th scope="col">العميل</th>
+                <th scope="col">الكمية</th>
+                <th scope="col">تاريخ التسليم</th>
+                <th scope="col">الحالة</th>
+                <th scope="col">الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ord in filteredProductOrdersList" :key="ord.orderId">
+                <td class="font-bold text-mono">#{{ ord.orderNumber }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="font-bold text-dark">{{ ord.customerName }}</span>
+                    <a 
+                      v-if="ord.customerPhone" 
+                      :href="getLibyanWhatsAppUrl(ord.customerPhone)" 
+                      target="_blank" 
+                      class="cust-icon-btn whatsapp xs" 
+                      title="واتساب" 
+                      aria-label="واتساب"
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    </a>
+                  </div>
+                  <span v-if="ord.customerPhone" class="text-muted text-mono text-small d-block" dir="ltr">{{ ord.customerPhone }}</span>
+                  <span v-if="ord.notes" class="text-small text-primary d-block mt-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    {{ ord.notes }}
+                  </span>
+                </td>
+                <td class="text-mono font-bold text-primary" style="font-size: 1.05rem;">{{ ord.quantity }}</td>
+                <td class="text-mono text-small">{{ ord.deliveryDate || ord.effectiveDate || '-' }}</td>
+                <td>
+                  <span class="status-pill-badge" :class="ord.status">
+                    {{ ord.status === 'received' ? 'تم الاستلام' : ord.status === 'ready' ? 'جاهز' : 'قيد الانتظار' }}
+                  </span>
+                </td>
+                <td class="text-mono font-bold text-success">{{ formatCurrency(ord.totalPrice) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer pt-3 mt-3 border-top d-flex justify-content-between align-items-center">
+        <span class="text-muted text-small">
+          إجمالي المسجل: <strong class="text-mono text-dark">{{ productCustomersData.totalQty }} قطعة</strong> في <strong class="text-mono text-dark">{{ productCustomersData.ordersCount }} طلب</strong>
+        </span>
+        <button 
+          type="button" 
+          @click="closeProductCustomersModal" 
+          class="btn btn-primary btn-sm"
+        >
+          <span>إغلاق</span>
+        </button>
       </div>
     </div>
   </div>
@@ -9142,6 +9450,112 @@ export default {
       window.print();
     };
 
+    // ============ PRODUCT CUSTOMERS BREAKDOWN MODAL (PRODUCTION REPORT) ============
+    const productCustomersModalOpen = ref(false);
+    const productCustomersLoading = ref(false);
+    const selectedProductForCustomers = ref(null);
+    const productCustomersData = ref({
+      productName: '',
+      totalQty: 0,
+      totalRevenue: 0,
+      ordersCount: 0,
+      customersCount: 0,
+      orders: [],
+      customers: []
+    });
+    const productCustomersSearch = ref('');
+    const productCustomersViewMode = ref('customers'); // 'customers' | 'orders'
+
+    const activeReportDateFilterLabel = computed(() => {
+      if (isProdRangeToday.value) return 'اليوم';
+      if (isProdRange7d.value) return 'آخر 7 أيام';
+      if (isProdRangeMonth.value) return 'هذا الشهر';
+      if (productionReportFilters.dateFrom && productionReportFilters.dateTo) {
+        return `${formatArabicDate(productionReportFilters.dateFrom)} ← ${formatArabicDate(productionReportFilters.dateTo)}`;
+      }
+      if (productionReportFilters.dateFrom) {
+        return `من: ${formatArabicDate(productionReportFilters.dateFrom)}`;
+      }
+      if (productionReportFilters.dateTo) {
+        return `إلى: ${formatArabicDate(productionReportFilters.dateTo)}`;
+      }
+      return 'كافة الفترات المسجلة';
+    });
+
+    const openProductCustomersModal = async (product, chef = null) => {
+      if (!product || !product.name) return;
+      selectedProductForCustomers.value = {
+        name: product.name,
+        category: product.category || '',
+        chefName: chef ? (chef.chefName || chef.name || '') : ''
+      };
+      productCustomersSearch.value = '';
+      productCustomersViewMode.value = 'customers';
+      productCustomersModalOpen.value = true;
+      productCustomersLoading.value = true;
+
+      try {
+        const params = new URLSearchParams({
+          shop: activeShop.value,
+          productName: product.name
+        });
+        if (productionReportFilters.dateFrom) params.append('startDate', productionReportFilters.dateFrom);
+        if (productionReportFilters.dateTo) params.append('endDate', productionReportFilters.dateTo);
+
+        const res = await adminFetch(`/api/admin/production/product-orders?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          productCustomersData.value = {
+            productName: data.productName || product.name,
+            totalQty: Number(data.totalQty) || 0,
+            totalRevenue: Number(data.totalRevenue) || 0,
+            ordersCount: Number(data.ordersCount) || 0,
+            customersCount: Number(data.customersCount) || 0,
+            orders: Array.isArray(data.orders) ? data.orders : [],
+            customers: Array.isArray(data.customers) ? data.customers : []
+          };
+        } else {
+          toast.show('فشل تحميل تفاصيل طلبات الصنف', 'danger');
+        }
+      } catch (err) {
+        console.error('Failed to load product customer orders:', err);
+        toast.show('حدث خطأ أثناء تحميل تفاصيل الطلبات', 'danger');
+      } finally {
+        productCustomersLoading.value = false;
+      }
+    };
+
+    const closeProductCustomersModal = () => {
+      productCustomersModalOpen.value = false;
+      selectedProductForCustomers.value = null;
+      productCustomersSearch.value = '';
+    };
+
+    const filteredProductCustomersList = computed(() => {
+      const list = productCustomersData.value.customers || [];
+      const q = productCustomersSearch.value ? productCustomersSearch.value.trim().toLowerCase() : '';
+      if (!q) return list;
+      return list.filter(cust => {
+        const nameMatch = (cust.customerName || '').toLowerCase().includes(q);
+        const phoneMatch = (cust.customerPhone || '').includes(q);
+        const orderMatch = (cust.orders || []).some(o => String(o.orderNumber || '').toLowerCase().includes(q));
+        return nameMatch || phoneMatch || orderMatch;
+      });
+    });
+
+    const filteredProductOrdersList = computed(() => {
+      const list = productCustomersData.value.orders || [];
+      const q = productCustomersSearch.value ? productCustomersSearch.value.trim().toLowerCase() : '';
+      if (!q) return list;
+      return list.filter(ord => {
+        const nameMatch = (ord.customerName || '').toLowerCase().includes(q);
+        const phoneMatch = (ord.customerPhone || '').includes(q);
+        const numMatch = String(ord.orderNumber || '').toLowerCase().includes(q);
+        const noteMatch = (ord.notes || '').toLowerCase().includes(q);
+        return nameMatch || phoneMatch || numMatch || noteMatch;
+      });
+    });
+
         const fetchProducts = async () => {
       const url = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
       const res = await adminFetch(url);
@@ -10416,6 +10830,7 @@ const closeSuggestionsWithDelay = () => {
           newOrderModalOpen.value = false;
           return;
         }
+        if (productCustomersModalOpen.value) { productCustomersModalOpen.value = false; return; }
         if (paymentModalOpen.value) { paymentModalOpen.value = false; return; }
         if (paymentHistoryModalOpen.value) { paymentHistoryModalOpen.value = false; return; }
         if (customerModalOpen.value) { customerModalOpen.value = false; return; }
@@ -11266,6 +11681,17 @@ const closeSuggestionsWithDelay = () => {
       loadProductionReport,
       setProductionDateShortcut,
       printProductionReport,
+      productCustomersModalOpen,
+      productCustomersLoading,
+      selectedProductForCustomers,
+      productCustomersData,
+      productCustomersSearch,
+      productCustomersViewMode,
+      activeReportDateFilterLabel,
+      openProductCustomersModal,
+      closeProductCustomersModal,
+      filteredProductCustomersList,
+      filteredProductOrdersList,
       prodDateFromOpen,
       prodDateToOpen,
       openProdDateFromPicker,
@@ -22573,6 +22999,400 @@ select.pos-control {
 
 .cancelled-warning-banner svg {
   flex-shrink: 0;
+}
+
+
+/* ==========================================================================
+   PRODUCTION REPORT: PRODUCT CUSTOMER BREAKDOWN MODAL STYLING
+   ========================================================================== */
+.clickable-product-row {
+  cursor: pointer !important;
+  transition: background-color 0.18s ease;
+}
+
+.clickable-product-row:hover {
+  background: rgba(253, 181, 24, 0.08) !important;
+}
+
+.shop-theme-shop2 .clickable-product-row:hover {
+  background: rgba(30, 58, 95, 0.08) !important;
+}
+
+.product-cell-interactive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.row-hover-icon {
+  opacity: 0;
+  color: #f59e0b;
+  transform: translateX(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.shop-theme-shop2 .row-hover-icon {
+  color: #1e3a5f;
+}
+
+.clickable-product-row:hover .row-hover-icon {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.product-customers-modal {
+  max-width: 760px;
+  width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.prod-badge-tag {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.chef-badge-tag {
+  background: rgba(30, 58, 95, 0.1);
+  color: #1e3a5f;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.prod-cust-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .prod-cust-kpi-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.prod-cust-kpi-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.prod-cust-kpi-item.highlight {
+  background: rgba(245, 158, 11, 0.07);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.prod-cust-kpi-item .kpi-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.prod-cust-kpi-item.highlight .kpi-icon-wrap {
+  color: #d97706;
+}
+
+.prod-cust-kpi-item .kpi-text-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.prod-cust-kpi-item .kpi-lbl {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prod-cust-kpi-item .kpi-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.prod-cust-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.prod-cust-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.prod-cust-search-wrap .search-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.prod-cust-search-wrap .search-input {
+  padding-right: 36px;
+  padding-left: 32px;
+  border-radius: 8px;
+  height: 38px;
+}
+
+.prod-cust-search-wrap .btn-clear-search {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.prod-cust-view-switcher {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.switcher-pill-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.switcher-pill-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.prod-cust-modal-body {
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.prod-cust-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.prod-cust-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.prod-cust-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cust-profile-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cust-avatar-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.shop-theme-shop2 .cust-avatar-circle {
+  background: linear-gradient(135deg, #1e3a5f, #0f172a);
+}
+
+.cust-phone-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.cust-phone {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.cust-action-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cust-icon-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.cust-icon-btn.whatsapp {
+  background: #25d366;
+  color: #ffffff;
+}
+
+.cust-icon-btn.call {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.cust-icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.cust-icon-btn.xs {
+  width: 18px;
+  height: 18px;
+}
+
+.cust-qty-summary-side {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.cust-qty-badge {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.shop-theme-shop2 .cust-qty-badge {
+  background: rgba(30, 58, 95, 0.12);
+  color: #1e3a5f;
+  border-color: rgba(30, 58, 95, 0.25);
+}
+
+.cust-order-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+}
+
+.chip-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.chip-status-dot.pending {
+  background: #f59e0b;
+}
+
+.chip-status-dot.ready {
+  background: #3b82f6;
+}
+
+.chip-status-dot.received {
+  background: #10b981;
+}
+
+.chip-note-tag {
+  color: #d97706;
+  display: inline-flex;
+}
+
+.prod-cust-orders-table th {
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  background: #f8fafc;
+}
+
+.prod-cust-orders-table td {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.status-pill-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.status-pill-badge.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.status-pill-badge.ready {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.status-pill-badge.received {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
 }
 
 </style>
