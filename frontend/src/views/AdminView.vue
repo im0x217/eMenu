@@ -8017,18 +8017,115 @@ export default {
       window.open(url, '_blank');
     };
 
-    const setPrintPageSize = (size = 'A5 portrait', margin = '4mm 6mm') => {
+    const setPrintPageSize = (docType = 'order') => {
       let styleTag = document.getElementById('forced-print-page-size-style');
       if (!styleTag) {
         styleTag = document.createElement('style');
         styleTag.id = 'forced-print-page-size-style';
         document.head.appendChild(styleTag);
       }
-      styleTag.innerHTML = `@media print { @page { size: ${size} !important; margin: ${margin} !important; } }`;
+
+      // Exact millimeter dimensions & profile definitions
+      const profiles = {
+        order: {
+          size: '148mm 210mm', // A5 Portrait
+          margin: '4mm 6mm',
+          containerWidth: '148mm'
+        },
+        payment: {
+          size: '148mm 210mm', // A5 Portrait
+          margin: '4mm 6mm',
+          containerWidth: '148mm'
+        },
+        debtReport: {
+          size: '210mm 297mm', // A4 Portrait
+          margin: '6mm 8mm',
+          containerWidth: '210mm'
+        },
+        notesReport: {
+          size: '210mm 297mm', // A4 Portrait
+          margin: '6mm 8mm',
+          containerWidth: '210mm'
+        },
+        reconciliation: {
+          size: '210mm 297mm', // A4 Portrait
+          margin: '6mm 8mm',
+          containerWidth: '210mm'
+        },
+        productionReport: {
+          size: '210mm 297mm', // A4 Portrait
+          margin: '6mm 8mm',
+          containerWidth: '210mm'
+        },
+        analytics: {
+          size: '210mm 297mm', // A4 Portrait
+          margin: '8mm 10mm',
+          containerWidth: '210mm'
+        }
+      };
+
+      let size = '148mm 210mm';
+      let margin = '4mm 6mm';
+      let containerWidth = '148mm';
+
+      if (profiles[docType]) {
+        size = profiles[docType].size;
+        margin = profiles[docType].margin;
+        containerWidth = profiles[docType].containerWidth;
+      } else if (typeof docType === 'string') {
+        if (docType.toLowerCase().includes('a4')) {
+          size = '210mm 297mm';
+          margin = '6mm 8mm';
+          containerWidth = '210mm';
+        } else {
+          size = '148mm 210mm';
+          margin = '4mm 6mm';
+          containerWidth = '148mm';
+        }
+      }
+
+      // Valid top-level @page rule (NOT nested inside @media print)
+      styleTag.textContent = `
+@page {
+  size: ${size} !important;
+  margin: ${margin} !important;
+}
+@media print {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html, body {
+    width: ${containerWidth} !important;
+    max-width: ${containerWidth} !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+`;
+
+      // Force synchronous layout reflow so Chromium registers the new page dimensions
+      if (document.body) {
+        void document.body.offsetHeight;
+      }
+    };
+
+    const clearPrintPageSize = () => {
+      const styleTag = document.getElementById('forced-print-page-size-style');
+      if (styleTag) {
+        styleTag.textContent = '';
+      }
     };
 
     const printReport = () => {
-      setPrintPageSize('A4 portrait', '8mm 10mm');
+      setPrintPageSize('analytics');
+      const cleanup = () => {
+        clearPrintPageSize();
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
       window.print();
     };
 
@@ -8082,12 +8179,13 @@ export default {
     });
 
     const printCustomerDebtReport = async () => {
-      setPrintPageSize('A4 portrait', '6mm 8mm');
+      setPrintPageSize('debtReport');
       printingCustomerDebtReport.value = true;
       await nextTick();
 
       const cleanup = () => {
         printingCustomerDebtReport.value = false;
+        clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
 
@@ -8396,7 +8494,7 @@ export default {
     };
 
     const printPaymentReceipt = async (payment) => {
-      setPrintPageSize('A5 portrait', '4mm 6mm');
+      setPrintPageSize('payment');
       printingPayment.value = payment;
       printingPaymentReceipt.value = true;
       await nextTick();
@@ -8410,6 +8508,7 @@ export default {
       const cleanup = () => {
         printingPaymentReceipt.value = false;
         printingPayment.value = null;
+        clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
       window.addEventListener('afterprint', cleanup);
@@ -8695,13 +8794,14 @@ export default {
     });
 
     const printOrderNotesReport = async () => {
-      setPrintPageSize('A4 portrait', '6mm 8mm');
+      setPrintPageSize('notesReport');
       printingOrderNotesReport.value = true;
       await nextTick();
       await new Promise(r => setTimeout(r, 150));
 
       const cleanup = () => {
         printingOrderNotesReport.value = false;
+        clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
 
@@ -8710,12 +8810,13 @@ export default {
     };
 
     const printReconciliation = async () => {
-      setPrintPageSize('A4 portrait', '6mm 8mm');
+      setPrintPageSize('reconciliation');
       printingReconciliation.value = true;
       await nextTick();
 
       const cleanup = () => {
         printingReconciliation.value = false;
+        clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
 
@@ -8739,7 +8840,7 @@ export default {
     };
 
     const printOrder = async (order) => {
-      setPrintPageSize('A5 portrait', '4mm 6mm');
+      setPrintPageSize('order');
       printingOrder.value = order;
 
       // Mark order as printed on backend
@@ -8790,6 +8891,7 @@ export default {
       const cleanup = () => {
         printingOrder.value = null;
         printingOrderCustomerBalance.value = null;
+        clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
 
@@ -9047,12 +9149,13 @@ export default {
     };
 
     const printProductionReport = async () => {
-      setPrintPageSize('A4 portrait', '6mm 8mm');
+      setPrintPageSize('productionReport');
       printingProductionReport.value = true;
       await nextTick();
 
       const cleanup = () => {
         printingProductionReport.value = false;
+        clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
 
@@ -14661,17 +14764,7 @@ select.form-control:focus {
     display: none !important;
   }
 
-  /* Suppress browser print headers & footers (URL link in bottom-left corner, page numbers, date) */
-  @page {
-    size: A5 portrait;
-    margin: 0 !important;
-  }
-
-  /* Named page for reconciliation — A4 portrait layout without browser headers/footers */
-  @page reconciliation {
-    size: A4 portrait;
-    margin: 0 !important;
-  }
+  /* Default @page sizing is handled dynamically via setPrintPageSize() */
 
   /* Suppress link URL text insertion when printing */
   a[href]:after {
@@ -14683,7 +14776,7 @@ select.form-control:focus {
   }
 
   .reconciliation-page {
-    page: reconciliation;
+    /* page: reconciliation */
     padding: 8mm 10mm;
     box-sizing: border-box;
   }
@@ -17289,11 +17382,7 @@ select.form-control:focus {
     background: transparent;
   }
 
-  /* Suppress browser print headers & footers for payment receipt */
-  @page {
-    size: A5 portrait;
-    margin: 0 !important;
-  }
+  /* Payment receipt @page sizing is handled dynamically via setPrintPageSize() */
 
   /* Suppress link URL text insertion */
   a[href]:after {
@@ -19463,11 +19552,7 @@ select.pos-control {
   background: rgba(245, 158, 11, 0.05) !important;
 }
 
-/* === ORDER NOTES PRINT REPORT (A4 Portrait) === */
-@page notesReport {
-  size: A4 portrait;
-  margin: 0 !important;
-}
+/* === ORDER NOTES PRINT REPORT === */
 
 @media print {
   .print-order-notes-wrapper, .print-order-notes-wrapper * {
@@ -19482,7 +19567,7 @@ select.pos-control {
   }
 
   .order-notes-page {
-    page: notesReport;
+    /* page: notesReport */
     padding: 6mm 8mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
@@ -19572,10 +19657,7 @@ select.pos-control {
   display: none;
 }
 
-@page debtReport {
-  size: A4 portrait;
-  margin: 0 !important;
-}
+/* debtReport @page sizing is handled dynamically via setPrintPageSize() */
 
 @media print {
   .print-debt-report-wrapper, .print-debt-report-wrapper * {
@@ -19590,7 +19672,7 @@ select.pos-control {
   }
 
   .debt-report-page {
-    page: debtReport;
+    /* page: debtReport */
     padding: 8mm 10mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
@@ -20212,10 +20294,7 @@ select.pos-control {
   display: none;
 }
 
-@page productionReport {
-  size: A4 portrait;
-  margin: 0 !important;
-}
+/* productionReport @page sizing is handled dynamically via setPrintPageSize() */
 
 @media print {
   .print-production-report-wrapper, .print-production-report-wrapper * {
@@ -20230,7 +20309,7 @@ select.pos-control {
   }
 
   .production-report-page {
-    page: productionReport;
+    /* page: productionReport */
     padding: 8mm 10mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
