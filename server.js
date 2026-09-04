@@ -255,6 +255,29 @@ const checkAdmin = (req, res, next) => {
   res.status(403).json({ success: false, message: "Forbidden" });
 };
 
+// ============ UNIVERSAL RECEIVING/EFFECTIVE DATE HELPER ============
+const getOrderEffectiveDateStr = (order) => {
+  if (!order) return '';
+  if (order.deliveryDate) {
+    if (typeof order.deliveryDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(order.deliveryDate.trim())) {
+      return order.deliveryDate.trim().slice(0, 10);
+    }
+    const d = new Date(order.deliveryDate);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-CA');
+    }
+  }
+  if (order.receivedAt) {
+    const d = new Date(order.receivedAt);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
+  }
+  if (order.createdAt) {
+    const d = new Date(order.createdAt);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
+  }
+  return '';
+};
+
 // ============ HEALTH CHECK ============
 app.get("/api/health", (req, res) => {
   console.log("[ROUTE] GET /api/health called");
@@ -1278,25 +1301,58 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
   let prodColl = shop === "shop2" ? productsCollection2 : productsCollection;
   
-  let startDate, endDate;
+  let startDateStr = '', endDateStr = '';
+  let startDateObj = null, endDateObj = null;
+
   if (req.query.startDate && req.query.endDate) {
-    startDate = new Date(req.query.startDate);
-    endDate = new Date(req.query.endDate);
-    endDate.setHours(23, 59, 59, 999);
+    startDateStr = req.query.startDate.trim().slice(0, 10);
+    endDateStr = req.query.endDate.trim().slice(0, 10);
+    startDateObj = new Date(req.query.startDate);
+    endDateObj = new Date(req.query.endDate);
+    endDateObj.setHours(23, 59, 59, 999);
   } else {
-    endDate = new Date();
+    const today = new Date();
+    endDateStr = today.toLocaleDateString('en-CA');
+    endDateObj = new Date();
     const period = req.query.period || "30d";
     if (period === "7d") {
-      startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      startDateStr = d.toLocaleDateString('en-CA');
+      startDateObj = d;
     } else if (period === "30d") {
-      startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      startDateStr = d.toLocaleDateString('en-CA');
+      startDateObj = d;
+    } else if (period === "today" || period === "1d") {
+      startDateStr = endDateStr;
+      startDateObj = new Date();
+      startDateObj.setHours(0, 0, 0, 0);
     } else {
-      startDate = new Date(0);
+      startDateStr = '1970-01-01';
+      startDateObj = new Date(0);
     }
   }
   
   try {
-    const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: { $in: ["received", "completed"] } };
+    // Fetch all successful/received orders
+    const allSuccessfulOrders = await ordColl.find({ status: { $in: ["received", "completed"] } }).toArray();
+
+    // Filter orders by effective receiving date (rec_date)
+    const filteredOrdersList = allSuccessfulOrders.filter(order => {
+      const effDate = getOrderEffectiveDateStr(order);
+      if (!effDate) return false;
+      if (startDateStr && endDateStr) {
+        return effDate >= startDateStr && effDate <= endDateStr;
+      } else if (startDateStr) {
+        return effDate >= startDateStr;
+      } else if (endDateStr) {
+        return effDate <= endDateStr;
+      }
+      return true;
+    });
+
+    const matchingOrderIds = filteredOrdersList.map(o => o._id);
+    const matchStage = { _id: { $in: matchingOrderIds } };
     
     // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
     const kpiSummary = await ordColl.aggregate([
@@ -1316,22 +1372,18 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       activeCustomers: kpiSummary[0] ? kpiSummary[0].uniquePhones.length : 0
     };
     
-    // Revenue trend (sales trend chart)
-    const trend = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          revenue: { $sum: "$totalPrice" },
-          orders: { $sum: 1 }
-      } },
-      { $sort: { _id: 1 } }
-    ]).toArray();
-    
-    const revenueTrend = trend.map(t => ({
-      date: t._id,
-      revenue: t.revenue,
-      orders: t.orders
-    }));
+    // Revenue trend by effective receiving date (rec_date)
+    const trendMap = {};
+    for (const ord of filteredOrdersList) {
+      const effDate = getOrderEffectiveDateStr(ord);
+      if (!effDate) continue;
+      if (!trendMap[effDate]) {
+        trendMap[effDate] = { date: effDate, revenue: 0, orders: 0 };
+      }
+      trendMap[effDate].revenue += Number(ord.totalPrice) || 0;
+      trendMap[effDate].orders += 1;
+    }
+    const revenueTrend = Object.values(trendMap).sort((a, b) => a.date.localeCompare(b.date));
     
     // Price Mode split (bulk vs regular)
     const modes = await ordColl.aggregate([
@@ -1354,8 +1406,8 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
     
     // Payment Methods breakdown (Actual paid values from paymentsCollection)
     const paymentMatchStage = { shop };
-    if (startDate && endDate) {
-      paymentMatchStage.createdAt = { $gte: startDate, $lte: endDate };
+    if (startDateObj && endDateObj) {
+      paymentMatchStage.createdAt = { $gte: startDateObj, $lte: endDateObj };
     }
 
     const paymentMethodsRaw = await paymentsCollection.aggregate([
@@ -1745,74 +1797,72 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-// Get all customers with details
+// Get all customers with details (Filtered accurately by rec_date / deliveryDate)
 app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
 
-  let orderDateFilter = {};
+  let startDateStr = '';
+  let endDateStr = '';
   if (req.query.selectedDate) {
-    const startDate = new Date(req.query.selectedDate);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(req.query.selectedDate);
-    endDate.setHours(23, 59, 59, 999);
-    orderDateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+    startDateStr = req.query.selectedDate.trim().slice(0, 10);
+    endDateStr = startDateStr;
   } else if (req.query.startDate && req.query.endDate) {
-    const startDate = new Date(req.query.startDate);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(req.query.endDate);
-    endDate.setHours(23, 59, 59, 999);
-    orderDateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+    startDateStr = req.query.startDate.trim().slice(0, 10);
+    endDateStr = req.query.endDate.trim().slice(0, 10);
+  } else if (req.query.startDate) {
+    startDateStr = req.query.startDate.trim().slice(0, 10);
+  } else if (req.query.endDate) {
+    endDateStr = req.query.endDate.trim().slice(0, 10);
   }
 
   try {
     const customers = await customersCollection.find().toArray();
     
-    // Batch fetch all orders stats by phone (all active non-cancelled orders)
-    const allOrderStats = await ordColl.aggregate([
-      { $match: { status: { $ne: "cancelled" }, ...orderDateFilter } },
-      { $group: {
-          _id: "$customerInfo.phone",
-          totalSpent: { $sum: "$totalPrice" },
-          orderCount: { $sum: 1 }
-      } }
-    ]).toArray();
-    
-    // Batch fetch outstanding balance stats by phone
-    const unpaidStats = await ordColl.aggregate([
-      { 
-        $match: { 
-          status: { $ne: "cancelled" },
-          ...orderDateFilter,
-          $or: [
-            { paymentStatus: { $in: ["unpaid", "partial"] } },
-            { paymentStatus: { $exists: false } }
-          ]
-        } 
-      },
-      { 
-        $group: {
-          _id: "$customerInfo.phone",
-          totalOwed: { $sum: "$totalPrice" },
-          totalPaid: { $sum: { $ifNull: ["$paidAmount", 0] } }
-        } 
+    // Fetch all non-cancelled orders for the active shop
+    const allActiveOrders = await ordColl.find({ status: { $ne: "cancelled" } }).toArray();
+
+    // Filter orders by effective receiving date (rec_date: deliveryDate -> receivedAt -> createdAt)
+    const filteredOrders = allActiveOrders.filter(order => {
+      if (!startDateStr && !endDateStr) return true;
+      const effDate = getOrderEffectiveDateStr(order);
+      if (!effDate) return false;
+      if (startDateStr && endDateStr) {
+        return effDate >= startDateStr && effDate <= endDateStr;
+      } else if (startDateStr) {
+        return effDate >= startDateStr;
+      } else if (endDateStr) {
+        return effDate <= endDateStr;
       }
-    ]).toArray();
+      return true;
+    });
+
+    // Aggregate stats by customer phone
+    const statsMap = {};
+    const balanceMap = {};
+
+    for (const order of filteredOrders) {
+      const phone = order.customerInfo && order.customerInfo.phone;
+      if (!phone) continue;
+
+      if (!statsMap[phone]) {
+        statsMap[phone] = { totalSpent: 0, orderCount: 0 };
+      }
+      statsMap[phone].totalSpent += Number(order.totalPrice) || 0;
+      statsMap[phone].orderCount += 1;
+
+      // Outstanding balance check
+      const isUnpaidOrPartial = order.paymentStatus === 'unpaid' || order.paymentStatus === 'partial' || !order.paymentStatus;
+      if (isUnpaidOrPartial) {
+        const totalOwed = Number(order.totalPrice) || 0;
+        const totalPaid = Number(order.paidAmount) || 0;
+        const owed = Math.max(0, totalOwed - totalPaid);
+        balanceMap[phone] = (balanceMap[phone] || 0) + owed;
+      }
+    }
 
     // Batch fetch all favorites by phone for the active shop
     const allFavs = await favoritesCollection.find({ shop }).toArray();
-    
-    // Create lookup maps
-    const statsMap = {};
-    for (const stat of allOrderStats) {
-      if (stat._id) statsMap[stat._id] = stat;
-    }
-    
-    const balanceMap = {};
-    for (const b of unpaidStats) {
-      if (b._id) balanceMap[b._id] = Math.max(0, (b.totalOwed || 0) - (b.totalPaid || 0));
-    }
-
     const favsMap = {};
     for (const fav of allFavs) {
       if (!favsMap[fav.phone]) favsMap[fav.phone] = [];
@@ -3573,27 +3623,7 @@ app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, re
     const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
     const prodColl = shop === 'shop2' ? productsCollection2 : productsCollection;
     
-    // Helper to extract effective operational/production date in YYYY-MM-DD local format
-    const getOrderEffectiveDateStr = (order) => {
-      if (order.deliveryDate) {
-        if (typeof order.deliveryDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(order.deliveryDate.trim())) {
-          return order.deliveryDate.trim().slice(0, 10);
-        }
-        const d = new Date(order.deliveryDate);
-        if (!isNaN(d.getTime())) {
-          return d.toLocaleDateString('en-CA');
-        }
-      }
-      if (order.receivedAt) {
-        const d = new Date(order.receivedAt);
-        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
-      }
-      if (order.createdAt) {
-        const d = new Date(order.createdAt);
-        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
-      }
-      return '';
-    };
+    // Uses universal getOrderEffectiveDateStr(order) helper
 
     // Get all non-cancelled orders
     const allOrders = await ordColl.find({

@@ -8931,7 +8931,9 @@ export default {
         if (customerFilters.dateFrom && customerFilters.dateTo) {
           url += `&startDate=${customerFilters.dateFrom}&endDate=${customerFilters.dateTo}`;
         } else if (customerFilters.dateFrom) {
-          url += `&selectedDate=${customerFilters.dateFrom}`;
+          url += `&startDate=${customerFilters.dateFrom}&endDate=${customerFilters.dateFrom}`;
+        } else if (customerFilters.dateTo) {
+          url += `&endDate=${customerFilters.dateTo}`;
         }
         const res = await adminFetch(url);
         if (res.ok) {
@@ -9785,6 +9787,29 @@ const closeSuggestionsWithDelay = () => {
       }
     };
 
+        // Universal Helper: Extract effective receiving date (rec_date) in YYYY-MM-DD format
+    const getOrderEffectiveDateStr = (order) => {
+      if (!order) return '';
+      if (order.deliveryDate) {
+        if (typeof order.deliveryDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(order.deliveryDate.trim())) {
+          return order.deliveryDate.trim().slice(0, 10);
+        }
+        const d = new Date(order.deliveryDate);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('en-CA');
+        }
+      }
+      if (order.receivedAt) {
+        const d = new Date(order.receivedAt);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
+      }
+      if (order.createdAt) {
+        const d = new Date(order.createdAt);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA');
+      }
+      return '';
+    };
+
     const filteredOrders = computed(() => {
       const query = orderFilters.search ? orderFilters.search.trim().toLowerCase().replace(/^#/, '') : '';
       return orders.value.filter(o => {
@@ -9817,26 +9842,8 @@ const closeSuggestionsWithDelay = () => {
         
         let matchesDate = true;
         if (orderFilters.selectedDate) {
-          let receiveDateStr = '';
-          if (o.deliveryDate) {
-            const d = new Date(o.deliveryDate);
-            if (!isNaN(d.getTime())) {
-              receiveDateStr = d.toLocaleDateString('en-CA');
-            } else if (typeof o.deliveryDate === 'string') {
-              receiveDateStr = o.deliveryDate.trim().slice(0, 10);
-            }
-          } else if (o.receivedAt) {
-            const d = new Date(o.receivedAt);
-            if (!isNaN(d.getTime())) {
-              receiveDateStr = d.toLocaleDateString('en-CA');
-            }
-          } else if (o.createdAt) {
-            const d = new Date(o.createdAt);
-            if (!isNaN(d.getTime())) {
-              receiveDateStr = d.toLocaleDateString('en-CA');
-            }
-          }
-          matchesDate = receiveDateStr === orderFilters.selectedDate;
+          const recDateStr = getOrderEffectiveDateStr(o);
+          matchesDate = recDateStr === orderFilters.selectedDate;
         }
         
         return matchesSearch && matchesStatus && matchesPrint && matchesDate;
