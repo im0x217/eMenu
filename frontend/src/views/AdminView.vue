@@ -2147,6 +2147,76 @@
           <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <form @submit.prevent="saveOrder">
+          <!-- Customer Details & Change Customer Card -->
+          <div class="edit-order-customer-card mb-3 glass-panel">
+            <div class="edit-card-header d-flex justify-content-between align-items-center mb-2">
+              <div class="edit-card-title d-flex align-items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="font-bold">بيانات وتغيير العميل</span>
+              </div>
+              <span v-if="editingOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone === editingOrder.customerPhone) ? 'is-registered' : 'is-new'">
+                {{ customers.find(c => c.phone === editingOrder.customerPhone) ? 'عميل مسجل' : 'عميل مخصص / جديد' }}
+              </span>
+            </div>
+
+            <!-- Customer Search & Fast Dropdown Picker -->
+            <div class="customer-search-autocomplete-wrapper position-relative mb-3">
+              <div class="search-input-wrapper">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input 
+                  v-model="editOrderCustomerSearch" 
+                  type="text" 
+                  class="form-control search-input" 
+                  placeholder="ابحث لاختيار عميل آخر من السجل (بالاسم أو الهاتف)…" 
+                  @focus="showEditOrderCustomerSuggestions = true"
+                  @click="showEditOrderCustomerSuggestions = true"
+                  @blur="closeEditOrderCustomerSuggestionsWithDelay"
+                  @input="showEditOrderCustomerSuggestions = true; highlightedEditCustomerIndex = 0"
+                  @keydown.esc.prevent="showEditOrderCustomerSuggestions = false"
+                  @keydown.tab="showEditOrderCustomerSuggestions = false"
+                  @keydown.down.prevent="navigateEditCustomerSuggestions(1)"
+                  @keydown.up.prevent="navigateEditCustomerSuggestions(-1)"
+                  @keydown.enter.prevent="selectHighlightedEditCustomerOrNext"
+                />
+                <button v-if="editOrderCustomerSearch" type="button" @click="editOrderCustomerSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
+              </div>
+
+              <!-- Dropdown Suggestions -->
+              <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
+                <div 
+                  v-for="(cust, cIdx) in filteredEditOrderCustomers" 
+                  :key="cust._id" 
+                  class="suggestion-item customer-suggestion-item"
+                  :class="{ highlighted: cIdx === highlightedEditCustomerIndex }"
+                  @mousedown="selectCustomerForEditOrder(cust)"
+                  @mouseenter="highlightedEditCustomerIndex = cIdx"
+                >
+                  <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
+                  <div class="cust-info-group">
+                    <span class="cust-sugg-name">{{ cust.name }}</span>
+                    <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                  </div>
+                  <div class="cust-badge-stats">
+                    <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
+                    <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(cust.outstandingBalance) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Editable Inputs Row: Name & Phone -->
+            <div class="pos-input-grid">
+              <div class="pos-field">
+                <label class="pos-label">اسم العميل *</label>
+                <input v-model="editingOrder.customerName" type="text" class="form-control pos-control" placeholder="اسم العميل" required />
+              </div>
+              <div class="pos-field">
+                <label class="pos-label">رقم الهاتف *</label>
+                <input v-model="editingOrder.customerPhone" type="tel" dir="ltr" class="form-control pos-control text-mono text-center" placeholder="09xxxxxxxx" required />
+              </div>
+            </div>
+          </div>
+
           <!-- Order Settings & Re-Date Bar (Datepicker + Price Mode + Editable Notes) -->
           <div class="edit-order-meta-card mb-4 glass-panel">
             <div class="edit-order-meta-grid">
@@ -5973,6 +6043,52 @@ export default {
       notes: ''
     });
 
+    // Order Edit Modal Customer Selection & Autocomplete State
+    const editOrderCustomerSearch = ref('');
+    const showEditOrderCustomerSuggestions = ref(false);
+    const highlightedEditCustomerIndex = ref(0);
+
+    const filteredEditOrderCustomers = computed(() => {
+      const q = (editOrderCustomerSearch.value || '').trim().toLowerCase();
+      const list = customers.value || [];
+      if (!q) return list.slice(0, 8);
+      return list.filter(c => {
+        const name = (c.name || '').toLowerCase();
+        const phone = (c.phone || '').toLowerCase();
+        return name.includes(q) || phone.includes(q);
+      }).slice(0, 10);
+    });
+
+    const selectCustomerForEditOrder = (cust) => {
+      if (!cust) return;
+      editingOrder.customerName = cust.name || '';
+      editingOrder.customerPhone = cust.phone || '';
+      editOrderCustomerSearch.value = '';
+      showEditOrderCustomerSuggestions.value = false;
+      toast.show(`تم تغيير عميل الطلب إلى: ${cust.name}`, 'info');
+    };
+
+    const navigateEditCustomerSuggestions = (delta) => {
+      const max = filteredEditOrderCustomers.value.length;
+      if (max === 0) return;
+      highlightedEditCustomerIndex.value = (highlightedEditCustomerIndex.value + delta + max) % max;
+    };
+
+    const selectHighlightedEditCustomerOrNext = () => {
+      if (showEditOrderCustomerSuggestions.value && filteredEditOrderCustomers.value.length > 0) {
+        const idx = (highlightedEditCustomerIndex.value >= 0 && highlightedEditCustomerIndex.value < filteredEditOrderCustomers.value.length)
+          ? highlightedEditCustomerIndex.value
+          : 0;
+        selectCustomerForEditOrder(filteredEditOrderCustomers.value[idx]);
+      }
+    };
+
+    const closeEditOrderCustomerSuggestionsWithDelay = () => {
+      setTimeout(() => {
+        showEditOrderCustomerSuggestions.value = false;
+      }, 200);
+    };
+
     // Order Edit Modal Standardized DatePicker State & Logic
     const editOrderDatePickerOpen = ref(false);
     const editOrderPickerYear = ref(new Date().getFullYear());
@@ -9088,6 +9204,9 @@ const closeSuggestionsWithDelay = () => {
       editingOrder._id = order._id;
       editingOrder.customerName = order.customerInfo?.name || '';
       editingOrder.customerPhone = order.customerInfo?.phone || '';
+      editOrderCustomerSearch.value = '';
+      showEditOrderCustomerSuggestions.value = false;
+      highlightedEditCustomerIndex.value = 0;
       editingOrder.items = (order.items || []).map(item => ({ ...item }));
       editingOrder.totalPrice = order.totalPrice || 0;
       editingOrder.priceMode = order.priceMode || 'regular';
@@ -10824,6 +10943,14 @@ const closeSuggestionsWithDelay = () => {
       updateOrderStatus,
       orderEditModalOpen,
       editingOrder,
+      editOrderCustomerSearch,
+      showEditOrderCustomerSuggestions,
+      highlightedEditCustomerIndex,
+      filteredEditOrderCustomers,
+      selectCustomerForEditOrder,
+      navigateEditCustomerSuggestions,
+      selectHighlightedEditCustomerOrNext,
+      closeEditOrderCustomerSuggestionsWithDelay,
       openOrderEditModal,
       isEditOrderDateRelative,
       setEditOrderDateShortcut,
@@ -21778,4 +21905,25 @@ select.pos-control {
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
+}
+
+
+/* ============ EDIT ORDER CUSTOMER CARD STYLES ============ */
+.edit-order-customer-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.edit-order-customer-card .pos-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .edit-order-customer-card .pos-input-grid {
+    grid-template-columns: 1fr;
+  }
 }

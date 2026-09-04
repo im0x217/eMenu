@@ -1790,6 +1790,28 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
+    // If customer phone is provided/changed, ensure customer document exists/updated
+    if (updateDoc.customerInfo && updateDoc.customerInfo.phone) {
+      try {
+        await customersCollection.updateOne(
+          { phone: updateDoc.customerInfo.phone },
+          { 
+            $setOnInsert: { 
+              name: updateDoc.customerInfo.name || 'عميل',
+              phone: updateDoc.customerInfo.phone,
+              createdAt: new Date()
+            },
+            $set: {
+              lastActive: new Date()
+            }
+          },
+          { upsert: true }
+        );
+      } catch (custErr) {
+        console.warn("Failed to auto-upsert customer on order edit:", custErr);
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("Full order edit error:", err);
