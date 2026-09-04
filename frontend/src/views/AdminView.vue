@@ -2139,7 +2139,7 @@
       </div>
     </div>
 
-    <!-- Order Edit Modal (Spacious Fast-POS Architecture) -->
+    <!-- Order Edit Modal (Refined Fast-POS Architecture) -->
     <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in" @click.self="orderEditModalOpen = false">
       <div class="modal-content glass-panel fast-order-modal">
         
@@ -2150,7 +2150,7 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </div>
             <div>
-              <div class="fast-order-title-row">
+              <div class="fast-order-title-row" style="flex-wrap: wrap; row-gap: 6px;">
                 <h3>تعديل محتويات الطلب</h3>
                 <span class="edit-order-id-badge text-mono font-bold">#{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</span>
                 <span class="pos-cust-status-badge" :class="editingOrder.status === 'ready' ? 'status-ready' : (editingOrder.status === 'received' ? 'status-received' : (editingOrder.status === 'cancelled' ? 'status-cancelled' : 'status-pending'))">
@@ -2204,37 +2204,35 @@
                   </span>
                 </div>
 
-                <!-- Current Selected Customer Profile Box -->
+                <!-- Selected Customer Profile Box (2-Row Balanced Layout) -->
                 <div class="edit-selected-customer-box">
-                  <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
-                  <div class="edit-cust-details">
-                    <div class="edit-cust-name-row">
-                      <span class="edit-cust-name">{{ editingOrder.customerName || 'عميل غير محدد' }}</span>
-                    </div>
-                    <div class="edit-cust-meta-row">
+                  <div class="edit-cust-box-top">
+                    <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
+                    <div class="edit-cust-name-col">
+                      <span class="edit-cust-name" :title="editingOrder.customerName || 'عميل غير محدد'">{{ editingOrder.customerName || 'عميل غير محدد' }}</span>
                       <span class="edit-cust-phone text-mono" dir="ltr">{{ editingOrder.customerPhone || 'لا يوجد هاتف' }}</span>
-                      <span v-if="matchedEditingCustomer" class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
-                      <span v-if="matchedEditingCustomer && matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }} دين</span>
+                    </div>
+                    <div v-if="editingOrder.customerPhone" class="edit-cust-quick-actions">
+                      <a 
+                        :href="getLibyanWhatsAppUrl(editingOrder.customerPhone)" 
+                        target="_blank" 
+                        class="edit-action-circle edit-whatsapp-circle" 
+                        title="مراسلة عبر واتساب (+218)"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                      </a>
+                      <a 
+                        :href="'tel:' + editingOrder.customerPhone" 
+                        class="edit-action-circle edit-call-circle" 
+                        title="اتصال هاتفي"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      </a>
                     </div>
                   </div>
-
-                  <!-- 1-Tap WhatsApp & Call Quick Action Buttons (Habit #16) -->
-                  <div v-if="editingOrder.customerPhone" class="edit-cust-quick-actions">
-                    <a 
-                      :href="getLibyanWhatsAppUrl(editingOrder.customerPhone)" 
-                      target="_blank" 
-                      class="edit-action-circle edit-whatsapp-circle" 
-                      title="مراسلة العميل عبر واتساب (+218)"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                    </a>
-                    <a 
-                      :href="'tel:' + editingOrder.customerPhone" 
-                      class="edit-action-circle edit-call-circle" 
-                      title="اتصال هاتفي بالعميل"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    </a>
+                  <div v-if="matchedEditingCustomer" class="edit-cust-box-bottom">
+                    <span class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
+                    <span v-if="matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }} دين</span>
                   </div>
                 </div>
 
@@ -2264,7 +2262,7 @@
                   </div>
 
                   <!-- Dropdown Suggestions -->
-                  <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
+                  <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1500;">
                     <div 
                       v-for="(cust, cIdx) in filteredEditOrderCustomers" 
                       :key="cust._id" 
@@ -2297,99 +2295,96 @@
                 </div>
 
                 <div class="pos-fields-stack">
-                  <!-- Row: Delivery Date & Order Status -->
-                  <div class="pos-input-grid">
-                    <!-- Delivery Date (Re-Date with 50/50 Dual Shortcuts - Habit #10) -->
-                    <div class="pos-field">
-                      <div class="pos-field-header-row">
-                        <label class="pos-label mb-0">تاريخ الاستلام</label>
-                        <button v-if="editingOrder.deliveryDate" type="button" class="btn-clear-date-mini" @click="clearEditOrderDate" title="إلغاء الموعد">مسح</button>
-                      </div>
+                  <!-- Row 1: Delivery Date (Full Card Width) -->
+                  <div class="pos-field">
+                    <div class="pos-field-header-row">
+                      <label class="pos-label mb-0">تاريخ الاستلام</label>
+                      <button v-if="editingOrder.deliveryDate" type="button" class="btn-clear-date-mini" @click="clearEditOrderDate" title="إلغاء الموعد">مسح</button>
+                    </div>
 
-                      <div class="position-relative">
-                        <button 
-                          type="button" 
-                          class="form-control pos-control btn-standard-datepicker-trigger" 
-                          :class="{ active: editOrderDatePickerOpen }"
-                          @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
-                        >
-                          <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </button>
+                    <div class="position-relative">
+                      <button 
+                        type="button" 
+                        class="form-control pos-control btn-standard-datepicker-trigger" 
+                        :class="{ active: editOrderDatePickerOpen }"
+                        @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
+                      >
+                        <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      </button>
 
-                        <!-- Popover Calendar -->
-                        <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
-                          <div class="datepicker-header">
-                            <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
-                            <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
-                            <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
-                          </div>
-
-                          <div class="dp-weekdays">
-                            <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                          </div>
-
-                          <div class="dp-days-grid">
-                            <button 
-                              type="button" 
-                              v-for="(dayObj, idx) in editOrderCalendarDays" 
-                              :key="idx" 
-                              class="dp-day-cell"
-                              :class="{ 
-                                'other-month': !dayObj.inMonth,
-                                'is-today': dayObj.isToday,
-                                'is-selected': editingOrder.deliveryDate === dayObj.dateStr
-                              }"
-                              @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
-                            >
-                              {{ dayObj.dayNum }}
-                            </button>
-                          </div>
-
-                          <div class="datepicker-footer">
-                            <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
-                          </div>
+                      <!-- Popover Calendar -->
+                      <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
+                        <div class="datepicker-header">
+                          <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                          <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
+                          <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
                         </div>
-                      </div>
 
-                      <!-- Habit #10: Touch-Friendly 50/50 Dual Shortcut Split Buttons -->
-                      <div class="pos-date-shortcuts-split">
-                        <button 
-                          type="button" 
-                          class="pos-date-shortcut-btn" 
-                          :class="{ active: isEditOrderDateRelative(0) }" 
-                          @click="setEditOrderDateShortcut(0)" 
-                          title="تحديد تاريخ اليوم"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                          <span>اليوم</span>
-                        </button>
-                        <button 
-                          type="button" 
-                          class="pos-date-shortcut-btn" 
-                          :class="{ active: isEditOrderDateRelative(1) }" 
-                          @click="setEditOrderDateShortcut(1)" 
-                          title="تحديد تاريخ الغد"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                          <span>غداً</span>
-                        </button>
+                        <div class="dp-weekdays">
+                          <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                        </div>
+
+                        <div class="dp-days-grid">
+                          <button 
+                            type="button" 
+                            v-for="(dayObj, idx) in editOrderCalendarDays" 
+                            :key="idx" 
+                            class="dp-day-cell"
+                            :class="{ 
+                              'other-month': !dayObj.inMonth,
+                              'is-today': dayObj.isToday,
+                              'is-selected': editingOrder.deliveryDate === dayObj.dateStr
+                            }"
+                            @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
+                          >
+                            {{ dayObj.dayNum }}
+                          </button>
+                        </div>
+
+                        <div class="datepicker-footer">
+                          <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Order Status Selector -->
-                    <div class="pos-field">
-                      <label class="pos-label">حالة الطلب</label>
-                      <select v-model="editingOrder.status" class="form-control pos-control edit-status-select">
-                        <option value="pending">قيد الانتظار</option>
-                        <option value="ready">جاهز للاستلام</option>
-                        <option value="received">تم الاستلام</option>
-                        <option value="cancelled">ملغي</option>
-                      </select>
+                    <!-- Habit #10: Touch-Friendly 50/50 Dual Shortcut Split Buttons -->
+                    <div class="pos-date-shortcuts-split">
+                      <button 
+                        type="button" 
+                        class="pos-date-shortcut-btn" 
+                        :class="{ active: isEditOrderDateRelative(0) }" 
+                        @click="setEditOrderDateShortcut(0)" 
+                        title="تحديد تاريخ اليوم"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>اليوم</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="pos-date-shortcut-btn" 
+                        :class="{ active: isEditOrderDateRelative(1) }" 
+                        @click="setEditOrderDateShortcut(1)" 
+                        title="تحديد تاريخ الغد"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>غداً</span>
+                      </button>
                     </div>
                   </div>
 
-                  <!-- Order Notes -->
+                  <!-- Row 2: Order Status (Full Width) -->
+                  <div class="pos-field">
+                    <label class="pos-label">حالة الطلب</label>
+                    <select v-model="editingOrder.status" class="form-control pos-control edit-status-select">
+                      <option value="pending">قيد الانتظار</option>
+                      <option value="ready">جاهز للاستلام</option>
+                      <option value="received">تم الاستلام</option>
+                      <option value="cancelled">ملغي</option>
+                    </select>
+                  </div>
+
+                  <!-- Row 3: Order Notes (Full Width) -->
                   <div class="pos-field">
                     <label class="pos-label">ملاحظات الطلب العامة</label>
                     <input 
@@ -2430,25 +2425,25 @@
                         @focus="showSuggestions = true" 
                         @click="showSuggestions = true" 
                         @keydown.esc.prevent="showSuggestions = false" 
-                        @keydown.tab="showSuggestions = false"
-                        @blur="closeSuggestionsWithDelay"
-                        @keydown.down.prevent="navigateSuggestions(1)"
-                        @keydown.up.prevent="navigateSuggestions(-1)"
-                        @keydown.enter.prevent="selectHighlightedSuggestion"
+                        @keydown.tab="showSuggestions = false" 
+                        @blur="closeSuggestionsWithDelay" 
+                        @keydown.down.prevent="navigateSuggestions(1)" 
+                        @keydown.up.prevent="navigateSuggestions(-1)" 
+                        @keydown.enter.prevent="selectHighlightedSuggestion" 
                       />
                       <button v-if="productSearchQuery" type="button" @click="productSearchQuery = ''" class="btn-clear-search" tabindex="-1">&times;</button>
                     </div>
 
                     <!-- Suggestions Dropdown -->
-                    <div v-if="showSuggestions && filteredSuggestions.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
+                    <div v-if="showSuggestions && filteredSuggestions.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in" style="z-index: 1500;">
                       <div 
                         v-for="(prod, index) in filteredSuggestions" 
                         :key="prod._id" 
-                        class="suggestion-item"
+                        class="suggestion-item" 
                         :class="{ 
                           highlighted: index === highlightedSuggestionIndex,
                           'is-in-cart': getEditOrderItemQty(prod._id) > 0 
-                        }"
+                        }" 
                         @mousedown="addSelectedProduct(prod)"
                       >
                         <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
@@ -2484,7 +2479,7 @@
                         <th style="width: 140px; text-align: center;">الكمية</th>
                         <th style="width: 130px; text-align: center;">سعر الوحدة</th>
                         <th style="width: 120px; text-align: center;">المجموع</th>
-                        <th style="width: 48px; text-align: center;"></th>
+                        <th style="width: 44px; text-align: center;"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2499,10 +2494,10 @@
                       <tr v-for="(item, idx) in editingOrder.items" :key="'edit-item-'+idx">
                         <td>
                           <div class="edit-item-name-cell">
-                            <span v-if="item.productId" class="db-product-name font-bold" title="منتج مسجل بالمنظومة">
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"/></svg>
-                              {{ item.name }}
-                            </span>
+                            <div v-if="item.productId" class="db-item-title-row">
+                              <span class="db-product-name font-bold" title="منتج مسجل بالمنظومة">{{ item.name }}</span>
+                              <span class="db-verified-badge" title="منتج مسجل">مسجل</span>
+                            </div>
                             <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
                             
                             <input 
@@ -2513,7 +2508,7 @@
                             />
                           </div>
                         </td>
-                        <td style="width: 140px;">
+                        <td style="width: 140px; text-align: center;">
                           <div class="qty-stepper-control">
                             <button type="button" class="stepper-btn btn-minus" @click="adjustEditOrderItemQty(item, -1)" tabindex="-1">-</button>
                             <input 
@@ -2533,7 +2528,7 @@
                             <button type="button" class="stepper-btn btn-plus" @click="adjustEditOrderItemQty(item, 1)" tabindex="-1">+</button>
                           </div>
                         </td>
-                        <td style="width: 130px;">
+                        <td style="width: 130px; text-align: center;">
                           <div class="edit-price-input-wrapper">
                             <input 
                               v-model.number="item.price" 
@@ -2552,7 +2547,7 @@
                         <td class="text-bold text-dark text-center text-mono font-bold" style="width: 120px;">
                           {{ formatCurrency(item.quantity * item.price) }}
                         </td>
-                        <td style="width: 48px; text-align: center;">
+                        <td style="width: 44px; text-align: center;">
                           <button 
                             type="button" 
                             @click="removeOrderItem(idx)" 
@@ -21871,7 +21866,7 @@ select.pos-control {
   margin-bottom: 8px;
 }
 
-</style>
+
 
 
 /* ============ SETTINGS & BACKUP STYLES ============ */
@@ -22118,58 +22113,96 @@ select.pos-control {
   letter-spacing: -0.3px;
 }
 
+/* Status Badges Styling */
+.pos-cust-status-badge.status-ready {
+  background: rgba(59, 130, 246, 0.12) !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+.pos-cust-status-badge.status-received {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.pos-cust-status-badge.status-pending {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.pos-cust-status-badge.status-cancelled {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Customer Card Layout */
 .edit-selected-customer-box {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   padding: 12px 14px;
-  background: rgba(245, 158, 11, 0.06);
+  background: rgba(245, 158, 11, 0.05);
   border: 1.5px solid rgba(245, 158, 11, 0.22);
-  border-radius: 12px;
+  border-radius: 14px;
   position: relative;
 }
 
+.edit-cust-box-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
 .cust-avatar-md {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 800;
   flex-shrink: 0;
   box-shadow: 0 3px 8px rgba(217, 119, 6, 0.28);
 }
 
-.edit-cust-details {
+.edit-cust-name-col {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  flex-grow: 1;
+  gap: 2px;
+  flex: 1;
   min-width: 0;
 }
 
 .edit-cust-name {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: var(--text-color, #0f172a);
   line-height: 1.35;
-}
-
-.edit-cust-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .edit-cust-phone {
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #64748b;
+}
+
+.edit-cust-box-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(245, 158, 11, 0.25);
+  flex-wrap: wrap;
 }
 
 .edit-cust-quick-actions {
@@ -22249,24 +22282,116 @@ select.pos-control {
 }
 
 .edit-status-select {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.edit-order-notes-input {
+  font-size: 0.88rem !important;
+}
+
+/* Verified Item Badge in Cell */
+.db-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.db-product-name {
+  font-size: 0.94rem !important;
+  font-weight: 750 !important;
+  color: #0f172a !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+}
+
+.db-verified-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  flex-shrink: 0;
+}
+
+.edit-custom-name-input {
+  max-width: 100% !important;
+  height: 34px !important;
+  font-size: 0.88rem !important;
+}
+
+/* Stepper Input Number Arrow Suppression */
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button,
+.edit-price-input::-webkit-outer-spin-button,
+.edit-price-input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+.stepper-input,
+.edit-price-input {
+  -moz-appearance: textfield !important;
+}
+
+/* Edit Price Wrapper Centering */
+.edit-price-input-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 9px !important;
+  padding: 0 8px !important;
+  height: 36px !important;
+  max-width: 110px !important;
+  margin: 0 auto !important;
+  background: #ffffff !important;
+}
+
+.edit-price-input {
+  width: 55px !important;
+  height: 34px !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-align: center !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+  padding: 0 !important;
+}
+
+.qty-stepper-control {
+  max-width: 125px !important;
+  margin: 0 auto !important;
+}
+
+.btn-item-delete:disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 .item-note-input {
-  font-size: 0.78rem;
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px dashed #cbd5e1;
-  background: #f8fafc;
-  color: #475569;
+  font-size: 0.78rem !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  border: 1px dashed #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #475569 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .item-note-input:focus {
-  border-style: solid;
-  border-color: #f59e0b;
-  background: #ffffff;
+  border-style: solid !important;
+  border-color: #f59e0b !important;
+  background: #ffffff !important;
 }
 
 .edit-btn-print {
@@ -22284,4 +22409,4 @@ select.pos-control {
   color: #0f172a;
 }
 
-
+</style>
