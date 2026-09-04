@@ -8028,67 +8028,44 @@ export default {
       // Exact millimeter dimensions & profile definitions
       const profiles = {
         order: {
-          size: '148mm 210mm', // A5 Portrait
-          margin: '4mm 6mm',
-          containerWidth: '148mm'
+          size: '148mm 210mm' // A5 Portrait
         },
         payment: {
-          size: '148mm 210mm', // A5 Portrait
-          margin: '4mm 6mm',
-          containerWidth: '148mm'
+          size: '148mm 210mm' // A5 Portrait
         },
         debtReport: {
-          size: '210mm 297mm', // A4 Portrait
-          margin: '6mm 8mm',
-          containerWidth: '210mm'
+          size: '210mm 297mm' // A4 Portrait
         },
         notesReport: {
-          size: '210mm 297mm', // A4 Portrait
-          margin: '6mm 8mm',
-          containerWidth: '210mm'
+          size: '210mm 297mm' // A4 Portrait
         },
         reconciliation: {
-          size: '210mm 297mm', // A4 Portrait
-          margin: '6mm 8mm',
-          containerWidth: '210mm'
+          size: '210mm 297mm' // A4 Portrait
         },
         productionReport: {
-          size: '210mm 297mm', // A4 Portrait
-          margin: '6mm 8mm',
-          containerWidth: '210mm'
+          size: '210mm 297mm' // A4 Portrait
         },
         analytics: {
-          size: '210mm 297mm', // A4 Portrait
-          margin: '8mm 10mm',
-          containerWidth: '210mm'
+          size: '210mm 297mm' // A4 Portrait
         }
       };
 
       let size = '148mm 210mm';
-      let margin = '4mm 6mm';
-      let containerWidth = '148mm';
-
       if (profiles[docType]) {
         size = profiles[docType].size;
-        margin = profiles[docType].margin;
-        containerWidth = profiles[docType].containerWidth;
-      } else if (typeof docType === 'string') {
-        if (docType.toLowerCase().includes('a4')) {
-          size = '210mm 297mm';
-          margin = '6mm 8mm';
-          containerWidth = '210mm';
-        } else {
-          size = '148mm 210mm';
-          margin = '4mm 6mm';
-          containerWidth = '148mm';
-        }
+      } else if (typeof docType === 'string' && docType.toLowerCase().includes('a4')) {
+        size = '210mm 297mm';
       }
 
-      // Valid top-level @page rule (NOT nested inside @media print)
+      // Valid top-level @page rule:
+      // margin: 0 !important ensures:
+      // 1. Browser headers & footers (URL, page numbers, timestamp) are suppressed
+      // 2. The entire paper area is accessible without arbitrary page-level clipping
+      // 3. Document padding defines the safe margins symmetrically on all sides
       styleTag.textContent = `
 @page {
   size: ${size} !important;
-  margin: ${margin} !important;
+  margin: 0 !important;
 }
 @media print {
   *, *::before, *::after {
@@ -8096,10 +8073,12 @@ export default {
     print-color-adjust: exact !important;
   }
   html, body {
-    width: ${containerWidth} !important;
-    max-width: ${containerWidth} !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    box-sizing: border-box !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -14798,9 +14777,10 @@ select.form-control:focus {
   .print-receipt {
     display: block !important;
     width: 100%;
+    max-width: 148mm;
     box-sizing: border-box;
     padding: 3.5mm 5.5mm;
-    margin: 0;
+    margin: 0 auto;
     background: #ffffff !important;
     color: #111111 !important;
     font-family: 'Cairo', 'Fira Code', sans-serif;
@@ -17376,6 +17356,7 @@ select.form-control:focus {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
     padding: 0;
     margin: 0;
@@ -17396,9 +17377,10 @@ select.form-control:focus {
   .print-payment-receipt {
     display: block !important;
     width: 100%;
+    max-width: 148mm;
     box-sizing: border-box;
     padding: 5mm 7mm;
-    margin: 0;
+    margin: 0 auto;
     background: #ffffff !important;
     color: #111111 !important;
     font-family: 'Cairo', 'Fira Code', sans-serif;
