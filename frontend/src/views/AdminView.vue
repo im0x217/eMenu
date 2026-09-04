@@ -21154,16 +21154,6 @@ select.pos-control {
   grid-column: 1 / -1;
 }
 
-.edit-meta-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: #475569;
-  margin-bottom: 6px;
-}
-
 .edit-date-input-group {
   display: flex;
   align-items: center;
@@ -21253,15 +21243,7 @@ select.pos-control {
   border-radius: 6px;
 }
 
-.edit-order-notes-input {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  font-size: 0.88rem;
-}
-
-/* ================= ORDER EDIT META & RE-DATE STYLES ================= */
+/* ================= ORDER EDIT META CARD (LEGACY) ================= */
 .edit-order-meta-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -21270,17 +21252,11 @@ select.pos-control {
   margin-bottom: 16px;
 }
 
-.edit-order-meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  align-items: start;
-}
-
 .edit-order-meta-grid .edit-meta-col.notes-col {
   grid-column: 1 / -1;
 }
 
+/* Authoritative edit-meta-label */
 .edit-meta-label {
   display: flex;
   align-items: center;
@@ -21295,6 +21271,7 @@ select.pos-control {
   stroke: var(--primary-color, #d97706);
 }
 
+/* Authoritative edit-order-notes-input */
 .edit-order-notes-input {
   width: 100%;
   padding: 9px 14px;
@@ -21930,10 +21907,11 @@ select.pos-control {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 16px;
+  align-items: stretch;
 }
 
 .edit-order-card {
-  padding: 16px;
+  padding: 18px;
   border-radius: 14px;
   background: var(--card-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
@@ -21942,19 +21920,50 @@ select.pos-control {
   flex-direction: column;
 }
 
+.edit-order-card.edit-customer-card {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, var(--card-bg, #ffffff) 100%);
+  border-color: rgba(245, 158, 11, 0.18);
+}
+
+/* Card Header — mirrors .pos-card-header pattern */
+.edit-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.edit-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.edit-card-title svg {
+  color: var(--primary-color, #d97706);
+  flex-shrink: 0;
+}
+
+/* Customer Profile Box */
 .edit-selected-customer-box {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: rgba(245, 158, 11, 0.06);
-  border: 1px solid rgba(245, 158, 11, 0.22);
-  border-radius: 10px;
+  border: 1.5px solid rgba(245, 158, 11, 0.22);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
 }
 
 .cust-avatar-md {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
@@ -21964,20 +21973,28 @@ select.pos-control {
   font-size: 1.15rem;
   font-weight: 800;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28);
 }
 
 .edit-cust-details {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   flex-grow: 1;
+  min-width: 0;
+}
+
+.edit-cust-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .edit-cust-name {
   font-size: 1.02rem;
   font-weight: 800;
   color: var(--text-color, #0f172a);
+  line-height: 1.35;
 }
 
 .edit-cust-meta-row {
@@ -21993,24 +22010,63 @@ select.pos-control {
   color: #64748b;
 }
 
+/* Customer Search Input */
 .edit-cust-search-input {
   font-size: 0.88rem;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--input-bg, #f8fafc);
+  border: 1px solid #cbd5e1;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.edit-cust-search-input:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+  outline: none;
+}
+
+/* Meta Details Grid (Card 2) */
 .edit-meta-grid-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  row-gap: 10px;
+  gap: 14px;
+  row-gap: 12px;
 }
 
+.edit-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .edit-order-top-grid {
     grid-template-columns: 1fr;
   }
   .edit-meta-grid-inner {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .edit-order-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  .edit-card-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+  .edit-selected-customer-box {
+    padding: 10px 12px;
+  }
+  .cust-avatar-md {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
+  .edit-cust-name {
+    font-size: 0.95rem;
   }
 }
