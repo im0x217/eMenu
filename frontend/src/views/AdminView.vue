@@ -1560,13 +1560,50 @@
 
                     <!-- Card Action Buttons & Status Selector -->
                     <div class="mob-card-footer-actions">
-                      <div class="d-flex flex-column gap-1">
-                        <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select mob-status-select" :class="'status-' + order.status">
-                          <option value="pending">قيد الانتظار</option>
-                          <option value="ready">جاهز للاستلام</option>
-                          <option value="received">تم الاستلام</option>
-                          <option value="cancelled">ملغي</option>
-                        </select>
+                      <!-- Segmented Icon State Selector -->
+                      <div class="mob-status-selector-wrapper">
+                        <div class="mob-status-segmented" role="group" aria-label="تحديد حالة الطلب">
+                          <button 
+                            type="button" 
+                            class="mob-status-btn pending" 
+                            :class="{ active: (order.status || 'pending') === 'pending' }" 
+                            @click="order.status !== 'pending' && updateOrderStatus(order._id, 'pending')" 
+                            title="قيد الانتظار" 
+                            aria-label="قيد الانتظار"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                          </button>
+                          <button 
+                            type="button" 
+                            class="mob-status-btn ready" 
+                            :class="{ active: order.status === 'ready' }" 
+                            @click="order.status !== 'ready' && updateOrderStatus(order._id, 'ready')" 
+                            title="جاهز للاستلام" 
+                            aria-label="جاهز للاستلام"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                          </button>
+                          <button 
+                            type="button" 
+                            class="mob-status-btn received" 
+                            :class="{ active: order.status === 'received' }" 
+                            @click="order.status !== 'received' && updateOrderStatus(order._id, 'received')" 
+                            title="تم الاستلام" 
+                            aria-label="تم الاستلام"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          </button>
+                          <button 
+                            type="button" 
+                            class="mob-status-btn cancelled" 
+                            :class="{ active: order.status === 'cancelled' }" 
+                            @click="order.status !== 'cancelled' && updateOrderStatus(order._id, 'cancelled')" 
+                            title="إلغاء الطلب" 
+                            aria-label="إلغاء الطلب"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                          </button>
+                        </div>
                         <span v-if="order.status === 'cancelled'" class="cancelled-timer-pill" :class="{ 'is-urgent': getCancelledOrderExpiryInfo(order)?.urgent }" title="سيتم حذف الطلب نهائياً وتلقائياً بعد مرور 24 ساعة من إلغائه">
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           {{ getCancelledOrderExpiryInfo(order)?.text }}
@@ -19409,11 +19446,95 @@ select.pos-control {
     padding-top: 10px;
   }
 
-  .mob-status-select {
-    flex: 1;
-    min-width: 0 !important;
-    height: 40px !important;
-    font-size: 0.84rem !important;
+  .mob-status-selector-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .mob-status-segmented {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 10px;
+    gap: 3px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .mob-status-btn {
+    width: 35px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    position: relative;
+  }
+
+  .mob-status-btn:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+  }
+
+  .mob-status-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.85);
+    color: #475569;
+  }
+
+  .mob-status-btn.pending:hover:not(.active) {
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.12);
+  }
+
+  .mob-status-btn.ready:hover:not(.active) {
+    color: #2563eb;
+    background: rgba(59, 130, 246, 0.12);
+  }
+
+  .mob-status-btn.received:hover:not(.active) {
+    color: #059669;
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .mob-status-btn.cancelled:hover:not(.active) {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .mob-status-btn.active {
+    transform: scale(1.04);
+  }
+
+  .mob-status-btn.pending.active {
+    background: #f59e0b;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+  }
+
+  .mob-status-btn.ready.active {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+  }
+
+  .mob-status-btn.received.active {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+  }
+
+  .mob-status-btn.cancelled.active {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
   }
 
   .mob-action-buttons-group {
