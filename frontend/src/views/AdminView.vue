@@ -3729,7 +3729,7 @@
               </div>
               <div>
                 <h2 class="modal-title">{{ editingChef._id ? 'تعديل بيانات الشيف' : 'إضافة شيف جديد' }}</h2>
-                <span class="modal-subtitle">إدارة وتعيين بيانات الشيف ومتابعة أصنافه المسندة</span>
+                <span class="modal-subtitle text-muted mt-1 d-block">إدارة وتعيين بيانات الشيف ومتابعة أصنافه المسندة</span>
               </div>
             </div>
           </div>
@@ -5188,9 +5188,9 @@
     aria-modal="true"
     aria-labelledby="prod-cust-modal-title"
   >
-    <div class="modal-box glass-panel max-w-2xl product-customers-modal animate-scale-in">
+    <div class="modal-box glass-panel max-w-4xl product-customers-modal animate-scale-in">
       <!-- Modal Header -->
-      <div class="modal-header pb-3 mb-3">
+      <div class="modal-header pb-3 mb-4">
         <div class="modal-title-group">
           <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span class="prod-badge-tag">{{ selectedProductForCustomers.category || 'صنف' }}</span>
@@ -5198,7 +5198,7 @@
               الشيف: {{ selectedProductForCustomers.chefName }}
             </span>
           </div>
-          <h3 id="prod-cust-modal-title" class="modal-title font-bold">
+          <h3 id="prod-cust-modal-title" class="modal-title font-bold text-xl">
             {{ selectedProductForCustomers.name }}
           </h3>
           <span class="modal-subtitle">
@@ -5214,10 +5214,10 @@
       </div>
 
       <!-- KPI Summary Cards Bar -->
-      <div class="prod-cust-kpi-bar mb-3">
+      <div class="prod-cust-kpi-bar mb-4">
         <div class="prod-cust-kpi-item highlight">
           <div class="kpi-icon-wrap" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           </div>
           <div class="kpi-text-wrap">
             <span class="kpi-lbl">إجمالي الكمية المطلوبة</span>
@@ -5257,7 +5257,7 @@
       </div>
 
       <!-- Controls & Search Toolbar -->
-      <div class="prod-cust-toolbar mb-3">
+      <div class="prod-cust-toolbar mb-4">
         <!-- Search Input -->
         <div class="prod-cust-search-wrap">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -5334,7 +5334,7 @@
           <div 
             v-for="(cust, cIdx) in filteredProductCustomersList" 
             :key="cust.customerPhone || cust.customerName || cIdx" 
-            class="prod-cust-card glass-panel mb-2"
+            class="prod-cust-card glass-panel mb-3"
           >
             <div class="prod-cust-card-header">
               <div class="cust-profile-side">
@@ -5377,8 +5377,8 @@
             </div>
 
             <!-- Customer Orders Breakdown Chips -->
-            <div class="cust-orders-list-row pt-2 mt-2 border-top">
-              <span class="cust-orders-title text-small text-muted mb-1 d-block">الطلبات ({{ cust.orders.length }}):</span>
+            <div class="cust-orders-list-row pt-3 mt-3 border-top">
+              <span class="cust-orders-title text-small text-muted mb-2 d-block">الطلبات المسجلة ({{ cust.orders.length }}):</span>
               <div class="d-flex flex-wrap gap-2">
                 <div 
                   v-for="ord in cust.orders" 
@@ -5454,14 +5454,14 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="modal-footer pt-3 mt-3 border-top d-flex justify-content-between align-items-center">
+      <div class="modal-footer pt-4 mt-4 border-top d-flex justify-content-between align-items-center">
         <span class="text-muted text-small">
           إجمالي المسجل: <strong class="text-mono text-dark">{{ productCustomersData.totalQty }} قطعة</strong> في <strong class="text-mono text-dark">{{ productCustomersData.ordersCount }} طلب</strong>
         </span>
         <button 
           type="button" 
           @click="closeProductCustomersModal" 
-          class="btn btn-primary btn-sm"
+          class="btn btn-primary px-4"
         >
           <span>إغلاق</span>
         </button>
@@ -23042,205 +23042,299 @@ select.pos-control {
 }
 
 .product-customers-modal {
-  max-width: 760px;
-  width: 95vw;
-  max-height: 90vh;
+  max-width: 940px !important;
+  width: 94vw !important;
+  max-height: 92vh;
+  padding: 32px 36px;
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.22);
+}
+
+@media (max-width: 768px) {
+  .product-customers-modal {
+    padding: 20px 16px;
+    width: 96vw !important;
+    border-radius: 16px;
+  }
+}
+
+.product-customers-modal .modal-header {
+  border-bottom: 1px solid #edf2f7 !important;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.product-customers-modal .modal-title {
+  font-size: 1.45rem;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.product-customers-modal .modal-subtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.product-customers-modal .modal-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 1.1rem;
 }
 
 .prod-badge-tag {
   background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-  font-size: 0.72rem;
+  color: #b45309;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 8px;
   font-family: 'Cairo', sans-serif;
+  letter-spacing: 0.01em;
 }
 
 .chef-badge-tag {
-  background: rgba(30, 58, 95, 0.1);
+  background: rgba(30, 58, 95, 0.08);
   color: #1e3a5f;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 8px;
   font-family: 'Cairo', sans-serif;
 }
 
 .prod-cust-kpi-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 820px) {
   .prod-cust-kpi-bar {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .prod-cust-kpi-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
 .prod-cust-kpi-item {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.prod-cust-kpi-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  border-color: #cbd5e1;
 }
 
 .prod-cust-kpi-item.highlight {
-  background: rgba(245, 158, 11, 0.07);
-  border-color: rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(245, 158, 11, 0.14));
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .prod-cust-kpi-item .kpi-icon-wrap {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #475569;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .prod-cust-kpi-item.highlight .kpi-icon-wrap {
+  background: #ffffff;
   color: #d97706;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
 }
 
 .prod-cust-kpi-item .kpi-text-wrap {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 3px;
 }
 
 .prod-cust-kpi-item .kpi-lbl {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: #64748b;
   font-weight: 600;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 .prod-cust-kpi-item .kpi-val {
-  font-size: 1.05rem;
+  font-size: 1.28rem;
   font-weight: 800;
   color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
 }
 
 .prod-cust-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
 }
 
 .prod-cust-search-wrap {
   position: relative;
   flex: 1;
-  min-width: 220px;
+  min-width: 260px;
 }
 
 .prod-cust-search-wrap .search-icon {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 14px;
   transform: translateY(-50%);
   color: #94a3b8;
   pointer-events: none;
 }
 
 .prod-cust-search-wrap .search-input {
-  padding-right: 36px;
-  padding-left: 32px;
-  border-radius: 8px;
-  height: 38px;
+  padding-right: 42px;
+  padding-left: 36px;
+  border-radius: 12px;
+  height: 44px;
+  font-size: 0.92rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.prod-cust-search-wrap .search-input:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  outline: none;
 }
 
 .prod-cust-search-wrap .btn-clear-search {
   position: absolute;
   top: 50%;
-  left: 8px;
+  left: 10px;
   transform: translateY(-50%);
-  background: none;
+  background: #f1f5f9;
   border: none;
-  color: #94a3b8;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  color: #64748b;
   cursor: pointer;
-  padding: 4px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.prod-cust-search-wrap .btn-clear-search:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .prod-cust-view-switcher {
   display: inline-flex;
   background: #f1f5f9;
-  padding: 3px;
-  border-radius: 8px;
-  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  gap: 6px;
 }
 
 .switcher-pill-btn {
   border: none;
   background: transparent;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   font-weight: 700;
   color: #64748b;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.switcher-pill-btn:hover:not(.active) {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .switcher-pill-btn.active {
   background: #ffffff;
   color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .prod-cust-modal-body {
-  max-height: 52vh;
+  max-height: 65vh;
   overflow-y: auto;
+  padding: 4px 6px 4px 2px;
 }
 
 .prod-cust-card {
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 22px 26px;
   background: #ffffff;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .prod-cust-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
 }
 
 .prod-cust-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
 .cust-profile-side {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   min-width: 0;
 }
 
 .cust-avatar-circle {
-  width: 38px;
-  height: 38px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
@@ -23248,40 +23342,56 @@ select.pos-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.28);
 }
 
 .shop-theme-shop2 .cust-avatar-circle {
   background: linear-gradient(135deg, #1e3a5f, #0f172a);
+  box-shadow: 0 3px 8px rgba(30, 58, 95, 0.28);
+}
+
+.cust-meta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cust-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
 }
 
 .cust-phone-actions-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 2px;
+  gap: 10px;
 }
 
 .cust-phone {
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   color: #64748b;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .cust-action-buttons {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .cust-icon-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .cust-icon-btn.whatsapp {
@@ -23296,11 +23406,13 @@ select.pos-control {
 
 .cust-icon-btn:hover {
   transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .cust-icon-btn.xs {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
 }
 
 .cust-qty-summary-side {
@@ -23308,40 +23420,71 @@ select.pos-control {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 6px;
 }
 
 .cust-qty-badge {
   background: rgba(245, 158, 11, 0.12);
   color: #b45309;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.95rem;
+  padding: 6px 18px;
+  border-radius: 24px;
+  font-size: 1.15rem;
   font-weight: 800;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
 }
 
 .shop-theme-shop2 .cust-qty-badge {
   background: rgba(30, 58, 95, 0.12);
   color: #1e3a5f;
-  border-color: rgba(30, 58, 95, 0.25);
+  border-color: rgba(30, 58, 95, 0.28);
+}
+
+.cust-total-sales {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #059669;
+  font-variant-numeric: tabular-nums;
+}
+
+.cust-orders-list-row {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.cust-orders-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 10px;
 }
 
 .cust-order-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 0.78rem;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.86rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.cust-order-chip:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .chip-status-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #94a3b8;
+  flex-shrink: 0;
 }
 
 .chip-status-dot.pending {
@@ -23361,23 +23504,38 @@ select.pos-control {
   display: inline-flex;
 }
 
+.prod-cust-orders-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 .prod-cust-orders-table th {
-  font-size: 0.8rem;
-  padding: 8px 10px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 14px 18px;
   background: #f8fafc;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .prod-cust-orders-table td {
-  padding: 8px 10px;
-  font-size: 0.85rem;
+  padding: 14px 18px;
+  font-size: 0.92rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.prod-cust-orders-table tr:hover td {
+  background: #f8fafc;
 }
 
 .status-pill-badge {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 4px 12px;
+  border-radius: 16px;
 }
 
 .status-pill-badge.pending {
@@ -23393,6 +23551,20 @@ select.pos-control {
 .status-pill-badge.received {
   background: rgba(16, 185, 129, 0.12);
   color: #047857;
+}
+
+.product-customers-modal .modal-footer {
+  border-top: 1px solid #edf2f7 !important;
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+.product-customers-modal .modal-footer .btn-primary {
+  min-height: 42px;
+  padding: 0 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 10px;
 }
 
 </style>
