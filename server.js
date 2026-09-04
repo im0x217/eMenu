@@ -1536,8 +1536,15 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       }));
 
     // Actionable Insights: Inactive Customers (not active in selected period)
+    const inactiveFilterDate = (startDateObj && startDateObj.getTime() > 0) 
+      ? startDateObj 
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const inactiveCustsRaw = await customersCollection.find({
-      lastActive: { $lt: startDate }
+      $or: [
+        { lastActive: { $lt: inactiveFilterDate } },
+        { lastActive: { $exists: false } },
+        { lastActive: null }
+      ]
     }).sort({ lastActive: -1 }).limit(10).toArray();
     const inactiveCustomers = inactiveCustsRaw.map(c => ({
       phone: c.phone,

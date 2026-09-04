@@ -7981,9 +7981,14 @@ export default {
           analyticsData.topFavorites = data.topFavorites || [];
           analyticsData.inactiveCustomers = data.inactiveCustomers || [];
           analyticsData.lowPerformingProducts = data.lowPerformingProducts || [];
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.error('Failed to fetch analytics:', errData);
+          toast.show(errData.error || 'فشل تحميل بيانات التحليلات', 'danger');
         }
       } catch (err) {
-        console.error(err);
+        console.error('Analytics fetch error:', err);
+        toast.show('حدث خطأ أثناء تحميل بيانات التحليلات', 'danger');
       } finally {
         analyticsLoading.value = false;
       }
