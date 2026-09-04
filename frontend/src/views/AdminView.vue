@@ -2139,468 +2139,472 @@
       </div>
     </div>
 
-    <!-- Order Edit Modal (Refactored Complete UI/UX) -->
+    <!-- Order Edit Modal (Spacious Fast-POS Architecture) -->
     <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in" @click.self="orderEditModalOpen = false">
-      <div class="modal-content glass-panel order-edit-modal-content">
-        <!-- Modal Header with Badges -->
-        <div class="modal-header edit-modal-header">
-          <div class="edit-modal-title-group">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <span class="edit-modal-main-title">تعديل محتويات الطلب</span>
-              <span class="edit-order-id-badge text-mono font-bold">#{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</span>
-              <span class="pos-cust-status-badge" :class="editingOrder.status === 'ready' ? 'status-ready' : (editingOrder.status === 'received' ? 'status-received' : (editingOrder.status === 'cancelled' ? 'status-cancelled' : 'status-pending'))">
-                {{ editingOrder.status === 'ready' ? 'جاهز للاستلام' : (editingOrder.status === 'received' ? 'تم الاستلام' : (editingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار')) }}
-              </span>
-              <span class="edit-price-mode-badge" :class="editingOrder.priceMode === 'bulk' ? 'is-bulk' : 'is-regular'">
-                {{ editingOrder.priceMode === 'bulk' ? 'تسعير جملة' : 'تسعير مفرد' }}
-              </span>
+      <div class="modal-content glass-panel fast-order-modal">
+        
+        <!-- Modal Header -->
+        <div class="fast-order-header">
+          <div class="fast-order-title-group">
+            <div class="new-order-icon" style="background: rgba(245, 158, 11, 0.16); color: #d97706;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </div>
+            <div>
+              <div class="fast-order-title-row">
+                <h3>تعديل محتويات الطلب</h3>
+                <span class="edit-order-id-badge text-mono font-bold">#{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</span>
+                <span class="pos-cust-status-badge" :class="editingOrder.status === 'ready' ? 'status-ready' : (editingOrder.status === 'received' ? 'status-received' : (editingOrder.status === 'cancelled' ? 'status-cancelled' : 'status-pending'))">
+                  {{ editingOrder.status === 'ready' ? 'جاهز للاستلام' : (editingOrder.status === 'received' ? 'تم الاستلام' : (editingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار')) }}
+                </span>
+              </div>
+              <p class="fast-order-subtitle">تعديل بيانات العميل، موعد الاستلام، وحالة الطلب وإدارة قائمة الأصناف والكميات</p>
             </div>
           </div>
+
+          <!-- Price Mode Segmented Switch -->
+          <div class="fast-order-price-mode-switch">
+            <button 
+              type="button" 
+              class="price-mode-pill" 
+              :class="{ active: editingOrder.priceMode === 'bulk' }" 
+              @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <span>تسعير جملة</span>
+            </button>
+            <button 
+              type="button" 
+              class="price-mode-pill" 
+              :class="{ active: editingOrder.priceMode === 'regular' }" 
+              @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <span>تسعير مفرد</span>
+            </button>
+          </div>
+
           <button type="button" @click="orderEditModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
 
-        <form @submit.prevent="saveOrder" class="edit-order-form-body">
-          <!-- Top Grid: Customer Profile Hub + Scheduling & Order Details -->
-          <div class="edit-order-top-grid mb-4">
+        <form @submit.prevent="saveOrder" class="fast-order-form-body">
+          <div class="fast-order-grid-layout">
             
-            <!-- Card 1: Customer Profile Hub -->
-            <div class="edit-order-card edit-customer-card glass-panel">
-              <div class="edit-card-header">
-                <div class="edit-card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  <span>العميل المرتبط بالطلب</span>
-                </div>
-                <span class="pos-cust-status-badge" :class="matchedEditingCustomer ? 'is-registered' : 'is-new'">
-                  {{ matchedEditingCustomer ? 'عميل مسجل' : 'عميل محدد' }}
-                </span>
-              </div>
-
-              <!-- Active Customer Summary Box -->
-              <div class="edit-selected-customer-box">
-                <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
-                <div class="edit-cust-details">
-                  <div class="edit-cust-name-row">
-                    <span class="edit-cust-name">{{ editingOrder.customerName || 'عميل غير محدد' }}</span>
+            <!-- RIGHT COLUMN: Customer & Order Scheduling (RTL First, 430px wide) -->
+            <div class="fast-order-side-col">
+              
+              <!-- Customer Section Card -->
+              <div class="pos-section-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>بيانات العميل</span>
                   </div>
-                  <div class="edit-cust-meta-row">
-                    <span class="edit-cust-phone text-mono" dir="ltr">{{ editingOrder.customerPhone || 'لا يوجد هاتف' }}</span>
-                    <span v-if="matchedEditingCustomer" class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
-                    <span v-if="matchedEditingCustomer && matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }} دين</span>
-                  </div>
+                  <span class="pos-cust-status-badge" :class="matchedEditingCustomer ? 'is-registered' : 'is-new'">
+                    {{ matchedEditingCustomer ? 'عميل مسجل' : 'عميل محدد' }}
+                  </span>
                 </div>
 
-                <!-- 1-Tap WhatsApp & Call Quick Action Buttons (Habit #16) -->
-                <div v-if="editingOrder.customerPhone" class="edit-cust-quick-actions">
-                  <a 
-                    :href="getLibyanWhatsAppUrl(editingOrder.customerPhone)" 
-                    target="_blank" 
-                    class="edit-action-circle edit-whatsapp-circle" 
-                    title="مراسلة العميل عبر واتساب (+218)"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                  </a>
-                  <a 
-                    :href="'tel:' + editingOrder.customerPhone" 
-                    class="edit-action-circle edit-call-circle" 
-                    title="اتصال هاتفي بالعميل"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                  </a>
-                </div>
-              </div>
-
-              <!-- Customer Search Autocomplete (Selection Only from Suggestions) -->
-              <div class="customer-search-autocomplete-wrapper position-relative mt-3">
-                <label class="edit-sub-label mb-1">
-                  <span>تغيير أو إعادة تعيين العميل:</span>
-                </label>
-                <div class="search-input-wrapper">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <input 
-                    v-model="editOrderCustomerSearch" 
-                    type="text" 
-                    class="form-control search-input edit-cust-search-input" 
-                    placeholder="ابحث بالاسم أو الهاتف لاختيار وتعيين عميل آخر من السجل…" 
-                    @focus="showEditOrderCustomerSuggestions = true"
-                    @click="showEditOrderCustomerSuggestions = true"
-                    @blur="closeEditOrderCustomerSuggestionsWithDelay"
-                    @input="showEditOrderCustomerSuggestions = true; highlightedEditCustomerIndex = 0"
-                    @keydown.esc.prevent="showEditOrderCustomerSuggestions = false"
-                    @keydown.tab="showEditOrderCustomerSuggestions = false"
-                    @keydown.down.prevent="navigateEditCustomerSuggestions(1)"
-                    @keydown.up.prevent="navigateEditCustomerSuggestions(-1)"
-                    @keydown.enter.prevent="selectHighlightedEditCustomerOrNext"
-                  />
-                  <button v-if="editOrderCustomerSearch" type="button" @click="editOrderCustomerSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
-                </div>
-
-                <!-- Dropdown Suggestions -->
-                <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
-                  <div 
-                    v-for="(cust, cIdx) in filteredEditOrderCustomers" 
-                    :key="cust._id" 
-                    class="suggestion-item customer-suggestion-item"
-                    :class="{ highlighted: cIdx === highlightedEditCustomerIndex }"
-                    @mousedown="selectCustomerForEditOrder(cust)"
-                    @mouseenter="highlightedEditCustomerIndex = cIdx"
-                  >
-                    <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
-                    <div class="cust-info-group">
-                      <span class="cust-sugg-name">{{ cust.name }}</span>
-                      <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                <!-- Current Selected Customer Profile Box -->
+                <div class="edit-selected-customer-box">
+                  <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
+                  <div class="edit-cust-details">
+                    <div class="edit-cust-name-row">
+                      <span class="edit-cust-name">{{ editingOrder.customerName || 'عميل غير محدد' }}</span>
                     </div>
-                    <div class="cust-badge-stats">
-                      <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
-                      <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(cust.outstandingBalance) }}</span>
+                    <div class="edit-cust-meta-row">
+                      <span class="edit-cust-phone text-mono" dir="ltr">{{ editingOrder.customerPhone || 'لا يوجد هاتف' }}</span>
+                      <span v-if="matchedEditingCustomer" class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
+                      <span v-if="matchedEditingCustomer && matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }} دين</span>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            <!-- Card 2: Order Scheduling, Status & Pricing Details -->
-            <div class="edit-order-card edit-meta-card glass-panel">
-              <div class="edit-card-header">
-                <div class="edit-card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>موعد وتفاصيل الطلب</span>
-                </div>
-              </div>
-
-              <div class="edit-meta-grid-inner">
-                <!-- Delivery Date (Re-Date with 50/50 Dual Shortcuts - Habit #10) -->
-                <div class="edit-meta-col delivery-date-col">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label class="edit-meta-label mb-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      <span>تاريخ الاستلام</span>
-                    </label>
-                    <button v-if="editingOrder.deliveryDate" type="button" class="btn-clear-date-mini" @click="clearEditOrderDate" title="إلغاء الموعد">مسح</button>
-                  </div>
-
-                  <!-- Date Picker Trigger & Popover -->
-                  <div class="position-relative">
-                    <button 
-                      type="button" 
-                      class="form-control pos-control btn-standard-datepicker-trigger" 
-                      :class="{ active: editOrderDatePickerOpen }"
-                      @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
+                  <!-- 1-Tap WhatsApp & Call Quick Action Buttons (Habit #16) -->
+                  <div v-if="editingOrder.customerPhone" class="edit-cust-quick-actions">
+                    <a 
+                      :href="getLibyanWhatsAppUrl(editingOrder.customerPhone)" 
+                      target="_blank" 
+                      class="edit-action-circle edit-whatsapp-circle" 
+                      title="مراسلة العميل عبر واتساب (+218)"
                     >
-                      <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    </button>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    </a>
+                    <a 
+                      :href="'tel:' + editingOrder.customerPhone" 
+                      class="edit-action-circle edit-call-circle" 
+                      title="اتصال هاتفي بالعميل"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </a>
+                  </div>
+                </div>
 
-                    <!-- Popover Calendar -->
-                    <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
-                      <div class="datepicker-header">
-                        <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
-                        <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
-                        <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
+                <!-- Customer Search Autocomplete (Selection Only from Suggestions) -->
+                <div class="customer-search-autocomplete-wrapper position-relative mt-3">
+                  <div class="pos-field-header-row mb-1">
+                    <label class="edit-sub-label">تغيير أو تعيين عميل آخر من السجل:</label>
+                  </div>
+                  <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input 
+                      v-model="editOrderCustomerSearch" 
+                      type="text" 
+                      class="form-control search-input edit-cust-search-input" 
+                      placeholder="ابحث بالاسم أو الهاتف لتغيير عميل الطلب…" 
+                      @focus="showEditOrderCustomerSuggestions = true"
+                      @click="showEditOrderCustomerSuggestions = true"
+                      @blur="closeEditOrderCustomerSuggestionsWithDelay"
+                      @input="showEditOrderCustomerSuggestions = true; highlightedEditCustomerIndex = 0"
+                      @keydown.esc.prevent="showEditOrderCustomerSuggestions = false"
+                      @keydown.tab="showEditOrderCustomerSuggestions = false"
+                      @keydown.down.prevent="navigateEditCustomerSuggestions(1)"
+                      @keydown.up.prevent="navigateEditCustomerSuggestions(-1)"
+                      @keydown.enter.prevent="selectHighlightedEditCustomerOrNext"
+                    />
+                    <button v-if="editOrderCustomerSearch" type="button" @click="editOrderCustomerSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
+                  </div>
+
+                  <!-- Dropdown Suggestions -->
+                  <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
+                    <div 
+                      v-for="(cust, cIdx) in filteredEditOrderCustomers" 
+                      :key="cust._id" 
+                      class="suggestion-item customer-suggestion-item"
+                      :class="{ highlighted: cIdx === highlightedEditCustomerIndex }"
+                      @mousedown="selectCustomerForEditOrder(cust)"
+                      @mouseenter="highlightedEditCustomerIndex = cIdx"
+                    >
+                      <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
+                      <div class="cust-info-group">
+                        <span class="cust-sugg-name">{{ cust.name }}</span>
+                        <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                      </div>
+                      <div class="cust-badge-stats">
+                        <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
+                        <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(cust.outstandingBalance) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Delivery & Status Card -->
+              <div class="pos-section-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>الموعد وحالة الطلب</span>
+                  </div>
+                </div>
+
+                <div class="pos-fields-stack">
+                  <!-- Row: Delivery Date & Order Status -->
+                  <div class="pos-input-grid">
+                    <!-- Delivery Date (Re-Date with 50/50 Dual Shortcuts - Habit #10) -->
+                    <div class="pos-field">
+                      <div class="pos-field-header-row">
+                        <label class="pos-label mb-0">تاريخ الاستلام</label>
+                        <button v-if="editingOrder.deliveryDate" type="button" class="btn-clear-date-mini" @click="clearEditOrderDate" title="إلغاء الموعد">مسح</button>
                       </div>
 
-                      <div class="dp-weekdays">
-                        <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                      </div>
-
-                      <div class="dp-days-grid">
+                      <div class="position-relative">
                         <button 
                           type="button" 
-                          v-for="(dayObj, idx) in editOrderCalendarDays" 
-                          :key="idx" 
-                          class="dp-day-cell"
-                          :class="{ 
-                            'other-month': !dayObj.inMonth,
-                            'is-today': dayObj.isToday,
-                            'is-selected': editingOrder.deliveryDate === dayObj.dateStr
-                          }"
-                          @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
+                          class="form-control pos-control btn-standard-datepicker-trigger" 
+                          :class="{ active: editOrderDatePickerOpen }"
+                          @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
                         >
-                          {{ dayObj.dayNum }}
+                          <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        </button>
+
+                        <!-- Popover Calendar -->
+                        <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
+                          <div class="datepicker-header">
+                            <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                            <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
+                            <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
+                          </div>
+
+                          <div class="dp-weekdays">
+                            <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                          </div>
+
+                          <div class="dp-days-grid">
+                            <button 
+                              type="button" 
+                              v-for="(dayObj, idx) in editOrderCalendarDays" 
+                              :key="idx" 
+                              class="dp-day-cell"
+                              :class="{ 
+                                'other-month': !dayObj.inMonth,
+                                'is-today': dayObj.isToday,
+                                'is-selected': editingOrder.deliveryDate === dayObj.dateStr
+                              }"
+                              @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
+                            >
+                              {{ dayObj.dayNum }}
+                            </button>
+                          </div>
+
+                          <div class="datepicker-footer">
+                            <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Habit #10: Touch-Friendly 50/50 Dual Shortcut Split Buttons -->
+                      <div class="pos-date-shortcuts-split">
+                        <button 
+                          type="button" 
+                          class="pos-date-shortcut-btn" 
+                          :class="{ active: isEditOrderDateRelative(0) }" 
+                          @click="setEditOrderDateShortcut(0)" 
+                          title="تحديد تاريخ اليوم"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <span>اليوم</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          class="pos-date-shortcut-btn" 
+                          :class="{ active: isEditOrderDateRelative(1) }" 
+                          @click="setEditOrderDateShortcut(1)" 
+                          title="تحديد تاريخ الغد"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                          <span>غداً</span>
                         </button>
                       </div>
+                    </div>
 
-                      <div class="datepicker-footer">
-                        <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
-                      </div>
+                    <!-- Order Status Selector -->
+                    <div class="pos-field">
+                      <label class="pos-label">حالة الطلب</label>
+                      <select v-model="editingOrder.status" class="form-control pos-control edit-status-select">
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="ready">جاهز للاستلام</option>
+                        <option value="received">تم الاستلام</option>
+                        <option value="cancelled">ملغي</option>
+                      </select>
                     </div>
                   </div>
 
-                  <!-- Habit #10: Touch-Friendly 50/50 Dual Shortcut Split Buttons -->
-                  <div class="pos-date-shortcuts-split mt-2">
-                    <button 
-                      type="button" 
-                      class="pos-date-shortcut-btn" 
-                      :class="{ active: isEditOrderDateRelative(0) }" 
-                      @click="setEditOrderDateShortcut(0)" 
-                      title="تحديد تاريخ اليوم"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      <span>اليوم</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="pos-date-shortcut-btn" 
-                      :class="{ active: isEditOrderDateRelative(1) }" 
-                      @click="setEditOrderDateShortcut(1)" 
-                      title="تحديد تاريخ الغد"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                      <span>غداً</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Order Status Selector -->
-                <div class="edit-meta-col status-col">
-                  <label class="edit-meta-label mb-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>حالة الطلب</span>
-                  </label>
-                  <select v-model="editingOrder.status" class="form-control pos-control edit-status-select">
-                    <option value="pending">قيد الانتظار</option>
-                    <option value="ready">جاهز للاستلام</option>
-                    <option value="received">تم الاستلام</option>
-                    <option value="cancelled">ملغي</option>
-                  </select>
-
-                  <!-- Price Mode Switch -->
-                  <div class="mt-2">
-                    <label class="edit-meta-label mb-1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                      <span>نوع التسعير</span>
-                    </label>
-                    <div class="fast-order-price-mode-switch" style="margin-top: 0;">
-                      <button 
-                        type="button" 
-                        class="price-mode-pill" 
-                        :class="{ active: editingOrder.priceMode === 'bulk' }" 
-                        @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                        <span>تسعير جملة</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="price-mode-pill" 
-                        :class="{ active: editingOrder.priceMode === 'regular' }" 
-                        @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                        <span>تسعير مفرد</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Order Notes -->
-                <div class="edit-meta-col notes-col" style="grid-column: 1 / -1;">
-                  <label class="edit-meta-label mb-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span>ملاحظات الطلب العامة</span>
-                  </label>
-                  <input 
-                    v-model="editingOrder.notes" 
-                    type="text" 
-                    class="form-control edit-order-notes-input" 
-                    placeholder="أدخل أي ملاحظات خاصة بالطلب أو مواعيد تسليم إضافية…" 
-                  />
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Items Management Section -->
-          <div class="edit-order-items-card glass-panel mb-4">
-            <div class="order-items-header mb-3">
-              <div class="d-flex align-items-center gap-2">
-                <span class="section-title">إدارة محتويات الطلب</span>
-                <span class="toolbar-badge">{{ formatArabicPlural(editingOrder.items.length, 'product') }}</span>
-              </div>
-
-              <!-- Product Search Autocomplete (Supports continuous adding) -->
-              <div class="product-search-autocomplete-container position-relative flex-grow-1">
-                <div class="search-input-wrapper">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <input 
-                    v-model="productSearchQuery" 
-                    type="text" 
-                    class="form-control search-input" 
-                    placeholder="ابحث باسم المنتج أو التصنيف لإضافته مباشرة للطلب…" 
-                    @focus="showSuggestions = true" 
-                    @click="showSuggestions = true" 
-                    @keydown.esc.prevent="showSuggestions = false" 
-                    @keydown.tab="showSuggestions = false"
-                    @blur="closeSuggestionsWithDelay"
-                    @keydown.down.prevent="navigateSuggestions(1)"
-                    @keydown.up.prevent="navigateSuggestions(-1)"
-                    @keydown.enter.prevent="selectHighlightedSuggestion"
-                  />
-                  <button v-if="productSearchQuery" type="button" @click="productSearchQuery = ''" class="btn-clear-search" tabindex="-1">&times;</button>
-                </div>
-
-                <!-- Dropdown Suggestions -->
-                <div v-if="showSuggestions && filteredSuggestions.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
-                  <div 
-                    v-for="(prod, index) in filteredSuggestions" 
-                    :key="prod._id" 
-                    class="suggestion-item"
-                    :class="{ 
-                      highlighted: index === highlightedSuggestionIndex,
-                      'is-in-cart': getEditOrderItemQty(prod._id) > 0 
-                    }"
-                    @mousedown="addSelectedProduct(prod)"
-                  >
-                    <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
-                    <div class="suggestion-info">
-                      <div class="suggestion-name-row">
-                        <span class="suggestion-name">{{ prod.name }}</span>
-                        <span v-if="getEditOrderItemQty(prod._id) > 0" class="sugg-in-cart-badge">
-                          في الطلب ×{{ getEditOrderItemQty(prod._id) }}
-                        </span>
-                      </div>
-                      <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
-                    </div>
-                    <div class="suggestion-pricing">
-                      <span class="suggestion-price text-mono font-bold">
-                        {{ formatCurrency(editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
-                      </span>
-                      <span class="btn-quick-add" :class="{ 'btn-quick-add-active': getEditOrderItemQty(prod._id) > 0 }">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        {{ getEditOrderItemQty(prod._id) > 0 ? '+1' : 'إضافة' }}
-                      </span>
-                    </div>
+                  <!-- Order Notes -->
+                  <div class="pos-field">
+                    <label class="pos-label">ملاحظات الطلب العامة</label>
+                    <input 
+                      v-model="editingOrder.notes" 
+                      type="text" 
+                      class="form-control pos-control edit-order-notes-input" 
+                      placeholder="أي ملاحظات خاصة بموعد الاستلام أو تعليمات التسليم…" 
+                    />
                   </div>
                 </div>
               </div>
+
             </div>
 
-            <!-- Items Table with Modern Steppers and Per-Item Notes -->
-            <div class="edit-order-table-container">
-              <table class="edit-order-table">
-                <thead>
-                  <tr>
-                    <th>اسم المنتج وملاحظات التجهيز</th>
-                    <th style="width: 140px; text-align: center;">الكمية</th>
-                    <th style="width: 130px; text-align: center;">سعر الوحدة</th>
-                    <th style="width: 120px; text-align: center;">الإجمالي</th>
-                    <th style="width: 48px; text-align: center;"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="editingOrder.items.length === 0">
-                    <td colspan="5" class="pos-empty-cart-msg">
-                      <div class="pos-empty-cart-inner py-4 text-center">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                        <span class="d-block mt-2 text-muted">لم يتم تحديد أصناف لهذا الطلب. ابحث عن المنتجات أعلاه لإضافتها.</span>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-for="(item, idx) in editingOrder.items" :key="'edit-item-'+idx">
-                    <td>
-                      <div class="edit-item-name-cell">
-                        <span v-if="item.productId" class="db-product-name font-bold" title="منتج مسجل بالمنظومة">
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"/></svg>
-                          {{ item.name }}
-                        </span>
-                        <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
-                        
-                        <!-- Editable Per-Item Note Input Field -->
-                        <input 
-                          v-model="item.notes" 
-                          type="text" 
-                          class="form-control form-control-sm item-note-input mt-1" 
-                          placeholder="ملاحظة خاصة بالصنف (اختياري)…" 
-                        />
-                      </div>
-                    </td>
-                    <td style="width: 140px;">
-                      <div class="qty-stepper-control">
-                        <button type="button" class="stepper-btn btn-minus" @click="adjustEditOrderItemQty(item, -1)" tabindex="-1">-</button>
-                        <input 
-                          v-model.number="item.quantity" 
-                          type="number" 
-                          :step="item.allowFloat ? 0.25 : 1" 
-                          :min="item.allowFloat ? 0.25 : 1" 
-                          class="form-control stepper-input text-mono text-center" 
-                          placeholder="الكمية" 
-                          required 
-                          @input="recalcOrderTotal" 
-                          @change="recalcOrderTotal" 
-                          @keydown.up.prevent="adjustEditOrderItemQty(item, 1)" 
-                          @keydown.down.prevent="adjustEditOrderItemQty(item, -1)" 
-                          @keydown.delete.prevent="removeOrderItem(idx)" 
-                        />
-                        <button type="button" class="stepper-btn btn-plus" @click="adjustEditOrderItemQty(item, 1)" tabindex="-1">+</button>
-                      </div>
-                    </td>
-                    <td style="width: 130px;">
-                      <div class="edit-price-input-wrapper">
-                        <input 
-                          v-model.number="item.price" 
-                          type="number" 
-                          step="0.01" 
-                          min="0" 
-                          class="form-control edit-price-input text-mono text-center" 
-                          placeholder="السعر" 
-                          required 
-                          @input="recalcOrderTotal" 
-                          @change="recalcOrderTotal" 
-                        />
-                        <span class="currency-label">د.ل</span>
-                      </div>
-                    </td>
-                    <td class="text-bold text-dark text-center text-mono font-bold" style="width: 120px;">
-                      {{ formatCurrency(item.quantity * item.price) }}
-                    </td>
-                    <td style="width: 48px; text-align: center;">
-                      <button 
-                        type="button" 
-                        @click="removeOrderItem(idx)" 
-                        class="btn-item-delete" 
-                        :disabled="editingOrder.items.length <= 1" 
-                        title="حذف الصنف من الطلب"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Modal Footer: Summary & Actions Bar -->
-          <div class="fast-order-modal-footer edit-order-modal-footer">
-            <div class="fast-order-totals-summary">
-              <div class="total-summary-label">إجمالي قيمة الطلب</div>
-              <div class="total-summary-val-group">
-                <span class="total-summary-val text-mono">{{ formatCurrency(editingOrder.totalPrice) }}</span>
-                <span class="total-summary-count text-muted">({{ editingOrder.items.length }} أصناف • الكمية: {{ editingOrder.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0) }})</span>
-              </div>
-            </div>
-
-            <div class="fast-order-footer-actions">
-              <button 
-                type="button" 
-                class="btn btn-outline edit-btn-print" 
-                @click="printEditingOrder" 
-                title="طباعة إيصال الطلب"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span>طباعة الإيصال</span>
-              </button>
-
-              <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="loading">إلغاء</button>
+            <!-- LEFT COLUMN: Selected Items & Catalog Search (RTL Second, 1fr) -->
+            <div class="fast-order-main-col">
               
-              <button type="submit" class="btn btn-primary pos-btn-submit" :disabled="loading || editingOrder.items.length === 0 || !editingOrder.customerName || !editingOrder.customerPhone" title="حفظ وتحديث الطلب">
-                <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
-                <span>{{ loading ? 'جاري الحفظ…' : 'حفظ التعديلات' }}</span>
-              </button>
+              <!-- Items Management Card -->
+              <div class="pos-section-card pos-items-card">
+                <div class="pos-card-header">
+                  <div class="pos-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    <span>أصناف ومحتويات الطلب</span>
+                  </div>
+                  <span class="toolbar-badge">{{ formatArabicPlural(editingOrder.items.length, 'product') }}</span>
+                </div>
+
+                <!-- Product Quick Search Toolbar (Supports continuous addition) -->
+                <div class="product-picker-toolbar mb-3">
+                  <div class="product-search-autocomplete-container position-relative flex-grow-1">
+                    <div class="search-input-wrapper">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <input 
+                        v-model="productSearchQuery" 
+                        type="text" 
+                        class="form-control search-input" 
+                        placeholder="ابحث باسم المنتج أو التصنيف لإضافته مباشرة للطلب…" 
+                        @focus="showSuggestions = true" 
+                        @click="showSuggestions = true" 
+                        @keydown.esc.prevent="showSuggestions = false" 
+                        @keydown.tab="showSuggestions = false"
+                        @blur="closeSuggestionsWithDelay"
+                        @keydown.down.prevent="navigateSuggestions(1)"
+                        @keydown.up.prevent="navigateSuggestions(-1)"
+                        @keydown.enter.prevent="selectHighlightedSuggestion"
+                      />
+                      <button v-if="productSearchQuery" type="button" @click="productSearchQuery = ''" class="btn-clear-search" tabindex="-1">&times;</button>
+                    </div>
+
+                    <!-- Suggestions Dropdown -->
+                    <div v-if="showSuggestions && filteredSuggestions.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
+                      <div 
+                        v-for="(prod, index) in filteredSuggestions" 
+                        :key="prod._id" 
+                        class="suggestion-item"
+                        :class="{ 
+                          highlighted: index === highlightedSuggestionIndex,
+                          'is-in-cart': getEditOrderItemQty(prod._id) > 0 
+                        }"
+                        @mousedown="addSelectedProduct(prod)"
+                      >
+                        <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
+                        <div class="suggestion-info">
+                          <div class="suggestion-name-row">
+                            <span class="suggestion-name">{{ prod.name }}</span>
+                            <span v-if="getEditOrderItemQty(prod._id) > 0" class="sugg-in-cart-badge">
+                              في الطلب ×{{ getEditOrderItemQty(prod._id) }}
+                            </span>
+                          </div>
+                          <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
+                        </div>
+                        <div class="suggestion-pricing">
+                          <span class="suggestion-price text-mono font-bold">
+                            {{ formatCurrency(editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                          </span>
+                          <span class="btn-quick-add" :class="{ 'btn-quick-add-active': getEditOrderItemQty(prod._id) > 0 }">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            {{ getEditOrderItemQty(prod._id) > 0 ? '+1' : 'إضافة' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Items Table with Steppers & Notes -->
+                <div class="edit-order-table-container" style="max-height: 480px; overflow-y: auto;">
+                  <table class="edit-order-table">
+                    <thead>
+                      <tr>
+                        <th>اسم المنتج وملاحظات التجهيز</th>
+                        <th style="width: 140px; text-align: center;">الكمية</th>
+                        <th style="width: 130px; text-align: center;">سعر الوحدة</th>
+                        <th style="width: 120px; text-align: center;">المجموع</th>
+                        <th style="width: 48px; text-align: center;"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="editingOrder.items.length === 0">
+                        <td colspan="5" class="pos-empty-cart-msg">
+                          <div class="pos-empty-cart-inner py-4 text-center">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            <span class="d-block mt-2 text-muted">لا توجد أصناف في هذا الطلب. ابحث عن المنتجات أعلاه لإضافتها.</span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-for="(item, idx) in editingOrder.items" :key="'edit-item-'+idx">
+                        <td>
+                          <div class="edit-item-name-cell">
+                            <span v-if="item.productId" class="db-product-name font-bold" title="منتج مسجل بالمنظومة">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"/></svg>
+                              {{ item.name }}
+                            </span>
+                            <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
+                            
+                            <input 
+                              v-model="item.notes" 
+                              type="text" 
+                              class="form-control form-control-sm item-note-input mt-1" 
+                              placeholder="ملاحظة خاصة بالصنف (اختياري)…" 
+                            />
+                          </div>
+                        </td>
+                        <td style="width: 140px;">
+                          <div class="qty-stepper-control">
+                            <button type="button" class="stepper-btn btn-minus" @click="adjustEditOrderItemQty(item, -1)" tabindex="-1">-</button>
+                            <input 
+                              v-model.number="item.quantity" 
+                              type="number" 
+                              :step="item.allowFloat ? 0.25 : 1" 
+                              :min="item.allowFloat ? 0.25 : 1" 
+                              class="form-control stepper-input text-mono text-center" 
+                              placeholder="الكمية" 
+                              required 
+                              @input="recalcOrderTotal" 
+                              @change="recalcOrderTotal" 
+                              @keydown.up.prevent="adjustEditOrderItemQty(item, 1)" 
+                              @keydown.down.prevent="adjustEditOrderItemQty(item, -1)" 
+                              @keydown.delete.prevent="removeOrderItem(idx)" 
+                            />
+                            <button type="button" class="stepper-btn btn-plus" @click="adjustEditOrderItemQty(item, 1)" tabindex="-1">+</button>
+                          </div>
+                        </td>
+                        <td style="width: 130px;">
+                          <div class="edit-price-input-wrapper">
+                            <input 
+                              v-model.number="item.price" 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              class="form-control edit-price-input text-mono text-center" 
+                              placeholder="السعر" 
+                              required 
+                              @input="recalcOrderTotal" 
+                              @change="recalcOrderTotal" 
+                            />
+                            <span class="currency-label">د.ل</span>
+                          </div>
+                        </td>
+                        <td class="text-bold text-dark text-center text-mono font-bold" style="width: 120px;">
+                          {{ formatCurrency(item.quantity * item.price) }}
+                        </td>
+                        <td style="width: 48px; text-align: center;">
+                          <button 
+                            type="button" 
+                            @click="removeOrderItem(idx)" 
+                            class="btn-item-delete" 
+                            :disabled="editingOrder.items.length <= 1" 
+                            title="حذف الصنف من الطلب"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
+
           </div>
         </form>
+
+        <!-- Modal Footer: Summary & Submission Bar (Pinned to bottom) -->
+        <div class="fast-order-modal-footer">
+          <div class="fast-order-totals-summary">
+            <div class="total-summary-label">إجمالي قيمة الطلب</div>
+            <div class="total-summary-val-group">
+              <span class="total-summary-val text-mono">{{ formatCurrency(editingOrder.totalPrice) }}</span>
+              <span class="total-summary-count text-muted">({{ editingOrder.items.length }} أصناف • الكمية: {{ editingOrder.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0) }})</span>
+            </div>
+          </div>
+
+          <div class="fast-order-footer-actions">
+            <button 
+              type="button" 
+              class="btn btn-outline edit-btn-print" 
+              @click="printEditingOrder" 
+              title="طباعة إيصال الطلب"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>طباعة الإيصال</span>
+            </button>
+
+            <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="loading">إلغاء</button>
+            
+            <button type="button" @click="saveOrder" class="btn btn-primary pos-btn-submit" :disabled="loading || editingOrder.items.length === 0 || !editingOrder.customerName || !editingOrder.customerPhone" title="حفظ وتحديث الطلب">
+              <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+              <span>{{ loading ? 'جاري الحفظ…' : 'حفظ التعديلات' }}</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -22105,28 +22109,6 @@ select.pos-control {
 
 
 /* ============ EDIT ORDER REFACTORED UI/UX STYLES ============ */
-.order-edit-modal-content {
-  width: 96% !important;
-  max-width: 1020px !important;
-  padding: 24px !important;
-  border-radius: 18px !important;
-}
-
-.edit-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
-  margin-bottom: 20px;
-}
-
-.edit-modal-main-title {
-  font-size: 1.22rem;
-  font-weight: 800;
-  color: var(--text-color, #0f172a);
-}
-
 .edit-order-id-badge {
   background: rgba(15, 23, 42, 0.08);
   color: #1e293b;
@@ -22134,70 +22116,6 @@ select.pos-control {
   border-radius: 8px;
   font-size: 0.88rem;
   letter-spacing: -0.3px;
-}
-
-.edit-price-mode-badge {
-  font-size: 0.74rem;
-  font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 8px;
-}
-
-.edit-price-mode-badge.is-bulk {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.edit-price-mode-badge.is-regular {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.edit-order-top-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.15fr;
-  gap: 16px;
-  align-items: stretch;
-}
-
-.edit-order-card {
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-  display: flex;
-  flex-direction: column;
-}
-
-.edit-order-card.edit-customer-card {
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.04) 0%, var(--card-bg, #ffffff) 100%);
-  border-color: rgba(245, 158, 11, 0.22);
-}
-
-.edit-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.edit-card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.94rem;
-  font-weight: 800;
-  color: #1e293b;
-}
-
-.edit-card-title svg {
-  color: var(--primary-color, #d97706);
-  flex-shrink: 0;
 }
 
 .edit-selected-customer-box {
@@ -22316,20 +22234,6 @@ select.pos-control {
   outline: none;
 }
 
-/* Card 2: Meta Grid Inner */
-.edit-meta-grid-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  row-gap: 12px;
-}
-
-.edit-meta-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
 .btn-clear-date-mini {
   background: none;
   border: none;
@@ -22348,14 +22252,6 @@ select.pos-control {
   font-size: 0.88rem;
   font-weight: 700;
   color: #0f172a;
-}
-
-/* Items Card & Table */
-.edit-order-items-card {
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
 }
 
 .item-note-input {
@@ -22386,41 +22282,6 @@ select.pos-control {
   background: #f1f5f9;
   border-color: #94a3b8;
   color: #0f172a;
-}
-
-@media (max-width: 768px) {
-  .edit-order-top-grid {
-    grid-template-columns: 1fr;
-  }
-  .edit-meta-grid-inner {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .order-edit-modal-content {
-    width: 100% !important;
-    max-width: 100% !important;
-    max-height: 94vh !important;
-    overflow-y: auto !important;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 16px !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-  .edit-order-card {
-    padding: 14px;
-    border-radius: 12px;
-  }
-  .cust-avatar-md {
-    width: 40px;
-    height: 40px;
-    font-size: 1.05rem;
-  }
-  .edit-cust-name {
-    font-size: 0.98rem;
-  }
 }
 
 
