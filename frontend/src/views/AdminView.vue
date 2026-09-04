@@ -1427,12 +1427,18 @@
                         </span>
                       </td>
                       <td>
-                        <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select" :class="'status-' + order.status">
-                          <option value="pending">قيد الانتظار</option>
-                          <option value="ready">جاهز للاستلام</option>
-                          <option value="received">تم الاستلام</option>
-                          <option value="cancelled">ملغي</option>
-                        </select>
+                        <div class="d-flex flex-column gap-1 align-items-center">
+                          <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select" :class="'status-' + order.status">
+                            <option value="pending">قيد الانتظار</option>
+                            <option value="ready">جاهز للاستلام</option>
+                            <option value="received">تم الاستلام</option>
+                            <option value="cancelled">ملغي</option>
+                          </select>
+                          <span v-if="order.status === 'cancelled'" class="cancelled-timer-pill" :class="{ 'is-urgent': getCancelledOrderExpiryInfo(order)?.urgent }" title="سيتم حذف الطلب نهائياً وتلقائياً بعد مرور 24 ساعة من إلغائه">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ getCancelledOrderExpiryInfo(order)?.text }}
+                          </span>
+                        </div>
                       </td>
                       <td>
                         <div class="order-actions-btns">
@@ -1554,12 +1560,18 @@
 
                     <!-- Card Action Buttons & Status Selector -->
                     <div class="mob-card-footer-actions">
-                      <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select mob-status-select" :class="'status-' + order.status">
-                        <option value="pending">قيد الانتظار</option>
-                        <option value="ready">جاهز للاستلام</option>
-                        <option value="received">تم الاستلام</option>
-                        <option value="cancelled">ملغي</option>
-                      </select>
+                      <div class="d-flex flex-column gap-1">
+                        <select :value="order.status" @change="updateOrderStatus(order._id, $event.target.value)" class="form-control status-select mob-status-select" :class="'status-' + order.status">
+                          <option value="pending">قيد الانتظار</option>
+                          <option value="ready">جاهز للاستلام</option>
+                          <option value="received">تم الاستلام</option>
+                          <option value="cancelled">ملغي</option>
+                        </select>
+                        <span v-if="order.status === 'cancelled'" class="cancelled-timer-pill" :class="{ 'is-urgent': getCancelledOrderExpiryInfo(order)?.urgent }" title="سيتم حذف الطلب نهائياً وتلقائياً بعد مرور 24 ساعة من إلغائه">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {{ getCancelledOrderExpiryInfo(order)?.text }}
+                        </span>
+                      </div>
 
                       <div class="mob-action-buttons-group">
                         <button @click="openOrderEditModal(order)" class="btn-table-action btn-action-edit" title="تعديل">
@@ -2375,13 +2387,24 @@
 
                   <!-- Row 2: Order Status (Full Width) -->
                   <div class="pos-field">
-                    <label class="pos-label">حالة الطلب</label>
+                    <div class="pos-field-header-row">
+                      <label class="pos-label mb-0">حالة الطلب</label>
+                      <span v-if="editingOrder.status === 'cancelled'" class="cancelled-timer-pill" :class="{ 'is-urgent': getCancelledOrderExpiryInfo(editingOrder)?.urgent }">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {{ getCancelledOrderExpiryInfo(editingOrder)?.text || 'يُحذف خلال 24 ساعة' }}
+                      </span>
+                    </div>
                     <select v-model="editingOrder.status" class="form-control pos-control edit-status-select">
                       <option value="pending">قيد الانتظار</option>
                       <option value="ready">جاهز للاستلام</option>
                       <option value="received">تم الاستلام</option>
                       <option value="cancelled">ملغي</option>
                     </select>
+                    <!-- Warning notice if status is cancelled -->
+                    <div v-if="editingOrder.status === 'cancelled'" class="cancelled-warning-banner animate-fade-in mt-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <span>تنبيه: الطلبات الملغية تُحذف نهائياً وتلقائياً بعد 24 ساعة من تاريخ الإلغاء.</span>
+                    </div>
                   </div>
 
                   <!-- Row 3: Order Notes (Full Width) -->
@@ -9261,6 +9284,26 @@ export default {
       }
     };
 
+    // Helper: Compute remaining time before automatic 24h cancellation deletion
+    const getCancelledOrderExpiryInfo = (order) => {
+      if (!order || order.status !== 'cancelled') return null;
+      const cancelledTime = order.cancelledAt 
+        ? new Date(order.cancelledAt).getTime() 
+        : (order.updatedAt ? new Date(order.updatedAt).getTime() : new Date(order.createdAt).getTime());
+      if (!cancelledTime || isNaN(cancelledTime)) return { text: 'يُحذف خلال 24 ساعة', urgent: false };
+      const expiresAt = cancelledTime + 24 * 60 * 60 * 1000;
+      const remainingMs = expiresAt - Date.now();
+      if (remainingMs <= 0) {
+        return { text: 'يُحذف قريباً جداً', urgent: true };
+      }
+      const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+      const remainingMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+      if (remainingHours > 0) {
+        return { text: `يُحذف بعد ${remainingHours} س`, urgent: remainingHours < 4 };
+      }
+      return { text: `يُحذف بعد ${Math.max(1, remainingMinutes)} د`, urgent: true };
+    };
+
     const updateOrderStatus = async (orderId, status) => {
       try {
         const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
@@ -9269,7 +9312,11 @@ export default {
           body: JSON.stringify({ status })
         });
         if (res.ok) {
-          toast.show('تم تحديث حالة الطلب بنجاح', 'success');
+          if (status === 'cancelled') {
+            toast.show('تم إلغاء الطلب — سيتم حذفه نهائياً وتلقائياً بعد 24 ساعة', 'warning');
+          } else {
+            toast.show('تم تحديث حالة الطلب بنجاح', 'success');
+          }
           await Promise.all([fetchOrders(), fetchAnalytics()]);
         } else {
           toast.show('فشل تحديث حالة الطلب', 'danger');
@@ -9520,7 +9567,11 @@ const closeSuggestionsWithDelay = () => {
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          toast.show('تم تعديل الطلب بنجاح', 'success');
+          if (payload.status === 'cancelled') {
+            toast.show('تم تعديل الطلب (ملغي — سيتم حذفه تلقائياً بعد 24 ساعة)', 'warning');
+          } else {
+            toast.show('تم تعديل الطلب بنجاح', 'success');
+          }
           orderEditModalOpen.value = false;
           await Promise.all([fetchOrders(), fetchCustomers(), fetchAnalytics()]);
         } else {
@@ -11155,6 +11206,7 @@ const closeSuggestionsWithDelay = () => {
       viewingCustomerFavs,
       viewingCustomer,
       updateOrderStatus,
+      getCancelledOrderExpiryInfo,
       orderEditModalOpen,
       editingOrder,
       matchedEditingCustomer,
@@ -22407,6 +22459,54 @@ select.pos-control {
   background: #f1f5f9;
   border-color: #94a3b8;
   color: #0f172a;
+}
+
+
+/* ============ CANCELLED ORDERS 24H AUTO-DELETION STYLES ============ */
+.cancelled-timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+.cancelled-timer-pill.is-urgent {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+  animation: pulseWarning 2s infinite ease-in-out;
+}
+
+@keyframes pulseWarning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.cancelled-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(254, 242, 242, 0.95);
+  border: 1px solid #fecaca;
+  border-right: 3.5px solid #ef4444;
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: #991b1b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cancelled-warning-banner svg {
+  flex-shrink: 0;
 }
 
 </style>

@@ -1707,14 +1707,27 @@ app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, re
   }
 
   try {
+    const updateOps = {
+      $set: { status, updatedAt: new Date() }
+    };
+    if (status === 'cancelled') {
+      updateOps.$set.cancelledAt = new Date();
+    } else {
+      updateOps.$unset = { cancelledAt: "" };
+    }
+
     const result = await ordColl.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { status } }
+      updateOps
     );
     if (result.matchedCount === 0) {
       return res.status(404).json({ error: "Order not found" });
     }
-    res.json({ success: true, status });
+    res.json({ 
+      success: true, 
+      status, 
+      cancelledAt: status === 'cancelled' ? updateOps.$set.cancelledAt : null 
+    });
   } catch (err) {
     console.error("Update order status error:", err);
     res.status(500).json({ error: "Failed to update order status" });
@@ -1775,15 +1788,26 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
     if (deliveryDate !== undefined) updateDoc.deliveryDate = deliveryDate;
     if (notes !== undefined) updateDoc.notes = notes;
     if (priceMode) updateDoc.priceMode = priceMode;
+    const unsetDoc = {};
     if (status && ["pending", "ready", "received", "cancelled"].includes(status)) {
       updateDoc.status = status;
+      if (status === 'cancelled') {
+        updateDoc.cancelledAt = new Date();
+      } else {
+        unsetDoc.cancelledAt = "";
+      }
     }
 
     updateDoc.updatedAt = new Date();
 
+    const updateQuery = { $set: updateDoc };
+    if (Object.keys(unsetDoc).length > 0) {
+      updateQuery.$unset = unsetDoc;
+    }
+
     const result = await ordColl.updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateDoc }
+      updateQuery
     );
 
     if (result.matchedCount === 0) {
@@ -3212,7 +3236,8 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
-      status: status && ['pending', 'ready', 'received', 'cancelled'].includes(status) ? status : 'pending',
+      status: (status && ['pending', 'ready', 'received', 'cancelled'].includes(status)) ? status : 'pending',
+      ...(status === 'cancelled' ? { cancelledAt: new Date() } : {}),
       printed: false,
       whatsappSent: true,
       createdAt: new Date()
@@ -3313,7 +3338,8 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
-      status: status && ['pending', 'ready', 'received', 'cancelled'].includes(status) ? status : 'pending',
+      status: (status && ['pending', 'ready', 'received', 'cancelled'].includes(status)) ? status : 'pending',
+      ...(status === 'cancelled' ? { cancelledAt: new Date() } : {}),
       printed: false,
       whatsappSent: true,
       createdAt: new Date()
@@ -3979,8 +4005,10 @@ const connectWithRetry = async () => {
     favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
     ordersCollection.createIndex({ "customerInfo.phone": 1 });
     ordersCollection.createIndex({ orderNumber: 1 });
+    ordersCollection.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
     ordersCollection2.createIndex({ "customerInfo.phone": 1 });
     ordersCollection2.createIndex({ orderNumber: 1 });
+    ordersCollection2.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
     adminUsersCollection.createIndex({ username: 1 }, { unique: true });
     chefsCollection.createIndex({ name: 1 });
     chefsCollection2.createIndex({ name: 1 });
@@ -4075,6 +4103,13 @@ const connectWithRetry = async () => {
     } else {
       console.log(`✓ Found ${count2} existing shop2 categories`);
     }
+
+    // Run initial cleanup of expired cancelled orders (>24h)
+    try {
+      await cleanupExpiredCancelledOrders();
+    } catch (cleanErr) {
+      console.warn("Initial cancelled orders cleanup warning:", cleanErr.message);
+    }
   } catch (err) {
     console.error('✗ MongoDB connection failed:', err.message, '- Retrying in 5s...');
     mongoConnected = false;
@@ -4082,7 +4117,85 @@ const connectWithRetry = async () => {
   }
 };
 
+// ============ AUTOMATIC 24H CANCELLED ORDERS CLEANUP ============
+const cleanupExpiredCancelledOrders = async () => {
+  if (!mongoConnected || !ordersCollection || !ordersCollection2) {
+    return { success: false, reason: "Database not connected" };
+  }
+  try {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // 1. Delete cancelled orders where cancelledAt <= 24 hours ago
+    const delRes1 = await ordersCollection.deleteMany({
+      status: "cancelled",
+      cancelledAt: { $lte: cutoff }
+    });
+    const delRes2 = await ordersCollection2.deleteMany({
+      status: "cancelled",
+      cancelledAt: { $lte: cutoff }
+    });
+
+    // 2. Handle legacy cancelled orders that lack cancelledAt:
+    // If (updatedAt || createdAt) is older than 24h, delete them.
+    // If younger, backfill cancelledAt so TTL index and future cleanups can track them.
+    const legacyShop1 = await ordersCollection.find({
+      status: "cancelled",
+      $or: [{ cancelledAt: { $exists: false } }, { cancelledAt: null }]
+    }).toArray();
+
+    let legacyDel1 = 0;
+    for (const ord of legacyShop1) {
+      const refDate = new Date(ord.updatedAt || ord.createdAt || 0);
+      if (refDate <= cutoff) {
+        await ordersCollection.deleteOne({ _id: ord._id });
+        legacyDel1++;
+      } else {
+        await ordersCollection.updateOne({ _id: ord._id }, { $set: { cancelledAt: refDate } });
+      }
+    }
+
+    const legacyShop2 = await ordersCollection2.find({
+      status: "cancelled",
+      $or: [{ cancelledAt: { $exists: false } }, { cancelledAt: null }]
+    }).toArray();
+
+    let legacyDel2 = 0;
+    for (const ord of legacyShop2) {
+      const refDate = new Date(ord.updatedAt || ord.createdAt || 0);
+      if (refDate <= cutoff) {
+        await ordersCollection2.deleteOne({ _id: ord._id });
+        legacyDel2++;
+      } else {
+        await ordersCollection2.updateOne({ _id: ord._id }, { $set: { cancelledAt: refDate } });
+      }
+    }
+
+    const totalDeleted = (delRes1.deletedCount || 0) + (delRes2.deletedCount || 0) + legacyDel1 + legacyDel2;
+    if (totalDeleted > 0) {
+      console.log(`✓ [Auto-Cleanup] Permanently deleted ${totalDeleted} expired cancelled order(s) (>24h).`);
+    }
+    return {
+      success: true,
+      totalDeleted,
+      shop1Deleted: (delRes1.deletedCount || 0) + legacyDel1,
+      shop2Deleted: (delRes2.deletedCount || 0) + legacyDel2
+    };
+  } catch (cleanErr) {
+    console.error("✗ [Auto-Cleanup] Error during cancelled orders cleanup:", cleanErr);
+    return { success: false, error: cleanErr.message };
+  }
+};
+
+// Admin endpoint to manually trigger cancelled orders cleanup
+app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, checkAdmin, async (req, res) => {
+  const result = await cleanupExpiredCancelledOrders();
+  res.json(result);
+});
+
 connectWithRetry();
+
+// Schedule periodic cleanup of cancelled orders every 30 minutes
+setInterval(cleanupExpiredCancelledOrders, 30 * 60 * 1000).unref();
 
 app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
