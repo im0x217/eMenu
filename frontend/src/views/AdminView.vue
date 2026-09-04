@@ -2147,178 +2147,189 @@
           <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
         </div>
         <form @submit.prevent="saveOrder">
-          <!-- Customer Details & Change Customer Card -->
-          <div class="edit-order-customer-card mb-3 glass-panel">
-            <div class="edit-card-header d-flex justify-content-between align-items-center mb-2">
-              <div class="edit-card-title d-flex align-items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span class="font-bold">بيانات وتغيير العميل</span>
-              </div>
-              <span v-if="editingOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone === editingOrder.customerPhone) ? 'is-registered' : 'is-new'">
-                {{ customers.find(c => c.phone === editingOrder.customerPhone) ? 'عميل مسجل' : 'عميل مخصص / جديد' }}
-              </span>
-            </div>
-
-            <!-- Customer Search & Fast Dropdown Picker -->
-            <div class="customer-search-autocomplete-wrapper position-relative mb-3">
-              <div class="search-input-wrapper">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input 
-                  v-model="editOrderCustomerSearch" 
-                  type="text" 
-                  class="form-control search-input" 
-                  placeholder="ابحث لاختيار عميل آخر من السجل (بالاسم أو الهاتف)…" 
-                  @focus="showEditOrderCustomerSuggestions = true"
-                  @click="showEditOrderCustomerSuggestions = true"
-                  @blur="closeEditOrderCustomerSuggestionsWithDelay"
-                  @input="showEditOrderCustomerSuggestions = true; highlightedEditCustomerIndex = 0"
-                  @keydown.esc.prevent="showEditOrderCustomerSuggestions = false"
-                  @keydown.tab="showEditOrderCustomerSuggestions = false"
-                  @keydown.down.prevent="navigateEditCustomerSuggestions(1)"
-                  @keydown.up.prevent="navigateEditCustomerSuggestions(-1)"
-                  @keydown.enter.prevent="selectHighlightedEditCustomerOrNext"
-                />
-                <button v-if="editOrderCustomerSearch" type="button" @click="editOrderCustomerSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
-              </div>
-
-              <!-- Dropdown Suggestions -->
-              <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
-                <div 
-                  v-for="(cust, cIdx) in filteredEditOrderCustomers" 
-                  :key="cust._id" 
-                  class="suggestion-item customer-suggestion-item"
-                  :class="{ highlighted: cIdx === highlightedEditCustomerIndex }"
-                  @mousedown="selectCustomerForEditOrder(cust)"
-                  @mouseenter="highlightedEditCustomerIndex = cIdx"
-                >
-                  <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
-                  <div class="cust-info-group">
-                    <span class="cust-sugg-name">{{ cust.name }}</span>
-                    <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
-                  </div>
-                  <div class="cust-badge-stats">
-                    <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
-                    <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(cust.outstandingBalance) }}</span>
-                  </div>
+          <!-- Top Grid: Customer Card + Order Details Card -->
+          <div class="edit-order-top-grid mb-4">
+            
+            <!-- Card 1: Customer Profile & Change via Suggestions Only -->
+            <div class="edit-order-card edit-customer-card glass-panel">
+              <div class="edit-card-header d-flex justify-content-between align-items-center mb-2">
+                <div class="edit-card-title d-flex align-items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span class="font-bold">العميل المرتبط بالطلب</span>
                 </div>
+                <span class="pos-cust-status-badge is-registered">عميل مسجل</span>
               </div>
-            </div>
 
-            <!-- Editable Inputs Row: Name & Phone -->
-            <div class="pos-input-grid">
-              <div class="pos-field">
-                <label class="pos-label">اسم العميل *</label>
-                <input v-model="editingOrder.customerName" type="text" class="form-control pos-control" placeholder="اسم العميل" required />
-              </div>
-              <div class="pos-field">
-                <label class="pos-label">رقم الهاتف *</label>
-                <input v-model="editingOrder.customerPhone" type="tel" dir="ltr" class="form-control pos-control text-mono text-center" placeholder="09xxxxxxxx" required />
-              </div>
-            </div>
-          </div>
-
-          <!-- Order Settings & Re-Date Bar (Datepicker + Price Mode + Editable Notes) -->
-          <div class="edit-order-meta-card mb-4 glass-panel">
-            <div class="edit-order-meta-grid">
-              
-              <!-- Column 1: Delivery Date (Re-Date) -->
-              <div class="edit-meta-col delivery-date-col">
-                <label class="edit-meta-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>تاريخ وموعد الاستلام</span>
-                </label>
-
-                <!-- Date Picker Trigger & Popover -->
-                <div class="position-relative">
-                  <button 
-                    type="button" 
-                    class="form-control pos-control btn-standard-datepicker-trigger" 
-                    :class="{ active: editOrderDatePickerOpen }"
-                    @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
-                  >
-                    <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  </button>
-
-                  <!-- Standardized Popover Calendar for Order Edit Modal -->
-                  <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
-                    <div class="datepicker-header">
-                      <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
-                      <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
-                      <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
-                    </div>
-
-                    <div class="dp-weekdays">
-                      <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                    </div>
-
-                    <div class="dp-days-grid">
-                      <button 
-                        type="button" 
-                        v-for="(dayObj, idx) in editOrderCalendarDays" 
-                        :key="idx" 
-                        class="dp-day-cell"
-                        :class="{ 
-                          'other-month': !dayObj.inMonth,
-                          'is-today': dayObj.isToday,
-                          'is-selected': editingOrder.deliveryDate === dayObj.dateStr
-                        }"
-                        @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
-                      >
-                        {{ dayObj.dayNum }}
-                      </button>
-                    </div>
-
-                    <div class="datepicker-footer">
-                      <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
-                    </div>
+              <!-- Active Customer Summary Badge -->
+              <div class="edit-selected-customer-box">
+                <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
+                <div class="edit-cust-details">
+                  <div class="edit-cust-name-row">
+                    <span class="edit-cust-name">{{ editingOrder.customerName || 'عميل غير محدد' }}</span>
+                  </div>
+                  <div class="edit-cust-meta-row">
+                    <span class="edit-cust-phone text-mono" dir="ltr">{{ editingOrder.customerPhone || 'لا يوجد هاتف' }}</span>
+                    <span v-if="matchedEditingCustomer" class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
+                    <span v-if="matchedEditingCustomer && matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Column 2: Price Mode Switch -->
-              <div class="edit-meta-col price-mode-col">
-                <label class="edit-meta-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                  <span>نوع التسعير</span>
-                </label>
-                <div class="fast-order-price-mode-switch" style="margin-top: 0;">
-                  <button 
-                    type="button" 
-                    class="price-mode-pill" 
-                    :class="{ active: editingOrder.priceMode === 'bulk' }" 
-                    @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
+              <!-- Customer Search (Selection Only from Suggestions) -->
+              <div class="customer-search-autocomplete-wrapper position-relative mt-3">
+                <div class="search-input-wrapper">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input 
+                    v-model="editOrderCustomerSearch" 
+                    type="text" 
+                    class="form-control search-input edit-cust-search-input" 
+                    placeholder="ابحث بالاسم أو الهاتف لاختيار وتعيين عميل آخر من السجل…" 
+                    @focus="showEditOrderCustomerSuggestions = true"
+                    @click="showEditOrderCustomerSuggestions = true"
+                    @blur="closeEditOrderCustomerSuggestionsWithDelay"
+                    @input="showEditOrderCustomerSuggestions = true; highlightedEditCustomerIndex = 0"
+                    @keydown.esc.prevent="showEditOrderCustomerSuggestions = false"
+                    @keydown.tab="showEditOrderCustomerSuggestions = false"
+                    @keydown.down.prevent="navigateEditCustomerSuggestions(1)"
+                    @keydown.up.prevent="navigateEditCustomerSuggestions(-1)"
+                    @keydown.enter.prevent="selectHighlightedEditCustomerOrNext"
+                  />
+                  <button v-if="editOrderCustomerSearch" type="button" @click="editOrderCustomerSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
+                </div>
+
+                <!-- Dropdown Suggestions (Only Way to Pick/Change Customer) -->
+                <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
+                  <div 
+                    v-for="(cust, cIdx) in filteredEditOrderCustomers" 
+                    :key="cust._id" 
+                    class="suggestion-item customer-suggestion-item"
+                    :class="{ highlighted: cIdx === highlightedEditCustomerIndex }"
+                    @mousedown="selectCustomerForEditOrder(cust)"
+                    @mouseenter="highlightedEditCustomerIndex = cIdx"
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    <span>تسعير جملة</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    class="price-mode-pill" 
-                    :class="{ active: editingOrder.priceMode === 'regular' }" 
-                    @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                    <span>تسعير مفرد</span>
-                  </button>
+                    <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
+                    <div class="cust-info-group">
+                      <span class="cust-sugg-name">{{ cust.name }}</span>
+                      <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                    </div>
+                    <div class="cust-badge-stats">
+                      <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
+                      <span v-if="cust.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(cust.outstandingBalance) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Order Scheduling & Pricing Details -->
+            <div class="edit-order-card edit-meta-card glass-panel">
+              <div class="edit-card-header d-flex justify-content-between align-items-center mb-2">
+                <div class="edit-card-title d-flex align-items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span class="font-bold">موعد وتفاصيل الطلب</span>
                 </div>
               </div>
 
-              <!-- Row 2: Editable Order Notes -->
-              <div class="edit-meta-col notes-col">
-                <label class="edit-meta-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                  <span>ملاحظات الطلب</span>
-                </label>
-                <input 
-                  v-model="editingOrder.notes" 
-                  type="text" 
-                  class="form-control edit-order-notes-input" 
-                  placeholder="أدخل أي ملاحظات خاصة بالطلب أو مواعيد تسليم إضافية…" 
-                />
-              </div>
+              <div class="edit-meta-grid-inner">
+                <!-- Delivery Date (Re-Date) -->
+                <div class="edit-meta-col delivery-date-col">
+                  <label class="edit-meta-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>تاريخ الاستلام</span>
+                  </label>
 
+                  <!-- Date Picker Trigger & Popover -->
+                  <div class="position-relative">
+                    <button 
+                      type="button" 
+                      class="form-control pos-control btn-standard-datepicker-trigger" 
+                      :class="{ active: editOrderDatePickerOpen }"
+                      @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
+                    >
+                      <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </button>
+
+                    <!-- Popover Calendar -->
+                    <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
+                      <div class="datepicker-header">
+                        <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                        <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
+                        <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
+                      </div>
+
+                      <div class="dp-weekdays">
+                        <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                      </div>
+
+                      <div class="dp-days-grid">
+                        <button 
+                          type="button" 
+                          v-for="(dayObj, idx) in editOrderCalendarDays" 
+                          :key="idx" 
+                          class="dp-day-cell"
+                          :class="{ 
+                            'other-month': !dayObj.inMonth,
+                            'is-today': dayObj.isToday,
+                            'is-selected': editingOrder.deliveryDate === dayObj.dateStr
+                          }"
+                          @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
+                        >
+                          {{ dayObj.dayNum }}
+                        </button>
+                      </div>
+
+                      <div class="datepicker-footer">
+                        <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Price Mode Switch -->
+                <div class="edit-meta-col price-mode-col">
+                  <label class="edit-meta-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    <span>نوع التسعير</span>
+                  </label>
+                  <div class="fast-order-price-mode-switch" style="margin-top: 0;">
+                    <button 
+                      type="button" 
+                      class="price-mode-pill" 
+                      :class="{ active: editingOrder.priceMode === 'bulk' }" 
+                      @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                      <span>تسعير جملة</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="price-mode-pill" 
+                      :class="{ active: editingOrder.priceMode === 'regular' }" 
+                      @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                      <span>تسعير مفرد</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Order Notes -->
+                <div class="edit-meta-col notes-col" style="grid-column: 1 / -1;">
+                  <label class="edit-meta-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    <span>ملاحظات الطلب</span>
+                  </label>
+                  <input 
+                    v-model="editingOrder.notes" 
+                    type="text" 
+                    class="form-control edit-order-notes-input" 
+                    placeholder="أدخل أي ملاحظات خاصة بالطلب أو مواعيد تسليم إضافية…" 
+                  />
+                </div>
+              </div>
             </div>
+
           </div>
 
           <div class="form-group">
@@ -6047,6 +6058,11 @@ export default {
     const editOrderCustomerSearch = ref('');
     const showEditOrderCustomerSuggestions = ref(false);
     const highlightedEditCustomerIndex = ref(0);
+
+    const matchedEditingCustomer = computed(() => {
+      if (!editingOrder.customerPhone) return null;
+      return (customers.value || []).find(c => c.phone === editingOrder.customerPhone) || null;
+    });
 
     const filteredEditOrderCustomers = computed(() => {
       const q = (editOrderCustomerSearch.value || '').trim().toLowerCase();
@@ -10943,6 +10959,7 @@ const closeSuggestionsWithDelay = () => {
       updateOrderStatus,
       orderEditModalOpen,
       editingOrder,
+      matchedEditingCustomer,
       editOrderCustomerSearch,
       showEditOrderCustomerSuggestions,
       highlightedEditCustomerIndex,
@@ -21908,22 +21925,92 @@ select.pos-control {
 }
 
 
-/* ============ EDIT ORDER CUSTOMER CARD STYLES ============ */
-.edit-order-customer-card {
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
+/* ============ EDIT ORDER REFACTORED UI/UX STYLES ============ */
+.edit-order-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 16px;
 }
 
-.edit-order-customer-card .pos-input-grid {
+.edit-order-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-selected-customer-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 10px;
+}
+
+.cust-avatar-md {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+}
+
+.edit-cust-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-grow: 1;
+}
+
+.edit-cust-name {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--text-color, #0f172a);
+}
+
+.edit-cust-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.edit-cust-phone {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.edit-cust-search-input {
+  font-size: 0.88rem;
+  border-radius: 8px;
+  background: var(--input-bg, #f8fafc);
+}
+
+.edit-meta-grid-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  row-gap: 10px;
 }
 
-@media (max-width: 640px) {
-  .edit-order-customer-card .pos-input-grid {
+@media (max-width: 768px) {
+  .edit-order-top-grid {
+    grid-template-columns: 1fr;
+  }
+  .edit-meta-grid-inner {
     grid-template-columns: 1fr;
   }
 }
