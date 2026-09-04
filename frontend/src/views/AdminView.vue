@@ -2139,28 +2139,43 @@
       </div>
     </div>
 
-    <!-- Order Edit Modal -->
-    <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-content glass-panel" style="width: 95%; max-width: 950px; padding: 30px;">
-        <div class="modal-header">
-          <h3>تعديل محتويات الطلب #{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</h3>
-          <button @click="orderEditModalOpen = false" class="modal-close-btn">✕</button>
+    <!-- Order Edit Modal (Refactored Complete UI/UX) -->
+    <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in" @click.self="orderEditModalOpen = false">
+      <div class="modal-content glass-panel order-edit-modal-content">
+        <!-- Modal Header with Badges -->
+        <div class="modal-header edit-modal-header">
+          <div class="edit-modal-title-group">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="edit-modal-main-title">تعديل محتويات الطلب</span>
+              <span class="edit-order-id-badge text-mono font-bold">#{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</span>
+              <span class="pos-cust-status-badge" :class="editingOrder.status === 'ready' ? 'status-ready' : (editingOrder.status === 'received' ? 'status-received' : (editingOrder.status === 'cancelled' ? 'status-cancelled' : 'status-pending'))">
+                {{ editingOrder.status === 'ready' ? 'جاهز للاستلام' : (editingOrder.status === 'received' ? 'تم الاستلام' : (editingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار')) }}
+              </span>
+              <span class="edit-price-mode-badge" :class="editingOrder.priceMode === 'bulk' ? 'is-bulk' : 'is-regular'">
+                {{ editingOrder.priceMode === 'bulk' ? 'تسعير جملة' : 'تسعير مفرد' }}
+              </span>
+            </div>
+          </div>
+          <button type="button" @click="orderEditModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
         </div>
-        <form @submit.prevent="saveOrder">
-          <!-- Top Grid: Customer Card + Order Details Card -->
+
+        <form @submit.prevent="saveOrder" class="edit-order-form-body">
+          <!-- Top Grid: Customer Profile Hub + Scheduling & Order Details -->
           <div class="edit-order-top-grid mb-4">
             
-            <!-- Card 1: Customer Profile & Change via Suggestions Only -->
+            <!-- Card 1: Customer Profile Hub -->
             <div class="edit-order-card edit-customer-card glass-panel">
-              <div class="edit-card-header d-flex justify-content-between align-items-center mb-2">
-                <div class="edit-card-title d-flex align-items-center gap-2">
+              <div class="edit-card-header">
+                <div class="edit-card-title">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  <span class="font-bold">العميل المرتبط بالطلب</span>
+                  <span>العميل المرتبط بالطلب</span>
                 </div>
-                <span class="pos-cust-status-badge is-registered">عميل مسجل</span>
+                <span class="pos-cust-status-badge" :class="matchedEditingCustomer ? 'is-registered' : 'is-new'">
+                  {{ matchedEditingCustomer ? 'عميل مسجل' : 'عميل محدد' }}
+                </span>
               </div>
 
-              <!-- Active Customer Summary Badge -->
+              <!-- Active Customer Summary Box -->
               <div class="edit-selected-customer-box">
                 <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
                 <div class="edit-cust-details">
@@ -2170,13 +2185,35 @@
                   <div class="edit-cust-meta-row">
                     <span class="edit-cust-phone text-mono" dir="ltr">{{ editingOrder.customerPhone || 'لا يوجد هاتف' }}</span>
                     <span v-if="matchedEditingCustomer" class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
-                    <span v-if="matchedEditingCustomer && matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }}</span>
+                    <span v-if="matchedEditingCustomer && matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }} دين</span>
                   </div>
+                </div>
+
+                <!-- 1-Tap WhatsApp & Call Quick Action Buttons (Habit #16) -->
+                <div v-if="editingOrder.customerPhone" class="edit-cust-quick-actions">
+                  <a 
+                    :href="getLibyanWhatsAppUrl(editingOrder.customerPhone)" 
+                    target="_blank" 
+                    class="edit-action-circle edit-whatsapp-circle" 
+                    title="مراسلة العميل عبر واتساب (+218)"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  </a>
+                  <a 
+                    :href="'tel:' + editingOrder.customerPhone" 
+                    class="edit-action-circle edit-call-circle" 
+                    title="اتصال هاتفي بالعميل"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  </a>
                 </div>
               </div>
 
-              <!-- Customer Search (Selection Only from Suggestions) -->
+              <!-- Customer Search Autocomplete (Selection Only from Suggestions) -->
               <div class="customer-search-autocomplete-wrapper position-relative mt-3">
+                <label class="edit-sub-label mb-1">
+                  <span>تغيير أو إعادة تعيين العميل:</span>
+                </label>
                 <div class="search-input-wrapper">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   <input 
@@ -2197,7 +2234,7 @@
                   <button v-if="editOrderCustomerSearch" type="button" @click="editOrderCustomerSearch = ''" class="btn-clear-search" tabindex="-1">&times;</button>
                 </div>
 
-                <!-- Dropdown Suggestions (Only Way to Pick/Change Customer) -->
+                <!-- Dropdown Suggestions -->
                 <div v-if="showEditOrderCustomerSuggestions && filteredEditOrderCustomers.length > 0" class="autocomplete-suggestions-dropdown customer-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
                   <div 
                     v-for="(cust, cIdx) in filteredEditOrderCustomers" 
@@ -2221,22 +2258,25 @@
               </div>
             </div>
 
-            <!-- Card 2: Order Scheduling & Pricing Details -->
+            <!-- Card 2: Order Scheduling, Status & Pricing Details -->
             <div class="edit-order-card edit-meta-card glass-panel">
-              <div class="edit-card-header d-flex justify-content-between align-items-center mb-2">
-                <div class="edit-card-title d-flex align-items-center gap-2">
+              <div class="edit-card-header">
+                <div class="edit-card-title">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span class="font-bold">موعد وتفاصيل الطلب</span>
+                  <span>موعد وتفاصيل الطلب</span>
                 </div>
               </div>
 
               <div class="edit-meta-grid-inner">
-                <!-- Delivery Date (Re-Date) -->
+                <!-- Delivery Date (Re-Date with 50/50 Dual Shortcuts - Habit #10) -->
                 <div class="edit-meta-col delivery-date-col">
-                  <label class="edit-meta-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <span>تاريخ الاستلام</span>
-                  </label>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="edit-meta-label mb-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <span>تاريخ الاستلام</span>
+                    </label>
+                    <button v-if="editingOrder.deliveryDate" type="button" class="btn-clear-date-mini" @click="clearEditOrderDate" title="إلغاء الموعد">مسح</button>
+                  </div>
 
                   <!-- Date Picker Trigger & Popover -->
                   <div class="position-relative">
@@ -2284,41 +2324,79 @@
                       </div>
                     </div>
                   </div>
+
+                  <!-- Habit #10: Touch-Friendly 50/50 Dual Shortcut Split Buttons -->
+                  <div class="pos-date-shortcuts-split mt-2">
+                    <button 
+                      type="button" 
+                      class="pos-date-shortcut-btn" 
+                      :class="{ active: isEditOrderDateRelative(0) }" 
+                      @click="setEditOrderDateShortcut(0)" 
+                      title="تحديد تاريخ اليوم"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span>اليوم</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="pos-date-shortcut-btn" 
+                      :class="{ active: isEditOrderDateRelative(1) }" 
+                      @click="setEditOrderDateShortcut(1)" 
+                      title="تحديد تاريخ الغد"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                      <span>غداً</span>
+                    </button>
+                  </div>
                 </div>
 
-                <!-- Price Mode Switch -->
-                <div class="edit-meta-col price-mode-col">
-                  <label class="edit-meta-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    <span>نوع التسعير</span>
+                <!-- Order Status Selector -->
+                <div class="edit-meta-col status-col">
+                  <label class="edit-meta-label mb-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>حالة الطلب</span>
                   </label>
-                  <div class="fast-order-price-mode-switch" style="margin-top: 0;">
-                    <button 
-                      type="button" 
-                      class="price-mode-pill" 
-                      :class="{ active: editingOrder.priceMode === 'bulk' }" 
-                      @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                      <span>تسعير جملة</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="price-mode-pill" 
-                      :class="{ active: editingOrder.priceMode === 'regular' }" 
-                      @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                      <span>تسعير مفرد</span>
-                    </button>
+                  <select v-model="editingOrder.status" class="form-control pos-control edit-status-select">
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="ready">جاهز للاستلام</option>
+                    <option value="received">تم الاستلام</option>
+                    <option value="cancelled">ملغي</option>
+                  </select>
+
+                  <!-- Price Mode Switch -->
+                  <div class="mt-2">
+                    <label class="edit-meta-label mb-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                      <span>نوع التسعير</span>
+                    </label>
+                    <div class="fast-order-price-mode-switch" style="margin-top: 0;">
+                      <button 
+                        type="button" 
+                        class="price-mode-pill" 
+                        :class="{ active: editingOrder.priceMode === 'bulk' }" 
+                        @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        <span>تسعير جملة</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="price-mode-pill" 
+                        :class="{ active: editingOrder.priceMode === 'regular' }" 
+                        @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        <span>تسعير مفرد</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Order Notes -->
                 <div class="edit-meta-col notes-col" style="grid-column: 1 / -1;">
-                  <label class="edit-meta-label">
+                  <label class="edit-meta-label mb-1">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span>ملاحظات الطلب</span>
+                    <span>ملاحظات الطلب العامة</span>
                   </label>
                   <input 
                     v-model="editingOrder.notes" 
@@ -2332,9 +2410,15 @@
 
           </div>
 
-          <div class="form-group">
+          <!-- Items Management Section -->
+          <div class="edit-order-items-card glass-panel mb-4">
             <div class="order-items-header mb-3">
-              <span class="section-title">إدارة محتويات الطلب</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="section-title">إدارة محتويات الطلب</span>
+                <span class="toolbar-badge">{{ formatArabicPlural(editingOrder.items.length, 'product') }}</span>
+              </div>
+
+              <!-- Product Search Autocomplete (Supports continuous adding) -->
               <div class="product-search-autocomplete-container position-relative flex-grow-1">
                 <div class="search-input-wrapper">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -2342,8 +2426,11 @@
                     v-model="productSearchQuery" 
                     type="text" 
                     class="form-control search-input" 
-                    placeholder="ابحث باسم المنتج لإضافته مباشرة للطلب…" 
-                    @focus="showSuggestions = true" @click="showSuggestions = true" @keydown.esc.prevent="showSuggestions = false" @keydown.tab="showSuggestions = false"
+                    placeholder="ابحث باسم المنتج أو التصنيف لإضافته مباشرة للطلب…" 
+                    @focus="showSuggestions = true" 
+                    @click="showSuggestions = true" 
+                    @keydown.esc.prevent="showSuggestions = false" 
+                    @keydown.tab="showSuggestions = false"
                     @blur="closeSuggestionsWithDelay"
                     @keydown.down.prevent="navigateSuggestions(1)"
                     @keydown.up.prevent="navigateSuggestions(-1)"
@@ -2351,74 +2438,131 @@
                   />
                   <button v-if="productSearchQuery" type="button" @click="productSearchQuery = ''" class="btn-clear-search" tabindex="-1">&times;</button>
                 </div>
-                <div v-if="showSuggestions" class="autocomplete-suggestions-dropdown animate-fade-in">
+
+                <!-- Dropdown Suggestions -->
+                <div v-if="showSuggestions && filteredSuggestions.length > 0" class="autocomplete-suggestions-dropdown animate-fade-in" style="z-index: 1400;">
                   <div 
                     v-for="(prod, index) in filteredSuggestions" 
                     :key="prod._id" 
                     class="suggestion-item"
-                    :class="{ highlighted: index === highlightedSuggestionIndex }"
+                    :class="{ 
+                      highlighted: index === highlightedSuggestionIndex,
+                      'is-in-cart': getEditOrderItemQty(prod._id) > 0 
+                    }"
                     @mousedown="addSelectedProduct(prod)"
                   >
                     <img :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" alt="" class="suggestion-img" />
                     <div class="suggestion-info">
-                      <span class="suggestion-name">{{ prod.name }}</span>
-                      <span class="suggestion-category">{{ prod.category }}</span>
+                      <div class="suggestion-name-row">
+                        <span class="suggestion-name">{{ prod.name }}</span>
+                        <span v-if="getEditOrderItemQty(prod._id) > 0" class="sugg-in-cart-badge">
+                          في الطلب ×{{ getEditOrderItemQty(prod._id) }}
+                        </span>
+                      </div>
+                      <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
                     </div>
                     <div class="suggestion-pricing">
                       <span class="suggestion-price text-mono font-bold">
                         {{ formatCurrency(editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
                       </span>
-                      <span class="btn-quick-add">
+                      <span class="btn-quick-add" :class="{ 'btn-quick-add-active': getEditOrderItemQty(prod._id) > 0 }">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        إضافة
+                        {{ getEditOrderItemQty(prod._id) > 0 ? '+1' : 'إضافة' }}
                       </span>
                     </div>
-                  </div>
-                  <div v-if="filteredSuggestions.length === 0" class="suggestion-no-results">
-                    لا توجد نتائج مطابقة لـ "{{ productSearchQuery }}"
                   </div>
                 </div>
               </div>
             </div>
 
+            <!-- Items Table with Modern Steppers and Per-Item Notes -->
             <div class="edit-order-table-container">
               <table class="edit-order-table">
                 <thead>
                   <tr>
-                    <th>اسم المنتج</th>
-                    <th style="max-width: 120px;">الكمية</th>
-                    <th style="max-width: 140px;">سعر الوحدة</th>
-                    <th>إجمالي المنتج</th>
-                    <th style="width: 60px; text-align: center;">حذف</th>
+                    <th>اسم المنتج وملاحظات التجهيز</th>
+                    <th style="width: 140px; text-align: center;">الكمية</th>
+                    <th style="width: 130px; text-align: center;">سعر الوحدة</th>
+                    <th style="width: 120px; text-align: center;">الإجمالي</th>
+                    <th style="width: 48px; text-align: center;"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(item, idx) in editingOrder.items" :key="idx">
+                  <tr v-if="editingOrder.items.length === 0">
+                    <td colspan="5" class="pos-empty-cart-msg">
+                      <div class="pos-empty-cart-inner py-4 text-center">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        <span class="d-block mt-2 text-muted">لم يتم تحديد أصناف لهذا الطلب. ابحث عن المنتجات أعلاه لإضافتها.</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-for="(item, idx) in editingOrder.items" :key="'edit-item-'+idx">
                     <td>
                       <div class="edit-item-name-cell">
-                        <span v-if="item.productId" class="db-product-name" title="منتج مسجل بالمنظومة"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display: inline-block; vertical-align: middle; margin-left: 2px;"><polyline points="20 6 9 17 4 12"/></svg> {{ item.name }}</span>
+                        <span v-if="item.productId" class="db-product-name font-bold" title="منتج مسجل بالمنظومة">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"/></svg>
+                          {{ item.name }}
+                        </span>
                         <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
-                        <div v-if="item.notes" class="order-item-static-note" title="ملاحظة الزبون">
-                          * {{ item.notes }}
-                        </div>
+                        
+                        <!-- Editable Per-Item Note Input Field -->
+                        <input 
+                          v-model="item.notes" 
+                          type="text" 
+                          class="form-control form-control-sm item-note-input mt-1" 
+                          placeholder="ملاحظة خاصة بالصنف (اختياري)…" 
+                        />
                       </div>
                     </td>
-                    <td style="max-width: 120px;">
-                      <div class="edit-qty-input-wrapper">
-                        <input v-model.number="item.quantity" type="number" step="0.01" min="0.01" class="form-control edit-qty-input" placeholder="الكمية" required @input="recalcOrderTotal" @change="recalcOrderTotal" @keydown.up.prevent="item.quantity = Math.max(0.01, (item.quantity || 0) + (item.allowFloat ? 0.25 : 1)); recalcOrderTotal()" @keydown.down.prevent="item.quantity = Math.max(0.01, (item.quantity || 0) - (item.allowFloat ? 0.25 : 1)); recalcOrderTotal()" @keydown.delete.prevent="removeOrderItem(idx)" />
+                    <td style="width: 140px;">
+                      <div class="qty-stepper-control">
+                        <button type="button" class="stepper-btn btn-minus" @click="adjustEditOrderItemQty(item, -1)" tabindex="-1">-</button>
+                        <input 
+                          v-model.number="item.quantity" 
+                          type="number" 
+                          :step="item.allowFloat ? 0.25 : 1" 
+                          :min="item.allowFloat ? 0.25 : 1" 
+                          class="form-control stepper-input text-mono text-center" 
+                          placeholder="الكمية" 
+                          required 
+                          @input="recalcOrderTotal" 
+                          @change="recalcOrderTotal" 
+                          @keydown.up.prevent="adjustEditOrderItemQty(item, 1)" 
+                          @keydown.down.prevent="adjustEditOrderItemQty(item, -1)" 
+                          @keydown.delete.prevent="removeOrderItem(idx)" 
+                        />
+                        <button type="button" class="stepper-btn btn-plus" @click="adjustEditOrderItemQty(item, 1)" tabindex="-1">+</button>
                       </div>
                     </td>
-                    <td style="max-width: 140px;">
+                    <td style="width: 130px;">
                       <div class="edit-price-input-wrapper">
-                        <input v-model.number="item.price" type="number" step="0.01" min="0" class="form-control edit-price-input" placeholder="السعر" required @input="recalcOrderTotal" @change="recalcOrderTotal" />
+                        <input 
+                          v-model.number="item.price" 
+                          type="number" 
+                          step="0.01" 
+                          min="0" 
+                          class="form-control edit-price-input text-mono text-center" 
+                          placeholder="السعر" 
+                          required 
+                          @input="recalcOrderTotal" 
+                          @change="recalcOrderTotal" 
+                        />
                         <span class="currency-label">د.ل</span>
                       </div>
                     </td>
-                    <td class="text-bold text-dark">
+                    <td class="text-bold text-dark text-center text-mono font-bold" style="width: 120px;">
                       {{ formatCurrency(item.quantity * item.price) }}
                     </td>
-                    <td style="width: 60px; text-align: center;">
-                      <button type="button" @click="removeOrderItem(idx)" class="btn btn-danger btn-xs btn-remove-item" :disabled="editingOrder.items.length <= 1" title="حذف المنتج">✕</button>
+                    <td style="width: 48px; text-align: center;">
+                      <button 
+                        type="button" 
+                        @click="removeOrderItem(idx)" 
+                        class="btn-item-delete" 
+                        :disabled="editingOrder.items.length <= 1" 
+                        title="حذف الصنف من الطلب"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -2426,20 +2570,35 @@
             </div>
           </div>
 
-          <div class="order-total-display mb-3">
-            <span>إجمالي قيمة الطلب:</span>
-            <strong>{{ formatCurrency(editingOrder.totalPrice) }}</strong>
-          </div>
+          <!-- Modal Footer: Summary & Actions Bar -->
+          <div class="fast-order-modal-footer edit-order-modal-footer">
+            <div class="fast-order-totals-summary">
+              <div class="total-summary-label">إجمالي قيمة الطلب</div>
+              <div class="total-summary-val-group">
+                <span class="total-summary-val text-mono">{{ formatCurrency(editingOrder.totalPrice) }}</span>
+                <span class="total-summary-count text-muted">({{ editingOrder.items.length }} أصناف • الكمية: {{ editingOrder.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0) }})</span>
+              </div>
+            </div>
 
-          <div class="modal-footer mt-4">
-            <button type="submit" class="btn btn-primary btn-modal-save">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <span>حفظ التعديلات</span>
-            </button>
-            <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline btn-modal-cancel">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              <span>إلغاء</span>
-            </button>
+            <div class="fast-order-footer-actions">
+              <button 
+                type="button" 
+                class="btn btn-outline edit-btn-print" 
+                @click="printEditingOrder" 
+                title="طباعة إيصال الطلب"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>طباعة الإيصال</span>
+              </button>
+
+              <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="loading">إلغاء</button>
+              
+              <button type="submit" class="btn btn-primary pos-btn-submit" :disabled="loading || editingOrder.items.length === 0 || !editingOrder.customerName || !editingOrder.customerPhone" title="حفظ وتحديث الطلب">
+                <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+                <span>{{ loading ? 'جاري الحفظ…' : 'حفظ التعديلات' }}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -6044,6 +6203,7 @@ export default {
     // Order edit form bindings
     const editingOrder = reactive({
       _id: '',
+      orderNumber: '',
       customerName: '',
       customerPhone: '',
       items: [],
@@ -9126,12 +9286,27 @@ export default {
 
     const filteredSuggestions = computed(() => {
       const q = productSearchQuery.value.trim().toLowerCase();
-      if (!q) return [];
-      return products.value
-        .filter(p => p.name.toLowerCase().includes(q))
+      const list = products.value || [];
+      if (!q) return list.slice(0, 8);
+      return list
+        .filter(p => (p.name || '').toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q)))
         .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
-        .slice(0, 8);
+        .slice(0, 10);
     });
+
+    const getEditOrderItemQty = (prodId) => {
+      if (!prodId || !editingOrder.items) return 0;
+      const item = editingOrder.items.find(i => i.productId && i.productId.toString() === prodId.toString());
+      return item ? item.quantity : 0;
+    };
+
+    const adjustEditOrderItemQty = (item, delta) => {
+      const step = item.allowFloat ? 0.25 : 1;
+      const current = Number(item.quantity) || 0;
+      const next = Math.max(step, Math.round((current + delta * step) * 100) / 100);
+      item.quantity = next;
+      recalcOrderTotal();
+    };
 
     watch(productSearchQuery, (newVal) => {
       showSuggestions.value = newVal.trim().length > 0;
@@ -9180,7 +9355,8 @@ const navigateSuggestions = (dir) => {
       
       const existingItem = editingOrder.items.find(item => item.productId && item.productId.toString() === prod._id.toString());
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity += (existingItem.allowFloat ? 0.25 : 1);
+        existingItem.quantity = Math.round(existingItem.quantity * 100) / 100;
       } else {
         editingOrder.items.push({
           productId: prod._id,
@@ -9194,6 +9370,28 @@ const navigateSuggestions = (dir) => {
       recalcOrderTotal();
       productSearchQuery.value = '';
       showSuggestions.value = false;
+    };
+
+    const printEditingOrder = () => {
+      const ord = orders.value.find(o => o._id === editingOrder._id);
+      if (ord) {
+        printOrder(ord);
+      } else {
+        printOrder({
+          _id: editingOrder._id,
+          orderNumber: editingOrder.orderNumber,
+          customerInfo: {
+            name: editingOrder.customerName,
+            phone: editingOrder.customerPhone
+          },
+          items: editingOrder.items,
+          totalPrice: editingOrder.totalPrice,
+          priceMode: editingOrder.priceMode,
+          status: editingOrder.status,
+          deliveryDate: editingOrder.deliveryDate,
+          notes: editingOrder.notes
+        });
+      }
     };
 
         const closeNewOrderCustomerSuggestionsWithDelay = () => {
@@ -9218,12 +9416,13 @@ const closeSuggestionsWithDelay = () => {
 
     const openOrderEditModal = (order) => {
       editingOrder._id = order._id;
+      editingOrder.orderNumber = order.orderNumber || (order._id ? order._id.toString().slice(-6) : '');
       editingOrder.customerName = order.customerInfo?.name || '';
       editingOrder.customerPhone = order.customerInfo?.phone || '';
       editOrderCustomerSearch.value = '';
       showEditOrderCustomerSuggestions.value = false;
       highlightedEditCustomerIndex.value = 0;
-      editingOrder.items = (order.items || []).map(item => ({ ...item }));
+      editingOrder.items = (order.items || []).map(item => ({ ...item, notes: item.notes || '' }));
       editingOrder.totalPrice = order.totalPrice || 0;
       editingOrder.priceMode = order.priceMode || 'regular';
       editingOrder.status = order.status || 'pending';
@@ -10974,6 +11173,9 @@ const closeSuggestionsWithDelay = () => {
       clearEditOrderDate,
       onPriceModeChange,
       saveOrder,
+      adjustEditOrderItemQty,
+      getEditOrderItemQty,
+      printEditingOrder,
       newOrderModalOpen,
       newOrderLoading,
       newOrderAutoPrint,
@@ -21903,29 +22105,78 @@ select.pos-control {
 
 
 /* ============ EDIT ORDER REFACTORED UI/UX STYLES ============ */
+.order-edit-modal-content {
+  width: 96% !important;
+  max-width: 1020px !important;
+  padding: 24px !important;
+  border-radius: 18px !important;
+}
+
+.edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 20px;
+}
+
+.edit-modal-main-title {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: var(--text-color, #0f172a);
+}
+
+.edit-order-id-badge {
+  background: rgba(15, 23, 42, 0.08);
+  color: #1e293b;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  letter-spacing: -0.3px;
+}
+
+.edit-price-mode-badge {
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 8px;
+}
+
+.edit-price-mode-badge.is-bulk {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.edit-price-mode-badge.is-regular {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
 .edit-order-top-grid {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr 1.15fr;
   gap: 16px;
   align-items: stretch;
 }
 
 .edit-order-card {
-  padding: 18px;
+  padding: 16px 18px;
   border-radius: 14px;
   background: var(--card-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
 }
 
 .edit-order-card.edit-customer-card {
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, var(--card-bg, #ffffff) 100%);
-  border-color: rgba(245, 158, 11, 0.18);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.04) 0%, var(--card-bg, #ffffff) 100%);
+  border-color: rgba(245, 158, 11, 0.22);
 }
 
-/* Card Header — mirrors .pos-card-header pattern */
 .edit-card-header {
   display: flex;
   align-items: center;
@@ -21939,7 +22190,7 @@ select.pos-control {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   font-weight: 800;
   color: #1e293b;
 }
@@ -21949,7 +22200,6 @@ select.pos-control {
   flex-shrink: 0;
 }
 
-/* Customer Profile Box */
 .edit-selected-customer-box {
   display: flex;
   align-items: center;
@@ -21958,40 +22208,34 @@ select.pos-control {
   background: rgba(245, 158, 11, 0.06);
   border: 1.5px solid rgba(245, 158, 11, 0.22);
   border-radius: 12px;
-  transition: border-color 0.2s ease;
+  position: relative;
 }
 
 .cust-avatar-md {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 800;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28);
+  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.28);
 }
 
 .edit-cust-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex-grow: 1;
   min-width: 0;
 }
 
-.edit-cust-name-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .edit-cust-name {
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--text-color, #0f172a);
   line-height: 1.35;
@@ -22005,12 +22249,59 @@ select.pos-control {
 }
 
 .edit-cust-phone {
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   font-weight: 700;
   color: #64748b;
 }
 
-/* Customer Search Input */
+.edit-cust-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.edit-action-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.edit-whatsapp-circle {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.edit-whatsapp-circle:hover {
+  background: #10b981;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.edit-call-circle {
+  background: rgba(59, 130, 246, 0.14);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.edit-call-circle:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.edit-sub-label {
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #64748b;
+}
+
 .edit-cust-search-input {
   font-size: 0.88rem;
   border-radius: 10px;
@@ -22025,7 +22316,7 @@ select.pos-control {
   outline: none;
 }
 
-/* Meta Details Grid (Card 2) */
+/* Card 2: Meta Grid Inner */
 .edit-meta-grid-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -22036,10 +22327,67 @@ select.pos-control {
 .edit-meta-col {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
-/* Responsive */
+.btn-clear-date-mini {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 750;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.btn-clear-date-mini:hover {
+  text-decoration: underline;
+}
+
+.edit-status-select {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Items Card & Table */
+.edit-order-items-card {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.item-note-input {
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.item-note-input:focus {
+  border-style: solid;
+  border-color: #f59e0b;
+  background: #ffffff;
+}
+
+.edit-btn-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 750;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.edit-btn-print:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
 @media (max-width: 768px) {
   .edit-order-top-grid {
     grid-template-columns: 1fr;
@@ -22050,23 +22398,29 @@ select.pos-control {
 }
 
 @media (max-width: 640px) {
+  .order-edit-modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 94vh !important;
+    overflow-y: auto !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 16px !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
   .edit-order-card {
     padding: 14px;
     border-radius: 12px;
   }
-  .edit-card-header {
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-  }
-  .edit-selected-customer-box {
-    padding: 10px 12px;
-  }
   .cust-avatar-md {
-    width: 38px;
-    height: 38px;
-    font-size: 1rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
   }
   .edit-cust-name {
-    font-size: 0.95rem;
+    font-size: 0.98rem;
   }
 }
+
+
