@@ -5251,7 +5251,7 @@
           </div>
           <div class="kpi-text-wrap">
             <span class="kpi-lbl">إجمالي المبيعات</span>
-            <strong class="kpi-val text-mono text-success">{{ formatCurrency(productCustomersData.totalRevenue) }}</strong>
+            <strong class="kpi-val text-mono text-success nowrap">{{ formatCurrency(productCustomersData.totalRevenue) }}</strong>
           </div>
         </div>
       </div>
@@ -5420,17 +5420,17 @@
               <tr v-for="ord in filteredProductOrdersList" :key="ord.orderId">
                 <td class="font-bold text-mono">#{{ ord.orderNumber }}</td>
                 <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="font-bold text-dark">{{ ord.customerName }}</span>
+                  <div class="table-cust-identity-row mb-1">
+                    <span class="font-bold text-dark table-cust-name">{{ ord.customerName }}</span>
                     <a 
                       v-if="ord.customerPhone" 
                       :href="getLibyanWhatsAppUrl(ord.customerPhone)" 
                       target="_blank" 
-                      class="cust-icon-btn whatsapp xs" 
-                      title="واتساب" 
-                      aria-label="واتساب"
+                      class="cust-icon-btn whatsapp table-cust-whatsapp-btn" 
+                      title="مراسلة عبر واتساب" 
+                      aria-label="مراسلة العميل عبر واتساب"
                     >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                     </a>
                   </div>
                   <span v-if="ord.customerPhone" class="text-muted text-mono text-small d-block" dir="ltr">{{ ord.customerPhone }}</span>
@@ -23112,22 +23112,22 @@ select.pos-control {
 
 .prod-cust-kpi-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
 }
 
 @media (max-width: 820px) {
   .prod-cust-kpi-bar {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
   }
 }
 
 @media (max-width: 480px) {
   .prod-cust-kpi-bar {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 }
 
@@ -23135,10 +23135,11 @@ select.pos-control {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  min-width: 0;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -23155,9 +23156,9 @@ select.pos-control {
 }
 
 .prod-cust-kpi-item .kpi-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: #f8fafc;
   display: flex;
   align-items: center;
@@ -23177,11 +23178,13 @@ select.pos-control {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 3px;
+  gap: 2px;
+  overflow: hidden;
+  flex: 1;
 }
 
 .prod-cust-kpi-item .kpi-lbl {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #64748b;
   font-weight: 600;
   white-space: nowrap;
@@ -23189,11 +23192,19 @@ select.pos-control {
 }
 
 .prod-cust-kpi-item .kpi-val {
-  font-size: 1.28rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #0f172a;
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.prod-cust-kpi-item .kpi-val.nowrap {
+  white-space: nowrap !important;
 }
 
 .prod-cust-toolbar {
@@ -23355,7 +23366,7 @@ select.pos-control {
 .cust-meta-text {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .cust-name {
@@ -23363,12 +23374,13 @@ select.pos-control {
   font-weight: 700;
   color: #0f172a;
   line-height: 1.3;
+  margin-bottom: 2px;
 }
 
 .cust-phone-actions-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .cust-phone {
@@ -23381,7 +23393,8 @@ select.pos-control {
 .cust-action-buttons {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin-inline-start: 14px;
 }
 
 .cust-icon-btn {
@@ -23413,6 +23426,26 @@ select.pos-control {
   width: 22px;
   height: 22px;
   border-radius: 6px;
+}
+
+.table-cust-identity-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.table-cust-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.table-cust-whatsapp-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  margin-inline-start: 14px;
+  flex-shrink: 0;
 }
 
 .cust-qty-summary-side {
