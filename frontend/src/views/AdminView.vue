@@ -6295,11 +6295,11 @@ export default {
         '.settings-section'
       );
       const targets = (cards && cards.length > 0) ? cards : [el];
-      gsap.set(targets, { opacity: 0, y: 16, scale: 0.985 });
+      gsap.set(targets, { opacity: 0, y: 18, scale: 0.985 });
     };
 
-    // Hardware-composited card materialization cascade (Called immediately on mount)
-    // 60-120fps locked, zero paint thrashing, high-quality premium stagger
+    // Hardware-composited card materialization cascade (120% longer, premium luxury stagger)
+    // Double RAF decouples table DOM construction/layout from compositor animation -> 0 frame drops!
     const onTabEnter = (el, done) => {
       const cards = el.querySelectorAll(
         '.kpi-grid > .kpi-card, ' +
@@ -6312,16 +6312,21 @@ export default {
         '.settings-section'
       );
       const targets = (cards && cards.length > 0) ? cards : [el];
-      gsap.killTweensOf(targets);
-      gsap.to(targets, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.46,
-        stagger: 0.04,
-        ease: 'power2.out',
-        clearProps: 'transform,opacity',
-        onComplete: done
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          gsap.killTweensOf(targets);
+          gsap.to(targets, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.82,
+            stagger: 0.055,
+            ease: 'power2.out',
+            clearProps: 'transform,opacity',
+            onComplete: done
+          });
+        });
       });
     };
 
@@ -6341,19 +6346,63 @@ export default {
         '.settings-section'
       );
       const targets = (cards && cards.length > 0) ? cards : [activeEl];
-      gsap.killTweensOf(targets);
-      gsap.fromTo(targets,
-        { opacity: 0, y: 16, scale: 0.985 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.46,
-          stagger: 0.04,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity'
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          gsap.killTweensOf(targets);
+          gsap.fromTo(targets,
+            { opacity: 0, y: 18, scale: 0.985 },
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.82,
+              stagger: 0.055,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity'
+            }
+          );
+        });
+      });
+    };
+
+    // Heavy Tabs with complex tables & multi-row layout (Orders, Products, Customers, Production, Analytics)
+    const HEAVY_TABS = ['orders', 'products', 'customers', 'production', 'analytics'];
+
+    const isTabDataLoading = (tab) => {
+      if (tab === 'orders') return ordersLoading.value;
+      if (tab === 'products') return productsLoading.value;
+      if (tab === 'customers') return customersLoading.value;
+      if (tab === 'analytics') return analyticsLoading.value;
+      if (tab === 'production') return chefsLoading.value;
+      return false;
+    };
+
+    // Extended skeleton loader bridge: waits for heavy tables to load data & prevents layout frame drops
+    const scheduleTabSwitchCompletion = (tab) => {
+      if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
+      const isHeavy = HEAVY_TABS.includes(tab);
+      // 120% longer baseline: 620ms for standard tabs, 740ms for heavy tables/Kanban
+      const minDuration = isHeavy ? 740 : 620;
+      const startTime = Date.now();
+
+      const checkAndComplete = () => {
+        const elapsed = Date.now() - startTime;
+        // If data is actively loading for a heavy tab, wait with the skeleton loader (safety timeout 2000ms)
+        if (isHeavy && isTabDataLoading(tab) && elapsed < 2000) {
+          tabSwitchTimer = setTimeout(checkAndComplete, 60);
+          return;
         }
-      );
+        const remaining = Math.max(0, minDuration - elapsed);
+        if (remaining > 0) {
+          tabSwitchTimer = setTimeout(() => {
+            isTabSwitching.value = false;
+          }, remaining);
+        } else {
+          isTabSwitching.value = false;
+        }
+      };
+
+      tabSwitchTimer = setTimeout(checkAndComplete, minDuration);
     };
 
     const handleSidebarKeydown = (e) => {
@@ -6415,9 +6464,7 @@ export default {
         if (oldTab && oldTab !== newTab && !isTabSwitching.value) {
           if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
           isTabSwitching.value = true;
-          tabSwitchTimer = setTimeout(() => {
-        isTabSwitching.value = false;
-      }, 280);
+          scheduleTabSwitchCompletion(newTab);
         } else if (!oldTab) {
           // Initial mount
           triggerHolographicScan();
@@ -8322,9 +8369,7 @@ export default {
       isTabSwitching.value = true;
       activeTab.value = tab;
 
-      tabSwitchTimer = setTimeout(() => {
-        isTabSwitching.value = false;
-      }, 120);
+      scheduleTabSwitchCompletion(tab);
     };
 
     // User Management Methods
@@ -14628,6 +14673,10 @@ select.form-control:focus {
 .tab-content-wrapper .category-card,
 .tab-content-wrapper .settings-section {
   will-change: transform, opacity;
+}
+
+.tab-content-wrapper .table-card {
+  contain: paint;
 }
 
 /* Responsive breakdowns */
