@@ -888,7 +888,9 @@ watch(carouselItems, (newItems) => {
   opacity: 0.4;
 }
 
-/* Modals styling */
+/* ========================================================================= */
+/* POPUP MODALS MATERIALIZATION & BACKDROP ENTRANCE                          */
+/* ========================================================================= */
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -900,6 +902,13 @@ watch(carouselItems, (newItems) => {
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  animation: modalOverlayFade 0.22s ease-out both;
+  will-change: opacity;
+}
+
+@keyframes modalOverlayFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .modal-content {
@@ -911,6 +920,40 @@ watch(carouselItems, (newItems) => {
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow-xl);
+  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+@keyframes modalMaterializeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-content .modal-title,
+.modal-content .modal-desc {
+  animation: modalChildIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.03s both;
+}
+
+.modal-content .modal-actions {
+  animation: modalChildIn 0.30s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
+}
+
+@keyframes modalChildIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-title {
@@ -972,7 +1015,8 @@ watch(carouselItems, (newItems) => {
   direction: ltr;
   padding: 16px;
   box-sizing: border-box;
-  animation: fadeIn 0.2s ease;
+  animation: modalOverlayFade 0.22s ease-out both;
+  will-change: opacity;
 }
 
 .zoom-content {
@@ -984,6 +1028,9 @@ watch(carouselItems, (newItems) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .zoom-skeleton-loader {
@@ -1148,6 +1195,24 @@ watch(carouselItems, (newItems) => {
   .skeleton-products-row {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px;
+    margin: 0;
+    animation: modalSheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes modalSheetSlideUp {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0); }
   }
 }
 

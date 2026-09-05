@@ -14045,8 +14045,12 @@ select.form-control:focus {
   font-weight: 500;
 }
 
-/* Modals overlays styling */
-.modal-overlay {
+/* ========================================================================= */
+/* POPUP MODALS MATERIALIZATION & BACKDROP ENTRANCE                          */
+/* ========================================================================= */
+.modal-overlay,
+.premium-cropper-overlay,
+.zoom-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(15, 23, 42, 0.45) !important;
@@ -14057,10 +14061,25 @@ select.form-control:focus {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: modalOverlayFade 0.22s ease-out both !important;
+  will-change: opacity;
+}
+
+.modal-overlay.animate-fade-in,
+.premium-cropper-overlay.animate-fade-in,
+.zoom-backdrop.animate-fade-in {
+  animation: modalOverlayFade 0.22s ease-out both !important;
+}
+
+@keyframes modalOverlayFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .modal-box,
-.modal-content {
+.modal-content,
+.premium-cropper-content,
+.zoom-content {
   background: #ffffff !important;
   color: #0f172a !important;
   font-family: 'Cairo', system-ui, -apple-system, sans-serif !important;
@@ -14076,6 +14095,63 @@ select.form-control:focus {
   z-index: 1001;
   display: flex;
   flex-direction: column;
+  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+@keyframes modalMaterializeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Staggered micro-entrance for modal sections */
+.modal-content .modal-header,
+.modal-box .modal-header,
+.premium-cropper-header {
+  animation: modalChildIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.03s both;
+}
+
+.modal-content .modal-footer,
+.modal-box .modal-footer,
+.modal-content .modal-actions,
+.premium-cropper-footer {
+  animation: modalChildIn 0.30s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
+}
+
+@keyframes modalChildIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Datepicker popover bloom */
+.datepicker-popover {
+  animation: popoverMaterializeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+@keyframes popoverMaterializeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-box.max-w-md,
