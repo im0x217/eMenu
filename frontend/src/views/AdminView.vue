@@ -146,7 +146,7 @@
       <!-- Main Content -->
       <main class="admin-main" ref="adminMainRef">
         <!-- Cyber Holographic Scanline Overlay -->
-        <div v-show="isScanning" class="cyber-scanline-container" aria-hidden="true">
+        <div class="cyber-scanline-container" aria-hidden="true">
           <div class="cyber-scanline-beam"></div>
           <div class="cyber-scanline-trail"></div>
         </div>
@@ -313,7 +313,7 @@
         </div>
 
         <!-- Tab Content -->
-        <div class="tab-content-wrapper animate-fade-in" :key="activeTab">
+        <div class="tab-content-wrapper">
           
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
@@ -1069,7 +1069,7 @@
           </div>
 
           <!-- TAGS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content animate-fade-in">
+          <div v-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1141,7 +1141,7 @@
 
 
           <!-- MARKETING CAROUSEL TAB -->
-          <div v-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content animate-fade-in">
+          <div v-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
             <div class="table-card glass-panel overflow-hidden p-0">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1206,7 +1206,7 @@
           </div>
 
           <!-- ORDERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
+          <div v-if="activeTab === 'orders'" class="orders-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split orders-toolbar-container">
                 <div class="card-toolbar-top">
@@ -2680,7 +2680,7 @@
     </div>
 
           <!-- CUSTOMERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
+          <div v-if="activeTab === 'customers'" class="customers-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3043,7 +3043,7 @@
           </div>
 
           <!-- PRODUCTION MANAGEMENT TAB -->
-          <div v-if="activeTab === 'production'" class="production-tab-content animate-fade-in">
+          <div v-if="activeTab === 'production'" class="production-tab-content">
             <!-- Navigation Sub-Tab Pills Switcher -->
             <div class="production-subnav-bar glass-panel mb-3">
               <div class="production-tabs-pills">
@@ -3578,7 +3578,7 @@
           </div>
 
           <!-- USERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content animate-fade-in">
+          <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3641,7 +3641,7 @@
           </div>
 
           <!-- Settings & Backup Tab -->
-          <div v-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content animate-fade-in">
+          <div v-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content">
             <div class="settings-grid">
               
               <!-- Backup Management Card -->
@@ -6181,28 +6181,39 @@ export default {
     let activeScanTimeline = null;
 
     const triggerHolographicScan = () => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
       isScanning.value = true;
       nextTick(() => {
         if (activeScanTimeline) activeScanTimeline.kill();
 
-        const beam = document.querySelector('.cyber-scanline-beam');
-        const trail = document.querySelector('.cyber-scanline-trail');
         const container = adminMainRef.value || document.querySelector('.admin-main');
-        const header = document.querySelector('.main-header');
-        const dateBar = document.querySelector('.date-range-bar');
-        const cards = document.querySelectorAll(
-          '.tab-content-wrapper .kpi-card, ' +
-          '.tab-content-wrapper .table-card, ' +
-          '.tab-content-wrapper .chart-card, ' +
-          '.tab-content-wrapper .chefs-kanban-board, ' +
-          '.tab-content-wrapper .analytics-real-content, ' +
-          '.tab-content-wrapper .production-subnav-container, ' +
-          '.tab-content-wrapper .card-toolbar'
-        );
+        const beam = container?.querySelector('.cyber-scanline-beam');
+        const trail = container?.querySelector('.cyber-scanline-trail');
+        const header = container?.querySelector('.main-header');
+        const dateBar = container?.querySelector('.date-range-bar');
+        
+        // Direct panels and cards of the active tab
+        const mainPanels = container?.querySelectorAll(
+          '.tab-content-wrapper > div > .table-card, ' +
+          '.tab-content-wrapper > div > .kpi-grid, ' +
+          '.tab-content-wrapper > div > .charts-grid, ' +
+          '.tab-content-wrapper > div > .chefs-kanban-board, ' +
+          '.tab-content-wrapper > div > .categories-management-grid, ' +
+          '.tab-content-wrapper > div > .carousel-admin-grid, ' +
+          '.tab-content-wrapper > div > .settings-grid, ' +
+          '.tab-content-wrapper > div > *'
+        ) || [];
 
-        const scanHeight = Math.min(container ? container.clientHeight : 700, 850);
+        // Individual table rows / cards for ShopView-style micro-stagger
+        const subItems = container?.querySelectorAll(
+          '.kpi-grid .kpi-card, ' +
+          '.charts-grid .chart-card, ' +
+          '.mob-orders-list .mob-order-card, ' +
+          '.categories-management-grid .category-card, ' +
+          '.chefs-kanban-board .chef-kanban-col, ' +
+          '.admin-table tbody tr'
+        ) || [];
+
+        const scanHeight = Math.max(container ? container.clientHeight : 0, window.innerHeight || 800);
 
         activeScanTimeline = gsap.timeline({
           onComplete: () => {
@@ -6213,13 +6224,7 @@ export default {
         // 1. Animate Laser Beam and Holographic Trail
         if (beam && trail) {
           gsap.set([beam, trail], { y: 0, opacity: 1 });
-          activeScanTimeline.to(beam, {
-            y: scanHeight,
-            duration: 0.58,
-            ease: 'power2.inOut'
-          }, 0);
-
-          activeScanTimeline.to(trail, {
+          activeScanTimeline.to([beam, trail], {
             y: scanHeight,
             duration: 0.58,
             ease: 'power2.inOut'
@@ -6227,16 +6232,16 @@ export default {
 
           activeScanTimeline.to([beam, trail], {
             opacity: 0,
-            duration: 0.12,
+            duration: 0.14,
             ease: 'power1.out'
-          }, 0.5);
+          }, 0.48);
         }
 
         // 2. Materialize Header Title
         if (header) {
           activeScanTimeline.fromTo(header,
-            { opacity: 0.25, y: -8, filter: 'blur(3px)' },
-            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.36, ease: 'power2.out', clearProps: 'filter' },
+            { opacity: 0.15, y: -8, filter: 'blur(4px)' },
+            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.38, ease: 'power2.out', clearProps: 'filter' },
             0.04
           );
         }
@@ -6244,30 +6249,36 @@ export default {
         // 3. Materialize Filter & Date Bar
         if (dateBar) {
           activeScanTimeline.fromTo(dateBar,
-            { opacity: 0.2, y: 10, filter: 'blur(3px)' },
-            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.38, ease: 'power2.out', clearProps: 'filter' },
-            0.12
+            { opacity: 0.15, y: 8, filter: 'blur(4px)' },
+            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, ease: 'power2.out', clearProps: 'filter' },
+            0.1
           );
         }
 
-        // 4. Materialize Cards & Tables with cascading sweep
-        if (cards && cards.length > 0) {
-          activeScanTimeline.fromTo(cards,
-            { opacity: 0.12, y: 16, scale: 0.985, filter: 'blur(4px)' },
+        // 4. Materialize Primary Content Panels
+        if (mainPanels && mainPanels.length > 0) {
+          activeScanTimeline.fromTo(mainPanels,
+            { opacity: 0.1, y: 18, scale: 0.985, filter: 'blur(5px)' },
             { 
               opacity: 1, 
               y: 0, 
               scale: 1, 
               filter: 'blur(0px)', 
-              duration: 0.44, 
-              stagger: {
-                each: 0.05,
-                from: 'start'
-              }, 
+              duration: 0.46, 
+              stagger: 0.05, 
               ease: 'power3.out',
               clearProps: 'filter,scale'
             },
-            0.16
+            0.12
+          );
+        }
+
+        // 5. Micro-stagger sub-items (ShopView style per e-menu-design-guide)
+        if (subItems && subItems.length > 0 && subItems.length <= 30) {
+          activeScanTimeline.fromTo(subItems,
+            { opacity: 0.2, y: 10 },
+            { opacity: 1, y: 0, duration: 0.32, stagger: 0.02, ease: 'power1.out', overwrite: 'auto' },
+            0.2
           );
         }
       });
@@ -12714,6 +12725,7 @@ const closeSuggestionsWithDelay = () => {
 
 /* Main Content Area */
 .admin-main {
+  position: relative !important;
   grid-column: 2;
   grid-row: 1;
   padding: 30px 30px calc(80px + env(safe-area-inset-bottom)) 30px;
@@ -14490,7 +14502,8 @@ select.form-control:focus {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  height: 100%;
+  min-height: 100%;
   pointer-events: none;
   z-index: 999;
   overflow: hidden;
@@ -14501,20 +14514,21 @@ select.form-control:focus {
   top: 0;
   left: 0;
   right: 0;
-  height: 2.5px;
+  height: 3px;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(245, 158, 11, 0.35) 12%, 
+    rgba(245, 158, 11, 0.4) 10%, 
     rgba(253, 224, 71, 1) 50%, 
-    rgba(245, 158, 11, 0.35) 88%, 
+    rgba(245, 158, 11, 0.4) 90%, 
     transparent 100%
   );
   box-shadow: 
-    0 0 14px rgba(245, 158, 11, 0.95),
-    0 0 28px rgba(245, 158, 11, 0.6),
-    0 0 45px rgba(253, 224, 71, 0.45);
+    0 0 16px rgba(245, 158, 11, 1),
+    0 0 35px rgba(245, 158, 11, 0.7),
+    0 0 60px rgba(253, 224, 71, 0.5);
   pointer-events: none;
-  filter: drop-shadow(0 0 6px #f59e0b);
+  filter: drop-shadow(0 0 8px #f59e0b);
+  opacity: 0;
 }
 
 .cyber-scanline-trail {
@@ -14522,20 +14536,15 @@ select.form-control:focus {
   top: 0;
   left: 0;
   right: 0;
-  height: 80px;
+  height: 120px;
   background: linear-gradient(180deg, 
-    rgba(245, 158, 11, 0.12) 0%, 
-    rgba(245, 158, 11, 0.03) 65%, 
+    rgba(245, 158, 11, 0.16) 0%, 
+    rgba(245, 158, 11, 0.04) 60%, 
     transparent 100%
   );
   pointer-events: none;
   transform: translateY(-100%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cyber-scanline-container {
-    display: none !important;
-  }
+  opacity: 0;
 }
 
 /* Responsive breakdowns */
