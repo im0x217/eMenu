@@ -145,11 +145,6 @@
 
       <!-- Main Content -->
       <main class="admin-main" ref="adminMainRef">
-        <!-- Cyber Holographic Scanline Overlay -->
-        <div class="cyber-scanline-container" aria-hidden="true">
-          <div class="cyber-scanline-beam"></div>
-          <div class="cyber-scanline-trail"></div>
-        </div>
         <div class="main-header no-print">
           <h1>{{ tabTitles[activeTab] }}</h1>
           <!-- Period & Actions for Analytics -->
@@ -6183,94 +6178,55 @@ export default {
     const triggerHolographicScan = () => {
       isScanning.value = true;
       nextTick(() => {
-        if (activeScanTimeline) activeScanTimeline.kill();
-
         const container = adminMainRef.value || document.querySelector('.admin-main');
-        const beam = container?.querySelector('.cyber-scanline-beam');
-        const trail = container?.querySelector('.cyber-scanline-trail');
-        const header = container?.querySelector('.main-header');
-        const dateBar = container?.querySelector('.date-range-bar');
-        
-        // Direct panels and cards of the active tab (removed wildcard for performance)
-        const mainPanels = container?.querySelectorAll(
-          '.tab-content-wrapper .table-card, ' +
-          '.tab-content-wrapper .kpi-grid, ' +
-          '.tab-content-wrapper .charts-grid, ' +
-          '.tab-content-wrapper .chefs-kanban-board, ' +
-          '.tab-content-wrapper .categories-management-grid, ' +
-          '.tab-content-wrapper .carousel-admin-grid, ' +
-          '.tab-content-wrapper .settings-grid'
-        ) || [];
+        if (!container) {
+          isScanning.value = false;
+          return;
+        }
 
-        // Individual table rows / cards for ShopView-style micro-stagger
-        const subItems = container?.querySelectorAll(
-          '.kpi-grid .kpi-card, ' +
-          '.charts-grid .chart-card, ' +
-          '.mob-orders-list .mob-order-card, ' +
-          '.categories-management-grid .category-card, ' +
-          '.chefs-kanban-board .chef-kanban-col, ' +
-          '.admin-table tbody tr'
-        ) || [];
+        const activeTabEl = container.querySelector('.tab-content-wrapper > div');
+        if (!activeTabEl) {
+          isScanning.value = false;
+          return;
+        }
 
-        const scanHeight = Math.max(container ? container.clientHeight : 0, window.innerHeight || 800);
+        // Query only top-level leaf cards/panels (exactly matching ShopView.vue card pattern)
+        // Strictly avoid nested parent-child selections and table row (tr) transforms
+        const cards = activeTabEl.querySelectorAll(
+          '.kpi-grid > .kpi-card, ' +
+          '.charts-grid > .chart-card, ' +
+          '.table-card, ' +
+          '.production-subnav-bar, ' +
+          '.categories-management-grid > .category-card, ' +
+          '.carousel-admin-grid > .carousel-item-card, ' +
+          '.chef-kanban-col'
+        );
 
-        activeScanTimeline = gsap.timeline({
-          onComplete: () => {
-            isScanning.value = false;
+        const targets = (cards && cards.length > 0) ? cards : activeTabEl.children;
+
+        // GSAP hardware-composited entrance stagger (pure compositor properties: opacity, y, scale)
+        // 60-120fps locked, zero paint thrashing, exactly per ShopView.vue & e-menu-design-guide
+        gsap.killTweensOf(targets);
+        gsap.fromTo(targets, 
+          { 
+            opacity: 0, 
+            y: 12, 
+            scale: 0.98 
+          }, 
+          { 
+            opacity: 1, 
+            y: 0, 
+            scale: 1, 
+            duration: 0.28, 
+            stagger: 0.025, 
+            ease: 'power1.out', 
+            overwrite: 'auto',
+            clearProps: 'transform,opacity',
+            onComplete: () => {
+              isScanning.value = false;
+            }
           }
-        });
-
-        // 1. Animate Laser Beam and Holographic Trail (Fast sweep)
-        if (beam && trail) {
-          gsap.set([beam, trail], { y: 0, opacity: 1 });
-          activeScanTimeline.to([beam, trail], {
-            y: scanHeight,
-            duration: 0.4,
-            ease: 'power2.inOut'
-          }, 0);
-
-          activeScanTimeline.to([beam, trail], {
-            opacity: 0,
-            duration: 0.1,
-            ease: 'power1.out'
-          }, 0.3);
-        }
-
-        // 2. Materialize Header Title
-        if (header) {
-          activeScanTimeline.fromTo(header,
-            { opacity: 0, y: -8 },
-            { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out', clearProps: 'transform' },
-            0.02
-          );
-        }
-
-        // 3. Materialize Filter & Date Bar
-        if (dateBar) {
-          activeScanTimeline.fromTo(dateBar,
-            { opacity: 0, y: 8 },
-            { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out', clearProps: 'transform' },
-            0.04
-          );
-        }
-
-        // 4. Fast, high-performance materialization (ShopView pattern - pure compositor)
-        if (mainPanels && mainPanels.length > 0) {
-          activeScanTimeline.fromTo(mainPanels,
-            { opacity: 0, y: 12, scale: 0.97 },
-            { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power1.out', overwrite: 'auto', clearProps: 'transform' },
-            0.05
-          );
-        }
-
-        // 5. Micro-stagger sub-items 
-        if (subItems && subItems.length > 0 && subItems.length <= 40) {
-          activeScanTimeline.fromTo(subItems,
-            { opacity: 0, y: 8 },
-            { opacity: 1, y: 0, duration: 0.25, stagger: 0.02, ease: 'power1.out', overwrite: 'auto', clearProps: 'transform' },
-            0.15
-          );
-        }
+        );
       });
     };
 
@@ -14485,56 +14441,18 @@ select.form-control:focus {
 }
 
 /* ========================================================================= */
-/* CYBER HOLOGRAPHIC SCANLINE & MATERIALIZATION OVERLAY                      */
+/* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (ShopView Pattern)         */
 /* ========================================================================= */
-.cyber-scanline-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  min-height: 100%;
-  pointer-events: none;
-  z-index: 999;
-  overflow: hidden;
+.tab-content-wrapper {
+  position: relative;
+  width: 100%;
 }
 
-.cyber-scanline-beam {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(245, 158, 11, 0.4) 10%, 
-    rgba(253, 224, 71, 1) 50%, 
-    rgba(245, 158, 11, 0.4) 90%, 
-    transparent 100%
-  );
-  box-shadow: 
-    0 0 16px rgba(245, 158, 11, 1),
-    0 0 35px rgba(245, 158, 11, 0.7),
-    0 0 60px rgba(253, 224, 71, 0.5);
-  pointer-events: none;
-  filter: drop-shadow(0 0 8px #f59e0b);
-  opacity: 0;
-}
-
-.cyber-scanline-trail {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: linear-gradient(180deg, 
-    rgba(245, 158, 11, 0.16) 0%, 
-    rgba(245, 158, 11, 0.04) 60%, 
-    transparent 100%
-  );
-  pointer-events: none;
-  transform: translateY(-100%);
-  opacity: 0;
+.tab-content-wrapper .glass-panel,
+.tab-content-wrapper .table-card,
+.tab-content-wrapper .kpi-card,
+.tab-content-wrapper .chart-card {
+  will-change: transform, opacity;
 }
 
 /* Responsive breakdowns */
