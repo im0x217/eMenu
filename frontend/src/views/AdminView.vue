@@ -6312,8 +6312,8 @@ export default {
             opacity: 1, 
             y: 0, 
             scale: 1, 
-            duration: 0.42,
-            stagger: 0.038,
+            duration: 0.8,
+            stagger: 0.07,
             ease: 'power2.out', 
             overwrite: 'auto',
             clearProps: 'transform,opacity',
@@ -6389,7 +6389,7 @@ export default {
             nextTick(() => {
               triggerHolographicScan();
             });
-          }, 280);
+          }, 550);
         } else {
           // Initial mount
           triggerHolographicScan();
@@ -14557,7 +14557,7 @@ select.form-control:focus {
 .tab-skeleton-placeholder {
   width: 100%;
   min-height: 420px;
-  animation: fadeIn 0.22s ease-out;
+  animation: fadeIn 0.4s ease-out;
   pointer-events: none;
   user-select: none;
 }
