@@ -399,7 +399,15 @@
             </div>
           </div>
 
-          <template v-else>
+          
+          <!-- Tab Content Materialization with Vue Transition Lifecycle -->
+          <Transition
+            appear
+            :css="false"
+            @before-enter="onTabBeforeEnter"
+            @enter="onTabEnter"
+          >
+            <div v-if="!isTabSwitching" :key="activeTab" class="active-tab-container">
           
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
@@ -777,7 +785,7 @@
           </div>
 
           <!-- PRODUCTS CRUD TAB -->
-          <div v-if="activeTab === 'products' && userRole === 'admin'" class="products-tab-content">
+          <div v-else-if="activeTab === 'products' && userRole === 'admin'" class="products-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1079,7 +1087,7 @@
           </div>
 
           <!-- CATEGORIES CRUD TAB -->
-          <div v-if="activeTab === 'categories' && userRole === 'admin'" class="categories-tab-content">
+          <div v-else-if="activeTab === 'categories' && userRole === 'admin'" class="categories-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1155,7 +1163,7 @@
           </div>
 
           <!-- TAGS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
+          <div v-else-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1227,7 +1235,7 @@
 
 
           <!-- MARKETING CAROUSEL TAB -->
-          <div v-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
+          <div v-else-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
             <div class="table-card glass-panel overflow-hidden p-0">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1292,7 +1300,7 @@
           </div>
 
           <!-- ORDERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'orders'" class="orders-tab-content">
+          <div v-else-if="activeTab === 'orders'" class="orders-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split orders-toolbar-container">
                 <div class="card-toolbar-top">
@@ -2766,7 +2774,7 @@
     </div>
 
           <!-- CUSTOMERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'customers'" class="customers-tab-content">
+          <div v-else-if="activeTab === 'customers'" class="customers-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3129,7 +3137,7 @@
           </div>
 
           <!-- PRODUCTION MANAGEMENT TAB -->
-          <div v-if="activeTab === 'production'" class="production-tab-content">
+          <div v-else-if="activeTab === 'production'" class="production-tab-content">
             <!-- Navigation Sub-Tab Pills Switcher -->
             <div class="production-subnav-bar glass-panel mb-3">
               <div class="production-tabs-pills">
@@ -3664,7 +3672,7 @@
           </div>
 
           <!-- USERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
+          <div v-else-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3727,7 +3735,7 @@
           </div>
 
           <!-- Settings & Backup Tab -->
-          <div v-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content">
+          <div v-else-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content">
             <div class="settings-grid">
               
               <!-- Backup Management Card -->
@@ -3854,7 +3862,10 @@
           </div>
 
         
-          </template>
+          
+            </div>
+          </Transition>
+
         </div>
       </main>
     </div>
@@ -6270,8 +6281,79 @@ export default {
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
 
+    // Synchronous pre-render setup (Called by Vue BEFORE element is inserted/drawn by browser)
+    // Guarantees ZERO flash of unstyled/unanimated content (FOUC)
+    const onTabBeforeEnter = (el) => {
+      const cards = el.querySelectorAll(
+        '.kpi-grid > .kpi-card, ' +
+        '.charts-grid > .chart-card, ' +
+        '.table-card, ' +
+        '.production-subnav-bar, ' +
+        '.categories-management-grid > .category-card, ' +
+        '.carousel-admin-grid > .carousel-item-card, ' +
+        '.chef-kanban-col, ' +
+        '.settings-section'
+      );
+      const targets = (cards && cards.length > 0) ? cards : [el];
+      gsap.set(targets, { opacity: 0, y: 16, scale: 0.985 });
+    };
+
+    // Hardware-composited card materialization cascade (Called immediately on mount)
+    // 60-120fps locked, zero paint thrashing, high-quality premium stagger
+    const onTabEnter = (el, done) => {
+      const cards = el.querySelectorAll(
+        '.kpi-grid > .kpi-card, ' +
+        '.charts-grid > .chart-card, ' +
+        '.table-card, ' +
+        '.production-subnav-bar, ' +
+        '.categories-management-grid > .category-card, ' +
+        '.carousel-admin-grid > .carousel-item-card, ' +
+        '.chef-kanban-col, ' +
+        '.settings-section'
+      );
+      const targets = (cards && cards.length > 0) ? cards : [el];
+      gsap.killTweensOf(targets);
+      gsap.to(targets, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.46,
+        stagger: 0.04,
+        ease: 'power2.out',
+        clearProps: 'transform,opacity',
+        onComplete: done
+      });
+    };
+
     const triggerHolographicScan = () => {
-      isScanning.value = false;
+      const container = adminMainRef.value || document.querySelector('.admin-main');
+      if (!container) return;
+      const activeEl = container.querySelector('.active-tab-container') || container.querySelector('.tab-content-wrapper > div:not(.tab-skeleton-placeholder)');
+      if (!activeEl) return;
+      const cards = activeEl.querySelectorAll(
+        '.kpi-grid > .kpi-card, ' +
+        '.charts-grid > .chart-card, ' +
+        '.table-card, ' +
+        '.production-subnav-bar, ' +
+        '.categories-management-grid > .category-card, ' +
+        '.carousel-admin-grid > .carousel-item-card, ' +
+        '.chef-kanban-col, ' +
+        '.settings-section'
+      );
+      const targets = (cards && cards.length > 0) ? cards : [activeEl];
+      gsap.killTweensOf(targets);
+      gsap.fromTo(targets,
+        { opacity: 0, y: 16, scale: 0.985 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.46,
+          stagger: 0.04,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity'
+        }
+      );
     };
 
     const handleSidebarKeydown = (e) => {
@@ -6335,7 +6417,7 @@ export default {
           isTabSwitching.value = true;
           tabSwitchTimer = setTimeout(() => {
         isTabSwitching.value = false;
-      }, 120);
+      }, 280);
         } else if (!oldTab) {
           // Initial mount
           triggerHolographicScan();
@@ -11660,6 +11742,8 @@ const closeSuggestionsWithDelay = () => {
     });
 
     return {
+      onTabBeforeEnter,
+      onTabEnter,
       isScanning,
       adminMainRef,
       sidebarMenuRef,
@@ -14523,33 +14607,26 @@ select.form-control:focus {
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-/* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (Zero Flash, Instant Sync) */
+/* ========================================================================= */
+/* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (Hardware-Composited GSAP)  */
 /* ========================================================================= */
 .tab-content-wrapper {
   position: relative;
   width: 100%;
 }
 
-.tab-content-wrapper > div:not(.tab-skeleton-placeholder) {
-  animation: tabContentEntrance 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
-}
-
-@keyframes tabContentEntrance {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.985);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.active-tab-container {
+  position: relative;
+  width: 100%;
 }
 
 .tab-content-wrapper .glass-panel,
 .tab-content-wrapper .table-card,
 .tab-content-wrapper .kpi-card,
-.tab-content-wrapper .chart-card {
+.tab-content-wrapper .chart-card,
+.tab-content-wrapper .chef-kanban-col,
+.tab-content-wrapper .category-card,
+.tab-content-wrapper .settings-section {
   will-change: transform, opacity;
 }
 
