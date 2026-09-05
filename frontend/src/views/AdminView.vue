@@ -6191,16 +6191,15 @@ export default {
         const header = container?.querySelector('.main-header');
         const dateBar = container?.querySelector('.date-range-bar');
         
-        // Direct panels and cards of the active tab
+        // Direct panels and cards of the active tab (removed wildcard for performance)
         const mainPanels = container?.querySelectorAll(
-          '.tab-content-wrapper > div > .table-card, ' +
-          '.tab-content-wrapper > div > .kpi-grid, ' +
-          '.tab-content-wrapper > div > .charts-grid, ' +
-          '.tab-content-wrapper > div > .chefs-kanban-board, ' +
-          '.tab-content-wrapper > div > .categories-management-grid, ' +
-          '.tab-content-wrapper > div > .carousel-admin-grid, ' +
-          '.tab-content-wrapper > div > .settings-grid, ' +
-          '.tab-content-wrapper > div > *'
+          '.tab-content-wrapper .table-card, ' +
+          '.tab-content-wrapper .kpi-grid, ' +
+          '.tab-content-wrapper .charts-grid, ' +
+          '.tab-content-wrapper .chefs-kanban-board, ' +
+          '.tab-content-wrapper .categories-management-grid, ' +
+          '.tab-content-wrapper .carousel-admin-grid, ' +
+          '.tab-content-wrapper .settings-grid'
         ) || [];
 
         // Individual table rows / cards for ShopView-style micro-stagger
@@ -6221,64 +6220,55 @@ export default {
           }
         });
 
-        // 1. Animate Laser Beam and Holographic Trail
+        // 1. Animate Laser Beam and Holographic Trail (Fast sweep)
         if (beam && trail) {
           gsap.set([beam, trail], { y: 0, opacity: 1 });
           activeScanTimeline.to([beam, trail], {
             y: scanHeight,
-            duration: 0.58,
+            duration: 0.4,
             ease: 'power2.inOut'
           }, 0);
 
           activeScanTimeline.to([beam, trail], {
             opacity: 0,
-            duration: 0.14,
+            duration: 0.1,
             ease: 'power1.out'
-          }, 0.48);
+          }, 0.3);
         }
 
         // 2. Materialize Header Title
         if (header) {
           activeScanTimeline.fromTo(header,
-            { opacity: 0.15, y: -8, filter: 'blur(4px)' },
-            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.38, ease: 'power2.out', clearProps: 'filter' },
-            0.04
+            { opacity: 0, y: -8 },
+            { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out', clearProps: 'transform' },
+            0.02
           );
         }
 
         // 3. Materialize Filter & Date Bar
         if (dateBar) {
           activeScanTimeline.fromTo(dateBar,
-            { opacity: 0.15, y: 8, filter: 'blur(4px)' },
-            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, ease: 'power2.out', clearProps: 'filter' },
-            0.1
+            { opacity: 0, y: 8 },
+            { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out', clearProps: 'transform' },
+            0.04
           );
         }
 
-        // 4. Materialize Primary Content Panels
+        // 4. Fast, high-performance materialization (ShopView pattern - pure compositor)
         if (mainPanels && mainPanels.length > 0) {
           activeScanTimeline.fromTo(mainPanels,
-            { opacity: 0.1, y: 18, scale: 0.985, filter: 'blur(5px)' },
-            { 
-              opacity: 1, 
-              y: 0, 
-              scale: 1, 
-              filter: 'blur(0px)', 
-              duration: 0.46, 
-              stagger: 0.05, 
-              ease: 'power3.out',
-              clearProps: 'filter,scale'
-            },
-            0.12
+            { opacity: 0, y: 12, scale: 0.97 },
+            { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power1.out', overwrite: 'auto', clearProps: 'transform' },
+            0.05
           );
         }
 
-        // 5. Micro-stagger sub-items (ShopView style per e-menu-design-guide)
-        if (subItems && subItems.length > 0 && subItems.length <= 30) {
+        // 5. Micro-stagger sub-items 
+        if (subItems && subItems.length > 0 && subItems.length <= 40) {
           activeScanTimeline.fromTo(subItems,
-            { opacity: 0.2, y: 10 },
-            { opacity: 1, y: 0, duration: 0.32, stagger: 0.02, ease: 'power1.out', overwrite: 'auto' },
-            0.2
+            { opacity: 0, y: 8 },
+            { opacity: 1, y: 0, duration: 0.25, stagger: 0.02, ease: 'power1.out', overwrite: 'auto', clearProps: 'transform' },
+            0.15
           );
         }
       });
