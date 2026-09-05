@@ -6295,11 +6295,12 @@ export default {
         '.settings-section'
       );
       const targets = (cards && cards.length > 0) ? cards : [el];
-      gsap.set(targets, { opacity: 0, y: 18, scale: 0.985 });
+      // Pure GPU translateY (no scale to prevent layer re-rastering stalls)
+      gsap.set(targets, { opacity: 0, y: 12 });
     };
 
-    // Hardware-composited card materialization cascade (120% longer, premium luxury stagger)
-    // Double RAF decouples table DOM construction/layout from compositor animation -> 0 frame drops!
+    // Hardware-composited card materialization cascade (Speed up by 40%: 0.48s, stagger 0.032s)
+    // Locked 60-120fps GPU compositor motion with zero paint thrashing
     const onTabEnter = (el, done) => {
       const cards = el.querySelectorAll(
         '.kpi-grid > .kpi-card, ' +
@@ -6314,18 +6315,15 @@ export default {
       const targets = (cards && cards.length > 0) ? cards : [el];
 
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          gsap.killTweensOf(targets);
-          gsap.to(targets, {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.82,
-            stagger: 0.055,
-            ease: 'power2.out',
-            clearProps: 'transform,opacity',
-            onComplete: done
-          });
+        gsap.killTweensOf(targets);
+        gsap.to(targets, {
+          opacity: 1,
+          y: 0,
+          duration: 0.48,
+          stagger: 0.032,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+          onComplete: done
         });
       });
     };
@@ -6347,21 +6345,18 @@ export default {
       );
       const targets = (cards && cards.length > 0) ? cards : [activeEl];
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          gsap.killTweensOf(targets);
-          gsap.fromTo(targets,
-            { opacity: 0, y: 18, scale: 0.985 },
-            {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              duration: 0.82,
-              stagger: 0.055,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity'
-            }
-          );
-        });
+        gsap.killTweensOf(targets);
+        gsap.fromTo(targets,
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.48,
+            stagger: 0.032,
+            ease: 'power2.out',
+            clearProps: 'transform,opacity'
+          }
+        );
       });
     };
 
@@ -6377,19 +6372,19 @@ export default {
       return false;
     };
 
-    // Extended skeleton loader bridge: waits for heavy tables to load data & prevents layout frame drops
+    // Extended skeleton loader bridge: 40% faster, waits for data to avoid table layout frame drops
     const scheduleTabSwitchCompletion = (tab) => {
       if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
       const isHeavy = HEAVY_TABS.includes(tab);
-      // 120% longer baseline: 620ms for standard tabs, 740ms for heavy tables/Kanban
-      const minDuration = isHeavy ? 740 : 620;
+      // Sped up by 40%: 370ms for standard tabs, 440ms for heavy tables/Kanban
+      const minDuration = isHeavy ? 440 : 370;
       const startTime = Date.now();
 
       const checkAndComplete = () => {
         const elapsed = Date.now() - startTime;
-        // If data is actively loading for a heavy tab, wait with the skeleton loader (safety timeout 2000ms)
-        if (isHeavy && isTabDataLoading(tab) && elapsed < 2000) {
-          tabSwitchTimer = setTimeout(checkAndComplete, 60);
+        // If data is actively loading for a heavy tab, wait with the skeleton loader (safety timeout 1500ms)
+        if (isHeavy && isTabDataLoading(tab) && elapsed < 1500) {
+          tabSwitchTimer = setTimeout(checkAndComplete, 40);
           return;
         }
         const remaining = Math.max(0, minDuration - elapsed);
@@ -6434,15 +6429,15 @@ export default {
 
     const scrollActiveTabIntoView = () => {
       nextTick(() => {
-        // 1. Sidebar menu navigation item
+        // 1. Sidebar menu navigation item (behavior: 'auto' prevents main thread scroll contention during animation)
         const activeMenuItem = document.querySelector('.sidebar-menu .menu-item.active');
         if (activeMenuItem && typeof activeMenuItem.scrollIntoView === 'function') {
-          activeMenuItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+          activeMenuItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
         }
         // 2. Subnav horizontal tabs & pills (Production subnav, Analytics date shortcuts, etc.)
         const activeSubnavItem = document.querySelector('.production-subnav-btn.active, .subnav-pill.active, .tab-pill.active');
         if (activeSubnavItem && typeof activeSubnavItem.scrollIntoView === 'function') {
-          activeSubnavItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+          activeSubnavItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
         }
       });
     };
@@ -13460,9 +13455,8 @@ const closeSuggestionsWithDelay = () => {
   flex-direction: column;
   gap: 14px;
   padding: 18px 24px;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid rgba(44, 37, 32, 0.08);
-  backdrop-filter: blur(12px);
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
   position: relative;
@@ -14677,6 +14671,7 @@ select.form-control:focus {
 
 .tab-content-wrapper .table-card {
   contain: paint;
+  transform: translateZ(0);
 }
 
 /* Responsive breakdowns */
@@ -22902,25 +22897,26 @@ select.pos-control {
 
 
 /* ================= SKELETON LOADER STYLES ================= */
-@keyframes skeletonShimmer {
+@keyframes skeletonPulse {
   0% {
-    background-position: -200% 0;
+    opacity: 0.5;
+    transform: translateZ(0);
   }
   100% {
-    background-position: 200% 0;
+    opacity: 0.95;
+    transform: translateZ(0);
   }
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: skeletonShimmer 1.5s infinite ease-in-out;
+  background-color: #e2e8f0;
+  animation: skeletonPulse 1.1s ease-in-out infinite alternate;
   border-radius: 8px;
+  will-change: opacity;
 }
 
 .shop-theme-shop2 .skeleton-shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #dbeafe 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
+  background-color: #dbeafe;
 }
 
 .skeleton-card {
