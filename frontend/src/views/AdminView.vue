@@ -19838,11 +19838,45 @@ select.pos-control {
   }
 
   .btn-make-order,
-  .reconciliation-print-btn,
   .card-toolbar-top .btn-primary {
     width: 100% !important;
     justify-content: center !important;
     box-sizing: border-box !important;
+  }
+
+  /* Responsive 2-column grid for order action reports (notes & reconciliation) */
+  .orders-toolbar-actions-group {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .orders-toolbar-actions-group .btn,
+  .orders-search-print-row .reconciliation-print-btn,
+  .orders-search-print-row .order-notes-print-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    padding: 0 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex: 1 1 0 !important;
+  }
+
+  .orders-toolbar-actions-group .btn span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
   }
 
   .date-filter-group {
