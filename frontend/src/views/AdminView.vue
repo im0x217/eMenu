@@ -309,6 +309,97 @@
 
         <!-- Tab Content -->
         <div class="tab-content-wrapper">
+          <!-- BLANK PLACEHOLDER SKELETON LOADER (Smooth Transition Bridge) -->
+          <div v-if="isTabSwitching" class="tab-skeleton-placeholder animate-fade-in" aria-hidden="true">
+            <!-- Analytics Skeleton -->
+            <div v-if="activeTab === 'analytics'" class="analytics-tab-skeleton">
+              <div class="kpi-grid mb-4">
+                <div v-for="i in 4" :key="'ts-kpi-' + i" class="kpi-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-icon"></div>
+                  <div class="kpi-info" style="width: 100%;">
+                    <div class="skeleton-shimmer skeleton-line skeleton-title-line"></div>
+                    <div class="skeleton-shimmer skeleton-line skeleton-val-line"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="charts-grid">
+                <div class="chart-card glass-panel span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line mb-3" style="width: 160px; height: 18px;"></div>
+                  <div class="skeleton-shimmer skeleton-chart-box"></div>
+                </div>
+                <div class="chart-card glass-panel skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line mb-3" style="width: 140px; height: 18px;"></div>
+                  <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px; gap: 14px;">
+                    <div class="skeleton-shimmer skeleton-circle"></div>
+                    <div class="skeleton-shimmer skeleton-line" style="width: 110px; height: 14px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Production Skeleton -->
+            <div v-else-if="activeTab === 'production'" class="production-tab-skeleton">
+              <div class="production-subnav-bar glass-panel mb-3 p-2 d-flex gap-2">
+                <div class="skeleton-shimmer" style="width: 110px; height: 36px; border-radius: 20px;"></div>
+                <div class="skeleton-shimmer" style="width: 110px; height: 36px; border-radius: 20px;"></div>
+                <div class="skeleton-shimmer" style="width: 110px; height: 36px; border-radius: 20px;"></div>
+              </div>
+              <div class="d-flex gap-3 flex-wrap" style="min-height: 400px;">
+                <div v-for="i in 3" :key="'ts-prod-' + i" class="table-card glass-panel flex-grow-1 p-3 skeleton-card" style="min-width: 260px;">
+                  <div class="skeleton-shimmer skeleton-line mb-3" style="width: 130px; height: 20px;"></div>
+                  <div class="skeleton-shimmer skeleton-row-bar mb-2" v-for="j in 4" :key="'ts-pb-' + j"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Skeleton -->
+            <div v-else-if="activeTab === 'settings'" class="settings-tab-skeleton">
+              <div v-for="i in 2" :key="'ts-set-' + i" class="table-card glass-panel p-4 mb-4 skeleton-card">
+                <div class="skeleton-shimmer skeleton-line mb-3" style="width: 180px; height: 22px;"></div>
+                <div class="skeleton-shimmer skeleton-line mb-4" style="width: 320px; height: 14px; opacity: 0.7;"></div>
+                <div class="d-flex flex-column gap-3">
+                  <div v-for="j in 3" :key="'ts-set-row-' + j" class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
+                    <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 16px;"></div>
+                    <div class="skeleton-shimmer" style="width: 80px; height: 32px; border-radius: 8px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Table / Card Tabs Skeleton (Orders, Products, Customers, Categories, Tags, Carousel, Users) -->
+            <div v-else class="table-tab-skeleton">
+              <div class="table-card glass-panel p-4 skeleton-card">
+                <!-- Toolbar Shimmer -->
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="skeleton-shimmer" style="width: 140px; height: 26px; border-radius: 8px;"></div>
+                    <div class="skeleton-shimmer" style="width: 50px; height: 22px; border-radius: 12px;"></div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="skeleton-shimmer" style="width: 200px; height: 36px; border-radius: 10px;"></div>
+                    <div class="skeleton-shimmer" style="width: 90px; height: 36px; border-radius: 10px;"></div>
+                  </div>
+                </div>
+
+                <!-- Table Rows Shimmer -->
+                <div class="skeleton-table-wrapper">
+                  <div class="skeleton-shimmer mb-3" style="width: 100%; height: 36px; border-radius: 8px; opacity: 0.6;"></div>
+                  <div v-for="i in 6" :key="'ts-row-' + i" class="d-flex align-items-center gap-3 py-3 border-bottom border-light">
+                    <div class="skeleton-shimmer" style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;"></div>
+                    <div class="d-flex flex-column gap-1 flex-grow-1">
+                      <div class="skeleton-shimmer" style="width: 32%; height: 16px; border-radius: 4px;"></div>
+                      <div class="skeleton-shimmer" style="width: 18%; height: 12px; border-radius: 4px;"></div>
+                    </div>
+                    <div class="skeleton-shimmer" style="width: 85px; height: 22px; border-radius: 12px; flex-shrink: 0;"></div>
+                    <div class="skeleton-shimmer" style="width: 70px; height: 22px; border-radius: 6px; flex-shrink: 0;"></div>
+                    <div class="skeleton-shimmer" style="width: 75px; height: 30px; border-radius: 8px; flex-shrink: 0;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <template v-else>
           
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
@@ -3762,6 +3853,8 @@
             </div>
           </div>
 
+        
+          </template>
         </div>
       </main>
     </div>
@@ -6171,6 +6264,8 @@ export default {
 
 
     const isScanning = ref(false);
+    const isTabSwitching = ref(false);
+    let tabSwitchTimer = null;
     const adminMainRef = ref(null);
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
@@ -6184,7 +6279,7 @@ export default {
           return;
         }
 
-        const activeTabEl = container.querySelector('.tab-content-wrapper > div');
+        const activeTabEl = container.querySelector('.tab-content-wrapper > div:not(.tab-skeleton-placeholder)');
         if (!activeTabEl) {
           isScanning.value = false;
           return;
@@ -6272,7 +6367,7 @@ export default {
       });
     };
 
-    watch(activeTab, (newTab) => {
+    watch(activeTab, (newTab, oldTab) => {
       if (newTab && VALID_TABS.includes(newTab)) {
         try {
           localStorage.setItem('emenu_admin_active_tab', newTab);
@@ -6284,7 +6379,21 @@ export default {
         if (adminMainRef.value) {
           adminMainRef.value.scrollTop = 0;
         }
-        triggerHolographicScan();
+
+        // Smooth blank placeholder skeleton loader bridge
+        if (oldTab && oldTab !== newTab) {
+          if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
+          isTabSwitching.value = true;
+          tabSwitchTimer = setTimeout(() => {
+            isTabSwitching.value = false;
+            nextTick(() => {
+              triggerHolographicScan();
+            });
+          }, 180);
+        } else {
+          // Initial mount
+          triggerHolographicScan();
+        }
       }
     });
 
@@ -11376,6 +11485,7 @@ const closeSuggestionsWithDelay = () => {
     });
 
     onUnmounted(() => {
+      if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
       document.removeEventListener('click', closeAllDatePickers);
@@ -14441,6 +14551,21 @@ select.form-control:focus {
 }
 
 /* ========================================================================= */
+/* ========================================================================= */
+/* TAB SKELETON PLACEHOLDER LOADER (Smooth Transition Bridge)               */
+/* ========================================================================= */
+.tab-skeleton-placeholder {
+  width: 100%;
+  min-height: 420px;
+  animation: fadeIn 0.15s ease-out;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tab-skeleton-placeholder .skeleton-card {
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
 /* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (ShopView Pattern)         */
 /* ========================================================================= */
 .tab-content-wrapper {
