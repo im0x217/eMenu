@@ -79,44 +79,57 @@
           </div>
         </div>
 
-        <nav class="sidebar-menu">
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')">
+        <nav 
+          class="sidebar-menu" 
+          ref="sidebarMenuRef"
+          :class="{ 'has-sliding-indicator': hasSlidingIndicator }"
+          role="tablist" 
+          aria-label="أقسام لوحة التحكم"
+          @keydown="handleSidebarKeydown"
+        >
+          <!-- Smooth Sliding Active Tab Indicator Pill -->
+          <div 
+            class="sidebar-active-indicator" 
+            :style="activeIndicatorStyle"
+            aria-hidden="true"
+          ></div>
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')" role="tab" :aria-selected="activeTab === 'analytics'" :tabindex="activeTab === 'analytics' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
             <span>الإحصائيات والتقارير</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'products' }" @click="setTab('products')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'products' }" @click="setTab('products')" role="tab" :aria-selected="activeTab === 'products'" :tabindex="activeTab === 'products' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             <span>إدارة المنتجات</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'categories' }" @click="setTab('categories')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'categories' }" @click="setTab('categories')" role="tab" :aria-selected="activeTab === 'categories'" :tabindex="activeTab === 'categories' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             <span>إدارة الأصناف</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'tags' }" @click="setTab('tags')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'tags' }" @click="setTab('tags')" role="tab" :aria-selected="activeTab === 'tags'" :tabindex="activeTab === 'tags' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
             <span>العلامات المميزة</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'orders' }" @click="setTab('orders')">
+          <button class="menu-item" :class="{ active: activeTab === 'orders' }" @click="setTab('orders')" role="tab" :aria-selected="activeTab === 'orders'" :tabindex="activeTab === 'orders' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             <span>إدارة الطلبات</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'customers' }" @click="setTab('customers')">
+          <button class="menu-item" :class="{ active: activeTab === 'customers' }" @click="setTab('customers')" role="tab" :aria-selected="activeTab === 'customers'" :tabindex="activeTab === 'customers' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             <span>العملاء والمفضلات</span>
           </button>
-          <button class="menu-item" :class="{ active: activeTab === 'production' }" @click="setTab('production')">
+          <button class="menu-item" :class="{ active: activeTab === 'production' }" @click="setTab('production')" role="tab" :aria-selected="activeTab === 'production'" :tabindex="activeTab === 'production' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             <span>إدارة الإنتاج</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')" role="tab" :aria-selected="activeTab === 'carousel'" :tabindex="activeTab === 'carousel' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'users' }" @click="setTab('users')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'users' }" @click="setTab('users')" role="tab" :aria-selected="activeTab === 'users'" :tabindex="activeTab === 'users' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
             <span>إدارة المستخدمين</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'settings' }" @click="setTab('settings')">
+          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'settings' }" @click="setTab('settings')" role="tab" :aria-selected="activeTab === 'settings'" :tabindex="activeTab === 'settings' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             <span>الإعدادات والنسخ الاحتياطي</span>
           </button>
@@ -138,9 +151,13 @@
       </header>
 
       <!-- Main Content -->
-      <main class="admin-main">
+      <main class="admin-main" ref="adminMainRef">
         <div class="main-header no-print">
-          <h1>{{ tabTitles[activeTab] }}</h1>
+          <div class="main-header-title-wrap">
+            <Transition name="header-title" mode="out-in">
+              <h1 :key="activeTab">{{ tabTitles[activeTab] || 'لوحة التحكم' }}</h1>
+            </Transition>
+          </div>
           <!-- Period & Actions for Analytics -->
           <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
             <!-- Period Selector -->
@@ -302,7 +319,8 @@
         </div>
 
         <!-- Tab Content -->
-        <div class="tab-content-wrapper animate-fade-in" :key="activeTab">
+        <Transition name="admin-tab" mode="out-in" @before-leave="onTabBeforeLeave">
+          <div class="tab-content-wrapper" :key="activeTab">
           
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
@@ -1058,7 +1076,7 @@
           </div>
 
           <!-- TAGS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content animate-fade-in">
+          <div v-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1130,7 +1148,7 @@
 
 
           <!-- MARKETING CAROUSEL TAB -->
-          <div v-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content animate-fade-in">
+          <div v-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
             <div class="table-card glass-panel overflow-hidden p-0">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -1195,7 +1213,7 @@
           </div>
 
           <!-- ORDERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'orders'" class="orders-tab-content animate-fade-in">
+          <div v-if="activeTab === 'orders'" class="orders-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split orders-toolbar-container">
                 <div class="card-toolbar-top">
@@ -2669,7 +2687,7 @@
     </div>
 
           <!-- CUSTOMERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'customers'" class="customers-tab-content animate-fade-in">
+          <div v-if="activeTab === 'customers'" class="customers-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3032,7 +3050,7 @@
           </div>
 
           <!-- PRODUCTION MANAGEMENT TAB -->
-          <div v-if="activeTab === 'production'" class="production-tab-content animate-fade-in">
+          <div v-if="activeTab === 'production'" class="production-tab-content">
             <!-- Navigation Sub-Tab Pills Switcher -->
             <div class="production-subnav-bar glass-panel mb-3">
               <div class="production-tabs-pills">
@@ -3567,7 +3585,7 @@
           </div>
 
           <!-- USERS MANAGEMENT TAB -->
-          <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content animate-fade-in">
+          <div v-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
@@ -3630,7 +3648,7 @@
           </div>
 
           <!-- Settings & Backup Tab -->
-          <div v-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content animate-fade-in">
+          <div v-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content">
             <div class="settings-grid">
               
               <!-- Backup Management Card -->
@@ -3757,6 +3775,7 @@
           </div>
 
         </div>
+        </Transition>
       </main>
     </div>
 
@@ -6107,6 +6126,9 @@ export default {
     const loading = ref(false);
     const isAuthenticated = ref(false);
     const sidebarOpen = ref(false);
+    watch(sidebarOpen, (open) => {
+      if (open) updateActiveIndicator();
+    });
 
     // ================= P3 KEYBOARD POWER-USER STATE =================
     const selectedTableRowIndex = ref(0);
@@ -6162,6 +6184,70 @@ export default {
     const activeShop = ref('shop1');
     const loginShop = ref('shop1');
 
+
+    const sidebarMenuRef = ref(null);
+    const adminMainRef = ref(null);
+    const hasSlidingIndicator = ref(false);
+    const activeIndicatorStyle = ref({
+      transform: 'translateY(0)',
+      height: '0px',
+      opacity: 0
+    });
+
+    const updateActiveIndicator = () => {
+      nextTick(() => {
+        if (!sidebarMenuRef.value) return;
+        const activeBtn = sidebarMenuRef.value.querySelector('.menu-item.active');
+        if (!activeBtn) {
+          activeIndicatorStyle.value = { ...activeIndicatorStyle.value, opacity: 0 };
+          return;
+        }
+        const top = activeBtn.offsetTop;
+        const height = activeBtn.offsetHeight;
+        if (height > 0) {
+          hasSlidingIndicator.value = true;
+          activeIndicatorStyle.value = {
+            transform: `translateY(${top}px)`,
+            height: `${height}px`,
+            opacity: 1
+          };
+        }
+      });
+    };
+
+    const handleSidebarKeydown = (e) => {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+      if (!sidebarMenuRef.value) return;
+      const items = Array.from(sidebarMenuRef.value.querySelectorAll('.menu-item'));
+      if (items.length === 0) return;
+      const currentIndex = items.indexOf(document.activeElement);
+      if (currentIndex === -1) return;
+
+      e.preventDefault();
+      let nextIndex = currentIndex;
+      if (e.key === 'ArrowDown') {
+        nextIndex = (currentIndex + 1) % items.length;
+      } else if (e.key === 'ArrowUp') {
+        nextIndex = (currentIndex - 1 + items.length) % items.length;
+      } else if (e.key === 'Home') {
+        nextIndex = 0;
+      } else if (e.key === 'End') {
+        nextIndex = items.length - 1;
+      }
+
+      const targetBtn = items[nextIndex];
+      if (targetBtn) {
+        targetBtn.focus();
+        targetBtn.click();
+      }
+    };
+
+    const onTabBeforeLeave = () => {
+      if (adminMainRef.value) {
+        adminMainRef.value.scrollTop = 0;
+      }
+    };
+
     const scrollActiveTabIntoView = () => {
       nextTick(() => {
         // 1. Sidebar menu navigation item
@@ -6186,6 +6272,10 @@ export default {
           }
         } catch (e) {}
         scrollActiveTabIntoView();
+        updateActiveIndicator();
+        if (adminMainRef.value) {
+          adminMainRef.value.scrollTop = 0;
+        }
       }
     });
 
@@ -6253,7 +6343,8 @@ export default {
       customers: 'قائمة العملاء والمنتجات المفضلة',
       production: 'إدارة الإنتاج وتقارير الشيفات',
       carousel: 'إدارة بنرات العروض التسويقية',
-      users: 'إدارة المستخدمين وصلاحيات النظام'
+      users: 'إدارة المستخدمين وصلاحيات النظام',
+      settings: 'الإعدادات والنسخ الاحتياطي'
     };
 
     // Analytics Data
@@ -11053,7 +11144,7 @@ const closeSuggestionsWithDelay = () => {
         }
 
         // Direct Tab Switching via Alt+1..9 (outside modals)
-        if (e.altKey && ['1','2','3','4','5','6','7','8','9'].includes(e.key)) {
+        if (e.altKey && ['0','1','2','3','4','5','6','7','8','9'].includes(e.key)) {
           e.preventDefault();
           const tabMap = {
             '1': 'analytics',
@@ -11064,7 +11155,8 @@ const closeSuggestionsWithDelay = () => {
             '6': 'customers',
             '7': 'production',
             '8': 'carousel',
-            '9': 'users'
+            '9': 'users',
+            '0': 'settings'
           };
           const targetTab = tabMap[e.key];
           if (targetTab) {
@@ -11270,6 +11362,7 @@ const closeSuggestionsWithDelay = () => {
       window.addEventListener('keydown', handleGlobalKeydown);
       document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
+      updateActiveIndicator();
       updateHeadIcon();
     });
 
@@ -11491,6 +11584,12 @@ const closeSuggestionsWithDelay = () => {
     });
 
     return {
+      sidebarMenuRef,
+      adminMainRef,
+      activeIndicatorStyle,
+      hasSlidingIndicator,
+      handleSidebarKeydown,
+      onTabBeforeLeave,
       formatLibyanWhatsappNumber,
       getLibyanWhatsAppUrl,
       loading,
@@ -12445,63 +12544,98 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .sidebar-menu {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding: 4px 0;
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
 
+/* Sliding active tab indicator pill - smooth, restrained, premium */
+.sidebar-active-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  border-radius: 10px;
+  background: rgba(217, 119, 6, 0.09);
+  border-right: 3px solid var(--primary-color, #d97706);
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1),
+              height 0.22s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.15s ease;
+  will-change: transform, height, opacity;
+}
+
 .menu-item {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  min-height: 48px;
-  border-radius: 12px;
-  color: #334155;
+  gap: 12px;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-radius: 10px;
+  color: #475569;
   background: transparent;
   border: none;
-  border-right: 4px solid transparent;
+  border-right: 3px solid transparent;
   cursor: pointer;
   text-align: right;
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.92rem;
   font-family: inherit;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.15s ease, background-color 0.15s ease;
+  user-select: none;
 }
 
-.menu-item:hover {
-  background: rgba(253, 181, 24, 0.08);
-  color: var(--primary-color);
-  transform: translateX(-3px);
+.menu-item:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1e293b;
+}
+
+.menu-item:focus-visible {
+  outline: 2px solid var(--primary-color, #d97706);
+  outline-offset: -1px;
+  border-radius: 10px;
+  z-index: 3;
 }
 
 .menu-item.active {
-  background: linear-gradient(135deg, rgba(253, 181, 24, 0.16) 0%, rgba(253, 181, 24, 0.06) 100%);
-  color: var(--primary-color);
-  border-right: 4px solid var(--primary-color);
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(253, 181, 24, 0.1);
+  color: var(--primary-color, #d97706);
+  font-weight: 750;
+  background: transparent;
+  border-right-color: transparent;
+}
+
+/* Fallback if sliding indicator is not active */
+.sidebar-menu:not(.has-sliding-indicator) .menu-item.active {
+  background: rgba(217, 119, 6, 0.09);
+  border-right-color: var(--primary-color, #d97706);
 }
 
 .menu-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  transition: transform 0.2s ease, color 0.2s ease;
+  transition: color 0.15s ease;
+  color: #64748b;
+}
+
+.menu-item:hover:not(.active) .menu-icon {
+  color: #1e293b;
 }
 
 .menu-item.active .menu-icon {
-  color: var(--primary-color);
-  transform: scale(1.08);
+  color: var(--primary-color, #d97706);
 }
 
 .sidebar-footer {
@@ -14312,6 +14446,80 @@ select.form-control:focus {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Clean, subtle left content crossfade */
+.main-header-title-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-title-enter-active {
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-title-leave-active {
+  transition: opacity 0.08s ease-out;
+}
+
+.header-title-enter-from {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+.header-title-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.header-title-leave-to {
+  opacity: 0;
+}
+
+.tab-content-wrapper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Smooth, fast, elegant content crossfade */
+.admin-tab-enter-active {
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.admin-tab-leave-active {
+  transition: opacity 0.08s ease-out;
+  will-change: opacity;
+}
+
+.admin-tab-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.admin-tab-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.admin-tab-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-tab-enter-active,
+  .admin-tab-leave-active,
+  .header-title-enter-active,
+  .header-title-leave-active,
+  .sidebar-active-indicator,
+  .menu-item,
+  .menu-icon {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 /* Responsive breakdowns */
