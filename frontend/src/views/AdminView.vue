@@ -6380,8 +6380,8 @@ export default {
           adminMainRef.value.scrollTop = 0;
         }
 
-        // Smooth blank placeholder skeleton loader bridge
-        if (oldTab && oldTab !== newTab) {
+        // Smooth blank placeholder skeleton loader bridge (for changes originating outside setTab)
+        if (oldTab && oldTab !== newTab && !isTabSwitching.value) {
           if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
           isTabSwitching.value = true;
           tabSwitchTimer = setTimeout(() => {
@@ -6390,12 +6390,12 @@ export default {
               triggerHolographicScan();
             });
           }, 550);
-        } else {
+        } else if (!oldTab) {
           // Initial mount
           triggerHolographicScan();
         }
       }
-    });
+    }, { flush: 'sync' });
 
     // Also watch route.query.tab if user clicks browser back/forward
     watch(() => route.query.tab, (qTab) => {
@@ -8284,8 +8284,22 @@ export default {
         sidebarOpen.value = false;
         return;
       }
-      activeTab.value = tab;
+      if (activeTab.value === tab) return;
+
       sidebarOpen.value = false;
+
+      // Activate skeleton bridge immediately BEFORE updating activeTab
+      // This prevents the target tab's real content from flashing before the watcher can react
+      if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
+      isTabSwitching.value = true;
+      activeTab.value = tab;
+
+      tabSwitchTimer = setTimeout(() => {
+        isTabSwitching.value = false;
+        nextTick(() => {
+          triggerHolographicScan();
+        });
+      }, 550);
     };
 
     // User Management Methods
@@ -11007,15 +11021,15 @@ const closeSuggestionsWithDelay = () => {
       const q = commandPaletteQuery.value.trim().toLowerCase();
       const allCmds = [
         { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'طلبات', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
-        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => { activeTab.value = 'orders'; } },
-        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => { activeTab.value = 'products'; } },
-        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => { activeTab.value = 'customers'; } },
-        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => { activeTab.value = 'production'; } },
-        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => { activeTab.value = 'analytics'; } },
-        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => { activeTab.value = 'categories'; } },
-        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => { activeTab.value = 'tags'; } },
-        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => { activeTab.value = 'carousel'; } },
-        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => { activeTab.value = 'users'; } },
+        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => setTab('orders') },
+        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => setTab('products') },
+        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => setTab('customers') },
+        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => setTab('production') },
+        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => setTab('analytics') },
+        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => setTab('categories') },
+        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => setTab('tags') },
+        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => setTab('carousel') },
+        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => setTab('users') },
         { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
         { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
         { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
@@ -11282,7 +11296,7 @@ const closeSuggestionsWithDelay = () => {
               toast.show('صلاحيات حسابك تشمل إدارة الطلبات، العملاء، والإنتاج فقط', 'warning');
               return;
             }
-            activeTab.value = targetTab;
+            setTab(targetTab);
           }
           return;
         }
@@ -11390,7 +11404,7 @@ const closeSuggestionsWithDelay = () => {
           } else {
             newIdx = currentIdx >= allowedTabs.length - 1 ? 0 : currentIdx + 1;
           }
-          activeTab.value = allowedTabs[newIdx];
+          setTab(allowedTabs[newIdx]);
           return;
         }
       }
@@ -14571,6 +14585,21 @@ select.form-control:focus {
 .tab-content-wrapper {
   position: relative;
   width: 100%;
+}
+
+.tab-content-wrapper > div:not(.tab-skeleton-placeholder) {
+  animation: tabContentEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tabContentEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .tab-content-wrapper .glass-panel,
