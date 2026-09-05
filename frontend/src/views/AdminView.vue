@@ -6271,58 +6271,7 @@ export default {
     let activeScanTimeline = null;
 
     const triggerHolographicScan = () => {
-      isScanning.value = true;
-      nextTick(() => {
-        const container = adminMainRef.value || document.querySelector('.admin-main');
-        if (!container) {
-          isScanning.value = false;
-          return;
-        }
-
-        const activeTabEl = container.querySelector('.tab-content-wrapper > div:not(.tab-skeleton-placeholder)');
-        if (!activeTabEl) {
-          isScanning.value = false;
-          return;
-        }
-
-        // Query only top-level leaf cards/panels (exactly matching ShopView.vue card pattern)
-        // Strictly avoid nested parent-child selections and table row (tr) transforms
-        const cards = activeTabEl.querySelectorAll(
-          '.kpi-grid > .kpi-card, ' +
-          '.charts-grid > .chart-card, ' +
-          '.table-card, ' +
-          '.production-subnav-bar, ' +
-          '.categories-management-grid > .category-card, ' +
-          '.carousel-admin-grid > .carousel-item-card, ' +
-          '.chef-kanban-col'
-        );
-
-        const targets = (cards && cards.length > 0) ? cards : activeTabEl.children;
-
-        // GSAP hardware-composited entrance stagger (pure compositor properties: opacity, y, scale)
-        // 60-120fps locked, zero paint thrashing, exactly per ShopView.vue & e-menu-design-guide
-        gsap.killTweensOf(targets);
-        gsap.fromTo(targets, 
-          { 
-            opacity: 0, 
-            y: 12, 
-            scale: 0.98 
-          }, 
-          { 
-            opacity: 1, 
-            y: 0, 
-            scale: 1, 
-            duration: 0.8,
-            stagger: 0.07,
-            ease: 'power2.out', 
-            overwrite: 'auto',
-            clearProps: 'transform,opacity',
-            onComplete: () => {
-              isScanning.value = false;
-            }
-          }
-        );
-      });
+      isScanning.value = false;
     };
 
     const handleSidebarKeydown = (e) => {
@@ -6385,11 +6334,8 @@ export default {
           if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
           isTabSwitching.value = true;
           tabSwitchTimer = setTimeout(() => {
-            isTabSwitching.value = false;
-            nextTick(() => {
-              triggerHolographicScan();
-            });
-          }, 550);
+        isTabSwitching.value = false;
+      }, 120);
         } else if (!oldTab) {
           // Initial mount
           triggerHolographicScan();
@@ -8296,10 +8242,7 @@ export default {
 
       tabSwitchTimer = setTimeout(() => {
         isTabSwitching.value = false;
-        nextTick(() => {
-          triggerHolographicScan();
-        });
-      }, 550);
+      }, 120);
     };
 
     // User Management Methods
@@ -14571,7 +14514,7 @@ select.form-control:focus {
 .tab-skeleton-placeholder {
   width: 100%;
   min-height: 420px;
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.12s ease-out;
   pointer-events: none;
   user-select: none;
 }
@@ -14580,7 +14523,7 @@ select.form-control:focus {
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-/* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (ShopView Pattern)         */
+/* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (Zero Flash, Instant Sync) */
 /* ========================================================================= */
 .tab-content-wrapper {
   position: relative;
@@ -14588,13 +14531,14 @@ select.form-control:focus {
 }
 
 .tab-content-wrapper > div:not(.tab-skeleton-placeholder) {
-  animation: tabContentEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tabContentEntrance 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
 @keyframes tabContentEntrance {
   0% {
     opacity: 0;
-    transform: translateY(16px) scale(0.985);
+    transform: translateY(14px) scale(0.985);
   }
   100% {
     opacity: 1;
