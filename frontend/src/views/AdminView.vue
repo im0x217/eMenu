@@ -16179,9 +16179,11 @@ select.form-control:focus {
     background: #f8fafc;
     padding: 3.5px 5px;
     text-align: right;
-    border-bottom: 1.5px solid #cbd5e1;
+    border-bottom: 1.5px solid #94a3b8;
     font-weight: 700;
     font-size: 8.5pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .receipt-th-num, .receipt-td-num {
@@ -16194,9 +16196,11 @@ select.form-control:focus {
 
   .receipt-items-table td {
     padding: 2.5px 5px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #cbd5e1;
     vertical-align: middle;
     font-size: 8.5pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .receipt-td-qty, .receipt-td-price, .receipt-td-total {
