@@ -4,4 +4,6 @@ uploads/
 .env
 *.csv
 public/res/downloaded/
+scratch/
+res/rescued-test-images/
 
