@@ -2110,6 +2110,80 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
   }
 });
 
+// Get all customer orders for Admin A5 Statement & History
+app.get("/api/admin/customers/:phone/orders", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop === "shop2" ? "shop2" : (req.query.shop === "all" ? "all" : "shop1");
+  const { phone } = req.params;
+  const rawPhone = (phone || "").trim();
+
+  try {
+    const cleanDigits = rawPhone.replace(/\D/g, "");
+    const variations = [rawPhone];
+    if (cleanDigits) {
+      variations.push(cleanDigits);
+      if (cleanDigits.startsWith("218")) {
+        variations.push(cleanDigits.slice(3));
+        variations.push("0" + cleanDigits.slice(3));
+      } else if (cleanDigits.startsWith("0")) {
+        variations.push(cleanDigits.slice(1));
+        variations.push("218" + cleanDigits.slice(1));
+      } else {
+        variations.push("0" + cleanDigits);
+        variations.push("218" + cleanDigits);
+      }
+    }
+    const uniquePhones = [...new Set(variations.filter(Boolean))];
+
+    const phoneFilter = {
+      $or: [
+        { "customerInfo.phone": { $in: uniquePhones } },
+        { customerPhone: { $in: uniquePhones } }
+      ]
+    };
+
+    let orders = [];
+    if (shop === "all") {
+      const orders1 = await ordersCollection.find(phoneFilter).sort({ createdAt: -1 }).toArray();
+      const orders2 = await ordersCollection2.find(phoneFilter).sort({ createdAt: -1 }).toArray();
+      orders = [
+        ...orders1.map(o => ({ ...o, shop: 'shop1' })),
+        ...orders2.map(o => ({ ...o, shop: 'shop2' }))
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else {
+      const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
+      orders = await ordColl.find(phoneFilter).sort({ createdAt: -1 }).toArray();
+    }
+
+    const normalizedOrders = orders.map(o => {
+      const totalPrice = Number(o.totalPrice || o.total || 0);
+      const isPaid = o.paymentStatus === 'paid';
+      const paidAmount = Number(o.paidAmount || (isPaid ? totalPrice : 0));
+      const remaining = o.remaining !== undefined ? Number(o.remaining) : Math.max(0, totalPrice - paidAmount);
+
+      return {
+        _id: o._id,
+        orderNumber: o.orderNumber || null,
+        totalPrice,
+        paidAmount,
+        remaining,
+        paymentStatus: o.paymentStatus || (remaining <= 0 ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid')),
+        createdAt: o.createdAt,
+        deliveryDate: o.deliveryDate,
+        status: o.status || 'pending',
+        itemsSummary: (o.items || []).map(i => `${i.name || i.title || ''} (${i.quantity || 1})`).join('، '),
+        notes: o.notes || '',
+        shop: o.shop || shop
+      };
+    });
+
+    res.json(normalizedOrders);
+  } catch (err) {
+    console.error("Fetch customer orders error:", err);
+    res.status(500).json({ error: "Failed to fetch customer orders" });
+  }
+});
+
+
 // Record a payment (FIFO distribution)
 app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   const { customerPhone, customerName, amount, shop: reqShop, note, method, targetOrderId } = req.body;

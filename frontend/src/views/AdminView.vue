@@ -4325,14 +4325,37 @@
     </div>
 
     <!-- Customer Profile Details Modal Hub -->
-    <div v-if="customerDetailsModalOpen && selectedCustomer" class="modal-overlay animate-fade-in" @click.self="customerDetailsModalOpen = false">
+    <!-- Customer Profile Details Modal Hub -->
+    <div 
+      v-if="customerDetailsModalOpen && selectedCustomer" 
+      class="modal-overlay animate-fade-in" 
+      @click.self="customerDetailsModalOpen = false"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="customer-profile-modal-title"
+      aria-describedby="customer-profile-modal-phone"
+    >
       <div class="modal-content modal-md customer-profile-modal">
         <div class="modal-header">
           <div class="modal-title-group">
-            <h2 class="modal-title">الملف التعريفي للعميل</h2>
-            <span class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
+            <h2 id="customer-profile-modal-title" class="modal-title">الملف التعريفي للعميل</h2>
+            <span id="customer-profile-modal-phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
           </div>
-          <button @click="customerDetailsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
+          <div class="modal-header-actions">
+            <button 
+              type="button" 
+              @click="printCustomerOrdersStatement(selectedCustomer)" 
+              class="modal-header-btn btn-print-quick" 
+              aria-label="طباعة كشف طلبات وحساب العميل (A5)" 
+              :title="customerOrdersLoading ? 'جاري تجهيز الكشف…' : 'طباعة كشف الطلبات (A5)'"
+              :disabled="customerOrdersLoading"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            </button>
+            <button @click="customerDetailsModalOpen = false" class="modal-close-btn" aria-label="إغلاق الملف التعريفي">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
         </div>
 
         <div class="modal-body">
@@ -4344,11 +4367,11 @@
               <div class="profile-phone-row">
                 <span class="profile-phone-text text-mono">{{ selectedCustomer.phone }}</span>
                 <div class="profile-quick-actions">
-                  <a :href="getLibyanWhatsAppUrl(selectedCustomer.phone)" target="_blank" class="profile-action-icon whatsapp-icon" title="مراسلة عبر واتساب">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  <a :href="getLibyanWhatsAppUrl(selectedCustomer.phone)" target="_blank" class="profile-action-icon whatsapp-icon" aria-label="مراسلة عبر واتساب" title="مراسلة عبر واتساب">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                   </a>
-                  <a :href="'tel:' + selectedCustomer.phone" class="profile-action-icon call-icon" title="اتصال بالعميل">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <a :href="'tel:' + selectedCustomer.phone" class="profile-action-icon call-icon" aria-label="اتصال بالعميل" title="اتصال بالعميل">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                   </a>
                 </div>
               </div>
@@ -4384,11 +4407,11 @@
           <div class="profile-security-card">
             <div class="security-card-header">
               <div class="security-title-group">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 <span class="security-title font-bold">كلمة مرور الحساب:</span>
               </div>
               <span v-if="selectedCustomer.password" class="badge-status-active">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                 مفعّلة
               </span>
               <span v-else class="badge-status-inactive">
@@ -4406,18 +4429,20 @@
                     type="button" 
                     @click="showProfilePassword = !showProfilePassword" 
                     class="btn-pass-action btn-pass-toggle" 
+                    :aria-label="showProfilePassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
                     :title="showProfilePassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
                   >
-                    <svg v-if="showProfilePassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg v-if="showProfilePassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
                   <button 
                     type="button" 
                     @click="copyCustomerPassword(selectedCustomer.password)" 
                     class="btn-pass-action btn-pass-copy" 
+                    aria-label="نسخ كلمة المرور"
                     title="نسخ كلمة المرور"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     <span>نسخ</span>
                   </button>
                 </div>
@@ -4435,12 +4460,24 @@
 
           <!-- Quick Action Buttons Hub -->
           <div class="profile-actions-hub">
+            <!-- Primary Print Customer Orders Statement Action Button (A5) -->
+            <button 
+              type="button" 
+              @click="printCustomerOrdersStatement(selectedCustomer)" 
+              class="btn-hub-action btn-hub-print"
+              :disabled="customerOrdersLoading"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              <span v-if="customerOrdersLoading">جاري تجهيز كشف الطلبات…</span>
+              <span v-else>طباعة كشف طلبات وحساب العميل (A5)</span>
+            </button>
+
             <button 
               type="button" 
               @click="openPaymentModal(selectedCustomer); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-pay"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
               <span>تسجيل دفعة نقدية / تحصيل</span>
             </button>
 
@@ -4449,7 +4486,7 @@
               @click="openPaymentHistory(selectedCustomer); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-history"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               <span>سجل المدفوعات والإيصالات</span>
             </button>
 
@@ -4459,7 +4496,7 @@
               class="btn-hub-action btn-hub-favs"
               :disabled="!selectedCustomer.favorites || !selectedCustomer.favorites.length"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
               <span>المنتجات المفضلة ({{ selectedCustomer.favorites ? selectedCustomer.favorites.length : 0 }})</span>
             </button>
 
@@ -4468,7 +4505,7 @@
               @click="openCustomerEditModal(selectedCustomer); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-edit"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               <span>تعديل بيانات العميل</span>
             </button>
 
@@ -4477,7 +4514,7 @@
               @click="deleteCustomer(selectedCustomer._id); customerDetailsModalOpen = false;" 
               class="btn-hub-action btn-hub-delete"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               <span>حذف العميل نهائياً</span>
             </button>
           </div>
@@ -5010,6 +5047,133 @@
       
       <div class="debt-watermark-row">
         <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — كشف مديونيات العملاء</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Print Customer Orders Statement (A5 Portrait) -->
+  <div class="print-customer-orders-wrapper" v-if="printingCustomerOrders && customerOrdersPrintData">
+    <div class="customer-orders-print-page">
+      <!-- Executive Header Banner -->
+      <div class="cust-print-header">
+        <div class="cust-print-brand">
+          <img :src="customerOrdersPrintData.shopLogo" alt="Logo" class="cust-print-logo" />
+          <div class="cust-print-brand-text">
+            <h1 class="cust-print-shop-name">{{ customerOrdersPrintData.shopBrand }}</h1>
+            <p class="cust-print-subtitle">كشف حساب وطلبات العميل</p>
+          </div>
+        </div>
+        <div class="cust-print-header-badge">كشف معتمد (A5)</div>
+      </div>
+
+      <div class="cust-print-divider"></div>
+
+      <!-- Customer Details Card -->
+      <div class="cust-print-info-card">
+        <div class="cust-print-info-grid">
+          <div class="cust-print-info-item">
+            <span class="cust-print-info-label">اسم العميل:</span>
+            <span class="cust-print-info-val cust-name-bold">{{ customerOrdersPrintData.customer.name }}</span>
+          </div>
+          <div class="cust-print-info-item">
+            <span class="cust-print-info-label">رقم الهاتف:</span>
+            <span class="cust-print-info-val text-mono" dir="ltr">{{ customerOrdersPrintData.customer.phone }}</span>
+          </div>
+          <div class="cust-print-info-item">
+            <span class="cust-print-info-label">إجمالي الطلبات:</span>
+            <span class="cust-print-info-val text-mono font-bold">{{ customerOrdersPrintData.totalOrders }} طلب</span>
+          </div>
+          <div class="cust-print-info-item">
+            <span class="cust-print-info-label">تاريخ الإصدار:</span>
+            <span class="cust-print-info-val text-mono">{{ customerOrdersPrintData.generatedAt }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Summary Bar -->
+      <div class="cust-print-kpi-bar">
+        <div class="cust-print-kpi-item">
+          <span class="cust-print-kpi-label">إجمالي المشتريات</span>
+          <span class="cust-print-kpi-val text-mono">{{ customerOrdersPrintData.totalPurchasesFormatted }}</span>
+        </div>
+        <div class="cust-print-kpi-item">
+          <span class="cust-print-kpi-label">إجمالي المدفوع</span>
+          <span class="cust-print-kpi-val text-mono">{{ customerOrdersPrintData.totalPaidFormatted }}</span>
+        </div>
+        <div class="cust-print-kpi-item" :class="customerOrdersPrintData.totalRemaining > 0 ? 'kpi-has-debt' : 'kpi-is-clear'">
+          <span class="cust-print-kpi-label">الرصيد المتبقي</span>
+          <span class="cust-print-kpi-val text-mono">{{ customerOrdersPrintData.totalRemainingFormatted }}</span>
+        </div>
+      </div>
+
+      <!-- Main Customer Orders Table [رقم الطلب, الإجمالي, المدفوع, المتبقي] -->
+      <div class="cust-print-table-container">
+        <table class="cust-print-table">
+          <thead>
+            <tr>
+              <th style="width: 32%;">رقم الطلب</th>
+              <th style="width: 22%;">الإجمالي</th>
+              <th style="width: 22%;">المدفوع</th>
+              <th style="width: 24%;">المتبقي</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!customerOrdersPrintData.orders || customerOrdersPrintData.orders.length === 0">
+              <td colspan="4" class="text-center py-4">لا توجد طلبات مسجلة لهذا العميل.</td>
+            </tr>
+            <tr 
+              v-for="ord in customerOrdersPrintData.orders" 
+              :key="ord._id"
+              :class="{ 'has-debt-row': (ord.remaining || 0) > 0.009 }"
+            >
+              <td>
+                <div class="cust-print-order-cell">
+                  <span class="order-num-pill text-mono font-bold">#{{ ord.orderNumber || (ord._id ? ord._id.toString().slice(-6) : '') }}</span>
+                  <span class="order-date-sub text-mono" v-if="ord.createdAt">
+                    {{ new Date(ord.createdAt).toLocaleDateString('ar-LY') }} - {{ new Date(ord.createdAt).toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }) }}
+                  </span>
+                  <span class="order-items-mini text-truncate" v-if="ord.itemsSummary" :title="ord.itemsSummary">
+                    {{ ord.itemsSummary }}
+                  </span>
+                </div>
+              </td>
+              <td class="text-mono font-bold">{{ formatCurrency(ord.totalPrice || 0) }}</td>
+              <td class="text-mono font-bold">{{ formatCurrency(ord.paidAmount || 0) }}</td>
+              <td class="text-mono font-bold">
+                <span 
+                  class="cust-print-status-pill text-mono"
+                  :class="(ord.remaining || 0) > 0.009 ? 'pill-remaining' : 'pill-paid'"
+                >
+                  {{ (ord.remaining || 0) > 0.009 ? formatCurrency(ord.remaining) : '0.00 د.ل (خالص)' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="cust-print-grand-total">
+              <td class="font-bold text-end">الإجمالي العام (Grand Total):</td>
+              <td class="text-mono font-bold">{{ customerOrdersPrintData.totalPurchasesFormatted }}</td>
+              <td class="text-mono font-bold">{{ customerOrdersPrintData.totalPaidFormatted }}</td>
+              <td class="text-mono font-bold">{{ customerOrdersPrintData.totalRemainingFormatted }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Authentication & Signature Blocks -->
+      <div class="cust-print-signatures">
+        <div class="cust-print-sig-block">
+          <span class="sig-title">المحاسب المسؤول:</span>
+          <span class="sig-dots">...........................................</span>
+        </div>
+        <div class="cust-print-sig-block">
+          <span class="sig-title">خاتم وتوقيع الإدارة:</span>
+          <span class="sig-dots">...........................................</span>
+        </div>
+      </div>
+
+      <div class="cust-print-watermark">
+        <span>تم استخراج هذا الكشف آلياً عبر نظام المنيو الإلكتروني e-Menu — جميع الحقوق محفوظة</span>
       </div>
     </div>
   </div>
@@ -8671,6 +8835,9 @@ export default {
         payment: {
           size: '148mm 210mm' // A5 Portrait
         },
+        customerOrders: {
+          size: '148mm 210mm' // A5 Portrait
+        },
         debtReport: {
           size: '210mm 297mm' // A4 Portrait
         },
@@ -8809,6 +8976,96 @@ export default {
       window.addEventListener('afterprint', cleanup);
       window.print();
     };
+
+    // ============ CUSTOMER ORDERS A5 STATEMENT PRINT ============
+    const printingCustomerOrders = ref(false);
+    const customerOrdersPrintData = ref(null);
+    const customerOrdersLoading = ref(false);
+
+    const printCustomerOrdersStatement = async (cust) => {
+      if (!cust || !cust.phone) return;
+      customerOrdersLoading.value = true;
+      try {
+        let customerOrdersList = [];
+        try {
+          const res = await adminFetch(`/api/admin/customers/${encodeURIComponent(cust.phone)}/orders?shop=${activeShop.value}`);
+          if (res.ok) {
+            customerOrdersList = await res.json();
+          }
+        } catch (fetchErr) {
+          console.warn("Could not fetch remote customer orders, falling back to local orders:", fetchErr);
+        }
+
+        // Fallback or augment with local orders if endpoint returned empty
+        if (!customerOrdersList || customerOrdersList.length === 0) {
+          const cleanPhone = (cust.phone || '').trim();
+          customerOrdersList = (orders.value || []).filter(o => {
+            const p = (o.customerInfo?.phone || o.customerPhone || '').trim();
+            return p === cleanPhone || (cust.name && (o.customerInfo?.name || o.customerName) === cust.name);
+          }).map(o => {
+            const totalPrice = Number(o.totalPrice || o.total || 0);
+            const isPaid = o.paymentStatus === 'paid';
+            const paidAmount = Number(o.paidAmount || (isPaid ? totalPrice : 0));
+            const remaining = o.remaining !== undefined ? Number(o.remaining) : Math.max(0, totalPrice - paidAmount);
+            return {
+              _id: o._id,
+              orderNumber: o.orderNumber || null,
+              totalPrice,
+              paidAmount,
+              remaining,
+              paymentStatus: o.paymentStatus || (remaining <= 0 ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid')),
+              createdAt: o.createdAt,
+              deliveryDate: o.deliveryDate,
+              status: o.status || 'pending',
+              itemsSummary: (o.items || []).map(i => `${i.name || i.title || ''} (${i.quantity || 1})`).join('، ')
+            };
+          });
+        }
+
+        // Sort descending by creation date
+        customerOrdersList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        // Calculate Totals
+        const totalPurchases = Math.round(customerOrdersList.reduce((sum, o) => sum + (o.totalPrice || 0), 0) * 100) / 100;
+        const totalPaid = Math.round(customerOrdersList.reduce((sum, o) => sum + (o.paidAmount || 0), 0) * 100) / 100;
+        const totalRemaining = Math.round(customerOrdersList.reduce((sum, o) => sum + (o.remaining || 0), 0) * 100) / 100;
+
+        customerOrdersPrintData.value = {
+          customer: cust,
+          orders: customerOrdersList,
+          totalOrders: customerOrdersList.length,
+          totalPurchases,
+          totalPurchasesFormatted: formatCurrency(totalPurchases),
+          totalPaid,
+          totalPaidFormatted: formatCurrency(totalPaid),
+          totalRemaining,
+          totalRemainingFormatted: formatCurrency(totalRemaining),
+          outstandingBalanceFormatted: formatCurrency(cust.outstandingBalance || totalRemaining),
+          generatedAt: new Date().toLocaleString('ar-LY', { dateStyle: 'full', timeStyle: 'short' }),
+          shopBrand: activeShop.value === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق',
+          shopLogo: activeShop.value === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'
+        };
+
+        setPrintPageSize('customerOrders');
+        printingCustomerOrders.value = true;
+        await nextTick();
+
+        const cleanup = () => {
+          printingCustomerOrders.value = false;
+          clearPrintPageSize();
+          window.removeEventListener('afterprint', cleanup);
+        };
+
+        window.addEventListener('afterprint', cleanup);
+        window.print();
+      } catch (err) {
+        console.error("Print customer orders statement error:", err);
+        toast.show("فشل إعداد كشف طلبات العميل للطباعة", "danger");
+      } finally {
+        customerOrdersLoading.value = false;
+      }
+    };
+
     const printingPaymentReceipt = ref(false);
     const printingPayment = ref(null);
     const ITEMS_PER_PAGE = 16; // 16 items per page for ultra-dense A5 layout
@@ -11900,6 +12157,10 @@ const closeSuggestionsWithDelay = () => {
       printingCustomerDebtReport,
       customerDebtReportData,
       printCustomerDebtReport,
+      printingCustomerOrders,
+      customerOrdersPrintData,
+      customerOrdersLoading,
+      printCustomerOrdersStatement,
       paginatedOrderPages,
       getPrintItemIndex,
       printOrder,
@@ -15479,7 +15740,9 @@ select.form-control:focus {
 /* Screen: hide print-only wrappers */
 .print-receipt-wrapper,
 .print-reconciliation-wrapper,
-.print-order-notes-wrapper {
+.print-order-notes-wrapper,
+.print-debt-report-wrapper,
+.print-customer-orders-wrapper {
   display: none;
 }
 
@@ -18237,6 +18500,55 @@ select.form-control:focus {
   background: #fee2e2;
 }
 
+.btn-hub-action.btn-hub-print {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.25);
+  border: 1px solid #334155;
+}
+
+.btn-hub-action.btn-hub-print:hover:not(:disabled) {
+  background: linear-gradient(135deg, #334155, #1e293b);
+  border-color: #475569;
+}
+
+.btn-hub-action.btn-hub-print:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-header-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.modal-header-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.modal-header-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Print Payment Receipt Styles */
 .print-payment-receipt-wrapper {
   display: none;
@@ -20958,6 +21270,275 @@ select.pos-control {
   }
 }
 
+/* ==========================================================================
+   CUSTOMER ORDERS A5 STATEMENT PRINT STYLES
+   ========================================================================== */
+
+.print-customer-orders-wrapper {
+  display: none;
+}
+
+@media print {
+  .print-customer-orders-wrapper, .print-customer-orders-wrapper * {
+    visibility: visible;
+  }
+
+  .print-customer-orders-wrapper {
+    display: block !important;
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+  }
+
+  .customer-orders-print-page {
+    width: 100%;
+    max-width: 148mm;
+    margin: 0 auto;
+    padding: 4mm 6mm;
+    box-sizing: border-box;
+    font-family: 'Cairo', 'Fira Code', sans-serif;
+    direction: rtl;
+    color: #000000;
+  }
+
+  .cust-print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    page-break-inside: avoid;
+  }
+
+  .cust-print-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cust-print-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .cust-print-shop-name {
+    font-size: 13pt;
+    font-weight: 900;
+    color: #000000;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .cust-print-subtitle {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #000000;
+    margin: 2px 0 0 0;
+  }
+
+  .cust-print-header-badge {
+    font-size: 8.5pt;
+    font-weight: 800;
+    color: #000000;
+    border: 1.5px solid #000000;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .cust-print-divider {
+    height: 1.5px;
+    background: #000000;
+    margin: 6px 0;
+  }
+
+  .cust-print-info-card {
+    background: #ffffff;
+    border: 1.5px solid #000000;
+    border-radius: 6px;
+    padding: 5px 8px;
+    margin-bottom: 7px;
+    page-break-inside: avoid;
+  }
+
+  .cust-print-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 10px;
+    font-size: 8.2pt;
+  }
+
+  .cust-print-info-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .cust-print-info-label {
+    font-weight: 700;
+    color: #000000;
+    white-space: nowrap;
+  }
+
+  .cust-print-info-val {
+    font-weight: 800;
+    color: #000000;
+  }
+
+  .cust-print-info-val.cust-name-bold {
+    font-size: 9pt;
+    font-weight: 900;
+  }
+
+  .cust-print-kpi-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+  }
+
+  .cust-print-kpi-item {
+    border: 1.5px solid #000000;
+    border-radius: 6px;
+    padding: 4px 6px;
+    text-align: center;
+    background: #ffffff;
+  }
+
+  .cust-print-kpi-label {
+    font-size: 7pt;
+    font-weight: 800;
+    color: #000000;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .cust-print-kpi-val {
+    font-size: 9.8pt;
+    font-weight: 900;
+    color: #000000;
+  }
+
+  .cust-print-table-container {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .cust-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    border: 1.5px solid #000000;
+    page-break-inside: auto;
+  }
+
+  .cust-print-table thead {
+    display: table-header-group;
+  }
+
+  .cust-print-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .cust-print-table th {
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-weight: 900;
+    padding: 5px 6px;
+    text-align: right;
+    border: 1px solid #000000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cust-print-table td {
+    padding: 4px 6px;
+    border: 1px solid #000000;
+    vertical-align: middle;
+    color: #000000;
+    background: #ffffff !important;
+  }
+
+  .cust-print-order-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .order-num-pill {
+    font-size: 8.5pt;
+    font-weight: 900;
+  }
+
+  .order-date-sub {
+    font-size: 6.8pt;
+    color: #222222;
+  }
+
+  .order-items-mini {
+    font-size: 6.8pt;
+    color: #444444;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cust-print-status-pill {
+    font-size: 8pt;
+    font-weight: 900;
+  }
+
+  .cust-print-status-pill.pill-remaining {
+    color: #000000;
+    font-weight: 900;
+  }
+
+  .cust-print-status-pill.pill-paid {
+    color: #000000;
+    font-weight: 800;
+  }
+
+  .cust-print-grand-total td {
+    background: #ffffff !important;
+    font-size: 8.8pt;
+    padding: 6px;
+    font-weight: 900;
+    border-top: 2px solid #000000;
+    border-bottom: 2px solid #000000;
+    color: #000000;
+  }
+
+  .cust-print-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 6px;
+    page-break-inside: avoid;
+  }
+
+  .cust-print-sig-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 8pt;
+    font-weight: 800;
+    color: #000000;
+  }
+
+  .cust-print-watermark {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 6.8pt;
+    color: #000000;
+    border-top: 1px dashed #000000;
+    padding-top: 4px;
+    page-break-inside: avoid;
+  }
+}
 
 /* ==========================================================================
    PRODUCTION MANAGEMENT & CHEFS TAB STYLES
