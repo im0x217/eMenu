@@ -1785,18 +1785,27 @@
           </div>
 
     <!-- New Fast Order Modal (POS Mode) -->
-    <div v-if="newOrderModalOpen" class="modal-overlay animate-fade-in" @click.self="newOrderModalOpen = false">
+    <div 
+      v-if="newOrderModalOpen" 
+      class="modal-overlay animate-fade-in pos-modal-overlay" 
+      @click.self="newOrderModalOpen = false"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="fast-order-modal-title"
+    >
       <div class="modal-content glass-panel fast-order-modal">
+        <!-- Mobile Bottom-Sheet Drag Handle -->
+        <div class="mobile-modal-drag-pill" aria-hidden="true"></div>
         
         <!-- Modal Header -->
         <div class="fast-order-header">
           <div class="fast-order-title-group">
-            <div class="new-order-icon">
+            <div class="new-order-icon" aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             </div>
             <div>
               <div class="fast-order-title-row">
-                <h3>إنشاء طلب جديد</h3>
+                <h3 id="fast-order-modal-title">إنشاء طلب جديد</h3>
                 <span class="shop-badge-indicator" :class="activeShop === 'shop2' ? 'shop2-badge' : 'shop1-badge'">
                   {{ activeShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}
                 </span>
@@ -1813,7 +1822,7 @@
               :class="{ active: newOrder.priceMode === 'bulk' }" 
               @click="onNewOrderPriceModeChange('bulk')"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               <span>تسعير جملة</span>
             </button>
             <button 
@@ -1822,19 +1831,45 @@
               :class="{ active: newOrder.priceMode === 'regular' }" 
               @click="onNewOrderPriceModeChange('regular')"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
               <span>تسعير مفرد</span>
             </button>
           </div>
 
-          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
+          <button @click="newOrderModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <!-- Mobile Segmented Navigation Pills (Only visible on screens <= 768px) -->
+        <div class="pos-mobile-nav-pills">
+          <button 
+            type="button" 
+            class="pos-mobile-nav-pill" 
+            :class="{ active: posMobileActiveTab === 'catalog' }" 
+            @click="posMobileActiveTab = 'catalog'"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span>المنتجات والسلة</span>
+            <span v-if="newOrder.items.length > 0" class="pos-mobile-cart-badge text-mono">{{ newOrder.items.length }}</span>
+          </button>
+          <button 
+            type="button" 
+            class="pos-mobile-nav-pill" 
+            :class="{ active: posMobileActiveTab === 'customer' }" 
+            @click="posMobileActiveTab = 'customer'"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>بيانات العميل والتسليم</span>
+            <span v-if="newOrder.customerName && newOrder.customerPhone" class="pos-mobile-check-badge">✓</span>
+          </button>
         </div>
 
         <form @submit.prevent="submitNewOrder" class="fast-order-form-body">
           <div class="fast-order-grid-layout">
             
             <!-- RIGHT COLUMN: Customer & Order Details (RTL First) -->
-            <div class="fast-order-side-col">
+            <div class="fast-order-side-col" :class="{ 'pos-mobile-col-hidden': posMobileActiveTab !== 'customer' }">
               
               <!-- Customer Section -->
               <div class="pos-section-card">
@@ -2040,7 +2075,7 @@
             </div>
 
             <!-- LEFT COLUMN: Product Catalog & Selected Items (RTL Second) -->
-            <div class="fast-order-main-col">
+            <div class="fast-order-main-col" :class="{ 'pos-mobile-col-hidden': posMobileActiveTab !== 'catalog' }">
               
               <!-- Product Search & Category Filters -->
               <div class="pos-section-card pos-catalog-card">
@@ -2198,7 +2233,8 @@
                 </div>
 
                 <div class="edit-order-table-container">
-                  <table class="edit-order-table">
+                  <!-- Desktop Cart Table (Visible only on Desktop >= 769px) -->
+                  <table class="edit-order-table desktop-cart-table">
                     <thead>
                       <tr>
                         <th>المنتج</th>
@@ -2212,7 +2248,7 @@
                       <tr v-if="newOrder.items.length === 0">
                         <td colspan="5" class="pos-empty-cart-msg">
                           <div class="pos-empty-cart-inner">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                             <span>لم يتم إضافة أصناف بعد. ابحث عن المنتجات أو انقر عليها أعلاه لإضافتها للطلب.</span>
                           </div>
                         </td>
@@ -2226,7 +2262,7 @@
                         </td>
                         <td style="width: 130px;">
                           <div class="qty-stepper-control">
-                            <button type="button" class="stepper-btn btn-minus" @click="adjustNewOrderItemQty(item, -1)" tabindex="-1">-</button>
+                            <button type="button" class="stepper-btn btn-minus" @click="adjustNewOrderItemQty(item, -1)" tabindex="-1" aria-label="إنقاص الكمية">-</button>
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
@@ -2241,7 +2277,7 @@
                               @keydown.esc.prevent="focusProductSearch"
                               required 
                             />
-                            <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)" tabindex="-1">+</button>
+                            <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)" tabindex="-1" aria-label="زيادة الكمية">+</button>
                           </div>
                         </td>
                         <td style="width: 120px;">
@@ -2254,13 +2290,96 @@
                           {{ formatCurrency(item.quantity * item.price) }}
                         </td>
                         <td style="width: 44px; text-align: center;">
-                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" title="حذف الصنف">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          <button type="button" @click="removeNewOrderItem(idx)" class="btn-item-delete" aria-label="حذف الصنف" title="حذف الصنف">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
                         </td>
                       </tr>
                     </tbody>
                   </table>
+
+                  <!-- Mobile Cart Cards (Visible only on Mobile <= 768px) -->
+                  <div class="pos-mobile-cart-cards">
+                    <div v-if="newOrder.items.length === 0" class="pos-empty-cart-msg">
+                      <div class="pos-empty-cart-inner">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        <span>لم يتم إضافة أصناف بعد. تصفح المنتجات أعلاه لإضافتها للسلة.</span>
+                      </div>
+                    </div>
+                    <div 
+                      v-for="(item, idx) in newOrder.items" 
+                      :key="'mob-item-'+idx"
+                      class="pos-mobile-cart-card"
+                    >
+                      <div class="pos-mob-card-header">
+                        <span class="pos-mob-item-name font-bold">{{ item.name }}</span>
+                        <button 
+                          type="button" 
+                          @click="removeNewOrderItem(idx)" 
+                          class="pos-mob-btn-delete" 
+                          aria-label="حذف الصنف"
+                          title="حذف الصنف"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                      </div>
+
+                      <div class="pos-mob-card-note-row">
+                        <input 
+                          v-model="item.notes" 
+                          type="text" 
+                          class="form-control pos-mob-note-input" 
+                          placeholder="ملاحظة خاصة بالصنف (تغليف، تحميص…)…" 
+                        />
+                      </div>
+
+                      <div class="pos-mob-card-controls-row">
+                        <div class="pos-mob-stepper">
+                          <button 
+                            type="button" 
+                            class="pos-mob-stepper-btn btn-minus" 
+                            @click="adjustNewOrderItemQty(item, -1)" 
+                            aria-label="إنقاص الكمية"
+                          >-</button>
+                          <input 
+                            v-model.number="item.quantity" 
+                            type="number" 
+                            :step="item.allowFloat ? 0.25 : 1" 
+                            min="0.1" 
+                            class="pos-mob-stepper-input text-mono text-center" 
+                            @input="recalcNewOrderTotal" 
+                            @change="recalcNewOrderTotal" 
+                            required 
+                          />
+                          <button 
+                            type="button" 
+                            class="pos-mob-stepper-btn btn-plus" 
+                            @click="adjustNewOrderItemQty(item, 1)" 
+                            aria-label="زيادة الكمية"
+                          >+</button>
+                        </div>
+
+                        <div class="pos-mob-unit-price-wrapper">
+                          <span class="pos-mob-price-label">السعر:</span>
+                          <input 
+                            v-model.number="item.price" 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            class="pos-mob-price-input text-mono" 
+                            @input="recalcNewOrderTotal" 
+                            @change="recalcNewOrderTotal" 
+                            required 
+                          />
+                          <span class="currency-label">د.ل</span>
+                        </div>
+
+                        <div class="pos-mob-subtotal-badge text-mono font-bold">
+                          {{ formatCurrency(item.quantity * item.price) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2280,16 +2399,25 @@
           </div>
 
           <div class="fast-order-footer-actions">
-            <label class="auto-print-checkbox-label" :class="{ 'is-checked': newOrderAutoPrint }" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
-              <input type="checkbox" v-model="newOrderAutoPrint" class="auto-print-checkbox-input" />
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="auto-print-icon"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              <span class="auto-print-text">طباعة الإيصال فوراً</span>
-            </label>
+            <div class="pos-footer-aux-actions">
+              <label class="auto-print-checkbox-label" :class="{ 'is-checked': newOrderAutoPrint }" title="طباعة إيصال الطلب تلقائياً بعد الحفظ">
+                <input type="checkbox" v-model="newOrderAutoPrint" class="auto-print-checkbox-input" />
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="auto-print-icon" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span class="auto-print-text">طباعة فورية</span>
+              </label>
 
-            <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
-            <button type="button" @click="submitNewOrder" class="btn btn-primary pos-btn-submit" :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone" title="تأكيد وإنشاء الطلب">
-              <svg v-if="!newOrderLoading" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+              <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
+            </div>
+
+            <button 
+              type="button" 
+              @click="submitNewOrder" 
+              class="btn btn-primary pos-btn-submit" 
+              :disabled="newOrderLoading || newOrder.items.length === 0 || !newOrder.customerName || !newOrder.customerPhone" 
+              title="تأكيد وإنشاء الطلب"
+            >
+              <svg v-if="!newOrderLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else class="btn-spinner me-1" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
               <span>{{ newOrderLoading ? 'جاري الحفظ…' : 'تأكيد وإنشاء الطلب' }}</span>
             </button>
           </div>
@@ -10675,6 +10803,7 @@ const closeSuggestionsWithDelay = () => {
 
     // ============ FAST NEW ORDER CREATION (POS / ADMIN ORDER) ============
     const newOrderModalOpen = ref(false);
+    const posMobileActiveTab = ref('catalog'); // 'catalog' | 'customer' (mobile view only)
     const newOrderLoading = ref(false);
     const newOrderAutoPrint = ref(true);
     const newOrderCustomerSearch = ref('');
@@ -10803,6 +10932,7 @@ const closeSuggestionsWithDelay = () => {
       highlightedCustomerIndex.value = 0;
       highlightedProductIndex.value = 0;
       posProductDisplayLimit.value = 24;
+      posMobileActiveTab.value = 'catalog';
 
       newOrderModalOpen.value = true;
 
@@ -12342,6 +12472,7 @@ const closeSuggestionsWithDelay = () => {
       getEditOrderItemQty,
       printEditingOrder,
       newOrderModalOpen,
+      posMobileActiveTab,
       newOrderLoading,
       newOrderAutoPrint,
       newOrderCustomerSearch,
@@ -18674,6 +18805,28 @@ select.form-control:focus {
   filter: brightness(1.05);
 }
 
+.mobile-modal-drag-pill {
+  display: none;
+}
+
+.pos-mobile-nav-pills {
+  display: none;
+}
+
+.pos-mobile-cart-cards {
+  display: none;
+}
+
+.desktop-cart-table {
+  display: table;
+}
+
+.pos-footer-aux-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .fast-order-modal {
   width: 96% !important;
   max-width: 1420px !important;
@@ -19594,34 +19747,463 @@ select.pos-control {
   border-color: #16a34a !important;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 960px) and (min-width: 769px) {
   .fast-order-modal {
     width: 98% !important;
     height: 96vh !important;
     padding: 18px !important;
   }
   .fast-order-grid-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 360px 1fr !important;
   }
+}
+
+@media (max-width: 768px) {
+  .pos-modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .fast-order-modal {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
+    margin: auto 0 0 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding: 8px 14px 0 14px !important;
+    box-sizing: border-box !important;
+    animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .mobile-modal-drag-pill {
+    display: block !important;
+    width: 44px;
+    height: 5px;
+    background: #cbd5e1;
+    border-radius: 3px;
+    margin: 4px auto 10px auto;
+    flex-shrink: 0;
+  }
+
   .fast-order-header {
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding-bottom: 12px !important;
+    position: relative !important;
   }
+
+  .fast-order-title-group {
+    gap: 10px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .new-order-icon {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  .fast-order-title-row h3 {
+    font-size: 1.15rem !important;
+  }
+
+  .fast-order-subtitle {
+    display: none !important;
+  }
+
   .fast-order-price-mode-switch {
-    width: 100%;
-    justify-content: center;
+    order: 3 !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    margin-top: 4px !important;
   }
+
+  .price-mode-pill {
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    font-size: 0.88rem !important;
+    min-height: 40px !important;
+  }
+
+  /* Mobile Segmented Nav Pills */
+  .pos-mobile-nav-pills {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin: 8px 0 !important;
+    padding: 4px !important;
+    background: #f1f5f9 !important;
+    border-radius: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pos-mobile-nav-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    padding: 10px 8px !important;
+    min-height: 44px !important;
+    border-radius: 9px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #64748b !important;
+    font-size: 0.86rem !important;
+    font-weight: 750 !important;
+    font-family: 'Cairo', sans-serif !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+    touch-action: manipulation !important;
+  }
+
+  .pos-mobile-nav-pill.active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .pos-mobile-cart-badge {
+    background: #f59e0b !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 900 !important;
+    padding: 2px 7px !important;
+    border-radius: 12px !important;
+  }
+
+  .pos-mobile-check-badge {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 900 !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+  }
+
+  .fast-order-form-body {
+    padding: 8px 2px 14px 2px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .fast-order-grid-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .pos-mobile-col-hidden {
+    display: none !important;
+  }
+
+  .fast-order-side-col,
+  .fast-order-main-col {
+    width: 100% !important;
+    gap: 14px !important;
+  }
+
+  .pos-section-card {
+    padding: 14px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .pos-input-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .pos-control,
+  .search-input,
+  .btn-standard-datepicker-trigger {
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
+
+  .pos-date-shortcuts-split {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .pos-date-shortcut-btn {
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+  }
+
+  .quick-products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    max-height: 380px !important;
+  }
+
+  .quick-prod-card {
+    padding: 8px !important;
+    min-height: 64px !important;
+  }
+
+  .quick-prod-thumb {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .quick-prod-name {
+    font-size: 0.86rem !important;
+  }
+
+  .quick-prod-price {
+    font-size: 0.82rem !important;
+  }
+
+  .quick-prod-add-btn {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 9px !important;
+  }
+
+  .desktop-cart-table {
+    display: none !important;
+  }
+
+  .pos-mobile-cart-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-top: 4px !important;
+  }
+
+  .pos-mobile-cart-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  }
+
+  .pos-mob-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pos-mob-item-name {
+    font-size: 0.98rem;
+    color: #0f172a;
+    line-height: 1.35;
+    flex: 1;
+  }
+
+  .pos-mob-btn-delete {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    border: 1px solid #fee2e2;
+    background: #fff1f2;
+    color: #e11d48;
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+
+  .pos-mob-btn-delete:active {
+    background: #ffe4e6;
+    transform: scale(0.95);
+  }
+
+  .pos-mob-card-note-row {
+    width: 100%;
+  }
+
+  .pos-mob-note-input {
+    min-height: 38px !important;
+    font-size: 15px !important;
+    border-radius: 8px !important;
+    padding: 6px 10px !important;
+  }
+
+  .pos-mob-card-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .pos-mob-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  .pos-mob-stepper-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+
+  .pos-mob-stepper-btn:active {
+    background: #e2e8f0;
+  }
+
+  .pos-mob-stepper-input {
+    width: 48px !important;
+    height: 40px !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .pos-mob-unit-price-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 3px 8px;
+  }
+
+  .pos-mob-price-label {
+    font-size: 0.76rem;
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .pos-mob-price-input {
+    width: 58px !important;
+    height: 32px !important;
+    border: none !important;
+    padding: 2px !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+    text-align: center !important;
+  }
+
+  .pos-mob-subtotal-badge {
+    font-size: 0.95rem;
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  /* Sticky Bottom Action Dock */
   .fast-order-modal-footer {
-    flex-direction: column;
-    gap: 14px;
-    align-items: stretch;
+    position: sticky !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 -14px !important;
+    padding: 12px 16px max(14px, env(safe-area-inset-bottom)) 16px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.08) !important;
+    z-index: 100 !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
   }
+
+  .fast-order-totals-summary {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .total-summary-label {
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+  }
+
+  .total-summary-val {
+    font-size: 1.45rem !important;
+    font-weight: 900 !important;
+    color: var(--primary-color, #1e3a5f) !important;
+  }
+
+  .total-summary-count {
+    font-size: 0.8rem !important;
+  }
+
   .fast-order-footer-actions {
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
   }
-  .fast-order-footer-actions button,
-  .fast-order-footer-actions .auto-print-checkbox-label {
-    width: 100%;
-    justify-content: center;
+
+  .pos-footer-aux-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .auto-print-checkbox-label {
+    min-height: 42px !important;
+    padding: 6px 10px !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .pos-btn-cancel {
+    min-height: 42px !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+
+  .pos-btn-submit {
+    min-height: 48px !important;
+    font-size: 1.05rem !important;
+    font-weight: 850 !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
   }
 }
 
