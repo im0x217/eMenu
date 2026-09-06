@@ -54,10 +54,11 @@ export const useCartStore = defineStore('cart', () => {
   });
 
   const cartTotal = computed(() => {
-    return items.value.reduce((total, item) => {
+    const total = items.value.reduce((sum, item) => {
       const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price);
-      return total + (price * item.quantity);
+      return sum + (price * item.quantity);
     }, 0);
+    return Math.round(total);
   });
 
   const addToCart = (product, shopId, priceMode = 'regular', qty = 1, notes = '') => {

@@ -257,7 +257,7 @@ const generateWhatsAppMessage = (order) => {
   });
   
   text += `--------------------------------\n`;
-  text += `*الإجمالي الكلي:* ${order.totalPrice} د.ل\n`;
+  text += `*الإجمالي الكلي:* ${Math.round(Number(order.totalPrice) || 0)} د.ل\n`;
   if (order.notes) {
     text += `*ملاحظات إضافية:* ${order.notes}\n`;
   }
@@ -498,7 +498,7 @@ const handleResendWhatsApp = () => {
         <div class="balance-main-amount">
           <span class="balance-amount-label">الرصيد المستحق الحالي:</span>
           <div class="balance-amount-val text-mono">
-            <span class="num font-bold">{{ balanceData.outstandingBalance.toFixed(2) }}</span>
+            <span class="num font-bold">{{ Math.round(balanceData.outstandingBalance || 0) }}</span>
             <span class="curr">د.ل</span>
           </div>
         </div>
@@ -509,7 +509,7 @@ const handleResendWhatsApp = () => {
           </div>
           <div class="sub-stat-item">
             <span class="sub-stat-label">إجمالي المشتريات:</span>
-            <span class="sub-stat-val text-mono font-bold">{{ balanceData.lifetimeTotal.toFixed(2) }} د.ل</span>
+            <span class="sub-stat-val text-mono font-bold">{{ Math.round(balanceData.lifetimeTotal || 0) }} د.ل</span>
           </div>
         </div>
       </div>
@@ -588,7 +588,7 @@ const handleResendWhatsApp = () => {
               </div>
               <div class="item-pricing">
                 <span class="item-qty">× {{ item.quantity }}</span>
-                <span class="item-total-price">{{ item.price * item.quantity }} د.ل</span>
+                <span class="item-total-price">{{ Math.round((Number(item.price) || 0) * (Number(item.quantity) || 0)) }} د.ل</span>
               </div>
             </div>
           </div>
@@ -596,7 +596,7 @@ const handleResendWhatsApp = () => {
           <!-- Order Total Row -->
           <div class="order-total-row">
             <span class="total-label">الإجمالي الكلي:</span>
-            <span class="total-value">{{ order.totalPrice }} د.ل</span>
+            <span class="total-value">{{ Math.round(Number(order.totalPrice) || 0) }} د.ل</span>
           </div>
 
           <!-- Order Actions Grid (Edit / Confirm Received / WhatsApp) -->

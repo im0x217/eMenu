@@ -947,9 +947,9 @@
                         {{ prod.category }}
                         <span v-if="prod.subCategory" class="badge-sub">{{ prod.subCategory }}</span>
                       </td>
-                      <td class="text-mono text-bold">{{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</td>
-                      <td class="text-mono text-bold">{{ prod.price_bulk ? formatCurrency(prod.price_bulk) : '-' }}</td>
-                      <td class="text-mono text-bold text-muted">{{ prod.makingCost !== undefined && prod.makingCost !== null ? formatCurrency(prod.makingCost) : formatCurrency(0) }}</td>
+                      <td class="text-mono text-bold">{{ prod.price_regular ? formatPrice(prod.price_regular) : '-' }}</td>
+                      <td class="text-mono text-bold">{{ prod.price_bulk ? formatPrice(prod.price_bulk) : '-' }}</td>
+                      <td class="text-mono text-bold text-muted">{{ prod.makingCost !== undefined && prod.makingCost !== null ? formatPrice(prod.makingCost) : formatPrice(0) }}</td>
                       <td>
                         <div class="tags-container-small">
                           <span 
@@ -1010,8 +1010,8 @@
                           <span class="badge-sub">{{ prod.category }}</span>
                         </div>
                         <div class="mob-prod-prices">
-                          <span class="mob-price-pill regular text-mono">مفرد: {{ prod.price_regular ? formatCurrency(prod.price_regular) : '-' }}</span>
-                          <span v-if="prod.price_bulk" class="mob-price-pill bulk text-mono">جملة: {{ formatCurrency(prod.price_bulk) }}</span>
+                          <span class="mob-price-pill regular text-mono">مفرد: {{ prod.price_regular ? formatPrice(prod.price_regular) : '-' }}</span>
+                          <span v-if="prod.price_bulk" class="mob-price-pill bulk text-mono">جملة: {{ formatPrice(prod.price_bulk) }}</span>
                         </div>
                         <div v-if="prod.tags && prod.tags.length" class="tags-container-small mt-1">
                           <span 
@@ -2121,7 +2121,7 @@
                         </div>
                         <div class="suggestion-pricing">
                           <span class="suggestion-price text-mono font-bold">
-                            {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                            {{ formatPrice(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
                           </span>
                           <div class="suggestion-item-btns" @click.stop>
                             <button 
@@ -2198,7 +2198,7 @@
                         <span v-if="getItemQtyInCart(prod._id) > 0" class="sugg-in-cart-badge">×{{ getItemQtyInCart(prod._id) }}</span>
                       </div>
                       <span class="quick-prod-price text-mono">
-                        {{ formatCurrency(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                        {{ formatPrice(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
                       </span>
                     </div>
                     <button 
@@ -2756,7 +2756,7 @@
                         </div>
                         <div class="suggestion-pricing">
                           <span class="suggestion-price text-mono font-bold">
-                            {{ formatCurrency(editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                            {{ formatPrice(editingOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
                           </span>
                           <span class="btn-quick-add" :class="{ 'btn-quick-add-active': getEditOrderItemQty(prod._id) > 0 }">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -4750,11 +4750,11 @@
                 <div class="fav-card-prices mt-2">
                   <div v-if="prod.price_regular" class="price-pill regular">
                     <span class="price-lbl">مفرد:</span>
-                    <span class="price-val">{{ formatCurrency(prod.price_regular) }}</span>
+                    <span class="price-val">{{ formatPrice(prod.price_regular) }}</span>
                   </div>
                   <div v-if="prod.price_bulk" class="price-pill bulk">
                     <span class="price-lbl">جملة:</span>
-                    <span class="price-val">{{ formatCurrency(prod.price_bulk) }}</span>
+                    <span class="price-val">{{ formatPrice(prod.price_bulk) }}</span>
                   </div>
                 </div>
                 <button @click="removeCustomerFavorite(prod._id)" class="btn btn-outline btn-xs w-100 mt-2" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="إزالة من قائمة مفضلة العميل">
@@ -5145,7 +5145,7 @@
                   class="debt-val-pill text-mono font-bold" 
                   :class="(cust.outstandingBalance || 0) > 0 ? 'is-debt' : 'is-clear'"
                 >
-                  {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : '0.00 د.ل (خالص)' }}
+                  {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : '0 د.ل (خالص)' }}
                 </span>
               </td>
             </tr>
@@ -5272,7 +5272,7 @@
                   class="cust-print-status-pill text-mono"
                   :class="(ord.remaining || 0) > 0.009 ? 'pill-remaining' : 'pill-paid'"
                 >
-                  {{ (ord.remaining || 0) > 0.009 ? formatCurrency(ord.remaining) : '0.00 د.ل (خالص)' }}
+                  {{ (ord.remaining || 0) > 0.009 ? formatCurrency(ord.remaining) : '0 د.ل (خالص)' }}
                 </span>
               </td>
             </tr>
@@ -5573,8 +5573,8 @@
               <span v-if="item.notes" class="receipt-item-note">{{ item.notes }}</span>
             </td>
             <td class="receipt-td-qty">{{ item.quantity }}</td>
-            <td class="receipt-td-price">{{ Number(item.price).toFixed(2) }}</td>
-            <td class="receipt-td-total">{{ (Number(item.price) * Number(item.quantity)).toFixed(2) }}</td>
+            <td class="receipt-td-price">{{ Number(item.price) % 1 === 0 ? Number(item.price) : Number(item.price).toFixed(2) }}</td>
+            <td class="receipt-td-total">{{ Math.round(Number(item.price) * Number(item.quantity)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -5586,21 +5586,21 @@
         <div class="receipt-total-section">
           <div class="receipt-grand-total">
             <span>إجمالي الطلب</span>
-            <span class="receipt-grand-value">{{ Number(printingOrder.totalPrice).toFixed(2) }} د.ل</span>
+            <span class="receipt-grand-value">{{ Math.round(Number(printingOrder.totalPrice) || 0) }} د.ل</span>
           </div>
           <div class="receipt-payment-breakdown">
             <div class="receipt-breakdown-row receipt-paid-row">
               <span>المدفوع:</span>
-              <span class="receipt-paid-value text-mono">{{ Number(getOrderPaidAmount(printingOrder)).toFixed(2) }} د.ل</span>
+              <span class="receipt-paid-value text-mono">{{ Math.round(Number(getOrderPaidAmount(printingOrder)) || 0) }} د.ل</span>
             </div>
             <div class="receipt-breakdown-row receipt-leftover-row" :class="{ 'has-leftover': getOrderRemaining(printingOrder) > 0 }">
               <span>المتبقي:</span>
-              <span class="receipt-leftover-value text-mono">{{ Number(getOrderRemaining(printingOrder)).toFixed(2) }} د.ل</span>
+              <span class="receipt-leftover-value text-mono">{{ Math.round(Number(getOrderRemaining(printingOrder)) || 0) }} د.ل</span>
             </div>
           </div>
           <div v-if="printingOrderCustomerBalance !== null && printingOrderCustomerBalance > 0" class="receipt-customer-balance-row">
             <span>إجمالي ديون العميل السابقة:</span>
-            <span class="receipt-balance-value">{{ formatCurrency(printingOrderCustomerBalance) }}</span>
+            <span class="receipt-balance-value">{{ formatTotal(printingOrderCustomerBalance) }}</span>
           </div>
         </div>
 
@@ -6232,15 +6232,15 @@
       <div class="payment-receipt-amount-section">
         <div class="payment-receipt-row">
           <span>الرصيد السابق</span>
-          <span>{{ Number(printingPayment.balanceBefore).toFixed(2) }} د.ل</span>
+          <span>{{ Math.round(Number(printingPayment.balanceBefore) || 0) }} د.ل</span>
         </div>
         <div class="payment-receipt-row payment-receipt-highlight">
           <span>المبلغ المدفوع</span>
-          <span>{{ Number(printingPayment.amount).toFixed(2) }} د.ل</span>
+          <span>{{ Math.round(Number(printingPayment.amount) || 0) }} د.ل</span>
         </div>
         <div class="payment-receipt-row">
           <span>الرصيد المتبقي</span>
-          <span>{{ Number(printingPayment.remainingBalanceAfter).toFixed(2) }} د.ل</span>
+          <span>{{ Math.round(Number(printingPayment.remainingBalanceAfter) || 0) }} د.ل</span>
         </div>
       </div>
 
@@ -6260,7 +6260,7 @@
           <tbody>
             <tr v-for="d in printingPayment.distributedTo" :key="d.orderId">
               <td>#{{ d.orderNumber || (d.orderId ? d.orderId.toString().slice(-6) : '') }}</td>
-              <td>{{ Number(d.applied).toFixed(2) }} د.ل</td>
+              <td>{{ Math.round(Number(d.applied) || 0) }} د.ل</td>
               <td>{{ d.newStatus === 'paid' ? 'مسدد' : 'جزئي' }}</td>
             </tr>
           </tbody>
@@ -8535,9 +8535,20 @@ export default {
       if (carouselFileInput.value) carouselFileInput.value.value = '';
     };
 
-    const formatCurrency = (val) => {
+    const formatTotal = (val) => {
+      const rounded = Math.round(Number(val) || 0);
+      const formatted = rounded.toLocaleString('ar-LY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + ' د.ل';
+    };
+
+    const formatPrice = (val) => {
       const formatted = (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
       return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + ' د.ل';
+    };
+
+    const formatCurrency = (val, isUnit = false) => {
+      if (isUnit) return formatPrice(val);
+      return formatTotal(val);
     };
 
     const adminFetch = async (url, options = {}) => {
@@ -9679,7 +9690,7 @@ export default {
                 .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
                 .map(p => ({
                   name: p.name,
-                  unitPriceFormatted: formatCurrency(p.unitPrice),
+                  unitPriceFormatted: formatPrice(p.unitPrice),
                   quantity: p.quantity,
                   totalRevenueFormatted: formatCurrency(p.totalRevenue)
                 }))
@@ -12264,6 +12275,8 @@ const closeSuggestionsWithDelay = () => {
       toggleProductTag,
 
       formatCurrency,
+      formatTotal,
+      formatPrice,
       handleSearchEnter,
       handleSearchArrowDown,
       formatArabicPlural,
