@@ -4,6 +4,7 @@ import { useShopStore } from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
 import CategoryIcon from '../components/CategoryIcon.vue';
 import { gsap } from 'gsap';
+import { triggerHaptic } from '../utils/haptics';
 
 const shopStore = useShopStore();
 
@@ -231,6 +232,7 @@ const bulkError = ref(false);
 const showDisableConfirm = ref(false);
 
 const handleOpenBulkModal = () => {
+  triggerHaptic('medium');
   if (shopStore.isBulkVerified) {
     showDisableConfirm.value = true;
   } else {
@@ -243,8 +245,10 @@ const handleOpenBulkModal = () => {
 const handleVerifyBulk = async () => {
   const success = await shopStore.verifyBulkCode(bulkCodeInput.value);
   if (success) {
+    triggerHaptic('success');
     showBulkModal.value = false;
   } else {
+    triggerHaptic('warning');
     bulkError.value = true;
   }
 };
@@ -254,16 +258,18 @@ const zoomedImgUrl = ref('');
 const isZoomImgLoaded = ref(false);
 
 const openZoomModal = (url) => {
+  triggerHaptic('light');
   isZoomImgLoaded.value = false;
   zoomedImgUrl.value = url;
 };
 
 const closeZoomModal = () => {
+  triggerHaptic('light');
   zoomedImgUrl.value = '';
   isZoomImgLoaded.value = false;
 };
 
-// Keyboard Escape dismiss support for modals
+// Keyboard Escape dismiss & Tab focus trapping support for modals
 const handleKeydown = (e) => {
   if (e.key === 'Escape') {
     if (zoomedImgUrl.value) {
@@ -273,8 +279,41 @@ const handleKeydown = (e) => {
     } else if (showBulkModal.value) {
       showBulkModal.value = false;
     }
+    return;
+  }
+
+  // Focus trapping inside active modal
+  if (e.key === 'Tab') {
+    const activeModal = document.querySelector('.modal-backdrop[role="dialog"]');
+    if (activeModal) {
+      const focusableEls = activeModal.querySelectorAll('input:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (focusableEls.length > 0) {
+        const firstEl = focusableEls[0];
+        const lastEl = focusableEls[focusableEls.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === firstEl) {
+            e.preventDefault();
+            lastEl.focus();
+          }
+        } else {
+          if (document.activeElement === lastEl) {
+            e.preventDefault();
+            firstEl.focus();
+          }
+        }
+      }
+    }
   }
 };
+
+// Body scroll lock when any modal is open
+watch([showBulkModal, showDisableConfirm, zoomedImgUrl], ([bulk, disable, zoom]) => {
+  if (bulk || disable || zoom) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
@@ -383,6 +422,7 @@ const stopAutoplay = () => {
 };
 
 onUnmounted(() => {
+  document.body.style.overflow = '';
   window.removeEventListener('keydown', handleKeydown);
   stopAutoplay();
   if (carouselTrack.value) {
@@ -606,88 +646,98 @@ watch(carouselItems, (newItems) => {
     </div>
 
     <!-- Bulk code validation Modal -->
-    <div 
-      v-if="showBulkModal" 
-      class="modal-backdrop"
-      role="dialog"
-      aria-modal="true"
-      aria-label="التحقق من رمز الجملة"
-    >
-      <div class="modal-content glass-panel">
-        <h3 class="modal-title">تفعيل أسعار الجملة</h3>
-        <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
-        
-        <input 
-          type="password" 
-          v-model="bulkCodeInput" 
-          placeholder="رمز التحقق (4 أرقام)" 
-          maxlength="4"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          aria-label="رمز التحقق المكون من 4 أرقام"
-          class="form-input text-center font-bold"
-          @keyup.enter="handleVerifyBulk"
-        />
-        
-        <p v-if="bulkError" class="error-msg">الرمز غير صحيح! يرجى المحاولة مرة أخرى.</p>
+    <Transition name="modal-sheet">
+      <div 
+        v-if="showBulkModal" 
+        class="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-label="التحقق من رمز الجملة"
+        @click.self="showBulkModal = false"
+      >
+        <div class="modal-content glass-panel" @click.stop>
+          <div class="sheet-grab-handle" aria-hidden="true"></div>
+          <h3 class="modal-title">تفعيل أسعار الجملة</h3>
+          <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
+          
+          <input 
+            type="password" 
+            v-model="bulkCodeInput" 
+            placeholder="رمز التحقق (4 أرقام)" 
+            maxlength="4"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            aria-label="رمز التحقق المكون من 4 أرقام"
+            class="form-input text-center font-bold"
+            @keyup.enter="handleVerifyBulk"
+          />
+          
+          <p v-if="bulkError" class="error-msg">الرمز غير صحيح! يرجى المحاولة مرة أخرى.</p>
 
-        <div class="modal-actions">
-          <button type="button" class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
-          <button type="button" class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
+            <button type="button" class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- Disable Bulk Confirmation Modal -->
-    <div 
-      v-if="showDisableConfirm" 
-      class="modal-backdrop"
-      role="dialog"
-      aria-modal="true"
-      aria-label="تأكيد تعطيل الجملة"
-    >
-      <div class="modal-content glass-panel">
-        <h3 class="modal-title">تعطيل أسعار الجملة</h3>
-        <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
-          <button type="button" class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
+    <Transition name="modal-sheet">
+      <div 
+        v-if="showDisableConfirm" 
+        class="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-label="تأكيد تعطيل الجملة"
+        @click.self="showDisableConfirm = false"
+      >
+        <div class="modal-content glass-panel" @click.stop>
+          <div class="sheet-grab-handle" aria-hidden="true"></div>
+          <h3 class="modal-title">تعطيل أسعار الجملة</h3>
+          <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
+            <button type="button" class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- Image Zoom Modal -->
-    <div 
-      v-if="zoomedImgUrl" 
-      class="zoom-backdrop" 
-      role="dialog"
-      aria-modal="true"
-      aria-label="عرض الصورة بالدقة الكاملة"
-      @click="closeZoomModal"
-    >
-      <!-- Fixed Top-Left Close Button -->
-      <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
+    <Transition name="zoom-fade">
+      <div 
+        v-if="zoomedImgUrl" 
+        class="zoom-backdrop" 
+        role="dialog"
+        aria-modal="true"
+        aria-label="عرض الصورة بالدقة الكاملة"
+        @click.self="closeZoomModal"
+      >
+        <!-- Fixed Top-Left Close Button -->
+        <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
 
-      <div class="zoom-content" @click.stop>
-        <!-- Shimmer & Spinner Loader while full-size image downloads -->
-        <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
-          <div class="spinner"></div>
-          <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
+        <div class="zoom-content" @click.stop>
+          <!-- Shimmer & Spinner Loader while full-size image downloads -->
+          <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
+            <div class="spinner"></div>
+            <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
+          </div>
+
+          <img 
+            :src="zoomedImgUrl" 
+            alt="صورة المنتج الكاملة" 
+            class="zoom-image"
+            :class="{ 'loaded': isZoomImgLoaded }"
+            fetchpriority="high"
+            loading="eager"
+            decoding="async"
+            @load="isZoomImgLoaded = true"
+            @error="isZoomImgLoaded = true"
+          />
         </div>
-
-        <img 
-          :src="zoomedImgUrl" 
-          alt="صورة المنتج الكاملة" 
-          class="zoom-image"
-          :class="{ 'loaded': isZoomImgLoaded }"
-          fetchpriority="high"
-          loading="eager"
-          decoding="async"
-          @load="isZoomImgLoaded = true"
-          @error="isZoomImgLoaded = true"
-        />
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -1296,16 +1346,85 @@ watch(carouselItems, (newItems) => {
 
   .modal-content {
     max-width: 100%;
-    border-radius: 20px 20px 0 0;
-    padding: 24px 20px;
+    border-radius: 24px 24px 0 0;
+    padding: 14px 20px calc(22px + env(safe-area-inset-bottom, 12px)) 20px !important;
     margin: 0;
-    animation: modalSheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
   }
+}
 
-  @keyframes modalSheetSlideUp {
-    0% { transform: translateY(100%); }
-    100% { transform: translateY(0); }
+.sheet-grab-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.45);
+  margin: 0 auto 10px auto;
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .sheet-grab-handle {
+    display: block;
   }
+}
+
+/* Symmetrical Modal Sheet Transitions */
+.modal-sheet-enter-active,
+.modal-sheet-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.modal-sheet-enter-active .modal-content,
+.modal-sheet-leave-active .modal-content {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-sheet-enter-from,
+.modal-sheet-leave-to {
+  opacity: 0;
+}
+
+.modal-sheet-enter-from .modal-content,
+.modal-sheet-leave-to .modal-content {
+  transform: translateY(100%);
+}
+
+@media (min-width: 641px) {
+  .modal-sheet-enter-from .modal-content,
+  .modal-sheet-leave-to .modal-content {
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+/* Zoom Modal Transition */
+.zoom-fade-enter-active,
+.zoom-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.zoom-fade-enter-active .zoom-content,
+.zoom-fade-leave-active .zoom-content {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zoom-fade-enter-from,
+.zoom-fade-leave-to {
+  opacity: 0;
+}
+
+.zoom-fade-enter-from .zoom-content,
+.zoom-fade-leave-to .zoom-content {
+  transform: scale(0.94);
+}
+
+/* Button Instant Touch/Press Feedback */
+.bulk-toggle-btn:active,
+.cat-btn:active,
+.back-home-btn:active {
+  transform: scale(0.97) !important;
+  transition: transform 0.08s ease-out;
 }
 
 .skeleton-product-card {

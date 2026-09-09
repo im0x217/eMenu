@@ -1,9 +1,10 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
+import { triggerHaptic } from '../utils/haptics';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -15,15 +16,44 @@ const nameInput = ref(authStore.customerName);
 const phoneInput = ref(authStore.customerPhone);
 const showIdentityForm = computed(() => !authStore.isIdentified());
 
-// Minimum delivery date is always tomorrow
+// Minimum delivery date is today
 const minDeliveryDate = computed(() => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTomorrowDateString = () => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const year = tomorrow.getFullYear();
   const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
   const day = String(tomorrow.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-});
+};
+
+const setDeliveryDateShortcut = (type) => {
+  triggerHaptic('light');
+  if (type === 'today') {
+    cartStore.deliveryDate = getTodayDateString();
+  } else if (type === 'tomorrow') {
+    cartStore.deliveryDate = getTomorrowDateString();
+  }
+  cartStore.persist();
+};
+
+const isTodayActive = computed(() => cartStore.deliveryDate === getTodayDateString());
+const isTomorrowActive = computed(() => cartStore.deliveryDate === getTomorrowDateString());
 
 // Checkout processing & Confirmation Modal state
 const isSubmitting = ref(false);
@@ -55,10 +85,12 @@ const handleCheckout = () => {
   }
 
   if (cartStore.items.length === 0) {
+    triggerHaptic('warning');
     toastStore.show('السلة فارغة!', 'warning');
     return;
   }
 
+  triggerHaptic('medium');
   showOrderConfirmModal.value = true;
 };
 
@@ -67,11 +99,13 @@ const handleConfirmSubmit = async () => {
   isSubmitting.value = true;
   try {
     const result = await cartStore.submitOrder();
+    triggerHaptic('success');
     showOrderConfirmModal.value = false;
     if (result && result.isEdit) {
       toastStore.show('تم حفظ وتحديث طلبك بنجاح!', 'success');
     }
   } catch (err) {
+    triggerHaptic('warning');
     toastStore.show(err.message || 'عذراً، فشل إرسال الطلب. يرجى المحاولة مرة أخرى.', 'error');
   } finally {
     isSubmitting.value = false;
@@ -80,20 +114,55 @@ const handleConfirmSubmit = async () => {
 
 const handleCloseConfirmation = () => {
   if (isSubmitting.value) return;
+  triggerHaptic('light');
   showOrderConfirmModal.value = false;
 };
 
 const onKeydown = (e) => {
   if (e.key === 'Escape' && showOrderConfirmModal.value && !isSubmitting.value) {
     handleCloseConfirmation();
+    return;
+  }
+
+  // Focus trap inside confirmation modal
+  if (e.key === 'Tab' && showOrderConfirmModal.value) {
+    const modalEl = document.querySelector('.confirm-modal-backdrop[role="dialog"]');
+    if (modalEl) {
+      const focusableEls = modalEl.querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (focusableEls.length > 0) {
+        const firstEl = focusableEls[0];
+        const lastEl = focusableEls[focusableEls.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === firstEl) {
+            e.preventDefault();
+            lastEl.focus();
+          }
+        } else {
+          if (document.activeElement === lastEl) {
+            e.preventDefault();
+            firstEl.focus();
+          }
+        }
+      }
+    }
   }
 };
+
+// Lock body scroll while confirmation modal is active
+watch(showOrderConfirmModal, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown);
 });
 
 onUnmounted(() => {
+  document.body.style.overflow = '';
   window.removeEventListener('keydown', onKeydown);
 });
 
@@ -144,17 +213,24 @@ const handleDirectQtyInput = (itemId, value, allowFloat) => {
   cartStore.updateQty(itemId, parsed);
 };
 
+const handleQtyChange = (itemId, newQty) => {
+  triggerHaptic('light');
+  cartStore.updateQty(itemId, newQty);
+};
+
 const isConfirmingClear = ref(false);
 let confirmTimer = null;
 
 const handleClearCart = () => {
   if (!isConfirmingClear.value) {
+    triggerHaptic('warning');
     isConfirmingClear.value = true;
     if (confirmTimer) clearTimeout(confirmTimer);
     confirmTimer = setTimeout(() => {
       isConfirmingClear.value = false;
     }, 3000);
   } else {
+    triggerHaptic('warning');
     if (confirmTimer) clearTimeout(confirmTimer);
     isConfirmingClear.value = false;
     cartStore.clearCart();
@@ -242,7 +318,7 @@ const handleClearCart = () => {
               
               <!-- Quantity adjuster -->
               <div class="qty-adjuster">
-                <button type="button" class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity - (item.allowFloat ? 0.5 : 1))" aria-label="تقليل الكمية">-</button>
+                <button type="button" class="qty-btn" @click="handleQtyChange(item._id, item.quantity - (item.allowFloat ? 0.5 : 1))" aria-label="تقليل الكمية">-</button>
                 <input 
                   type="number" 
                   class="qty-input-field" 
@@ -254,7 +330,7 @@ const handleClearCart = () => {
                   @change="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
                   @blur="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
                 />
-                <button type="button" class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity + (item.allowFloat ? 0.5 : 1))" aria-label="زيادة الكمية">+</button>
+                <button type="button" class="qty-btn" @click="handleQtyChange(item._id, item.quantity + (item.allowFloat ? 0.5 : 1))" aria-label="زيادة الكمية">+</button>
               </div>
             </div>
 
@@ -331,7 +407,23 @@ const handleClearCart = () => {
         <h3 class="section-title">بيانات الاستلام والملاحظات</h3>
 
         <div class="form-group">
-          <label for="cart-delivery-date" class="form-label">تاريخ استلام الطلب</label>
+          <div class="date-header-row">
+            <label for="cart-delivery-date" class="form-label">تاريخ استلام الطلب</label>
+            <div class="date-shortcuts-pills">
+              <button 
+                type="button" 
+                class="date-pill-btn" 
+                :class="{ active: isTodayActive }"
+                @click="setDeliveryDateShortcut('today')"
+              >اليوم</button>
+              <button 
+                type="button" 
+                class="date-pill-btn" 
+                :class="{ active: isTomorrowActive }"
+                @click="setDeliveryDateShortcut('tomorrow')"
+              >غداً</button>
+            </div>
+          </div>
           <input id="cart-delivery-date" type="date" :min="minDeliveryDate" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
         </div>
 
@@ -392,6 +484,7 @@ const handleClearCart = () => {
         aria-labelledby="confirm-order-title"
       >
         <div class="confirm-modal-card glass-panel" @click.stop>
+          <div class="sheet-grab-handle" aria-hidden="true"></div>
           <!-- Modal Header -->
           <div class="confirm-modal-header">
             <div class="confirm-header-icon-group">
@@ -1036,6 +1129,52 @@ const handleClearCart = () => {
   color: #334155;
 }
 
+.date-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.date-shortcuts-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-pill-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  min-height: 28px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.date-pill-btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.date-pill-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border-color: #d97706;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+}
+
+.date-pill-btn:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 1px;
+}
+
 .form-input {
   width: 100%;
   max-width: 100%;
@@ -1635,10 +1774,24 @@ const handleClearCart = () => {
   cursor: not-allowed;
 }
 
-/* Transitions */
+.sheet-grab-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.45);
+  margin: 10px auto 4px auto;
+  display: none;
+}
+
+/* Symmetrical Confirm Modal Transitions */
 .confirm-modal-fade-enter-active,
 .confirm-modal-fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.22s ease;
+}
+
+.confirm-modal-fade-enter-active .confirm-modal-card,
+.confirm-modal-fade-leave-active .confirm-modal-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .confirm-modal-fade-enter-from,
@@ -1646,35 +1799,57 @@ const handleClearCart = () => {
   opacity: 0;
 }
 
+.confirm-modal-fade-enter-from .confirm-modal-card,
+.confirm-modal-fade-leave-to .confirm-modal-card {
+  transform: translateY(100%);
+}
+
+@media (min-width: 641px) {
+  .confirm-modal-fade-enter-from .confirm-modal-card,
+  .confirm-modal-fade-leave-to .confirm-modal-card {
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
 /* Mobile Bottom-Sheet (Habit 15) */
 @media (max-width: 640px) {
+  .sheet-grab-handle {
+    display: block;
+  }
+
   .confirm-modal-backdrop {
     align-items: flex-end;
     padding: 0;
   }
 
   .confirm-modal-card {
-    border-radius: 20px 20px 0 0;
+    border-radius: 24px 24px 0 0;
     max-height: 92vh;
     width: 100%;
     border-bottom: none;
     border-left: none;
     border-right: none;
-    animation: slideUpConfirmMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  @keyframes slideUpConfirmMobile {
-    from {
-      transform: translateY(100%);
-    }
-    to {
-      transform: translateY(0);
-    }
+  .confirm-actions-bar {
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 14px)) !important;
   }
 
   .confirm-meta-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Button Instant Touch/Press Feedback */
+.checkout-btn:active,
+.confirm-btn-primary:active,
+.confirm-btn-secondary:active,
+.change-btn:active,
+.btn-cancel-edit-mode:active,
+.btn-browse-store-add:active,
+.date-pill-btn:active {
+  transform: scale(0.97) !important;
+  transition: transform 0.08s ease-out;
 }
 
 /* Mobile Responsive 80% Scale (≤ 768px) */

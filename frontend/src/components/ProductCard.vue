@@ -7,6 +7,7 @@ import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
 import CategoryIcon from './CategoryIcon.vue';
 import { gsap } from 'gsap';
+import { triggerHaptic } from '../utils/haptics';
 
 const heartBtnRef = ref(null);
 const addBtnRef = ref(null);
@@ -137,6 +138,7 @@ const showBulkPrice = computed(() => {
 const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props.product._id));
 
 const toggleSave = () => {
+  triggerHaptic('light');
   if (heartBtnRef.value) {
     gsap.fromTo(heartBtnRef.value, 
       { scale: 0.7 }, 
@@ -162,6 +164,7 @@ const toggleSave = () => {
 };
 
 const handleAddToCart = () => {
+  triggerHaptic('medium');
   if (addBtnRef.value) {
     gsap.fromTo(addBtnRef.value,
       { scale: 0.93 },
