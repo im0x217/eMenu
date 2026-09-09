@@ -71,13 +71,6 @@
   .app-container {
     padding: calc(0.65rem + env(safe-area-inset-top, 0px)) 0.65rem calc(125px + env(safe-area-inset-bottom, 0px)) 0.65rem !important;
   }
-
-  /* Maintain 16px equivalent on mobile form controls to avoid unwanted iOS Safari auto-zoom */
-  input:not([type="checkbox"]):not([type="radio"]),
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
 }
 
 * {

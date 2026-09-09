@@ -113,6 +113,7 @@ const selectCategory = (catName) => {
     dragMoved.value = false;
     return;
   }
+  triggerHaptic('light');
   activeCategory.value = catName;
   activeSubCategory.value = ''; // Reset subcategory filter
 };
@@ -1476,7 +1477,7 @@ watch(carouselItems, (newItems) => {
   
   .search-input {
     padding: 0.55rem 2.2rem 0.55rem 1.8rem;
-    font-size: 16px !important;
+    font-size: 0.88rem !important;
   }
   
   .cat-btn {

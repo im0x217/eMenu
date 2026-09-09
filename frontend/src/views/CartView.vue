@@ -1906,13 +1906,20 @@ const handleClearCart = () => {
   .qty-input-field {
     width: 34px;
     height: 26px;
-    font-size: 16px !important;
+    font-size: 0.85rem !important;
   }
 
-  /* Enforce 16px font-size on mobile inputs to prevent iOS Safari auto-zoom */
-  .item-note-input,
+  /* Proportional balanced typography on mobile inputs */
+  .item-note-input {
+    font-size: 0.8rem !important;
+    min-height: 34px;
+    height: 34px;
+  }
+
   .form-input {
-    font-size: 16px !important;
+    font-size: 0.85rem !important;
+    min-height: 40px;
+    height: 40px;
   }
 
   .checkout-details-section {

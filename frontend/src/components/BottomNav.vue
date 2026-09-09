@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useShopStore } from '../stores/shop';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
+import { triggerHaptic } from '../utils/haptics';
 
 const router = useRouter();
 const route = useRoute();
@@ -21,7 +22,13 @@ const totalFavorites = computed(() => {
   return favoritesStore.getFavoritesList(activeShop.value).length;
 });
 
+const navTo = (path) => {
+  triggerHaptic('light');
+  router.push(path);
+};
+
 const navToShop = () => {
+  triggerHaptic('light');
   router.push(`/shop/${activeShop.value}`);
 };
 </script>
@@ -45,7 +52,7 @@ const navToShop = () => {
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path === '/favorites' }" 
-      @click="router.push('/favorites')"
+      @click="navTo('/favorites')"
     >
       <div class="icon-wrapper">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -60,7 +67,7 @@ const navToShop = () => {
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path === '/cart' }" 
-      @click="router.push('/cart')"
+      @click="navTo('/cart')"
     >
       <div class="icon-wrapper">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -77,7 +84,7 @@ const navToShop = () => {
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path === '/account' }" 
-      @click="router.push('/account')"
+      @click="navTo('/account')"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
