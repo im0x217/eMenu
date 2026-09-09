@@ -40,9 +40,19 @@ const fetchCarousel = async () => {
 };
 
 
+// Ensure activeCategory is set immediately when categories are loaded
+watch(() => shopStore.categories, (cats) => {
+  if (cats.length > 0 && !activeCategory.value) {
+    activeCategory.value = cats[0].name;
+  }
+}, { immediate: true });
+
 onMounted(async () => {
+  if (shopStore.categories.length > 0 && !activeCategory.value) {
+    activeCategory.value = shopStore.categories[0].name;
+  }
   await Promise.all([shopStore.fetchMenu(), fetchCarousel()]);
-  if (shopStore.categories.length > 0) {
+  if (shopStore.categories.length > 0 && !activeCategory.value) {
     activeCategory.value = shopStore.categories[0].name;
   }
 
@@ -136,27 +146,41 @@ const sortProducts = (a, b) => {
   return 0;
 };
 
+// Arabic text normalization helper for robust search matching
+const normalizeArabic = (text) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[\u064B-\u065F\u0670]/g, '') // Remove Arabic tashkeel / diacritics
+    .replace(/[إأآا]/g, 'ا')
+    .replace(/[ةه]/g, 'ه')
+    .replace(/[ىي]/g, 'ي');
+};
+
 // Filtered products list
 const filteredProducts = computed(() => {
   let list = shopStore.products;
 
-  // 1. Search Query filter (global)
+  // 1. Search Query filter (global across all categories)
   if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase().trim();
-    list = list.filter(p => 
-      p.name.toLowerCase().includes(q) || 
-      (p.desc && p.desc.toLowerCase().includes(q))
-    );
-  }
+    const q = normalizeArabic(searchQuery.value);
+    list = list.filter(p => {
+      const nameNorm = normalizeArabic(p.name);
+      const descNorm = normalizeArabic(p.desc);
+      return nameNorm.includes(q) || descNorm.includes(q);
+    });
+  } else {
+    // 2. Main Category filter (applied only when NOT searching)
+    if (activeCategory.value) {
+      list = list.filter(p => p.category === activeCategory.value);
+    }
 
-  // 2. Main Category filter
-  if (activeCategory.value) {
-    list = list.filter(p => p.category === activeCategory.value);
-  }
-
-  // 3. Sub Category filter
-  if (activeSubCategory.value) {
-    list = list.filter(p => p.subCategory === activeSubCategory.value);
+    // 3. Sub Category filter (applied only when NOT searching)
+    if (activeSubCategory.value) {
+      list = list.filter(p => p.subCategory === activeSubCategory.value);
+    }
   }
 
   // 4. In Shop2, respect bulk view configurations
@@ -176,9 +200,15 @@ const subCategorySections = computed(() => {
     return [{ name: 'نتائج البحث', products: filteredProducts.value }];
   }
 
+  // Guard: Do not render unassigned products before active category is set
+  if (!activeCategory.value) {
+    return [];
+  }
+
   let list = shopStore.products;
   if (activeCategory.value) {
-    list = list.filter(p => p.category === activeCategory.value);
+    const activeNorm = normalizeArabic(activeCategory.value);
+    list = list.filter(p => normalizeArabic(p.category) === activeNorm);
   }
   if (shopStore.activeShop === 'shop2' && !shopStore.isBulkVerified) {
     list = list.filter(p => p.purchaseType !== 'bulk');
@@ -192,13 +222,15 @@ const subCategorySections = computed(() => {
 
   if (subs.length > 0) {
     subs.forEach(subName => {
-      const subProds = list.filter(p => p.subCategory === subName);
+      const normSub = normalizeArabic(subName);
+      const subProds = list.filter(p => normalizeArabic(p.subCategory) === normSub);
       if (subProds.length > 0) {
         sections.push({ name: subName, products: subProds });
       }
     });
 
-    const unassignedProds = list.filter(p => !p.subCategory || !subs.includes(p.subCategory));
+    const normSubs = subs.map(s => normalizeArabic(s));
+    const unassignedProds = list.filter(p => !p.subCategory || !normSubs.includes(normalizeArabic(p.subCategory)));
     if (unassignedProds.length > 0) {
       sections.push({ name: 'تشكيلة أخرى', products: unassignedProds });
     }
@@ -208,24 +240,6 @@ const subCategorySections = computed(() => {
 
   return sections;
 });
-
-// GSAP entrance stagger animation for product grid (respects prefers-reduced-motion)
-watch(filteredProducts, () => {
-  nextTick(() => {
-    const cards = document.querySelectorAll('.product-card');
-    if (cards.length > 0) {
-      const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReducedMotion) {
-        gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
-      } else {
-        gsap.fromTo(cards, 
-          { opacity: 0, y: 12, scale: 0.97 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power1.out', overwrite: 'auto' }
-        );
-      }
-    }
-  });
-}, { immediate: true });
 
 // Bulk price verification modal state
 const showBulkModal = ref(false);

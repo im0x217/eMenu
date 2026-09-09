@@ -37,11 +37,9 @@ const authStore = useAuthStore();
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isBulkMode = computed(() => shopStore.isBulkVerified);
 
-// View-Aware Image Prioritization & Blur-Up State
-const isIntersecting = ref(props.priority === 'high');
+// Robust Image Loading & Blur-Up State
 const isLoaded = ref(false);
 const hasError = ref(false);
-let observer = null;
 
 const checkCachedImage = () => {
   if (imgRef.value && imgRef.value.complete && imgRef.value.naturalWidth !== 0) {
@@ -57,64 +55,14 @@ watch(() => props.product._id, () => {
   });
 });
 
-watch(isIntersecting, (val) => {
-  if (val) {
-    nextTick(() => {
-      checkCachedImage();
-    });
-  }
-});
-
 onMounted(() => {
-  if (props.priority === 'high') {
-    isIntersecting.value = true;
-    nextTick(() => {
-      checkCachedImage();
-    });
-    return;
-  }
-  
-  if ('IntersectionObserver' in window && cardRef.value) {
-    observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            isIntersecting.value = true;
-            nextTick(() => {
-              checkCachedImage();
-            });
-            if (observer && cardRef.value) {
-              observer.unobserve(cardRef.value);
-            }
-          }
-        });
-      },
-      {
-        rootMargin: '250px 120px 250px 120px',
-        threshold: 0.01
-      }
-    );
-    observer.observe(cardRef.value);
-  } else {
-    isIntersecting.value = true;
-    nextTick(() => {
-      checkCachedImage();
-    });
-  }
-});
-
-onUnmounted(() => {
-  if (observer) {
-    observer.disconnect();
-  }
-});
-
-const shouldRenderImage = computed(() => {
-  return props.priority === 'high' || isIntersecting.value;
-});
-
-const fetchPriorityAttr = computed(() => {
-  return props.priority === 'high' ? 'high' : 'auto';
+  nextTick(() => {
+    checkCachedImage();
+  });
+  // Safety fallback: Ensure skeleton shimmer fades out within 1.5s even on slow connections
+  setTimeout(() => {
+    isLoaded.value = true;
+  }, 1500);
 });
 
 const handleImageLoad = () => {
@@ -216,7 +164,13 @@ const decrementQuantity = () => {
 };
 
 const getImageUrl = () => {
-  return props.product.imgSigned || props.product.img || '/res/logo.jpg';
+  const raw = props.product.imgSigned || props.product.img || '/res/logo.jpg';
+  if (!raw) return '/res/logo.jpg';
+  try {
+    return encodeURI(raw);
+  } catch (e) {
+    return raw;
+  }
 };
 
 const activeTagsList = computed(() => {
@@ -235,7 +189,16 @@ const activeTagsList = computed(() => {
     :class="['shop-theme-' + activeShop, { 'not-available': product.available === false }]"
   >
     <!-- Favorite Heart Toggle -->
-    <button ref="heartBtnRef" class="favorite-btn" @click.stop="toggleSave" aria-label="أضف للمفضلة">
+    <button 
+      ref="heartBtnRef" 
+      type="button"
+      class="favorite-btn" 
+      @click.stop="toggleSave" 
+      @mousedown.stop 
+      @touchstart.stop
+      @pointerdown.stop
+      aria-label="أضف للمفضلة"
+    >
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
         width="18" 
@@ -260,13 +223,13 @@ const activeTagsList = computed(() => {
       </div>
 
       <img 
-        v-if="shouldRenderImage"
         ref="imgRef"
         :src="getImageUrl()" 
         :alt="product.name" 
         class="product-image"
         :class="{ 'loaded': isLoaded }"
-        :fetchpriority="fetchPriorityAttr"
+        loading="eager"
+        :fetchpriority="priority === 'high' ? 'high' : 'auto'"
         decoding="async"
         @load="handleImageLoad"
         @error="handleImageError"
@@ -315,7 +278,7 @@ const activeTagsList = computed(() => {
       </div>
 
       <!-- In-Card Direct Stepper or Full-Width Add To Cart Button -->
-      <div class="actions-row">
+      <div class="actions-row" @mousedown.stop @touchstart.stop @pointerdown.stop>
         <!-- If already in cart: Show Direct Manipulation Stepper [- qty +] -->
         <div v-if="cartItemQuantity > 0" class="card-stepper-control animate-fade-in" @click.stop>
           <button 
@@ -467,8 +430,8 @@ const activeTagsList = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transform: scale(1.04);
+  opacity: 1;
+  transform: scale(1);
   transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
   z-index: 2;
 }

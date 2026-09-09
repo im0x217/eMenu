@@ -357,6 +357,7 @@ export const useCartStore = defineStore('cart', () => {
     updateQty,
     removeFromCart,
     clearCart,
+    getItemQty,
     importOrderForEditing,
     cancelOrderEditing,
     submitOrder
