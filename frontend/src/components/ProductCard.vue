@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/auth';
 import CategoryIcon from './CategoryIcon.vue';
 import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
+import { flyToCart } from '../utils/flyToCart';
 
 const heartBtnRef = ref(null);
 const addBtnRef = ref(null);
@@ -163,6 +164,11 @@ const toggleSave = () => {
   }
 };
 
+// Current quantity of this product in active cart
+const cartItemQuantity = computed(() => {
+  return cartStore.getItemQty(props.product._id);
+});
+
 const handleAddToCart = () => {
   triggerHaptic('medium');
   if (addBtnRef.value) {
@@ -180,10 +186,32 @@ const handleAddToCart = () => {
   }
   
   try {
-    cartStore.addToCart(props.product, activeShop.value, mode, 1);
+    const qtyStep = props.product.allowFloat ? 0.5 : 1;
+    cartStore.addToCart(props.product, activeShop.value, mode, qtyStep);
+    flyToCart(imgRef.value || cardRef.value, getImageUrl());
     toastStore.show('تم إضافة المنتج إلى السلة بنجاح!');
   } catch (err) {
     toastStore.show(err.message, 'error');
+  }
+};
+
+const incrementQuantity = () => {
+  triggerHaptic('light');
+  const step = props.product.allowFloat ? 0.5 : 1;
+  const newQty = cartItemQuantity.value + step;
+  cartStore.updateQty(props.product._id, newQty);
+  flyToCart(imgRef.value || cardRef.value, getImageUrl());
+};
+
+const decrementQuantity = () => {
+  const step = props.product.allowFloat ? 0.5 : 1;
+  const newQty = Math.max(0, cartItemQuantity.value - step);
+  if (newQty === 0) {
+    triggerHaptic('warning');
+    cartStore.removeFromCart(props.product._id);
+  } else {
+    triggerHaptic('light');
+    cartStore.updateQty(props.product._id, newQty);
   }
 };
 
@@ -286,15 +314,47 @@ const activeTagsList = computed(() => {
         </div>
       </div>
 
-      <!-- Restored Full-Width Add To Cart Button at bottom -->
+      <!-- In-Card Direct Stepper or Full-Width Add To Cart Button -->
       <div class="actions-row">
+        <!-- If already in cart: Show Direct Manipulation Stepper [- qty +] -->
+        <div v-if="cartItemQuantity > 0" class="card-stepper-control animate-fade-in" @click.stop>
+          <button 
+            type="button" 
+            class="card-stepper-btn minus" 
+            @click.stop="decrementQuantity" 
+            aria-label="إنقاص الكمية"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+          <div class="card-stepper-qty">
+            <span class="card-stepper-val text-mono">{{ cartItemQuantity }}</span>
+            <span class="card-stepper-label">في السلة</span>
+          </div>
+          <button 
+            type="button" 
+            class="card-stepper-btn plus" 
+            @click.stop="incrementQuantity" 
+            aria-label="زيادة الكمية"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- If not in cart: Show Add To Cart Button -->
         <button 
+          v-else
           ref="addBtnRef"
+          type="button"
           class="add-btn-wide" 
           @click.stop="handleAddToCart"
           :disabled="product.available === false"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="9" cy="21" r="1"/>
             <circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
@@ -627,6 +687,86 @@ const activeTagsList = computed(() => {
   width: 100%;
 }
 
+/* In-Card Stepper Styling */
+.card-stepper-control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-stepper-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: none;
+  background: #ffffff;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.card-stepper-btn:active {
+  transform: scale(0.92);
+}
+
+.card-stepper-btn.minus {
+  color: #dc2626;
+  background: #fff;
+}
+
+.card-stepper-btn.minus:active {
+  background: #fee2e2;
+}
+
+.card-stepper-btn.plus {
+  color: #ffffff;
+  background: var(--primary-color, #f59e0b);
+}
+
+.shop-theme-shop1 .card-stepper-btn.plus {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0c0603;
+}
+
+.shop-theme-shop2 .card-stepper-btn.plus {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+}
+
+.card-stepper-qty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  line-height: 1;
+}
+
+.card-stepper-val {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.card-stepper-label {
+  font-size: 0.62rem;
+  color: #64748b;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
 .add-btn-wide {
   width: 100%;
   padding: 8px 12px;
@@ -697,6 +837,18 @@ const activeTagsList = computed(() => {
     font-size: 0.8rem;
     border-radius: 10px;
     min-height: 36px;
+  }
+  .card-stepper-control {
+    border-radius: 10px;
+    padding: 2px;
+  }
+  .card-stepper-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+  .card-stepper-val {
+    font-size: 0.88rem;
   }
 }
 </style>

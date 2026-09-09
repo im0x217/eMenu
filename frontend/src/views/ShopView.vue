@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard.vue';
 import CategoryIcon from '../components/CategoryIcon.vue';
 import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
+import { bindSheetGesture } from '../utils/sheetGesture';
 
 const shopStore = useShopStore();
 
@@ -307,7 +308,10 @@ const handleKeydown = (e) => {
   }
 };
 
-// Body scroll lock and background nav dismissal when any modal is open
+let cleanupBulkGesture = null;
+let cleanupDisableGesture = null;
+
+// Body scroll lock, background nav dismissal and gesture-dismissible binding
 watch([showBulkModal, showDisableConfirm, zoomedImgUrl], ([bulk, disable, zoom]) => {
   if (bulk || disable || zoom) {
     document.body.style.overflow = 'hidden';
@@ -315,6 +319,34 @@ watch([showBulkModal, showDisableConfirm, zoomedImgUrl], ([bulk, disable, zoom])
   } else {
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
+  }
+
+  if (bulk) {
+    nextTick(() => {
+      const sheet = document.querySelector('.bulk-sheet-card');
+      if (sheet) {
+        cleanupBulkGesture = bindSheetGesture(sheet, () => {
+          showBulkModal.value = false;
+        });
+      }
+    });
+  } else if (cleanupBulkGesture) {
+    cleanupBulkGesture();
+    cleanupBulkGesture = null;
+  }
+
+  if (disable) {
+    nextTick(() => {
+      const sheet = document.querySelector('.disable-sheet-card');
+      if (sheet) {
+        cleanupDisableGesture = bindSheetGesture(sheet, () => {
+          showDisableConfirm.value = false;
+        });
+      }
+    });
+  } else if (cleanupDisableGesture) {
+    cleanupDisableGesture();
+    cleanupDisableGesture = null;
   }
 });
 
@@ -427,6 +459,8 @@ const stopAutoplay = () => {
 onUnmounted(() => {
   document.body.style.overflow = '';
   document.body.classList.remove('modal-open');
+  if (cleanupBulkGesture) cleanupBulkGesture();
+  if (cleanupDisableGesture) cleanupDisableGesture();
   window.removeEventListener('keydown', handleKeydown);
   stopAutoplay();
   if (carouselTrack.value) {
@@ -660,7 +694,7 @@ watch(carouselItems, (newItems) => {
           aria-label="التحقق من رمز الجملة"
           @click.self="showBulkModal = false"
         >
-          <div class="modal-content glass-panel" @click.stop>
+          <div class="modal-content bulk-sheet-card glass-panel" @click.stop>
             <div class="sheet-grab-handle" aria-hidden="true"></div>
             <h3 class="modal-title">تفعيل أسعار الجملة</h3>
             <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
@@ -697,7 +731,7 @@ watch(carouselItems, (newItems) => {
           aria-label="تأكيد تعطيل الجملة"
           @click.self="showDisableConfirm = false"
         >
-          <div class="modal-content glass-panel" @click.stop>
+          <div class="modal-content disable-sheet-card glass-panel" @click.stop>
             <div class="sheet-grab-handle" aria-hidden="true"></div>
             <h3 class="modal-title">تعطيل أسعار الجملة</h3>
             <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>

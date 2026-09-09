@@ -61,6 +61,11 @@ export const useCartStore = defineStore('cart', () => {
     return Math.round(total);
   });
 
+  const getItemQty = (productId) => {
+    const found = items.value.find(i => i._id === productId);
+    return found ? found.quantity : 0;
+  };
+
   const addToCart = (product, shopId, priceMode = 'regular', qty = 1, notes = '') => {
     // 1. Check shop consistency
     if (getShopType.value && getShopType.value !== shopId) {

@@ -1,10 +1,11 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 import { triggerHaptic } from '../utils/haptics';
+import { bindSheetGesture } from '../utils/sheetGesture';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -148,14 +149,28 @@ const onKeydown = (e) => {
   }
 };
 
+let cleanupConfirmGesture = null;
+
 // Lock body scroll and dismiss background navs while confirmation modal is active
 watch(showOrderConfirmModal, (isOpen) => {
   if (isOpen) {
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
+    nextTick(() => {
+      const sheet = document.querySelector('.confirm-modal-card');
+      if (sheet) {
+        cleanupConfirmGesture = bindSheetGesture(sheet, () => {
+          handleCloseConfirmation();
+        });
+      }
+    });
   } else {
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
+    if (cleanupConfirmGesture) {
+      cleanupConfirmGesture();
+      cleanupConfirmGesture = null;
+    }
   }
 });
 
@@ -166,6 +181,10 @@ onMounted(() => {
 onUnmounted(() => {
   document.body.style.overflow = '';
   document.body.classList.remove('modal-open');
+  if (cleanupConfirmGesture) {
+    cleanupConfirmGesture();
+    cleanupConfirmGesture = null;
+  }
   window.removeEventListener('keydown', onKeydown);
 });
 
