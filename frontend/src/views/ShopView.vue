@@ -306,12 +306,14 @@ const handleKeydown = (e) => {
   }
 };
 
-// Body scroll lock when any modal is open
+// Body scroll lock and background nav dismissal when any modal is open
 watch([showBulkModal, showDisableConfirm, zoomedImgUrl], ([bulk, disable, zoom]) => {
   if (bulk || disable || zoom) {
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
   } else {
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
   }
 });
 
@@ -423,6 +425,7 @@ const stopAutoplay = () => {
 
 onUnmounted(() => {
   document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
   window.removeEventListener('keydown', handleKeydown);
   stopAutoplay();
   if (carouselTrack.value) {
@@ -646,98 +649,100 @@ watch(carouselItems, (newItems) => {
     </div>
 
     <!-- Bulk code validation Modal -->
-    <Transition name="modal-sheet">
-      <div 
-        v-if="showBulkModal" 
-        class="modal-backdrop"
-        role="dialog"
-        aria-modal="true"
-        aria-label="التحقق من رمز الجملة"
-        @click.self="showBulkModal = false"
-      >
-        <div class="modal-content glass-panel" @click.stop>
-          <div class="sheet-grab-handle" aria-hidden="true"></div>
-          <h3 class="modal-title">تفعيل أسعار الجملة</h3>
-          <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
-          
-          <input 
-            type="password" 
-            v-model="bulkCodeInput" 
-            placeholder="رمز التحقق (4 أرقام)" 
-            maxlength="4"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            aria-label="رمز التحقق المكون من 4 أرقام"
-            class="form-input text-center font-bold"
-            @keyup.enter="handleVerifyBulk"
-          />
-          
-          <p v-if="bulkError" class="error-msg">الرمز غير صحيح! يرجى المحاولة مرة أخرى.</p>
+    <Teleport to="body">
+      <Transition name="modal-sheet">
+        <div 
+          v-if="showBulkModal" 
+          class="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="التحقق من رمز الجملة"
+          @click.self="showBulkModal = false"
+        >
+          <div class="modal-content glass-panel" @click.stop>
+            <div class="sheet-grab-handle" aria-hidden="true"></div>
+            <h3 class="modal-title">تفعيل أسعار الجملة</h3>
+            <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
+            
+            <input 
+              type="password" 
+              v-model="bulkCodeInput" 
+              placeholder="رمز التحقق (4 أرقام)" 
+              maxlength="4"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              aria-label="رمز التحقق المكون من 4 أرقام"
+              class="form-input text-center font-bold"
+              @keyup.enter="handleVerifyBulk"
+            />
+            
+            <p v-if="bulkError" class="error-msg">الرمز غير صحيح! يرجى المحاولة مرة أخرى.</p>
 
-          <div class="modal-actions">
-            <button type="button" class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
-            <button type="button" class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
+            <div class="modal-actions">
+              <button type="button" class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
+              <button type="button" class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
 
-    <!-- Disable Bulk Confirmation Modal -->
-    <Transition name="modal-sheet">
-      <div 
-        v-if="showDisableConfirm" 
-        class="modal-backdrop"
-        role="dialog"
-        aria-modal="true"
-        aria-label="تأكيد تعطيل الجملة"
-        @click.self="showDisableConfirm = false"
-      >
-        <div class="modal-content glass-panel" @click.stop>
-          <div class="sheet-grab-handle" aria-hidden="true"></div>
-          <h3 class="modal-title">تعطيل أسعار الجملة</h3>
-          <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
-            <button type="button" class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
+      <!-- Disable Bulk Confirmation Modal -->
+      <Transition name="modal-sheet">
+        <div 
+          v-if="showDisableConfirm" 
+          class="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="تأكيد تعطيل الجملة"
+          @click.self="showDisableConfirm = false"
+        >
+          <div class="modal-content glass-panel" @click.stop>
+            <div class="sheet-grab-handle" aria-hidden="true"></div>
+            <h3 class="modal-title">تعطيل أسعار الجملة</h3>
+            <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>
+            <div class="modal-actions">
+              <button type="button" class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
+              <button type="button" class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
 
-    <!-- Image Zoom Modal -->
-    <Transition name="zoom-fade">
-      <div 
-        v-if="zoomedImgUrl" 
-        class="zoom-backdrop" 
-        role="dialog"
-        aria-modal="true"
-        aria-label="عرض الصورة بالدقة الكاملة"
-        @click.self="closeZoomModal"
-      >
-        <!-- Fixed Top-Left Close Button -->
-        <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
+      <!-- Image Zoom Modal -->
+      <Transition name="zoom-fade">
+        <div 
+          v-if="zoomedImgUrl" 
+          class="zoom-backdrop" 
+          role="dialog"
+          aria-modal="true"
+          aria-label="عرض الصورة بالدقة الكاملة"
+          @click.self="closeZoomModal"
+        >
+          <!-- Fixed Top-Left Close Button -->
+          <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
 
-        <div class="zoom-content" @click.stop>
-          <!-- Shimmer & Spinner Loader while full-size image downloads -->
-          <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
-            <div class="spinner"></div>
-            <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
+          <div class="zoom-content" @click.stop>
+            <!-- Shimmer & Spinner Loader while full-size image downloads -->
+            <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
+              <div class="spinner"></div>
+              <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
+            </div>
+
+            <img 
+              :src="zoomedImgUrl" 
+              alt="صورة المنتج الكاملة" 
+              class="zoom-image"
+              :class="{ 'loaded': isZoomImgLoaded }"
+              fetchpriority="high"
+              loading="eager"
+              decoding="async"
+              @load="isZoomImgLoaded = true"
+              @error="isZoomImgLoaded = true"
+            />
           </div>
-
-          <img 
-            :src="zoomedImgUrl" 
-            alt="صورة المنتج الكاملة" 
-            class="zoom-image"
-            :class="{ 'loaded': isZoomImgLoaded }"
-            fetchpriority="high"
-            loading="eager"
-            decoding="async"
-            @load="isZoomImgLoaded = true"
-            @error="isZoomImgLoaded = true"
-          />
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 

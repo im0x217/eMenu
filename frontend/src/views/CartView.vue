@@ -148,12 +148,14 @@ const onKeydown = (e) => {
   }
 };
 
-// Lock body scroll while confirmation modal is active
+// Lock body scroll and dismiss background navs while confirmation modal is active
 watch(showOrderConfirmModal, (isOpen) => {
   if (isOpen) {
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
   } else {
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
   }
 });
 
@@ -163,6 +165,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
   window.removeEventListener('keydown', onKeydown);
 });
 
@@ -474,181 +477,183 @@ const handleClearCart = () => {
     </div>
 
     <!-- ORDER CONFIRMATION MODAL -->
-    <Transition name="confirm-modal-fade">
-      <div 
-        v-if="showOrderConfirmModal" 
-        class="confirm-modal-backdrop" 
-        @click.self="handleCloseConfirmation"
-        role="dialog" 
-        aria-modal="true" 
-        aria-labelledby="confirm-order-title"
-      >
-        <div class="confirm-modal-card glass-panel" @click.stop>
-          <div class="sheet-grab-handle" aria-hidden="true"></div>
-          <!-- Modal Header -->
-          <div class="confirm-modal-header">
-            <div class="confirm-header-icon-group">
-              <div class="confirm-icon-badge">
-                <svg v-if="cartStore.isEditingOrder" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="8" cy="21" r="1"/>
-                  <circle cx="19" cy="21" r="1"/>
-                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                </svg>
+    <Teleport to="body">
+      <Transition name="confirm-modal-fade">
+        <div 
+          v-if="showOrderConfirmModal" 
+          class="confirm-modal-backdrop" 
+          @click.self="handleCloseConfirmation"
+          role="dialog" 
+          aria-modal="true" 
+          aria-labelledby="confirm-order-title"
+        >
+          <div class="confirm-modal-card glass-panel" @click.stop>
+            <div class="sheet-grab-handle" aria-hidden="true"></div>
+            <!-- Modal Header -->
+            <div class="confirm-modal-header">
+              <div class="confirm-header-icon-group">
+                <div class="confirm-icon-badge">
+                  <svg v-if="cartStore.isEditingOrder" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="8" cy="21" r="1"/>
+                    <circle cx="19" cy="21" r="1"/>
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                  </svg>
+                </div>
+                <div class="confirm-header-texts">
+                  <h3 id="confirm-order-title" class="confirm-title">
+                    {{ cartStore.isEditingOrder ? `تأكيد تحديث الطلب (#${cartStore.editingOrderNumber})` : 'تأكيد إرسال الطلب' }}
+                  </h3>
+                  <span class="confirm-subtitle">يرجى مراجعة تفاصيل طلبك قبل الإرسال النهائي عبر الواتساب</span>
+                </div>
               </div>
-              <div class="confirm-header-texts">
-                <h3 id="confirm-order-title" class="confirm-title">
-                  {{ cartStore.isEditingOrder ? `تأكيد تحديث الطلب (#${cartStore.editingOrderNumber})` : 'تأكيد إرسال الطلب' }}
-                </h3>
-                <span class="confirm-subtitle">يرجى مراجعة تفاصيل طلبك قبل الإرسال النهائي عبر الواتساب</span>
-              </div>
-            </div>
-            <button 
-              type="button" 
-              class="confirm-btn-close" 
-              @click="handleCloseConfirmation" 
-              :disabled="isSubmitting"
-              aria-label="إلغاء وإغلاق النافذة"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Modal Scrollable Body -->
-          <div class="confirm-modal-body">
-            <!-- Customer Identity Pill -->
-            <div class="confirm-identity-strip">
-              <div class="confirm-identity-info">
-                <span class="confirm-customer-name">{{ authStore.customerName || 'عميل مسجل' }}</span>
-                <span class="confirm-customer-phone text-mono" dir="ltr">{{ authStore.customerPhone }}</span>
-              </div>
-              <span class="confirm-verified-tag">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="20 6 9 17 4 12"/>
+              <button 
+                type="button" 
+                class="confirm-btn-close" 
+                @click="handleCloseConfirmation" 
+                :disabled="isSubmitting"
+                aria-label="إلغاء وإغلاق النافذة"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
-                <span>حساب موثق</span>
-              </span>
+              </button>
             </div>
 
-            <!-- Logistics & Store Metadata Row -->
-            <div class="confirm-meta-grid">
-              <div class="confirm-meta-item">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span class="confirm-meta-label">الاستلام:</span>
-                <span class="confirm-meta-val text-mono">{{ cartStore.deliveryDate || 'غداً' }}</span>
+            <!-- Modal Scrollable Body -->
+            <div class="confirm-modal-body">
+              <!-- Customer Identity Pill -->
+              <div class="confirm-identity-strip">
+                <div class="confirm-identity-info">
+                  <span class="confirm-customer-name">{{ authStore.customerName || 'عميل مسجل' }}</span>
+                  <span class="confirm-customer-phone text-mono" dir="ltr">{{ authStore.customerPhone }}</span>
+                </div>
+                <span class="confirm-verified-tag">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>حساب موثق</span>
+                </span>
               </div>
-              <div class="confirm-meta-item">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                <span class="confirm-meta-val">{{ storeDisplayName }}</span>
-                <span class="confirm-price-tier-tag">{{ priceModeDisplayName }}</span>
-              </div>
-            </div>
 
-            <!-- Order Items Breakdown -->
-            <div class="confirm-items-section">
-              <div class="confirm-items-header">
-                <span class="confirm-items-title">قائمة الأصناف</span>
-                <span class="confirm-items-count text-mono">{{ totalItemsCount }} قطعة</span>
+              <!-- Logistics & Store Metadata Row -->
+              <div class="confirm-meta-grid">
+                <div class="confirm-meta-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span class="confirm-meta-label">الاستلام:</span>
+                  <span class="confirm-meta-val text-mono">{{ cartStore.deliveryDate || 'غداً' }}</span>
+                </div>
+                <div class="confirm-meta-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                  <span class="confirm-meta-val">{{ storeDisplayName }}</span>
+                  <span class="confirm-price-tier-tag">{{ priceModeDisplayName }}</span>
+                </div>
               </div>
-              <div class="confirm-items-list">
-                <div v-for="item in cartStore.items" :key="item._id" class="confirm-item-row">
-                  <div class="confirm-item-info">
-                    <span class="confirm-item-name">{{ item.name }}</span>
-                    <span v-if="item.itemNotes" class="confirm-item-note">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                      </svg>
-                      {{ item.itemNotes }}
-                    </span>
+
+              <!-- Order Items Breakdown -->
+              <div class="confirm-items-section">
+                <div class="confirm-items-header">
+                  <span class="confirm-items-title">قائمة الأصناف</span>
+                  <span class="confirm-items-count text-mono">{{ totalItemsCount }} قطعة</span>
+                </div>
+                <div class="confirm-items-list">
+                  <div v-for="item in cartStore.items" :key="item._id" class="confirm-item-row">
+                    <div class="confirm-item-info">
+                      <span class="confirm-item-name">{{ item.name }}</span>
+                      <span v-if="item.itemNotes" class="confirm-item-note">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        {{ item.itemNotes }}
+                      </span>
+                    </div>
+                    <div class="confirm-item-math">
+                      <span class="confirm-item-qty-price text-mono">{{ item.quantity }} × {{ getItemPrice(item) }}</span>
+                      <span class="confirm-item-subtotal text-mono">{{ Math.round(getItemPrice(item) * item.quantity) }} د.ل</span>
+                    </div>
                   </div>
-                  <div class="confirm-item-math">
-                    <span class="confirm-item-qty-price text-mono">{{ item.quantity }} × {{ getItemPrice(item) }}</span>
-                    <span class="confirm-item-subtotal text-mono">{{ Math.round(getItemPrice(item) * item.quantity) }} د.ل</span>
-                  </div>
+                </div>
+              </div>
+
+              <!-- Order Notes (if any) -->
+              <div v-if="cartStore.orderNotes" class="confirm-notes-box">
+                <div class="confirm-notes-header">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                  <span>ملاحظات عامة:</span>
+                </div>
+                <p class="confirm-notes-content">{{ cartStore.orderNotes }}</p>
+              </div>
+
+              <!-- Grand Total Row -->
+              <div class="confirm-total-card">
+                <span class="confirm-total-label">الإجمالي الكلي المستحق:</span>
+                <div class="confirm-total-amount">
+                  <span class="confirm-total-number text-mono">{{ cartStore.cartTotal }}</span>
+                  <span class="confirm-total-currency">د.ل</span>
                 </div>
               </div>
             </div>
 
-            <!-- Order Notes (if any) -->
-            <div v-if="cartStore.orderNotes" class="confirm-notes-box">
-              <div class="confirm-notes-header">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
+            <!-- Modal Action Buttons -->
+            <div class="confirm-actions-bar">
+              <button 
+                type="button" 
+                class="confirm-btn-primary pulse-animation" 
+                :class="{ 'btn-update-mode': cartStore.isEditingOrder }"
+                @click="handleConfirmSubmit"
+                :disabled="isSubmitting"
+              >
+                <template v-if="isSubmitting">
+                  <div class="confirm-mini-spinner" aria-hidden="true"></div>
+                  <span>{{ cartStore.isEditingOrder ? 'جاري حفظ التعديل…' : 'جاري إرسال الطلب…' }}</span>
+                </template>
+                <template v-else-if="cartStore.isEditingOrder">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>تأكيد وحفظ الطلب</span>
+                </template>
+                <template v-else>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.977 0c3.222.001 6.252 1.256 8.529 3.536 2.277 2.278 3.53 5.31 3.528 8.53-.005 6.655-5.33 11.98-11.979 11.98-2.002-.001-3.97-.497-5.714-1.442L0 24zm6.59-4.846c1.666.988 3.311 1.485 5.32 1.488 5.626 0 10.201-4.576 10.205-10.2.002-2.724-1.056-5.285-2.977-7.208C17.279 1.312 14.72 .253 12 .25c-5.631 0-10.21 4.579-10.213 10.21-.002 1.902.485 3.759 1.411 5.389l-1.017 3.72 3.823-1.002zM17.065 14.1c-.277-.139-1.64-.81-1.895-.902-.255-.092-.441-.139-.626.139-.185.277-.718.902-.88 1.088-.163.186-.325.208-.602.069-.277-.14-1.17-.431-2.228-1.376-.824-.735-1.38-1.644-1.542-1.922-.163-.277-.018-.427.121-.566.125-.125.277-.324.417-.486.139-.162.186-.277.277-.462.093-.185.047-.348-.023-.487-.07-.139-.626-1.507-.858-2.064-.226-.543-.454-.47-.626-.478-.162-.007-.347-.007-.532-.007-.185 0-.486.07-.74.348-.255.277-.973.95-973 2.315 0 1.365.992 2.68 1.13 2.865.139.186 1.953 2.982 4.73 4.181.66.285 1.176.455 1.579.583.664.211 1.269.181 1.748.11.534-.08 1.64-.67 1.872-1.318.232-.647.232-1.203.163-1.318-.07-.115-.255-.162-.532-.3z"/>
+                  </svg>
+                  <span>تأكيد وإرسال عبر الواتساب</span>
+                </template>
+              </button>
+              <button 
+                type="button" 
+                class="confirm-btn-secondary" 
+                @click="handleCloseConfirmation" 
+                :disabled="isSubmitting"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
-                <span>ملاحظات عامة:</span>
-              </div>
-              <p class="confirm-notes-content">{{ cartStore.orderNotes }}</p>
+                <span>مراجعة السلة / تعديل</span>
+              </button>
             </div>
-
-            <!-- Grand Total Row -->
-            <div class="confirm-total-card">
-              <span class="confirm-total-label">الإجمالي الكلي المستحق:</span>
-              <div class="confirm-total-amount">
-                <span class="confirm-total-number text-mono">{{ cartStore.cartTotal }}</span>
-                <span class="confirm-total-currency">د.ل</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Modal Action Buttons -->
-          <div class="confirm-actions-bar">
-            <button 
-              type="button" 
-              class="confirm-btn-primary pulse-animation" 
-              :class="{ 'btn-update-mode': cartStore.isEditingOrder }"
-              @click="handleConfirmSubmit"
-              :disabled="isSubmitting"
-            >
-              <template v-if="isSubmitting">
-                <div class="confirm-mini-spinner" aria-hidden="true"></div>
-                <span>{{ cartStore.isEditingOrder ? 'جاري حفظ التعديل…' : 'جاري إرسال الطلب…' }}</span>
-              </template>
-              <template v-else-if="cartStore.isEditingOrder">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                <span>تأكيد وحفظ الطلب</span>
-              </template>
-              <template v-else>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.977 0c3.222.001 6.252 1.256 8.529 3.536 2.277 2.278 3.53 5.31 3.528 8.53-.005 6.655-5.33 11.98-11.979 11.98-2.002-.001-3.97-.497-5.714-1.442L0 24zm6.59-4.846c1.666.988 3.311 1.485 5.32 1.488 5.626 0 10.201-4.576 10.205-10.2.002-2.724-1.056-5.285-2.977-7.208C17.279 1.312 14.72 .253 12 .25c-5.631 0-10.21 4.579-10.213 10.21-.002 1.902.485 3.759 1.411 5.389l-1.017 3.72 3.823-1.002zM17.065 14.1c-.277-.139-1.64-.81-1.895-.902-.255-.092-.441-.139-.626.139-.185.277-.718.902-.88 1.088-.163.186-.325.208-.602.069-.277-.14-1.17-.431-2.228-1.376-.824-.735-1.38-1.644-1.542-1.922-.163-.277-.018-.427.121-.566.125-.125.277-.324.417-.486.139-.162.186-.277.277-.462.093-.185.047-.348-.023-.487-.07-.139-.626-1.507-.858-2.064-.226-.543-.454-.47-.626-.478-.162-.007-.347-.007-.532-.007-.185 0-.486.07-.74.348-.255.277-.973.95-973 2.315 0 1.365.992 2.68 1.13 2.865.139.186 1.953 2.982 4.73 4.181.66.285 1.176.455 1.579.583.664.211 1.269.181 1.748.11.534-.08 1.64-.67 1.872-1.318.232-.647.232-1.203.163-1.318-.07-.115-.255-.162-.532-.3z"/>
-                </svg>
-                <span>تأكيد وإرسال عبر الواتساب</span>
-              </template>
-            </button>
-            <button 
-              type="button" 
-              class="confirm-btn-secondary" 
-              @click="handleCloseConfirmation" 
-              :disabled="isSubmitting"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              <span>مراجعة السلة / تعديل</span>
-            </button>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 

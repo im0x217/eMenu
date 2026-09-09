@@ -675,3 +675,22 @@ button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
   font-weight: 500;
 }
 
+/* ==========================================================================
+   GLOBAL MODAL ELEVATION & CHROME DOCKING
+   ========================================================================== */
+.modal-backdrop,
+.confirm-modal-backdrop,
+.zoom-backdrop {
+  z-index: 10000 !important;
+}
+
+/* When any modal is active, cleanly fade out BottomNav & FloatingCartBar and disable clicks */
+body.modal-open .bottom-nav,
+body.modal-open .bottom-nav-bar,
+body.modal-open .floating-cart-bar {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
