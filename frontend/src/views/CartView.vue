@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
@@ -25,9 +25,10 @@ const minDeliveryDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-// Checkout processing
+// Checkout processing & Confirmation Modal state
 const isSubmitting = ref(false);
 const errorMsg = ref('');
+const showOrderConfirmModal = ref(false);
 
 const handleSaveIdentity = () => {
   if (!nameInput.value.trim() || !phoneInput.value.trim()) {
@@ -46,24 +47,67 @@ const handleSaveIdentity = () => {
   authStore.showSetPasswordModal = true;
 };
 
-const handleCheckout = async () => {
+// Open the confirmation modal instead of immediate dispatch
+const handleCheckout = () => {
   if (!authStore.isIdentified()) {
     handleSaveIdentity();
     if (errorMsg.value) return;
   }
 
+  if (cartStore.items.length === 0) {
+    toastStore.show('السلة فارغة!', 'warning');
+    return;
+  }
+
+  showOrderConfirmModal.value = true;
+};
+
+// Explicit order submission confirmed by user
+const handleConfirmSubmit = async () => {
   isSubmitting.value = true;
   try {
     const result = await cartStore.submitOrder();
+    showOrderConfirmModal.value = false;
     if (result && result.isEdit) {
       toastStore.show('تم حفظ وتحديث طلبك بنجاح!', 'success');
     }
   } catch (err) {
-    toastStore.show(err.message, 'error');
+    toastStore.show(err.message || 'عذراً، فشل إرسال الطلب. يرجى المحاولة مرة أخرى.', 'error');
   } finally {
     isSubmitting.value = false;
   }
 };
+
+const handleCloseConfirmation = () => {
+  if (isSubmitting.value) return;
+  showOrderConfirmModal.value = false;
+};
+
+const onKeydown = (e) => {
+  if (e.key === 'Escape' && showOrderConfirmModal.value && !isSubmitting.value) {
+    handleCloseConfirmation();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+});
+
+const storeDisplayName = computed(() => {
+  return cartStore.getShopType === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي (حلويات)';
+});
+
+const priceModeDisplayName = computed(() => {
+  return cartStore.getPriceMode === 'bulk' ? 'سعر جملة' : 'سعر عادي';
+});
+
+const totalItemsCount = computed(() => {
+  return cartStore.items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
+});
 
 const handleCancelEditMode = () => {
   if (confirm('هل أنت متأكد من إلغاء وضع تعديل الطلب؟ سيتم تفريغ التغييرات غير المحفوظة.')) {
@@ -319,20 +363,196 @@ const handleClearCart = () => {
           :disabled="isSubmitting"
         >
           <template v-if="cartStore.isEditingOrder">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
-            <span>{{ isSubmitting ? 'جاري حفظ التعديل…' : 'حفظ وتحديث الطلب' }}</span>
+            <span>حفظ وتحديث الطلب</span>
           </template>
           <template v-else>
-            <span>{{ isSubmitting ? 'جاري إرسال الطلب…' : 'إرسال الطلب عبر الواتساب' }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <span>إرسال الطلب عبر الواتساب</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.977 0c3.222.001 6.252 1.256 8.529 3.536 2.277 2.278 3.53 5.31 3.528 8.53-.005 6.655-5.33 11.98-11.979 11.98-2.002-.001-3.97-.497-5.714-1.442L0 24zm6.59-4.846c1.666.988 3.311 1.485 5.32 1.488 5.626 0 10.201-4.576 10.205-10.2.002-2.724-1.056-5.285-2.977-7.208C17.279 1.312 14.72 .253 12 .25c-5.631 0-10.21 4.579-10.213 10.21-.002 1.902.485 3.759 1.411 5.389l-1.017 3.72 3.823-1.002zM17.065 14.1c-.277-.139-1.64-.81-1.895-.902-.255-.092-.441-.139-.626.139-.185.277-.718.902-.88 1.088-.163.186-.325.208-.602.069-.277-.14-1.17-.431-2.228-1.376-.824-.735-1.38-1.644-1.542-1.922-.163-.277-.018-.427.121-.566.125-.125.277-.324.417-.486.139-.162.186-.277.277-.462.093-.185.047-.348-.023-.487-.07-.139-.626-1.507-.858-2.064-.226-.543-.454-.47-.626-.478-.162-.007-.347-.007-.532-.007-.185 0-.486.07-.74.348-.255.277-.973.95-973 2.315 0 1.365.992 2.68 1.13 2.865.139.186 1.953 2.982 4.73 4.181.66.285 1.176.455 1.579.583.664.211 1.269.181 1.748.11.534-.08 1.64-.67 1.872-1.318.232-.647.232-1.203.163-1.318-.07-.115-.255-.162-.532-.3z"/>
             </svg>
           </template>
         </button>
       </div>
     </div>
+
+    <!-- ORDER CONFIRMATION MODAL -->
+    <Transition name="confirm-modal-fade">
+      <div 
+        v-if="showOrderConfirmModal" 
+        class="confirm-modal-backdrop" 
+        @click.self="handleCloseConfirmation"
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="confirm-order-title"
+      >
+        <div class="confirm-modal-card glass-panel" @click.stop>
+          <!-- Modal Header -->
+          <div class="confirm-modal-header">
+            <div class="confirm-header-icon-group">
+              <div class="confirm-icon-badge">
+                <svg v-if="cartStore.isEditingOrder" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="8" cy="21" r="1"/>
+                  <circle cx="19" cy="21" r="1"/>
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                </svg>
+              </div>
+              <div class="confirm-header-texts">
+                <h3 id="confirm-order-title" class="confirm-title">
+                  {{ cartStore.isEditingOrder ? `تأكيد تحديث الطلب (#${cartStore.editingOrderNumber})` : 'تأكيد إرسال الطلب' }}
+                </h3>
+                <span class="confirm-subtitle">يرجى مراجعة تفاصيل طلبك قبل الإرسال النهائي عبر الواتساب</span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              class="confirm-btn-close" 
+              @click="handleCloseConfirmation" 
+              :disabled="isSubmitting"
+              aria-label="إلغاء وإغلاق النافذة"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Scrollable Body -->
+          <div class="confirm-modal-body">
+            <!-- Customer Identity Pill -->
+            <div class="confirm-identity-strip">
+              <div class="confirm-identity-info">
+                <span class="confirm-customer-name">{{ authStore.customerName || 'عميل مسجل' }}</span>
+                <span class="confirm-customer-phone text-mono" dir="ltr">{{ authStore.customerPhone }}</span>
+              </div>
+              <span class="confirm-verified-tag">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>حساب موثق</span>
+              </span>
+            </div>
+
+            <!-- Logistics & Store Metadata Row -->
+            <div class="confirm-meta-grid">
+              <div class="confirm-meta-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span class="confirm-meta-label">الاستلام:</span>
+                <span class="confirm-meta-val text-mono">{{ cartStore.deliveryDate || 'غداً' }}</span>
+              </div>
+              <div class="confirm-meta-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span class="confirm-meta-val">{{ storeDisplayName }}</span>
+                <span class="confirm-price-tier-tag">{{ priceModeDisplayName }}</span>
+              </div>
+            </div>
+
+            <!-- Order Items Breakdown -->
+            <div class="confirm-items-section">
+              <div class="confirm-items-header">
+                <span class="confirm-items-title">قائمة الأصناف</span>
+                <span class="confirm-items-count text-mono">{{ totalItemsCount }} قطعة</span>
+              </div>
+              <div class="confirm-items-list">
+                <div v-for="item in cartStore.items" :key="item._id" class="confirm-item-row">
+                  <div class="confirm-item-info">
+                    <span class="confirm-item-name">{{ item.name }}</span>
+                    <span v-if="item.itemNotes" class="confirm-item-note">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      {{ item.itemNotes }}
+                    </span>
+                  </div>
+                  <div class="confirm-item-math">
+                    <span class="confirm-item-qty-price text-mono">{{ item.quantity }} × {{ getItemPrice(item) }}</span>
+                    <span class="confirm-item-subtotal text-mono">{{ Math.round(getItemPrice(item) * item.quantity) }} د.ل</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order Notes (if any) -->
+            <div v-if="cartStore.orderNotes" class="confirm-notes-box">
+              <div class="confirm-notes-header">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                <span>ملاحظات عامة:</span>
+              </div>
+              <p class="confirm-notes-content">{{ cartStore.orderNotes }}</p>
+            </div>
+
+            <!-- Grand Total Row -->
+            <div class="confirm-total-card">
+              <span class="confirm-total-label">الإجمالي الكلي المستحق:</span>
+              <div class="confirm-total-amount">
+                <span class="confirm-total-number text-mono">{{ cartStore.cartTotal }}</span>
+                <span class="confirm-total-currency">د.ل</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Action Buttons -->
+          <div class="confirm-actions-bar">
+            <button 
+              type="button" 
+              class="confirm-btn-primary pulse-animation" 
+              :class="{ 'btn-update-mode': cartStore.isEditingOrder }"
+              @click="handleConfirmSubmit"
+              :disabled="isSubmitting"
+            >
+              <template v-if="isSubmitting">
+                <div class="confirm-mini-spinner" aria-hidden="true"></div>
+                <span>{{ cartStore.isEditingOrder ? 'جاري حفظ التعديل…' : 'جاري إرسال الطلب…' }}</span>
+              </template>
+              <template v-else-if="cartStore.isEditingOrder">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>تأكيد وحفظ الطلب</span>
+              </template>
+              <template v-else>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.977 0c3.222.001 6.252 1.256 8.529 3.536 2.277 2.278 3.53 5.31 3.528 8.53-.005 6.655-5.33 11.98-11.979 11.98-2.002-.001-3.97-.497-5.714-1.442L0 24zm6.59-4.846c1.666.988 3.311 1.485 5.32 1.488 5.626 0 10.201-4.576 10.205-10.2.002-2.724-1.056-5.285-2.977-7.208C17.279 1.312 14.72 .253 12 .25c-5.631 0-10.21 4.579-10.213 10.21-.002 1.902.485 3.759 1.411 5.389l-1.017 3.72 3.823-1.002zM17.065 14.1c-.277-.139-1.64-.81-1.895-.902-.255-.092-.441-.139-.626.139-.185.277-.718.902-.88 1.088-.163.186-.325.208-.602.069-.277-.14-1.17-.431-2.228-1.376-.824-.735-1.38-1.644-1.542-1.922-.163-.277-.018-.427.121-.566.125-.125.277-.324.417-.486.139-.162.186-.277.277-.462.093-.185.047-.348-.023-.487-.07-.139-.626-1.507-.858-2.064-.226-.543-.454-.47-.626-.478-.162-.007-.347-.007-.532-.007-.185 0-.486.07-.74.348-.255.277-.973.95-973 2.315 0 1.365.992 2.68 1.13 2.865.139.186 1.953 2.982 4.73 4.181.66.285 1.176.455 1.579.583.664.211 1.269.181 1.748.11.534-.08 1.64-.67 1.872-1.318.232-.647.232-1.203.163-1.318-.07-.115-.255-.162-.532-.3z"/>
+                </svg>
+                <span>تأكيد وإرسال عبر الواتساب</span>
+              </template>
+            </button>
+            <button 
+              type="button" 
+              class="confirm-btn-secondary" 
+              @click="handleCloseConfirmation" 
+              :disabled="isSubmitting"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span>مراجعة السلة / تعديل</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -838,5 +1058,543 @@ const handleClearCart = () => {
   font-size: 0.95rem;
   font-weight: 850;
   border-radius: 12px;
+}
+
+/* ==========================================================================
+   ORDER CONFIRMATION MODAL STYLES (Adhering to e-menu-design-guide.md)
+   ========================================================================== */
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  overscroll-behavior: contain;
+}
+
+.confirm-modal-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Cairo', sans-serif;
+  line-height: 1.45;
+  text-align: right;
+  direction: rtl;
+}
+
+/* Modal Header */
+.confirm-modal-header {
+  padding: 16px 18px 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.confirm-header-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.confirm-icon-badge {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(253, 181, 24, 0.2), rgba(217, 119, 6, 0.22));
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.confirm-header-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.confirm-title {
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  line-height: 1.35;
+}
+
+.confirm-subtitle {
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.confirm-btn-close {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.confirm-btn-close:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.confirm-btn-close:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+.confirm-btn-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal Body */
+.confirm-modal-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.confirm-modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.confirm-modal-body::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Customer Identity Pill */
+.confirm-identity-strip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.confirm-identity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.confirm-customer-name {
+  font-weight: 850;
+  font-size: 0.92rem;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirm-customer-phone {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.confirm-verified-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Logistics & Store Metadata */
+.confirm-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.confirm-meta-item {
+  background: #fffdf9;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.confirm-meta-item svg {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.confirm-meta-label {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.confirm-meta-val {
+  font-weight: 850;
+  color: #0f172a;
+}
+
+.confirm-price-tier-tag {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: auto;
+}
+
+/* Items Section */
+.confirm-items-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.confirm-items-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.confirm-items-title {
+  font-weight: 850;
+  font-size: 0.86rem;
+  color: #1e293b;
+}
+
+.confirm-items-count {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.confirm-items-list {
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.confirm-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 4px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.confirm-item-row:last-child {
+  border-bottom: none;
+}
+
+.confirm-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.confirm-item-name {
+  font-weight: 800;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirm-item-note {
+  font-size: 0.72rem;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.confirm-item-math {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.confirm-item-qty-price {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.confirm-item-subtotal {
+  font-weight: 850;
+  color: #0f172a;
+  font-size: 0.84rem;
+}
+
+/* Order Notes Box */
+.confirm-notes-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confirm-notes-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.confirm-notes-content {
+  font-size: 0.8rem;
+  color: #78350f;
+  margin: 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+/* Grand Total Card */
+.confirm-total-card {
+  background: linear-gradient(135deg, rgba(253, 181, 24, 0.12), rgba(245, 158, 11, 0.18));
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.confirm-total-label {
+  font-weight: 850;
+  font-size: 0.92rem;
+  color: #78350f;
+}
+
+.confirm-total-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.confirm-total-number {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #b45309;
+}
+
+.confirm-total-currency {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #92400e;
+}
+
+/* Action Buttons Bar */
+.confirm-actions-bar {
+  padding: 14px 18px 18px 18px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.confirm-btn-primary {
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 850;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.confirm-btn-primary.btn-update-mode {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+}
+
+.confirm-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.45);
+}
+
+.confirm-btn-primary.btn-update-mode:hover:not(:disabled) {
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.45);
+}
+
+.confirm-btn-primary:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+.confirm-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.confirm-mini-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: confirmSpin 0.75s linear infinite;
+}
+
+@keyframes confirmSpin {
+  to { transform: rotate(360deg); }
+}
+
+.confirm-btn-secondary {
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  background: #ffffff;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.confirm-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.confirm-btn-secondary:focus-visible {
+  outline: 2px solid #94a3b8;
+  outline-offset: 2px;
+}
+
+.confirm-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Transitions */
+.confirm-modal-fade-enter-active,
+.confirm-modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.confirm-modal-fade-enter-from,
+.confirm-modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Mobile Bottom-Sheet (Habit 15) */
+@media (max-width: 640px) {
+  .confirm-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .confirm-modal-card {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    width: 100%;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    animation: slideUpConfirmMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUpConfirmMobile {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .confirm-meta-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
