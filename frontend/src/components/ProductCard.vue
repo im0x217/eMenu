@@ -672,4 +672,28 @@ const activeTagsList = computed(() => {
 .add-btn-wide:active {
   transform: scale(0.97);
 }
+
+@media (max-width: 768px) {
+  .product-info {
+    padding: 8px 10px;
+    gap: 5px;
+  }
+  .product-title {
+    font-size: 0.88rem;
+    line-height: 1.25;
+  }
+  .product-desc {
+    font-size: 0.72rem;
+  }
+  .price-pill {
+    font-size: 0.76rem;
+    padding: 2px 6px;
+  }
+  .add-btn-wide {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    min-height: 36px;
+  }
+}
 </style>

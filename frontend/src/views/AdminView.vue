@@ -15193,7 +15193,7 @@ select.form-control:focus {
   .admin-main {
     grid-column: 1;
     grid-row: auto;
-    padding: 16px 12px calc(150px + env(safe-area-inset-bottom)) 12px !important;
+    padding: 10px 8px calc(110px + env(safe-area-inset-bottom)) 8px !important;
     overflow-x: hidden !important;
     max-width: 100vw !important;
     overscroll-behavior-x: none !important;
@@ -15207,7 +15207,7 @@ select.form-control:focus {
   .carousel-tab-content,
   .users-tab-content,
   .analytics-tab-content {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
@@ -15228,10 +15228,10 @@ select.form-control:focus {
 
   .admin-sidebar {
     position: fixed;
-    top: 60px;
+    top: 48px;
     right: 0;
-    width: 280px;
-    height: calc(100dvh - 60px);
+    width: 260px;
+    height: calc(100dvh - 48px);
     transform: translateX(100%);
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
     z-index: 1000;
@@ -15243,7 +15243,7 @@ select.form-control:focus {
 
   .sidebar-backdrop {
     position: fixed;
-    top: 60px;
+    top: 48px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -15255,10 +15255,19 @@ select.form-control:focus {
 
   .admin-mobile-header {
     display: flex;
+    padding: 8px 12px;
+    height: 48px;
+    align-items: center;
+    box-sizing: border-box;
   }
 
-  .admin-main {
-    padding: 20px;
+  .admin-mobile-header h2 {
+    font-size: 0.95rem;
+  }
+
+  .mobile-logo {
+    width: 30px;
+    height: 30px;
   }
 
   .charts-grid {
@@ -15267,6 +15276,18 @@ select.form-control:focus {
 
   .chart-card.span-2 {
     grid-column: span 1;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .kpi-card {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    gap: 10px !important;
   }
 
   .filter-actions-bar {
@@ -19787,8 +19808,8 @@ select.pos-control {
     height: 94vh !important;
     max-height: 94vh !important;
     margin: auto 0 0 0 !important;
-    border-radius: 24px 24px 0 0 !important;
-    padding: 8px 14px 0 14px !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 6px 10px 0 10px !important;
     box-sizing: border-box !important;
     animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     display: flex !important;
@@ -19797,35 +19818,35 @@ select.pos-control {
 
   .mobile-modal-drag-pill {
     display: block !important;
-    width: 44px;
-    height: 5px;
+    width: 38px;
+    height: 4px;
     background: #cbd5e1;
     border-radius: 3px;
-    margin: 4px auto 10px auto;
+    margin: 3px auto 8px auto;
     flex-shrink: 0;
   }
 
   .fast-order-header {
     flex-wrap: wrap !important;
-    gap: 10px !important;
-    padding-bottom: 12px !important;
+    gap: 8px !important;
+    padding-bottom: 8px !important;
     position: relative !important;
   }
 
   .fast-order-title-group {
-    gap: 10px !important;
+    gap: 8px !important;
     flex: 1 !important;
     min-width: 0 !important;
   }
 
   .new-order-icon {
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 10px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
   }
 
   .fast-order-title-row h3 {
-    font-size: 1.15rem !important;
+    font-size: 1.05rem !important;
   }
 
   .fast-order-subtitle {
@@ -19843,20 +19864,20 @@ select.pos-control {
 
   .price-mode-pill {
     justify-content: center !important;
-    padding: 8px 12px !important;
-    font-size: 0.88rem !important;
-    min-height: 40px !important;
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    min-height: 34px !important;
   }
 
   /* Mobile Segmented Nav Pills */
   .pos-mobile-nav-pills {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-    margin: 8px 0 !important;
-    padding: 4px !important;
+    gap: 6px !important;
+    margin: 6px 0 !important;
+    padding: 3px !important;
     background: #f1f5f9 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     flex-shrink: 0 !important;
   }
 
@@ -19864,14 +19885,14 @@ select.pos-control {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 7px !important;
-    padding: 10px 8px !important;
-    min-height: 44px !important;
-    border-radius: 9px !important;
+    gap: 6px !important;
+    padding: 6px 8px !important;
+    min-height: 36px !important;
+    border-radius: 8px !important;
     border: none !important;
     background: transparent !important;
     color: #64748b !important;
-    font-size: 0.86rem !important;
+    font-size: 0.8rem !important;
     font-weight: 750 !important;
     font-family: 'Cairo', sans-serif !important;
     cursor: pointer !important;
@@ -19908,7 +19929,7 @@ select.pos-control {
   }
 
   .fast-order-form-body {
-    padding: 8px 2px 14px 2px !important;
+    padding: 6px 2px 10px 2px !important;
     flex: 1 !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -19917,7 +19938,7 @@ select.pos-control {
   .fast-order-grid-layout {
     display: flex !important;
     flex-direction: column !important;
-    gap: 14px !important;
+    gap: 10px !important;
   }
 
   .pos-mobile-col-hidden {
@@ -19927,66 +19948,66 @@ select.pos-control {
   .fast-order-side-col,
   .fast-order-main-col {
     width: 100% !important;
-    gap: 14px !important;
+    gap: 10px !important;
   }
 
   .pos-section-card {
-    padding: 14px 14px !important;
-    border-radius: 14px !important;
+    padding: 10px 10px !important;
+    border-radius: 12px !important;
   }
 
   .pos-input-grid {
     grid-template-columns: 1fr !important;
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   .pos-control,
   .search-input,
   .btn-standard-datepicker-trigger {
-    min-height: 44px !important;
+    min-height: 38px !important;
     font-size: 16px !important;
   }
 
   .pos-date-shortcuts-split {
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+    gap: 6px !important;
     width: 100% !important;
   }
 
   .pos-date-shortcut-btn {
-    min-height: 44px !important;
-    font-size: 0.95rem !important;
+    min-height: 36px !important;
+    font-size: 0.82rem !important;
     font-weight: 800 !important;
   }
 
   .quick-products-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-    max-height: 380px !important;
+    gap: 6px !important;
+    max-height: 340px !important;
   }
 
   .quick-prod-card {
-    padding: 8px !important;
-    min-height: 64px !important;
+    padding: 6px 8px !important;
+    min-height: 52px !important;
   }
 
   .quick-prod-thumb {
-    width: 44px !important;
-    height: 44px !important;
+    width: 34px !important;
+    height: 34px !important;
   }
 
   .quick-prod-name {
-    font-size: 0.86rem !important;
+    font-size: 0.8rem !important;
   }
 
   .quick-prod-price {
-    font-size: 0.82rem !important;
+    font-size: 0.74rem !important;
   }
 
   .quick-prod-add-btn {
-    width: 34px !important;
-    height: 34px !important;
-    border-radius: 9px !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 7px !important;
   }
 
   .desktop-cart-table {
@@ -19996,18 +20017,18 @@ select.pos-control {
   .pos-mobile-cart-cards {
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 8px !important;
     margin-top: 4px !important;
   }
 
   .pos-mobile-cart-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: 10px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 7px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   }
 
@@ -20015,23 +20036,23 @@ select.pos-control {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
   }
 
   .pos-mob-item-name {
-    font-size: 0.98rem;
+    font-size: 0.88rem;
     color: #0f172a;
-    line-height: 1.35;
+    line-height: 1.3;
     flex: 1;
   }
 
   .pos-mob-btn-delete {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9px;
+    border-radius: 8px;
     border: 1px solid #fee2e2;
     background: #fff1f2;
     color: #e11d48;
@@ -20050,19 +20071,19 @@ select.pos-control {
   }
 
   .pos-mob-note-input {
-    min-height: 38px !important;
+    min-height: 32px !important;
     font-size: 15px !important;
-    border-radius: 8px !important;
-    padding: 6px 10px !important;
+    border-radius: 7px !important;
+    padding: 4px 8px !important;
   }
 
   .pos-mob-card-controls-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
-    padding-top: 6px;
+    padding-top: 5px;
     border-top: 1px dashed #e2e8f0;
   }
 
@@ -20070,18 +20091,18 @@ select.pos-control {
     display: inline-flex;
     align-items: center;
     border: 1.5px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: 8px;
     background: #ffffff;
     overflow: hidden;
   }
 
   .pos-mob-stepper-btn {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     border: none;
     background: #f1f5f9;
     color: #1e293b;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 800;
     cursor: pointer;
     display: flex;
@@ -20095,11 +20116,11 @@ select.pos-control {
   }
 
   .pos-mob-stepper-input {
-    width: 48px !important;
-    height: 40px !important;
+    width: 42px !important;
+    height: 34px !important;
     border: none !important;
     padding: 0 !important;
-    font-size: 1rem !important;
+    font-size: 0.92rem !important;
     font-weight: 800 !important;
     box-shadow: none !important;
     background: transparent !important;
@@ -20111,34 +20132,34 @@ select.pos-control {
     gap: 4px;
     background: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    padding: 3px 8px;
+    border-radius: 8px;
+    padding: 2px 6px;
   }
 
   .pos-mob-price-label {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     color: #64748b;
     font-weight: 700;
   }
 
   .pos-mob-price-input {
-    width: 58px !important;
-    height: 32px !important;
+    width: 52px !important;
+    height: 28px !important;
     border: none !important;
-    padding: 2px !important;
-    font-size: 0.95rem !important;
+    padding: 1px !important;
+    font-size: 0.88rem !important;
     font-weight: 800 !important;
     box-shadow: none !important;
     text-align: center !important;
   }
 
   .pos-mob-subtotal-badge {
-    font-size: 0.95rem;
+    font-size: 0.86rem;
     color: #047857;
     background: #ecfdf5;
     border: 1px solid #a7f3d0;
-    padding: 5px 10px;
-    border-radius: 8px;
+    padding: 4px 8px;
+    border-radius: 7px;
     white-space: nowrap;
   }
 
@@ -20148,8 +20169,8 @@ select.pos-control {
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    margin: 0 -14px !important;
-    padding: 12px 16px max(14px, env(safe-area-inset-bottom)) 16px !important;
+    margin: 0 -10px !important;
+    padding: 8px 12px max(10px, env(safe-area-inset-bottom)) 12px !important;
     background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(14px) !important;
     -webkit-backdrop-filter: blur(14px) !important;
@@ -20157,7 +20178,7 @@ select.pos-control {
     box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.08) !important;
     z-index: 100 !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 6px !important;
     align-items: stretch !important;
   }
 
@@ -20169,55 +20190,55 @@ select.pos-control {
   }
 
   .total-summary-label {
-    font-size: 0.88rem !important;
+    font-size: 0.82rem !important;
     font-weight: 700 !important;
     color: #64748b !important;
   }
 
   .total-summary-val {
-    font-size: 1.45rem !important;
+    font-size: 1.25rem !important;
     font-weight: 900 !important;
     color: var(--primary-color, #1e3a5f) !important;
   }
 
   .total-summary-count {
-    font-size: 0.8rem !important;
+    font-size: 0.76rem !important;
   }
 
   .fast-order-footer-actions {
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 6px !important;
     width: 100% !important;
   }
 
   .pos-footer-aux-actions {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+    gap: 6px !important;
     width: 100% !important;
   }
 
   .auto-print-checkbox-label {
-    min-height: 42px !important;
-    padding: 6px 10px !important;
+    min-height: 36px !important;
+    padding: 4px 8px !important;
     justify-content: center !important;
-    border-radius: 10px !important;
-    font-size: 0.85rem !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
   }
 
   .pos-btn-cancel {
-    min-height: 42px !important;
-    font-size: 0.92rem !important;
+    min-height: 36px !important;
+    font-size: 0.82rem !important;
     font-weight: 700 !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
   }
 
   .pos-btn-submit {
-    min-height: 48px !important;
-    font-size: 1.05rem !important;
+    min-height: 42px !important;
+    font-size: 0.95rem !important;
     font-weight: 850 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     width: 100% !important;
     justify-content: center !important;
     box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
@@ -20615,17 +20636,17 @@ select.pos-control {
   .mobile-customers-cards-grid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 10px 4px;
+    gap: 8px;
+    padding: 6px 2px;
     width: 100%;
     box-sizing: border-box;
   }
 
   .mobile-empty-card {
-    padding: 30px 16px;
+    padding: 24px 12px;
     text-align: center;
     color: var(--text-muted, #64748b);
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     font-weight: 700;
   }
 
@@ -20633,12 +20654,12 @@ select.pos-control {
   .mobile-order-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 14px;
+    border-radius: 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    gap: 7px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -20656,12 +20677,12 @@ select.pos-control {
   .mob-card-id-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
   }
 
   .mob-card-time {
-    font-size: 0.8rem;
+    font-size: 0.74rem;
     color: #64748b;
     font-weight: 700;
   }
@@ -20671,35 +20692,35 @@ select.pos-control {
     justify-content: space-between;
     align-items: center;
     background: #f8fafc;
-    border-radius: 10px;
-    padding: 8px 10px;
+    border-radius: 8px;
+    padding: 6px 8px;
   }
 
   .mob-cust-details {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
   }
 
   .mob-cust-name {
-    font-size: 0.95rem;
+    font-size: 0.86rem;
     color: #0f172a;
   }
 
   .mob-cust-phone {
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     color: #64748b;
   }
 
   .mob-cust-quick-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .mob-action-circle {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -20723,17 +20744,17 @@ select.pos-control {
   .mob-card-items-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
   }
 
   .mob-item-chip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     background: #f1f5f9;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 0.74rem;
     color: #334155;
   }
 
@@ -20744,23 +20765,23 @@ select.pos-control {
 
   .mob-item-note {
     color: #d97706;
-    font-size: 0.74rem;
+    font-size: 0.7rem;
   }
 
   .mob-card-meta-row {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    font-size: 0.8rem;
+    gap: 3px;
+    font-size: 0.74rem;
     color: #64748b;
     border-top: 1px dashed #e2e8f0;
-    padding-top: 6px;
+    padding-top: 5px;
   }
 
   .mob-meta-delivery {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     color: #2563eb;
     font-weight: 700;
   }
@@ -20770,23 +20791,23 @@ select.pos-control {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid #f1f5f9;
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .mob-price-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
   }
 
   .mob-price-label {
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     color: #64748b;
     font-weight: 700;
   }
 
   .mob-price-val {
-    font-size: 1.15rem;
+    font-size: 1rem;
     color: var(--primary-color, #d97706);
   }
 
@@ -20945,23 +20966,23 @@ select.pos-control {
   .mobile-product-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 9px 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
   }
 
   .mob-prod-main {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
   }
 
   .mob-prod-img-box {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
   }
 
@@ -20970,7 +20991,7 @@ select.pos-control {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
   }
 
   .mob-prod-title-row {
@@ -20981,22 +21002,22 @@ select.pos-control {
   }
 
   .mob-prod-name {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     color: #0f172a;
-    line-height: 1.3;
+    line-height: 1.25;
   }
 
   .mob-prod-prices {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
   }
 
   .mob-price-pill {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 2px 5px;
+    border-radius: 5px;
   }
 
   .mob-price-pill.regular {
@@ -21014,17 +21035,17 @@ select.pos-control {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid #f1f5f9;
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .mob-avail-switch {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
   }
 
   .mob-avail-label {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 700;
     color: #64748b;
   }
@@ -21033,18 +21054,18 @@ select.pos-control {
   .mobile-customer-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 9px 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
   }
 
   .mob-cust-card-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
   }
 
@@ -21058,11 +21079,11 @@ select.pos-control {
 
   .mob-cust-stats-row {
     display: flex;
-    gap: 14px;
+    gap: 10px;
     background: #f8fafc;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 0.82rem;
+    padding: 4px 8px;
+    border-radius: 7px;
+    font-size: 0.76rem;
   }
 
   .mob-cust-stat {
@@ -21076,16 +21097,16 @@ select.pos-control {
 
   .mob-cust-card-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     border-top: 1px solid #f1f5f9;
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   .mob-cust-card-actions .cust-btn {
     flex: 1;
     justify-content: center;
-    height: 38px;
-    font-size: 0.84rem;
+    height: 32px;
+    font-size: 0.76rem;
   }
 
   /* Adaptive Bottom-Sheet Modals on Mobile */
@@ -21099,8 +21120,8 @@ select.pos-control {
     width: 100% !important;
     max-width: 100% !important;
     max-height: 92vh !important;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 20px 16px !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding: 16px 14px !important;
     margin: 0 !important;
     animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
@@ -21162,6 +21183,8 @@ select.pos-control {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
+    height: 34px !important;
+    font-size: 16px !important;
     box-sizing: border-box !important;
   }
 
@@ -21171,6 +21194,8 @@ select.pos-control {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
+    height: 34px !important;
+    font-size: 16px !important;
     box-sizing: border-box !important;
   }
 
@@ -21180,6 +21205,9 @@ select.pos-control {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
+    height: 34px !important;
+    font-size: 0.82rem !important;
+    padding: 0 10px !important;
     box-sizing: border-box !important;
     justify-content: space-between !important;
   }
@@ -21187,6 +21215,8 @@ select.pos-control {
   .btn-make-order,
   .card-toolbar-top .btn-primary {
     width: 100% !important;
+    height: 36px !important;
+    font-size: 0.84rem !important;
     justify-content: center !important;
     box-sizing: border-box !important;
   }
@@ -21207,15 +21237,15 @@ select.pos-control {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    height: 38px !important;
+    height: 34px !important;
     padding: 0 8px !important;
-    font-size: 0.82rem !important;
+    font-size: 0.78rem !important;
     font-weight: 700 !important;
     justify-content: center !important;
     box-sizing: border-box !important;
     display: inline-flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 5px !important;
     flex: 1 1 0 !important;
   }
 
@@ -21245,22 +21275,24 @@ select.pos-control {
     flex: 1 1 auto !important;
     text-align: center !important;
     justify-content: center !important;
-    height: 38px !important;
-    font-size: 0.85rem !important;
+    height: 34px !important;
+    font-size: 0.78rem !important;
     box-sizing: border-box !important;
   }
 
   .selected-date-badge {
     width: 100% !important;
     max-width: 100% !important;
+    height: 34px !important;
+    font-size: 0.78rem !important;
     justify-content: space-between !important;
     box-sizing: border-box !important;
     margin-top: 2px !important;
   }
 
   .table-card {
-    padding: 12px 10px !important;
-    border-radius: 14px !important;
+    padding: 10px 8px !important;
+    border-radius: 12px !important;
     box-sizing: border-box !important;
     width: 100% !important;
     max-width: 100% !important;

@@ -50,10 +50,11 @@ const totalPrice = computed(() => cartStore.cartTotal);
 <style scoped>
 .floating-cart-bar {
   position: fixed;
-  bottom: calc(74px + var(--safe-bottom)); /* Float just above BottomNav */
-  left: 1rem;
-  right: 1rem;
-  padding: 0.85rem 1.2rem;
+  bottom: calc(62px + var(--safe-bottom)); /* Float just above BottomNav */
+  left: 0.75rem;
+  right: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;

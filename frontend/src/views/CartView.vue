@@ -1597,4 +1597,65 @@ const handleClearCart = () => {
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile Responsive 80% Scale (≤ 768px) */
+@media (max-width: 768px) {
+  .cart-view-container {
+    gap: 0.75rem;
+  }
+
+  .cart-content-wrapper {
+    gap: 0.75rem;
+  }
+
+  .cart-items-section {
+    padding: 0.75rem;
+    gap: 0.6rem;
+  }
+
+  .item-img {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+  }
+
+  .item-title {
+    font-size: 0.82rem;
+  }
+
+  .price-val {
+    font-size: 0.78rem;
+  }
+
+  .qty-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.85rem;
+  }
+
+  .qty-input-field {
+    width: 32px;
+    font-size: 0.82rem;
+  }
+
+  .checkout-details-section {
+    padding: 0.75rem;
+  }
+
+  .checkout-footer {
+    padding: 0.75rem 0.85rem;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .price-wrapper .value {
+    font-size: 1.25rem;
+  }
+
+  .checkout-btn {
+    height: 44px;
+    font-size: 0.88rem;
+    border-radius: 10px;
+  }
+}
 </style>

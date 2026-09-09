@@ -1231,4 +1231,64 @@ watch(carouselItems, (newItems) => {
   border-radius: 12px;
 }
 
+/* Mobile Responsive 80% Scale (≤ 768px) */
+@media (max-width: 768px) {
+  .shop-header {
+    padding: 0.65rem 0.75rem;
+    gap: 6px;
+  }
+  
+  .shop-title {
+    font-size: 1.05rem;
+  }
+  
+  .logo-placeholder {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .bulk-toggle-btn {
+    padding: 6px 10px;
+    font-size: 0.76rem;
+    border-radius: 8px;
+  }
+  
+  .search-box-wrapper {
+    padding: 2px 4px;
+    border-radius: 12px;
+  }
+  
+  .search-input {
+    padding: 0.55rem 2.2rem 0.55rem 1.8rem;
+    font-size: 16px !important;
+  }
+  
+  .cat-btn {
+    padding: 0.45rem 0.8rem;
+    gap: 5px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+
+  .subcat-sections-wrapper {
+    gap: 1.1rem;
+    margin-top: 0.35rem;
+  }
+  
+  .subcat-plain-title {
+    font-size: 0.96rem;
+  }
+  
+  .subcat-plain-badge {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+  }
+
+  /* Compact 1-row product grid matching 80% zoom scale */
+  .subcat-products-grid-1row {
+    grid-auto-columns: minmax(172px, 205px);
+    gap: 10px;
+    padding: 4px 6px 10px 6px;
+  }
+}
 </style>
