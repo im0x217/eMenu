@@ -206,15 +206,20 @@ const subCategorySections = computed(() => {
   return sections;
 });
 
-// GSAP entrance stagger animation for product grid
+// GSAP entrance stagger animation for product grid (respects prefers-reduced-motion)
 watch(filteredProducts, () => {
   nextTick(() => {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length > 0) {
-      gsap.fromTo(cards, 
-        { opacity: 0, y: 12, scale: 0.97 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power1.out', overwrite: 'auto' }
-      );
+      const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) {
+        gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
+      } else {
+        gsap.fromTo(cards, 
+          { opacity: 0, y: 12, scale: 0.97 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power1.out', overwrite: 'auto' }
+        );
+      }
     }
   });
 }, { immediate: true });
@@ -257,6 +262,23 @@ const closeZoomModal = () => {
   zoomedImgUrl.value = '';
   isZoomImgLoaded.value = false;
 };
+
+// Keyboard Escape dismiss support for modals
+const handleKeydown = (e) => {
+  if (e.key === 'Escape') {
+    if (zoomedImgUrl.value) {
+      closeZoomModal();
+    } else if (showDisableConfirm.value) {
+      showDisableConfirm.value = false;
+    } else if (showBulkModal.value) {
+      showBulkModal.value = false;
+    }
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+});
 
 // Header information
 const shopTitle = computed(() => {
@@ -361,6 +383,7 @@ const stopAutoplay = () => {
 };
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
   stopAutoplay();
   if (carouselTrack.value) {
     carouselTrack.value.removeEventListener('scroll', handleCarouselScroll);
@@ -402,7 +425,7 @@ watch(carouselItems, (newItems) => {
     <header class="shop-header glass-panel">
       <div class="header-main">
         <a href="/" class="back-home-btn" aria-label="الرجوع للرئيسية">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 19 12 12 5"></polyline>
           </svg>
@@ -416,19 +439,20 @@ watch(carouselItems, (newItems) => {
       <!-- Wholesale toggle button (only shown if bulk prices are offered) -->
       <button 
         v-if="hasBulkProducts"
+        type="button"
         class="bulk-toggle-btn"
         :class="{ active: shopStore.isBulkVerified, disabled: !shopStore.isBulkVerified }"
         @click="handleOpenBulkModal"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
         </svg>
         <span>أسعار الجملة: {{ shopStore.isBulkVerified ? 'مفعّلة' : 'معطّلة' }}</span>
-        <svg v-if="shopStore.isBulkVerified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <svg v-if="shopStore.isBulkVerified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -455,6 +479,7 @@ watch(carouselItems, (newItems) => {
           v-for="(item, idx) in carouselItems"
           :key="item._id"
           :href="item.link || undefined"
+          :aria-label="item.link ? (item.title || 'إعلان ترويجي') : undefined"
           class="carousel-card"
           @click="handleCarouselClick"
           draggable="false"
@@ -483,7 +508,7 @@ watch(carouselItems, (newItems) => {
     <!-- Search Input -->
     <div class="search-box-wrapper glass-panel">
       <div class="search-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
@@ -492,11 +517,19 @@ watch(carouselItems, (newItems) => {
         type="text" 
         name="search"
         autocomplete="off"
+        inputmode="search"
+        aria-label="البحث عن منتج"
         v-model="searchQuery" 
         placeholder="ابحث عن منتج…" 
         class="search-input" 
       />
-      <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">✕</button>
+      <button 
+        v-if="searchQuery" 
+        type="button"
+        class="clear-search-btn" 
+        aria-label="مسح البحث"
+        @click="searchQuery = ''"
+      >✕</button>
     </div>
 
     <!-- Category Selector (hidden when searching) -->
@@ -565,7 +598,7 @@ watch(carouselItems, (newItems) => {
 
     <!-- Empty State -->
     <div v-else class="empty-state glass-panel">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/>
         <line x1="8" y1="12" x2="16" y2="12"/>
       </svg>
@@ -573,7 +606,13 @@ watch(carouselItems, (newItems) => {
     </div>
 
     <!-- Bulk code validation Modal -->
-    <div v-if="showBulkModal" class="modal-backdrop">
+    <div 
+      v-if="showBulkModal" 
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="التحقق من رمز الجملة"
+    >
       <div class="modal-content glass-panel">
         <h3 class="modal-title">تفعيل أسعار الجملة</h3>
         <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
@@ -583,6 +622,9 @@ watch(carouselItems, (newItems) => {
           v-model="bulkCodeInput" 
           placeholder="رمز التحقق (4 أرقام)" 
           maxlength="4"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          aria-label="رمز التحقق المكون من 4 أرقام"
           class="form-input text-center font-bold"
           @keyup.enter="handleVerifyBulk"
         />
@@ -590,28 +632,41 @@ watch(carouselItems, (newItems) => {
         <p v-if="bulkError" class="error-msg">الرمز غير صحيح! يرجى المحاولة مرة أخرى.</p>
 
         <div class="modal-actions">
-          <button class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
-          <button class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
+          <button type="button" class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>
+          <button type="button" class="modal-btn cancel" @click="showBulkModal = false">إلغاء</button>
         </div>
       </div>
     </div>
 
     <!-- Disable Bulk Confirmation Modal -->
-    <div v-if="showDisableConfirm" class="modal-backdrop">
+    <div 
+      v-if="showDisableConfirm" 
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="تأكيد تعطيل الجملة"
+    >
       <div class="modal-content glass-panel">
         <h3 class="modal-title">تعطيل أسعار الجملة</h3>
         <p class="modal-desc">هل أنت متأكد من تعطيل أسعار الجملة؟</p>
         <div class="modal-actions">
-          <button class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
-          <button class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
+          <button type="button" class="modal-btn confirm" style="background:#ff4d4f" @click="shopStore.disableBulk(); showDisableConfirm = false">نعم، تعطيل</button>
+          <button type="button" class="modal-btn cancel" @click="showDisableConfirm = false">إلغاء</button>
         </div>
       </div>
     </div>
 
     <!-- Image Zoom Modal -->
-    <div v-if="zoomedImgUrl" class="zoom-backdrop" @click="closeZoomModal">
+    <div 
+      v-if="zoomedImgUrl" 
+      class="zoom-backdrop" 
+      role="dialog"
+      aria-modal="true"
+      aria-label="عرض الصورة بالدقة الكاملة"
+      @click="closeZoomModal"
+    >
       <!-- Fixed Top-Left Close Button -->
-      <button class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
+      <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
 
       <div class="zoom-content" @click.stop>
         <!-- Shimmer & Spinner Loader while full-size image downloads -->
@@ -754,14 +809,40 @@ watch(carouselItems, (newItems) => {
   outline: none;
 }
 
+.search-input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 .clear-search-btn {
   position: absolute;
-  left: 12px;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: rgba(0, 0, 0, 0.4);
-  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 1.1rem;
   cursor: pointer;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.clear-search-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #000;
+}
+
+.clear-search-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .cat-btn {
@@ -983,12 +1064,21 @@ watch(carouselItems, (newItems) => {
 .modal-btn {
   flex: 1;
   padding: 0.65rem 1rem;
+  min-height: 44px;
   border-radius: 8px;
   font-family: 'Cairo', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.modal-btn:active {
+  transform: scale(0.98);
 }
 
 .modal-btn.confirm {
@@ -1085,8 +1175,10 @@ watch(carouselItems, (newItems) => {
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;

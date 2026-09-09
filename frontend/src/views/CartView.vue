@@ -175,7 +175,7 @@ const handleClearCart = () => {
           <span class="edit-order-number-tag">#{{ cartStore.editingOrderNumber }}</span>
         </div>
         <button type="button" class="btn-cancel-edit-mode" @click="handleCancelEditMode" title="إلغاء وضع التعديل">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           <span>إلغاء التعديل</span>
         </button>
       </div>
@@ -183,7 +183,7 @@ const handleClearCart = () => {
         يمكنك تعديل كميات الأصناف الحالية، أو تصفح المتجر وإضافة منتجات جديدة للسلة، ثم الضغط على "حفظ وتحديث الطلب" لتثبيت التغييرات.
       </p>
       <button type="button" class="btn-browse-store-add" @click="router.push(`/shop/${cartStore.editingOrderShop}`)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
         <span>تصفح المتجر وإضافة أصناف جديدة للطلب</span>
       </button>
     </div>
@@ -191,7 +191,7 @@ const handleClearCart = () => {
     <!-- 2. EMPTY STATE -->
     <div v-if="cartStore.items.length === 0" class="empty-state glass-panel">
       <div class="empty-icon-wrapper">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
           <line x1="3" y1="6" x2="21" y2="6"/>
           <path d="M16 10a4 4 0 0 1-8 0"/>
@@ -218,9 +218,9 @@ const handleClearCart = () => {
       <div class="cart-items-section glass-panel">
         <div class="cart-section-header">
           <h3 class="section-title">{{ cartStore.isEditingOrder ? 'أصناف الطلب المعدلة' : 'الأصناف المختارة' }}</h3>
-          <button class="clear-cart-btn" @click="handleClearCart" :class="{ confirming: isConfirmingClear }" title="إفراغ السلة">
+          <button type="button" class="clear-cart-btn" @click="handleClearCart" :class="{ confirming: isConfirmingClear }" title="إفراغ السلة" aria-label="إفراغ السلة">
             <span>{{ isConfirmingClear ? 'تأكيد الإفراغ؟' : 'إفراغ السلة' }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
@@ -242,17 +242,19 @@ const handleClearCart = () => {
               
               <!-- Quantity adjuster -->
               <div class="qty-adjuster">
-                <button class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity - (item.allowFloat ? 0.5 : 1))">-</button>
+                <button type="button" class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity - (item.allowFloat ? 0.5 : 1))" aria-label="تقليل الكمية">-</button>
                 <input 
                   type="number" 
                   class="qty-input-field" 
+                  aria-label="الكمية"
+                  inputmode="decimal"
                   :value="item.quantity" 
                   :step="item.allowFloat ? '0.5' : '1'" 
                   min="0.5"
                   @change="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
                   @blur="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
                 />
-                <button class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity + (item.allowFloat ? 0.5 : 1))">+</button>
+                <button type="button" class="qty-btn" @click="cartStore.updateQty(item._id, item.quantity + (item.allowFloat ? 0.5 : 1))" aria-label="زيادة الكمية">+</button>
               </div>
             </div>
 
@@ -260,6 +262,7 @@ const handleClearCart = () => {
             <div class="item-note-wrapper">
               <input 
                 type="text" 
+                aria-label="ملاحظة خاصة بالمنتج"
                 :value="item.itemNotes" 
                 @input="handleUpdateNote(item._id, $event.target.value)" 
                 placeholder="إضافة ملاحظة خاصة بهذا المنتج (مثال: بدون مكسرات)…" 
@@ -305,7 +308,7 @@ const handleClearCart = () => {
         
         <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
         
-        <button class="btn-primary" @click="handleSaveIdentity">حفظ وتأكيد البيانات</button>
+        <button type="button" class="btn-primary" @click="handleSaveIdentity">حفظ وتأكيد البيانات</button>
       </div>
 
       <!-- Logged-in info preview -->
@@ -314,7 +317,7 @@ const handleClearCart = () => {
           <div class="preview-name-row">
             <p class="name">الاسم: <strong>{{ authStore.customerName }}</strong></p>
             <span class="preview-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <span>حساب موثق</span>
             </span>
           </div>
@@ -625,10 +628,20 @@ const handleClearCart = () => {
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 800;
-  padding: 4px 10px;
+  padding: 6px 12px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-cancel-edit-mode:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
 }
 
 .btn-cancel-edit-mode:hover {
@@ -656,9 +669,15 @@ const handleClearCart = () => {
   font-size: 0.88rem;
   font-weight: 800;
   padding: 10px 14px;
+  min-height: 42px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-browse-store-add:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
 }
 
 .btn-browse-store-add:hover {
@@ -761,9 +780,15 @@ const handleClearCart = () => {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 6px 10px;
+  min-height: 36px;
   border-radius: 6px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.clear-cart-btn:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
 }
 
 .clear-cart-btn.confirming {
@@ -863,8 +888,8 @@ const handleClearCart = () => {
 }
 
 .qty-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   background: #ffffff;
   border: none;
   border-radius: 6px;
@@ -875,15 +900,33 @@ const handleClearCart = () => {
   justify-content: center;
   cursor: pointer;
   color: #0f172a;
+  position: relative;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.qty-btn::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -8px;
+  right: -8px;
+}
+
+.qty-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
 }
 
 .qty-btn:active {
   background: #e2e8f0;
+  transform: scale(0.94);
 }
 
 .qty-input-field {
   width: 38px;
-  height: 24px;
+  height: 26px;
   text-align: center;
   font-family: inherit;
   font-size: 0.85rem;
@@ -899,15 +942,23 @@ const handleClearCart = () => {
 
 .item-note-input {
   width: 100%;
-  height: 30px;
-  padding: 4px 8px;
+  min-height: 36px;
+  height: 36px;
+  padding: 6px 10px;
   font-family: inherit;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #334155;
   box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.item-note-input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+  border-color: var(--primary-color);
 }
 
 .identity-section,
@@ -916,7 +967,7 @@ const handleClearCart = () => {
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .identity-preview {
@@ -952,12 +1003,22 @@ const handleClearCart = () => {
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   color: #475569;
-  padding: 5px 10px;
+  padding: 6px 12px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 6px;
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 750;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.change-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .form-group {
@@ -979,7 +1040,8 @@ const handleClearCart = () => {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  height: 42px;
+  min-height: 44px;
+  height: 44px;
   padding: 6px 10px;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
@@ -987,6 +1049,13 @@ const handleClearCart = () => {
   font-size: 0.88rem;
   box-sizing: border-box;
   display: block;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-color: var(--primary-color);
 }
 
 .date-input {
@@ -1149,18 +1218,28 @@ const handleClearCart = () => {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #64748b;
   cursor: pointer;
   padding: 0;
+  position: relative;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   flex-shrink: 0;
+}
+
+.confirm-btn-close::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: -4px;
+  right: -4px;
 }
 
 .confirm-btn-close:hover:not(:disabled) {
@@ -1628,14 +1707,32 @@ const handleClearCart = () => {
   }
 
   .qty-btn {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     font-size: 0.85rem;
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  .qty-btn::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    left: -8px;
+    right: -8px;
   }
 
   .qty-input-field {
-    width: 32px;
-    font-size: 0.82rem;
+    width: 34px;
+    height: 26px;
+    font-size: 16px !important;
+  }
+
+  /* Enforce 16px font-size on mobile inputs to prevent iOS Safari auto-zoom */
+  .item-note-input,
+  .form-input {
+    font-size: 16px !important;
   }
 
   .checkout-details-section {
