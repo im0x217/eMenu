@@ -2266,7 +2266,7 @@
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
-                              :step="item.allowFloat ? 0.25 : 1" 
+                              step="1" 
                               min="0.1" 
                               class="form-control stepper-input text-mono text-center" 
                               @input="recalcNewOrderTotal" 
@@ -2344,7 +2344,7 @@
                           <input 
                             v-model.number="item.quantity" 
                             type="number" 
-                            :step="item.allowFloat ? 0.25 : 1" 
+                            step="1" 
                             min="0.1" 
                             class="pos-mob-stepper-input text-mono text-center" 
                             @input="recalcNewOrderTotal" 
@@ -2812,8 +2812,8 @@
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
-                              :step="item.allowFloat ? 0.25 : 1" 
-                              :min="item.allowFloat ? 0.25 : 1" 
+                              step="1" 
+                              min="0.1" 
                               class="form-control stepper-input text-mono text-center" 
                               placeholder="الكمية" 
                               required 
@@ -10574,9 +10574,9 @@ export default {
     };
 
     const adjustEditOrderItemQty = (item, delta) => {
-      const step = item.allowFloat ? 0.25 : 1;
+      const step = 1;
       const current = Number(item.quantity) || 0;
-      const next = Math.max(step, Math.round((current + delta * step) * 100) / 100);
+      const next = Math.max(1, Math.round((current + delta * step) * 100) / 100);
       item.quantity = next;
       recalcOrderTotal();
     };
@@ -10628,7 +10628,7 @@ const navigateSuggestions = (dir) => {
       
       const existingItem = editingOrder.items.find(item => item.productId && item.productId.toString() === prod._id.toString());
       if (existingItem) {
-        existingItem.quantity += (existingItem.allowFloat ? 0.25 : 1);
+        existingItem.quantity += 1;
         existingItem.quantity = Math.round(existingItem.quantity * 100) / 100;
       } else {
         editingOrder.items.push({
@@ -11016,7 +11016,7 @@ const closeSuggestionsWithDelay = () => {
       const idx = newOrder.items.findIndex(i => i.productId && i.productId.toString() === prod._id.toString());
       if (idx !== -1) {
         const item = newOrder.items[idx];
-        if (item.quantity <= (item.allowFloat ? 0.25 : 1)) {
+        if (item.quantity <= 1) {
           removeNewOrderItem(idx);
         } else {
           adjustNewOrderItemQty(item, -1);
@@ -11160,8 +11160,8 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const adjustNewOrderItemQty = (item, delta) => {
-      const step = item.allowFloat ? (item.quantity <= 1 && delta < 0 ? 0.25 : (delta > 0 && item.quantity < 1 ? 0.25 : 1)) : 1;
-      const newQty = Math.max(item.allowFloat ? 0.25 : 1, Math.round((item.quantity + delta * step) * 100) / 100);
+      const step = 1;
+      const newQty = Math.max(1, Math.round((item.quantity + delta * step) * 100) / 100);
       item.quantity = newQty;
       recalcNewOrderTotal();
     };

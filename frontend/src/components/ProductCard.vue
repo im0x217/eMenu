@@ -134,7 +134,7 @@ const handleAddToCart = () => {
   }
   
   try {
-    const qtyStep = props.product.allowFloat ? 0.5 : 1;
+    const qtyStep = 1;
     cartStore.addToCart(props.product, activeShop.value, mode, qtyStep);
     flyToCart(imgRef.value || cardRef.value, getImageUrl());
     toastStore.show('تم إضافة المنتج إلى السلة بنجاح!');
@@ -145,15 +145,13 @@ const handleAddToCart = () => {
 
 const incrementQuantity = () => {
   triggerHaptic('light');
-  const step = props.product.allowFloat ? 0.5 : 1;
-  const newQty = cartItemQuantity.value + step;
+  const newQty = cartItemQuantity.value + 1;
   cartStore.updateQty(props.product._id, newQty);
   flyToCart(imgRef.value || cardRef.value, getImageUrl());
 };
 
 const decrementQuantity = () => {
-  const step = props.product.allowFloat ? 0.5 : 1;
-  const newQty = Math.max(0, cartItemQuantity.value - step);
+  const newQty = Math.max(0, cartItemQuantity.value - 1);
   if (newQty === 0) {
     triggerHaptic('warning');
     cartStore.removeFromCart(props.product._id);

@@ -223,7 +223,7 @@ const handleUpdateNote = (itemId, note) => {
 const handleDirectQtyInput = (itemId, value, allowFloat) => {
   let parsed = parseFloat(value);
   if (isNaN(parsed) || parsed <= 0) {
-    parsed = allowFloat ? 0.5 : 1;
+    parsed = 1;
   }
   
   if (allowFloat) {
@@ -237,7 +237,7 @@ const handleDirectQtyInput = (itemId, value, allowFloat) => {
 
 const handleQtyChange = (itemId, newQty) => {
   triggerHaptic('light');
-  cartStore.updateQty(itemId, newQty);
+  cartStore.updateQty(itemId, Math.round(newQty * 100) / 100);
 };
 
 const isConfirmingClear = ref(false);
@@ -340,19 +340,19 @@ const handleClearCart = () => {
               
               <!-- Quantity adjuster -->
               <div class="qty-adjuster">
-                <button type="button" class="qty-btn" @click="handleQtyChange(item._id, item.quantity - (item.allowFloat ? 0.5 : 1))" aria-label="تقليل الكمية">-</button>
+                <button type="button" class="qty-btn" @click="handleQtyChange(item._id, item.quantity - 1)" aria-label="تقليل الكمية">-</button>
                 <input 
                   type="number" 
                   class="qty-input-field" 
                   aria-label="الكمية"
                   inputmode="decimal"
                   :value="item.quantity" 
-                  :step="item.allowFloat ? '0.5' : '1'" 
-                  min="0.5"
+                  step="1" 
+                  min="0.1"
                   @change="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
                   @blur="e => handleDirectQtyInput(item._id, e.target.value, item.allowFloat)"
                 />
-                <button type="button" class="qty-btn" @click="handleQtyChange(item._id, item.quantity + (item.allowFloat ? 0.5 : 1))" aria-label="زيادة الكمية">+</button>
+                <button type="button" class="qty-btn" @click="handleQtyChange(item._id, item.quantity + 1)" aria-label="زيادة الكمية">+</button>
               </div>
             </div>
 
