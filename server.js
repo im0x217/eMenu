@@ -1403,21 +1403,30 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       const key = m._id === "bulk" ? "bulk" : "regular";
       priceModeSplit[key] = { revenue: m.revenue, count: m.count };
     });
-    
-    // Payment Methods breakdown (Actual paid values from paymentsCollection)
-    const paymentMatchStage = { shop };
-    if (startDateObj && endDateObj) {
-      paymentMatchStage.createdAt = { $gte: startDateObj, $lte: endDateObj };
-    }
+    // Payment Methods breakdown (Attributed by order effective receiving date - rec_date)
+    const allShopPayments = await paymentsCollection.find({
+      shop,
+      isCancelled: { $ne: true },
+      status: { $ne: 'cancelled' }
+    }).toArray();
 
-    const paymentMethodsRaw = await paymentsCollection.aggregate([
-      { $match: paymentMatchStage },
-      { $group: {
-          _id: "$method",
-          revenue: { $sum: "$amount" },
-          count: { $sum: 1 }
-      } }
-    ]).toArray();
+    const orderPaymentsMap = new Map();
+    for (const p of allShopPayments) {
+      if (Array.isArray(p.distributedTo)) {
+        for (const d of p.distributedTo) {
+          if (d.orderId) {
+            const idStr = d.orderId.toString();
+            if (!orderPaymentsMap.has(idStr)) {
+              orderPaymentsMap.set(idStr, []);
+            }
+            orderPaymentsMap.get(idStr).push({
+              method: p.method || 'cash',
+              applied: Number(d.applied) || 0
+            });
+          }
+        }
+      }
+    }
 
     const paymentMethodsSplit = {
       cash: { revenue: 0, count: 0 },
@@ -1425,11 +1434,40 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       bank_transfer: { revenue: 0, count: 0 }
     };
 
-    paymentMethodsRaw.forEach(pm => {
-      const key = pm._id === 'card' ? 'card' : pm._id === 'bank_transfer' ? 'bank_transfer' : 'cash';
-      paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + (pm.revenue || 0)) * 100) / 100;
-      paymentMethodsSplit[key].count += (pm.count || 0);
-    });
+    for (const ord of filteredOrdersList) {
+      const idStr = ord._id.toString();
+      const paymentsForOrder = orderPaymentsMap.get(idStr);
+
+      if (paymentsForOrder && paymentsForOrder.length > 0) {
+        const seenMethodsInOrder = new Set();
+        let totalAppliedFromPayments = 0;
+
+        for (const p of paymentsForOrder) {
+          const key = p.method === 'card' ? 'card' : (p.method === 'bank_transfer' ? 'bank_transfer' : 'cash');
+          paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + p.applied) * 100) / 100;
+          seenMethodsInOrder.add(key);
+          totalAppliedFromPayments += p.applied;
+        }
+
+        for (const m of seenMethodsInOrder) {
+          paymentMethodsSplit[m].count += 1;
+        }
+
+        const directPaidRemainder = Math.round(((Number(ord.paidAmount) || 0) - totalAppliedFromPayments) * 100) / 100;
+        if (directPaidRemainder > 0.01) {
+          const key = ord.paymentMethod === 'card' ? 'card' : (ord.paymentMethod === 'bank_transfer' ? 'bank_transfer' : 'cash');
+          paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + directPaidRemainder) * 100) / 100;
+          if (!seenMethodsInOrder.has(key)) {
+            paymentMethodsSplit[key].count += 1;
+          }
+        }
+      } else if ((Number(ord.paidAmount) || 0) > 0) {
+        const key = ord.paymentMethod === 'card' ? 'card' : (ord.paymentMethod === 'bank_transfer' ? 'bank_transfer' : 'cash');
+        const paid = Number(ord.paidAmount) || 0;
+        paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + paid) * 100) / 100;
+        paymentMethodsSplit[key].count += 1;
+      }
+    }
     
     // Fetch all products for this shop to evaluate real-time availability in-memory
     const allShopProducts = await prodColl.find({}).toArray();

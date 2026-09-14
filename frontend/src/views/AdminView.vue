@@ -592,7 +592,10 @@
 
               <!-- Payment Methods Distribution Card -->
               <div class="chart-card glass-panel">
-                <h3 class="chart-title">توزيع طرق الدفع (نقدي / بطاقة / تحويل)</h3>
+                <div class="chart-title d-flex justify-content-between align-items-center">
+                  <span>توزيع طرق الدفع (نقدي / بطاقة / تحويل)</span>
+                  <span class="chart-rec-badge">حسب تاريخ الاستلام</span>
+                </div>
                 <div class="payment-methods-breakdown">
                   <!-- Cash Row -->
                   <div class="pm-breakdown-row pm-cash">
@@ -18127,6 +18130,17 @@ select.form-control:focus {
    ANALYTICS PAYMENT METHODS BREAKDOWN STYLES
    ========================================================================== */
 
+.chart-rec-badge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: normal;
+}
+
 .payment-methods-breakdown {
   display: flex;
   flex-direction: column;
@@ -18142,7 +18156,7 @@ select.form-control:focus {
   border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .pm-breakdown-row:hover {
