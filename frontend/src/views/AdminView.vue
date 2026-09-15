@@ -416,7 +416,7 @@
             <div v-if="analyticsLoading" class="analytics-skeleton-view animate-fade-in">
               <!-- KPI Cards Skeleton -->
               <div class="kpi-grid">
-                <div v-for="i in 4" :key="'kpi-skel-' + i" class="kpi-card glass-panel skeleton-card">
+                <div v-for="i in 6" :key="'kpi-skel-' + i" class="kpi-card glass-panel skeleton-card">
                   <div class="skeleton-shimmer skeleton-icon"></div>
                   <div class="kpi-info" style="width: 100%;">
                     <div class="skeleton-shimmer skeleton-line skeleton-title-line"></div>
@@ -484,7 +484,25 @@
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي المبيعات</span>
-                  <span class="kpi-value">{{ formatCurrency(analyticsData.kpi.totalRevenue) }}</span>
+                  <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.totalRevenue) }}</span>
+                </div>
+              </div>
+              <div class="kpi-card glass-panel kpi-card-paid">
+                <div class="kpi-icon-wrapper paid-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-title">إجمالي المدفوع</span>
+                  <span class="kpi-value text-mono text-success">{{ formatCurrency(analyticsData.kpi.totalPaid) }}</span>
+                </div>
+              </div>
+              <div class="kpi-card glass-panel kpi-card-remaining">
+                <div class="kpi-icon-wrapper remaining-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-title">إجمالي المتبقي</span>
+                  <span class="kpi-value text-mono text-danger">{{ formatCurrency(analyticsData.kpi.totalRemaining) }}</span>
                 </div>
               </div>
               <div class="kpi-card glass-panel">
@@ -493,7 +511,7 @@
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي الطلبات</span>
-                  <span class="kpi-value">{{ formatArabicPlural(analyticsData.kpi.orderCount, 'order') }}</span>
+                  <span class="kpi-value text-mono">{{ formatArabicPlural(analyticsData.kpi.orderCount, 'order') }}</span>
                 </div>
               </div>
               <div class="kpi-card glass-panel">
@@ -502,7 +520,7 @@
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">متوسط الطلب</span>
-                  <span class="kpi-value">{{ formatCurrency(analyticsData.kpi.avgOrderValue) }}</span>
+                  <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.avgOrderValue) }}</span>
                 </div>
               </div>
               <div class="kpi-card glass-panel">
@@ -511,7 +529,7 @@
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">العملاء النشطون</span>
-                  <span class="kpi-value">{{ formatArabicPlural(analyticsData.kpi.activeCustomers, 'customer') }}</span>
+                  <span class="kpi-value text-mono">{{ formatArabicPlural(analyticsData.kpi.activeCustomers, 'customer') }}</span>
                 </div>
               </div>
             </div>
@@ -6990,7 +7008,7 @@ export default {
     ];
 
     const analyticsData = reactive({
-      kpi: { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 },
+      kpi: { totalRevenue: 0, totalPaid: 0, totalRemaining: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 },
       revenueTrend: [],
       priceModeSplit: { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } },
       paymentMethodsSplit: { cash: { revenue: 0, count: 0 }, card: { revenue: 0, count: 0 }, bank_transfer: { revenue: 0, count: 0 } },
@@ -8915,7 +8933,7 @@ export default {
         const res = await adminFetch(url);
         if (res.ok) {
           const data = await res.json();
-          analyticsData.kpi = data.kpi || { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 };
+          analyticsData.kpi = data.kpi || { totalRevenue: 0, totalPaid: 0, totalRemaining: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 };
           analyticsData.revenueTrend = data.revenueTrend || [];
           analyticsData.priceModeSplit = data.priceModeSplit || { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } };
           analyticsData.paymentMethodsSplit = data.paymentMethodsSplit || { cash: { revenue: 0, count: 0 }, card: { revenue: 0, count: 0 }, bank_transfer: { revenue: 0, count: 0 } };
@@ -13331,8 +13349,8 @@ const closeSuggestionsWithDelay = () => {
 /* KPI Cards Layout */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
   margin-bottom: 30px;
 }
 
@@ -13368,6 +13386,8 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .sales-icon { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.paid-icon { background: linear-gradient(135deg, #059669, #10b981); }
+.remaining-icon { background: linear-gradient(135deg, #e11d48, #f43f5e); }
 .orders-icon { background: linear-gradient(135deg, #f1c40f, #f39c12); }
 .aov-icon { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
 .customers-icon { background: linear-gradient(135deg, #3498db, #2980b9); }
@@ -13387,6 +13407,7 @@ const closeSuggestionsWithDelay = () => {
   font-size: 1.3rem;
   font-weight: 700;
   color: #1e3a5f;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Charts Grid */

@@ -1468,6 +1468,12 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
         paymentMethodsSplit[key].count += 1;
       }
     }
+
+    // KPI total paid and total remaining (debt)
+    const totalPaid = Math.round((paymentMethodsSplit.cash.revenue + paymentMethodsSplit.card.revenue + paymentMethodsSplit.bank_transfer.revenue) * 100) / 100;
+    const totalRemaining = Math.max(0, Math.round(((kpi.totalRevenue || 0) - totalPaid) * 100) / 100);
+    kpi.totalPaid = totalPaid;
+    kpi.totalRemaining = totalRemaining;
     
     // Fetch all products for this shop to evaluate real-time availability in-memory
     const allShopProducts = await prodColl.find({}).toArray();
