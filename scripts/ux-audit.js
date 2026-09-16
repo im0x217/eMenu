@@ -45,7 +45,7 @@ function auditFile(filePath) {
   const template = templateMatch[1];
 
   // 1. Audit Images for alt attributes (WCAG 1.1.1 Non-text Content)
-  const imgTags = template.match(/<img\b[^>]*>/gi) || [];
+  const imgTags = template.match(/<img\b(?:[^"'>]|"[^"]*"|'[^']*')*>/gi) || [];
   imgTags.forEach((tag, idx) => {
     if (!tag.includes('alt=') && !tag.includes(':alt=')) {
       issues.push({
@@ -57,7 +57,7 @@ function auditFile(filePath) {
   });
 
   // 2. Audit SVGs for aria-hidden or role (WCAG 1.1.1)
-  const svgTags = template.match(/<svg\b[^>]*>/gi) || [];
+  const svgTags = template.match(/<svg\b(?:[^"'>]|"[^"]*"|'[^']*')*>/gi) || [];
   svgTags.forEach((tag, idx) => {
     if (!tag.includes('aria-hidden=') && !tag.includes('role=') && !tag.includes('aria-label=')) {
       issues.push({
@@ -69,10 +69,10 @@ function auditFile(filePath) {
   });
 
   // 3. Audit Buttons without text for aria-label (WCAG 4.1.2 Name, Role, Value)
-  const buttonTags = template.match(/<button\b[^>]*>([\s\S]*?)<\/button>/gi) || [];
+  const buttonTags = template.match(/<button\b(?:[^"'>]|"[^"]*"|'[^']*')*>([\s\S]*?)<\/button>/gi) || [];
   buttonTags.forEach((fullBtn, idx) => {
-    const openingTag = fullBtn.match(/<button\b[^>]*>/i)[0];
-    const innerContent = fullBtn.replace(/<button\b[^>]*>/i, '').replace(/<\/button>/i, '').trim();
+    const openingTag = fullBtn.match(/<button\b(?:[^"'>]|"[^"]*"|'[^']*')*>/i)[0];
+    const innerContent = fullBtn.replace(/<button\b(?:[^"'>]|"[^"]*"|'[^']*')*>/i, '').replace(/<\/button>/i, '').trim();
 
     // Check if inner content is purely icons / SVGs (no visible text)
     const textOnly = innerContent.replace(/<[^>]+>/g, '').trim();
@@ -88,7 +88,7 @@ function auditFile(filePath) {
   });
 
   // 4. Audit Modals for role="dialog" and aria-modal (WCAG 2.1.2 No Keyboard Trap)
-  const dialogTags = template.match(/<div\b[^>]*role=["']dialog["'][^>]*>/gi) || [];
+  const dialogTags = template.match(/<div\b(?:[^"'>]|"[^"]*"|'[^']*')*role=["']dialog["'](?:[^"'>]|"[^"]*"|'[^']*')*>/gi) || [];
   dialogTags.forEach((tag, idx) => {
     if (!tag.includes('aria-modal="true"') && !tag.includes(':aria-modal=')) {
       issues.push({
@@ -107,7 +107,7 @@ function auditFile(filePath) {
   });
 
   // 5. Audit Form Controls for placeholder / label (WCAG 3.3.2 Labels or Instructions)
-  const inputTags = template.match(/<(input|select|textarea)\b[^>]*>/gi) || [];
+  const inputTags = template.match(/<(input|select|textarea)\b(?:[^"'>]|"[^"]*"|'[^']*')*>/gi) || [];
   inputTags.forEach((tag, idx) => {
     const isHidden = tag.includes('type="hidden"') || tag.includes('style="display: none"');
     if (!isHidden) {
