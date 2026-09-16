@@ -418,8 +418,11 @@ const shopTitle = computed(() => {
 });
 
 const hasBulkProducts = computed(() => {
-  // Check if any product in shop catalog offers bulk pricing
-  return shopStore.products.some(p => p.purchaseType === 'bulk' || p.purchaseType === 'both');
+  // Check if any product in shop catalog offers bulk pricing with a valid bulk price
+  return shopStore.products.some(p => 
+    (p.purchaseType === 'bulk' || p.purchaseType === 'both') &&
+    p.price_bulk !== null && p.price_bulk !== undefined && p.price_bulk !== ''
+  );
 });
 
 // Horizontal scrolling for mouse users on PC views
@@ -679,8 +682,8 @@ watch(carouselItems, (newItems) => {
       </button>
     </div>
 
-    <!-- Category Selector (hidden when searching) -->
-    <div v-if="!searchQuery" class="categories-row">
+    <!-- Category Selector (hidden when searching or loading) -->
+    <div v-if="!searchQuery && !shopStore.isLoading" class="categories-row">
       <div 
         ref="categoriesContainer"
         class="scroll-container" 
@@ -704,10 +707,49 @@ watch(carouselItems, (newItems) => {
       </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div v-if="shopStore.isLoading" class="loading-state">
-      <div class="spinner"></div>
-      <p>جاري تحميل المنيو…</p>
+    <!-- Shop Skeleton Loader (while shopStore.isLoading) -->
+    <div v-if="shopStore.isLoading" class="shop-skeleton-wrapper" aria-busy="true" aria-label="جاري تحميل المنتجات">
+      <!-- Category Pills Skeleton Row -->
+      <div class="skeleton-categories-row" aria-hidden="true">
+        <div v-for="i in 6" :key="'skel-cat-' + i" class="skeleton-cat-pill glass-panel">
+          <div class="skeleton-shimmer skeleton-cat-icon"></div>
+          <div class="skeleton-shimmer skeleton-cat-name"></div>
+        </div>
+      </div>
+
+      <!-- Sub-Category Sections Skeleton (2 stacked rows matching real shop layout) -->
+      <div class="subcat-sections-wrapper skeleton-sections-wrapper" aria-hidden="true">
+        <div v-for="s in 2" :key="'skel-sec-' + s" class="subcat-plain-section">
+          <!-- Section Header Skeleton -->
+          <div class="subcat-plain-header">
+            <div class="skeleton-shimmer skeleton-sec-title"></div>
+            <div class="skeleton-shimmer skeleton-sec-badge"></div>
+          </div>
+
+          <!-- Horizontal 1-Row Products Grid Skeleton -->
+          <div class="subcat-products-grid-1row skeleton-products-grid">
+            <div v-for="c in 4" :key="'skel-card-' + s + '-' + c" class="product-card skeleton-card glass-panel">
+              <!-- Card Image Skeleton -->
+              <div class="img-wrapper skeleton-card-img">
+                <div class="skeleton-shimmer skeleton-shimmer-fill"></div>
+              </div>
+              <!-- Card Info Skeleton -->
+              <div class="product-info skeleton-card-info">
+                <div class="info-body">
+                  <div class="skeleton-shimmer skeleton-title-bar"></div>
+                  <div class="skeleton-shimmer skeleton-desc-bar"></div>
+                  <div class="prices-row skeleton-prices-row">
+                    <div class="skeleton-shimmer skeleton-pill-bar"></div>
+                  </div>
+                </div>
+                <div class="actions-row skeleton-actions-row">
+                  <div class="skeleton-shimmer skeleton-btn-bar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Sub-Category Product Sections (1 Horizontal Scrollable Row Per Sub-Category) -->
@@ -1447,30 +1489,44 @@ watch(carouselItems, (newItems) => {
   transform: scale(0.98);
 }
 
-/* Skeleton Shimmer Styles */
-@keyframes skeletonShimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
+/* GPU-composited hardware accelerated skeleton shimmer */
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: skeletonShimmer 1.5s infinite ease-in-out;
+  position: relative;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.18);
+  contain: layout paint;
 }
 
-.skeleton-products-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  animation: skeletonTranslateShimmer 1.6s infinite ease-in-out;
+  will-change: transform;
+}
+
+@keyframes skeletonTranslateShimmer {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(200%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    animation: none;
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
-  .skeleton-products-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
   .modal-backdrop {
     align-items: flex-end;
     padding: 0;
@@ -1559,19 +1615,121 @@ watch(carouselItems, (newItems) => {
   transition: transform 0.08s ease-out;
 }
 
-.skeleton-product-card {
-  border-radius: 18px;
-  padding: 12px;
+/* Comprehensive Shop Skeleton Layout */
+.shop-skeleton-wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 240px;
+  gap: 1.25rem;
+  width: 100%;
   pointer-events: none;
+  user-select: none;
 }
 
-.skeleton-prod-img {
-  width: 100%;
-  height: 140px;
+.skeleton-categories-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: hidden;
+  padding: 4px 4px 8px 4px;
+}
+
+.skeleton-cat-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  min-width: 105px;
+  height: 42px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-card, rgba(255, 253, 249, 0.85));
+}
+
+.skeleton-cat-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-cat-name {
+  width: 52px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeleton-sec-title {
+  width: 120px;
+  height: 20px;
+  border-radius: 6px;
+}
+
+.skeleton-sec-badge {
+  width: 28px;
+  height: 18px;
   border-radius: 12px;
+}
+
+.skeleton-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 100%;
+  min-height: 290px;
+  background: var(--bg-card, rgba(255, 253, 249, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.skeleton-card-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.skeleton-shimmer-fill {
+  width: 100%;
+  height: 100%;
+}
+
+.skeleton-card-info {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.skeleton-title-bar {
+  width: 80%;
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.skeleton-desc-bar {
+  width: 55%;
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.skeleton-pill-bar {
+  width: 64px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.skeleton-btn-bar {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
 }
 
 /* Mobile Responsive 80% Scale (≤ 768px) */

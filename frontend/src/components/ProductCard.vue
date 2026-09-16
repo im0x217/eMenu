@@ -126,11 +126,22 @@ const handleImageError = (e) => {
 
 // Check if we should show regular/bulk prices based on purchaseType & shop settings
 const showRegularPrice = computed(() => {
-  return props.product.purchaseType === 'regular' || props.product.purchaseType === 'both' || !props.product.purchaseType;
+  if (props.product.purchaseType === 'bulk') return false;
+  return (
+    props.product.purchaseType === 'regular' ||
+    props.product.purchaseType === 'both' ||
+    !props.product.purchaseType
+  );
 });
 
 const showBulkPrice = computed(() => {
-  return props.product.purchaseType === 'bulk' || props.product.purchaseType === 'both';
+  const hasBulkValue = props.product.price_bulk !== null && 
+                       props.product.price_bulk !== undefined && 
+                       props.product.price_bulk !== '';
+  if (!hasBulkValue) return false;
+  if (props.product.purchaseType === 'bulk') return true;
+  if (props.product.purchaseType === 'both') return isBulkMode.value;
+  return false;
 });
 
 const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props.product._id));
