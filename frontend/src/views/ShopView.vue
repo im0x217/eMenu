@@ -6,6 +6,7 @@ import CategoryIcon from '../components/CategoryIcon.vue';
 import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
+import { isImageCached, warmImageUrls } from '../utils/imageCache';
 
 const shopStore = useShopStore();
 
@@ -241,6 +242,25 @@ const subCategorySections = computed(() => {
   return sections;
 });
 
+// Pre-warm visible product images (first 6 per row) to ensure instantaneous rendering
+watch(subCategorySections, (sections) => {
+  if (!sections || !sections.length) return;
+  const urlsToWarm = [];
+  for (const section of sections) {
+    if (Array.isArray(section.products)) {
+      const topItems = section.products.slice(0, 6);
+      for (const item of topItems) {
+        if (item && item.img) {
+          urlsToWarm.push(item.img);
+        }
+      }
+    }
+  }
+  if (urlsToWarm.length > 0) {
+    warmImageUrls(urlsToWarm, 4);
+  }
+}, { immediate: true });
+
 // Bulk price verification modal state
 const showBulkModal = ref(false);
 const bulkCodeInput = ref('');
@@ -275,7 +295,7 @@ const isZoomImgLoaded = ref(false);
 
 const openZoomModal = (url) => {
   triggerHaptic('light');
-  isZoomImgLoaded.value = false;
+  isZoomImgLoaded.value = isImageCached(url);
   zoomedImgUrl.value = url;
 };
 

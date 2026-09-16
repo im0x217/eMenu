@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v122';
+const CACHE_NAME = 'emenu-cache-v123';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -49,21 +49,20 @@ self.addEventListener('fetch', (event) => {
   // 2. Cache-First Strategy for S3 Product Images
   if (url.hostname.includes('amazonaws.com')) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-            const responseClone = networkResponse.clone();
-            caches.open('emenu-images-cache-v1').then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+      caches.open('emenu-images-cache-v1').then((imageCache) => {
+        return imageCache.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
           }
-          return networkResponse;
-        }).catch((err) => {
-          console.warn('[SW] S3 image network error, serving fallback', err);
-          return caches.match('/res/logo.jpg');
+          return fetch(event.request).then((networkResponse) => {
+            if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+              imageCache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch((err) => {
+            console.warn('[SW] S3 image network error, serving fallback', err);
+            return caches.match('/res/logo.jpg');
+          });
         });
       })
     );

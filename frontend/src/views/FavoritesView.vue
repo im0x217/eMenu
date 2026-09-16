@@ -1,9 +1,10 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useShopStore } from '../stores/shop';
 import { useFavoritesStore } from '../stores/favorites';
 import { useAuthStore } from '../stores/auth';
 import ProductCard from '../components/ProductCard.vue';
+import { isImageCached, warmImageUrls } from '../utils/imageCache';
 
 const shopStore = useShopStore();
 const favoritesStore = useFavoritesStore();
@@ -23,12 +24,21 @@ const favoriteProducts = computed(() => {
   return shopStore.products.filter(p => favIds.includes(p._id));
 });
 
+// Pre-warm favorite products images (first 8 items)
+watch(favoriteProducts, (prods) => {
+  if (!prods || !prods.length) return;
+  const urls = prods.slice(0, 8).map(p => p.img).filter(Boolean);
+  if (urls.length > 0) {
+    warmImageUrls(urls, 4);
+  }
+}, { immediate: true });
+
 // Image zoom state
 const zoomedImgUrl = ref('');
 const isZoomImgLoaded = ref(false);
 
 const openZoomModal = (url) => {
-  isZoomImgLoaded.value = false;
+  isZoomImgLoaded.value = isImageCached(url);
   zoomedImgUrl.value = url;
 };
 

@@ -9,6 +9,7 @@ import CategoryIcon from './CategoryIcon.vue';
 import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
 import { flyToCart } from '../utils/flyToCart';
+import { normalizeImageUrl, isImageCached, markImageLoaded } from '../utils/imageCache';
 
 const heartBtnRef = ref(null);
 const addBtnRef = ref(null);
@@ -37,32 +38,53 @@ const authStore = useAuthStore();
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 const isBulkMode = computed(() => shopStore.isBulkVerified);
 
-// Robust Image Loading & Blur-Up State
-const isLoaded = ref(false);
+const getImageUrl = () => {
+  const raw = props.product.imgSigned || props.product.img || '/res/logo.jpg';
+  return normalizeImageUrl(raw);
+};
+
+// Robust In-Memory Cache Aware State (0ms synchronous hit on previously seen images)
+const isLoaded = ref(isImageCached(props.product.imgSigned || props.product.img));
 const hasError = ref(false);
 
 const checkCachedImage = () => {
   if (imgRef.value && imgRef.value.complete && imgRef.value.naturalWidth !== 0) {
+    markImageLoaded(getImageUrl());
     isLoaded.value = true;
   }
 };
 
+const triggerOffThreadDecode = () => {
+  if (imgRef.value && typeof imgRef.value.decode === 'function') {
+    imgRef.value.decode().then(() => {
+      markImageLoaded(getImageUrl());
+      isLoaded.value = true;
+    }).catch(() => {
+      // Handled gracefully by standard @load / @error events
+    });
+  }
+};
+
 watch(() => props.product._id, () => {
-  isLoaded.value = false;
+  const url = getImageUrl();
+  isLoaded.value = isImageCached(url);
   hasError.value = false;
   nextTick(() => {
     checkCachedImage();
+    triggerOffThreadDecode();
   });
 });
 
 onMounted(() => {
   checkCachedImage();
+  triggerOffThreadDecode();
   nextTick(() => {
     checkCachedImage();
   });
 });
 
 const handleImageLoad = () => {
+  markImageLoaded(getImageUrl());
   isLoaded.value = true;
 };
 
@@ -156,16 +178,6 @@ const decrementQuantity = () => {
   } else {
     triggerHaptic('light');
     cartStore.updateQty(props.product._id, newQty);
-  }
-};
-
-const getImageUrl = () => {
-  const raw = props.product.imgSigned || props.product.img || '/res/logo.jpg';
-  if (!raw) return '/res/logo.jpg';
-  try {
-    return encodeURI(decodeURI(raw));
-  } catch (e) {
-    return raw;
   }
 };
 
@@ -387,6 +399,7 @@ const activeTagsList = computed(() => {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: #0f172a;
+  contain: layout paint;
   cursor: zoom-in;
 }
 
@@ -419,15 +432,16 @@ const activeTagsList = computed(() => {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.22) 50%,
     transparent 100%
   );
   animation: shimmer 1.6s infinite ease-in-out;
+  will-change: transform;
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(200%); }
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(200%, 0, 0); }
 }
 
 .product-image {
@@ -439,8 +453,9 @@ const activeTagsList = computed(() => {
   object-fit: cover;
   opacity: 0;
   transform: scale(1.03);
-  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s ease;
   z-index: 2;
+  will-change: opacity, transform;
 }
 
 .product-image.loaded {
