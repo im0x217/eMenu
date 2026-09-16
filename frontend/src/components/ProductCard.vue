@@ -154,13 +154,13 @@ const handleAddToCart = () => {
 
 const incrementQuantity = () => {
   triggerHaptic('light');
-  const newQty = cartItemQuantity.value + 1;
+  const newQty = Math.round((cartItemQuantity.value + 1) * 100) / 100;
   cartStore.updateQty(props.product._id, newQty);
   flyToCart(imgRef.value || cardRef.value, getImageUrl());
 };
 
 const decrementQuantity = () => {
-  const newQty = Math.max(0, cartItemQuantity.value - 1);
+  const newQty = Math.max(0, Math.round((cartItemQuantity.value - 1) * 100) / 100);
   if (newQty === 0) {
     triggerHaptic('warning');
     cartStore.removeFromCart(props.product._id);
@@ -223,7 +223,15 @@ const activeTagsList = computed(() => {
     </button>
 
     <!-- Product Image (Bigger Image: 75% aspect ratio) -->
-    <div class="img-wrapper" @click="emit('zoom', getImageUrl())">
+    <div 
+      class="img-wrapper" 
+      role="button"
+      tabindex="0"
+      :aria-label="'تكبير صورة ' + product.name"
+      @click="emit('zoom', getImageUrl())"
+      @keydown.enter="emit('zoom', getImageUrl())"
+      @keydown.space.prevent="emit('zoom', getImageUrl())"
+    >
       <!-- Pulsing Glass Shimmer Placeholder (Fades out smoothly when image loads) -->
       <div class="img-skeleton-shimmer" :class="{ 'hidden-skeleton': isLoaded }">
         <div class="shimmer-wave"></div>

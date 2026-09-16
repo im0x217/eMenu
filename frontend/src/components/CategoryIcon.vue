@@ -114,7 +114,7 @@ const iconComponent = computed(() => {
 </script>
 
 <template>
-  <span class="cat-svg-icon-wrapper">
+  <span class="cat-svg-icon-wrapper" aria-hidden="true">
     <HugeiconsIcon 
       :icon="iconComponent" 
       :size="size" 

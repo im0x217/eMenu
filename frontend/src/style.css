@@ -71,6 +71,13 @@
   .app-container {
     padding: calc(0.65rem + env(safe-area-inset-top, 0px)) 0.65rem calc(125px + env(safe-area-inset-bottom, 0px)) 0.65rem !important;
   }
+
+  /* Universal iOS Safari Form Control Guard: prevent unwanted page zoom */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 * {
@@ -685,5 +692,19 @@ body.modal-open .floating-cart-bar {
   pointer-events: none !important;
   visibility: hidden !important;
   transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

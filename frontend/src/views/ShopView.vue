@@ -627,7 +627,12 @@ watch(carouselItems, (newItems) => {
         class="clear-search-btn" 
         aria-label="مسح البحث"
         @click="searchQuery = ''"
-      >✕</button>
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
 
     <!-- Category Selector (hidden when searching) -->
@@ -774,7 +779,12 @@ watch(carouselItems, (newItems) => {
           @click.self="closeZoomModal"
         >
           <!-- Fixed Top-Left Close Button -->
-          <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
+          <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
 
           <div class="zoom-content" @click.stop>
             <!-- Shimmer & Spinner Loader while full-size image downloads -->
@@ -1299,7 +1309,12 @@ watch(carouselItems, (newItems) => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s, background 0.2s;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.zoom-close-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
 }
 
 .zoom-close-btn:active {

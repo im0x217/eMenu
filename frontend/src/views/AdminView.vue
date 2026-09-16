@@ -868,18 +868,20 @@
                     
   <!-- RESET ORDERS CONFIRMATION MODAL -->
   <div v-if="resetModalOpen" class="modal-overlay animate-fade-in" @click.self="resetModalOpen = false">
-    <div class="modal-content reset-confirm-modal-box">
+    <div class="modal-content reset-confirm-modal-box" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
       <div class="modal-header reset-modal-header">
         <div class="d-flex align-items-center gap-3">
-          <div class="reset-header-icon">
+          <div class="reset-header-icon" aria-hidden="true">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </div>
           <div>
-            <h3 class="m-0 font-bold text-danger">تأكيد مسح وتصفير سجل الطلبات</h3>
+            <h3 id="reset-modal-title" class="m-0 font-bold text-danger">تأكيد مسح وتصفير سجل الطلبات</h3>
             <p class="text-muted m-0 text-small">هذا الإجراء سيقوم بمسح بيانات الطلبات والمبيعات نهائياً</p>
           </div>
         </div>
-        <button @click="resetModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+        <button @click="resetModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
 
       <div class="modal-body py-3">
@@ -902,6 +904,7 @@
             class="form-control text-center font-bold" 
             placeholder="اكتب: مسح البيانات"
             autocomplete="off"
+            spellcheck="false"
           />
         </div>
       </div>
@@ -914,7 +917,7 @@
           :disabled="resetConfirmText.trim() !== 'مسح البيانات' || resetLoading"
         >
           <span v-if="resetLoading" class="spinner-border spinner-border-sm"></span>
-          <span>{{ resetLoading ? 'جاري المسح...' : 'نعم، قم بالمسح النهائي' }}</span>
+          <span>{{ resetLoading ? 'جاري المسح…' : 'نعم، قم بالمسح النهائي' }}</span>
         </button>
         <button type="button" @click="resetModalOpen = false" class="btn btn-outline">
           <span>إلغاء</span>
@@ -1066,8 +1069,8 @@
                       v-for="(p, pIdx) in productsVisiblePages" 
                       :key="'prod-page-'+pIdx" 
                       class="page-num-pill" 
-                      :class="{ active: productsPage === p, ellipsis: p === '...' }" 
-                      :disabled="p === '...'"
+                      :class="{ active: productsPage === p, ellipsis: p === '…' }" 
+                      :disabled="p === '…'"
                       @click="typeof p === 'number' && (productsPage = p)"
                     >
                       {{ p }}
@@ -1764,8 +1767,8 @@
                       v-for="(p, pIdx) in ordersVisiblePages" 
                       :key="'ord-page-'+pIdx" 
                       class="page-num-pill" 
-                      :class="{ active: ordersPage === p, ellipsis: p === '...' }" 
-                      :disabled="p === '...'"
+                      :class="{ active: ordersPage === p, ellipsis: p === '…' }" 
+                      :disabled="p === '…'"
                       @click="typeof p === 'number' && (ordersPage = p)"
                     >
                       {{ p }}
@@ -2429,18 +2432,27 @@
     </div>
 
     <!-- Order Edit Modal (Refined Fast-POS Architecture) -->
-    <div v-if="orderEditModalOpen" class="modal-overlay animate-fade-in" @click.self="orderEditModalOpen = false">
+    <div 
+      v-if="orderEditModalOpen" 
+      class="modal-overlay animate-fade-in pos-modal-overlay" 
+      @click.self="orderEditModalOpen = false"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-edit-title"
+    >
       <div class="modal-content glass-panel fast-order-modal">
+        <!-- Mobile Bottom-Sheet Drag Handle -->
+        <div class="mobile-modal-drag-pill" aria-hidden="true"></div>
         
         <!-- Modal Header -->
         <div class="fast-order-header">
           <div class="fast-order-title-group">
-            <div class="new-order-icon" style="background: rgba(245, 158, 11, 0.16); color: #d97706;">
+            <div class="new-order-icon" style="background: rgba(245, 158, 11, 0.16); color: #d97706;" aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </div>
             <div>
               <div class="fast-order-title-row" style="flex-wrap: wrap; row-gap: 6px;">
-                <h3>تعديل محتويات الطلب</h3>
+                <h3 id="order-edit-title">تعديل محتويات الطلب</h3>
                 <span class="edit-order-id-badge text-mono font-bold">#{{ editingOrder.orderNumber || (editingOrder._id ? editingOrder._id.toString().slice(-6) : '') }}</span>
                 <span class="pos-cust-status-badge" :class="editingOrder.status === 'ready' ? 'status-ready' : (editingOrder.status === 'received' ? 'status-received' : (editingOrder.status === 'cancelled' ? 'status-cancelled' : 'status-pending'))">
                   {{ editingOrder.status === 'ready' ? 'جاهز للاستلام' : (editingOrder.status === 'received' ? 'تم الاستلام' : (editingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار')) }}
@@ -2458,7 +2470,7 @@
               :class="{ active: editingOrder.priceMode === 'bulk' }" 
               @click="editingOrder.priceMode = 'bulk'; onPriceModeChange();"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               <span>تسعير جملة</span>
             </button>
             <button 
@@ -2467,12 +2479,14 @@
               :class="{ active: editingOrder.priceMode === 'regular' }" 
               @click="editingOrder.priceMode = 'regular'; onPriceModeChange();"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
               <span>تسعير مفرد</span>
             </button>
           </div>
 
-          <button type="button" @click="orderEditModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
+          <button type="button" @click="orderEditModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <form @submit.prevent="saveOrder" class="fast-order-form-body">
@@ -3244,8 +3258,8 @@
                       v-for="(p, pIdx) in customersVisiblePages" 
                       :key="'cust-page-'+pIdx" 
                       class="page-num-pill" 
-                      :class="{ active: customersPage === p, ellipsis: p === '...' }" 
-                      :disabled="p === '...'"
+                      :class="{ active: customersPage === p, ellipsis: p === '…' }" 
+                      :disabled="p === '…'"
                       @click="typeof p === 'number' && (customersPage = p)"
                     >
                       {{ p }}
@@ -3888,7 +3902,7 @@
                     <input 
                       v-model="newBackupLabel" 
                       type="text" 
-                      placeholder="وصف اختياري للنسخة (مثال: قبل تصفير الطلبات)..." 
+                      placeholder="وصف اختياري للنسخة (مثال: قبل تصفير الطلبات)…" 
                       class="form-control flex-grow-1" 
                     />
                     <button 
@@ -3898,7 +3912,7 @@
                     >
                       <svg v-if="!backupLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       <span v-if="backupLoading" class="spinner-border spinner-border-sm"></span>
-                      <span>{{ backupLoading ? 'جاري الإنشاء...' : 'إنشاء نسخة احتياطية الآن' }}</span>
+                      <span>{{ backupLoading ? 'جاري الإنشاء…' : 'إنشاء نسخة احتياطية الآن' }}</span>
                     </button>
                   </div>
 
@@ -3982,7 +3996,7 @@
                   <div class="mt-3">
                     <button @click="openResetModal" class="btn btn-danger btn-reset-trigger d-flex align-items-center gap-2">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                      <span>مسح وتصفير سجل الطلبات والمبيعات...</span>
+                      <span>مسح وتصفير سجل الطلبات والمبيعات…</span>
                     </button>
                   </div>
                 </div>
@@ -4002,32 +4016,34 @@
 
     <!-- Chef Create/Edit Modal -->
     <div v-if="chefModalOpen" class="modal-overlay animate-fade-in" @click.self="chefModalOpen = false">
-      <div class="modal-content modal-md chef-form-modal">
+      <div class="modal-content modal-md chef-form-modal" role="dialog" aria-modal="true" aria-labelledby="chef-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="d-flex align-items-center gap-3">
-              <div class="modal-title-icon-chef">
+              <div class="modal-title-icon-chef" aria-hidden="true">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
               </div>
               <div>
-                <h2 class="modal-title">{{ editingChef._id ? 'تعديل بيانات الشيف' : 'إضافة شيف جديد' }}</h2>
+                <h2 id="chef-modal-title" class="modal-title">{{ editingChef._id ? 'تعديل بيانات الشيف' : 'إضافة شيف جديد' }}</h2>
                 <span class="modal-subtitle text-muted mt-1 d-block">إدارة وتعيين بيانات الشيف ومتابعة أصنافه المسندة</span>
               </div>
             </div>
           </div>
-          <button @click="chefModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
+          <button @click="chefModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <form @submit.prevent="saveChef" class="modal-form">
           <div class="modal-body py-2">
             <div class="form-group mb-3">
               <label class="form-label font-bold">اسم الشيف *</label>
-              <input v-model="editingChef.name" type="text" required class="form-control" placeholder="مثال: الشيف أحمد..." />
+              <input v-model="editingChef.name" type="text" required class="form-control" placeholder="مثال: الشيف أحمد…" />
               <small class="form-text text-muted mt-1 d-block">الاسم الذي سيظهر في بطاقات المنتجات وتقارير الإنتاج.</small>
             </div>
 
             <div class="form-group mb-3">
               <label class="form-label font-bold">رقم الهاتف (اختياري)</label>
-              <input v-model="editingChef.phone" type="text" class="form-control text-mono" placeholder="0910000000..." />
+              <input v-model="editingChef.phone" type="tel" inputmode="tel" spellcheck="false" class="form-control text-mono" placeholder="0910000000…" />
               <small class="form-text text-muted mt-1 d-block">للتواصل السريع والمباشر مع الشيف عبر واتساب أو الاتصال.</small>
             </div>
 
@@ -4059,28 +4075,30 @@
 
     <!-- Assign Products to Chef Modal (Spacious Card Picker) -->
     <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay animate-fade-in" @click.self="assignProductsModalOpen = false">
-      <div class="modal-content modal-lg assign-products-modal-box">
+      <div class="modal-content modal-lg assign-products-modal-box" role="dialog" aria-modal="true" aria-labelledby="assign-products-title">
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="d-flex align-items-center gap-3">
-              <div class="modal-title-icon-chef">
+              <div class="modal-title-icon-chef" aria-hidden="true">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
               </div>
               <div>
-                <h2 class="modal-title">تخصيص وإسناد الأصناف للشيف</h2>
+                <h2 id="assign-products-title" class="modal-title">تخصيص وإسناد الأصناف للشيف</h2>
                 <span class="modal-subtitle">اختر الأصناف التي يتولى إنتاجها الشيف <strong class="text-primary">{{ selectedChefForAssign.name }}</strong></span>
               </div>
             </div>
           </div>
-          <button @click="assignProductsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">✕</button>
+          <button @click="assignProductsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <div class="modal-body py-2">
           <!-- Filter & Bulk Actions Toolbar -->
           <div class="assign-toolbar-container mb-3">
             <div class="search-input-wrapper flex-grow-1">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input v-model="assignProductSearch" type="text" placeholder="البحث باسم الصنف أو التصنيف..." class="form-control search-input" />
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input v-model="assignProductSearch" type="text" placeholder="البحث باسم الصنف أو التصنيف…" class="form-control search-input" autocomplete="off" spellcheck="false" />
             </div>
 
             <div class="assign-toolbar-actions">
@@ -4110,16 +4128,17 @@
               :title="isProductAssignedToOtherChef(prod) ? ('هذا الصنف مخصص ومقفل للشيف: ' + getOtherChefName(prod)) : ''"
             >
               <div class="card-selection-check" :class="{ 'is-lock-badge': isProductAssignedToOtherChef(prod) }">
-                <svg v-if="isProductAssignedToOtherChef(prod)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <svg v-else-if="selectedProductIdsForChef.includes(String(prod._id))" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg v-if="isProductAssignedToOtherChef(prod)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg v-else-if="selectedProductIdsForChef.includes(String(prod._id))" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <img :src="prod.img || '/res/logo.jpg'" :alt="prod.name" class="assign-prod-img" />
               <div class="assign-prod-info">
                 <h5 class="assign-prod-title font-bold">{{ prod.name }}</h5>
                 <div class="d-flex align-items-center gap-1 flex-wrap my-1">
                   <span class="assign-prod-cat-pill">{{ prod.category }}</span>
-                  <span v-if="isProductAssignedToOtherChef(prod)" class="assign-prod-locked-pill">
-                    🔒 مخصص لـ {{ getOtherChefName(prod) }}
+                  <span v-if="isProductAssignedToOtherChef(prod)" class="assign-prod-locked-pill d-inline-flex align-items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>مخصص لـ {{ getOtherChefName(prod) }}</span>
                   </span>
                 </div>
                 <span class="assign-prod-price text-mono font-bold">{{ formatCurrency(prod.price_regular || prod.price || 0) }}</span>
@@ -4142,15 +4161,17 @@
 
     <!-- Product Modal Form -->
     <div v-if="productModalOpen" class="modal-overlay animate-fade-in" @click.self="productModalOpen = false">
-      <div class="modal-box glass-panel max-w-lg product-form-modal">
+      <div class="modal-box glass-panel max-w-lg product-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
-            <div class="modal-title-icon">
+            <div class="modal-title-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             </div>
-            <h3>{{ editingProduct._id ? 'تعديل بيانات المنتج' : 'إضافة منتج جديد' }}</h3>
+            <h3 id="product-modal-title">{{ editingProduct._id ? 'تعديل بيانات المنتج' : 'إضافة منتج جديد' }}</h3>
           </div>
-          <button @click="productModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+          <button @click="productModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <form @submit.prevent="saveProduct" class="modal-form">
@@ -4179,17 +4200,17 @@
                 <img :src="modalFilePreview || editingProduct.img" alt="Product Preview" class="upload-preview-img" decoding="async" loading="eager" />
                 <div class="image-preview-overlay">
                   <span class="preview-change-btn">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     تغيير الصورة
                   </span>
-                  <button type="button" class="preview-remove-btn" @click.stop="removeModalImage" title="حذف الصورة">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  <button type="button" class="preview-remove-btn" @click.stop="removeModalImage" title="حذف الصورة" aria-label="حذف الصورة">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
               </div>
 
               <div v-else class="dropzone-placeholder">
-                <div class="dropzone-icon">
+                <div class="dropzone-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                 </div>
                 <div class="dropzone-text">
@@ -4207,14 +4228,14 @@
 
           <div class="form-group">
             <label>الوصف</label>
-            <textarea v-model="editingProduct.desc" rows="2" placeholder="أدخل وصفاً مشوقاً للمنتج..." class="form-control"></textarea>
+            <textarea v-model="editingProduct.desc" rows="2" placeholder="أدخل وصفاً مشوقاً للمنتج…" class="form-control"></textarea>
           </div>
 
           <div class="form-group-row">
             <div class="form-group">
               <label class="form-label font-bold">الصنف الرئيسي *</label>
               <select v-model="editingProduct.category" @change="onProductCategoryChange" required class="form-control">
-                <option value="">اختر الصنف...</option>
+                <option value="">اختر الصنف…</option>
                 <option v-for="cat in categories" :key="cat._id" :value="cat.name">{{ cat.name }}</option>
               </select>
             </div>
@@ -4320,11 +4341,13 @@
     </div>
 
     <!-- Category Modal Form -->
-    <div v-if="categoryModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-md">
+    <div v-if="categoryModalOpen" class="modal-overlay animate-fade-in" @click.self="categoryModalOpen = false">
+      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
         <div class="modal-header">
-          <h3>{{ editingCategory._id ? 'تعديل الصنف' : 'إضافة صنف جديد' }}</h3>
-          <button @click="categoryModalOpen = false" class="modal-close-btn">&times;</button>
+          <h3 id="category-modal-title">{{ editingCategory._id ? 'تعديل الصنف' : 'إضافة صنف جديد' }}</h3>
+          <button @click="categoryModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <form @submit.prevent="saveCategory" class="modal-form">
           <div class="form-group">
@@ -4375,15 +4398,17 @@
 
     <!-- Tag Modal Form -->
     <div v-if="tagModalOpen" class="modal-overlay animate-fade-in" @click.self="tagModalOpen = false">
-      <div class="modal-box glass-panel max-w-md">
+      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="tag-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
-            <div class="modal-title-icon">
+            <div class="modal-title-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
             </div>
-            <h3>{{ editingTag._id ? 'تعديل العلامة المميزة' : 'إضافة علامة مميزة جديدة' }}</h3>
+            <h3 id="tag-modal-title">{{ editingTag._id ? 'تعديل العلامة المميزة' : 'إضافة علامة مميزة جديدة' }}</h3>
           </div>
-          <button @click="tagModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+          <button @click="tagModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <form @submit.prevent="saveTag" class="modal-form">
@@ -4654,24 +4679,26 @@
 
     <!-- Customer Modal Form -->
     <div v-if="customerModalOpen" class="modal-overlay animate-fade-in" @click.self="customerModalOpen = false">
-      <div class="modal-content modal-md">
+      <div class="modal-content modal-md" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
-            <h2 class="modal-title">تعديل بيانات العميل</h2>
+            <h2 id="customer-modal-title" class="modal-title">تعديل بيانات العميل</h2>
             <span v-if="editingCustomer.phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ editingCustomer.phone }}</span>
           </div>
-          <button @click="customerModalOpen = false" class="modal-close-btn">✕</button>
+          <button @click="customerModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <form @submit.prevent="saveCustomerDetails" class="modal-form">
           <div class="modal-body">
             <div class="form-group mb-3">
               <label class="form-label">اسم العميل *</label>
-              <input v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل الكامل..." />
+              <input v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل الكامل…" />
             </div>
 
             <div class="form-group mb-3">
               <label class="form-label">رقم الهاتف *</label>
-              <input v-model="editingCustomer.phone" type="text" required class="form-control text-mono" placeholder="0910000000..." />
+              <input v-model="editingCustomer.phone" type="tel" inputmode="tel" spellcheck="false" required class="form-control text-mono" placeholder="0910000000…" />
             </div>
 
             <div class="form-group mb-3">
@@ -4684,16 +4711,17 @@
                   v-model="editingCustomer.password" 
                   :type="editingCustomer.showPassword ? 'text' : 'password'" 
                   class="form-control text-mono" 
-                  placeholder="أدخل كلمة المرور (4 خانات على الأقل)..." 
+                  placeholder="أدخل كلمة المرور (4 خانات على الأقل)…" 
                 />
                 <button 
                   type="button" 
                   @click="editingCustomer.showPassword = !editingCustomer.showPassword" 
                   class="input-action-btn"
                   :title="editingCustomer.showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+                  :aria-label="editingCustomer.showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
                 >
-                  <svg v-if="editingCustomer.showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg v-if="editingCustomer.showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
               <small class="form-text text-muted mt-1 d-block">
@@ -4704,7 +4732,7 @@
 
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>حفظ التغييرات</span>
             </button>
             <button type="button" @click="customerModalOpen = false" class="btn btn-outline btn-modal-cancel">
@@ -4717,15 +4745,17 @@
 
     <!-- Customer Favorites Modal -->
     <div v-if="customerFavsModalOpen" class="modal-overlay animate-fade-in" @click.self="customerFavsModalOpen = false">
-      <div class="modal-content modal-lg">
+      <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="customer-favs-title">
         <div class="modal-header">
           <div class="modal-title-group">
-            <h2 class="modal-title">المنتجات المفضلة للعميل</h2>
+            <h2 id="customer-favs-title" class="modal-title">المنتجات المفضلة للعميل</h2>
             <span v-if="viewingCustomer" class="modal-subtitle">
               {{ viewingCustomer.name }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ viewingCustomer.phone }}</span>
             </span>
           </div>
-          <button @click="customerFavsModalOpen = false" class="modal-close-btn">✕</button>
+          <button @click="customerFavsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <div class="modal-body py-3">
           <div v-if="viewingCustomer" class="customer-favs-meta mb-3 pb-2" style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
@@ -4774,11 +4804,13 @@
     </div>
 
     <!-- Marketing Carousel Modal Form -->
-    <div v-if="carouselModalOpen" class="modal-overlay animate-fade-in">
-      <div class="modal-box glass-panel max-w-md">
+    <div v-if="carouselModalOpen" class="modal-overlay animate-fade-in" @click.self="carouselModalOpen = false">
+      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="carousel-modal-title">
         <div class="modal-header">
-          <h3>{{ editingCarouselId ? 'تعديل البنر الإعلاني' : 'إضافة بنر إعلاني جديد' }}</h3>
-          <button @click="carouselModalOpen = false" class="modal-close-btn">&times;</button>
+          <h3 id="carousel-modal-title">{{ editingCarouselId ? 'تعديل البنر الإعلاني' : 'إضافة بنر إعلاني جديد' }}</h3>
+          <button @click="carouselModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <form @submit.prevent="saveCarouselItem" class="modal-form">
           <p class="modal-subtitle text-muted text-small mb-3">اختر صورة البنر الإعلاني ورابط التوجيه ليتم تحديثها وعرضها مباشرة للزبائن.</p>
@@ -4828,9 +4860,14 @@
 
 
     <!-- Modern Admin Image Zoom View -->
-    <div v-if="zoomedImageSrc" class="zoom-backdrop" @click="closeAdminZoom">
+    <div v-if="zoomedImageSrc" class="zoom-backdrop" @click="closeAdminZoom" role="dialog" aria-modal="true" aria-label="معاينة الصورة">
       <!-- Fixed Top-Left Close Button -->
-      <button class="zoom-close-btn" @click.stop="closeAdminZoom" aria-label="إغلاق">✕</button>
+      <button class="zoom-close-btn" @click.stop="closeAdminZoom" aria-label="إغلاق">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
       <div class="zoom-content" @click.stop>
         <!-- Shimmer & Spinner Loader while full-size image downloads -->
@@ -4854,14 +4891,16 @@
       </div>
     </div>
     <!-- Premium Image Cropper Modal -->
-    <div v-if="cropperModalOpen" class="premium-cropper-overlay animate-fade-in">
+    <div v-if="cropperModalOpen" class="premium-cropper-overlay animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="cropper-modal-title">
       <div class="premium-cropper-content">
         <div class="premium-cropper-header">
           <div>
-            <h2 class="text-xl text-bold" style="margin: 0; color: #1f2937;">تخصيص أبعاد البنر</h2>
+            <h2 id="cropper-modal-title" class="text-xl text-bold" style="margin: 0; color: #1f2937;">تخصيص أبعاد البنر</h2>
             <p class="text-muted text-small" style="margin: 0; margin-top: 4px;">قم بتعديل الصورة لتتناسب مع واجهة المتجر</p>
           </div>
-          <button @click="cropperModalOpen = false" class="premium-close-btn">&times;</button>
+          <button @click="cropperModalOpen = false" class="premium-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         
         <div class="premium-cropper-body">
@@ -4909,15 +4948,17 @@
 
   <!-- User Modal Form -->
   <div v-if="userModalOpen" class="modal-overlay animate-fade-in" @click.self="userModalOpen = false">
-    <div class="modal-box glass-panel max-w-lg user-form-modal">
+    <div class="modal-box glass-panel max-w-lg user-form-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
       <div class="modal-header">
         <div class="modal-title-group">
-          <div class="modal-title-icon">
+          <div class="modal-title-icon" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
           </div>
-          <h3>{{ editingUser._id ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم جديد' }}</h3>
+          <h3 id="user-modal-title">{{ editingUser._id ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم جديد' }}</h3>
         </div>
-        <button @click="userModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+        <button @click="userModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
 
       <form @submit.prevent="saveUser" class="modal-form">
@@ -5017,7 +5058,10 @@
       <!-- Chef Breakdown Tables -->
       <div v-for="cReport in productionReportData.chefReport" :key="cReport.chefId" class="mb-4" style="page-break-inside: avoid;">
         <div class="d-flex justify-content-between align-items-center mb-2 pb-1" style="border-bottom: 2px solid #1e293b;">
-          <h3 class="font-bold mb-0" style="font-size: 11pt;">👨‍🍳 الشيف: {{ cReport.chefName }}</h3>
+          <h3 class="font-bold mb-0 d-inline-flex align-items-center gap-1" style="font-size: 11pt;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+            <span>الشيف: {{ cReport.chefName }}</span>
+          </h3>
           <span class="text-mono font-bold" style="font-size: 9pt;">إجمالي القطع: {{ cReport.totalQty }} | الإيراد: {{ formatCurrency(cReport.totalRevenue) }} | التكلفة: {{ formatCurrency(cReport.totalCost) }}</span>
         </div>
 
@@ -5656,7 +5700,9 @@
           @click="closeProductCustomersModal" 
           class="modal-close-btn" 
           aria-label="إغلاق النافذة"
-        >✕</button>
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
 
       <!-- KPI Summary Cards Bar -->
@@ -5722,7 +5768,9 @@
             class="btn-clear-search" 
             @click="productCustomersSearch = ''" 
             aria-label="مسح البحث"
-          >✕</button>
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <!-- View Mode Switcher -->
@@ -5917,15 +5965,17 @@
 
   <!-- ============ PAYMENT RECORDING MODAL ============ -->
   <div v-if="paymentModalOpen" class="modal-overlay animate-fade-in" @click.self="paymentModalOpen = false">
-    <div class="modal-content modal-lg">
+    <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h2 class="modal-title">تسجيل دفعة نقدية</h2>
+          <h2 id="payment-modal-title" class="modal-title">تسجيل دفعة نقدية</h2>
           <span class="modal-subtitle">
             {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ paymentTarget.customerPhone }}</span>
           </span>
         </div>
-        <button @click="paymentModalOpen = false" class="modal-close-btn">✕</button>
+        <button @click="paymentModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
 
       <!-- SKELETON LOADER FOR PAYMENT RECORDING MODAL -->
@@ -6039,7 +6089,7 @@
 
             <div class="form-group form-group-full">
               <label class="form-label">ملاحظة (اختياري)</label>
-              <input v-model="paymentTarget.note" type="text" class="form-control" placeholder="ملاحظة على الدفعة..." />
+              <input v-model="paymentTarget.note" type="text" class="form-control" placeholder="ملاحظة على الدفعة…" />
             </div>
           </div>
 
@@ -6095,15 +6145,17 @@
 
   <!-- ============ PAYMENT HISTORY MODAL ============ -->
   <div v-if="paymentHistoryModalOpen" class="modal-overlay animate-fade-in" @click.self="paymentHistoryModalOpen = false">
-    <div class="modal-content modal-lg">
+    <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-history-title">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h2 class="modal-title">سجل المدفوعات والتحصيلات</h2>
+          <h2 id="payment-history-title" class="modal-title">سجل المدفوعات والتحصيلات</h2>
           <span class="modal-subtitle">
             {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ paymentTarget.customerPhone }}</span>
           </span>
         </div>
-        <button @click="paymentHistoryModalOpen = false" class="modal-close-btn">✕</button>
+        <button @click="paymentHistoryModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
 
       <!-- SKELETON LOADER FOR PAYMENT HISTORY -->
@@ -6288,19 +6340,21 @@
 
   <!-- KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
   <div v-if="shortcutsModalOpen" class="modal-overlay animate-fade-in" @click.self="shortcutsModalOpen = false">
-    <div class="modal-content shortcuts-modal-box">
+    <div class="modal-content shortcuts-modal-box" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
       <!-- Fixed Modal Header -->
       <div class="shortcuts-modal-header">
         <div class="d-flex align-items-center gap-3">
-          <div class="shortcuts-header-icon">
+          <div class="shortcuts-header-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
           </div>
           <div>
-            <h3 class="m-0 font-bold shortcuts-title">دليل اختصارات لوحة المفاتيح (Keyboard Shortcuts)</h3>
+            <h3 id="shortcuts-modal-title" class="m-0 font-bold shortcuts-title">دليل اختصارات لوحة المفاتيح (Keyboard Shortcuts)</h3>
             <p class="text-muted m-0 text-small">تحكم كامل بالمنظومة وإدخال سريع للطلبات دون استخدام الفأرة</p>
           </div>
         </div>
-        <button @click="shortcutsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">&times;</button>
+        <button @click="shortcutsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
 
       <!-- Scrollable Modal Body -->
@@ -6443,7 +6497,7 @@
 
   <!-- COMMAND PALETTE MODAL -->
   <div v-if="commandPaletteOpen" class="command-palette-backdrop animate-fade-in" @click.self="commandPaletteOpen = false">
-    <div class="command-palette-box glass-panel">
+    <div class="command-palette-box glass-panel" role="dialog" aria-modal="true" aria-label="لوحة الأوامر السريعة">
       <div class="palette-input-wrapper">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="palette-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input 
@@ -12012,20 +12066,20 @@ const closeSuggestionsWithDelay = () => {
       }
       if (isMobile) {
         if (current <= 3) {
-          return [1, 2, 3, '...', total];
+          return [1, 2, 3, '…', total];
         }
         if (current >= total - 2) {
-          return [1, '...', total - 2, total - 1, total];
+          return [1, '…', total - 2, total - 1, total];
         }
-        return [1, '...', current, '...', total];
+        return [1, '…', current, '…', total];
       }
       if (current <= 4) {
-        return [1, 2, 3, 4, 5, '...', total];
+        return [1, 2, 3, 4, 5, '…', total];
       }
       if (current >= total - 3) {
-        return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
       }
-      return [1, '...', current - 1, current, current + 1, '...', total];
+      return [1, '…', current - 1, current, current + 1, '…', total];
     };
 
     // Products Pagination
@@ -14638,6 +14692,7 @@ select.form-control:focus {
 }
 
 .modal-close-btn {
+  position: relative;
   background: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
   width: 32px;
@@ -14649,13 +14704,33 @@ select.form-control:focus {
   font-size: 1rem;
   cursor: pointer;
   color: #64748b !important;
-  transition: all 0.2s ease;
+  touch-action: manipulation;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.modal-close-btn::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  bottom: -6px;
+  left: -6px;
 }
 
 .modal-close-btn:hover {
   background: #fef2f2 !important;
   color: #ef4444 !important;
   border-color: #fca5a5 !important;
+}
+
+.modal-close-btn:focus-visible {
+  outline: none;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
+.modal-close-btn:active {
+  transform: scale(0.94);
 }
 
 .form-group {
@@ -17560,8 +17635,8 @@ select.form-control:focus {
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17569,15 +17644,21 @@ select.form-control:focus {
   font-size: 1.3rem;
   font-weight: bold;
   cursor: pointer;
+  touch-action: manipulation;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-  transition: transform 0.2s, background 0.2s;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .zoom-close-btn:hover {
   transform: scale(1.1);
   background: rgba(255, 255, 255, 0.25);
+}
+
+.zoom-close-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6), 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
 .zoom-close-btn:active {

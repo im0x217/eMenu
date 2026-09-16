@@ -653,13 +653,18 @@ const handleResendWhatsApp = () => {
 
     <!-- WhatsApp Details Modal -->
     <div v-if="isModalOpen" class="modal-backdrop" @click="closeModal">
-      <div class="modal-content glass-panel" @click.stop>
+      <div class="modal-content glass-panel" role="dialog" aria-modal="true" aria-labelledby="order-details-title" @click.stop>
         <div class="modal-header">
           <div class="modal-title-group">
-            <h4 class="modal-title">تفاصيل الطلب</h4>
+            <h4 id="order-details-title" class="modal-title">تفاصيل الطلب</h4>
             <span class="modal-subtitle">رسالة جاهزة لإعادة الإرسال عبر واتساب</span>
           </div>
-          <button class="btn-close" @click="closeModal">✕</button>
+          <button type="button" class="btn-close" @click="closeModal" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
         <div class="modal-body">
@@ -1534,10 +1539,39 @@ const handleResendWhatsApp = () => {
 .btn-close {
   background: transparent;
   border: none;
-  font-size: 1.1rem;
-  color: #94a3b8;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #64748b;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+  position: relative;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-close::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: -4px;
+  right: -4px;
+}
+
+.btn-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+.btn-close:focus-visible {
+  outline: 2px solid var(--primary-color, #f59e0b);
+  outline-offset: 2px;
 }
 
 .whatsapp-textarea {

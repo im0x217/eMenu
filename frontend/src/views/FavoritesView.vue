@@ -100,8 +100,12 @@ const closeZoomModal = () => {
 
     <!-- Image Zoom Modal -->
     <div v-if="zoomedImgUrl" class="zoom-backdrop" @click="closeZoomModal">
-      <!-- Fixed Top-Left Close Button -->
-      <button class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">✕</button>
+      <button class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
       <div class="zoom-content" @click.stop>
         <!-- Shimmer & Spinner Loader while full-size image downloads -->
@@ -368,8 +372,10 @@ const closeZoomModal = () => {
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,7 +386,12 @@ const closeZoomModal = () => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s, background 0.2s;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.zoom-close-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
 }
 
 .zoom-close-btn:active {
