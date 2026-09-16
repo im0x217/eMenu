@@ -155,24 +155,6 @@
                 {{ p.label }}
               </button>
             </div>
-            
-            <!-- Quick Action Buttons -->
-            <div class="report-actions">
-              <button @click="printReport" class="btn btn-sm btn-outline">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="me-1" style="display:inline-block; vertical-align:middle;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                طباعة التقرير
-              </button>
-              <div class="dropdown-export">
-                <button class="btn btn-sm btn-primary">
-                  تصدير البيانات CSV
-                </button>
-                <div class="dropdown-content">
-                  <a href="#" @click.prevent="exportReport('orders')">تقرير الطلبات</a>
-                  <a href="#" @click.prevent="exportReport('products')">أداء المنتجات</a>
-                  <a href="#" @click.prevent="exportReport('customers')">تفاعل العملاء</a>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
