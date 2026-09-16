@@ -3845,9 +3845,14 @@ app.get("/apple-touch-icon.png", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "apple-touch-icon.png"));
 });
 
-app.get("/manifest-admin.json", (req, res) => {
+app.get(["/manifest-admin.json", "/app/manifest-admin.json"], (req, res) => {
   res.setHeader("Content-Type", "application/manifest+json");
   res.sendFile(path.join(__dirname, "public", "manifest-admin.json"));
+});
+
+// ============ DEDICATED ADMIN PWA ROUTE ============
+app.get(["/admin", "/admin/*"], (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app", "index.html"));
 });
 
 // ============ CATCH-ALL ROUTE FOR VUE SPA ============

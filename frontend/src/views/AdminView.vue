@@ -13622,7 +13622,7 @@ const closeSuggestionsWithDelay = () => {
   position: relative !important;
   grid-column: 2;
   grid-row: 1;
-  padding: 30px 30px calc(80px + env(safe-area-inset-bottom)) 30px;
+  padding: 30px 30px calc(24px + env(safe-area-inset-bottom, 0px)) 30px;
   overflow-y: auto;
   overflow-x: hidden;
   height: 100dvh;
@@ -15561,18 +15561,26 @@ select.form-control:focus {
   }
 
   .admin-container {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow: hidden !important;
   }
 
   .admin-main {
-    grid-column: 1;
-    grid-row: auto;
-    padding: 10px 8px calc(110px + env(safe-area-inset-bottom)) 8px !important;
+    grid-column: unset;
+    grid-row: unset;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    padding: 12px 10px calc(20px + env(safe-area-inset-bottom, 0px)) 10px !important;
+    overflow-y: auto !important;
     overflow-x: hidden !important;
     max-width: 100vw !important;
     overscroll-behavior-x: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .products-tab-content,
@@ -15583,7 +15591,7 @@ select.form-control:focus {
   .carousel-tab-content,
   .users-tab-content,
   .analytics-tab-content {
-    padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: 12px !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
@@ -15604,10 +15612,11 @@ select.form-control:focus {
 
   .admin-sidebar {
     position: fixed;
-    top: 48px;
+    top: calc(48px + env(safe-area-inset-top, 0px));
     right: 0;
     width: 260px;
-    height: calc(100dvh - 48px);
+    height: calc(100dvh - 48px - env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     transform: translateX(100%);
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
     z-index: 1000;
@@ -15619,7 +15628,7 @@ select.form-control:focus {
 
   .sidebar-backdrop {
     position: fixed;
-    top: 48px;
+    top: calc(48px + env(safe-area-inset-top, 0px));
     left: 0;
     right: 0;
     bottom: 0;
@@ -15631,8 +15640,9 @@ select.form-control:focus {
 
   .admin-mobile-header {
     display: flex;
-    padding: 8px 12px;
-    height: 48px;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 12px;
+    height: calc(48px + env(safe-area-inset-top, 0px));
+    flex-shrink: 0;
     align-items: center;
     box-sizing: border-box;
   }

@@ -3,7 +3,7 @@
   "name": "لوحة تحكم عبمبر الزروق",
   "short_name": "إدارة الزروق",
   "description": "لوحة تحكم الإدارة ونقاط البيع السريعة وإدارة الطلبات",
-  "start_url": "/app/#/admin",
+  "start_url": "/app/?view=admin",
   "scope": "/app/",
   "display": "standalone",
   "orientation": "any",
@@ -33,7 +33,7 @@
     {
       "name": "إنشاء طلب كاشير فوري",
       "short_name": "طلب فوري",
-      "url": "/app/#/admin",
+      "url": "/app/?view=admin",
       "icons": [
         {
           "src": "/favicon.png",
@@ -44,7 +44,7 @@
     {
       "name": "الطلبات والمبيعات",
       "short_name": "الطلبات",
-      "url": "/app/#/admin",
+      "url": "/app/?view=admin",
       "icons": [
         {
           "src": "/favicon.png",

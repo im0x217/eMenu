@@ -12,8 +12,16 @@ const routes = [
   {
     path: '/',
     redirect: () => {
-      // Parse query params to detect active shop from index.html links
+      // Parse query params to detect active view or shop from links or PWA launch
       const urlParams = new URLSearchParams(window.location.search);
+      if (
+        urlParams.get('view') === 'admin' || 
+        urlParams.get('mode') === 'admin' || 
+        urlParams.has('admin') || 
+        window.location.pathname.startsWith('/admin')
+      ) {
+        return '/admin';
+      }
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') {
         return '/shop/shop2';
@@ -69,9 +77,17 @@ const router = createRouter({
 
 import { trackPageView } from '../utils/analytics';
 
-// Ensure activeShop is always initialized on all customer routes
+// Ensure activeShop is always initialized on all customer routes and handle PWA admin launch
 router.beforeEach((to, from, next) => {
   const shopStore = useShopStore();
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // If launched via PWA start_url with ?view=admin but router initially targeted a non-admin route
+  if ((urlParams.get('view') === 'admin' || urlParams.get('mode') === 'admin' || urlParams.has('admin')) && to.path !== '/admin') {
+    next('/admin');
+    return;
+  }
+
   if (!shopStore.activeShop && !to.path.startsWith('/admin')) {
     shopStore.setShop('shop1');
   }
@@ -82,7 +98,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to) => {
   trackPageView(to.fullPath, to.name ? String(to.name) : '');
 
-  // Dynamic PWA Manifest & App Title for Edge & Chrome App Installation
+  // Dynamic PWA Manifest & App Title for iOS Safari, Edge & Chrome App Installation
   try {
     let manifestLink = document.querySelector('link[rel="manifest"]');
     if (!manifestLink) {
@@ -91,11 +107,20 @@ router.afterEach((to) => {
       document.head.appendChild(manifestLink);
     }
 
+    let appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if (!appleTitle) {
+      appleTitle = document.createElement('meta');
+      appleTitle.setAttribute('name', 'apple-mobile-web-app-title');
+      document.head.appendChild(appleTitle);
+    }
+
     if (to.name === 'admin' || to.path.includes('/admin')) {
       document.title = 'لوحة إدارة عبمبر الزروق | POS & Dashboard';
+      appleTitle.setAttribute('content', 'إدارة الزروق');
       manifestLink.setAttribute('href', '/manifest-admin.json');
     } else {
       document.title = 'منيو حلويات عبمبر الزروق';
+      appleTitle.setAttribute('content', 'عبمبر الزروق');
       manifestLink.setAttribute('href', '/manifest.json');
     }
   } catch (e) {

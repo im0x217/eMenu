@@ -5,13 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#fdb518" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="عبمبر الزروق" />
     <title>منيو حلويات عبمبر الزروق</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
+    <script>
+      (function() {
+        try {
+          var search = window.location.search || '';
+          var hash = window.location.hash || '';
+          var path = window.location.pathname || '';
+          var isAdmin = hash.indexOf('admin') !== -1 || search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1;
+          if (isAdmin) {
+            document.title = 'لوحة إدارة عبمبر الزروق';
+            var link = document.querySelector('link[rel="manifest"]');
+            if (link) link.setAttribute('href', '/manifest-admin.json');
+            var metaTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+            if (metaTitle) metaTitle.setAttribute('content', 'إدارة الزروق');
+            var themeColor = document.querySelector('meta[name="theme-color"]');
+            if (themeColor) themeColor.setAttribute('content', '#0f172a');
+            if (!hash || hash === '#/' || hash === '#') {
+              window.location.hash = '#/admin';
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

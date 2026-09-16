@@ -38,7 +38,7 @@
     {
       "name": "لوحة الإدارة والكاشير",
       "short_name": "لوحة الإدارة",
-      "url": "/app/#/admin",
+      "url": "/app/?view=admin",
       "icons": [
         {
           "src": "/favicon.png",
