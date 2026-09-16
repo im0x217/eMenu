@@ -10,6 +10,8 @@ const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const path = require("path");
 const crypto = require("crypto");
 
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'emenu-admin-secret-key-2026';
+
 // Secure dynamic session tokens generated on server start
 const SESSION_TOKEN_SHOP1 = crypto.randomBytes(32).toString('hex');
 const SESSION_TOKEN_SHOP2 = crypto.randomBytes(32).toString('hex');
@@ -31,10 +33,37 @@ function verifyCustomerPassword(password, storedHash, storedPlain) {
 
 function generateCustomerToken(phone) {
   const payload = `${phone}:${Date.now()}:${crypto.randomBytes(16).toString('hex')}`;
-  const signature = crypto.createHmac('sha256', process.env.ADMIN_SESSION_SECRET || 'emenu-customer-secret-key-2026')
+  const signature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
     .update(payload)
     .digest('hex');
   return Buffer.from(`${payload}:${signature}`).toString('base64');
+}
+
+function verifyCustomerToken(token, expectedPhone) {
+  if (!token || typeof token !== 'string') return false;
+  try {
+    const cleanToken = token.trim();
+    const decoded = Buffer.from(cleanToken, 'base64').toString('utf8');
+    const parts = decoded.split(':');
+    if (parts.length < 4) return false;
+    const [tokenPhone, timestamp, rand, signature] = parts;
+    const payload = `${tokenPhone}:${timestamp}:${rand}`;
+    const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
+      .update(payload)
+      .digest('hex');
+    if (signature !== expectedSig) return false;
+
+    if (expectedPhone) {
+      const cleanExpected = expectedPhone.toString().replace(/[^0-9]/g, '');
+      const cleanTokenPhone = tokenPhone.replace(/[^0-9]/g, '');
+      if (cleanExpected.slice(-9) !== cleanTokenPhone.slice(-9)) {
+        return false;
+      }
+    }
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
 
 // Helper to look up customer by phone with flexible Libyan formatting (09..., 218..., +218...)
@@ -206,13 +235,15 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
-app.use(cookieParser());
+app.use(cookieParser(ADMIN_SESSION_SECRET));
 app.use(express.static(path.join(__dirname, "public"), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html') || filePath.includes('assets')) {
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js') || filePath.endsWith('manifest.json') || filePath.endsWith('manifest-admin.json')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+    } else if (filePath.includes('assets') || filePath.match(/\.[a-f0-9]{8,}\.(js|css|png|jpg|jpeg|svg|woff2?)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));
@@ -245,14 +276,33 @@ const checkMongoDB = (req, res, next) => {
   next();
 };
 
+const isStaffSession = (req) => {
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  const signedToken = req.signedCookies?.admin_session || req.signedCookies?.admin_session_shop2;
+  const token = bearerToken || signedToken;
+  return !!(token && (token === SESSION_TOKEN_SHOP1 || token === SESSION_TOKEN_SHOP2));
+};
+
 const checkAdmin = (req, res, next) => {
-  // Accept legacy cookie, shop2 cookie, OR Authorization header for mobile compatibility
-  const isAdmin = req.cookies.admin === "true" || 
-                  req.cookies.admin_shop2 === "true" ||
-                  req.headers.authorization === `Bearer ${SESSION_TOKEN_SHOP1}` ||
-                  req.headers.authorization === `Bearer ${SESSION_TOKEN_SHOP2}`;
-  if (isAdmin) return next();
+  if (isStaffSession(req)) return next();
   res.status(403).json({ success: false, message: "Forbidden" });
+};
+
+const checkCustomerAuth = (req, res, next) => {
+  // 1. Authenticated staff/admin sessions have operational access to customer records
+  if (isStaffSession(req)) return next();
+
+  // 2. Validate customer token against target phone
+  const phone = req.query.phone || req.body?.phone;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  const customerToken = req.headers['x-customer-token'] || bearerToken;
+
+  if (verifyCustomerToken(customerToken, phone)) {
+    return next();
+  }
+  return res.status(401).json({ error: "غير مصرح - يرجى تسجيل الدخول للوصول إلى بيانات الطلبات" });
 };
 
 // ============ UNIVERSAL RECEIVING/EFFECTIVE DATE HELPER ============
@@ -413,17 +463,30 @@ app.post("/api/login", loginLimiter, async (req, res) => {
   // 1. Search database users
   if (mongoConnected) {
     try {
-      const user = await adminUsersCollection.findOne({ username: username.trim(), password: password.trim() });
+      const user = await adminUsersCollection.findOne({ username: username.trim() });
       if (user) {
-        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-        res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-        return res.json({ 
-          success: true, 
-          token: SESSION_TOKEN_SHOP1,
-          role: user.role || "admin",
-          name: user.name || user.username,
-          shopAccess: user.shopAccess || "all"
-        });
+        const isMatch = verifyCustomerPassword(password.trim(), user.passwordHash, user.password);
+        if (isMatch) {
+          // Transparently upgrade legacy plain password to PBKDF2 hash
+          if (!user.passwordHash) {
+            await adminUsersCollection.updateOne(
+              { _id: user._id },
+              { 
+                $set: { passwordHash: hashCustomerPassword(password.trim()) },
+                $unset: { password: "" }
+              }
+            ).catch(err => console.error("Password migration error:", err));
+          }
+          const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+          res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
+          return res.json({ 
+            success: true, 
+            token: SESSION_TOKEN_SHOP1,
+            role: user.role || "admin",
+            name: user.name || user.username,
+            shopAccess: user.shopAccess || "all"
+          });
+        }
       }
     } catch (e) {
       console.error("Login DB check error:", e);
@@ -433,7 +496,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
   // 2. Fallback ENV check
   if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
+    res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
     return res.json({ success: true, token: SESSION_TOKEN_SHOP1, role: "admin", name: "المدير العام", shopAccess: "all" });
   }
 
@@ -442,6 +505,14 @@ app.post("/api/login", loginLimiter, async (req, res) => {
 
 app.get("/api/admin-check", checkAdmin, (req, res) => {
   res.json({ ok: true });
+});
+
+app.post("/api/logout", (req, res) => {
+  res.clearCookie("admin_session", { path: "/" });
+  res.clearCookie("admin_session_shop2", { path: "/" });
+  res.clearCookie("admin", { path: "/" });
+  res.clearCookie("admin_shop2", { path: "/" });
+  res.json({ success: true });
 });
 
 // Public endpoint to list available admin/staff user accounts for login dropdown selector
@@ -479,6 +550,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
       query = { category };
     }
     
+    const isStaff = isStaffSession(req);
     const products = await productsCollection
       .find(query, {
         projection: {
@@ -487,7 +559,6 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           price: 1,
           price_regular: 1,
           price_bulk: 1,
-          makingCost: 1,
           img: 1,
           category: 1,
           subCategory: 1,
@@ -496,8 +567,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           allowFloat: 1,
           purchaseType: 1,
           tags: 1,
-          chefId: 1,
-          chefName: 1,
+          ...(isStaff ? { makingCost: 1, chefId: 1, chefName: 1 } : {})
         },
       })
       .sort({ name: 1 })
@@ -951,6 +1021,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
       query = { category };
     }
     
+    const isStaff = isStaffSession(req);
     const products = await productsCollection2
       .find(query, {
         projection: {
@@ -959,7 +1030,6 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           price: 1,
           price_regular: 1,
           price_bulk: 1,
-          makingCost: 1,
           img: 1,
           category: 1,
           subCategory: 1,
@@ -968,8 +1038,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           allowFloat: 1,
           purchaseType: 1,
           tags: 1,
-          chefId: 1,
-          chefName: 1,
+          ...(isStaff ? { makingCost: 1, chefId: 1, chefName: 1 } : {})
         },
       })
       .sort({ name: 1 })
@@ -1185,17 +1254,30 @@ app.post("/api/shop2/login", loginLimiter, async (req, res) => {
   // 1. Search database users
   if (mongoConnected) {
     try {
-      const user = await adminUsersCollection.findOne({ username: username.trim(), password: password.trim() });
+      const user = await adminUsersCollection.findOne({ username: username.trim() });
       if (user) {
-        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-        res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
-        return res.json({ 
-          success: true, 
-          token: SESSION_TOKEN_SHOP2,
-          role: user.role || "admin",
-          name: user.name || user.username,
-          shopAccess: user.shopAccess || "all"
-        });
+        const isMatch = verifyCustomerPassword(password.trim(), user.passwordHash, user.password);
+        if (isMatch) {
+          // Transparently upgrade legacy plain password to PBKDF2 hash
+          if (!user.passwordHash) {
+            await adminUsersCollection.updateOne(
+              { _id: user._id },
+              { 
+                $set: { passwordHash: hashCustomerPassword(password.trim()) },
+                $unset: { password: "" }
+              }
+            ).catch(err => console.error("Password migration error:", err));
+          }
+          const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+          res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
+          return res.json({ 
+            success: true, 
+            token: SESSION_TOKEN_SHOP2,
+            role: user.role || "admin",
+            name: user.name || user.username,
+            shopAccess: user.shopAccess || "all"
+          });
+        }
       }
     } catch (e) {
       console.error("Shop2 Login DB check error:", e);
@@ -1205,7 +1287,7 @@ app.post("/api/shop2/login", loginLimiter, async (req, res) => {
   // 2. Fallback ENV check
   if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_shop2", "true", { httpOnly: true, sameSite: "Lax", secure: isSecure, path: "/" });
+    res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
     return res.json({ success: true, token: SESSION_TOKEN_SHOP2, role: "admin", name: "المدير العام", shopAccess: "all" });
   }
 
@@ -1215,7 +1297,7 @@ app.post("/api/shop2/login", loginLimiter, async (req, res) => {
 // ============ USER MANAGEMENT APIs (ADMIN ONLY) ============
 app.get("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const users = await adminUsersCollection.find({}, { projection: { password: 0 } }).sort({ createdAt: -1 }).toArray();
+    const users = await adminUsersCollection.find({}, { projection: { password: 0, passwordHash: 0 } }).sort({ createdAt: -1 }).toArray();
     res.json({ users });
   } catch (err) {
     console.error("Get users error:", err);
@@ -1234,16 +1316,17 @@ app.post("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
     if (existing) {
       return res.status(400).json({ error: "هذا الاسم مستخدم بالفعل" });
     }
+    const cleanPass = password.trim();
     const newUser = {
       name: cleanName,
       username: cleanName,
-      password: password.trim(),
+      passwordHash: hashCustomerPassword(cleanPass),
       role: role === 'order_manager' ? 'order_manager' : 'admin',
       shopAccess: shopAccess || 'all',
       createdAt: new Date()
     };
     await adminUsersCollection.insertOne(newUser);
-    delete newUser.password;
+    delete newUser.passwordHash;
     res.json({ success: true, user: newUser });
   } catch (err) {
     console.error("Create user error:", err);
@@ -1265,10 +1348,12 @@ app.put("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) => {
       role: role === 'order_manager' ? 'order_manager' : 'admin',
       shopAccess: shopAccess || 'all'
     };
+    let updateFields = { $set: updateData };
     if (password && password.trim().length > 0) {
-      updateData.password = password.trim();
+      updateData.passwordHash = hashCustomerPassword(password.trim());
+      updateFields.$unset = { password: "" };
     }
-    await adminUsersCollection.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+    await adminUsersCollection.updateOne({ _id: new ObjectId(id) }, updateFields);
     res.json({ success: true });
   } catch (err) {
     console.error("Update user error:", err);
@@ -2976,7 +3061,7 @@ app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkAdmin, asy
 
 
 // Get customer balance for customer view (combines both shops)
-app.get("/api/customer/balance", checkMongoDB, customerLimiter, async (req, res) => {
+app.get("/api/customer/balance", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { phone } = req.query;
     if (!phone || typeof phone !== 'string') {
@@ -3051,14 +3136,15 @@ app.post("/api/customer/identify", checkMongoDB, customerLimiter, async (req, re
       { upsert: true }
     );
     
-    res.json({ success: true });
+    const token = generateCustomerToken(normalizedPhone);
+    res.json({ success: true, token });
   } catch (err) {
     console.error("Identify customer error:", err);
     res.status(500).json({ error: "Failed to identify customer" });
   }
 });
 
-app.post("/api/customer/favorites", checkMongoDB, customerLimiter, async (req, res) => {
+app.post("/api/customer/favorites", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { phone, shop, favorites } = req.body;
     if (!phone || !shop || !Array.isArray(favorites) || typeof phone !== 'string') {
@@ -3088,7 +3174,7 @@ app.post("/api/customer/favorites", checkMongoDB, customerLimiter, async (req, r
   }
 });
 
-app.get("/api/customer/favorites", checkMongoDB, customerLimiter, async (req, res) => {
+app.get("/api/customer/favorites", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { phone } = req.query;
     if (!phone || typeof phone !== 'string') {
@@ -3108,7 +3194,7 @@ app.get("/api/customer/favorites", checkMongoDB, customerLimiter, async (req, re
   }
 });
 
-app.get("/api/customer/orders", checkMongoDB, customerLimiter, async (req, res) => {
+app.get("/api/customer/orders", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { phone } = req.query;
     if (!phone || typeof phone !== 'string') {
@@ -3139,7 +3225,7 @@ app.get("/api/customer/orders", checkMongoDB, customerLimiter, async (req, res) 
 
 
 // Customer edits their order (allowed ONLY if admin has not printed the order yet)
-app.put("/api/customer/orders/:id", checkMongoDB, customerLimiter, async (req, res) => {
+app.put("/api/customer/orders/:id", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { phone, shop, items, deliveryDate, notes } = req.body;
@@ -3218,7 +3304,7 @@ app.put("/api/customer/orders/:id", checkMongoDB, customerLimiter, async (req, r
 });
 
 // Customer confirms order received
-app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, async (req, res) => {
+app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { phone, shop } = req.body;
@@ -3277,18 +3363,120 @@ const areOrderItemsEqual = (itemsA, itemsB) => {
   return true;
 };
 
+// Server-Side Price Recalculation & Privilege Segregation Helper
+const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl, isStaffPOS, body = {}) => {
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    throw new Error("يجب أن يحتوي الطلب على صنف واحد على الأقل");
+  }
+
+  // Pre-fetch all products referenced in items
+  const productIds = rawItems
+    .map(i => i.productId)
+    .filter(id => id && ObjectId.isValid(id))
+    .map(id => new ObjectId(id));
+
+  let dbProductsMap = new Map();
+  if (productIds.length > 0) {
+    const dbProducts = await targetProductsColl.find({ _id: { $in: productIds } }).toArray();
+    dbProducts.forEach(p => dbProductsMap.set(p._id.toString(), p));
+  }
+
+  let computedTotal = 0;
+  const sanitizedItems = rawItems.map(item => {
+    const qty = Math.max(item.allowFloat ? 0.05 : 1, Number(item.quantity) || 1);
+    let unitPrice = 0;
+
+    const prodIdStr = item.productId ? item.productId.toString() : '';
+    const dbProd = dbProductsMap.get(prodIdStr);
+
+    if (dbProd) {
+      if (isStaffPOS && typeof item.price === 'number' && !isNaN(item.price) && item.price >= 0) {
+        // Staff POS can manually override prices or give line-item discounts
+        unitPrice = Math.round(Number(item.price) * 100) / 100;
+      } else {
+        // Public orders strictly derive unit price from database catalog
+        if (priceMode === 'bulk' && dbProd.price_bulk !== null && dbProd.price_bulk !== undefined && dbProd.price_bulk !== '') {
+          unitPrice = Number(dbProd.price_bulk);
+        } else if (dbProd.price_regular !== null && dbProd.price_regular !== undefined && dbProd.price_regular !== '') {
+          unitPrice = Number(dbProd.price_regular);
+        } else {
+          unitPrice = Number(dbProd.price || 0);
+        }
+      }
+    } else if (isStaffPOS) {
+      // Staff POS can enter custom off-menu items
+      unitPrice = Math.round(Number(item.price || 0) * 100) / 100;
+    } else {
+      // Public order referencing non-existent item
+      unitPrice = 0;
+    }
+
+    unitPrice = Math.round(unitPrice * 100) / 100;
+    computedTotal += unitPrice * qty;
+
+    return {
+      productId: item.productId && ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
+      name: dbProd ? dbProd.name : (item.name || 'صنف غير محدد'),
+      price: unitPrice,
+      quantity: Math.round(qty * 100) / 100,
+      allowFloat: !!item.allowFloat,
+      notes: typeof item.notes === 'string' ? item.notes.slice(0, 500) : ''
+    };
+  });
+
+  computedTotal = Math.round(computedTotal * 100) / 100;
+
+  // Strict Privilege Segregation for financial fields
+  let paidAmount = 0;
+  let paymentStatus = 'unpaid';
+  let paymentMethod = '';
+  let status = 'pending';
+
+  if (isStaffPOS) {
+    const rawPaid = Number(body.paidAmount) || 0;
+    paidAmount = Math.round(rawPaid * 100) / 100;
+    if (body.paymentStatus && ['paid', 'partial', 'unpaid'].includes(body.paymentStatus)) {
+      paymentStatus = body.paymentStatus;
+    } else {
+      paymentStatus = paidAmount >= computedTotal && computedTotal > 0 ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid');
+    }
+    paymentMethod = typeof body.paymentMethod === 'string' ? body.paymentMethod.slice(0, 50) : '';
+    if (body.status && ['pending', 'ready', 'received', 'cancelled'].includes(body.status)) {
+      status = body.status;
+    }
+  }
+
+  return {
+    items: sanitizedItems,
+    totalPrice: computedTotal,
+    paidAmount,
+    paymentStatus,
+    paymentMethod,
+    status
+  };
+};
+
 // ============ ORDER SUBMISSION APIs ============
 
 app.post("/api/orders", checkMongoDB, async (req, res) => {
   try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod, force, bypassDuplicateCheck } = req.body;
+    const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body;
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
 
     const normalizedPhone = customer.phone.trim();
     const normalizedName = customer.name.trim();
-    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
+
+    const isStaff = isStaffSession(req);
+    const {
+      items: sanitizedItems,
+      totalPrice: parsedTotal,
+      paidAmount: parsedPaid,
+      paymentStatus: parsedPaymentStatus,
+      paymentMethod: parsedPaymentMethod,
+      status: parsedStatus
+    } = await sanitizeAndCalculateOrder(items, priceMode, productsCollection, isStaff, req.body);
 
     // 5-Minute Duplicate Order Prevention (Cooldown)
     if (!force && !bypassDuplicateCheck) {
@@ -3300,7 +3488,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       }).sort({ createdAt: -1 }).toArray();
 
       for (const recent of recentOrders) {
-        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(items, recent.items)) {
+        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(sanitizedItems, recent.items)) {
           const elapsedMs = Date.now() - new Date(recent.createdAt).getTime();
           const remainingSeconds = Math.max(1, Math.ceil((5 * 60 * 1000 - elapsedMs) / 1000));
           const remainingMinutes = Math.ceil(remainingSeconds / 60);
@@ -3335,9 +3523,6 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       },
       { upsert: true }
     );
-    
-    const parsedPaid = Number(paidAmount) || 0;
-    const parsedPaymentStatus = paymentStatus || (parsedPaid >= parsedTotal && parsedTotal > 0 ? 'paid' : (parsedPaid > 0 ? 'partial' : 'unpaid'));
 
     const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
@@ -3346,23 +3531,16 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
         name: normalizedName,
         phone: normalizedPhone
       },
-      items: items.map(item => ({
-        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
-        name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-        allowFloat: !!item.allowFloat,
-        notes: item.notes || ''
-      })),
+      items: sanitizedItems,
       totalPrice: parsedTotal,
       paidAmount: parsedPaid,
       paymentStatus: parsedPaymentStatus,
-      paymentMethod: paymentMethod || '',
+      paymentMethod: parsedPaymentMethod,
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
-      status: (status && ['pending', 'ready', 'received', 'cancelled'].includes(status)) ? status : 'pending',
-      ...(status === 'cancelled' ? { cancelledAt: new Date() } : {}),
+      status: parsedStatus,
+      ...(parsedStatus === 'cancelled' ? { cancelledAt: new Date() } : {}),
       printed: false,
       whatsappSent: true,
       createdAt: new Date()
@@ -3383,14 +3561,23 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
 
 app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
   try {
-    const { customer, items, totalPrice, deliveryDate, notes, priceMode, status, paidAmount, paymentStatus, paymentMethod, force, bypassDuplicateCheck } = req.body;
+    const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body;
     if (!customer || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
 
     const normalizedPhone = customer.phone.trim();
     const normalizedName = customer.name.trim();
-    const parsedTotal = Math.round(Number(totalPrice) * 100) / 100;
+
+    const isStaff = isStaffSession(req);
+    const {
+      items: sanitizedItems,
+      totalPrice: parsedTotal,
+      paidAmount: parsedPaid,
+      paymentStatus: parsedPaymentStatus,
+      paymentMethod: parsedPaymentMethod,
+      status: parsedStatus
+    } = await sanitizeAndCalculateOrder(items, priceMode, productsCollection2, isStaff, req.body);
 
     // 5-Minute Duplicate Order Prevention (Cooldown)
     if (!force && !bypassDuplicateCheck) {
@@ -3402,7 +3589,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       }).sort({ createdAt: -1 }).toArray();
 
       for (const recent of recentOrders) {
-        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(items, recent.items)) {
+        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(sanitizedItems, recent.items)) {
           const elapsedMs = Date.now() - new Date(recent.createdAt).getTime();
           const remainingSeconds = Math.max(1, Math.ceil((5 * 60 * 1000 - elapsedMs) / 1000));
           const remainingMinutes = Math.ceil(remainingSeconds / 60);
@@ -3437,9 +3624,6 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       },
       { upsert: true }
     );
-    
-    const parsedPaid = Number(paidAmount) || 0;
-    const parsedPaymentStatus = paymentStatus || (parsedPaid >= parsedTotal && parsedTotal > 0 ? 'paid' : (parsedPaid > 0 ? 'partial' : 'unpaid'));
 
     const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
@@ -3448,23 +3632,16 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
         name: normalizedName,
         phone: normalizedPhone
       },
-      items: items.map(item => ({
-        productId: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
-        name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-        allowFloat: !!item.allowFloat,
-        notes: item.notes || ''
-      })),
+      items: sanitizedItems,
       totalPrice: parsedTotal,
       paidAmount: parsedPaid,
       paymentStatus: parsedPaymentStatus,
-      paymentMethod: paymentMethod || '',
+      paymentMethod: parsedPaymentMethod,
       deliveryDate: deliveryDate || '',
       notes: notes || '',
       priceMode: priceMode || 'regular',
-      status: (status && ['pending', 'ready', 'received', 'cancelled'].includes(status)) ? status : 'pending',
-      ...(status === 'cancelled' ? { cancelledAt: new Date() } : {}),
+      status: parsedStatus,
+      ...(parsedStatus === 'cancelled' ? { cancelledAt: new Date() } : {}),
       printed: false,
       whatsappSent: true,
       createdAt: new Date()
@@ -4236,13 +4413,28 @@ const connectWithRetry = async () => {
     favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
     ordersCollection.createIndex({ "customerInfo.phone": 1 });
     ordersCollection.createIndex({ orderNumber: 1 });
+    ordersCollection.createIndex({ createdAt: -1 });
+    ordersCollection.createIndex({ deliveryDate: 1 });
+    ordersCollection.createIndex({ status: 1, paymentStatus: 1 });
+    ordersCollection.createIndex({ "customerInfo.phone": 1, createdAt: -1 });
     ordersCollection.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
+
     ordersCollection2.createIndex({ "customerInfo.phone": 1 });
     ordersCollection2.createIndex({ orderNumber: 1 });
+    ordersCollection2.createIndex({ createdAt: -1 });
+    ordersCollection2.createIndex({ deliveryDate: 1 });
+    ordersCollection2.createIndex({ status: 1, paymentStatus: 1 });
+    ordersCollection2.createIndex({ "customerInfo.phone": 1, createdAt: -1 });
     ordersCollection2.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
+
     adminUsersCollection.createIndex({ username: 1 }, { unique: true });
     chefsCollection.createIndex({ name: 1 });
     chefsCollection2.createIndex({ name: 1 });
+
+    // Payment collection indexes
+    paymentsCollection.createIndex({ customerPhone: 1, createdAt: -1 });
+    paymentsCollection.createIndex({ createdAt: -1 });
+    paymentsCollection.createIndex({ "distributedTo.orderId": 1 });
 
     // Initialize order counter and backfill legacy orders without orderNumber
     try {
@@ -4421,6 +4613,15 @@ const cleanupExpiredCancelledOrders = async () => {
 app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, checkAdmin, async (req, res) => {
   const result = await cleanupExpiredCancelledOrders();
   res.json(result);
+});
+
+// Process Crash Protection & Logging
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED REJECTION]', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION]', err);
 });
 
 connectWithRetry();

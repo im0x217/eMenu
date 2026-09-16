@@ -57,9 +57,13 @@ const loadCustomerData = async () => {
   isLoadingBalance.value = true;
 
   try {
+    if (!authStore.customerToken) {
+      await authStore.ensureToken();
+    }
+    const headers = authStore.getAuthHeaders();
     const [ordersRes, balanceRes] = await Promise.all([
-      fetch(`/api/customer/orders?phone=${encodeURIComponent(authStore.customerPhone)}`),
-      fetch(`/api/customer/balance?phone=${encodeURIComponent(authStore.customerPhone)}`)
+      fetch(`/api/customer/orders?phone=${encodeURIComponent(authStore.customerPhone)}`, { headers }),
+      fetch(`/api/customer/balance?phone=${encodeURIComponent(authStore.customerPhone)}`, { headers })
     ]);
 
     if (ordersRes.ok) {
@@ -193,9 +197,15 @@ const confirmReceived = async (order) => {
   if (confirmingOrderId.value === order._id) return;
   confirmingOrderId.value = order._id;
   try {
+    if (!authStore.customerToken) {
+      await authStore.ensureToken();
+    }
     const res = await fetch(`/api/customer/orders/${order._id}/received`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authStore.getAuthHeaders()
+      },
       body: JSON.stringify({ phone: authStore.customerPhone, shop: order.shop })
     });
     if (res.ok) {

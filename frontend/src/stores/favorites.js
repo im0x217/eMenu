@@ -66,9 +66,15 @@ export const useFavoritesStore = defineStore('favorites', () => {
   const executeSync = async (shopId) => {
     const list = getFavoritesList(shopId);
     try {
+      if (!authStore.customerToken) {
+        await authStore.ensureToken();
+      }
       await fetch('/api/customer/favorites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...authStore.getAuthHeaders()
+        },
         body: JSON.stringify({
           phone: authStore.customerPhone,
           shop: shopId,
@@ -83,7 +89,14 @@ export const useFavoritesStore = defineStore('favorites', () => {
   const loadFavoritesFromBackend = async () => {
     if (!authStore.customerPhone) return;
     try {
-      const res = await fetch(`/api/customer/favorites?phone=${encodeURIComponent(authStore.customerPhone)}`);
+      if (!authStore.customerToken) {
+        await authStore.ensureToken();
+      }
+      const res = await fetch(`/api/customer/favorites?phone=${encodeURIComponent(authStore.customerPhone)}`, {
+        headers: {
+          ...authStore.getAuthHeaders()
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         // Overwrite local storage with server truth

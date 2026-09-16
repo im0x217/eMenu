@@ -1,11 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import ShopView from '../views/ShopView.vue';
-import FavoritesView from '../views/FavoritesView.vue';
-import CartView from '../views/CartView.vue';
-import AccountView from '../views/AccountView.vue';
-import AdminView from '../views/AdminView.vue';
-
 import { useShopStore } from '../stores/shop';
+
+// Dynamic route-level code splitting for lean mobile bundles
+const ShopView = () => import('../views/ShopView.vue');
+const FavoritesView = () => import('../views/FavoritesView.vue');
+const CartView = () => import('../views/CartView.vue');
+const AccountView = () => import('../views/AccountView.vue');
+const AdminView = () => import('../views/AdminView.vue');
 
 const routes = [
   {

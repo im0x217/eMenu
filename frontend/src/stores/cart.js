@@ -259,9 +259,15 @@ export const useCartStore = defineStore('cart', () => {
         notes: orderNotes.value
       };
 
+      if (!authStore.customerToken) {
+        await authStore.ensureToken();
+      }
       const res = await fetch(`/api/customer/orders/${editingOrderId.value}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...authStore.getAuthHeaders()
+        },
         body: JSON.stringify(editBody)
       });
 
