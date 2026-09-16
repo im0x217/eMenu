@@ -1050,7 +1050,7 @@
                     <tr v-else-if="filteredProducts.length === 0">
                       <td colspan="10" class="text-center">لا توجد منتجات مطابقة لخيارات التصفية.</td>
                     </tr>
-                    <tr v-else v-for="(prod, idx) in paginatedProducts" :key="prod._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(prod, idx) in paginatedProducts" :key="prod._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td>
                         <div class="admin-table-img-wrapper" @click="zoomImage(prod.img)" title="تكبير الصورة">
                           <div class="admin-table-img-shimmer"></div>
@@ -1167,7 +1167,7 @@
               </div>
 
               <!-- Products Table Numbered Pagination Bar -->
-              <div v-if="productsTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': paginationFocused }">
+              <div v-if="productsTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': !isMobileScreen && paginationFocused }">
                 <div class="pagination-info">
                   <span>عرض <strong>{{ (productsPage - 1) * productsPerPage + 1 }}</strong> - <strong>{{ Math.min(productsPage * productsPerPage, filteredProducts.length) }}</strong> من أصل <strong>{{ filteredProducts.length }}</strong> منتج</span>
                 </div>
@@ -1260,7 +1260,7 @@
                     <tr v-else-if="categories.length === 0">
                       <td colspan="4" class="text-center">لا توجد أصناف مدخلة.</td>
                     </tr>
-                    <tr v-else v-for="(cat, idx) in categories" :key="cat._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(cat, idx) in categories" :key="cat._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td class="text-center">
                         <div class="cat-icon-badge">
                           <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
@@ -1329,7 +1329,7 @@
                     <tr v-else-if="tags.length === 0">
                       <td colspan="3" class="text-center p-4">لا توجد علامات مميزة مدخلة.</td>
                     </tr>
-                    <tr v-else v-for="(t, idx) in tags" :key="t._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(t, idx) in tags" :key="t._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td class="text-bold">{{ t.name }}</td>
                       <td>
                         <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
@@ -1593,7 +1593,7 @@
                     <tr v-else-if="filteredOrders.length === 0">
                       <td colspan="9" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
-                    <tr v-else v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td class="text-bold text-mono">
                         <div class="order-id-cell-wrapper">
                           <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
@@ -1865,7 +1865,7 @@
               </div>
 
               <!-- Orders Table Numbered Pagination Bar -->
-              <div v-if="ordersTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': paginationFocused }">
+              <div v-if="ordersTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': !isMobileScreen && paginationFocused }">
                 <div class="pagination-info">
                   <span>عرض <strong>{{ (ordersPage - 1) * ordersPerPage + 1 }}</strong> - <strong>{{ Math.min(ordersPage * ordersPerPage, filteredOrders.length) }}</strong> من أصل <strong>{{ filteredOrders.length }}</strong> طلب</span>
                 </div>
@@ -3238,7 +3238,7 @@
                     <tr v-else-if="filteredCustomers.length === 0">
                       <td colspan="6" class="text-center p-4">لا توجد سجلات عملاء متطابقة.</td>
                     </tr>
-                    <tr v-else v-for="(cust, idx) in paginatedCustomers" :key="cust._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-else v-for="(cust, idx) in paginatedCustomers" :key="cust._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td>
                         <div class="customer-profile-cell" @click="openCustomerDetails(cust)" title="انقر لعرض الملف التعريفي الكامل">
                           <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
@@ -3356,7 +3356,7 @@
               </div>
 
               <!-- Customers Table Numbered Pagination Bar -->
-              <div v-if="customersTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': paginationFocused }">
+              <div v-if="customersTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': !isMobileScreen && paginationFocused }">
                 <div class="pagination-info">
                   <span>عرض <strong>{{ (customersPage - 1) * customersPerPage + 1 }}</strong> - <strong>{{ Math.min(customersPage * customersPerPage, filteredCustomers.length) }}</strong> من أصل <strong>{{ filteredCustomers.length }}</strong> عميل</span>
                 </div>
@@ -3965,7 +3965,7 @@
                     <tr v-if="adminUsers.length === 0">
                       <td colspan="5" class="text-center p-4">لا يوجد مستخدمون مدخلون بعد.</td>
                     </tr>
-                    <tr v-for="(u, idx) in adminUsers" :key="u._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
+                    <tr v-for="(u, idx) in adminUsers" :key="u._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td class="text-bold">{{ u.name }}</td>
                       <td>
                         <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
@@ -6194,7 +6194,7 @@
           <div class="payment-form-grid">
             <div class="form-group">
               <label class="form-label">المبلغ (د.ل)</label>
-              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" autofocus @keydown.enter.prevent="recordPayment" />
+              <input v-model="paymentTarget.amount" type="number" step="0.01" min="0.01" :max="paymentTarget.outstandingBalance" class="form-control payment-amount-input" placeholder="0.00" :autofocus="!isMobileScreen" @keydown.enter.prevent="recordPayment" />
             </div>
 
             <div class="form-group">
@@ -6689,6 +6689,12 @@ export default {
     const loading = ref(false);
     const isAuthenticated = ref(false);
     const sidebarOpen = ref(false);
+
+    // Responsive Mobile Viewport Tracking (Standard <= 768px for phones and tablets)
+    const isMobileScreen = ref(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+    const handleResize = () => {
+      isMobileScreen.value = window.innerWidth <= 768;
+    };
 
     // ================= P3 KEYBOARD POWER-USER STATE =================
     const selectedTableRowIndex = ref(0);
@@ -7882,7 +7888,7 @@ export default {
       productModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -8257,7 +8263,7 @@ export default {
       categoryModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -8336,7 +8342,7 @@ export default {
       tagModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -8891,7 +8897,7 @@ export default {
       userModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -10138,7 +10144,7 @@ export default {
       chefModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -10150,7 +10156,7 @@ export default {
       chefModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -10237,7 +10243,7 @@ export default {
       assignProductsModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -10937,7 +10943,7 @@ const closeSuggestionsWithDelay = () => {
       recalcOrderTotal();
       nextTick(() => {
         const el = document.querySelector('.modal-overlay .product-search-autocomplete-container input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -11119,7 +11125,7 @@ const closeSuggestionsWithDelay = () => {
 
     const focusProductSearch = () => {
       nextTick(() => {
-        if (newOrderProductInputRef.value) {
+        if (!isMobileScreen.value && newOrderProductInputRef.value) {
           newOrderProductInputRef.value.focus();
         }
       });
@@ -11151,7 +11157,7 @@ const closeSuggestionsWithDelay = () => {
       newOrderModalOpen.value = true;
 
       nextTick(() => {
-        if (newOrderCustomerInputRef.value) {
+        if (!isMobileScreen.value && newOrderCustomerInputRef.value) {
           newOrderCustomerInputRef.value.focus();
         }
       });
@@ -11319,7 +11325,7 @@ const closeSuggestionsWithDelay = () => {
     const focusFirstCartItem = () => {
       nextTick(() => {
         const firstStepper = document.querySelector('.fast-order-modal .stepper-input');
-        if (firstStepper) {
+        if (!isMobileScreen.value && firstStepper) {
           firstStepper.focus();
           firstStepper.select();
         }
@@ -11505,7 +11511,7 @@ const closeSuggestionsWithDelay = () => {
       customerModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (el) el.focus();
+        if (!isMobileScreen.value && el) el.focus();
       });
     };
 
@@ -11673,12 +11679,6 @@ const closeSuggestionsWithDelay = () => {
       }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
-    // Responsive Mobile Viewport Tracking for Pagination
-    const isMobileScreen = ref(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
-    const handleResize = () => {
-      isMobileScreen.value = window.innerWidth <= 640;
-    };
-
     let scanBuffer = '';
     let scanTimeout = null;
 
@@ -11717,7 +11717,7 @@ const closeSuggestionsWithDelay = () => {
       commandPaletteIndex.value = 0;
       commandPaletteOpen.value = true;
       nextTick(() => {
-        if (commandPaletteInputRef.value) commandPaletteInputRef.value.focus();
+        if (!isMobileScreen.value && commandPaletteInputRef.value) commandPaletteInputRef.value.focus();
       });
     };
 
@@ -12195,7 +12195,7 @@ const closeSuggestionsWithDelay = () => {
           if (selector) {
             nextTick(() => {
               const el = document.querySelector(selector);
-              if (el) el.focus();
+              if (!isMobileScreen.value && el) el.focus();
             });
           } else {
             toast.show('لا يوجد حقل بحث في هذا التبويب', 'info');
@@ -12239,7 +12239,7 @@ const closeSuggestionsWithDelay = () => {
           // Focus search input
           nextTick(() => {
             const searchInput = document.getElementById('order-search-input');
-            if (searchInput) searchInput.focus();
+            if (!isMobileScreen.value && searchInput) searchInput.focus();
           });
 
           // Show feedback toast
@@ -12542,6 +12542,7 @@ const closeSuggestionsWithDelay = () => {
       loading,
       isAuthenticated,
       sidebarOpen,
+      isMobileScreen,
       activeTab,
       activeShop,
       loginShop,
@@ -15657,11 +15658,22 @@ select.form-control:focus {
   }
 
   .charts-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .chart-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
   }
 
   .chart-card.span-2 {
-    grid-column: span 1;
+    grid-column: span 1 !important;
   }
 
   .kpi-grid {
@@ -26057,9 +26069,265 @@ select.pos-control {
 }
 
 @media (max-width: 768px) {
-  .ux-kpi-subgrid,
+  /* ==========================================================================
+     MOBILE VIEWPORT (<= 768px): KEYBOARD SELECTION HIGHLIGHT SUPPRESSION
+     ========================================================================== */
+  .keyboard-selected-row,
+  .shop-theme-shop2 .keyboard-selected-row,
+  tr.keyboard-selected-row,
+  .shop-theme-shop2 tr.keyboard-selected-row,
+  tr.keyboard-selected-row td,
+  .shop-theme-shop2 tr.keyboard-selected-row td,
+  tbody tr.keyboard-selected-row,
+  tbody tr.keyboard-selected-row td {
+    background: transparent !important;
+    background-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: inherit !important;
+  }
+
+  .keyboard-selected-pagination,
+  .shop-theme-shop2 .keyboard-selected-pagination,
+  .admin-pagination-bar.keyboard-selected-pagination {
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-color: inherit !important;
+  }
+
+  /* ==========================================================================
+     MOBILE VIEWPORT (<= 768px): ANALYTICS TAB RESPONSIVE PERFECTION
+     ========================================================================== */
+  .analytics-tab-content,
+  .analytics-real-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .charts-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chart-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    padding: 16px 12px !important;
+    box-sizing: border-box !important;
+    border-radius: 14px !important;
+  }
+
+  .chart-card.span-2 {
+    grid-column: span 1 !important;
+  }
+
+  .chart-title {
+    font-size: 0.95rem !important;
+    margin-bottom: 14px !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  .chart-card .card-header-with-badge {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .chart-card .card-header-with-badge .chart-title {
+    margin-bottom: 0 !important;
+  }
+
+  /* Revenue Trend SVG Line Chart */
+  .svg-chart-container {
+    height: 190px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .svg-line-chart {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+
+  /* Donut / Price Mode Split Display */
+  .split-display {
+    height: auto !important;
+    min-height: unset !important;
+    padding: 8px 0 !important;
+    gap: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .donut-display {
+    margin: 0 auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .split-legend {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 4px !important;
+  }
+
+  .legend-row {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    font-size: 0.8rem !important;
+    padding: 4px 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Payment Methods Breakdown */
+  .payment-methods-breakdown {
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+
+  .pm-breakdown-row {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .pm-badge {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .pm-name {
+    font-size: 0.8rem !important;
+  }
+
+  .pm-amount {
+    font-size: 0.85rem !important;
+  }
+
+  /* Tables inside Chart Cards */
+  .chart-card .table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 4px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chart-card .table-container .admin-table {
+    min-width: 300px !important;
+    width: 100% !important;
+    font-size: 0.8rem !important;
+  }
+
+  .chart-card .table-container .admin-table th,
+  .chart-card .table-container .admin-table td {
+    padding: 8px 10px !important;
+    white-space: nowrap !important;
+  }
+
+  /* UX Insights & Telemetry Funnel */
+  .ux-insights-card {
+    margin-top: 1rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .ux-funnel-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 12px 8px !important;
+    gap: 6px !important;
+    box-sizing: border-box !important;
+    scroll-snap-type: x mandatory !important;
+  }
+
+  .funnel-step {
+    min-width: 100px !important;
+    flex: 0 0 100px !important;
+    padding: 10px 6px !important;
+    scroll-snap-align: start !important;
+    box-sizing: border-box !important;
+  }
+
+  .funnel-connector {
+    flex-shrink: 0 !important;
+  }
+
+  .ux-kpi-subgrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .ux-stat-box {
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
   .ux-details-split {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .ux-subpanel {
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  /* Segmented Period Control */
+  .segmented-control {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+  }
+
+  .segmented-control .control-pill {
+    flex: 1 1 0 !important;
+    min-height: 42px !important;
+    min-width: 0 !important;
+    padding: 6px 2px !important;
+    font-size: 0.78rem !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
 }
 </style>
