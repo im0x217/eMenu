@@ -84,7 +84,6 @@
           ref="sidebarMenuRef"
           role="tablist" 
           aria-label="أقسام لوحة التحكم"
-          @keydown="handleSidebarKeydown"
         >
           <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')" role="tab" :aria-selected="activeTab === 'analytics'" :tabindex="activeTab === 'analytics' ? 0 : -1">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -1139,7 +1138,7 @@
                     <tr v-else-if="categories.length === 0">
                       <td colspan="4" class="text-center">لا توجد أصناف مدخلة.</td>
                     </tr>
-                    <tr v-else v-for="cat in categories" :key="cat._id">
+                    <tr v-else v-for="(cat, idx) in categories" :key="cat._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td class="text-center">
                         <div class="cat-icon-badge">
                           <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
@@ -1208,7 +1207,7 @@
                     <tr v-else-if="tags.length === 0">
                       <td colspan="3" class="text-center p-4">لا توجد علامات مميزة مدخلة.</td>
                     </tr>
-                    <tr v-else v-for="t in tags" :key="t._id">
+                    <tr v-else v-for="(t, idx) in tags" :key="t._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td class="text-bold">{{ t.name }}</td>
                       <td>
                         <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
@@ -3833,7 +3832,7 @@
                     <tr v-if="adminUsers.length === 0">
                       <td colspan="5" class="text-center p-4">لا يوجد مستخدمون مدخلون بعد.</td>
                     </tr>
-                    <tr v-for="u in adminUsers" :key="u._id">
+                    <tr v-for="(u, idx) in adminUsers" :key="u._id" :class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }">
                       <td class="text-bold">{{ u.name }}</td>
                       <td>
                         <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
@@ -6696,7 +6695,8 @@ export default {
     };
 
     const handleSidebarKeydown = (e) => {
-      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+      // Up/Down arrows are strictly reserved for traversing table rows (Section 22 of design guide)
+      if (!['Home', 'End'].includes(e.key)) return;
       if (!sidebarMenuRef.value) return;
       const items = Array.from(sidebarMenuRef.value.querySelectorAll('.menu-item'));
       if (items.length === 0) return;
@@ -6705,11 +6705,7 @@ export default {
 
       e.preventDefault();
       let nextIndex = currentIndex;
-      if (e.key === 'ArrowDown') {
-        nextIndex = (currentIndex + 1) % items.length;
-      } else if (e.key === 'ArrowUp') {
-        nextIndex = (currentIndex - 1 + items.length) % items.length;
-      } else if (e.key === 'Home') {
+      if (e.key === 'Home') {
         nextIndex = 0;
       } else if (e.key === 'End') {
         nextIndex = items.length - 1;
@@ -8660,9 +8656,14 @@ export default {
         sidebarOpen.value = false;
         return;
       }
-      if (activeTab.value === tab) return;
-
       sidebarOpen.value = false;
+      // Reset keyboard table row selection to first row when switching tabs
+      selectedTableRowIndex.value = 0;
+
+      // Blur the clicked tab button so focus does not stay trapped in sidebar
+      if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
 
       // Activate skeleton bridge immediately BEFORE updating activeTab
       // This prevents the target tab's real content from flashing before the watcher can react
@@ -11767,13 +11768,19 @@ const closeSuggestionsWithDelay = () => {
           return;
         }
 
-        // Table Row Navigation: ↑ / ↓ (or j / k)
+        // Table Row Navigation: ↑ / ↓ (or j / k) - strictly isolated to table records (Section 22)
         if (e.key === 'ArrowDown' || e.key === 'j') {
           e.preventDefault();
+          if (document.activeElement && (document.activeElement.classList?.contains('menu-item') || document.activeElement.tagName === 'BUTTON')) {
+            document.activeElement.blur();
+          }
           let maxLen = 0;
           if (activeTab.value === 'orders') maxLen = paginatedOrders.value.length;
           else if (activeTab.value === 'products') maxLen = paginatedProducts.value.length;
           else if (activeTab.value === 'customers') maxLen = paginatedCustomers.value.length;
+          else if (activeTab.value === 'categories') maxLen = categories.value.length;
+          else if (activeTab.value === 'tags') maxLen = tags.value.length;
+          else if (activeTab.value === 'users') maxLen = adminUsers.value.length;
 
           if (maxLen > 0) {
             selectedTableRowIndex.value = (selectedTableRowIndex.value + 1) % maxLen;
@@ -11789,10 +11796,16 @@ const closeSuggestionsWithDelay = () => {
 
         if (e.key === 'ArrowUp' || e.key === 'k') {
           e.preventDefault();
+          if (document.activeElement && (document.activeElement.classList?.contains('menu-item') || document.activeElement.tagName === 'BUTTON')) {
+            document.activeElement.blur();
+          }
           let maxLen = 0;
           if (activeTab.value === 'orders') maxLen = paginatedOrders.value.length;
           else if (activeTab.value === 'products') maxLen = paginatedProducts.value.length;
           else if (activeTab.value === 'customers') maxLen = paginatedCustomers.value.length;
+          else if (activeTab.value === 'categories') maxLen = categories.value.length;
+          else if (activeTab.value === 'tags') maxLen = tags.value.length;
+          else if (activeTab.value === 'users') maxLen = adminUsers.value.length;
 
           if (maxLen > 0) {
             selectedTableRowIndex.value = (selectedTableRowIndex.value - 1 + maxLen) % maxLen;
@@ -11821,6 +11834,21 @@ const closeSuggestionsWithDelay = () => {
           if (activeTab.value === 'customers' && paginatedCustomers.value[selectedTableRowIndex.value]) {
             e.preventDefault();
             openCustomerDetails(paginatedCustomers.value[selectedTableRowIndex.value]);
+            return;
+          }
+          if (activeTab.value === 'categories' && categories.value[selectedTableRowIndex.value]) {
+            e.preventDefault();
+            openCategoryModal(categories.value[selectedTableRowIndex.value]);
+            return;
+          }
+          if (activeTab.value === 'tags' && tags.value[selectedTableRowIndex.value]) {
+            e.preventDefault();
+            openTagModal(tags.value[selectedTableRowIndex.value]);
+            return;
+          }
+          if (activeTab.value === 'users' && adminUsers.value[selectedTableRowIndex.value]) {
+            e.preventDefault();
+            openUserModal(adminUsers.value[selectedTableRowIndex.value]);
             return;
           }
         }
