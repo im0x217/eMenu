@@ -56,6 +56,11 @@ const routes = [
     component: AdminView
   },
   {
+    path: '/ai-sandbox',
+    name: 'ai-sandbox',
+    component: () => import('../views/AiSandboxView.vue')
+  },
+  {
     path: '/:catchAll(.*)',
     redirect: '/shop/shop1'
   }

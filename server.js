@@ -4423,6 +4423,21 @@ app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, checkAdmin, async 
   res.json(result);
 });
 
+// ============ GEMINI AI LAB & SANDBOX (NON-PRODUCTION) ============
+try {
+  const createAiSandboxRouter = require("./routes/aiSandbox");
+  app.use("/api/dev/ai", createAiSandboxRouter({
+    getProductsCollection: () => productsCollection,
+    getCategoriesCollection: () => categoriesCollection,
+    getOrdersCollection: () => ordersCollection,
+    getPaymentsCollection: () => paymentsCollection,
+    getOrderEffectiveDateStr
+  }));
+  console.log("✓ [AI Sandbox] Mounted /api/dev/ai routes for non-production experimentation");
+} catch (aiRouteErr) {
+  console.error("✗ [AI Sandbox] Failed to mount AI sandbox routes:", aiRouteErr.message);
+}
+
 connectWithRetry();
 
 // Schedule periodic cleanup of cancelled orders every 30 minutes

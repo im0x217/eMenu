@@ -129,6 +129,7 @@
         </nav>
 
         <div class="sidebar-footer">
+          <a href="/#/ai-sandbox" target="_blank" class="btn btn-outline w-100 mb-2" style="border-style: dashed; color: #2563eb; border-color: #93c5fd;">مختبر الذكاء الاصطناعي ✨</a>
           <a href="/" class="btn btn-outline w-100 mb-2">معاينة المتجر</a>
           <button @click="handleLogout" class="btn btn-danger w-100">تسجيل الخروج</button>
         </div>
