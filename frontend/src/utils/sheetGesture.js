@@ -1,4 +1,4 @@
-﻿import { gsap } from 'gsap';
+import { gsap } from 'gsap';
 import { triggerHaptic } from './haptics';
 
 /**
@@ -85,8 +85,8 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
     // Calculate projected endpoint using momentum
     const projectedY = currentY + project(velocity * 0.4);
 
-    // Dismiss if pulled down > 90px OR if flicked downward with high velocity
-    const shouldDismiss = currentY > 90 || projectedY > 160 || (velocity > 0.65 && currentY > 20);
+    // Dismiss if pulled down > 80px OR if flicked downward with fluid velocity (RICO Mobile benchmark)
+    const shouldDismiss = currentY > 80 || projectedY > 140 || (velocity > 0.55 && currentY > 15);
 
     if (shouldDismiss) {
       triggerHaptic('light');

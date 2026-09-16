@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm run build --prefix frontend",
+    "tokens:build": "node scripts/build-tokens.js",
+    "build": "npm run tokens:build && npm run build --prefix frontend",
     "ux:audit": "node scripts/ux-audit.js"
   },
   "dependencies": {

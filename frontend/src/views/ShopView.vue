@@ -7,6 +7,7 @@ import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
 import { isImageCached, warmImageUrls } from '../utils/imageCache';
+import { telemetry } from '../utils/telemetry';
 
 const shopStore = useShopStore();
 
@@ -49,6 +50,8 @@ watch(() => shopStore.categories, (cats) => {
 }, { immediate: true });
 
 onMounted(async () => {
+  telemetry.track('page_view', { path: '/shop', shop: shopStore.activeShop });
+
   if (shopStore.categories.length > 0 && !activeCategory.value) {
     activeCategory.value = shopStore.categories[0].name;
   }
@@ -128,6 +131,7 @@ const selectCategory = (catName) => {
   triggerHaptic('light');
   activeCategory.value = catName;
   activeSubCategory.value = ''; // Reset subcategory filter
+  telemetry.track('category_select', { categoryName: catName, shop: shopStore.activeShop });
 };
 
 // Subtle GSAP Product Grid Stagger (Design Guide Section 3)
@@ -992,7 +996,20 @@ watch(carouselItems, (newItems) => {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  touch-action: manipulation;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* 48x48px invisible hit pad for mobile ergonomics (WCAG 2.5.5) */
+.clear-search-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  pointer-events: auto;
 }
 
 .clear-search-btn:hover {

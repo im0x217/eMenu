@@ -782,6 +782,125 @@
                   </table>
                 </div>
               </div>
+
+              <!-- UX Insights & Conversion Funnel Card (UX Datasets 03_interaction_telemetry) -->
+              <div class="chart-card glass-panel span-2 ux-insights-card">
+                <div class="card-header-with-badge">
+                  <div class="d-flex align-items-center gap-2">
+                    <h3 class="chart-title">إحصائيات تجربة المستخدم والتحويل (UX Insights)</h3>
+                    <span class="badge badge-primary">سلوك التسوق والتفاعل</span>
+                  </div>
+                  <span class="text-muted fs-xs">مبنية على معايير UX Datasets</span>
+                </div>
+
+                <div class="ux-insights-content mt-3">
+                  <!-- Conversion Funnel Row -->
+                  <div class="ux-funnel-grid">
+                    <div class="funnel-step">
+                      <div class="funnel-step-header">
+                        <span class="step-num">1</span>
+                        <span class="step-title">جلسات التصفح</span>
+                      </div>
+                      <div class="step-value text-mono">{{ telemetryInsights.funnel?.totalSessions || 0 }}</div>
+                      <div class="step-desc">إجمالي الجلسات</div>
+                    </div>
+
+                    <div class="funnel-connector" aria-hidden="true">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+
+                    <div class="funnel-step">
+                      <div class="funnel-step-header">
+                        <span class="step-num">2</span>
+                        <span class="step-title">إضافة للسلة</span>
+                      </div>
+                      <div class="step-value text-mono">{{ telemetryInsights.funnel?.cartSessions || 0 }}</div>
+                      <div class="step-desc">اهتمام بالشراء</div>
+                    </div>
+
+                    <div class="funnel-connector" aria-hidden="true">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+
+                    <div class="funnel-step">
+                      <div class="funnel-step-header">
+                        <span class="step-num">3</span>
+                        <span class="step-title">مراجعة الطلب</span>
+                      </div>
+                      <div class="step-value text-mono">{{ telemetryInsights.funnel?.checkoutSessions || 0 }}</div>
+                      <div class="step-desc">فتح نافذة التأكيد</div>
+                    </div>
+
+                    <div class="funnel-connector" aria-hidden="true">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+
+                    <div class="funnel-step highlight">
+                      <div class="funnel-step-header">
+                        <span class="step-num">4</span>
+                        <span class="step-title">إتمام الطلب</span>
+                      </div>
+                      <div class="step-value text-mono text-success">{{ telemetryInsights.funnel?.orderSessions || 0 }}</div>
+                      <div class="step-desc">تحويل مكتمل</div>
+                    </div>
+                  </div>
+
+                  <!-- Key UX Conversion Metrics -->
+                  <div class="ux-kpi-subgrid mt-3">
+                    <div class="ux-stat-box">
+                      <div class="ux-stat-label">معدل التحويل الكلي (Session Conversion)</div>
+                      <div class="ux-stat-value text-success text-mono">{{ telemetryInsights.funnel?.conversionRate || 0 }}%</div>
+                      <div class="ux-stat-sub">من زيارة المتجر إلى تقديم طلب</div>
+                    </div>
+
+                    <div class="ux-stat-box">
+                      <div class="ux-stat-label">معدل التراجع عن السلة (Cart Abandonment)</div>
+                      <div class="ux-stat-value text-warning text-mono">{{ telemetryInsights.funnel?.cartAbandonmentRate || 0 }}%</div>
+                      <div class="ux-stat-sub">أضافوا للسلة ولم يؤكدوا الطلب</div>
+                    </div>
+
+                    <div class="ux-stat-box">
+                      <div class="ux-stat-label">متوسط زمن معاينة المنتج (Product Dwell Time)</div>
+                      <div class="ux-stat-value text-primary text-mono">{{ telemetryInsights.avgDwellSeconds || 0 }} ثانية</div>
+                      <div class="ux-stat-sub">تفاعل نشط مع تفاصيل المنتج</div>
+                    </div>
+                  </div>
+
+                  <!-- Details Row -->
+                  <div class="ux-details-split mt-3">
+                    <div class="ux-subpanel">
+                      <h4 class="subpanel-title">توزيع الأجهزة (Device Breakdown)</h4>
+                      <div class="device-bars">
+                        <div class="device-row">
+                          <span class="device-name">📱 الهاتف المحمول</span>
+                          <span class="device-count text-mono">{{ telemetryInsights.devices?.mobile || 0 }}</span>
+                        </div>
+                        <div class="device-row">
+                          <span class="device-name">💻 الحاسوب المكتبي</span>
+                          <span class="device-count text-mono">{{ telemetryInsights.devices?.desktop || 0 }}</span>
+                        </div>
+                        <div class="device-row">
+                          <span class="device-name">📟 الأجهزة اللوحية</span>
+                          <span class="device-count text-mono">{{ telemetryInsights.devices?.tablet || 0 }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="ux-subpanel">
+                      <h4 class="subpanel-title">الأصناف الأكثر تفاعلاً وزيارة</h4>
+                      <div v-if="!telemetryInsights.topCategories || telemetryInsights.topCategories.length === 0" class="text-muted fs-xs text-center py-2">
+                        لا توجد بيانات تفاعل بعد في هذه الفترة.
+                      </div>
+                      <div v-else class="cat-engagement-list">
+                        <div v-for="cat in telemetryInsights.topCategories" :key="cat.name" class="cat-engage-item">
+                          <span class="cat-name">{{ cat.name }}</span>
+                          <span class="cat-interactions text-mono">{{ cat.interactions }} تفاعل</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             </div>
           </div>
@@ -7052,6 +7171,13 @@ export default {
       lowPerformingProducts: []
     });
 
+    const telemetryInsights = ref({
+      funnel: { totalSessions: 0, cartSessions: 0, checkoutSessions: 0, orderSessions: 0, conversionRate: 0, cartConversionRate: 0, cartAbandonmentRate: 0 },
+      devices: { mobile: 0, tablet: 0, desktop: 0 },
+      topCategories: [],
+      avgDwellSeconds: 0
+    });
+
     // Product & Categories datasets
     const products = ref([]);
     const categories = ref([]);
@@ -8980,6 +9106,20 @@ export default {
           analyticsData.topFavorites = data.topFavorites || [];
           analyticsData.inactiveCustomers = data.inactiveCustomers || [];
           analyticsData.lowPerformingProducts = data.lowPerformingProducts || [];
+
+          // Fetch UX Telemetry Insights (UX Datasets 03_interaction_telemetry)
+          try {
+            const telDays = analyticsPeriod.value === '7d' ? 7 : (analyticsPeriod.value === 'today' || analyticsPeriod.value === '1d') ? 1 : 30;
+            const telRes = await adminFetch(`/api/admin/telemetry/insights?shop=${activeShop.value}&days=${telDays}`);
+            if (telRes.ok) {
+              const telData = await telRes.json();
+              if (telData.success) {
+                telemetryInsights.value = telData;
+              }
+            }
+          } catch (telErr) {
+            console.debug('Telemetry insights fetch muted:', telErr);
+          }
         } else {
           const errData = await res.json().catch(() => ({}));
           console.error('Failed to fetch analytics:', errData);
@@ -12289,6 +12429,7 @@ const closeSuggestionsWithDelay = () => {
       analyticsStartDate,
       analyticsEndDate,
       analyticsLoading,
+      telemetryInsights,
       analyticsFromOpen,
       analyticsToOpen,
       analyticsFromYear,
@@ -25575,4 +25716,199 @@ select.pos-control {
   border-radius: 10px;
 }
 
+/* ============ UX INSIGHTS & CONVERSION FUNNEL ============ */
+.ux-insights-card {
+  margin-top: 1.5rem;
+  background: #ffffff;
+}
+
+.ux-funnel-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.funnel-step {
+  flex: 1;
+  min-width: 130px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.funnel-step.highlight {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.funnel-step-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.funnel-step.highlight .step-num {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.step-title {
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: #1e293b;
+}
+
+.step-value {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.step-desc {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.funnel-connector {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ux-kpi-subgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ux-stat-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ux-stat-label {
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #475569;
+}
+
+.ux-stat-value {
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.ux-stat-sub {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.ux-details-split {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.ux-subpanel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.subpanel-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.device-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.cat-engagement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cat-engage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.cat-name {
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.cat-interactions {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--primary-color, #d97706);
+}
+
+@media (max-width: 768px) {
+  .ux-kpi-subgrid,
+  .ux-details-split {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

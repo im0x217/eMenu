@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
+import { telemetry } from '../utils/telemetry';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -93,6 +94,12 @@ const handleCheckout = () => {
 
   triggerHaptic('medium');
   showOrderConfirmModal.value = true;
+  telemetry.track('checkout_step', {
+    step: 'open_confirm_modal',
+    shop: cartStore.activeShop,
+    itemsCount: cartStore.totalCount,
+    total: cartStore.totalPrice
+  });
 };
 
 // Explicit order submission confirmed by user
@@ -102,6 +109,12 @@ const handleConfirmSubmit = async () => {
     const result = await cartStore.submitOrder();
     triggerHaptic('success');
     showOrderConfirmModal.value = false;
+    telemetry.track('order_complete', {
+      shop: cartStore.activeShop,
+      orderNumber: result?.orderNumber || result?.order?.orderNumber,
+      total: cartStore.totalPrice,
+      isEdit: !!result?.isEdit
+    });
     if (result && result.isEdit) {
       toastStore.show('تم حفظ وتحديث طلبك بنجاح!', 'success');
     }
@@ -176,6 +189,12 @@ watch(showOrderConfirmModal, (isOpen) => {
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown);
+  telemetry.track('checkout_step', {
+    step: 'view_cart',
+    shop: cartStore.activeShop,
+    itemsCount: cartStore.totalCount,
+    total: cartStore.totalPrice
+  });
 });
 
 onUnmounted(() => {
@@ -753,7 +772,18 @@ const handleClearCart = () => {
   gap: 4px;
   border-radius: 8px;
   cursor: pointer;
+  position: relative;
+  touch-action: manipulation;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-cancel-edit-mode::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: -6px;
+  right: -6px;
 }
 
 .btn-cancel-edit-mode:focus-visible {
@@ -768,10 +798,9 @@ const handleClearCart = () => {
 }
 
 .edit-banner-instructions {
-  font-size: 0.84rem;
-  color: #78350f;
-  line-height: 1.45;
-  margin: 0;
+  font-size: 0.8rem;
+  color: #451a03;
+  line-height: 1.4;
 }
 
 .btn-browse-store-add {
@@ -900,7 +929,18 @@ const handleClearCart = () => {
   padding: 6px 10px;
   min-height: 36px;
   border-radius: 6px;
+  position: relative;
+  touch-action: manipulation;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.clear-cart-btn::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: -6px;
+  right: -6px;
 }
 
 .clear-cart-btn:focus-visible {
@@ -1130,7 +1170,18 @@ const handleClearCart = () => {
   font-size: 0.78rem;
   font-weight: 750;
   cursor: pointer;
+  position: relative;
+  touch-action: manipulation;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.change-btn::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: -6px;
+  right: -6px;
 }
 
 .change-btn:focus-visible {
@@ -1178,8 +1229,19 @@ const handleClearCart = () => {
   min-height: 28px;
   border-radius: 20px;
   cursor: pointer;
+  position: relative;
+  touch-action: manipulation;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   line-height: 1;
+}
+
+.date-pill-btn::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -8px;
+  right: -8px;
 }
 
 .date-pill-btn:hover {

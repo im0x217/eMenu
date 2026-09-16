@@ -10,6 +10,7 @@ import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
 import { flyToCart } from '../utils/flyToCart';
 import { normalizeImageUrl, isImageCached, markImageLoaded } from '../utils/imageCache';
+import { telemetry } from '../utils/telemetry';
 
 const heartBtnRef = ref(null);
 const addBtnRef = ref(null);
@@ -75,12 +76,40 @@ watch(() => props.product._id, () => {
   });
 });
 
+let dwellObserver = null;
+
 onMounted(() => {
   checkCachedImage();
   triggerOffThreadDecode();
   nextTick(() => {
     checkCachedImage();
   });
+
+  // Empirical Dwell Tracker (UX Datasets 03_interaction_telemetry benchmark)
+  if (typeof IntersectionObserver !== 'undefined' && cardRef.value) {
+    dwellObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          telemetry.startDwell(props.product._id, {
+            productId: props.product._id,
+            productName: props.product.name,
+            shop: activeShop.value
+          });
+        } else {
+          telemetry.endDwell(props.product._id);
+        }
+      }
+    }, { threshold: 0.6 });
+    dwellObserver.observe(cardRef.value);
+  }
+});
+
+onUnmounted(() => {
+  if (dwellObserver) {
+    dwellObserver.disconnect();
+    dwellObserver = null;
+  }
+  telemetry.endDwell(props.product._id);
 });
 
 const handleImageLoad = () => {
@@ -158,6 +187,13 @@ const handleAddToCart = () => {
     cartStore.addToCart(props.product, activeShop.value, mode, qtyStep);
     flyToCart(imgRef.value || cardRef.value, getImageUrl());
     toastStore.show('تم إضافة المنتج إلى السلة بنجاح!');
+    telemetry.track('cart_add', {
+      productId: props.product._id,
+      productName: props.product.name,
+      shop: activeShop.value,
+      price: mode === 'bulk' ? (props.product.price_bulk || props.product.price) : (props.product.price_regular || props.product.price),
+      mode
+    });
   } catch (err) {
     toastStore.show(err.message, 'error');
   }
@@ -168,6 +204,12 @@ const incrementQuantity = () => {
   const newQty = Math.round((cartItemQuantity.value + 1) * 100) / 100;
   cartStore.updateQty(props.product._id, newQty);
   flyToCart(imgRef.value || cardRef.value, getImageUrl());
+  telemetry.track('cart_add', {
+    productId: props.product._id,
+    productName: props.product.name,
+    shop: activeShop.value,
+    qty: newQty
+  });
 };
 
 const decrementQuantity = () => {
@@ -175,6 +217,11 @@ const decrementQuantity = () => {
   if (newQty === 0) {
     triggerHaptic('warning');
     cartStore.removeFromCart(props.product._id);
+    telemetry.track('cart_remove', {
+      productId: props.product._id,
+      productName: props.product.name,
+      shop: activeShop.value
+    });
   } else {
     triggerHaptic('light');
     cartStore.updateQty(props.product._id, newQty);
@@ -379,6 +426,19 @@ const activeTagsList = computed(() => {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  touch-action: manipulation;
+}
+
+/* Invisible 48x48px touch pad for mobile ergonomics (WCAG 2.1 & RICO) */
+.favorite-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  pointer-events: auto;
 }
 
 .favorite-btn:hover {
@@ -688,6 +748,7 @@ const activeTagsList = computed(() => {
 }
 
 .card-stepper-btn {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 9px;
@@ -701,6 +762,18 @@ const activeTagsList = computed(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   touch-action: manipulation;
   transition: transform 0.1s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Invisible 48x48px touch pad for effortless finger manipulation (WCAG 2.1 & RICO) */
+.card-stepper-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  pointer-events: auto;
 }
 
 .card-stepper-btn:active {
@@ -755,6 +828,7 @@ const activeTagsList = computed(() => {
 
 .add-btn-wide {
   width: 100%;
+  min-height: 42px;
   padding: 8px 12px;
   border-radius: 12px;
   background: var(--primary-color, #d97706);
@@ -768,6 +842,7 @@ const activeTagsList = computed(() => {
   justify-content: center;
   gap: 6px;
   cursor: pointer;
+  touch-action: manipulation;
   box-shadow: 0 4px 14px rgba(var(--primary-color-rgb, 217, 119, 6), 0.35);
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -822,7 +897,7 @@ const activeTagsList = computed(() => {
     padding: 6px 10px;
     font-size: 0.8rem;
     border-radius: 10px;
-    min-height: 36px;
+    min-height: 40px;
   }
   .card-stepper-control {
     border-radius: 10px;

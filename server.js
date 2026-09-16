@@ -256,6 +256,7 @@ let db2, productsCollection2, categoriesCollection2, tagsCollection2;
 let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection, paymentsCollection, countersCollection;
 let chefsCollection, chefsCollection2;
 let backupsCollection;
+let telemetryCollection;
 let mongoConnected = false;
 
 // Helper: Atomic Sequential Order Number Generator
@@ -1710,6 +1711,176 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   } catch (err) {
     console.error("Aggregation analytics error:", err);
     res.status(500).json({ error: "Failed to generate analytics" });
+  }
+});
+
+// ============ INTERACTION TELEMETRY & BEHAVIORAL ANALYTICS ============
+// Public ingestion endpoint for anonymous client interaction telemetry (inspired by UX Datasets: 03_interaction_telemetry)
+app.post("/api/telemetry/batch", async (req, res) => {
+  if (!mongoConnected || !telemetryCollection) {
+    return res.status(200).json({ success: false, reason: "Database initializing" });
+  }
+
+  try {
+    const { sessionId, events } = req.body || {};
+    if (!events || !Array.isArray(events) || events.length === 0) {
+      return res.status(200).json({ success: true, count: 0 });
+    }
+
+    const safeSessionId = typeof sessionId === 'string' ? sessionId.slice(0, 64) : 'unknown';
+    const now = new Date();
+
+    // Map and sanitize each event (limit batch to 50 max to prevent abuse)
+    const docs = events.slice(0, 50).map(evt => {
+      let evtDate = now;
+      if (evt.timestamp) {
+        const parsed = new Date(evt.timestamp);
+        if (!isNaN(parsed.getTime())) evtDate = parsed;
+      }
+
+      return {
+        sessionId: safeSessionId,
+        event: typeof evt.event === 'string' ? evt.event.slice(0, 40) : 'unknown',
+        shop: evt.shop === 'shop2' ? 'shop2' : 'shop1',
+        device: evt.device === 'tablet' ? 'tablet' : evt.device === 'desktop' ? 'desktop' : 'mobile',
+        timestamp: evtDate,
+        viewportWidth: typeof evt.viewportWidth === 'number' ? evt.viewportWidth : null,
+        metadata: evt.metadata && typeof evt.metadata === 'object' ? evt.metadata : {}
+      };
+    });
+
+    if (docs.length > 0) {
+      await telemetryCollection.insertMany(docs, { ordered: false });
+    }
+
+    res.status(200).json({ success: true, count: docs.length });
+  } catch (err) {
+    // Non-blocking response for client telemetry
+    res.status(200).json({ success: false, error: err.message });
+  }
+});
+
+// Admin UX Insights aggregation endpoint
+app.get("/api/admin/telemetry/insights", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const days = parseInt(req.query.days, 10) || 7;
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const matchFilter = { timestamp: { $gte: cutoff } };
+    if (shop === "shop1" || shop === "shop2") {
+      matchFilter.shop = shop;
+    }
+
+    // 1. Funnel & Session Conversion Aggregation
+    const funnelPipeline = [
+      { $match: matchFilter },
+      {
+        $group: {
+          _id: "$sessionId",
+          events: { $addToSet: "$event" },
+          device: { $first: "$device" }
+        }
+      },
+      {
+        $project: {
+          hasPageView: { $in: ["page_view", "$events"] },
+          hasCartAdd: { $in: ["cart_add", "$events"] },
+          hasCheckout: { $in: ["checkout_step", "$events"] },
+          hasOrder: { $in: ["order_complete", "$events"] },
+          device: 1
+        }
+      }
+    ];
+
+    const sessionData = await telemetryCollection.aggregate(funnelPipeline).toArray();
+
+    let totalSessions = 0;
+    let cartSessions = 0;
+    let checkoutSessions = 0;
+    let orderSessions = 0;
+    const deviceCounts = { mobile: 0, tablet: 0, desktop: 0 };
+
+    for (const s of sessionData) {
+      totalSessions++;
+      if (s.hasCartAdd) cartSessions++;
+      if (s.hasCheckout) checkoutSessions++;
+      if (s.hasOrder) orderSessions++;
+      if (s.device && deviceCounts[s.device] !== undefined) {
+        deviceCounts[s.device]++;
+      } else {
+        deviceCounts.mobile++;
+      }
+    }
+
+    // Rates calculation
+    const conversionRate = totalSessions > 0 ? Math.round((orderSessions / totalSessions) * 1000) / 10 : 0;
+    const cartConversionRate = cartSessions > 0 ? Math.round((orderSessions / cartSessions) * 1000) / 10 : 0;
+    const cartAbandonmentRate = cartSessions > 0 ? Math.round(((cartSessions - orderSessions) / cartSessions) * 1000) / 10 : 0;
+
+    // 2. Top Engaged Categories by Selection
+    const categoryPipeline = [
+      {
+        $match: {
+          ...matchFilter,
+          event: "category_select",
+          "metadata.categoryName": { $exists: true, $ne: "" }
+        }
+      },
+      {
+        $group: {
+          _id: "$metadata.categoryName",
+          interactions: { $sum: 1 }
+        }
+      },
+      { $sort: { interactions: -1 } },
+      { $limit: 6 }
+    ];
+
+    const topCategories = await telemetryCollection.aggregate(categoryPipeline).toArray();
+
+    // 3. Average Product Dwell Time
+    const dwellPipeline = [
+      {
+        $match: {
+          ...matchFilter,
+          event: "product_dwell",
+          "metadata.dwellMs": { $exists: true, $gt: 0 }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgDwellMs: { $avg: "$metadata.dwellMs" },
+          sampleCount: { $sum: 1 }
+        }
+      }
+    ];
+
+    const dwellResult = await telemetryCollection.aggregate(dwellPipeline).toArray();
+    const avgDwellSeconds = dwellResult.length > 0 && dwellResult[0].avgDwellMs
+      ? Math.round(dwellResult[0].avgDwellMs / 100) / 10
+      : 0;
+
+    res.json({
+      success: true,
+      periodDays: days,
+      funnel: {
+        totalSessions,
+        cartSessions,
+        checkoutSessions,
+        orderSessions,
+        conversionRate,
+        cartConversionRate,
+        cartAbandonmentRate
+      },
+      devices: deviceCounts,
+      topCategories: topCategories.map(c => ({ name: c._id, interactions: c.interactions })),
+      avgDwellSeconds
+    });
+  } catch (err) {
+    console.error("Telemetry insights aggregation error:", err);
+    res.status(500).json({ success: false, error: "Failed to generate UX insights" });
   }
 });
 
@@ -4401,6 +4572,7 @@ const connectWithRetry = async () => {
     chefsCollection = db.collection("chefs");
     chefsCollection2 = db2.collection("chefs");
     backupsCollection = db.collection("backups");
+    telemetryCollection = db.collection("telemetry");
     mongoConnected = true;
     
     productsCollection.createIndex({ category: 1 });
@@ -4430,6 +4602,12 @@ const connectWithRetry = async () => {
     adminUsersCollection.createIndex({ username: 1 }, { unique: true });
     chefsCollection.createIndex({ name: 1 });
     chefsCollection2.createIndex({ name: 1 });
+
+    // Telemetry indexes with 30-day automatic pruning TTL
+    telemetryCollection.createIndex({ timestamp: 1 }, { expireAfterSeconds: 30 * 86400 });
+    telemetryCollection.createIndex({ sessionId: 1 });
+    telemetryCollection.createIndex({ event: 1 });
+    telemetryCollection.createIndex({ shop: 1, timestamp: -1 });
 
     // Payment collection indexes
     paymentsCollection.createIndex({ customerPhone: 1, createdAt: -1 });

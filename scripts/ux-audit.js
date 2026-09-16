@@ -122,6 +122,36 @@ function auditFile(filePath) {
     }
   });
 
+  // 6. Audit Small Interactive Hit Targets (WCAG 2.5.5 / RICO Mobile Bounding Box)
+  // Scoped to mobile & customer-facing views; desktop back-office dashboards use dense pointer metrics
+  const isDesktopBackOffice = filePath.endsWith('AdminView.vue');
+  const styleMatch = content.match(/<style\b[^>]*>([\s\S]*?)<\/style>/i);
+  if (styleMatch && !isDesktopBackOffice) {
+    const styleContent = styleMatch[1];
+    // Match selectors with small width/height (e.g., width: 28px - 36px)
+    const smallClassMatches = [...styleContent.matchAll(/\.([a-z0-9-_]+)\s*\{[^}]*?(?:width|height):\s*([0-3][0-9]px)[^}]*?\}/gi)];
+    for (const match of smallClassMatches) {
+      const className = match[1];
+      // Only verify if this class is used on buttons or interactive elements in the template
+      const isUsedOnButton = new RegExp(`<button[^>]*class=["'][^"']*\\b${className}\\b`, 'i').test(template);
+      if (isUsedOnButton) {
+        // Check if a companion ::before or ::after hit-pad exists with 44px+ or negative offset expansion
+        const hasHitPad = new RegExp(`\\.${className}::(before|after)[^}]*?(?:width|min-width|height|min-height|top|bottom|inset):\\s*(?:-[0-9]+|4[4-9]|[5-9][0-9]|9999)px`, 'i').test(styleContent);
+        if (!hasHitPad) {
+          // Check if parent or element defines touch-action / min-height >= 40px
+          const hasAdequateMin = new RegExp(`\\.${className}\\s*\\{[^}]*?(?:min-height|min-width):\\s*(?:4[0-9]|[5-9][0-9])px`, 'i').test(styleContent);
+          if (!hasAdequateMin) {
+            issues.push({
+              type: 'WARNING',
+              rule: 'WCAG 2.5.5 / RICO Ergonomics (Target Size)',
+              msg: `Button class .${className} has visual dimensions < 40px (${match[2]}) without an expanded ::before/::after touch bounding box.`
+            });
+          }
+        }
+      }
+    }
+  }
+
   // Report results for this file
   if (issues.length === 0) {
     console.log('  [PASS] All WCAG 2.1 & UX rules satisfied cleanly.\n');
