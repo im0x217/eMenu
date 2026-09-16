@@ -692,7 +692,7 @@ watch(carouselItems, (newItems) => {
             v-for="(product, pIdx) in group.products" 
             :key="product._id" 
             :product="product" 
-            :priority="pIdx < 4 ? 'high' : 'auto'"
+            :priority="pIdx < 6 ? 'high' : 'auto'"
             @zoom="openZoomModal"
           />
         </div>

@@ -55,23 +55,11 @@ watch(() => props.product._id, () => {
   });
 });
 
-let shimmerFallbackTimer = null;
-
 onMounted(() => {
+  checkCachedImage();
   nextTick(() => {
     checkCachedImage();
   });
-  // Safety fallback: Ensure skeleton shimmer fades out within 1.5s even on slow connections
-  shimmerFallbackTimer = setTimeout(() => {
-    isLoaded.value = true;
-  }, 1500);
-});
-
-onUnmounted(() => {
-  if (shimmerFallbackTimer) {
-    clearTimeout(shimmerFallbackTimer);
-    shimmerFallbackTimer = null;
-  }
 });
 
 const handleImageLoad = () => {
@@ -79,6 +67,7 @@ const handleImageLoad = () => {
 };
 
 const handleImageError = (e) => {
+  if (hasError.value) return;
   hasError.value = true;
   isLoaded.value = true;
   e.target.src = '/res/logo.jpg';
@@ -174,7 +163,7 @@ const getImageUrl = () => {
   const raw = props.product.imgSigned || props.product.img || '/res/logo.jpg';
   if (!raw) return '/res/logo.jpg';
   try {
-    return encodeURI(raw);
+    return encodeURI(decodeURI(raw));
   } catch (e) {
     return raw;
   }
@@ -397,7 +386,7 @@ const activeTagsList = computed(() => {
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.4);
+  background: #0f172a;
   cursor: zoom-in;
 }
 
@@ -408,7 +397,7 @@ const activeTagsList = computed(() => {
   left: 0; 
   width: 100%; 
   height: 100%;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
   overflow: hidden;
   z-index: 1;
   opacity: 1;
@@ -423,11 +412,14 @@ const activeTagsList = computed(() => {
 
 .shimmer-wave {
   position: absolute;
-  top: 0; left: -100%; width: 100%; height: 100%;
+  top: 0; 
+  left: -100%; 
+  width: 100%; 
+  height: 100%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.25) 50%,
     transparent 100%
   );
   animation: shimmer 1.6s infinite ease-in-out;
@@ -445,9 +437,9 @@ const activeTagsList = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
   z-index: 2;
 }
 

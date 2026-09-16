@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v121';
+const CACHE_NAME = 'emenu-cache-v122';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -26,7 +26,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keyList) => {
       return Promise.all(
         keyList.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== 'emenu-images-cache-v1') {
             console.log('[Service Worker] Removing old cache', key);
             return caches.delete(key);
           }
@@ -46,7 +46,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Only intercept same-origin requests
+  // 2. Cache-First Strategy for S3 Product Images
+  if (url.hostname.includes('amazonaws.com')) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+            const responseClone = networkResponse.clone();
+            caches.open('emenu-images-cache-v1').then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        }).catch((err) => {
+          console.warn('[SW] S3 image network error, serving fallback', err);
+          return caches.match('/res/logo.jpg');
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. Only intercept same-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }

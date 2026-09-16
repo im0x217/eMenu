@@ -81,7 +81,7 @@ const closeZoomModal = () => {
         v-for="(product, idx) in favoriteProducts" 
         :key="product._id" 
         :product="product" 
-        :priority="idx < 4 ? 'high' : 'auto'"
+        :priority="idx < 6 ? 'high' : 'auto'"
         @zoom="openZoomModal"
       />
     </div>
