@@ -130,6 +130,26 @@ const selectCategory = (catName) => {
   activeSubCategory.value = ''; // Reset subcategory filter
 };
 
+// Subtle GSAP Product Grid Stagger (Design Guide Section 3)
+const animateProductCards = () => {
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+  nextTick(() => {
+    gsap.from('.product-card', {
+      opacity: 0,
+      y: 8,
+      duration: 0.3,
+      stagger: 0.03,
+      ease: 'power1.out'
+    });
+  });
+};
+
+watch(activeCategory, () => {
+  animateProductCards();
+});
+
 // Helper comparator: Available products first, tagged products second, unavailable products LAST
 const sortProducts = (a, b) => {
   const aAvail = a.available !== false ? 1 : 0;
