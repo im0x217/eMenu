@@ -1178,7 +1178,7 @@ const handleClearCart = () => {
   min-height: 28px;
   border-radius: 20px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   line-height: 1;
 }
 
@@ -1928,17 +1928,17 @@ const handleClearCart = () => {
     font-size: 0.85rem !important;
   }
 
-  /* Proportional balanced typography on mobile inputs */
+  /* iOS Safari Auto-Zoom Guard: Enforce 16px font-size on all mobile inputs */
   .item-note-input {
-    font-size: 0.8rem !important;
-    min-height: 34px;
-    height: 34px;
+    font-size: 16px !important;
+    min-height: 36px;
+    height: 36px;
   }
 
   .form-input {
-    font-size: 0.85rem !important;
-    min-height: 40px;
-    height: 40px;
+    font-size: 16px !important;
+    min-height: 42px;
+    height: 42px;
   }
 
   .checkout-details-section {

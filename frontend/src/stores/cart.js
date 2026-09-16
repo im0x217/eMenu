@@ -3,10 +3,11 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from './auth';
 import { trackEvent } from '../utils/analytics';
+import { safeJsonParse, safeSetItem } from '../utils/storage';
 
 export const useCartStore = defineStore('cart', () => {
   const authStore = useAuthStore();
-  const items = ref(JSON.parse(localStorage.getItem('cart_items') || '[]'));
+  const items = ref(safeJsonParse('cart_items', []));
   
   // Order Editing Mode State
   const isEditingOrder = ref(localStorage.getItem('cart_is_editing_order') === 'true');

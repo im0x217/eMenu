@@ -2,22 +2,23 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import { useAuthStore } from './auth';
 import { trackEvent } from '../utils/analytics';
+import { safeJsonParse, safeSetItem } from '../utils/storage';
 
 export const useFavoritesStore = defineStore('favorites', () => {
   const authStore = useAuthStore();
   
   // Per-shop local storage lists of favorited product IDs
-  const shop1Favorites = ref(JSON.parse(localStorage.getItem('favorites_shop1') || '[]'));
-  const shop2Favorites = ref(JSON.parse(localStorage.getItem('favorites_shop2') || '[]'));
+  const shop1Favorites = ref(safeJsonParse('favorites_shop1', []));
+  const shop2Favorites = ref(safeJsonParse('favorites_shop2', []));
 
   // Watch for local changes and persist to localStorage
   watch(shop1Favorites, (newVal) => {
-    localStorage.setItem('favorites_shop1', JSON.stringify(newVal));
+    safeSetItem('favorites_shop1', newVal);
     syncFavoritesWithBackend('shop1');
   }, { deep: true });
 
   watch(shop2Favorites, (newVal) => {
-    localStorage.setItem('favorites_shop2', JSON.stringify(newVal));
+    safeSetItem('favorites_shop2', newVal);
     syncFavoritesWithBackend('shop2');
   }, { deep: true });
 

@@ -25,26 +25,25 @@ export const useShopStore = defineStore('shop', () => {
   };
 
   const fetchMenu = async () => {
-    if (!activeShop.value) return;
+    if (!activeShop.value) {
+      setShop('shop1');
+    }
+    const targetShop = activeShop.value || 'shop1';
     isLoading.value = true;
     try {
-      const catEndpoint = activeShop.value === 'shop2' ? '/api/shop2/categories' : '/api/categories';
-      const catRes = await fetch(catEndpoint);
-      if (catRes.ok) {
-        categories.value = await catRes.json();
-      }
+      const catEndpoint = targetShop === 'shop2' ? '/api/shop2/categories' : '/api/categories';
+      const prodEndpoint = targetShop === 'shop2' ? '/api/shop2/products' : '/api/products';
+      const tagEndpoint = targetShop === 'shop2' ? '/api/shop2/tags' : '/api/tags';
 
-      const prodEndpoint = activeShop.value === 'shop2' ? '/api/shop2/products' : '/api/products';
-      const prodRes = await fetch(prodEndpoint);
-      if (prodRes.ok) {
-        products.value = await prodRes.json();
-      }
+      const [catRes, prodRes, tagRes] = await Promise.all([
+        fetch(catEndpoint),
+        fetch(prodEndpoint),
+        fetch(tagEndpoint)
+      ]);
 
-      const tagEndpoint = activeShop.value === 'shop2' ? '/api/shop2/tags' : '/api/tags';
-      const tagRes = await fetch(tagEndpoint);
-      if (tagRes.ok) {
-        tags.value = await tagRes.json();
-      }
+      if (catRes.ok) categories.value = await catRes.json();
+      if (prodRes.ok) products.value = await prodRes.json();
+      if (tagRes.ok) tags.value = await tagRes.json();
     } catch (e) {
       console.error('Failed to fetch menu items', e);
     } finally {

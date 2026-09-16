@@ -69,6 +69,15 @@ const router = createRouter({
 
 import { trackPageView } from '../utils/analytics';
 
+// Ensure activeShop is always initialized on all customer routes
+router.beforeEach((to, from, next) => {
+  const shopStore = useShopStore();
+  if (!shopStore.activeShop && !to.path.startsWith('/admin')) {
+    shopStore.setShop('shop1');
+  }
+  next();
+});
+
 // Auto-track page views and update dynamic PWA manifest on route change
 router.afterEach((to) => {
   trackPageView(to.fullPath, to.name ? String(to.name) : '');

@@ -55,14 +55,23 @@ watch(() => props.product._id, () => {
   });
 });
 
+let shimmerFallbackTimer = null;
+
 onMounted(() => {
   nextTick(() => {
     checkCachedImage();
   });
   // Safety fallback: Ensure skeleton shimmer fades out within 1.5s even on slow connections
-  setTimeout(() => {
+  shimmerFallbackTimer = setTimeout(() => {
     isLoaded.value = true;
   }, 1500);
+});
+
+onUnmounted(() => {
+  if (shimmerFallbackTimer) {
+    clearTimeout(shimmerFallbackTimer);
+    shimmerFallbackTimer = null;
+  }
 });
 
 const handleImageLoad = () => {
@@ -226,7 +235,7 @@ const activeTagsList = computed(() => {
         :alt="product.name" 
         class="product-image"
         :class="{ 'loaded': isLoaded }"
-        loading="eager"
+        :loading="priority === 'high' ? 'eager' : 'lazy'"
         :fetchpriority="priority === 'high' ? 'high' : 'auto'"
         decoding="async"
         @load="handleImageLoad"

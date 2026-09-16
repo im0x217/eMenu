@@ -34,11 +34,12 @@ const navToShop = () => {
 </script>
 
 <template>
-  <nav class="bottom-nav-bar">
+  <nav class="bottom-nav-bar" aria-label="شريط التنقل الرئيسي">
     <!-- Home/Shop Tab -->
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path.startsWith('/shop/') }" 
+      :aria-current="route.path.startsWith('/shop/') ? 'page' : undefined"
       @click="navToShop"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -52,6 +53,7 @@ const navToShop = () => {
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path === '/favorites' }" 
+      :aria-current="route.path === '/favorites' ? 'page' : undefined"
       @click="navTo('/favorites')"
     >
       <div class="icon-wrapper">
@@ -67,6 +69,7 @@ const navToShop = () => {
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path === '/cart' }" 
+      :aria-current="route.path === '/cart' ? 'page' : undefined"
       @click="navTo('/cart')"
     >
       <div class="icon-wrapper">
@@ -84,6 +87,7 @@ const navToShop = () => {
     <button 
       class="nav-tab-btn" 
       :class="{ active: route.path === '/account' }" 
+      :aria-current="route.path === '/account' ? 'page' : undefined"
       @click="navTo('/account')"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

@@ -290,7 +290,7 @@ body {
   border-radius: 12px;
   color: #2c2520;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.95rem;
+  font-size: 1rem; /* 16px minimum guard against iOS Safari auto-zoom */
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 

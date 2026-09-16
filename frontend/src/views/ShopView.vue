@@ -403,15 +403,17 @@ const startDrag = (event) => {
   startX.value = event.pageX - activeContainer.value.offsetLeft;
   scrollLeftStart.value = activeContainer.value.scrollLeft;
   activeContainer.value.style.cursor = 'grabbing';
+  window.addEventListener('mousemove', drag, { passive: false });
+  window.addEventListener('mouseup', endDrag);
 };
 
 const drag = (event) => {
   if (!isDragging.value || !activeContainer.value) return;
-  event.preventDefault();
   const x = event.pageX - activeContainer.value.offsetLeft;
   const walk = (x - startX.value) * 1.5;
   if (Math.abs(walk) > 5) {
     dragMoved.value = true;
+    event.preventDefault();
   }
   activeContainer.value.scrollLeft = scrollLeftStart.value - walk;
 };
@@ -423,6 +425,8 @@ const endDrag = () => {
   isDragging.value = false;
   isPaused.value = false;
   activeContainer.value = null;
+  window.removeEventListener('mousemove', drag);
+  window.removeEventListener('mouseup', endDrag);
 };
 
 const selectSubCategory = (subName) => {
@@ -476,6 +480,8 @@ onUnmounted(() => {
   if (cleanupBulkGesture) cleanupBulkGesture();
   if (cleanupDisableGesture) cleanupDisableGesture();
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('mousemove', drag);
+  window.removeEventListener('mouseup', endDrag);
   stopAutoplay();
   if (carouselTrack.value) {
     carouselTrack.value.removeEventListener('scroll', handleCarouselScroll);
