@@ -1167,7 +1167,7 @@
               </div>
 
               <!-- Products Table Numbered Pagination Bar -->
-              <div v-if="productsTotalPages > 1" class="admin-pagination-bar">
+              <div v-if="productsTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': paginationFocused }">
                 <div class="pagination-info">
                   <span>عرض <strong>{{ (productsPage - 1) * productsPerPage + 1 }}</strong> - <strong>{{ Math.min(productsPage * productsPerPage, filteredProducts.length) }}</strong> من أصل <strong>{{ filteredProducts.length }}</strong> منتج</span>
                 </div>
@@ -1865,7 +1865,7 @@
               </div>
 
               <!-- Orders Table Numbered Pagination Bar -->
-              <div v-if="ordersTotalPages > 1" class="admin-pagination-bar">
+              <div v-if="ordersTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': paginationFocused }">
                 <div class="pagination-info">
                   <span>عرض <strong>{{ (ordersPage - 1) * ordersPerPage + 1 }}</strong> - <strong>{{ Math.min(ordersPage * ordersPerPage, filteredOrders.length) }}</strong> من أصل <strong>{{ filteredOrders.length }}</strong> طلب</span>
                 </div>
@@ -3356,7 +3356,7 @@
               </div>
 
               <!-- Customers Table Numbered Pagination Bar -->
-              <div v-if="customersTotalPages > 1" class="admin-pagination-bar">
+              <div v-if="customersTotalPages > 1" class="admin-pagination-bar" :class="{ 'keyboard-selected-pagination': paginationFocused }">
                 <div class="pagination-info">
                   <span>عرض <strong>{{ (customersPage - 1) * customersPerPage + 1 }}</strong> - <strong>{{ Math.min(customersPage * customersPerPage, filteredCustomers.length) }}</strong> من أصل <strong>{{ filteredCustomers.length }}</strong> عميل</span>
                 </div>
@@ -6531,7 +6531,11 @@
             </div>
             <div class="shortcut-item-row">
               <span class="desc">الانتقال للصفحة التالية / السابقة في الجدول</span>
-              <div class="keys"><kbd class="kbd-badge">PageDown</kbd> / <kbd class="kbd-badge">PageUp</kbd></div>
+              <div class="keys"><kbd class="kbd-badge">PageDown</kbd> / <kbd class="kbd-badge">PageUp</kbd> <span class="or-text">أو</span> <kbd class="kbd-badge">Ctrl</kbd>+<kbd class="kbd-badge">↓</kbd> / <kbd class="kbd-badge">↑</kbd></div>
+            </div>
+            <div class="shortcut-item-row">
+              <span class="desc">التمرير التلقائي لأزرار التصفح بعد نهاية الجدول</span>
+              <div class="keys"><kbd class="kbd-badge">↓</kbd> <span class="or-text">عند آخر صف</span></div>
             </div>
           </div>
 
@@ -6688,6 +6692,7 @@ export default {
 
     // ================= P3 KEYBOARD POWER-USER STATE =================
     const selectedTableRowIndex = ref(0);
+    const paginationFocused = ref(false);
     const shortcutsModalOpen = ref(false);
     const commandPaletteOpen = ref(false);
     const commandPaletteQuery = ref('');
@@ -11906,34 +11911,108 @@ const closeSuggestionsWithDelay = () => {
 
       if (!isInputFocused && !anyModalOpen()) {
 
-        // Table Pagination: PageDown / PageUp
-        if (e.key === 'PageDown') {
-          e.preventDefault();
+        // Helper functions for page traversal across paginated tabs
+        const goToNextPage = () => {
+          let advanced = false;
           if (activeTab.value === 'orders' && ordersPage.value < ordersTotalPages.value) {
             ordersPage.value++;
+            advanced = true;
             toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
           } else if (activeTab.value === 'products' && productsPage.value < productsTotalPages.value) {
             productsPage.value++;
+            advanced = true;
             toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
           } else if (activeTab.value === 'customers' && customersPage.value < customersTotalPages.value) {
             customersPage.value++;
+            advanced = true;
             toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
           }
-          return;
-        }
-        if (e.key === 'PageUp') {
-          e.preventDefault();
+          if (advanced) {
+            paginationFocused.value = false;
+            selectedTableRowIndex.value = 0;
+            nextTick(() => {
+              const row = document.querySelector('.keyboard-selected-row');
+              if (row && typeof row.scrollIntoView === 'function') {
+                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            });
+          }
+          return advanced;
+        };
+
+        const goToPrevPage = () => {
+          let movedBack = false;
           if (activeTab.value === 'orders' && ordersPage.value > 1) {
             ordersPage.value--;
+            movedBack = true;
             toast.show(`صفحة الطلبات: ${ordersPage.value} من ${ordersTotalPages.value}`, 'info');
           } else if (activeTab.value === 'products' && productsPage.value > 1) {
             productsPage.value--;
+            movedBack = true;
             toast.show(`صفحة المنتجات: ${productsPage.value} من ${productsTotalPages.value}`, 'info');
           } else if (activeTab.value === 'customers' && customersPage.value > 1) {
             customersPage.value--;
+            movedBack = true;
             toast.show(`صفحة العملاء: ${customersPage.value} من ${customersTotalPages.value}`, 'info');
           }
+          if (movedBack) {
+            paginationFocused.value = false;
+            selectedTableRowIndex.value = 0;
+            nextTick(() => {
+              const row = document.querySelector('.keyboard-selected-row');
+              if (row && typeof row.scrollIntoView === 'function') {
+                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            });
+          }
+          return movedBack;
+        };
+
+        // Table Pagination: PageDown / PageUp or Ctrl+ArrowDown / Ctrl+ArrowUp
+        if (e.key === 'PageDown' || (e.ctrlKey && e.key === 'ArrowDown')) {
+          e.preventDefault();
+          goToNextPage();
           return;
+        }
+        if (e.key === 'PageUp' || (e.ctrlKey && e.key === 'ArrowUp')) {
+          e.preventDefault();
+          goToPrevPage();
+          return;
+        }
+
+        // Pagination Bar Active Keyboard Controls (when focused after table ends)
+        if (paginationFocused.value) {
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            goToNextPage();
+            return;
+          }
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            goToPrevPage();
+            return;
+          }
+          if (e.key === 'Enter' || e.code === 'Space') {
+            e.preventDefault();
+            goToNextPage();
+            return;
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            paginationFocused.value = false;
+            let maxLen = 0;
+            if (activeTab.value === 'orders') maxLen = paginatedOrders.value.length;
+            else if (activeTab.value === 'products') maxLen = paginatedProducts.value.length;
+            else if (activeTab.value === 'customers') maxLen = paginatedCustomers.value.length;
+            selectedTableRowIndex.value = maxLen > 0 ? maxLen - 1 : 0;
+            nextTick(() => {
+              const row = document.querySelector('.keyboard-selected-row');
+              if (row && typeof row.scrollIntoView === 'function') {
+                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            });
+            return;
+          }
         }
 
         // Direct Tab Switching via Alt+1..9 (outside modals)
@@ -11976,14 +12055,46 @@ const closeSuggestionsWithDelay = () => {
           else if (activeTab.value === 'tags') maxLen = tags.value.length;
           else if (activeTab.value === 'users') maxLen = adminUsers.value.length;
 
+          // Paginated tabs with more than 1 page
+          const hasPagination = (activeTab.value === 'orders' && ordersTotalPages.value > 1) ||
+                                (activeTab.value === 'products' && productsTotalPages.value > 1) ||
+                                (activeTab.value === 'customers' && customersTotalPages.value > 1);
+
           if (maxLen > 0) {
-            selectedTableRowIndex.value = (selectedTableRowIndex.value + 1) % maxLen;
-            nextTick(() => {
-              const row = document.querySelector('.keyboard-selected-row');
-              if (row && typeof row.scrollIntoView === 'function') {
-                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-              }
-            });
+            if (paginationFocused.value && hasPagination) {
+              // Already at pagination bar — advance to next page
+              goToNextPage();
+            } else if (selectedTableRowIndex.value >= maxLen - 1 && hasPagination) {
+              // At last row of a paginated table — extend scroll to pagination controls
+              paginationFocused.value = true;
+              selectedTableRowIndex.value = -1; // Deselect all rows
+              nextTick(() => {
+                const bar = document.querySelector('.admin-pagination-bar');
+                if (bar && typeof bar.scrollIntoView === 'function') {
+                  bar.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              });
+            } else if (selectedTableRowIndex.value >= maxLen - 1 && !hasPagination) {
+              // Non-paginated tabs or single-page tables: wrap to first row
+              paginationFocused.value = false;
+              selectedTableRowIndex.value = 0;
+              nextTick(() => {
+                const row = document.querySelector('.keyboard-selected-row');
+                if (row && typeof row.scrollIntoView === 'function') {
+                  row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              });
+            } else {
+              // Normal increment
+              paginationFocused.value = false;
+              selectedTableRowIndex.value++;
+              nextTick(() => {
+                const row = document.querySelector('.keyboard-selected-row');
+                if (row && typeof row.scrollIntoView === 'function') {
+                  row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              });
+            }
           }
           return;
         }
@@ -12002,13 +12113,26 @@ const closeSuggestionsWithDelay = () => {
           else if (activeTab.value === 'users') maxLen = adminUsers.value.length;
 
           if (maxLen > 0) {
-            selectedTableRowIndex.value = (selectedTableRowIndex.value - 1 + maxLen) % maxLen;
-            nextTick(() => {
-              const row = document.querySelector('.keyboard-selected-row');
-              if (row && typeof row.scrollIntoView === 'function') {
-                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-              }
-            });
+            if (paginationFocused.value) {
+              // Return from pagination bar back to last row of table
+              paginationFocused.value = false;
+              selectedTableRowIndex.value = maxLen - 1;
+              nextTick(() => {
+                const row = document.querySelector('.keyboard-selected-row');
+                if (row && typeof row.scrollIntoView === 'function') {
+                  row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              });
+            } else {
+              paginationFocused.value = false;
+              selectedTableRowIndex.value = (selectedTableRowIndex.value - 1 + maxLen) % maxLen;
+              nextTick(() => {
+                const row = document.querySelector('.keyboard-selected-row');
+                if (row && typeof row.scrollIntoView === 'function') {
+                  row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              });
+            }
           }
           return;
         }
@@ -12079,8 +12203,8 @@ const closeSuggestionsWithDelay = () => {
           return;
         }
 
-        // Tab traversal: [ / ] or ← / → to cycle between admin tabs
-        if (e.key === '[' || e.key === ']' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        // Tab traversal: [ / ] or ← / → to cycle between admin tabs (only when not focused on pagination bar)
+        if (!paginationFocused.value && (e.key === '[' || e.key === ']' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
           e.preventDefault();
           const allowedTabs = userRole.value === 'order_manager' ? ['orders', 'customers', 'production'] : VALID_TABS;
           const currentIdx = allowedTabs.indexOf(activeTab.value);
@@ -12266,6 +12390,7 @@ const closeSuggestionsWithDelay = () => {
     // Reset table row selection when tab or pagination changes
     watch([activeTab, ordersPage, productsPage, customersPage], () => {
       selectedTableRowIndex.value = 0;
+      paginationFocused.value = false;
     });
     watch(activeShop, () => {
       productsPage.value = 1;
@@ -12825,6 +12950,7 @@ const closeSuggestionsWithDelay = () => {
       openPaymentModal,
       recordPayment,
       selectedTableRowIndex,
+      paginationFocused,
       shortcutsModalOpen,
       commandPaletteOpen,
       commandPaletteQuery,
@@ -23690,6 +23816,15 @@ select.pos-control {
   transition: background 0.15s ease, outline 0.15s ease;
 }
 
+.keyboard-selected-pagination {
+  outline: 2px solid #f59e0b !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35) !important;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.06) !important;
+  transition: outline 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
 .kbd-badge {
   display: inline-flex;
   align-items: center;
@@ -24385,6 +24520,12 @@ select.pos-control {
 .shop-theme-shop2 tr.keyboard-selected-row {
   outline: 2px solid #3b82f6 !important;
   outline-offset: -2px;
+}
+
+.shop-theme-shop2 .keyboard-selected-pagination {
+  outline-color: #3b82f6 !important;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.35) !important;
+  background: rgba(37, 99, 235, 0.06) !important;
 }
 
 /* 9. Badges, Icons & Accents */
