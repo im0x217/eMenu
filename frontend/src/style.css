@@ -36,8 +36,17 @@
   --shadow-sm: 0 1px 3px rgba(44, 37, 32, 0.04), 0 1px 2px rgba(44, 37, 32, 0.03);
   --shadow-md: 0 4px 12px rgba(44, 37, 32, 0.06), 0 1px 4px rgba(44, 37, 32, 0.04);
   --shadow-lg: 0 8px 24px rgba(44, 37, 32, 0.08), 0 2px 8px rgba(44, 37, 32, 0.04);
-  --shadow-xl: 0 16px 40px rgba(44, 37, 32, 0.1), 0 4px 12px rgba(44, 37, 32, 0.05);
-  
+  /* Border radius tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* Touch target tokens (WCAG 2.1 & Mobile Ergonomics) */
+  --touch-target-min: 48px;
+  --touch-target-clearance: 8px;
+
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
