@@ -306,8 +306,8 @@ Before any UI deployment, verify:
 - [x] `cursor: pointer` on all clickable elements
 - [x] Hover states with smooth transitions (200–300ms)
 - [x] Light mode text contrast ≥ 4.5:1
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected for animations
+- [x] Focus states visible for keyboard navigation
+- [x] `prefers-reduced-motion` respected for animations
 - [x] Responsive: 375px, 768px breakpoints tested
 - [x] No content hidden behind fixed navbars (160px padding)
 - [x] No horizontal scroll on mobile
@@ -495,16 +495,168 @@ Before any UI deployment, verify:
    - **Flex Child Inset**: Flex children containing dynamic text must specify `min-width: 0` to enable proper text truncation (`text-truncate` / `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`).
    - **Resilient Empty States**: Never render broken, blank, or misaligned containers when lists or search results are empty. Always provide a clean empty state with an SVG vector icon and guidance text.
 
+---
 
+### 📱 19. Mobile Viewport Compact Density Standard (80% Zoomout Equivalent)
+> **Global Mandate**: On mobile viewports ($\le 768\text{px}$), all views, cards, modals, navigation bars, and inputs MUST adopt compact density equivalent to an 80% browser zoom-out:
 
+1. **Root Font Scaling (`:root { font-size: 82.5%; }`)**:
+   - Scales all `rem`-based typography and spacing tokens seamlessly by ~18–20% without coordinate shift or RTL overflow clipping (which occurs with native CSS `zoom: 0.8` on `dir="rtl"`).
+   - Desktop viewports ($> 768\text{px}$) strictly remain at standard 100% scale (`font-size: 100%`).
 
+2. **iOS Safari Form Control Guard**:
+   - All mobile form controls (`input`, `select`, `textarea`) MUST enforce `font-size: 16px !important;` on mobile viewports to prevent iOS Safari from automatically zooming into the page on focus.
 
+3. **Touch Ergonomics**:
+   - Even with compact visual density, primary interactive elements maintain minimum accessible tap areas ($\ge 44\times 44\text{px}$ or generous tap padding) with `touch-action: manipulation`.
 
+4. **Component Density Profiles**:
+   - **Product Cards & Catalog Grid**: `grid-auto-columns: minmax(172px, 205px); gap: 10px;` allowing two products comfortably side-by-side on phone screens without horizontal scroll obstruction.
+   - **Bottom Navigation Bar**: Compact height `calc(54px + env(safe-area-inset-bottom))`, 20px icons, `0.68rem` typography.
+   - **Floating Bottom Cart Bar**: Compact padding `0.65rem 1rem`, 14px radius, positioned at `bottom: calc(62px + var(--safe-bottom))`.
+   - **Order Cards (Admin & Cart)**: Compact paddings (`9–10px`), 48px product thumbnails, 32px quick-action circles, and 34px action buttons.
+   - **POS Fast Order Modal**: Compact section cards, 34px product thumbs, 34px stepper buttons, and tight sticky dock footer.
 
+---
 
+### 🔢 20. Universal Stepper Standard (`[- 1 +]` Step by 1 Integer Stepping)
+> **Global Mandate**: All stepper controls (`[- / +]`), quantity adjusters, and increment/decrement buttons across the application MUST strictly step by integer increments (`1`), regardless of whether the product has `allowFloat: true` enabled.
 
+1. **Universal Stepper Invariance**:
+   - Tapping `+` or `-` buttons always increments or decrements quantity by exactly `1` across all customer and administrative interfaces (`ProductCard.vue`, `CartView.vue`, and `AdminView.vue` POS & order edit modals).
+   - Quantity inputs paired with stepper controls declare `step="1"`.
+   - Initial addition of any product to the cart or POS order adds `1` unit.
 
+2. **Float Support via Direct Typing Only**:
+   - Products with `allowFloat: true` (e.g., items sold by weight like nuts or sweets) preserve the ability for customers and administrators to type fractional quantities (e.g., `0.5`, `1.25`, `2.75`) directly into the input field.
+   - Quantity inputs declare `min="0.1"` with `inputmode="decimal"` to support easy fractional input on mobile devices.
+   - All quantity calculations are rounded to 2 decimal places (`Math.round(qty * 100) / 100`) to eliminate IEEE 754 floating-point drift (e.g., `1.4000000000000001`).
 
+3. **Hybrid Stepping Behavior on Fractional Quantities**:
+   - When a user steps up (`+`) from a fractional quantity (e.g., `1.5`), the quantity advances by `+1` (to `2.5`), cleanly preserving the fractional offset.
+   - When a user steps down (`-`) from a fractional quantity (e.g., `2.5`), it decrements by `-1` (to `1.5`).
+   - If reduced to `0` or below the minimum threshold, customer cards remove the item with a warning haptic and morph back to the full-width `"أضف للسلة"` action button.
 
+---
+
+### 📊 21. Analytics Temporal Consistency Standard (Order Rec-Date Baseline)
+> **Global Mandate**: All analytical metrics, summaries, trends, and breakdowns in the **Analytics** tab (`kpi`, `revenueTrend`, `priceModeSplit`, `paymentMethodsSplit`, `categorySales`, `topProducts`, `topCustomers`) MUST strictly measure and attribute performance against the **Order Effective Receiving Date (`rec_date`)** using `getOrderEffectiveDateStr(order)`.
+
+1. **Unified Temporal Baseline**:
+   - Never mix order creation timestamps, payment transaction timestamps, and order receiving dates within the same analytical dashboard view.
+   - When an administrator selects a timeframe (e.g., *Today*, *7 Days*, *30 Days*, or *Custom Dates*), all data cards reflect transactions and revenues belonging to orders scheduled for or received within that designated window.
+
+2. **Payment Methods Distribution Attribution**:
+   - **No Payment Timestamp Partitioning**: Payments must NEVER be aggregated by the payment document's `createdAt` timestamp in analytics.
+   - **Order-Centric Payment Mapping**: Payments from `paymentsCollection` are mapped via `payment.distributedTo[].orderId` to their corresponding orders. Direct POS payments are mapped via `order.paymentMethod` and `order.paidAmount`.
+   - **Deferred Debt Collection Alignment**: If an order was received on September 1st and paid two weeks later on September 15th, its payment amount and method are correctly attributed to September 1st (the day goods were delivered/received), ensuring that daily sales revenue and payment distribution reconcile with 100% accuracy.
+   - **Mixed Tender Accounting**: Orders settled using multiple payment methods (e.g., part cash, part card/transfer) correctly allocate each specific tender amount to its respective method breakdown.
+
+3. **Top Financial KPIs Sequence Standard**:
+   - In the top KPI metrics grid (`.kpi-grid`), financial metrics MUST follow a logical chronological accounting sequence:
+     1. **إجمالي المبيعات (Total Sales)**: Gross volume of all successful/received orders in the timeframe.
+     2. **إجمالي المدفوع (Total Paid)**: Total settled funds received across all payment methods (`.text-success`), strictly matching the sum of the payment methods split.
+     3. **إجمالي المتبقي (Total Remaining)**: Net unpaid balance / outstanding debts (`.text-danger`), strictly satisfying `totalRemaining = Math.max(0, totalRevenue - totalPaid)`.
+     4. **إجمالي الطلبات (Total Orders)**: Total volume of received orders.
+     5. **متوسط الطلب (Average Order Value)**: Average revenue per order.
+     6. **العملاء النشطون (Active Customers)**: Unique customer count.
+   - All numerical KPI values MUST enforce `font-variant-numeric: tabular-nums` (or `.text-mono`) to prevent visual jitter on real-time filter transitions.
+
+---
+
+### ⌨️ 22. Keyboard Navigation Standard: Vertical Arrow Isolation for Table Records
+> **Global Mandate**: Vertical navigation keys (`ArrowDown`, `ArrowUp`, `j`, `k`) in administrative views MUST strictly and exclusively traverse tabular records within the active view (`.keyboard-selected-row`). They must NEVER cycle navigation tabs or switch administrative views.
+
+1. **Strict Axis Separation**:
+   - **Vertical Traversal (`ArrowDown` / `ArrowUp` / `j` / `k`)**: Reserved solely for intra-view record selection across all administrative tables (`orders`, `products`, `customers`, `categories`, `tags`, `users`). Pressing `ArrowDown` or `ArrowUp` increments/decrements `selectedTableRowIndex`, scrolls the active row smoothly into view (`scrollIntoView({ block: 'nearest', behavior: 'smooth' })`), and never changes the active tab.
+   - **Horizontal Traversal (`ArrowLeft` / `ArrowRight` / `[` / `]`)**: Dedicated exclusively to cycling through administrative navigation tabs with boundary wrap-around.
+   - **Direct Numerical Access (`Alt+1..9`)**: Instant deterministic switching to specific tabs by index.
+
+2. **Sidebar Focus Isolation & Blur**:
+   - Sidebar navigation buttons (`.sidebar-menu .menu-item`) must never retain persistent keyboard focus after click or tab selection.
+   - Whenever a user clicks a tab button or invokes `setTab(tab)`, `document.activeElement.blur()` is immediately executed to release focus from the sidebar button.
+   - Any accidental focus remaining on a menu item or button is automatically neutralized on `ArrowDown` / `ArrowUp` keystrokes.
+   - `handleSidebarKeydown` on `<nav class="sidebar-menu">` must never intercept vertical arrow keys. Only `Home` and `End` may be handled if explicitly focused.
+
+3. **Active Table Row Contract**:
+   - When switching tabs, `selectedTableRowIndex` must immediately reset to `0`.
+   - Every administrative table row must bind `:class="{ 'keyboard-selected-row': selectedTableRowIndex === idx }"`.
+   - Pressing `Enter` when a row is selected opens that record's edit or details modal (`openOrderEditModal`, `openProductModal`, `openCustomerDetails`, `openCategoryModal`, `openTagModal`, `openUserModal`).
+   - In the Orders tab, pressing `p` or `P` or `ح` prints the receipt for the currently selected order row.
+
+4. **Table Arrow Auto-Scroll Extension & Page Traversal Contract**:
+   - **Extended Auto-Scroll Reach**: When traversing down with `ArrowDown` or `j` on a paginated table (`orders`, `products`, `customers` with `totalPages > 1`), reaching the final row on the page causes the subsequent `ArrowDown` to deselect the row and smoothly scroll the pagination controls (`.admin-pagination-bar`) into view with high-visibility focus styling (`.keyboard-selected-pagination`).
+   - **Pagination Bar Active Key Bindings**:
+     - `ArrowDown` / `j` / `Enter` / `Space`: Advances to the next page (`goToNextPage()`).
+     - `ArrowLeft` (RTL next): Advances to the next page.
+     - `ArrowRight` (RTL previous): Regresses to the previous page (`goToPrevPage()`).
+     - `ArrowUp` / `k`: Seamlessly ascends back into the table, selecting and scrolling into view the last row of the current page.
+     - `Escape`: Neutralizes pagination focus and restores selection to the table's final row.
+   - **Dedicated Page Traversal Keyboard Shortcuts**:
+     - `PageDown` or `Ctrl+ArrowDown`: Deterministically advances to the next table page from anywhere in the view.
+     - `PageUp` or `Ctrl+ArrowUp`: Deterministically regresses to the previous table page from anywhere in the view.
+     - Upon page transition, `selectedTableRowIndex` automatically resets to `0`, `paginationFocused` resets to `false`, and the first row of the new page is smoothly brought into view.
+
+---
+
+### 📱 23. iOS Safari PWA & Viewport Safe-Area Ergonomics Standard
+> **Global Mandate**: The application must provide isolated, deterministic Home Screen PWA experiences for both the Customer Storefront and Administrative Panel on iOS Safari. Layout containers must never inject artificial bottom space simulating legacy hardware or Android 3-button navigation.
+
+1. **Deterministic PWA Entry Points & WebClip Architecture**:
+   - **No Hash Fragments in `start_url`**: iOS Safari WebClip launcher strips URL fragments (`#...`) upon standalone PWA boot. Administrative manifests MUST use explicit query parameters (e.g., `start_url: "/app/?view=admin"`), which WebKit preserves unconditionally.
+   - **Immediate Synchronous Head Inspection**: `<head>` includes an inline pre-render bootstrap script that detects `admin` routes or `?view=admin`, immediately setting `<meta name="apple-mobile-web-app-title" content="إدارة الزروق">`, linking `/manifest-admin.json`, and setting `window.location.hash = '#/admin'` prior to Vue initialization.
+   - **Server-Side Dedicated Admin Routing**: Express explicitly handles `/admin`, `/admin/*`, and `/app/manifest-admin.json` to ensure clean initial loads and manifest delivery.
+   - **Router Navigation Guards**: `router.beforeEach()` validates `?view=admin` or `?mode=admin` and forces immediate redirection to `/admin`.
+
+2. **Zero-Phantom-Space Bottom Ergonomics (Anti-Double-Inset Rule)**:
+   - **Single Inset Ownership**: Only the outermost scroll container (`.admin-main` in back-office, `.app-container` in storefront) may declare `env(safe-area-inset-bottom)`. Child components, table wrappers, and tab contents must NEVER duplicate bottom safe-area insets.
+   - **Admin Back-Office Bottom Padding**: Administrative views have no persistent bottom navigation bar. `.admin-main` on mobile strictly specifies `padding: 12px 10px calc(20px + env(safe-area-inset-bottom, 0px)) 10px !important;`. Tab contents must NOT add redundant 90px+ artificial voids.
+   - **Mobile Header Notch/Island Clearance**: `.admin-mobile-header` must include `padding-top: calc(8px + env(safe-area-inset-top, 0px))` with matching calculated height to guarantee full clearance under iOS Dynamic Island and hardware notches.
+
+---
+
+### 🛍️ 24. Storefront Skeleton Loader & Wholesale Price Visibility Standard
+> **Global Mandate**: The storefront menu must provide fluid, zero-layout-shift visual skeleton placeholders during catalog transit. Wholesale pricing tiers must remain strictly invisible to retail customers unless wholesale verification is explicitly unlocked.
+
+1. **Hardware-Accelerated Skeleton Architecture (`ShopView.vue`)**:
+   - **Mirror Layout Hierarchy**: When `shopStore.isLoading` is active, the view renders `.shop-skeleton-wrapper` matching the exact visual rhythm of the real menu:
+     - Horizontal category pills row (`.skeleton-categories-row`): 6 glass-panel pills with circular icon and label placeholder.
+     - Subcategory sections (`.skeleton-sections-wrapper`): 2 stacked rows each with title bar, count badge, and a horizontal 1-row product cards grid (`.subcat-products-grid-1row`).
+     - Product card placeholders (`.skeleton-card`): Aspect ratio 4:3 image container, 80% title bar, 55% description bar, price pill placeholder, and 40px action button bar.
+   - **GPU-Composited Shimmer Wave**: All skeleton waves MUST use hardware-accelerated transforms (`transform: translate3d(...)`) with `will-change: transform` and `contain: layout paint`. Never animate `background-position` or properties that cause CPU layout reflows.
+   - **Accessible Motion Fallback**: Automatically disables wave animations under `@media (prefers-reduced-motion: reduce)`.
+   - **Zero Premature Flash**: Real category navigation and product rows remain unrendered until initial catalog data is completely resolved to prevent container pops.
+
+2. **Wholesale Pricing Tier Isolation Standard (`ProductCard.vue` & `ShopView.vue`)**:
+   - **Defensive Visibility Guard**: `showBulkPrice` strictly requires:
+     1. `price_bulk` to be non-null, non-empty, and defined.
+     2. If `purchaseType === 'bulk'`, shows wholesale price.
+     3. If `purchaseType === 'both'`, **strictly checks `isBulkMode.value` (`shopStore.isBulkVerified`)**.
+     4. Retail customers browsing hybrid items (`purchaseType === 'both'`) will NEVER see bulk pricing pills (`.bulk-price`). Only the regular price pill is displayed.
+   - **Wholesale Activation Contrast**: When wholesale mode is verified (`shopStore.isBulkVerified === true`):
+     - The header toggle button highlights in vibrant green (`أسعار الجملة: مفعّلة`).
+     - The product card renders the wholesale price pill (`.bulk-price.active`) with high visual prominence while dimming the regular price for comparison.
+   - **Defensive Storefront Catalog Guard**: `hasBulkProducts` in `ShopView.vue` checks for both `purchaseType` and valid non-empty `price_bulk` values before offering the wholesale toggle button.
+
+---
+
+### 📱 25. Admin Mobile Viewport Isolation: Table Row Selection Suppression, Fluid Grid Minmax, and Unwanted Autofocus Elimination
+> **Global Mandate**: On mobile viewports ($\le 768\text{px}$), the back-office management console MUST completely suppress desktop-centric keyboard selection highlights, prevent CSS Grid container track blowout, and eliminate unwanted software keyboard popups upon modal activation.
+
+1. **Table Row & Pagination Selection Suppression**:
+   - Keyboard traversal selection indicators (`.keyboard-selected-row`, `.keyboard-selected-pagination`) are designed exclusively for physical hardware keyboards. On mobile touch viewports, they must NEVER display on table rows or pagination controls.
+   - All table row and pagination class bindings MUST be guarded with `!isMobileScreen` (e.g. `:class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }"`).
+   - `@media (max-width: 768px)` MUST enforce strict CSS resets ensuring `background: transparent !important; outline: none !important; box-shadow: none !important;`.
+
+2. **CSS Grid `minmax(0, 1fr)` Container Track Containment**:
+   - CSS Grid tracks defined with `grid-template-columns: 1fr` default to `min-width: auto`, which causes containers like `.charts-grid` to expand and blowout to the largest child element (e.g., multi-step funnels or data tables), creating horizontal overflow on mobile screens.
+   - All mobile grid containers MUST explicitly specify `grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; max-width: 100% !important;`.
+   - Grid cards (`.chart-card`) MUST specify `min-width: 0 !important; max-width: 100% !important; overflow: hidden !important;`.
+   - Tables and horizontal elements within cards must declare `overflow-x: auto !important; -webkit-overflow-scrolling: touch !important;` to ensure internal scrollability without parent container distortion.
+
+3. **Zero-Autofocus Touch Protection (Unwanted Virtual Keyboard Elimination)**:
+   - On touch devices, programmatic `.focus()` on form inputs forcibly opens the virtual software keyboard, obstructing viewports and causing disorientation.
+   - All modal opening methods (`openProductModal`, `openEditOrderModal`, `openNewOrderModal`, `openCustomerEditModal`, `openCategoryModal`, `openTagModal`, `openUserModal`, `openCommandPalette`), global hotkeys (`/`), and barcode scan handlers MUST be guarded with `if (!isMobileScreen.value && el) el.focus()`.
+   - Any HTML `autofocus` attributes MUST bind dynamically: `:autofocus="!isMobileScreen"`.
 
 
