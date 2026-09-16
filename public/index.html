@@ -2,6 +2,12 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // If a Vue SPA hash route is accessed from the landing page, seamlessly redirect to /app/
+      if (window.location.hash && window.location.hash.length > 1) {
+        window.location.replace('/app/' + window.location.hash);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>حلويات عبمبر الزروق</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
