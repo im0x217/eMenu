@@ -18,7 +18,7 @@ function createAiSandboxRouter({
     return new GoogleGenAI({ apiKey });
   };
 
-  const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
   // 1. Connection / Health Check
   router.get('/status', async (req, res) => {
