@@ -30,7 +30,7 @@
 
           <div class="form-group">
             <label>كلمة المرور</label>
-            <input v-model="loginForm.password" type="password" required placeholder="أدخل كلمة المرور" class="form-control" />
+            <input v-model="loginForm.password" type="password" required placeholder="كلمة المرور…" class="form-control" />
           </div>
 
           <div class="form-group">
@@ -169,16 +169,20 @@
                 @click.stop="openAnalyticsFromPicker"
                 title="تاريخ البداية (من)"
               >
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>{{ analyticsStartDate ? ('من: ' + formatArabicDate(analyticsStartDate)) : 'من تاريخ' }}</span>
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </button>
 
               <!-- From Date Popover -->
               <div v-if="analyticsFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
                 <div class="datepicker-header">
-                  <button type="button" class="dp-nav-btn" @click="analyticsFromPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                  <button type="button" class="dp-nav-btn" @click="analyticsFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
                   <span class="dp-month-title">{{ analyticsFromMonthYearLabel }}</span>
-                  <button type="button" class="dp-nav-btn" @click="analyticsFromNextMonth" title="الشهر التالي">&rsaquo;</button>
+                  <button type="button" class="dp-nav-btn" @click="analyticsFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
                 </div>
 
                 <div class="dp-weekdays">
@@ -189,7 +193,7 @@
                   <button 
                     type="button"
                     v-for="(dayObj, idx) in analyticsFromCalendarDays" 
-                    :key="idx"
+                    :key="idx" 
                     class="dp-day-cell"
                     :class="{ 
                       'other-month': !dayObj.inMonth,
@@ -217,16 +221,20 @@
                 @click.stop="openAnalyticsToPicker"
                 title="تاريخ النهاية (إلى)"
               >
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>{{ analyticsEndDate ? ('إلى: ' + formatArabicDate(analyticsEndDate)) : 'إلى تاريخ' }}</span>
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </button>
 
               <!-- To Date Popover -->
               <div v-if="analyticsToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
                 <div class="datepicker-header">
-                  <button type="button" class="dp-nav-btn" @click="analyticsToPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                  <button type="button" class="dp-nav-btn" @click="analyticsToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
                   <span class="dp-month-title">{{ analyticsToMonthYearLabel }}</span>
-                  <button type="button" class="dp-nav-btn" @click="analyticsToNextMonth" title="الشهر التالي">&rsaquo;</button>
+                  <button type="button" class="dp-nav-btn" @click="analyticsToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
                 </div>
 
                 <div class="dp-weekdays">
@@ -927,7 +935,7 @@
                       type="text" 
                       name="search" 
                       autocomplete="off" 
-                      placeholder="البحث بالاسم أو الوصف… (اضغط Enter للتثبيت)" 
+                      placeholder="البحث بالاسم أو الوصف…" 
                       class="form-control search-input" 
                       @keydown.enter="handleSearchEnter('products', $event)"
                       @keydown.down="handleSearchArrowDown($event)"
@@ -1021,7 +1029,7 @@
             v-model="resetConfirmText" 
             type="text" 
             class="form-control text-center font-bold" 
-            placeholder="اكتب: مسح البيانات"
+            placeholder="مسح البيانات…"
             autocomplete="off"
             spellcheck="false"
           />
@@ -1452,7 +1460,7 @@
                       type="text" 
                       name="search" 
                       autocomplete="off" 
-                      placeholder="البحث برقم الطلب، اسم العميل، الهاتف، أو اسم الصنف والملاحظات… (اضغط Enter للتثبيت)" 
+                      placeholder="بحث بالرقم، العميل، الهاتف أو الصنف…" 
                       class="form-control search-input" 
                       @keydown.enter="handleSearchEnter('orders', $event)"
                       @keydown.down="handleSearchArrowDown($event)"
@@ -1497,8 +1505,8 @@
                         @click.stop="datePickerOpen = !datePickerOpen"
                         title="التصفية بحسب تاريخ الاستلام"
                       >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         <span>تاريخ الاستلام</span>
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                       </button>
 
                       <!-- Today Shortcut Button -->
@@ -1519,9 +1527,13 @@
                       <!-- Custom Date Picker Popover Panel -->
                       <div v-if="datePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                         <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق">&lsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                          </button>
                           <span class="dp-month-title">{{ currentMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي">&rsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                          </button>
                         </div>
 
                         <div class="dp-weekdays">
@@ -2016,7 +2028,7 @@
                       v-model="newOrderCustomerSearch" 
                       type="text" 
                       class="form-control search-input" 
-                      placeholder="البحث برقم الهاتف أو اسم العميل…" 
+                      placeholder="بحث بالهاتف أو اسم العميل…" 
                       @focus="showNewOrderCustomerSuggestions = true" @click="showNewOrderCustomerSuggestions = true"
                       @blur="closeNewOrderCustomerSuggestionsWithDelay" @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0" @keydown.esc.prevent="showNewOrderCustomerSuggestions = false" @keydown.tab="showNewOrderCustomerSuggestions = false" @keydown.down.prevent="navigateCustomerSuggestions(1)"
                       @keydown.up.prevent="navigateCustomerSuggestions(-1)"
@@ -2052,7 +2064,7 @@
                 <div class="pos-input-grid">
                   <div class="pos-field">
                     <label class="pos-label">اسم العميل *</label>
-                    <input v-model="newOrder.customerName" type="text" class="form-control pos-control" placeholder="محمد علي" required />
+                    <input v-model="newOrder.customerName" type="text" class="form-control pos-control" placeholder="اسم العميل…" required />
                   </div>
                   <div class="pos-field">
                     <label class="pos-label">رقم الهاتف *</label>
@@ -2089,9 +2101,13 @@
                         <!-- Standardized Popover Calendar for POS Modal -->
                         <div v-if="posDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1200;">
                           <div class="datepicker-header">
-                            <button type="button" class="dp-nav-btn" @click="posPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                            <button type="button" class="dp-nav-btn" @click="posPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
                             <span class="dp-month-title">{{ posCurrentMonthYearLabel }}</span>
-                            <button type="button" class="dp-nav-btn" @click="posNextMonth" title="الشهر التالي">&rsaquo;</button>
+                            <button type="button" class="dp-nav-btn" @click="posNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
                           </div>
 
                           <div class="dp-weekdays">
@@ -2178,7 +2194,7 @@
 
                     <div v-if="newOrder.paymentStatus === 'unpaid'" class="pos-field">
                       <label class="pos-label">ملاحظات إضافية</label>
-                      <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، العنوان…" />
+                      <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="ملاحظات الطلب أو العنوان…" />
                     </div>
                   </div>
 
@@ -2190,7 +2206,7 @@
                     </div>
                     <div class="pos-field" :style="newOrder.paymentStatus !== 'partial' ? 'grid-column: 1 / -1;' : ''">
                       <label class="pos-label">ملاحظات إضافية</label>
-                      <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="تعليمات التغليف، العنوان…" />
+                      <input v-model="newOrder.notes" type="text" class="form-control pos-control" placeholder="ملاحظات الطلب أو العنوان…" />
                     </div>
                   </div>
                 </div>
@@ -2212,7 +2228,7 @@
                         v-model="newOrderProductSearch" 
                         type="text" 
                         class="form-control search-input" 
-                        placeholder="ابحث باسم المنتج أو التصنيف لإضافته فوراً…" 
+                        placeholder="بحث باسم المنتج أو الصنف…" 
                         @focus="showNewOrderProductSuggestions = true" @click="showNewOrderProductSuggestions = true"
                         @blur="closeNewOrderProductSuggestionsWithDelay" @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0" @keydown="handleProductSearchKeydown"
                       />
@@ -2381,7 +2397,7 @@
                         <td>
                           <div class="edit-item-name-cell">
                             <span class="db-product-name font-bold">{{ item.name }}</span>
-                            <input v-model="item.notes" type="text" class="form-control form-control-sm item-note-input" placeholder="ملاحظة للصنف…" />
+                            <input v-model="item.notes" type="text" class="form-control form-control-sm item-note-input" placeholder="ملاحظة الصنف…" />
                           </div>
                         </td>
                         <td style="width: 130px;">
@@ -2450,11 +2466,11 @@
 
                       <div class="pos-mob-card-note-row">
                         <input 
-                          v-model="item.notes" 
-                          type="text" 
-                          class="form-control pos-mob-note-input" 
-                          placeholder="ملاحظة خاصة بالصنف (تغليف، تحميص…)…" 
-                        />
+                              v-model="item.notes" 
+                              type="text" 
+                              class="form-control pos-mob-note-input" 
+                              placeholder="ملاحظة الصنف (تغليف، تحميص…)…" 
+                            />
                       </div>
 
                       <div class="pos-mob-card-controls-row">
@@ -2669,7 +2685,7 @@
                       v-model="editOrderCustomerSearch" 
                       type="text" 
                       class="form-control search-input edit-cust-search-input" 
-                      placeholder="ابحث بالاسم أو الهاتف لتغيير عميل الطلب…" 
+                      placeholder="بحث بالاسم أو الهاتف لتغيير العميل…" 
                       @focus="showEditOrderCustomerSuggestions = true"
                       @click="showEditOrderCustomerSuggestions = true"
                       @blur="closeEditOrderCustomerSuggestionsWithDelay"
@@ -2738,9 +2754,13 @@
                       <!-- Popover Calendar -->
                       <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
                         <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                          </button>
                           <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي">&rsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                          </button>
                         </div>
 
                         <div class="dp-weekdays">
@@ -2824,7 +2844,7 @@
                       v-model="editingOrder.notes" 
                       type="text" 
                       class="form-control pos-control edit-order-notes-input" 
-                      placeholder="أي ملاحظات خاصة بموعد الاستلام أو تعليمات التسليم…" 
+                      placeholder="ملاحظات الاستلام أو التسليم…" 
                     />
                   </div>
                 </div>
@@ -2854,7 +2874,7 @@
                         v-model="productSearchQuery" 
                         type="text" 
                         class="form-control search-input" 
-                        placeholder="ابحث باسم المنتج أو التصنيف لإضافته مباشرة للطلب…" 
+                        placeholder="بحث باسم المنتج أو الصنف…" 
                         @focus="showSuggestions = true" 
                         @click="showSuggestions = true" 
                         @keydown.esc.prevent="showSuggestions = false" 
@@ -2931,13 +2951,13 @@
                               <span class="db-product-name font-bold" title="منتج مسجل بالمنظومة">{{ item.name }}</span>
                               <span class="db-verified-badge" title="منتج مسجل">مسجل</span>
                             </div>
-                            <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص" required />
+                            <input v-else v-model="item.name" type="text" class="form-control edit-custom-name-input" placeholder="اسم منتج مخصص…" required />
                             
                             <input 
                               v-model="item.notes" 
                               type="text" 
                               class="form-control form-control-sm item-note-input mt-1" 
-                              placeholder="ملاحظة خاصة بالصنف (اختياري)…" 
+                              placeholder="ملاحظة الصنف (اختياري)…" 
                             />
                           </div>
                         </td>
@@ -2950,7 +2970,7 @@
                               step="1" 
                               min="0.1" 
                               class="form-control stepper-input text-mono text-center" 
-                              placeholder="الكمية" 
+                              placeholder="1" 
                               required 
                               @input="recalcOrderTotal" 
                               @change="recalcOrderTotal" 
@@ -2969,7 +2989,7 @@
                               step="0.01" 
                               min="0" 
                               class="form-control edit-price-input text-mono text-center" 
-                              placeholder="السعر" 
+                              placeholder="0.00" 
                               required 
                               @input="recalcOrderTotal" 
                               @change="recalcOrderTotal" 
@@ -3060,7 +3080,7 @@
                       type="text" 
                       name="search" 
                       autocomplete="off" 
-                      placeholder="البحث باسم العميل أو رقم الهاتف… (اضغط Enter للتثبيت)" 
+                      placeholder="بحث باسم العميل أو رقم الهاتف…" 
                       class="form-control search-input" 
                       @keydown.enter="handleSearchEnter('customers', $event)"
                       @keydown.down="handleSearchArrowDown($event)"
@@ -3079,16 +3099,20 @@
                         @click.stop="openCustDateFromPicker"
                         title="تاريخ البداية (من)"
                       >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         <span>{{ customerFilters.dateFrom ? ('من: ' + formatArabicDate(customerFilters.dateFrom)) : 'من تاريخ' }}</span>
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                       </button>
 
                       <!-- From Date Popover -->
                       <div v-if="custDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                         <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="custFromPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="custFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                          </button>
                           <span class="dp-month-title">{{ custFromMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="custFromNextMonth" title="الشهر التالي">&rsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="custFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                          </button>
                         </div>
 
                         <div class="dp-weekdays">
@@ -3127,16 +3151,20 @@
                         @click.stop="openCustDateToPicker"
                         title="تاريخ النهاية (إلى)"
                       >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         <span>{{ customerFilters.dateTo ? ('إلى: ' + formatArabicDate(customerFilters.dateTo)) : 'إلى تاريخ' }}</span>
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                       </button>
 
                       <!-- To Date Popover -->
                       <div v-if="custDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                         <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="custToPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="custToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                          </button>
                           <span class="dp-month-title">{{ custToMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="custToNextMonth" title="الشهر التالي">&rsaquo;</button>
+                          <button type="button" class="dp-nav-btn" @click="custToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                          </button>
                         </div>
 
                         <div class="dp-weekdays">
@@ -3607,16 +3635,20 @@
                             @click.stop="openProdDateFromPicker"
                             title="تاريخ البداية (من)"
                           >
-                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                             <span>{{ productionReportFilters.dateFrom ? ('من: ' + formatArabicDate(productionReportFilters.dateFrom)) : 'من تاريخ' }}</span>
+                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                           </button>
 
                           <!-- From Date Popover -->
                           <div v-if="prodDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                             <div class="datepicker-header">
-                              <button type="button" class="dp-nav-btn" @click="prodFromPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                              <button type="button" class="dp-nav-btn" @click="prodFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
                               <span class="dp-month-title">{{ prodFromMonthYearLabel }}</span>
-                              <button type="button" class="dp-nav-btn" @click="prodFromNextMonth" title="الشهر التالي">&rsaquo;</button>
+                              <button type="button" class="dp-nav-btn" @click="prodFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </button>
                             </div>
 
                             <div class="dp-weekdays">
@@ -3655,16 +3687,20 @@
                             @click.stop="openProdDateToPicker"
                             title="تاريخ النهاية (إلى)"
                           >
-                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                             <span>{{ productionReportFilters.dateTo ? ('إلى: ' + formatArabicDate(productionReportFilters.dateTo)) : 'إلى تاريخ' }}</span>
+                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                           </button>
 
                           <!-- To Date Popover -->
                           <div v-if="prodDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
                             <div class="datepicker-header">
-                              <button type="button" class="dp-nav-btn" @click="prodToPrevMonth" title="الشهر السابق">&lsaquo;</button>
+                              <button type="button" class="dp-nav-btn" @click="prodToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
                               <span class="dp-month-title">{{ prodToMonthYearLabel }}</span>
-                              <button type="button" class="dp-nav-btn" @click="prodToNextMonth" title="الشهر التالي">&rsaquo;</button>
+                              <button type="button" class="dp-nav-btn" @click="prodToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </button>
                             </div>
 
                             <div class="dp-weekdays">
@@ -4021,7 +4057,7 @@
                     <input 
                       v-model="newBackupLabel" 
                       type="text" 
-                      placeholder="وصف اختياري للنسخة (مثال: قبل تصفير الطلبات)…" 
+                      placeholder="وصف اختياري للنسخة الاحتياطية…" 
                       class="form-control flex-grow-1" 
                     />
                     <button 
@@ -4217,7 +4253,7 @@
           <div class="assign-toolbar-container mb-3">
             <div class="search-input-wrapper flex-grow-1">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input v-model="assignProductSearch" type="text" placeholder="البحث باسم الصنف أو التصنيف…" class="form-control search-input" autocomplete="off" spellcheck="false" />
+              <input v-model="assignProductSearch" type="text" placeholder="بحث باسم الصنف أو التصنيف…" class="form-control search-input" autocomplete="off" spellcheck="false" />
             </div>
 
             <div class="assign-toolbar-actions">
@@ -4342,12 +4378,12 @@
 
           <div class="form-group">
             <label>اسم المنتج *</label>
-            <input v-model="editingProduct.name" type="text" required placeholder="مثال: غريبة باللوز" class="form-control" />
+            <input v-model="editingProduct.name" type="text" required placeholder="مثال: غريبة باللوز…" class="form-control" />
           </div>
 
           <div class="form-group">
             <label>الوصف</label>
-            <textarea v-model="editingProduct.desc" rows="2" placeholder="أدخل وصفاً مشوقاً للمنتج…" class="form-control"></textarea>
+            <textarea v-model="editingProduct.desc" rows="2" placeholder="وصف مشوق للمنتج…" class="form-control"></textarea>
           </div>
 
           <div class="form-group-row">
@@ -4504,7 +4540,7 @@
 
           <div class="form-group">
             <label>الأصناف الفرعية (تفصل بينها بفواصل ",")</label>
-            <input v-model="categorySubcategoriesString" type="text" placeholder="مثال: صنف 1, صنف 2, صنف 3" class="form-control" />
+            <input v-model="categorySubcategoriesString" type="text" placeholder="مثال: صنف 1، صنف 2، صنف 3…" class="form-control" />
           </div>
 
           <div class="modal-footer mt-4">
@@ -4533,7 +4569,7 @@
         <form @submit.prevent="saveTag" class="modal-form">
           <div class="form-group mb-3">
             <label class="form-label text-bold mb-1 block">اسم العلامة *</label>
-            <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر مبيعاً، جديد، تخفيضات" required class="form-input" />
+            <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر مبيعاً، جديد…" required class="form-input" />
           </div>
 
           <!-- Tag Color Selector -->
@@ -4812,7 +4848,7 @@
           <div class="modal-body">
             <div class="form-group mb-3">
               <label class="form-label">اسم العميل *</label>
-              <input v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل الكامل…" />
+              <input v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل…" />
             </div>
 
             <div class="form-group mb-3">
@@ -4830,7 +4866,7 @@
                   v-model="editingCustomer.password" 
                   :type="editingCustomer.showPassword ? 'text' : 'password'" 
                   class="form-control text-mono" 
-                  placeholder="أدخل كلمة المرور (4 خانات على الأقل)…" 
+                  placeholder="كلمة المرور (4 خانات فأكثر)…" 
                 />
                 <button 
                   type="button" 
@@ -4962,7 +4998,7 @@
           <!-- Link input field -->
           <div class="form-group mt-3">
             <label class="form-label text-bold" style="font-size: 0.9rem;">رابط التوجيه عند الضغط على البنر (اختياري)</label>
-            <input v-model="newCarouselItem.link" type="text" placeholder="مثال: /app/#/category/وجبات أو رابط خارجي" class="form-control" />
+            <input v-model="newCarouselItem.link" type="text" placeholder="مثال: /category/وجبات أو رابط…" class="form-control" />
             <p class="text-muted" style="font-size: 0.72rem; margin-top: 4px; line-height: 1.3;">عندما ينقر الزبون على هذا البنر، سيتم نقله تلقائياً إلى هذا الرابط.</p>
           </div>
 
@@ -5083,12 +5119,12 @@
       <form @submit.prevent="saveUser" class="modal-form">
         <div class="form-group mb-3">
           <label class="form-label">الاسم / اسم الحساب للدخول</label>
-          <input type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد أو موظف1" required />
+          <input type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد…" required />
         </div>
 
         <div class="form-group mb-3">
           <label class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
-          <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'اتركه فارغاً للإبقاء' : 'كلمة السر'" :required="!editingUser._id" />
+          <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'اتركه فارغاً للإبقاء…' : 'كلمة السر…'" :required="!editingUser._id" />
         </div>
 
         <div class="form-row">
@@ -5876,7 +5912,7 @@
             v-model="productCustomersSearch" 
             type="text" 
             class="form-control form-control-sm search-input" 
-            placeholder="بحث باسم العميل، الهاتف أو رقم الطلب…" 
+            placeholder="بحث بالرقم، الهاتف أو العميل…" 
             aria-label="بحث في قائمة العملاء والطلبات"
             autocomplete="off"
             spellcheck="false"
@@ -6628,7 +6664,7 @@
           v-model="commandPaletteQuery" 
           type="text" 
           class="palette-input" 
-          placeholder="اكتب أمراً للبحث والانتقال السريع (مثال: طلب جديد، المنتجات، طباعة…)" 
+          placeholder="ابحث أو اكتب أمراً… (Ctrl+K)" 
           autocomplete="off"
         />
         <kbd class="kbd-badge kbd-esc-badge" @click="commandPaletteOpen = false">Esc</kbd>
@@ -14452,6 +14488,8 @@ select.form-control:focus {
 .btn-datepicker-trigger {
   display: inline-flex;
   align-items: center;
+  direction: rtl;
+  text-align: right;
   gap: 8px;
   padding: 8px 14px;
   height: 38px;
@@ -14467,6 +14505,12 @@ select.form-control:focus {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-datepicker-trigger span,
+.btn-standard-datepicker-trigger span {
+  text-align: right;
+  direction: rtl;
 }
 
 .btn-datepicker-trigger:hover {
@@ -14552,6 +14596,8 @@ select.form-control:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  direction: rtl !important;
+  width: 100% !important;
   margin-bottom: 10px;
 }
 
@@ -14559,6 +14605,8 @@ select.form-control:focus {
   font-weight: 850;
   font-size: 0.95rem;
   color: #0f172a;
+  text-align: center !important;
+  flex: 1 1 auto !important;
 }
 
 .dp-nav-btn {
@@ -21715,7 +21763,7 @@ select.pos-control {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   /* Center DatePicker Popover as a clean modal on mobile viewports */
   .datepicker-popover {
     position: fixed !important;
