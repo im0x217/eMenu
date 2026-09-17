@@ -68,12 +68,12 @@ The `architect-backend` agent is the principal authority over the server-side ru
 | Model Tier | Designation | Model String | Target Use Case |
 |---|---|---|---|
 | **Primary (Claude)** | Claude 3.7 Sonnet | `claude-3-7-sonnet` | Complex multi-collection transactions, deep refactoring of 4.8k-line `server.js`, auth security audits. |
-| **Optimal Gemini** | **Gemini Thinking** | `gemini-thinking` | Zero-compromise replacement for complex database pipeline debugging, race condition analysis, and cryptographic validation. |
-| **Rapid Gemini** | Gemini 2.5 Pro | `gemini-2.5-pro` | Routine REST endpoint additions, schema extensions, and query optimizations. |
+| **Optimal Gemini** | **Gemini 3.1 Pro** | `gemini-3.1-pro` | Zero-compromise replacement for large-scale backend refactoring, complex aggregation pipelines, and schema migrations. |
+| **Deep Reasoning** | **Gemini Thinking** | `gemini-thinking` | Race condition analysis, cryptographic PBKDF2/HMAC validation, and atomic transaction proofs. |
 
 ### Quick-Switch Command
 To switch Antigravity to the optimal Gemini model for this agent:
 ```bash
-/model gemini-thinking
+/model gemini-3.1-pro
 ```
-*(or `/model gemini-2.5-pro` for standard endpoint extensions)*
+*(or `/model gemini-thinking` for deep transaction & race-condition proofs)*

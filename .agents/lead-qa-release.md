@@ -71,12 +71,12 @@ Every feature or refactoring task must complete this deterministic 5-step sequen
 | Model Tier | Designation | Model String | Target Use Case |
 |---|---|---|---|
 | **Primary (Claude)** | Claude 3.7 Sonnet | `claude-3-7-sonnet` | Repo-wide multi-file coordination, release verification, root-cause diagnosis. |
-| **Optimal Gemini** | **Gemini Thinking** | `gemini-thinking` | Zero-compromise replacement for deep causal analysis, multi-agent arbitration, and high-complexity debugging. |
-| **Rapid Gemini** | Gemini 2.5 Pro | `gemini-2.5-pro` | Standard multi-file builds, routine release cycles, and git workflow management. |
+| **Optimal Gemini** | **Gemini 3.1 Pro** | `gemini-3.1-pro` | Zero-compromise replacement for cross-repo coordination, build orchestrations, and full release execution. |
+| **Deep Reasoning** | **Gemini Thinking** | `gemini-thinking` | Deep causal analysis, multi-agent conflict arbitration, and zero-regression verification. |
 
 ### Quick-Switch Command
 To switch Antigravity to the optimal Gemini model for this agent:
 ```bash
-/model gemini-thinking
+/model gemini-3.1-pro
 ```
-*(or `/model gemini-2.5-pro` for standard releases)*
+*(or `/model gemini-thinking` for deep causal regression analysis)*

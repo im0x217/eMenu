@@ -70,12 +70,12 @@ The `designer-system-wcag` agent is the guardian of visual aesthetics, spatial h
 | Model Tier | Designation | Model String | Target Use Case |
 |---|---|---|---|
 | **Primary (Claude)** | Claude 3.7 Sonnet | `claude-3-7-sonnet` | Complex design token re-architecting, CSS architecture overhaul, accessibility standard enforcement. |
-| **Optimal Gemini** | **Gemini 2.5 Flash** | `gemini-2.5-flash` | Lightning-fast token compiling, regex-based UX audits, color contrast calculations, and CSS token updates. |
-| **High-Precision** | Gemini 2.5 Pro | `gemini-2.5-pro` | Comprehensive cross-component accessibility refactoring across all 11 views and components. |
+| **Optimal Gemini** | **Gemini 3.8 Flash** | `gemini-3.8-flash` | Lightning-fast token compiling, regex-based UX audits, color contrast calculations, and CSS token updates. |
+| **High-Precision** | **Gemini 3.1 Pro** | `gemini-3.1-pro` | Comprehensive cross-component accessibility refactoring across all 11 views and components. |
 
 ### Quick-Switch Command
 To switch Antigravity to the optimal Gemini model for this agent:
 ```bash
-/model gemini-2.5-flash
+/model gemini-3.8-flash
 ```
-*(or `/model gemini-2.5-pro` for full-codebase accessibility refactors)*
+*(or `/model gemini-3.1-pro` for full-codebase accessibility refactors)*

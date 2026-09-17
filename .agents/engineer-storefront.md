@@ -75,12 +75,12 @@ The `engineer-storefront` agent is dedicated to the end-to-end customer digital 
 | Model Tier | Designation | Model String | Target Use Case |
 |---|---|---|---|
 | **Primary (Claude)** | Claude 3.7 Sonnet | `claude-3-7-sonnet` | Intricate reactive store wiring, order edit state synchronization, and complex touch gestures. |
-| **Optimal Gemini** | **Gemini 2.5 Flash** | `gemini-2.5-flash` | Lightning-fast component updates, UI styling tweaks, template adjustments, and responsive layout fixes. |
-| **Deep Reasoning** | Gemini 2.5 Pro | `gemini-2.5-pro` | Comprehensive Pinia store refactoring, multi-view cart state coordination. |
+| **Optimal Gemini** | **Gemini 3.8 Flash** | `gemini-3.8-flash` | Lightning-fast component updates, UI styling tweaks, template adjustments, and responsive layout fixes. |
+| **Deep Reasoning** | **Gemini 3.1 Pro** | `gemini-3.1-pro` | Comprehensive Pinia store refactoring, multi-view cart state coordination. |
 
 ### Quick-Switch Command
 To switch Antigravity to the optimal Gemini model for this agent:
 ```bash
-/model gemini-2.5-flash
+/model gemini-3.8-flash
 ```
-*(or `/model gemini-2.5-pro` for deep Pinia store refactoring)*
+*(or `/model gemini-3.1-pro` for deep Pinia store refactoring)*

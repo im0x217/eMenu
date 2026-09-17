@@ -70,12 +70,12 @@ The `engineer-admin-pos` agent owns the operational mission-critical back-office
 | Model Tier | Designation | Model String | Target Use Case |
 |---|---|---|---|
 | **Primary (Claude)** | Claude 3.7 Sonnet | `claude-3-7-sonnet` | Complex state management in 26k-line `AdminView.vue`, keyboard state machines, POS flow refactoring. |
-| **Optimal Gemini** | **Gemini Pro** | `gemini-2.5-pro` | Zero-compromise replacement with massive 1M+ token context window specifically suited for multi-thousand line single-file components. |
-| **Deep Reasoning** | Gemini Thinking | `gemini-thinking` | Complex accounting algorithms, debt calculation loops, and print pagination geometry math. |
+| **Optimal Gemini** | **Gemini 3.1 Pro** | `gemini-3.1-pro` | Zero-compromise replacement with massive 1M+ token context window specifically suited for the 26,000+ line `AdminView.vue` monolith. |
+| **Deep Reasoning** | **Gemini Thinking** | `gemini-thinking` | Complex accounting algorithms, debt calculation loops, and print pagination geometry math. |
 
 ### Quick-Switch Command
 To switch Antigravity to the optimal Gemini model for this agent:
 ```bash
-/model gemini-2.5-pro
+/model gemini-3.1-pro
 ```
 *(or `/model gemini-thinking` for deep mathematical or pagination audits)*

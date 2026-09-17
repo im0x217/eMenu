@@ -67,12 +67,12 @@ The `infra-pwa-apple` agent is the systems authority over Progressive Web App (P
 | Model Tier | Designation | Model String | Target Use Case |
 |---|---|---|---|
 | **Primary (Claude)** | Claude 3.7 Sonnet | `claude-3-7-sonnet` | Complex service worker lifecycle coordination, WebKit WebClip browser quirk resolution, multi-manifest routing. |
-| **Optimal Gemini** | **Gemini 2.5 Pro** | `gemini-2.5-pro` | Zero-compromise replacement for cross-system cache invalidation, manifest synchronizations, and bundling optimization. |
-| **Rapid Gemini** | Gemini 2.5 Flash | `gemini-2.5-flash` | Cache version bumps, icon asset generation scripts, and manifest metadata edits. |
+| **Optimal Gemini** | **Gemini 3.1 Pro** | `gemini-3.1-pro` | Zero-compromise replacement for cross-system cache invalidation, manifest synchronizations, and bundling optimization. |
+| **Rapid Gemini** | **Gemini 3.8 Flash** | `gemini-3.8-flash` | Cache version bumps, icon asset generation scripts, and manifest metadata edits. |
 
 ### Quick-Switch Command
 To switch Antigravity to the optimal Gemini model for this agent:
 ```bash
-/model gemini-2.5-pro
+/model gemini-3.1-pro
 ```
-*(or `/model gemini-2.5-flash` for routine cache version bumps)*
+*(or `/model gemini-3.8-flash` for routine cache version bumps)*
