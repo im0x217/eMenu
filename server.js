@@ -8,6 +8,7 @@ const multer = require("multer");
 const multerS3 = require("multer-s3");
 const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const path = require("path");
+const fs = require("fs");
 const crypto = require("crypto");
 
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'emenu-admin-secret-key-2026';
@@ -3874,8 +3875,49 @@ app.get(["/admin", "/admin/*"], (req, res) => {
 });
 
 // ============ CATCH-ALL ROUTE FOR VUE SPA ============
+// Server-side manifest injection: swap <link rel="manifest"> and <link rel="apple-touch-icon">
+// in the HTML response based on ?shop= / ?view= query params BEFORE the page is sent to the
+// browser. This ensures iOS "Add to Home Screen" reads the correct manifest without needing
+// JavaScript to run first (JS-based swap is too late for iOS manifest capture).
 app.get("/app/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "app", "index.html"));
+  const shop = req.query.shop || '';
+  const view = req.query.view || req.query.mode || '';
+  const isAdmin = view === 'admin' || view === 'mode' || req.path.startsWith('/admin');
+  const isShop2 = shop === 'shop2';
+
+  // Serve the plain index.html for Shop 1 (default — no injection needed, it's already correct)
+  if (!isAdmin && !isShop2) {
+    return res.sendFile(path.join(__dirname, "public", "app", "index.html"));
+  }
+
+  // For Shop 2 and Admin: read index.html and patch the manifest + apple-touch-icon links
+  const indexPath = path.join(__dirname, "public", "app", "index.html");
+  fs.readFile(indexPath, 'utf8', (err, html) => {
+    if (err) {
+      return res.sendFile(indexPath);
+    }
+
+    let patched = html;
+
+    if (isAdmin) {
+      patched = patched
+        .replace(/href="\/app\/manifest\.json"/, 'href="/manifest-admin.json"')
+        .replace(/href="\/manifest\.json"/, 'href="/manifest-admin.json"')
+        .replace(/href="\/app\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-admin.png"')
+        .replace(/href="\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-admin.png"');
+    } else if (isShop2) {
+      patched = patched
+        .replace(/href="\/app\/manifest\.json"/, 'href="/manifest-shop2.json"')
+        .replace(/href="\/manifest\.json"/, 'href="/manifest-shop2.json"')
+        .replace(/href="\/app\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-shop2.png"')
+        .replace(/href="\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-shop2.png"');
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    // Do not cache the SPA shell — let the browser re-fetch to get the right manifest
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(patched);
+  });
 });
 
 // ============ FONT FILE HANDLER ============
