@@ -50,7 +50,6 @@
 
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
-  --island-top-clearance: calc(max(env(safe-area-inset-top, 0px), 8px) + 40px);
 }
 
 /* Shop Theme Overrides */
@@ -81,7 +80,7 @@
   }
 
   .app-container {
-    padding: var(--island-top-clearance) 0.65rem calc(125px + env(safe-area-inset-bottom, 0px)) 0.65rem !important;
+    padding: calc(0.65rem + env(safe-area-inset-top, 0px)) 0.65rem calc(125px + env(safe-area-inset-bottom, 0px)) 0.65rem !important;
   }
 
   /* Universal iOS Safari Form Control Guard: prevent unwanted page zoom */
@@ -192,7 +191,7 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   margin: 0 auto;
-  padding: calc(var(--island-top-clearance) + 4px) 1rem calc(100px + env(safe-area-inset-bottom, 0px)) 1rem;
+  padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem calc(100px + env(safe-area-inset-bottom, 0px)) 1rem;
 }
 
 /* Horizontal scroll for categories */
