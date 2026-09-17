@@ -20,13 +20,20 @@
           var hash = window.location.hash || '';
           var path = window.location.pathname || '';
 
-          // Detect intent from the URL query string (set by manifests start_url, shared links, etc.)
+          // Detect intent from URL query string (?shop=shop2, ?view=admin)
           var hasExplicitAdmin = search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1;
           var hasExplicitShop2 = search.indexOf('shop=shop2') !== -1;
 
-          // Also detect from existing hash (for in-app navigation continuity)
-          var isAdmin = hasExplicitAdmin || hash.indexOf('admin') !== -1;
-          var isShop2 = hasExplicitShop2 || (!isAdmin && hash.indexOf('shop2') !== -1);
+          // Also detect from existing hash (covers in-app navigation AND malformed shortcut hashes like #/shop2)
+          var hashHasShop2 = hash.indexOf('shop2') !== -1;
+          var hashHasAdmin = hash.indexOf('admin') !== -1;
+          var isAdmin = hasExplicitAdmin || hashHasAdmin;
+          var isShop2 = !isAdmin && (hasExplicitShop2 || hashHasShop2);
+
+          // Check if hash already has the correct full route
+          var hashAlreadyCorrect = (isAdmin && hash === '#/admin') ||
+                                    (isShop2 && hash === '#/shop/shop2') ||
+                                    (!isAdmin && !isShop2 && hash === '#/shop/shop1');
 
           var linkManifest = document.querySelector('link[rel="manifest"]');
           var linkAppleIcon = document.querySelector('link[rel="apple-touch-icon"]');
@@ -39,9 +46,8 @@
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-admin.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'إدارة الزروق');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
-            // Always force hash to admin when ?view=admin is explicit in URL
-            if (hasExplicitAdmin || !hash || hash === '#/' || hash === '#') {
-              window.location.replace(window.location.pathname + window.location.search + '#/admin');
+            if (!hashAlreadyCorrect) {
+              window.location.replace(path + search + '#/admin');
             }
           } else if (isShop2) {
             document.title = 'قسم النواشف - حلويات عبمبر الزروق';
@@ -49,9 +55,9 @@
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-shop2.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'قسم النواشف');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
-            // Always force hash to shop2 when ?shop=shop2 is explicit in URL
-            if (hasExplicitShop2 || !hash || hash === '#/' || hash === '#') {
-              window.location.replace(window.location.pathname + window.location.search + '#/shop/shop2');
+            // Force correct hash for ANY shop2 intent (explicit query OR hash like #/shop2)
+            if (!hashAlreadyCorrect) {
+              window.location.replace(path + search + '#/shop/shop2');
             }
           } else {
             document.title = 'منيو حلويات عبمبر الزروق';
@@ -60,7 +66,7 @@
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'عبمبر الزروق');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
             if (!hash || hash === '#/' || hash === '#') {
-              window.location.replace(window.location.pathname + window.location.search + '#/shop/shop1');
+              window.location.replace(path + search + '#/shop/shop1');
             }
           }
         } catch (e) {}

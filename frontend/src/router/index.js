@@ -40,7 +40,9 @@ const routes = [
         shopStore.setShop(id);
         next();
       } else {
-        next('/shop/shop1');
+        // Invalid shop id — check URL query for intent before defaulting
+        const urlParams = new URLSearchParams(window.location.search);
+        next(urlParams.get('shop') === 'shop2' ? '/shop/shop2' : '/shop/shop1');
       }
     }
   },
@@ -66,7 +68,12 @@ const routes = [
   },
   {
     path: '/:catchAll(.*)',
-    redirect: '/shop/shop1'
+    redirect: () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('shop') === 'shop2') return '/shop/shop2';
+      if (urlParams.get('view') === 'admin' || urlParams.get('mode') === 'admin') return '/admin';
+      return '/shop/shop1';
+    }
   }
 ];
 

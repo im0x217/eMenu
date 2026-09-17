@@ -26,7 +26,11 @@ export const useShopStore = defineStore('shop', () => {
 
   const fetchMenu = async () => {
     if (!activeShop.value) {
-      setShop('shop1');
+      // Read URL intent before defaulting — prevents shop1 flash on shop2 PWA launch
+      const urlParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash || '';
+      const shopFromUrl = urlParams.get('shop') || (hash.indexOf('shop2') !== -1 ? 'shop2' : 'shop1');
+      setShop(shopFromUrl);
     }
     const targetShop = activeShop.value || 'shop1';
     isLoading.value = true;
