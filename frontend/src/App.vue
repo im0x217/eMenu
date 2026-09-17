@@ -3,6 +3,7 @@ import { onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import BottomNav from './components/BottomNav.vue';
 import BottomCartBar from './components/BottomCartBar.vue';
+import DynamicIsland from './components/DynamicIsland.vue';
 import Toast from './components/Toast.vue';
 import SetPasswordModal from './components/SetPasswordModal.vue';
 import { useFavoritesStore } from './stores/favorites';
@@ -25,6 +26,9 @@ onMounted(() => {
 
 <template>
   <div class="app-layout">
+    <!-- Apple Dynamic Island Live Activity & Alert Pill -->
+    <DynamicIsland v-if="showCustomerNav" />
+
     <!-- For customer routes, wrap in app-container -->
     <main v-if="showCustomerNav" class="app-container">
       <router-view v-slot="{ Component }">
