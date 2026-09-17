@@ -66,6 +66,7 @@ onMounted(() => {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  background-color: var(--bg-dark);
 }
 
 .admin-main-wrapper {

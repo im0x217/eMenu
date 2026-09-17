@@ -117,6 +117,8 @@ const navToShop = () => {
   z-index: 999;
   padding-bottom: constant(safe-area-inset-bottom, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
   will-change: transform;

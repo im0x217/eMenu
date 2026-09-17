@@ -66,8 +66,8 @@ const handleNavigateToCart = () => {
 .floating-cart-bar {
   position: fixed;
   bottom: calc(62px + var(--safe-bottom)); /* Float just above BottomNav */
-  left: 0.75rem;
-  right: 0.75rem;
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
   padding: 0.65rem 1rem;
   border-radius: 16px;
   display: flex;
