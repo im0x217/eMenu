@@ -20,8 +20,13 @@
           var hash = window.location.hash || '';
           var path = window.location.pathname || '';
 
-          var isAdmin = hash.indexOf('admin') !== -1 || search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1;
-          var isShop2 = hash.indexOf('shop2') !== -1 || search.indexOf('shop=shop2') !== -1 || path.indexOf('/shop2') !== -1;
+          // Detect intent from the URL query string (set by manifests start_url, shared links, etc.)
+          var hasExplicitAdmin = search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1;
+          var hasExplicitShop2 = search.indexOf('shop=shop2') !== -1;
+
+          // Also detect from existing hash (for in-app navigation continuity)
+          var isAdmin = hasExplicitAdmin || hash.indexOf('admin') !== -1;
+          var isShop2 = hasExplicitShop2 || (!isAdmin && hash.indexOf('shop2') !== -1);
 
           var linkManifest = document.querySelector('link[rel="manifest"]');
           var linkAppleIcon = document.querySelector('link[rel="apple-touch-icon"]');
@@ -34,8 +39,9 @@
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-admin.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'إدارة الزروق');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
-            if (!hash || hash === '#/' || hash === '#') {
-              window.location.hash = '#/admin';
+            // Always force hash to admin when ?view=admin is explicit in URL
+            if (hasExplicitAdmin || !hash || hash === '#/' || hash === '#') {
+              window.location.replace(window.location.pathname + window.location.search + '#/admin');
             }
           } else if (isShop2) {
             document.title = 'قسم النواشف - حلويات عبمبر الزروق';
@@ -43,8 +49,9 @@
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-shop2.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'قسم النواشف');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
-            if (!hash || hash === '#/' || hash === '#') {
-              window.location.hash = '#/shop/shop2';
+            // Always force hash to shop2 when ?shop=shop2 is explicit in URL
+            if (hasExplicitShop2 || !hash || hash === '#/' || hash === '#') {
+              window.location.replace(window.location.pathname + window.location.search + '#/shop/shop2');
             }
           } else {
             document.title = 'منيو حلويات عبمبر الزروق';
@@ -53,13 +60,13 @@
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'عبمبر الزروق');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
             if (!hash || hash === '#/' || hash === '#') {
-              window.location.hash = '#/shop/shop1';
+              window.location.replace(window.location.pathname + window.location.search + '#/shop/shop1');
             }
           }
         } catch (e) {}
       })();
     </script>
-    <script type="module" crossorigin src="/app/assets/index-BrP4jZQ9.js"></script>
+    <script type="module" crossorigin src="/app/assets/index-DwyjEwHL.js"></script>
     <link rel="modulepreload" crossorigin href="/app/assets/vendor-vue-BCZm6I2w.js">
     <link rel="stylesheet" crossorigin href="/app/assets/index-CVQhSxm3.css">
   </head>

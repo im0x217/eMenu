@@ -82,20 +82,23 @@ router.beforeEach((to, from, next) => {
   const shopStore = useShopStore();
   const urlParams = new URLSearchParams(window.location.search);
 
-  // If launched via PWA start_url with ?view=admin but router initially targeted a non-admin route
+  // If launched via PWA start_url with ?view=admin but router targeted a non-admin route
   if ((urlParams.get('view') === 'admin' || urlParams.get('mode') === 'admin' || urlParams.has('admin')) && to.path !== '/admin') {
     next('/admin');
     return;
   }
 
-  // If launched via PWA start_url with ?shop=shop2 but router initially targeted shop1 or root
-  if (urlParams.get('shop') === 'shop2' && to.path === '/shop/shop1') {
+  // If launched via PWA start_url with ?shop=shop2, enforce shop2 regardless of resolved path
+  // (stale hash or browser cache may have resolved to shop1 first)
+  if (urlParams.get('shop') === 'shop2' && !to.path.includes('shop2')) {
     next('/shop/shop2');
     return;
   }
 
+  // Initialize activeShop from the URL if not already set, defaulting to shop2 when applicable
   if (!shopStore.activeShop && !to.path.startsWith('/admin')) {
-    shopStore.setShop('shop1');
+    const shopParam = urlParams.get('shop');
+    shopStore.setShop(shopParam === 'shop2' ? 'shop2' : 'shop1');
   }
   next();
 });
