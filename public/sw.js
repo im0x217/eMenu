@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v137';
+const CACHE_NAME = 'emenu-cache-v138';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -100,21 +100,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Network-First with Offline Fallback for HTML Navigations & App Shell
+  // 4. Network-First (NO CACHE STORE) for HTML Navigations & App Shell
+  // The SPA shell is served with server-side manifest injection based on ?shop= / ?view=.
+  // Caching the shell would bake in the wrong manifest link — always fetch fresh.
+  // Only fall back to a cached copy when genuinely offline.
   if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.startsWith('/app')) {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
         .catch(() => {
-          // Offline fallback: serve cached SPA shell or landing page
+          // Offline fallback: try the exact cached URL first (preserves ?shop= query),
+          // then fall back to the generic app shell as a last resort.
           return caches.match(event.request).then((cached) => {
             if (cached) return cached;
             if (url.pathname.startsWith('/app')) {

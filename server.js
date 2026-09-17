@@ -13,9 +13,11 @@ const crypto = require("crypto");
 
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'emenu-admin-secret-key-2026';
 
-// Secure dynamic session tokens generated on server start
-const SESSION_TOKEN_SHOP1 = crypto.randomBytes(32).toString('hex');
-const SESSION_TOKEN_SHOP2 = crypto.randomBytes(32).toString('hex');
+// Deterministic session tokens derived from ADMIN_SESSION_SECRET via HMAC-SHA256.
+// These are stable across server restarts — a logged-in admin stays logged in
+// as long as ADMIN_SESSION_SECRET does not change (rotating the secret = force re-login).
+const SESSION_TOKEN_SHOP1 = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update('shop1-admin-token-v1').digest('hex');
+const SESSION_TOKEN_SHOP2 = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update('shop2-admin-token-v1').digest('hex');
 
 // ============ PASSWORD & CUSTOMER AUTH HELPERS ============
 function hashCustomerPassword(password) {
@@ -480,7 +482,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
             ).catch(err => console.error("Password migration error:", err));
           }
           const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-          res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
+          res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
           return res.json({ 
             success: true, 
             token: SESSION_TOKEN_SHOP1,
@@ -498,7 +500,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
   // 2. Fallback ENV check
   if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
+    res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
     return res.json({ success: true, token: SESSION_TOKEN_SHOP1, role: "admin", name: "المدير العام", shopAccess: "all" });
   }
 
@@ -1271,7 +1273,7 @@ app.post("/api/shop2/login", loginLimiter, async (req, res) => {
             ).catch(err => console.error("Password migration error:", err));
           }
           const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-          res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
+          res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
           return res.json({ 
             success: true, 
             token: SESSION_TOKEN_SHOP2,
@@ -1289,7 +1291,7 @@ app.post("/api/shop2/login", loginLimiter, async (req, res) => {
   // 2. Fallback ENV check
   if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/" });
+    res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
     return res.json({ success: true, token: SESSION_TOKEN_SHOP2, role: "admin", name: "المدير العام", shopAccess: "all" });
   }
 
