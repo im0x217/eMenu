@@ -14,27 +14,48 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <script>
+      // Boot-time shop/view detection.
+      // Responsibilities: (1) detect shop intent, (2) persist to sessionStorage,
+      // (3) set manifest/icon/title for iOS "Add to Home Screen".
+      // This script MUST NOT manipulate window.location or the hash — Vue Router owns routing.
       (function() {
         try {
           var search = window.location.search || '';
           var hash = window.location.hash || '';
           var path = window.location.pathname || '';
+          var ss = window.sessionStorage;
 
-          // Detect intent from URL query string (?shop=shop2, ?view=admin)
-          var hasExplicitAdmin = search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1;
-          var hasExplicitShop2 = search.indexOf('shop=shop2') !== -1;
+          // Priority: explicit URL query > hash hint > sessionStorage > default
+          var isAdmin = false;
+          var isShop2 = false;
 
-          // Also detect from existing hash (covers in-app navigation AND malformed shortcut hashes like #/shop2)
-          var hashHasShop2 = hash.indexOf('shop2') !== -1;
-          var hashHasAdmin = hash.indexOf('admin') !== -1;
-          var isAdmin = hasExplicitAdmin || hashHasAdmin;
-          var isShop2 = !isAdmin && (hasExplicitShop2 || hashHasShop2);
+          // 1. Explicit query string (?shop=shop2, ?view=admin) — highest priority
+          if (search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1) {
+            isAdmin = true;
+          } else if (search.indexOf('shop=shop2') !== -1) {
+            isShop2 = true;
+          }
+          // 2. Hash hint (from in-app navigation or old bookmarks)
+          else if (hash.indexOf('admin') !== -1) {
+            isAdmin = true;
+          } else if (hash.indexOf('shop2') !== -1) {
+            isShop2 = true;
+          }
+          // 3. sessionStorage (persisted from a previous page load in this PWA instance)
+          else if (ss) {
+            var saved = ss.getItem('emenu_view');
+            if (saved === 'admin') isAdmin = true;
+            else if (saved === 'shop2') isShop2 = true;
+          }
 
-          // Check if hash already has the correct full route
-          var hashAlreadyCorrect = (isAdmin && hash === '#/admin') ||
-                                    (isShop2 && hash === '#/shop/shop2') ||
-                                    (!isAdmin && !isShop2 && hash === '#/shop/shop1');
+          // Persist to sessionStorage so Vue router and store can read it
+          if (ss) {
+            if (isAdmin) ss.setItem('emenu_view', 'admin');
+            else if (isShop2) ss.setItem('emenu_view', 'shop2');
+            else ss.setItem('emenu_view', 'shop1');
+          }
 
+          // Set manifest, icon, title for iOS "Add to Home Screen"
           var linkManifest = document.querySelector('link[rel="manifest"]');
           var linkAppleIcon = document.querySelector('link[rel="apple-touch-icon"]');
           var metaAppleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
@@ -46,28 +67,18 @@
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-admin.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'إدارة الزروق');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
-            if (!hashAlreadyCorrect) {
-              window.location.replace(path + search + '#/admin');
-            }
           } else if (isShop2) {
             document.title = 'قسم النواشف - حلويات عبمبر الزروق';
             if (linkManifest) linkManifest.setAttribute('href', '/manifest-shop2.json');
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-shop2.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'قسم النواشف');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
-            // Force correct hash for ANY shop2 intent (explicit query OR hash like #/shop2)
-            if (!hashAlreadyCorrect) {
-              window.location.replace(path + search + '#/shop/shop2');
-            }
           } else {
             document.title = 'منيو حلويات عبمبر الزروق';
             if (linkManifest) linkManifest.setAttribute('href', '/manifest.json');
             if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-shop1.png');
             if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'عبمبر الزروق');
             if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
-            if (!hash || hash === '#/' || hash === '#') {
-              window.location.replace(path + search + '#/shop/shop1');
-            }
           }
         } catch (e) {}
       })();

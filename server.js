@@ -239,6 +239,61 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser(ADMIN_SESSION_SECRET));
+
+// ============ SPA SHELL HANDLER WITH SERVER-SIDE MANIFEST INJECTION ============
+// Serves /app and /admin with dynamic manifest, title, and touch-icon injection BEFORE express.static
+// intercepts and sends the raw file. This ensures iOS Safari "Add to Home Screen" always captures
+// the correct manifest and start_url on the initial HTTP response.
+const serveSpaShell = (req, res) => {
+  const shop = req.query.shop || '';
+  const view = req.query.view || req.query.mode || '';
+  const isAdmin = view === 'admin' || req.path.startsWith('/admin');
+  const isShop2 = shop === 'shop2' || req.path.startsWith('/shop2');
+
+  const indexPath = path.join(__dirname, "public", "app", "index.html");
+  fs.readFile(indexPath, 'utf8', (err, html) => {
+    if (err) {
+      return res.sendFile(indexPath);
+    }
+
+    let patched = html;
+
+    if (isAdmin) {
+      patched = patched
+        .replace(/href="\/app\/manifest\.json"/g, 'href="/manifest-admin.json"')
+        .replace(/href="\/manifest\.json"/g, 'href="/manifest-admin.json"')
+        .replace(/href="\/app\/apple-touch-icon\.png"/g, 'href="/apple-touch-icon-admin.png"')
+        .replace(/href="\/apple-touch-icon\.png"/g, 'href="/apple-touch-icon-admin.png"')
+        .replace(/<title>.*?<\/title>/, '<title>لوحة إدارة عبمبر الزروق</title>')
+        .replace(/content="عبمبر الزروق"/g, 'content="إدارة الزروق"')
+        .replace(/content="#f7f3ec"/g, 'content="#0f172a"');
+    } else if (isShop2) {
+      patched = patched
+        .replace(/href="\/app\/manifest\.json"/g, 'href="/manifest-shop2.json"')
+        .replace(/href="\/manifest\.json"/g, 'href="/manifest-shop2.json"')
+        .replace(/href="\/app\/apple-touch-icon\.png"/g, 'href="/apple-touch-icon-shop2.png"')
+        .replace(/href="\/apple-touch-icon\.png"/g, 'href="/apple-touch-icon-shop2.png"')
+        .replace(/<title>.*?<\/title>/, '<title>قسم النواشف - حلويات عبمبر الزروق</title>')
+        .replace(/content="عبمبر الزروق"/g, 'content="قسم النواشف"');
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(patched);
+  });
+};
+
+// Route app navigations through shell generator (excluding static assets like .js, .css, etc.)
+app.get(['/app', '/app/', '/admin', '/admin/'], serveSpaShell);
+app.get(['/app/*', '/admin/*'], (req, res, next) => {
+  if (req.path.startsWith('/app/assets/') || req.path.includes('.')) {
+    return next();
+  }
+  serveSpaShell(req, res);
+});
+
 app.use(express.static(path.join(__dirname, "public"), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html') || filePath.endsWith('sw.js') || filePath.endsWith('manifest.json') || filePath.endsWith('manifest-admin.json')) {
@@ -3871,56 +3926,6 @@ app.get(["/manifest-admin.json", "/app/manifest-admin.json"], (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest-admin.json"));
 });
 
-// ============ DEDICATED ADMIN PWA ROUTE ============
-app.get(["/admin", "/admin/*"], (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "app", "index.html"));
-});
-
-// ============ CATCH-ALL ROUTE FOR VUE SPA ============
-// Server-side manifest injection: swap <link rel="manifest"> and <link rel="apple-touch-icon">
-// in the HTML response based on ?shop= / ?view= query params BEFORE the page is sent to the
-// browser. This ensures iOS "Add to Home Screen" reads the correct manifest without needing
-// JavaScript to run first (JS-based swap is too late for iOS manifest capture).
-app.get("/app/*", (req, res) => {
-  const shop = req.query.shop || '';
-  const view = req.query.view || req.query.mode || '';
-  const isAdmin = view === 'admin' || view === 'mode' || req.path.startsWith('/admin');
-  const isShop2 = shop === 'shop2';
-
-  // Serve the plain index.html for Shop 1 (default — no injection needed, it's already correct)
-  if (!isAdmin && !isShop2) {
-    return res.sendFile(path.join(__dirname, "public", "app", "index.html"));
-  }
-
-  // For Shop 2 and Admin: read index.html and patch the manifest + apple-touch-icon links
-  const indexPath = path.join(__dirname, "public", "app", "index.html");
-  fs.readFile(indexPath, 'utf8', (err, html) => {
-    if (err) {
-      return res.sendFile(indexPath);
-    }
-
-    let patched = html;
-
-    if (isAdmin) {
-      patched = patched
-        .replace(/href="\/app\/manifest\.json"/, 'href="/manifest-admin.json"')
-        .replace(/href="\/manifest\.json"/, 'href="/manifest-admin.json"')
-        .replace(/href="\/app\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-admin.png"')
-        .replace(/href="\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-admin.png"');
-    } else if (isShop2) {
-      patched = patched
-        .replace(/href="\/app\/manifest\.json"/, 'href="/manifest-shop2.json"')
-        .replace(/href="\/manifest\.json"/, 'href="/manifest-shop2.json"')
-        .replace(/href="\/app\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-shop2.png"')
-        .replace(/href="\/apple-touch-icon\.png"/, 'href="/apple-touch-icon-shop2.png"');
-    }
-
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    // Do not cache the SPA shell — let the browser re-fetch to get the right manifest
-    res.setHeader('Cache-Control', 'no-store');
-    res.send(patched);
-  });
-});
 
 // ============ FONT FILE HANDLER ============
 // Handle requests for font files that may not exist (prevents 404 errors in console)

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
+import { useShopStore } from '../stores/shop';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
 import { telemetry } from '../utils/telemetry';
@@ -12,6 +13,9 @@ const router = useRouter();
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const toastStore = useToastStore();
+const shopStore = useShopStore();
+
+const activeShop = computed(() => shopStore.activeShop || 'shop1');
 
 // Guest checkout details (Name and Phone)
 const nameInput = ref(authStore.customerName);
@@ -322,7 +326,7 @@ const handleClearCart = () => {
         type="button" 
         class="btn-primary" 
         style="margin-top: 10px; max-width: 260px;"
-        @click="router.push(cartStore.isEditingOrder ? `/shop/${cartStore.editingOrderShop}` : '/shop/shop1')"
+        @click="router.push(cartStore.isEditingOrder ? `/shop/${cartStore.editingOrderShop}` : `/shop/${activeShop}`)"
       >
         تصفح قائمة المنتجات
       </button>

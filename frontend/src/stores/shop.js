@@ -2,7 +2,21 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 export const useShopStore = defineStore('shop', () => {
-  const activeShop = ref(null); // 'shop1' or 'shop2'
+  // Read initial shop from sessionStorage or URL
+  const getInitialShop = () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('shop') === 'shop2') return 'shop2';
+      const hash = window.location.hash || '';
+      if (hash.indexOf('shop2') !== -1) return 'shop2';
+      const saved = window.sessionStorage?.getItem('emenu_view');
+      if (saved === 'shop2') return 'shop2';
+      if (saved === 'shop1') return 'shop1';
+    } catch (e) {}
+    return null;
+  };
+
+  const activeShop = ref(getInitialShop()); // 'shop1' or 'shop2'
   const categories = ref([]);
   const products = ref([]);
   const tags = ref([]);
@@ -13,6 +27,12 @@ export const useShopStore = defineStore('shop', () => {
     if (shopId !== 'shop1' && shopId !== 'shop2') return;
     
     activeShop.value = shopId;
+    
+    try {
+      if (window.sessionStorage) {
+        window.sessionStorage.setItem('emenu_view', shopId);
+      }
+    } catch (e) {}
     
     // Apply styling class to body for theme transitions
     document.body.className = '';
@@ -26,10 +46,10 @@ export const useShopStore = defineStore('shop', () => {
 
   const fetchMenu = async () => {
     if (!activeShop.value) {
-      // Read URL intent before defaulting — prevents shop1 flash on shop2 PWA launch
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash || '';
-      const shopFromUrl = urlParams.get('shop') || (hash.indexOf('shop2') !== -1 ? 'shop2' : 'shop1');
+      const saved = window.sessionStorage?.getItem('emenu_view');
+      const shopFromUrl = urlParams.get('shop') || (hash.indexOf('shop2') !== -1 ? 'shop2' : (saved === 'shop2' ? 'shop2' : 'shop1'));
       setShop(shopFromUrl);
     }
     const targetShop = activeShop.value || 'shop1';

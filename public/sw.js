@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v140';
+const CACHE_NAME = 'emenu-cache-v141';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -104,15 +104,21 @@ self.addEventListener('fetch', (event) => {
   // The SPA shell is served with server-side manifest injection based on ?shop= / ?view=.
   // Caching the shell would bake in the wrong manifest link — always fetch fresh.
   // Only fall back to a cached copy when genuinely offline.
-  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.startsWith('/app')) {
+  const isHtmlNavigation = event.request.mode === 'navigate' || 
+                           url.pathname === '/' || 
+                           url.pathname === '/app' || 
+                           url.pathname === '/app/' || 
+                           url.pathname === '/admin' || 
+                           url.pathname === '/admin/' ||
+                           url.pathname.endsWith('.html');
+  if (isHtmlNavigation) {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          // Offline fallback: try the exact cached URL first (preserves ?shop= query),
-          // then fall back to the generic app shell as a last resort.
+          // Offline fallback: try exact cached URL, then generic app shell
           return caches.match(event.request).then((cached) => {
             if (cached) return cached;
-            if (url.pathname.startsWith('/app')) {
+            if (url.pathname.startsWith('/app') || url.pathname.startsWith('/admin')) {
               return caches.match('/app/index.html');
             }
             return caches.match('/index.html');

@@ -26,6 +26,11 @@ const routes = [
       if (shopParam === 'shop2') {
         return '/shop/shop2';
       }
+      try {
+        const saved = window.sessionStorage?.getItem('emenu_view');
+        if (saved === 'admin') return '/admin';
+        if (saved === 'shop2') return '/shop/shop2';
+      } catch (e) {}
       return '/shop/shop1'; // Default
     }
   },
@@ -40,9 +45,14 @@ const routes = [
         shopStore.setShop(id);
         next();
       } else {
-        // Invalid shop id — check URL query for intent before defaulting
         const urlParams = new URLSearchParams(window.location.search);
-        next(urlParams.get('shop') === 'shop2' ? '/shop/shop2' : '/shop/shop1');
+        let target = urlParams.get('shop');
+        if (!target) {
+          try {
+            target = window.sessionStorage?.getItem('emenu_view');
+          } catch (e) {}
+        }
+        next(target === 'shop2' ? '/shop/shop2' : '/shop/shop1');
       }
     }
   },
@@ -70,8 +80,16 @@ const routes = [
     path: '/:catchAll(.*)',
     redirect: () => {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('shop') === 'shop2') return '/shop/shop2';
-      if (urlParams.get('view') === 'admin' || urlParams.get('mode') === 'admin') return '/admin';
+      if (urlParams.get('view') === 'admin' || urlParams.get('mode') === 'admin' || window.location.pathname.startsWith('/admin')) {
+        return '/admin';
+      }
+      const shopParam = urlParams.get('shop');
+      if (shopParam === 'shop2') return '/shop/shop2';
+      try {
+        const saved = window.sessionStorage?.getItem('emenu_view');
+        if (saved === 'admin') return '/admin';
+        if (saved === 'shop2') return '/shop/shop2';
+      } catch (e) {}
       return '/shop/shop1';
     }
   }
@@ -84,29 +102,43 @@ const router = createRouter({
 
 import { trackPageView } from '../utils/analytics';
 
-// Ensure activeShop is always initialized on all customer routes and handle PWA admin launch
+// Handle initial launch navigation without intercepting subsequent customer route changes
+let isInitialNavigation = true;
+
 router.beforeEach((to, from, next) => {
   const shopStore = useShopStore();
   const urlParams = new URLSearchParams(window.location.search);
 
-  // If launched via PWA start_url with ?view=admin but router targeted a non-admin route
-  if ((urlParams.get('view') === 'admin' || urlParams.get('mode') === 'admin' || urlParams.has('admin')) && to.path !== '/admin') {
-    next('/admin');
-    return;
+  // Handle cold-start landing from PWA start_url or external links
+  if (isInitialNavigation) {
+    isInitialNavigation = false;
+
+    // Admin PWA launch (?view=admin or /admin pathname)
+    const isAdminIntent = urlParams.get('view') === 'admin' || 
+                          urlParams.get('mode') === 'admin' || 
+                          urlParams.has('admin') || 
+                          window.location.pathname.startsWith('/admin');
+    if (isAdminIntent && to.path !== '/admin') {
+      return next('/admin');
+    }
+
+    // Shop 2 PWA launch (?shop=shop2) - if hash resolved to shop1 on cold start, redirect to shop2
+    const isShop2Intent = urlParams.get('shop') === 'shop2';
+    if (isShop2Intent && to.path === '/shop/shop1') {
+      return next('/shop/shop2');
+    }
   }
 
-  // If launched via PWA start_url with ?shop=shop2, enforce shop2 regardless of resolved path
-  // (stale hash or browser cache may have resolved to shop1 first)
-  if (urlParams.get('shop') === 'shop2' && !to.path.includes('shop2')) {
-    next('/shop/shop2');
-    return;
-  }
-
-  // Initialize activeShop from the URL if not already set, defaulting to shop2 when applicable
+  // Ensure activeShop is initialized if null on customer routes
   if (!shopStore.activeShop && !to.path.startsWith('/admin')) {
-    const shopParam = urlParams.get('shop');
-    shopStore.setShop(shopParam === 'shop2' ? 'shop2' : 'shop1');
+    let fallback = 'shop1';
+    try {
+      const saved = window.sessionStorage?.getItem('emenu_view');
+      if (saved === 'shop2') fallback = 'shop2';
+    } catch (e) {}
+    shopStore.setShop(fallback);
   }
+
   next();
 });
 
