@@ -55,3 +55,18 @@ All UI components, views, styles, and interaction workflows in this project must
   - All animations (shimmer waves, modal slides, drawer sheets) must strictly use GPU-composited properties (`transform: translate3d(...)`, `opacity`) with `will-change` hints and `contain: layout paint` where appropriate.
 - **Accessible Motion (`prefers-reduced-motion`)**:
   - Always provide graceful fallbacks disabling or shortening continuous animations when the user has requested reduced motion.
+
+---
+
+## 5. Form Controls, Date Pickers & RTL Ergonomics
+- **RTL Datepicker Trigger Inversion**:
+  - In RTL layouts, date picker trigger buttons must display the text label on the right (`<span>` first) and the calendar SVG icon on the left (`<svg>` second), styled with `direction: rtl; text-align: right;`.
+- **RTL Calendar Navigation Chevrons**:
+  - In RTL reading direction, "Previous Month" advances backward in time and points to the right:
+    `<polyline points="9 18 15 12 9 6"></polyline>` with explicit `title="الشهر السابق"` and `aria-label="الشهر السابق"`.
+  - "Next Month" advances forward in time and points to the left:
+    `<polyline points="15 18 9 12 15 6"></polyline>` with explicit `title="الشهر التالي"` and `aria-label="الشهر التالي"`.
+  - Header month/year labels must be centered (`text-align: center; flex: 1 1 auto;`).
+- **Placeholder Standards (Habit 19)**:
+  - Never prefix placeholders with redundant imperative verbs ("اكتب…", "أدخل…").
+  - Always use the true typographic Arabic ellipsis (`…`) rather than ASCII triple dots (`...`).
