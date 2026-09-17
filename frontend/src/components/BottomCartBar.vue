@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { triggerHaptic } from '../utils/haptics';
@@ -7,6 +7,9 @@ import { triggerHaptic } from '../utils/haptics';
 const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
+
+const isBadgeBouncing = ref(false);
+let bounceTimer = null;
 
 const showBar = computed(() => {
   // Don't show the bar if we are already on the cart page or if the cart is empty
@@ -18,6 +21,16 @@ const totalItems = computed(() => {
 });
 
 const totalPrice = computed(() => cartStore.cartTotal);
+
+watch(totalItems, (newVal, oldVal) => {
+  if (newVal !== oldVal && newVal > 0) {
+    isBadgeBouncing.value = true;
+    if (bounceTimer) clearTimeout(bounceTimer);
+    bounceTimer = setTimeout(() => {
+      isBadgeBouncing.value = false;
+    }, 360);
+  }
+});
 
 const handleNavigateToCart = () => {
   triggerHaptic('light');
@@ -44,7 +57,7 @@ const handleNavigateToCart = () => {
             <circle cx="19" cy="21" r="1"/>
             <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
           </svg>
-          <span class="item-count-badge">{{ totalItems }}</span>
+          <span class="item-count-badge" :class="{ 'badge-bounce': isBadgeBouncing }">{{ totalItems }}</span>
         </div>
         <div class="price-info">
           <span class="price-val">{{ totalPrice }}</span>
@@ -117,6 +130,23 @@ const handleNavigateToCart = () => {
   justify-content: center;
   font-weight: 700;
   border: 1px solid #000;
+}
+
+.item-count-badge.badge-bounce {
+  animation: cartBadgeBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cartBadgeBounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.38); }
+  75% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-count-badge.badge-bounce {
+    animation: none !important;
+  }
 }
 
 .price-info {

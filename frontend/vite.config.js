@@ -8,7 +8,18 @@ export default defineConfig({
   base: '/app/',
   build: {
     outDir: '../public/app',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('cropperjs')) return 'cropper';
+            if (id.includes('jsbarcode')) return 'jsbarcode';
+            if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) return 'vendor-vue';
+          }
+        }
+      }
+    }
   },
   resolve: {
     alias: {
