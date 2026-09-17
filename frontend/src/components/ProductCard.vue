@@ -150,8 +150,8 @@ const toggleSave = () => {
   triggerHaptic('light');
   if (heartBtnRef.value) {
     gsap.fromTo(heartBtnRef.value, 
-      { scale: 0.7 }, 
-      { scale: 1, duration: 0.45, ease: 'back.out(2.5)' }
+      { scale: 0.75 }, 
+      { scale: 1, duration: 0.35, ease: 'back.out(1.4)' }
     );
   }
   favoritesStore.toggleFavorite(activeShop.value, props.product._id);
@@ -181,8 +181,8 @@ const handleAddToCart = () => {
   triggerHaptic('medium');
   if (addBtnRef.value) {
     gsap.fromTo(addBtnRef.value,
-      { scale: 0.93 },
-      { scale: 1, duration: 0.3, ease: 'back.out(2)' }
+      { scale: 0.94 },
+      { scale: 1, duration: 0.28, ease: 'back.out(1.2)' }
     );
   }
   // Determine pricing mode to add to cart
@@ -453,16 +453,21 @@ const activeTagsList = computed(() => {
 }
 
 .favorite-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
   background: rgba(15, 23, 42, 0.85);
 }
 
 .heart-icon {
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), fill 0.3s;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), fill 0.25s;
+}
+
+.favorite-btn:active {
+  transform: scale(0.92);
+  transition: transform 80ms ease-out;
 }
 
 .favorite-btn:active .heart-icon {
-  transform: scale(0.8);
+  transform: scale(0.85);
 }
 
 .img-wrapper {
@@ -885,7 +890,8 @@ const activeTagsList = computed(() => {
 }
 
 .add-btn-wide:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition: transform 80ms ease-out;
 }
 
 @media (max-width: 768px) {

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '../stores/cart';
+import { triggerHaptic } from '../utils/haptics';
 
 const router = useRouter();
 const route = useRoute();
@@ -17,19 +18,24 @@ const totalItems = computed(() => {
 });
 
 const totalPrice = computed(() => cartStore.cartTotal);
+
+const handleNavigateToCart = () => {
+  triggerHaptic('light');
+  router.push('/cart');
+};
 </script>
 
 <template>
   <Transition name="slide-up">
     <div 
       v-if="showBar" 
-      class="floating-cart-bar glass-panel pulse-animation" 
+      class="floating-cart-bar glass-panel" 
       role="button"
       tabindex="0"
       :aria-label="cartStore.isEditingOrder ? `متابعة تعديل طلب #${cartStore.editingOrderNumber}` : `عرض السلة، تحتوي على ${totalItems} أصناف بإجمالي ${totalPrice} دينار`"
-      @click="router.push('/cart')"
-      @keydown.enter="router.push('/cart')"
-      @keydown.space.prevent="router.push('/cart')"
+      @click="handleNavigateToCart"
+      @keydown.enter="handleNavigateToCart"
+      @keydown.space.prevent="handleNavigateToCart"
     >
       <div class="cart-summary">
         <div class="cart-icon-group">
@@ -63,21 +69,26 @@ const totalPrice = computed(() => cartStore.cartTotal);
   left: 0.75rem;
   right: 0.75rem;
   padding: 0.65rem 1rem;
-  border-radius: 14px;
+  border-radius: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 998;
   cursor: pointer;
-  box-shadow: var(--shadow-xl), 0 0 12px rgba(var(--primary-color-rgb), 0.12);
-  border-color: rgba(var(--primary-color-rgb), 0.15);
-  background: rgba(255, 253, 249, 0.97);
-  animation: floatPulse 3s infinite alternate;
+  touch-action: manipulation;
+  background: rgba(255, 253, 249, 0.90);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px rgba(44, 37, 32, 0.12), 0 2px 8px rgba(var(--primary-color-rgb), 0.1);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
 }
 
-@keyframes floatPulse {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-4px); }
+.floating-cart-bar:active {
+  transform: scale(0.98);
+  transition: transform 80ms ease-out;
+  box-shadow: 0 4px 14px rgba(44, 37, 32, 0.1);
 }
 
 .cart-summary {
@@ -128,19 +139,23 @@ const totalPrice = computed(() => cartStore.cartTotal);
   font-size: 0.95rem;
 }
 
-/* Animations */
+/* Animations - Apple Settle Spring (Response 0.35s, Damping 1.0) */
 .slide-up-enter-active,
 .slide-up-leave-active {
-  transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease-out;
 }
 
-.slide-up-enter-from {
-  opacity: 0;
-  transform: translateY(30px);
-}
-
+.slide-up-enter-from,
 .slide-up-leave-to {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(24px) scale(0.97);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .floating-cart-bar {
+    background: #fffdf9 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 </style>

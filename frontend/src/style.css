@@ -169,12 +169,14 @@ body {
   background-attachment: fixed;
 }
 
-/* Card panel styling */
+/* Card panel styling - Apple Glass Material (§12) */
 .glass-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
+  background: rgba(255, 253, 249, 0.88);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 18px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), 0 8px 24px rgba(44, 37, 32, 0.05);
   transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
@@ -266,15 +268,22 @@ body {
   }
 }
 
-/* Card lifting animation */
+/* Card lifting animation & Apple direct manipulation press (§1 & §2) */
 .card-hover-effect {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-hover-effect:active, .card-hover-effect:hover {
-  transform: translateY(-3px);
-  border-color: rgba(var(--primary-color-rgb), 0.2);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(var(--primary-color-rgb), 0.06);
+@media (hover: hover) {
+  .card-hover-effect:hover {
+    transform: translateY(-3px);
+    border-color: rgba(var(--primary-color-rgb), 0.2);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(var(--primary-color-rgb), 0.06);
+  }
+}
+
+.card-hover-effect:active {
+  transform: scale(0.985);
+  transition: transform 80ms ease-out;
 }
 
 /* Floating badges */
@@ -422,6 +431,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Touch Action & Tap Delay Optimization */
 button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
   touch-action: manipulation;
+}
+
+/* Instant Tactile Press Response (Apple Design §1) */
+.cat-btn:active,
+.subcat-btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 80ms ease-out !important;
 }
 
 /* Accessible Keyboard Focus States */
@@ -717,4 +733,35 @@ body.modal-open .floating-cart-bar {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-TRANSPARENCY & HIGH CONTRAST (Apple Design §14)
+   ========================================================================== */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .bottom-nav-bar,
+  .floating-cart-bar {
+    background: #fffdf9 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .glass-panel,
+  .bottom-nav-bar,
+  .floating-cart-bar,
+  .product-card {
+    border: 1.5px solid #2c2520 !important;
+  }
+}
+
+/* ==========================================================================
+   TYPOGRAPHY: OPTICAL TUNING (Apple Design §15)
+   ========================================================================== */
+h1, h2, h3, .display-title, .modal-title {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
 

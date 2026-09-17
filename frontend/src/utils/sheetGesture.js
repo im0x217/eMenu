@@ -90,8 +90,9 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
 
     if (shouldDismiss) {
       triggerHaptic('light');
-      // Animate downward off-screen smoothly inheriting velocity
-      const duration = Math.min(0.28, Math.max(0.16, 250 / (Math.abs(velocity) * 1000 + 400)));
+      // Animate downward off-screen smoothly inheriting velocity (Apple Design §5 & §6)
+      const absV = Math.abs(velocity);
+      const duration = Math.min(0.32, Math.max(0.18, 0.28 / (absV + 0.8)));
       gsap.to(sheetEl, {
         y: '105%',
         duration: duration,
@@ -102,11 +103,12 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
         }
       });
     } else {
-      // Spring back gracefully to resting position (Apple Damping 0.85)
+      // Apple Design §4: Critically damped settle (damping 1.0) unless released with upward momentum
+      const hasUpwardMomentum = velocity < -0.3;
       gsap.to(sheetEl, {
         y: 0,
-        duration: 0.35,
-        ease: 'back.out(1.8)',
+        duration: 0.32,
+        ease: hasUpwardMomentum ? 'back.out(1.2)' : 'power3.out',
         onComplete: () => {
           sheetEl.style.transform = '';
         }
