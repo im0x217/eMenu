@@ -19,23 +19,47 @@
           var search = window.location.search || '';
           var hash = window.location.hash || '';
           var path = window.location.pathname || '';
+
           var isAdmin = hash.indexOf('admin') !== -1 || search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1;
+          var isShop2 = hash.indexOf('shop2') !== -1 || search.indexOf('shop=shop2') !== -1 || path.indexOf('/shop2') !== -1;
+
+          var linkManifest = document.querySelector('link[rel="manifest"]');
+          var linkAppleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+          var metaAppleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+          var metaThemeColor = document.querySelector('meta[name="theme-color"]');
+
           if (isAdmin) {
             document.title = 'لوحة إدارة عبمبر الزروق';
-            var link = document.querySelector('link[rel="manifest"]');
-            if (link) link.setAttribute('href', '/manifest-admin.json');
-            var metaTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-            if (metaTitle) metaTitle.setAttribute('content', 'إدارة الزروق');
-            var themeColor = document.querySelector('meta[name="theme-color"]');
-            if (themeColor) themeColor.setAttribute('content', '#0f172a');
+            if (linkManifest) linkManifest.setAttribute('href', '/manifest-admin.json');
+            if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-admin.png');
+            if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'إدارة الزروق');
+            if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
             if (!hash || hash === '#/' || hash === '#') {
               window.location.hash = '#/admin';
+            }
+          } else if (isShop2) {
+            document.title = 'قسم النواشف - حلويات عبمبر الزروق';
+            if (linkManifest) linkManifest.setAttribute('href', '/manifest-shop2.json');
+            if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-shop2.png');
+            if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'قسم النواشف');
+            if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
+            if (!hash || hash === '#/' || hash === '#') {
+              window.location.hash = '#/shop/shop2';
+            }
+          } else {
+            document.title = 'منيو حلويات عبمبر الزروق';
+            if (linkManifest) linkManifest.setAttribute('href', '/manifest.json');
+            if (linkAppleIcon) linkAppleIcon.setAttribute('href', '/apple-touch-icon-shop1.png');
+            if (metaAppleTitle) metaAppleTitle.setAttribute('content', 'عبمبر الزروق');
+            if (metaThemeColor) metaThemeColor.setAttribute('content', '#f7f3ec');
+            if (!hash || hash === '#/' || hash === '#') {
+              window.location.hash = '#/shop/shop1';
             }
           }
         } catch (e) {}
       })();
     </script>
-    <script type="module" crossorigin src="/app/assets/index-BIgLJGBU.js"></script>
+    <script type="module" crossorigin src="/app/assets/index-B6cFhpXz.js"></script>
     <link rel="modulepreload" crossorigin href="/app/assets/toast-lvmuJcip.js">
     <link rel="stylesheet" crossorigin href="/app/assets/index-CrI04BBt.css">
   </head>

@@ -1,0 +1,56 @@
+{
+  "id": "emenu-shop2-app",
+  "name": "قسم النواشف - حلويات عبمبر الزروق",
+  "short_name": "قسم النواشف",
+  "description": "منيو قسم النواشف - حلويات عبمبر الزروق",
+  "start_url": "/app/?shop=shop2",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f3ec",
+  "theme_color": "#f7f3ec",
+  "icons": [
+    {
+      "src": "/apple-touch-icon-shop2.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/res/icons/shop2-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/res/icons/shop2-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "المتجر الرئيسي (حلويات)",
+      "short_name": "المتجر",
+      "url": "/app/?shop=shop1",
+      "icons": [
+        {
+          "src": "/apple-touch-icon-shop1.png",
+          "sizes": "180x180"
+        }
+      ]
+    },
+    {
+      "name": "لوحة الإدارة والكاشير",
+      "short_name": "لوحة الإدارة",
+      "url": "/app/?view=admin",
+      "icons": [
+        {
+          "src": "/apple-touch-icon-admin.png",
+          "sizes": "180x180"
+        }
+      ]
+    }
+  ]
+}

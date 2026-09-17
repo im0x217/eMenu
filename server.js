@@ -3841,8 +3841,26 @@ app.get("/favicon.svg", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "favicon.svg"));
 });
 
-app.get("/apple-touch-icon.png", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "apple-touch-icon.png"));
+app.get(["/apple-touch-icon.png", "/app/apple-touch-icon.png", "/apple-touch-icon-shop1.png", "/app/apple-touch-icon-shop1.png"], (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "apple-touch-icon-shop1.png"));
+});
+
+app.get(["/apple-touch-icon-shop2.png", "/app/apple-touch-icon-shop2.png"], (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "apple-touch-icon-shop2.png"));
+});
+
+app.get(["/apple-touch-icon-admin.png", "/app/apple-touch-icon-admin.png"], (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "apple-touch-icon-admin.png"));
+});
+
+app.get(["/manifest.json", "/app/manifest.json"], (req, res) => {
+  res.setHeader("Content-Type", "application/manifest+json");
+  res.sendFile(path.join(__dirname, "public", "manifest.json"));
+});
+
+app.get(["/manifest-shop2.json", "/app/manifest-shop2.json"], (req, res) => {
+  res.setHeader("Content-Type", "application/manifest+json");
+  res.sendFile(path.join(__dirname, "public", "manifest-shop2.json"));
 });
 
 app.get(["/manifest-admin.json", "/app/manifest-admin.json"], (req, res) => {

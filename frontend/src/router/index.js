@@ -88,23 +88,36 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
+  // If launched via PWA start_url with ?shop=shop2 but router initially targeted shop1 or root
+  if (urlParams.get('shop') === 'shop2' && to.path === '/shop/shop1') {
+    next('/shop/shop2');
+    return;
+  }
+
   if (!shopStore.activeShop && !to.path.startsWith('/admin')) {
     shopStore.setShop('shop1');
   }
   next();
 });
 
-// Auto-track page views and update dynamic PWA manifest on route change
+// Auto-track page views and update dynamic PWA manifest, icon & title on route change
 router.afterEach((to) => {
   trackPageView(to.fullPath, to.name ? String(to.name) : '');
 
-  // Dynamic PWA Manifest & App Title for iOS Safari, Edge & Chrome App Installation
+  // Dynamic PWA Manifest, Apple Touch Icon & App Title for iOS Safari & WebApp Installation
   try {
     let manifestLink = document.querySelector('link[rel="manifest"]');
     if (!manifestLink) {
       manifestLink = document.createElement('link');
       manifestLink.setAttribute('rel', 'manifest');
       document.head.appendChild(manifestLink);
+    }
+
+    let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    if (!appleIcon) {
+      appleIcon = document.createElement('link');
+      appleIcon.setAttribute('rel', 'apple-touch-icon');
+      document.head.appendChild(appleIcon);
     }
 
     let appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
@@ -114,17 +127,38 @@ router.afterEach((to) => {
       document.head.appendChild(appleTitle);
     }
 
-    if (to.name === 'admin' || to.path.includes('/admin')) {
+    let themeColor = document.querySelector('meta[name="theme-color"]');
+    if (!themeColor) {
+      themeColor = document.createElement('meta');
+      themeColor.setAttribute('name', 'theme-color');
+      document.head.appendChild(themeColor);
+    }
+
+    const shopStore = useShopStore();
+    const isAdmin = to.name === 'admin' || to.path.includes('/admin');
+    const isShop2 = !isAdmin && (to.path.includes('shop2') || shopStore.activeShop === 'shop2');
+
+    if (isAdmin) {
       document.title = 'لوحة إدارة عبمبر الزروق | POS & Dashboard';
       appleTitle.setAttribute('content', 'إدارة الزروق');
+      appleIcon.setAttribute('href', '/apple-touch-icon-admin.png');
       manifestLink.setAttribute('href', '/manifest-admin.json');
+      themeColor.setAttribute('content', '#0f172a');
+    } else if (isShop2) {
+      document.title = 'قسم النواشف - حلويات عبمبر الزروق';
+      appleTitle.setAttribute('content', 'قسم النواشف');
+      appleIcon.setAttribute('href', '/apple-touch-icon-shop2.png');
+      manifestLink.setAttribute('href', '/manifest-shop2.json');
+      themeColor.setAttribute('content', '#f7f3ec');
     } else {
       document.title = 'منيو حلويات عبمبر الزروق';
       appleTitle.setAttribute('content', 'عبمبر الزروق');
+      appleIcon.setAttribute('href', '/apple-touch-icon-shop1.png');
       manifestLink.setAttribute('href', '/manifest.json');
+      themeColor.setAttribute('content', '#f7f3ec');
     }
   } catch (e) {
-    console.error('PWA manifest switch error:', e);
+    console.error('PWA manifest/icon switch error:', e);
   }
 });
 

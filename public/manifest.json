@@ -2,35 +2,29 @@
   "name": "حلويات عبمبر الزروق",
   "short_name": "عبمبر الزروق",
   "description": "منيو حلويات عبمبر الزروق وقسم النواشف",
-  "start_url": "/app/",
-  "scope": "/",
+  "start_url": "/app/?shop=shop1",
+  "scope": "/app/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f7f3ec",
   "theme_color": "#f7f3ec",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/apple-touch-icon-shop1.png",
+      "sizes": "180x180",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.png",
+      "src": "/res/icons/shop1-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/res/logo.jpg",
+      "src": "/res/icons/shop1-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/res/logo2.jpg.jpeg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],

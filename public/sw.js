@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v129';
+const CACHE_NAME = 'emenu-cache-v130';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -6,7 +6,12 @@ const ASSETS_TO_CACHE = [
   '/app/index.html',
   '/res/logo.jpg',
   '/res/logo2.jpg.jpeg',
-  '/manifest.json'
+  '/apple-touch-icon-shop1.png',
+  '/apple-touch-icon-shop2.png',
+  '/apple-touch-icon-admin.png',
+  '/manifest.json',
+  '/manifest-shop2.json',
+  '/manifest-admin.json'
 ];
 
 // Install Event
