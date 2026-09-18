@@ -1520,6 +1520,19 @@ const handleResendWhatsApp = () => {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
+@media (max-width: 768px) {
+  .modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-backdrop .modal-content {
+    border-radius: 20px 20px 0 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
 .modal-header {
   display: flex;
   align-items: flex-start;

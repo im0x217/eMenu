@@ -154,13 +154,7 @@ const handleDismiss = () => {
   z-index: 9999;
   padding: 16px;
   direction: rtl;
-  animation: modalOverlayFade 0.22s ease-out both;
   will-change: opacity;
-}
-
-@keyframes modalOverlayFade {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
 }
 
 .password-modal-card {
@@ -173,19 +167,20 @@ const handleDismiss = () => {
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3);
   text-align: center;
   font-family: 'Cairo', sans-serif;
-  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
   transform: translateZ(0);
 }
 
-@keyframes modalMaterializeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.985);
+@media (max-width: 768px) {
+  .password-modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
   }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+
+  .password-modal-card {
+    border-radius: 20px 20px 0 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
 }
 

@@ -3008,7 +3008,7 @@
 
   <!-- RESET ORDERS CONFIRMATION MODAL -->
     <Transition name="modal-spring-fade">
-  <div v-if="resetModalOpen" class="modal-overlay animate-fade-in" @click.self="resetModalOpen = false">
+  <div v-if="resetModalOpen" class="modal-overlay" @click.self="resetModalOpen = false">
     <div class="modal-content reset-confirm-modal-box" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
       <div class="modal-header reset-modal-header">
         <div class="d-flex align-items-center gap-3">
@@ -3072,7 +3072,7 @@
     <Transition name="modal-spring-fade">
     <div 
       v-if="newOrderModalOpen" 
-      class="modal-overlay animate-fade-in pos-modal-overlay" 
+      class="modal-overlay pos-modal-overlay" 
       @click.self="newOrderModalOpen = false"
       role="dialog"
       aria-modal="true"
@@ -3720,7 +3720,7 @@
     <Transition name="modal-spring-fade">
     <div 
       v-if="orderEditModalOpen" 
-      class="modal-overlay animate-fade-in pos-modal-overlay" 
+      class="modal-overlay pos-modal-overlay" 
       @click.self="orderEditModalOpen = false"
       role="dialog"
       aria-modal="true"
@@ -4210,7 +4210,7 @@
 
     <!-- Chef Create/Edit Modal -->
     <Transition name="modal-spring-fade">
-    <div v-if="chefModalOpen" class="modal-overlay animate-fade-in" @click.self="chefModalOpen = false">
+    <div v-if="chefModalOpen" class="modal-overlay" @click.self="chefModalOpen = false">
       <div class="modal-content modal-md chef-form-modal" role="dialog" aria-modal="true" aria-labelledby="chef-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
@@ -4271,7 +4271,7 @@
 
     <!-- Assign Products to Chef Modal (Spacious Card Picker) -->
     <Transition name="modal-spring-fade">
-    <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay animate-fade-in" @click.self="assignProductsModalOpen = false">
+    <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay" @click.self="assignProductsModalOpen = false">
       <div class="modal-content modal-lg assign-products-modal-box" role="dialog" aria-modal="true" aria-labelledby="assign-products-title">
         <div class="modal-header">
           <div class="modal-title-group">
@@ -4359,7 +4359,7 @@
 
     <!-- Product Modal Form -->
     <Transition name="modal-spring-fade">
-    <div v-if="productModalOpen" class="modal-overlay animate-fade-in" @click.self="productModalOpen = false">
+    <div v-if="productModalOpen" class="modal-overlay" @click.self="productModalOpen = false">
       <div class="modal-box glass-panel max-w-lg product-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
@@ -4542,7 +4542,7 @@
 
     <!-- Category Modal Form -->
     <Transition name="modal-spring-fade">
-    <div v-if="categoryModalOpen" class="modal-overlay animate-fade-in" @click.self="categoryModalOpen = false">
+    <div v-if="categoryModalOpen" class="modal-overlay" @click.self="categoryModalOpen = false">
       <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
         <div class="modal-header">
           <h3 id="category-modal-title">{{ editingCategory._id ? 'تعديل الصنف' : 'إضافة صنف جديد' }}</h3>
@@ -4600,7 +4600,7 @@
 
     <!-- Tag Modal Form -->
     <Transition name="modal-spring-fade">
-    <div v-if="tagModalOpen" class="modal-overlay animate-fade-in" @click.self="tagModalOpen = false">
+    <div v-if="tagModalOpen" class="modal-overlay" @click.self="tagModalOpen = false">
       <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="tag-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
@@ -4688,7 +4688,7 @@
     <Transition name="modal-spring-fade">
     <div 
       v-if="customerDetailsModalOpen && selectedCustomer" 
-      class="modal-overlay animate-fade-in" 
+      class="modal-overlay" 
       @click.self="customerDetailsModalOpen = false"
       role="dialog"
       aria-modal="true"
@@ -4885,7 +4885,7 @@
 
     <!-- Customer Modal Form -->
     <Transition name="modal-spring-fade">
-    <div v-if="customerModalOpen" class="modal-overlay animate-fade-in" @click.self="customerModalOpen = false">
+    <div v-if="customerModalOpen" class="modal-overlay" @click.self="customerModalOpen = false">
       <div class="modal-content modal-md" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
         <div class="modal-header">
           <div class="modal-title-group">
@@ -4953,7 +4953,7 @@
 
     <!-- Customer Favorites Modal -->
     <Transition name="modal-spring-fade">
-    <div v-if="customerFavsModalOpen" class="modal-overlay animate-fade-in" @click.self="customerFavsModalOpen = false">
+    <div v-if="customerFavsModalOpen" class="modal-overlay" @click.self="customerFavsModalOpen = false">
       <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="customer-favs-title">
         <div class="modal-header">
           <div class="modal-title-group">
@@ -5015,7 +5015,7 @@
 
     <!-- Marketing Carousel Modal Form -->
     <Transition name="modal-spring-fade">
-    <div v-if="carouselModalOpen" class="modal-overlay animate-fade-in" @click.self="carouselModalOpen = false">
+    <div v-if="carouselModalOpen" class="modal-overlay" @click.self="carouselModalOpen = false">
       <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="carousel-modal-title">
         <div class="modal-header">
           <h3 id="carousel-modal-title">{{ editingCarouselId ? 'تعديل البنر الإعلاني' : 'إضافة بنر إعلاني جديد' }}</h3>
@@ -5106,7 +5106,7 @@
     </Transition>
     <!-- Premium Image Cropper Modal -->
     <Transition name="modal-spring-fade">
-    <div v-if="cropperModalOpen" class="premium-cropper-overlay animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="cropper-modal-title">
+    <div v-if="cropperModalOpen" class="premium-cropper-overlay" role="dialog" aria-modal="true" aria-labelledby="cropper-modal-title">
       <div class="premium-cropper-content">
         <div class="premium-cropper-header">
           <div>
@@ -5164,7 +5164,7 @@
 
   <!-- User Modal Form -->
   <Transition name="modal-spring-fade">
-  <div v-if="userModalOpen" class="modal-overlay animate-fade-in" @click.self="userModalOpen = false">
+  <div v-if="userModalOpen" class="modal-overlay" @click.self="userModalOpen = false">
     <div class="modal-box glass-panel max-w-lg user-form-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
       <div class="modal-header">
         <div class="modal-title-group">
@@ -5891,13 +5891,13 @@
   <Transition name="modal-spring-fade">
   <div 
     v-if="productCustomersModalOpen && selectedProductForCustomers" 
-    class="modal-overlay animate-fade-in" 
+    class="modal-overlay" 
     @click.self="closeProductCustomersModal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="prod-cust-modal-title"
   >
-    <div class="modal-box glass-panel max-w-4xl product-customers-modal animate-scale-in">
+    <div class="modal-box glass-panel max-w-4xl product-customers-modal">
       <!-- Modal Header -->
       <div class="modal-header pb-3 mb-4">
         <div class="modal-title-group">
@@ -6185,7 +6185,7 @@
 
   <!-- ============ PAYMENT RECORDING MODAL ============ -->
   <Transition name="modal-spring-fade">
-  <div v-if="paymentModalOpen" class="modal-overlay animate-fade-in" @click.self="paymentModalOpen = false">
+  <div v-if="paymentModalOpen" class="modal-overlay" @click.self="paymentModalOpen = false">
     <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
       <div class="modal-header">
         <div class="modal-title-group">
@@ -6367,7 +6367,7 @@
 
   <!-- ============ PAYMENT HISTORY MODAL ============ -->
   <Transition name="modal-spring-fade">
-  <div v-if="paymentHistoryModalOpen" class="modal-overlay animate-fade-in" @click.self="paymentHistoryModalOpen = false">
+  <div v-if="paymentHistoryModalOpen" class="modal-overlay" @click.self="paymentHistoryModalOpen = false">
     <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-history-title">
       <div class="modal-header">
         <div class="modal-title-group">
@@ -6564,7 +6564,7 @@
 
   <!-- KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
   <Transition name="modal-spring-fade">
-  <div v-if="shortcutsModalOpen" class="modal-overlay animate-fade-in" @click.self="shortcutsModalOpen = false">
+  <div v-if="shortcutsModalOpen" class="modal-overlay" @click.self="shortcutsModalOpen = false">
     <div class="modal-content shortcuts-modal-box" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
       <!-- Fixed Modal Header -->
       <div class="shortcuts-modal-header">
@@ -6727,7 +6727,7 @@
 
   <!-- COMMAND PALETTE MODAL -->
   <Transition name="modal-spring-fade">
-  <div v-if="commandPaletteOpen" class="command-palette-backdrop animate-fade-in" @click.self="commandPaletteOpen = false">
+  <div v-if="commandPaletteOpen" class="command-palette-backdrop" @click.self="commandPaletteOpen = false">
     <div class="command-palette-box glass-panel" role="dialog" aria-modal="true" aria-label="لوحة الأوامر السريعة">
       <div class="palette-input-wrapper">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="palette-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -15054,19 +15054,7 @@ select.form-control:focus {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: modalOverlayFade 0.22s ease-out both !important;
   will-change: opacity;
-}
-
-.modal-overlay.animate-fade-in,
-.premium-cropper-overlay.animate-fade-in,
-.zoom-backdrop.animate-fade-in {
-  animation: modalOverlayFade 0.22s ease-out both !important;
-}
-
-@keyframes modalOverlayFade {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
 }
 
 .modal-box,
@@ -15088,45 +15076,8 @@ select.form-control:focus {
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
   transform: translateZ(0);
-}
-
-@keyframes modalMaterializeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.985);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Staggered micro-entrance for modal sections */
-.modal-content .modal-header,
-.modal-box .modal-header,
-.premium-cropper-header {
-  animation: modalChildIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.03s both;
-}
-
-.modal-content .modal-footer,
-.modal-box .modal-footer,
-.modal-content .modal-actions,
-.premium-cropper-footer {
-  animation: modalChildIn 0.30s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
-}
-
-@keyframes modalChildIn {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* Datepicker popover bloom */
@@ -18090,7 +18041,6 @@ select.form-control:focus {
   direction: ltr;
   padding: 16px;
   box-sizing: border-box;
-  animation: fadeIn 0.2s ease;
 }
 
 .zoom-content {
@@ -20478,7 +20428,6 @@ select.pos-control {
     border-radius: 20px 20px 0 0 !important;
     padding: 6px 10px 0 10px !important;
     box-sizing: border-box !important;
-    animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     display: flex !important;
     flex-direction: column !important;
   }
@@ -21790,12 +21739,6 @@ select.pos-control {
     border-radius: 18px 18px 0 0 !important;
     padding: 16px 14px !important;
     margin: 0 !important;
-    animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-
-  @keyframes slideUpMobile {
-    0% { transform: translateY(100%); }
-    100% { transform: translateY(0); }
   }
 }
 

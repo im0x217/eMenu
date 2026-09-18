@@ -1202,13 +1202,7 @@ watch(carouselItems, (newItems) => {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  animation: modalOverlayFade 0.22s ease-out both;
   will-change: opacity;
-}
-
-@keyframes modalOverlayFade {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
 }
 
 .modal-content {
@@ -1220,39 +1214,20 @@ watch(carouselItems, (newItems) => {
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow-xl);
-  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
   transform: translateZ(0);
 }
 
-@keyframes modalMaterializeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.985);
+@media (max-width: 768px) {
+  .modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
   }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
 
-.modal-content .modal-title,
-.modal-content .modal-desc {
-  animation: modalChildIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.03s both;
-}
-
-.modal-content .modal-actions {
-  animation: modalChildIn 0.30s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
-}
-
-@keyframes modalChildIn {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
+  .modal-content {
+    border-radius: 20px 20px 0 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
 }
 
@@ -1324,7 +1299,6 @@ watch(carouselItems, (newItems) => {
   direction: ltr;
   padding: 16px;
   box-sizing: border-box;
-  animation: modalOverlayFade 0.22s ease-out both;
   will-change: opacity;
 }
 
@@ -1337,7 +1311,6 @@ watch(carouselItems, (newItems) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  animation: modalMaterializeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
   transform: translateZ(0);
 }
@@ -1559,61 +1532,46 @@ watch(carouselItems, (newItems) => {
 }
 
 /* Symmetrical Modal Sheet Transitions (Desktop Fade-Out / Mobile Spring-Down) */
-.modal-sheet-enter-active,
+.modal-sheet-enter-active {
+  animation: modalBackdropFadeIn 0.22s ease-out both !important;
+  will-change: opacity;
+}
+
 .modal-sheet-leave-active {
-  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalBackdropFadeOut 0.22s ease-in both !important;
   will-change: opacity;
 }
 
 .modal-sheet-enter-active .modal-content {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalDesktopCardEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
   will-change: transform, opacity;
 }
 
 .modal-sheet-leave-active .modal-content {
-  /* Apple sheet spring down deceleration physics */
-  transition: transform 0.28s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalDesktopCardExit 0.22s cubic-bezier(0.4, 0, 0.2, 1) both !important;
   will-change: transform, opacity;
 }
 
-.modal-sheet-enter-from,
-.modal-sheet-leave-to {
-  opacity: 0;
-}
+@media (max-width: 768px) {
+  .modal-sheet-enter-active {
+    animation: modalBackdropFadeIn 0.32s ease-out both !important;
+  }
 
-.modal-sheet-enter-from .modal-content,
-.modal-sheet-leave-to .modal-content {
-  transform: translateY(100%);
-}
+  .modal-sheet-leave-active {
+    animation: modalBackdropFadeOut 0.28s ease-in both !important;
+  }
 
-@media (min-width: 641px) {
-  .modal-sheet-enter-from .modal-content,
-  .modal-sheet-leave-to .modal-content {
-    transform: translateY(12px) scale(0.985);
-    opacity: 0;
+  .modal-sheet-enter-active .modal-content {
+    animation: modalMobileSheetEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    will-change: transform;
+  }
+
+  .modal-sheet-leave-active .modal-content {
+    animation: modalMobileSpringDown 0.28s cubic-bezier(0.32, 1, 0.23, 1) both !important;
+    will-change: transform;
   }
 }
 
-/* Zoom Modal Transition */
-.zoom-fade-enter-active,
-.zoom-fade-leave-active {
-  transition: opacity 0.22s ease;
-}
-
-.zoom-fade-enter-active .zoom-content,
-.zoom-fade-leave-active .zoom-content {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.zoom-fade-enter-from,
-.zoom-fade-leave-to {
-  opacity: 0;
-}
-
-.zoom-fade-enter-from .zoom-content,
-.zoom-fade-leave-to .zoom-content {
-  transform: scale(0.94);
-}
 
 /* Button Instant Touch/Press Feedback */
 .bulk-toggle-btn:active,

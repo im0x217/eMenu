@@ -1874,43 +1874,48 @@ const handleClearCart = () => {
 }
 
 /* Symmetrical Confirm Modal Transitions (Desktop Fade-Out / Mobile Spring-Down) */
-.confirm-modal-fade-enter-active,
+.confirm-modal-fade-enter-active {
+  animation: modalBackdropFadeIn 0.22s ease-out both !important;
+  will-change: opacity;
+}
+
 .confirm-modal-fade-leave-active {
-  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalBackdropFadeOut 0.22s ease-in both !important;
   will-change: opacity;
 }
 
 .confirm-modal-fade-enter-active .confirm-modal-card {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalDesktopCardEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
   will-change: transform, opacity;
 }
 
 .confirm-modal-fade-leave-active .confirm-modal-card {
-  /* Apple sheet spring-down deceleration physics */
-  transition: transform 0.28s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalDesktopCardExit 0.22s cubic-bezier(0.4, 0, 0.2, 1) both !important;
   will-change: transform, opacity;
 }
 
-.confirm-modal-fade-enter-from,
-.confirm-modal-fade-leave-to {
-  opacity: 0;
-}
+@media (max-width: 768px) {
+  .confirm-modal-fade-enter-active {
+    animation: modalBackdropFadeIn 0.32s ease-out both !important;
+  }
 
-.confirm-modal-fade-enter-from .confirm-modal-card,
-.confirm-modal-fade-leave-to .confirm-modal-card {
-  transform: translateY(100%);
-}
+  .confirm-modal-fade-leave-active {
+    animation: modalBackdropFadeOut 0.28s ease-in both !important;
+  }
 
-@media (min-width: 641px) {
-  .confirm-modal-fade-enter-from .confirm-modal-card,
-  .confirm-modal-fade-leave-to .confirm-modal-card {
-    transform: translateY(12px) scale(0.985);
-    opacity: 0;
+  .confirm-modal-fade-enter-active .confirm-modal-card {
+    animation: modalMobileSheetEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    will-change: transform;
+  }
+
+  .confirm-modal-fade-leave-active .confirm-modal-card {
+    animation: modalMobileSpringDown 0.28s cubic-bezier(0.32, 1, 0.23, 1) both !important;
+    will-change: transform;
   }
 }
 
 /* Mobile Bottom-Sheet (Habit 15) */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .sheet-grab-handle {
     display: block;
   }
