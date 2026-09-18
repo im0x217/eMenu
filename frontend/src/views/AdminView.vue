@@ -71,11 +71,42 @@
           </div>
         </div>
 
-        <div class="shop-switcher">
-          <label class="switch-label">المتجر الحالي:</label>
-          <div class="shop-select-pills compact">
-            <button class="shop-pill" :class="{ active: activeShop === 'shop1' }" @click="switchShop('shop1')">رئيسي</button>
-            <button class="shop-pill" :class="{ active: activeShop === 'shop2' }" @click="switchShop('shop2')">نواشف</button>
+        <div class="shop-switcher" role="radiogroup" aria-label="اختيار المتجر النشط">
+          <div class="shop-switcher-header">
+            <div class="switcher-meta">
+              <svg aria-hidden="true" class="switcher-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span class="switcher-title">المتجر الحالي</span>
+            </div>
+            <span class="switcher-indicator" :class="activeShop">
+              <span class="switcher-indicator-dot"></span>
+              {{ activeShop === 'shop2' ? 'نواشف' : 'رئيسي' }}
+            </span>
+          </div>
+          <div class="shop-segmented-control">
+            <button 
+              type="button"
+              class="segmented-pill" 
+              :class="{ active: activeShop === 'shop1' }" 
+              @click="switchShop('shop1')"
+              role="radio"
+              :aria-checked="activeShop === 'shop1'"
+              aria-label="التبديل إلى المتجر الرئيسي (حلويات)"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="pill-icon"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span>الرئيسي</span>
+            </button>
+            <button 
+              type="button"
+              class="segmented-pill" 
+              :class="{ active: activeShop === 'shop2' }" 
+              @click="switchShop('shop2')"
+              role="radio"
+              :aria-checked="activeShop === 'shop2'"
+              aria-label="التبديل إلى قسم النواشف"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="pill-icon"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <span>النواشف</span>
+            </button>
           </div>
         </div>
 
@@ -13486,22 +13517,121 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .shop-switcher {
-  background: rgba(248, 250, 252, 0.9);
+  background: rgba(248, 250, 252, 0.95);
   border: 1px solid #e2e8f0;
-  padding: 12px;
+  padding: 10px 12px;
   border-radius: 14px;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.switch-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 700;
-  display: block;
+.shop-switcher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 8px;
 }
 
+.switcher-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.switcher-icon {
+  stroke: #64748b;
+  flex-shrink: 0;
+}
+
+.switcher-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.switcher-indicator.shop1 {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.switcher-indicator.shop2 {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+}
+
+.switcher-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shop-segmented-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: #e2e8f0;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.segmented-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 6px;
+  min-height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.segmented-pill .pill-icon {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.segmented-pill:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.65);
+  color: #1e293b;
+}
+
+.segmented-pill.active {
+  background: #ffffff;
+  color: var(--primary-color, #d97706);
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.segmented-pill:active {
+  transform: scale(0.97);
+}
+
+.segmented-pill:focus-visible {
+  outline: 2px solid var(--primary-color, #d97706);
+  outline-offset: 1px;
+}
+
+/* Fallback shop pill for login card */
 .shop-select-pills {
   display: flex;
   gap: 8px;
@@ -13536,13 +13666,18 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: 0 3px 10px var(--primary-glow);
 }
 
+/* Strictly lock sidebar tabs horizontally */
 .sidebar-menu {
   display: flex;
   flex-direction: column;
   gap: 6px;
   flex: 1;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: contain;
+  width: 100%;
+  box-sizing: border-box;
   padding-top: 4px;
   padding-bottom: 4px;
   -ms-overflow-style: none !important;
@@ -13555,6 +13690,8 @@ const closeSuggestionsWithDelay = () => {
   gap: 14px;
   padding: 12px 16px;
   min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
   border-radius: 12px;
   color: #334155;
   background: transparent;
@@ -13567,23 +13704,28 @@ const closeSuggestionsWithDelay = () => {
   font-family: inherit;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: none !important;
+  user-select: none;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.menu-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .menu-item:hover {
-  background: rgba(253, 181, 24, 0.08);
+  background: rgba(var(--primary-color-rgb, 217, 119, 6), 0.08);
   color: var(--primary-color);
-  transform: translateX(-3px);
-}
-
-.menu-item {
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
+  transform: none !important;
 }
 
 .menu-item:active {
-  transform: scale(0.975);
+  transform: none !important;
+  background: rgba(var(--primary-color-rgb, 217, 119, 6), 0.12);
 }
 
 .menu-item:focus-visible {
@@ -13594,12 +13736,12 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .menu-item.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(var(--primary-color-rgb, 217, 119, 6), 0.16) 0%, rgba(var(--primary-color-rgb, 217, 119, 6), 0.05) 100%);
   color: var(--primary-color, #d97706);
   border-right: 4px solid var(--primary-color, #d97706);
   font-weight: 800;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transform: translateX(-2px);
+  box-shadow: 0 0 16px rgba(var(--primary-color-rgb, 217, 119, 6), 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: none !important;
 }
 
 .menu-icon {
@@ -19288,22 +19430,42 @@ select.form-control:focus {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--primary-color, #fdb518), #d97706);
-  color: #111827;
-  font-weight: 700;
+  background: var(--theme-btn-bg, var(--primary-color, #f59e0b));
+  color: #ffffff !important;
+  font-weight: 800;
   font-size: 0.9rem;
   border-radius: 12px;
   padding: 9px 18px;
-  border: none;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(var(--primary-color-rgb, 217, 119, 6), 0.28);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.btn-make-order svg {
+  color: #ffffff;
+  stroke: #ffffff;
+  flex-shrink: 0;
+}
+
 .btn-make-order:hover {
+  background: var(--theme-btn-hover, #d97706);
+  color: #ffffff !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);
+  box-shadow: 0 6px 20px rgba(var(--primary-color-rgb, 217, 119, 6), 0.38);
   filter: brightness(1.05);
+}
+
+.btn-make-order:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(var(--primary-color-rgb, 217, 119, 6), 0.25);
+}
+
+.btn-make-order:focus-visible {
+  outline: 2px solid var(--primary-color, #f59e0b);
+  outline-offset: 2px;
 }
 
 .mobile-modal-drag-pill {
