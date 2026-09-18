@@ -733,6 +733,157 @@ body.modal-open .floating-cart-bar {
 }
 
 /* ==========================================================================
+   MODAL SPRING & FADE TRANSITIONS (DESKTOP FADE-OUT / MOBILE SPRING-DOWN)
+   ========================================================================== */
+.modal-spring-fade-enter-active,
+.modal-spring-fade-leave-active {
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+}
+
+.modal-spring-fade-enter-active > div,
+.modal-spring-fade-leave-active > div,
+.modal-spring-fade-enter-active .modal-content,
+.modal-spring-fade-leave-active .modal-content,
+.modal-spring-fade-enter-active .modal-box,
+.modal-spring-fade-leave-active .modal-box,
+.modal-spring-fade-enter-active .fast-order-modal,
+.modal-spring-fade-leave-active .fast-order-modal,
+.modal-spring-fade-enter-active .command-palette-box,
+.modal-spring-fade-leave-active .command-palette-box,
+.modal-spring-fade-enter-active .premium-cropper-content,
+.modal-spring-fade-leave-active .premium-cropper-content,
+.modal-spring-fade-enter-active .password-modal-card,
+.modal-spring-fade-leave-active .password-modal-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+/* Desktop: Fade In & Fade Out with subtle scale */
+.modal-spring-fade-enter-from,
+.modal-spring-fade-leave-to {
+  opacity: 0 !important;
+}
+
+.modal-spring-fade-enter-from > div,
+.modal-spring-fade-leave-to > div,
+.modal-spring-fade-enter-from .modal-content,
+.modal-spring-fade-leave-to .modal-content,
+.modal-spring-fade-enter-from .modal-box,
+.modal-spring-fade-leave-to .modal-box,
+.modal-spring-fade-enter-from .fast-order-modal,
+.modal-spring-fade-leave-to .fast-order-modal,
+.modal-spring-fade-enter-from .command-palette-box,
+.modal-spring-fade-leave-to .command-palette-box,
+.modal-spring-fade-enter-from .premium-cropper-content,
+.modal-spring-fade-leave-to .premium-cropper-content,
+.modal-spring-fade-enter-from .password-modal-card,
+.modal-spring-fade-leave-to .password-modal-card {
+  opacity: 0 !important;
+  transform: translateY(12px) scale(0.985) !important;
+}
+
+/* Override existing entrance animations on leave so they don't block the exit transition */
+.modal-spring-fade-leave-active,
+.modal-spring-fade-leave-active *,
+.modal-spring-fade-leave-to,
+.modal-spring-fade-leave-to * {
+  animation: none !important;
+}
+
+/* Mobile View: Bottom Sheet Slide Up & Spring Down */
+@media (max-width: 768px) {
+  .modal-spring-fade-enter-active {
+    transition: opacity 0.28s ease !important;
+  }
+
+  .modal-spring-fade-leave-active {
+    transition: opacity 0.26s ease !important;
+  }
+
+  .modal-spring-fade-enter-active > div,
+  .modal-spring-fade-enter-active .modal-content,
+  .modal-spring-fade-enter-active .modal-box,
+  .modal-spring-fade-enter-active .fast-order-modal,
+  .modal-spring-fade-enter-active .command-palette-box,
+  .modal-spring-fade-enter-active .premium-cropper-content,
+  .modal-spring-fade-enter-active .password-modal-card {
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .modal-spring-fade-leave-active > div,
+  .modal-spring-fade-leave-active .modal-content,
+  .modal-spring-fade-leave-active .modal-box,
+  .modal-spring-fade-leave-active .fast-order-modal,
+  .modal-spring-fade-leave-active .command-palette-box,
+  .modal-spring-fade-leave-active .premium-cropper-content,
+  .modal-spring-fade-leave-active .password-modal-card {
+    /* Apple sheet spring down deceleration physics */
+    transition: transform 0.28s cubic-bezier(0.32, 1, 0.23, 1) !important;
+  }
+
+  .modal-spring-fade-enter-from > div,
+  .modal-spring-fade-leave-to > div,
+  .modal-spring-fade-enter-from .modal-content,
+  .modal-spring-fade-leave-to .modal-content,
+  .modal-spring-fade-enter-from .modal-box,
+  .modal-spring-fade-leave-to .modal-box,
+  .modal-spring-fade-enter-from .fast-order-modal,
+  .modal-spring-fade-leave-to .fast-order-modal,
+  .modal-spring-fade-enter-from .command-palette-box,
+  .modal-spring-fade-leave-to .command-palette-box,
+  .modal-spring-fade-enter-from .premium-cropper-content,
+  .modal-spring-fade-leave-to .premium-cropper-content,
+  .modal-spring-fade-enter-from .password-modal-card,
+  .modal-spring-fade-leave-to .password-modal-card {
+    transform: translateY(100%) !important;
+    opacity: 1 !important; /* Visible sheet glide down off-screen */
+  }
+
+  .modal-spring-fade-enter-from,
+  .modal-spring-fade-leave-to {
+    opacity: 0 !important;
+  }
+}
+
+/* Fullscreen Zoom Image Fade Transitions */
+.zoom-fade-enter-active,
+.zoom-fade-leave-active {
+  transition: opacity 0.22s ease !important;
+  will-change: opacity;
+}
+
+.zoom-fade-enter-active .zoom-content,
+.zoom-fade-leave-active .zoom-content {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform;
+}
+
+.zoom-fade-enter-from,
+.zoom-fade-leave-to {
+  opacity: 0 !important;
+}
+
+.zoom-fade-enter-from .zoom-content,
+.zoom-fade-leave-to .zoom-content {
+  transform: scale(0.94) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-spring-fade-enter-active,
+  .modal-spring-fade-leave-active,
+  .modal-spring-fade-enter-active > div,
+  .modal-spring-fade-leave-active > div,
+  .zoom-fade-enter-active,
+  .zoom-fade-leave-active,
+  .zoom-fade-enter-active .zoom-content,
+  .zoom-fade-leave-active .zoom-content {
+    transition: opacity 0.15s ease !important;
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
    ACCESSIBILITY: PREFERS-REDUCED-MOTION
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {

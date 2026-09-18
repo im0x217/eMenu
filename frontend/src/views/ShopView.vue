@@ -1558,15 +1558,22 @@ watch(carouselItems, (newItems) => {
   }
 }
 
-/* Symmetrical Modal Sheet Transitions */
+/* Symmetrical Modal Sheet Transitions (Desktop Fade-Out / Mobile Spring-Down) */
 .modal-sheet-enter-active,
 .modal-sheet-leave-active {
-  transition: opacity 0.22s ease;
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
 }
 
-.modal-sheet-enter-active .modal-content,
+.modal-sheet-enter-active .modal-content {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
 .modal-sheet-leave-active .modal-content {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Apple sheet spring down deceleration physics */
+  transition: transform 0.28s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .modal-sheet-enter-from,
@@ -1582,7 +1589,8 @@ watch(carouselItems, (newItems) => {
 @media (min-width: 641px) {
   .modal-sheet-enter-from .modal-content,
   .modal-sheet-leave-to .modal-content {
-    transform: translateY(16px) scale(0.98);
+    transform: translateY(12px) scale(0.985);
+    opacity: 0;
   }
 }
 

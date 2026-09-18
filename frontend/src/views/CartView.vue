@@ -1873,15 +1873,22 @@ const handleClearCart = () => {
   display: none;
 }
 
-/* Symmetrical Confirm Modal Transitions */
+/* Symmetrical Confirm Modal Transitions (Desktop Fade-Out / Mobile Spring-Down) */
 .confirm-modal-fade-enter-active,
 .confirm-modal-fade-leave-active {
-  transition: opacity 0.22s ease;
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
 }
 
-.confirm-modal-fade-enter-active .confirm-modal-card,
+.confirm-modal-fade-enter-active .confirm-modal-card {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
 .confirm-modal-fade-leave-active .confirm-modal-card {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Apple sheet spring-down deceleration physics */
+  transition: transform 0.28s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .confirm-modal-fade-enter-from,
@@ -1897,7 +1904,8 @@ const handleClearCart = () => {
 @media (min-width: 641px) {
   .confirm-modal-fade-enter-from .confirm-modal-card,
   .confirm-modal-fade-leave-to .confirm-modal-card {
-    transform: translateY(16px) scale(0.98);
+    transform: translateY(12px) scale(0.985);
+    opacity: 0;
   }
 }
 

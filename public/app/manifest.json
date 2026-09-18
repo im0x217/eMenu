@@ -1,5 +1,4 @@
 {
-  "id": "emenu-shop1-app",
   "name": "حلويات عبمبر الزروق",
   "short_name": "عبمبر الزروق",
   "description": "منيو حلويات عبمبر الزروق وقسم النواشف",
@@ -44,7 +43,7 @@
     {
       "name": "المتجر الرئيسي (حلويات)",
       "short_name": "المتجر",
-      "url": "/app/?shop=shop1",
+      "url": "/app/#/shop1",
       "icons": [
         {
           "src": "/favicon.png",
@@ -55,7 +54,7 @@
     {
       "name": "قسم النواشف",
       "short_name": "النواشف",
-      "url": "/app/?shop=shop2",
+      "url": "/app/#/shop2",
       "icons": [
         {
           "src": "/favicon.png",

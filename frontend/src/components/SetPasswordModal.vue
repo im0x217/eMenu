@@ -48,87 +48,97 @@ const handleDismiss = () => {
 </script>
 
 <template>
-  <div v-if="authStore.showSetPasswordModal" class="password-modal-overlay animate-fade-in" @click.self="handleDismiss">
-    <div class="password-modal-card glass-panel" role="dialog" aria-modal="true" aria-label="تأمين حسابك بكلمة مرور">
-      <div class="modal-badge-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </div>
-
-      <h3 class="modal-title">تأمين حسابك بكلمة مرور</h3>
-      <p class="modal-desc">
-        لحماية سجل طلباتك وعنوانك ونقاطك، يرجى تعيين كلمة مرور خاصة بحسابك لتسجيل الدخول بأمان في أي وقت.
-      </p>
-
-      <div class="account-identity-pill">
-        <div class="identity-info">
-          <span class="identity-name font-bold">{{ authStore.customerName || 'عميل مسجل' }}</span>
-          <span class="identity-phone text-mono font-bold" dir="ltr">{{ authStore.customerPhone }}</span>
+  <Transition name="modal-spring-fade">
+    <div v-if="authStore.showSetPasswordModal" class="password-modal-overlay" @click.self="handleDismiss">
+      <div class="password-modal-card glass-panel" role="dialog" aria-modal="true" aria-label="تأمين حسابك بكلمة مرور">
+        <div class="modal-badge-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
         </div>
-        <span class="identity-verified-tag">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>مسجل</span>
-        </span>
-      </div>
 
-      <form @submit.prevent="handleSubmit" class="modal-form">
-        <!-- New Password Field -->
-        <div class="form-field-group">
-          <label class="form-label">كلمة المرور الجديدة</label>
-          <div class="input-with-icon-wrapper">
-            <input 
-              v-model="newPassword" 
-              :type="showNewPassword ? 'text' : 'password'" 
-              placeholder="اكتب كلمة المرور (4 خانات على الأقل)…" 
-              class="form-control-modal"
-              autocomplete="new-password"
-              required
-            />
-            <button type="button" class="btn-toggle-eye" @click="showNewPassword = !showNewPassword" tabindex="-1" aria-label="إظهار أو إخفاء كلمة المرور">
-              <svg v-if="!showNewPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        <h3 class="modal-title">تأمين حسابك بكلمة مرور</h3>
+        <p class="modal-desc">
+          لحماية سجل طلباتك وعنوانك ونقاطك، يرجى تعيين كلمة مرور خاصة بحسابك لتسجيل الدخول بأمان في أي وقت.
+        </p>
+
+        <div class="account-identity-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          <span>{{ authStore.customerPhone }}</span>
+        </div>
+
+        <form class="modal-form" @submit.prevent="handleSubmit">
+          <div class="form-field-group">
+            <label class="form-label" for="new-pass-input">كلمة المرور الجديدة</label>
+            <div class="input-with-icon-wrapper">
+              <input 
+                id="new-pass-input"
+                v-model="newPassword" 
+                :type="showNewPassword ? 'text' : 'password'" 
+                class="form-control-modal text-mono" 
+                placeholder="أدخل كلمة المرور الجديدة…" 
+                autocomplete="new-password"
+                required
+                minlength="4"
+              />
+              <button 
+                type="button" 
+                class="btn-toggle-eye" 
+                :aria-label="showNewPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'" 
+                @click="showNewPassword = !showNewPassword"
+              >
+                <svg v-if="showNewPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-field-group">
+            <label class="form-label" for="confirm-pass-input">تأكيد كلمة المرور</label>
+            <div class="input-with-icon-wrapper">
+              <input 
+                id="confirm-pass-input"
+                v-model="confirmPassword" 
+                :type="showConfirmPassword ? 'text' : 'password'" 
+                class="form-control-modal text-mono" 
+                placeholder="أعد كتابة كلمة المرور…" 
+                autocomplete="new-password"
+                required
+                minlength="4"
+              />
+              <button 
+                type="button" 
+                class="btn-toggle-eye" 
+                :aria-label="showConfirmPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'" 
+                @click="showConfirmPassword = !showConfirmPassword"
+              >
+                <svg v-if="showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div v-if="errorMessage" class="modal-alert-danger animate-fade-in">
+            {{ errorMessage }}
+          </div>
+
+          <div class="modal-actions-row">
+            <button type="submit" class="btn-modal-submit" :disabled="isSubmitting">
+              <svg v-if="!isSubmitting" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span v-if="!isSubmitting">حفظ وتأمين الحساب</span>
+              <span v-else>جاري الحفظ…</span>
+            </button>
+            <button type="button" class="btn-modal-cancel" @click="handleDismiss" :disabled="isSubmitting">
+              لاحقاً
             </button>
           </div>
-        </div>
-
-        <!-- Confirm Password Field -->
-        <div class="form-field-group">
-          <label class="form-label">تأكيد كلمة المرور</label>
-          <div class="input-with-icon-wrapper">
-            <input 
-              v-model="confirmPassword" 
-              :type="showConfirmPassword ? 'text' : 'password'" 
-              placeholder="أعد كتابة كلمة المرور…" 
-              class="form-control-modal"
-              autocomplete="new-password"
-              required
-            />
-            <button type="button" class="btn-toggle-eye" @click="showConfirmPassword = !showConfirmPassword" tabindex="-1" aria-label="إظهار أو إخفاء تأكيد كلمة المرور">
-              <svg v-if="!showConfirmPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="errorMessage" class="modal-alert-danger animate-fade-in">
-          {{ errorMessage }}
-        </div>
-
-        <div class="modal-actions-row">
-          <button type="submit" class="btn-modal-submit" :disabled="isSubmitting">
-            <svg v-if="!isSubmitting" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-            <span v-if="!isSubmitting">حفظ وتأمين الحساب</span>
-            <span v-else>جاري الحفظ…</span>
-          </button>
-          <button type="button" class="btn-modal-cancel" @click="handleDismiss" :disabled="isSubmitting">
-            لاحقاً
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
