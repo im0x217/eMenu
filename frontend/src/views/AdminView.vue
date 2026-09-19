@@ -327,107 +327,10 @@
           </div>
         </div>
 
-        <!-- Tab Content -->
+        <!-- Tab Content with Snappy Hardware-Accelerated CSS Fade -->
         <div class="tab-content-wrapper">
-          <!-- BLANK PLACEHOLDER SKELETON LOADER (Smooth Transition Bridge) -->
-          <div v-if="isTabSwitching" class="tab-skeleton-placeholder animate-fade-in" aria-hidden="true">
-            <!-- Analytics Skeleton -->
-            <div v-if="activeTab === 'analytics'" class="analytics-tab-skeleton">
-              <div class="kpi-grid mb-4">
-                <div v-for="i in 4" :key="'ts-kpi-' + i" class="kpi-card glass-panel skeleton-card">
-                  <div class="skeleton-shimmer skeleton-icon"></div>
-                  <div class="kpi-info" style="width: 100%;">
-                    <div class="skeleton-shimmer skeleton-line skeleton-title-line"></div>
-                    <div class="skeleton-shimmer skeleton-line skeleton-val-line"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="charts-grid">
-                <div class="chart-card glass-panel span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line mb-3" style="width: 160px; height: 18px;"></div>
-                  <div class="skeleton-shimmer skeleton-chart-box"></div>
-                </div>
-                <div class="chart-card glass-panel skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line mb-3" style="width: 140px; height: 18px;"></div>
-                  <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 200px; gap: 14px;">
-                    <div class="skeleton-shimmer skeleton-circle"></div>
-                    <div class="skeleton-shimmer skeleton-line" style="width: 110px; height: 14px;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Production Skeleton -->
-            <div v-else-if="activeTab === 'production'" class="production-tab-skeleton">
-              <div class="production-subnav-bar glass-panel mb-3 p-2 d-flex gap-2">
-                <div class="skeleton-shimmer" style="width: 110px; height: 36px; border-radius: 20px;"></div>
-                <div class="skeleton-shimmer" style="width: 110px; height: 36px; border-radius: 20px;"></div>
-                <div class="skeleton-shimmer" style="width: 110px; height: 36px; border-radius: 20px;"></div>
-              </div>
-              <div class="d-flex gap-3 flex-wrap" style="min-height: 400px;">
-                <div v-for="i in 3" :key="'ts-prod-' + i" class="table-card glass-panel flex-grow-1 p-3 skeleton-card" style="min-width: 260px;">
-                  <div class="skeleton-shimmer skeleton-line mb-3" style="width: 130px; height: 20px;"></div>
-                  <div class="skeleton-shimmer skeleton-row-bar mb-2" v-for="j in 4" :key="'ts-pb-' + j"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Settings Skeleton -->
-            <div v-else-if="activeTab === 'settings'" class="settings-tab-skeleton">
-              <div v-for="i in 2" :key="'ts-set-' + i" class="table-card glass-panel p-4 mb-4 skeleton-card">
-                <div class="skeleton-shimmer skeleton-line mb-3" style="width: 180px; height: 22px;"></div>
-                <div class="skeleton-shimmer skeleton-line mb-4" style="width: 320px; height: 14px; opacity: 0.7;"></div>
-                <div class="d-flex flex-column gap-3">
-                  <div v-for="j in 3" :key="'ts-set-row-' + j" class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
-                    <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 16px;"></div>
-                    <div class="skeleton-shimmer" style="width: 80px; height: 32px; border-radius: 8px;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Table / Card Tabs Skeleton (Orders, Products, Customers, Categories, Tags, Carousel, Users) -->
-            <div v-else class="table-tab-skeleton">
-              <div class="table-card glass-panel p-4 skeleton-card">
-                <!-- Toolbar Shimmer -->
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="skeleton-shimmer" style="width: 140px; height: 26px; border-radius: 8px;"></div>
-                    <div class="skeleton-shimmer" style="width: 50px; height: 22px; border-radius: 12px;"></div>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="skeleton-shimmer" style="width: 200px; height: 36px; border-radius: 10px;"></div>
-                    <div class="skeleton-shimmer" style="width: 90px; height: 36px; border-radius: 10px;"></div>
-                  </div>
-                </div>
-
-                <!-- Table Rows Shimmer -->
-                <div class="skeleton-table-wrapper">
-                  <div class="skeleton-shimmer mb-3" style="width: 100%; height: 36px; border-radius: 8px; opacity: 0.6;"></div>
-                  <div v-for="i in 6" :key="'ts-row-' + i" class="d-flex align-items-center gap-3 py-3 border-bottom border-light">
-                    <div class="skeleton-shimmer" style="width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;"></div>
-                    <div class="d-flex flex-column gap-1 flex-grow-1">
-                      <div class="skeleton-shimmer" style="width: 32%; height: 16px; border-radius: 4px;"></div>
-                      <div class="skeleton-shimmer" style="width: 18%; height: 12px; border-radius: 4px;"></div>
-                    </div>
-                    <div class="skeleton-shimmer" style="width: 85px; height: 22px; border-radius: 12px; flex-shrink: 0;"></div>
-                    <div class="skeleton-shimmer" style="width: 70px; height: 22px; border-radius: 6px; flex-shrink: 0;"></div>
-                    <div class="skeleton-shimmer" style="width: 75px; height: 30px; border-radius: 8px; flex-shrink: 0;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          
-          <!-- Tab Content Materialization with Vue Transition Lifecycle -->
-          <Transition
-            appear
-            :css="false"
-            @before-enter="onTabBeforeEnter"
-            @enter="onTabEnter"
-          >
-            <div v-if="!isTabSwitching" :key="activeTab" class="active-tab-container">
+          <Transition name="admin-tab-fade" mode="out-in">
+            <div :key="activeTab" class="active-tab-container">
           
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
@@ -6862,130 +6765,9 @@ export default {
 
 
     const isScanning = ref(false);
-    const isTabSwitching = ref(false);
-    let tabSwitchTimer = null;
     const adminMainRef = ref(null);
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
-
-    // Synchronous pre-render setup (Called by Vue BEFORE element is inserted/drawn by browser)
-    // Guarantees ZERO flash of unstyled/unanimated content (FOUC)
-    const onTabBeforeEnter = (el) => {
-      const cards = el.querySelectorAll(
-        '.kpi-grid > .kpi-card, ' +
-        '.charts-grid > .chart-card, ' +
-        '.table-card, ' +
-        '.production-subnav-bar, ' +
-        '.categories-management-grid > .category-card, ' +
-        '.carousel-admin-grid > .carousel-item-card, ' +
-        '.chef-kanban-col, ' +
-        '.settings-section'
-      );
-      const targets = (cards && cards.length > 0) ? cards : [el];
-      // Pure GPU translateY (no scale to prevent layer re-rastering stalls)
-      gsap.set(targets, { opacity: 0, y: 12 });
-    };
-
-    // Hardware-composited card materialization cascade (Speed up by 40%: 0.48s, stagger 0.032s)
-    // Locked 60-120fps GPU compositor motion with zero paint thrashing
-    const onTabEnter = (el, done) => {
-      const cards = el.querySelectorAll(
-        '.kpi-grid > .kpi-card, ' +
-        '.charts-grid > .chart-card, ' +
-        '.table-card, ' +
-        '.production-subnav-bar, ' +
-        '.categories-management-grid > .category-card, ' +
-        '.carousel-admin-grid > .carousel-item-card, ' +
-        '.chef-kanban-col, ' +
-        '.settings-section'
-      );
-      const targets = (cards && cards.length > 0) ? cards : [el];
-
-      requestAnimationFrame(() => {
-        gsap.killTweensOf(targets);
-        gsap.to(targets, {
-          opacity: 1,
-          y: 0,
-          duration: 0.48,
-          stagger: 0.032,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-          onComplete: done
-        });
-      });
-    };
-
-    const triggerHolographicScan = () => {
-      const container = adminMainRef.value || document.querySelector('.admin-main');
-      if (!container) return;
-      const activeEl = container.querySelector('.active-tab-container') || container.querySelector('.tab-content-wrapper > div:not(.tab-skeleton-placeholder)');
-      if (!activeEl) return;
-      const cards = activeEl.querySelectorAll(
-        '.kpi-grid > .kpi-card, ' +
-        '.charts-grid > .chart-card, ' +
-        '.table-card, ' +
-        '.production-subnav-bar, ' +
-        '.categories-management-grid > .category-card, ' +
-        '.carousel-admin-grid > .carousel-item-card, ' +
-        '.chef-kanban-col, ' +
-        '.settings-section'
-      );
-      const targets = (cards && cards.length > 0) ? cards : [activeEl];
-      requestAnimationFrame(() => {
-        gsap.killTweensOf(targets);
-        gsap.fromTo(targets,
-          { opacity: 0, y: 12 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.48,
-            stagger: 0.032,
-            ease: 'power2.out',
-            clearProps: 'transform,opacity'
-          }
-        );
-      });
-    };
-
-    // Heavy Tabs with complex tables & multi-row layout (Orders, Products, Customers, Production, Analytics)
-    const HEAVY_TABS = ['orders', 'products', 'customers', 'production', 'analytics'];
-
-    const isTabDataLoading = (tab) => {
-      if (tab === 'orders') return ordersLoading.value;
-      if (tab === 'products') return productsLoading.value;
-      if (tab === 'customers') return customersLoading.value;
-      if (tab === 'analytics') return analyticsLoading.value;
-      if (tab === 'production') return chefsLoading.value;
-      return false;
-    };
-
-    // Extended skeleton loader bridge: 40% faster, waits for data to avoid table layout frame drops
-    const scheduleTabSwitchCompletion = (tab) => {
-      if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
-      const isHeavy = HEAVY_TABS.includes(tab);
-      // Sped up by 40%: 370ms for standard tabs, 440ms for heavy tables/Kanban
-      const minDuration = isHeavy ? 440 : 370;
-      const startTime = Date.now();
-
-      const checkAndComplete = () => {
-        const elapsed = Date.now() - startTime;
-        // If data is actively loading for a heavy tab, wait with the skeleton loader (safety timeout 1500ms)
-        if (isHeavy && isTabDataLoading(tab) && elapsed < 1500) {
-          tabSwitchTimer = setTimeout(checkAndComplete, 40);
-          return;
-        }
-        const remaining = Math.max(0, minDuration - elapsed);
-        if (remaining > 0) {
-          tabSwitchTimer = setTimeout(() => {
-            isTabSwitching.value = false;
-          }, remaining);
-        } else {
-          isTabSwitching.value = false;
-        }
-      };
-
-      tabSwitchTimer = setTimeout(checkAndComplete, minDuration);
-    };
 
     const handleSidebarKeydown = (e) => {
       // Up/Down arrows are strictly reserved for traversing table rows (Section 22 of design guide)
@@ -7026,7 +6808,7 @@ export default {
       });
     };
 
-    watch(activeTab, (newTab, oldTab) => {
+    watch(activeTab, (newTab) => {
       if (newTab && VALID_TABS.includes(newTab)) {
         try {
           localStorage.setItem('emenu_admin_active_tab', newTab);
@@ -7037,16 +6819,6 @@ export default {
         scrollActiveTabIntoView();
         if (adminMainRef.value) {
           adminMainRef.value.scrollTop = 0;
-        }
-
-        // Smooth blank placeholder skeleton loader bridge (for changes originating outside setTab)
-        if (oldTab && oldTab !== newTab && !isTabSwitching.value) {
-          if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
-          isTabSwitching.value = true;
-          scheduleTabSwitchCompletion(newTab);
-        } else if (!oldTab) {
-          // Initial mount
-          triggerHolographicScan();
         }
       }
     }, { flush: 'sync' });
@@ -8965,13 +8737,8 @@ export default {
         document.activeElement.blur();
       }
 
-      // Activate skeleton bridge immediately BEFORE updating activeTab
-      // This prevents the target tab's real content from flashing before the watcher can react
-      if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
-      isTabSwitching.value = true;
+      // Update activeTab immediately for instant, buttery-smooth navigation
       activeTab.value = tab;
-
-      scheduleTabSwitchCompletion(tab);
     };
 
     // User Management Methods
@@ -12416,11 +12183,9 @@ const closeSuggestionsWithDelay = () => {
       document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
       updateHeadIcon();
-      triggerHolographicScan();
     });
 
     onUnmounted(() => {
-      if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
       document.removeEventListener('click', closeAllDatePickers);
@@ -12639,13 +12404,10 @@ const closeSuggestionsWithDelay = () => {
     });
 
     return {
-      onTabBeforeEnter,
-      onTabEnter,
       isScanning,
       adminMainRef,
       sidebarMenuRef,
       handleSidebarKeydown,
-      triggerHolographicScan,
       formatLibyanWhatsappNumber,
       getLibyanWhatsAppUrl,
       loading,
@@ -13503,10 +13265,19 @@ const closeSuggestionsWithDelay = () => {
   min-height: 100dvh;
 }
 
+/* High-Performance 60-120fps Admin Card & Panel Design (Eliminates GPU Blur Bottlenecks) */
+.admin-view .glass-panel,
+.admin-container .glass-panel {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
 /* Sidebar Navigation */
 .admin-sidebar {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
+  background: #ffffff;
   border-left: 1px solid rgba(0, 0, 0, 0.06);
   padding: 24px 18px;
   display: flex;
@@ -14195,8 +13966,7 @@ const closeSuggestionsWithDelay = () => {
   top: 0;
   z-index: 10;
   padding: 12px 14px;
-  background: rgba(248, 250, 252, 0.95);
-  backdrop-filter: blur(8px);
+  background: #f8fafc;
   color: #334155;
   font-weight: 850;
   border-bottom: 2px solid #e2e8f0;
@@ -14213,40 +13983,9 @@ const closeSuggestionsWithDelay = () => {
   transition: background-color 0.15s ease;
 }
 
-/* Table Row Entrance Fade Animation */
-@keyframes rowFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .admin-table tbody tr {
-  animation: rowFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity, transform;
   transition: background-color 0.15s ease;
 }
-
-.admin-table tbody tr:nth-child(1) { animation-delay: 0.02s; }
-.admin-table tbody tr:nth-child(2) { animation-delay: 0.04s; }
-.admin-table tbody tr:nth-child(3) { animation-delay: 0.06s; }
-.admin-table tbody tr:nth-child(4) { animation-delay: 0.08s; }
-.admin-table tbody tr:nth-child(5) { animation-delay: 0.10s; }
-.admin-table tbody tr:nth-child(6) { animation-delay: 0.12s; }
-.admin-table tbody tr:nth-child(7) { animation-delay: 0.14s; }
-.admin-table tbody tr:nth-child(8) { animation-delay: 0.16s; }
-.admin-table tbody tr:nth-child(9) { animation-delay: 0.18s; }
-.admin-table tbody tr:nth-child(10) { animation-delay: 0.20s; }
-.admin-table tbody tr:nth-child(11) { animation-delay: 0.22s; }
-.admin-table tbody tr:nth-child(12) { animation-delay: 0.24s; }
-.admin-table tbody tr:nth-child(13) { animation-delay: 0.26s; }
-.admin-table tbody tr:nth-child(14) { animation-delay: 0.28s; }
-.admin-table tbody tr:nth-child(15) { animation-delay: 0.30s; }
-.admin-table tbody tr:nth-child(n+16) { animation-delay: 0.32s; }
 
 .admin-table tbody tr:nth-child(even) {
   background-color: rgba(248, 250, 252, 0.4);
@@ -14726,7 +14465,6 @@ select.form-control:focus {
   font-weight: 800;
   font-family: inherit;
   box-shadow: 0 2px 8px rgba(253, 181, 24, 0.12);
-  will-change: transform, opacity;
 }
 
 .btn-remove-date {
@@ -14764,7 +14502,6 @@ select.form-control:focus {
   width: 280px !important;
   padding: 14px !important;
   background: #ffffff !important;
-  backdrop-filter: blur(16px);
   border: 1.5px solid #cbd5e1 !important;
   border-radius: 16px !important;
   box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22) !important;
@@ -15672,23 +15409,7 @@ select.form-control:focus {
 }
 
 /* ========================================================================= */
-/* ========================================================================= */
-/* TAB SKELETON PLACEHOLDER LOADER (Smooth Transition Bridge)               */
-/* ========================================================================= */
-.tab-skeleton-placeholder {
-  width: 100%;
-  min-height: 420px;
-  animation: fadeIn 0.12s ease-out;
-  pointer-events: none;
-  user-select: none;
-}
-
-.tab-skeleton-placeholder .skeleton-card {
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-/* ========================================================================= */
-/* TAB CONTENT ENTRANCE & COMPOSITOR OPTIMIZATION (Hardware-Composited GSAP)  */
+/* TAB CONTENT & COMPOSITOR OPTIMIZATIONS (Snappy 60-120fps CSS Transitions) */
 /* ========================================================================= */
 .tab-content-wrapper {
   position: relative;
@@ -15700,19 +15421,19 @@ select.form-control:focus {
   width: 100%;
 }
 
-.tab-content-wrapper .glass-panel,
-.tab-content-wrapper .table-card,
-.tab-content-wrapper .kpi-card,
-.tab-content-wrapper .chart-card,
-.tab-content-wrapper .chef-kanban-col,
-.tab-content-wrapper .category-card,
-.tab-content-wrapper .settings-section {
-  will-change: transform, opacity;
+/* Snappy CSS Tab Fade (120ms Hardware-Composited Crossfade) */
+.admin-tab-fade-enter-active,
+.admin-tab-fade-leave-active {
+  transition: opacity 0.12s ease-out;
+}
+
+.admin-tab-fade-enter-from,
+.admin-tab-fade-leave-to {
+  opacity: 0;
 }
 
 .tab-content-wrapper .table-card {
-  contain: paint;
-  transform: translateZ(0);
+  contain: content;
 }
 
 /* Responsive breakdowns */
@@ -16501,11 +16222,10 @@ select.form-control:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.75);
+  background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   padding: 6px 10px;
-  backdrop-filter: blur(8px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -18145,9 +17865,7 @@ select.form-control:focus {
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #ffffff;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   flex-wrap: wrap;
   gap: 12px;
@@ -19490,8 +19208,7 @@ select.form-control:focus {
   padding: 26px 32px !important;
   display: flex !important;
   flex-direction: column !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(28px) saturate(190%) !important;
+  background: #ffffff !important;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
   box-shadow: 0 30px 70px rgba(15, 23, 42, 0.22) !important;
   border-radius: 24px !important;
@@ -20787,9 +20504,7 @@ select.pos-control {
     right: 0 !important;
     margin: 0 -10px !important;
     padding: 8px 12px max(10px, env(safe-area-inset-bottom)) 12px !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
+    background: #ffffff !important;
     border-top: 1px solid #e2e8f0 !important;
     box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.08) !important;
     z-index: 100 !important;
@@ -24825,7 +24540,6 @@ select.pos-control {
   background-color: #e2e8f0;
   animation: skeletonPulse 1.1s ease-in-out infinite alternate;
   border-radius: 8px;
-  will-change: opacity;
 }
 
 .shop-theme-shop2 .skeleton-shimmer {
@@ -25523,9 +25237,7 @@ select.pos-control {
   border-radius: 24px;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: #ffffff;
   box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.22);
 }
 
