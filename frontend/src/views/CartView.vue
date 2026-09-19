@@ -138,6 +138,7 @@ const handleCloseConfirmation = () => {
 
 const onKeydown = (e) => {
   if (e.key === 'Escape' && showOrderConfirmModal.value && !isSubmitting.value) {
+    e.preventDefault();
     handleCloseConfirmation();
     return;
   }

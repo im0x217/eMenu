@@ -332,6 +332,7 @@ const closeZoomModal = () => {
 // Keyboard Escape dismiss & Tab focus trapping support for modals
 const handleKeydown = (e) => {
   if (e.key === 'Escape') {
+    e.preventDefault();
     if (zoomedImgUrl.value) {
       closeZoomModal();
     } else if (showDisableConfirm.value) {

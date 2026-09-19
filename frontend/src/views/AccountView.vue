@@ -1,6 +1,6 @@
 <script setup>
 import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl } from '../utils/phone';
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useFavoritesStore } from '../stores/favorites';
@@ -80,11 +80,25 @@ const loadCustomerData = async () => {
   }
 };
 
+const handleKeydown = (e) => {
+  if (e.key === 'Escape') {
+    if (isModalOpen.value) {
+      e.preventDefault();
+      closeModal();
+    }
+  }
+};
+
 onMounted(() => {
   loadCustomerData();
   if (authStore.customerPhone) {
     authStore.checkProfileStatus();
   }
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 
 // Watch phone number changes to refetch history & balance

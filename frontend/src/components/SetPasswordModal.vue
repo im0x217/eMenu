@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 
@@ -43,8 +43,25 @@ const handleSubmit = async () => {
 };
 
 const handleDismiss = () => {
-  authStore.showSetPasswordModal = false;
+  if (!isSubmitting.value) {
+    authStore.showSetPasswordModal = false;
+  }
 };
+
+const handleKeydown = (e) => {
+  if (e.key === 'Escape' && authStore.showSetPasswordModal && !isSubmitting.value) {
+    e.preventDefault();
+    handleDismiss();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
 </script>
 
 <template>

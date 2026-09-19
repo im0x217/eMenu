@@ -3082,7 +3082,7 @@
                       class="form-control search-input" 
                       placeholder="بحث بالهاتف أو اسم العميل…" 
                       @focus="showNewOrderCustomerSuggestions = true" @click="showNewOrderCustomerSuggestions = true"
-                      @blur="closeNewOrderCustomerSuggestionsWithDelay" @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0" @keydown.esc.prevent="showNewOrderCustomerSuggestions = false" @keydown.tab="showNewOrderCustomerSuggestions = false" @keydown.down.prevent="navigateCustomerSuggestions(1)"
+                      @blur="closeNewOrderCustomerSuggestionsWithDelay" @input="showNewOrderCustomerSuggestions = true; highlightedCustomerIndex = 0" @keydown.esc.stop.prevent="showNewOrderCustomerSuggestions = false" @keydown.tab="showNewOrderCustomerSuggestions = false" @keydown.down.prevent="navigateCustomerSuggestions(1)"
                       @keydown.up.prevent="navigateCustomerSuggestions(-1)"
                       @keydown.enter.prevent="selectHighlightedCustomerOrNext"
                     />
@@ -3466,7 +3466,7 @@
                               @keydown.up.prevent="adjustNewOrderItemQty(item, 1)"
                               @keydown.down.prevent="adjustNewOrderItemQty(item, -1)"
                               @keydown.delete.prevent="removeNewOrderItem(idx)"
-                              @keydown.esc.prevent="focusProductSearch"
+                              @keydown.esc.stop.prevent="focusProductSearch"
                               required 
                             />
                             <button type="button" class="stepper-btn btn-plus" @click="adjustNewOrderItemQty(item, 1)" tabindex="-1" aria-label="زيادة الكمية">+</button>
@@ -3744,7 +3744,7 @@
                       @click="showEditOrderCustomerSuggestions = true"
                       @blur="closeEditOrderCustomerSuggestionsWithDelay"
                       @input="showEditOrderCustomerSuggestions = true; highlightedEditCustomerIndex = 0"
-                      @keydown.esc.prevent="showEditOrderCustomerSuggestions = false"
+                      @keydown.esc.stop.prevent="showEditOrderCustomerSuggestions = false"
                       @keydown.tab="showEditOrderCustomerSuggestions = false"
                       @keydown.down.prevent="navigateEditCustomerSuggestions(1)"
                       @keydown.up.prevent="navigateEditCustomerSuggestions(-1)"
@@ -3931,7 +3931,7 @@
                         placeholder="بحث باسم المنتج أو الصنف…" 
                         @focus="showSuggestions = true" 
                         @click="showSuggestions = true" 
-                        @keydown.esc.prevent="showSuggestions = false" 
+                        @keydown.esc.stop.prevent="showSuggestions = false" 
                         @keydown.tab="showSuggestions = false" 
                         @blur="closeSuggestionsWithDelay" 
                         @keydown.down.prevent="navigateSuggestions(1)" 
@@ -11196,6 +11196,7 @@ const closeSuggestionsWithDelay = () => {
     const handleProductSearchKeydown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
         showNewOrderProductSuggestions.value = false;
         if (newOrderProductInputRef.value) {
           newOrderProductInputRef.value.blur();
@@ -11703,45 +11704,75 @@ const closeSuggestionsWithDelay = () => {
         categoryModalOpen.value || tagModalOpen.value || paymentModalOpen.value ||
         paymentHistoryModalOpen.value || customerModalOpen.value || customerFavsModalOpen.value ||
         customerDetailsModalOpen.value || chefModalOpen.value || assignProductsModalOpen.value ||
-        userModalOpen.value || carouselModalOpen.value || cropperModalOpen.value || shortcutsModalOpen.value || commandPaletteOpen.value || !!zoomedImageSrc.value;
+        userModalOpen.value || carouselModalOpen.value || cropperModalOpen.value || shortcutsModalOpen.value ||
+        commandPaletteOpen.value || resetModalOpen.value || !!zoomedImageSrc.value;
     };
 
     const handleGlobalKeydown = (e) => {
-      // 1. Modal Close / Cancel with Escape
+      // 1. Modal Close / Cancel with Escape (Standardized LIFO Overlay Stack)
       if (e.key === 'Escape') {
-        if (newOrderModalOpen.value) {
-          if (showNewOrderCustomerSuggestions.value || showNewOrderProductSuggestions.value) {
-            showNewOrderCustomerSuggestions.value = false;
-            showNewOrderProductSuggestions.value = false;
-            return;
-          }
-          newOrderModalOpen.value = false;
+        e.preventDefault();
+
+        // Layer 1: Inline Autocomplete Suggestions Dropdowns
+        if (showNewOrderProductSuggestions.value || showNewOrderCustomerSuggestions.value || showEditOrderCustomerSuggestions.value || showSuggestions.value) {
+          showNewOrderProductSuggestions.value = false;
+          showNewOrderCustomerSuggestions.value = false;
+          showEditOrderCustomerSuggestions.value = false;
+          showSuggestions.value = false;
           return;
         }
-        if (productCustomersModalOpen.value) { productCustomersModalOpen.value = false; return; }
-        if (paymentModalOpen.value) { paymentModalOpen.value = false; return; }
-        if (paymentHistoryModalOpen.value) { paymentHistoryModalOpen.value = false; return; }
-        if (customerModalOpen.value) { customerModalOpen.value = false; return; }
-        if (customerFavsModalOpen.value) { customerFavsModalOpen.value = false; return; }
-        if (customerDetailsModalOpen.value) { customerDetailsModalOpen.value = false; return; }
-        if (orderEditModalOpen.value) { orderEditModalOpen.value = false; return; }
-        if (productModalOpen.value) { productModalOpen.value = false; return; }
-        if (categoryModalOpen.value) { categoryModalOpen.value = false; return; }
-        if (tagModalOpen.value) { tagModalOpen.value = false; return; }
-        if (analyticsFromOpen.value || analyticsToOpen.value) { analyticsFromOpen.value = false; analyticsToOpen.value = false; return; }
-        if (datePickerOpen.value) { datePickerOpen.value = false; return; }
-        if (editOrderDatePickerOpen.value) { editOrderDatePickerOpen.value = false; return; }
+
+        // Layer 2: DatePicker & Calendar Popovers
         if (posDatePickerOpen.value) { posDatePickerOpen.value = false; return; }
+        if (editOrderDatePickerOpen.value) { editOrderDatePickerOpen.value = false; return; }
+        if (datePickerOpen.value) { datePickerOpen.value = false; return; }
+        if (analyticsFromOpen.value || analyticsToOpen.value) { analyticsFromOpen.value = false; analyticsToOpen.value = false; return; }
         if (custDateFromOpen.value || custDateToOpen.value) { custDateFromOpen.value = false; custDateToOpen.value = false; return; }
         if (prodDateFromOpen.value || prodDateToOpen.value) { prodDateFromOpen.value = false; prodDateToOpen.value = false; return; }
-        if (commandPaletteOpen.value) { commandPaletteOpen.value = false; return; }
-        if (shortcutsModalOpen.value) { shortcutsModalOpen.value = false; return; }
+
+        // Layer 3: Top-Most Media / Crop / Command Overlays
+        if (zoomedImageSrc.value) { zoomedImageSrc.value = null; return; }
         if (cropperModalOpen.value) { cropperModalOpen.value = false; return; }
+        if (commandPaletteOpen.value) { commandPaletteOpen.value = false; return; }
+
+        // Layer 4: Sub-Modals & Confirmation Dialogs
+        if (resetModalOpen.value) { resetModalOpen.value = false; return; }
+        if (shortcutsModalOpen.value) { shortcutsModalOpen.value = false; return; }
+        if (customerFavsModalOpen.value) { customerFavsModalOpen.value = false; return; }
+        if (productCustomersModalOpen.value) { productCustomersModalOpen.value = false; return; }
+        if (paymentHistoryModalOpen.value) { paymentHistoryModalOpen.value = false; return; }
+
+        // Layer 5: Primary Entity Modals
+        if (newOrderModalOpen.value) { newOrderModalOpen.value = false; return; }
+        if (orderEditModalOpen.value) { orderEditModalOpen.value = false; return; }
+        if (paymentModalOpen.value) { paymentModalOpen.value = false; return; }
+        if (productModalOpen.value) { productModalOpen.value = false; return; }
+        if (customerDetailsModalOpen.value) { customerDetailsModalOpen.value = false; return; }
+        if (customerModalOpen.value) { customerModalOpen.value = false; return; }
         if (chefModalOpen.value) { chefModalOpen.value = false; return; }
         if (assignProductsModalOpen.value) { assignProductsModalOpen.value = false; return; }
+        if (categoryModalOpen.value) { categoryModalOpen.value = false; return; }
+        if (tagModalOpen.value) { tagModalOpen.value = false; return; }
         if (userModalOpen.value) { userModalOpen.value = false; return; }
         if (carouselModalOpen.value) { carouselModalOpen.value = false; return; }
-        if (zoomedImageSrc.value) { zoomedImageSrc.value = null; return; }
+
+        // Layer 6: Table Pagination Bar Focus
+        if (paginationFocused.value) {
+          paginationFocused.value = false;
+          let maxLen = 0;
+          if (activeTab.value === 'orders') maxLen = paginatedOrders.value.length;
+          else if (activeTab.value === 'products') maxLen = paginatedProducts.value.length;
+          else if (activeTab.value === 'customers') maxLen = paginatedCustomers.value.length;
+          selectedTableRowIndex.value = maxLen > 0 ? maxLen - 1 : 0;
+          nextTick(() => {
+            const row = document.querySelector('.keyboard-selected-row');
+            if (row && typeof row.scrollIntoView === 'function') {
+              row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          });
+          return;
+        }
+
         return;
       }
 
