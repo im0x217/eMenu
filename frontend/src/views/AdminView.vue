@@ -628,7 +628,7 @@
               <div class="chart-card glass-panel span-2">
                 <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
                 <div class="table-container">
-                  <table class="admin-table">
+                  <table class="admin-table desktop-analytics-table">
                     <thead>
                       <tr>
                         <th>اسم المنتج</th>
@@ -647,6 +647,29 @@
                       </tr>
                     </tbody>
                   </table>
+
+                  <!-- Mobile Top Products Cards Grid (Active on screens <= 768px) -->
+                  <div class="mobile-analytics-cards-grid">
+                    <div v-if="activeTopProducts.length === 0" class="empty-state-card p-3 text-center">
+                      <p class="text-muted mb-0">لا توجد منتجات مباعة.</p>
+                    </div>
+                    <div
+                      v-for="(prod, idx) in activeTopProducts"
+                      :key="'mob-top-prod-' + prod.productId"
+                      class="mob-analytics-rank-card glass-panel"
+                    >
+                      <div class="mob-rank-badge" :class="{ 'top-1': idx === 0, 'top-2': idx === 1, 'top-3': idx === 2 }">
+                        #{{ idx + 1 }}
+                      </div>
+                      <div class="mob-rank-details">
+                        <span class="mob-rank-title font-bold">{{ prod.name }}</span>
+                        <div class="mob-rank-metrics">
+                          <span class="mob-metric-tag text-mono">{{ formatArabicPlural(prod.quantity, 'unit') }}</span>
+                          <span class="mob-metric-tag text-mono text-primary font-bold">{{ formatCurrency(prod.revenue) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -654,7 +677,7 @@
               <div class="chart-card glass-panel">
                 <h3 class="chart-title">كبار العملاء (إنفاقاً)</h3>
                 <div class="table-container">
-                  <table class="admin-table">
+                  <table class="admin-table desktop-analytics-table">
                     <thead>
                       <tr>
                         <th>الاسم</th>
@@ -673,6 +696,29 @@
                       </tr>
                     </tbody>
                   </table>
+
+                  <!-- Mobile Top Customers Cards Grid (Active on screens <= 768px) -->
+                  <div class="mobile-analytics-cards-grid">
+                    <div v-if="analyticsData.topCustomers.length === 0" class="empty-state-card p-3 text-center">
+                      <p class="text-muted mb-0">لا توجد بيانات عملاء.</p>
+                    </div>
+                    <div
+                      v-for="(cust, idx) in analyticsData.topCustomers"
+                      :key="'mob-top-cust-' + cust.phone"
+                      class="mob-analytics-rank-card glass-panel"
+                    >
+                      <div class="mob-rank-badge" :class="{ 'top-1': idx === 0, 'top-2': idx === 1, 'top-3': idx === 2 }">
+                        #{{ idx + 1 }}
+                      </div>
+                      <div class="mob-rank-details">
+                        <span class="mob-rank-title font-bold">{{ cust.name }}</span>
+                        <div class="mob-rank-metrics">
+                          <span class="mob-metric-tag text-mono text-muted">{{ cust.phone }}</span>
+                          <span class="mob-metric-tag text-mono text-primary font-bold">{{ formatCurrency(cust.totalSpent) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -684,7 +730,7 @@
                   <span class="badge badge-warning">آخر ظهور قديم</span>
                 </div>
                 <div class="table-container">
-                  <table class="admin-table">
+                  <table class="admin-table desktop-analytics-table">
                     <thead>
                       <tr>
                         <th>الاسم</th>
@@ -703,6 +749,29 @@
                       </tr>
                     </tbody>
                   </table>
+
+                  <!-- Mobile Inactive Customers Cards Grid (Active on screens <= 768px) -->
+                  <div class="mobile-analytics-cards-grid">
+                    <div v-if="analyticsData.inactiveCustomers.length === 0" class="empty-state-card p-3 text-center">
+                      <p class="text-muted mb-0">جميع العملاء نشطون في هذه الفترة!</p>
+                    </div>
+                    <div
+                      v-for="cust in analyticsData.inactiveCustomers"
+                      :key="'mob-inact-cust-' + cust.phone"
+                      class="mob-analytics-rank-card glass-panel"
+                    >
+                      <div class="mob-rank-icon-wrap warning">
+                        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      </div>
+                      <div class="mob-rank-details">
+                        <span class="mob-rank-title font-bold">{{ cust.name }}</span>
+                        <div class="mob-rank-metrics">
+                          <span class="mob-metric-tag text-mono text-muted">{{ cust.phone }}</span>
+                          <span class="mob-metric-tag text-muted text-small">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -713,7 +782,7 @@
                   <span class="badge badge-danger">مبيعات منخفضة</span>
                 </div>
                 <div class="table-container">
-                  <table class="admin-table">
+                  <table class="admin-table desktop-analytics-table">
                     <thead>
                       <tr>
                         <th>اسم المنتج</th>
@@ -732,6 +801,29 @@
                       </tr>
                     </tbody>
                   </table>
+
+                  <!-- Mobile Low Performing Products Cards Grid (Active on screens <= 768px) -->
+                  <div class="mobile-analytics-cards-grid">
+                    <div v-if="activeLowPerformingProducts.length === 0" class="empty-state-card p-3 text-center">
+                      <p class="text-muted mb-0">لا توجد منتجات خاملة، كل المنتجات تحقق مبيعات!</p>
+                    </div>
+                    <div
+                      v-for="prod in activeLowPerformingProducts"
+                      :key="'mob-low-prod-' + prod.productId"
+                      class="mob-analytics-rank-card glass-panel"
+                    >
+                      <div class="mob-rank-icon-wrap danger">
+                        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </div>
+                      <div class="mob-rank-details">
+                        <span class="mob-rank-title font-bold">{{ prod.name }}</span>
+                        <div class="mob-rank-metrics">
+                          <span class="mob-metric-tag badge-category">{{ prod.category }}</span>
+                          <span class="mob-metric-tag text-mono font-semibold">{{ formatCurrency(prod.price) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1120,7 +1212,7 @@
               </div>
 
               <div class="table-container">
-                <table class="admin-table">
+                <table class="admin-table desktop-categories-table">
                   <thead>
                     <tr>
                       <th style="width: 80px;">الرمز</th>
@@ -1175,6 +1267,35 @@
                     </tr>
                   </tbody>
                 </table>
+
+                <!-- Mobile Categories Cards Grid (Active on screens <= 768px) -->
+                <div class="mobile-categories-cards-grid">
+                  <div v-if="categories.length === 0" class="mobile-empty-card glass-panel">
+                    <span>لا توجد أصناف مدخلة.</span>
+                  </div>
+                  <div 
+                    v-for="cat in categories" 
+                    :key="'mob-cat-' + cat._id"
+                    class="mobile-category-card glass-panel"
+                  >
+                    <div class="mob-cat-main">
+                      <div class="cat-icon-badge mob-cat-icon">
+                        <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
+                      </div>
+                      <div class="mob-cat-info">
+                        <span class="mob-cat-title font-bold">{{ cat.name }}</span>
+                        <span class="mob-cat-sub-count text-small text-muted">{{ (cat.subCategories && cat.subCategories.length) ? (cat.subCategories.length + ' أصناف فرعية') : 'بدون أصناف فرعية' }}</span>
+                      </div>
+                      <div class="mob-cat-actions">
+                        <button @click="openCategoryModal(cat)" class="btn btn-sm btn-outline" title="تعديل">تعديل</button>
+                        <button @click="deleteCategory(cat._id)" class="btn btn-sm btn-danger" title="حذف">حذف</button>
+                      </div>
+                    </div>
+                    <div v-if="cat.subCategories && cat.subCategories.length" class="mob-cat-subs-chips mt-2">
+                      <span v-for="sub in cat.subCategories" :key="'mob-sub-' + sub" class="sub-chip">{{ sub }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1196,7 +1317,7 @@
               </div>
 
               <div class="table-container">
-                <table class="admin-table">
+                <table class="admin-table desktop-tags-table">
                   <thead>
                     <tr>
                       <th>اسم العلامة</th>
@@ -1245,6 +1366,31 @@
                     </tr>
                   </tbody>
                 </table>
+
+                <!-- Mobile Tags Cards Grid (Active on screens <= 768px) -->
+                <div class="mobile-tags-cards-grid">
+                  <div v-if="tags.length === 0" class="mobile-empty-card glass-panel">
+                    <span>لا توجد علامات مميزة مدخلة.</span>
+                  </div>
+                  <div 
+                    v-for="t in tags" 
+                    :key="'mob-tag-' + t._id"
+                    class="mobile-tag-card glass-panel"
+                  >
+                    <div class="mob-tag-main">
+                      <div class="mob-tag-info">
+                        <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
+                          <CategoryIcon :icon="t.icon" :name="t.name" size="16" />
+                          <span class="font-bold">{{ t.name }}</span>
+                        </span>
+                      </div>
+                      <div class="mob-tag-actions">
+                        <button @click="openTagModal(t)" class="btn btn-sm btn-outline" title="تعديل">تعديل</button>
+                        <button @click="deleteTag(t._id)" class="btn btn-sm btn-danger" title="حذف">حذف</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2656,7 +2802,7 @@
 
                         <!-- Products Table for this Chef -->
                         <div class="table-container">
-                          <table class="admin-table">
+                          <table class="admin-table desktop-production-table">
                             <thead>
                               <tr>
                                 <th>اسم الصنف</th>
@@ -2687,6 +2833,42 @@
                               </tr>
                             </tbody>
                           </table>
+
+                          <!-- Mobile Chef Products Cards Grid (Active on screens <= 768px) -->
+                          <div class="mobile-production-cards-grid">
+                            <div 
+                              v-for="p in cReport.products" 
+                              :key="'mob-prod-rep-' + p.name"
+                              class="mobile-production-card glass-panel"
+                              @click="openProductCustomersModal(p, cReport)"
+                            >
+                              <div class="mob-prod-rep-header">
+                                <div class="mob-prod-rep-title">
+                                  <span class="font-bold">{{ p.name }}</span>
+                                  <span class="category-pill">{{ p.category || '-' }}</span>
+                                </div>
+                                <span class="mob-qty-badge text-mono">{{ p.qty }} مبيع</span>
+                              </div>
+                              <div class="mob-prod-rep-metrics">
+                                <div class="mob-metric-item">
+                                  <span class="lbl">التكلفة:</span>
+                                  <span class="val text-mono text-danger">{{ formatCurrency(p.cost) }}</span>
+                                </div>
+                                <div class="mob-metric-item">
+                                  <span class="lbl">المبيعات:</span>
+                                  <span class="val text-mono text-success font-bold">{{ formatCurrency(p.revenue) }}</span>
+                                </div>
+                                <div class="mob-metric-item highlight">
+                                  <span class="lbl">الربح:</span>
+                                  <span class="val text-mono text-primary font-bold">{{ formatCurrency(Math.max(0, p.revenue - p.cost)) }}</span>
+                                </div>
+                              </div>
+                              <div class="mob-prod-rep-hint">
+                                <span>انقر لعرض تفاصيل الطلبات والعملاء</span>
+                                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2704,7 +2886,7 @@
                       </div>
 
                       <div class="table-container">
-                        <table class="admin-table">
+                        <table class="admin-table desktop-production-table">
                           <thead>
                             <tr>
                               <th>اسم الصنف</th>
@@ -2729,6 +2911,34 @@
                             </tr>
                           </tbody>
                         </table>
+
+                        <!-- Mobile Unassigned Cards Grid (Active on screens <= 768px) -->
+                        <div class="mobile-production-cards-grid">
+                          <div 
+                            v-for="u in productionReportData.unassigned"
+                            :key="'mob-unassigned-' + u.name"
+                            class="mobile-production-card glass-panel"
+                            @click="openProductCustomersModal(u, null)"
+                          >
+                            <div class="mob-prod-rep-header">
+                              <div class="mob-prod-rep-title">
+                                <span class="font-bold">{{ u.name }}</span>
+                                <span class="badge badge-warning text-small">غير مخصص لشيف</span>
+                              </div>
+                              <span class="mob-qty-badge text-mono">{{ u.qty }} مبيع</span>
+                            </div>
+                            <div class="mob-prod-rep-metrics">
+                              <div class="mob-metric-item highlight">
+                                <span class="lbl">إجمالي المبيعات:</span>
+                                <span class="val text-mono text-success font-bold">{{ formatCurrency(u.revenue) }}</span>
+                              </div>
+                            </div>
+                            <div class="mob-prod-rep-hint">
+                              <span>انقر لعرض تفاصيل الطلبات والعملاء</span>
+                              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -2762,7 +2972,7 @@
               </div>
 
               <div class="table-container">
-                <table class="admin-table">
+                <table class="admin-table desktop-users-table">
                   <thead>
                     <tr>
                       <th>الاسم / حساب الدخول</th>
@@ -2804,6 +3014,51 @@
                     </tr>
                   </tbody>
                 </table>
+
+                <!-- Mobile Users Cards Grid (Active on screens <= 768px) -->
+                <div class="mobile-users-cards-grid">
+                  <div v-if="adminUsers.length === 0" class="empty-state-card p-4 text-center">
+                    <p class="text-muted mb-0">لا يوجد مستخدمون مدخلون بعد.</p>
+                  </div>
+                  <div
+                    v-for="u in adminUsers"
+                    :key="'mob-user-' + u._id"
+                    class="mobile-user-card glass-panel"
+                  >
+                    <div class="mob-user-header">
+                      <div class="mob-user-avatar-wrap">
+                        <div class="mob-user-avatar" :class="u.role === 'admin' ? 'admin' : 'staff'">
+                          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div class="mob-user-meta">
+                          <span class="mob-user-name font-bold">{{ u.name }}</span>
+                          <span class="mob-user-date text-mono text-muted text-small">{{ u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-LY') : '-' }}</span>
+                        </div>
+                      </div>
+                      <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
+                        {{ u.role === 'admin' ? 'مدير النظام' : 'إدارة الطلبات والإنتاج' }}
+                      </span>
+                    </div>
+                    <div class="mob-user-body">
+                      <div class="mob-user-scope">
+                        <span class="lbl text-muted">نطاق المتجر:</span>
+                        <span class="val font-semibold">
+                          {{ u.shopAccess === 'shop1' ? 'المتجر الرئيسي' : u.shopAccess === 'shop2' ? 'قسم النواشف' : 'جميع المتاجر' }}
+                        </span>
+                      </div>
+                      <div class="mob-user-actions">
+                        <button @click="openUserModal(u)" class="btn-card-action btn-action-edit" :aria-label="`تعديل المستخدم ${u.name}`">
+                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          <span>تعديل</span>
+                        </button>
+                        <button @click="deleteUser(u._id)" class="btn-card-action btn-action-delete" :aria-label="`حذف المستخدم ${u.name}`">
+                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          <span>حذف</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -26268,7 +26523,473 @@ select.pos-control {
   color: var(--primary-color, #d97706);
 }
 
+/* ==========================================================================
+   DESKTOP VS MOBILE CARDS DISPLAY TOGGLE
+   ========================================================================== */
+.desktop-categories-table,
+.desktop-tags-table,
+.desktop-production-table,
+.desktop-users-table,
+.desktop-analytics-table {
+  display: table;
+  width: 100%;
+}
+
+.mobile-categories-cards-grid,
+.mobile-tags-cards-grid,
+.mobile-production-cards-grid,
+.mobile-users-cards-grid,
+.mobile-analytics-cards-grid {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  /* ==========================================================================
+     MOBILE VIEWPORT (<= 768px): TABLE TO TOUCH-FIRST CARDS CONVERSION
+     ========================================================================== */
+  .desktop-categories-table,
+  .desktop-tags-table,
+  .desktop-production-table,
+  .desktop-users-table,
+  .desktop-analytics-table {
+    display: none !important;
+  }
+
+  .mobile-categories-cards-grid,
+  .mobile-tags-cards-grid,
+  .mobile-production-cards-grid,
+  .mobile-users-cards-grid,
+  .mobile-analytics-cards-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Category Mobile Cards */
+  .mobile-category-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mob-cat-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .mob-cat-title-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .mob-cat-icon {
+    font-size: 1.4rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mob-cat-name {
+    font-weight: 800 !important;
+    font-size: 1rem !important;
+    color: #0f172a !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .mob-cat-badge {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-size: 0.8rem !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mob-cat-subs-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding-top: 2px !important;
+    border-top: 1px dashed #f1f5f9 !important;
+  }
+
+  .mob-cat-sub-chip {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 4px 8px !important;
+    font-size: 0.78rem !important;
+    color: #334155 !important;
+  }
+
+  .mob-cat-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #f1f5f9 !important;
+  }
+
+  /* Tag Mobile Cards */
+  .mobile-tag-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mob-tag-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .mob-tag-badge-preview {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+  }
+
+  .mob-tag-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Production Mobile Cards */
+  .mobile-production-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobile-production-card:active {
+    transform: scale(0.99) !important;
+    background: #f8fafc !important;
+  }
+
+  .mob-prod-rep-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+
+  .mob-prod-rep-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .mob-qty-badge {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    padding: 3px 10px !important;
+    border-radius: 20px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mob-prod-rep-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
+    gap: 8px !important;
+    background: #f8fafc !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    border: 1px solid #edf2f7 !important;
+  }
+
+  .mob-metric-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+  }
+
+  .mob-metric-item .lbl {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+  }
+
+  .mob-metric-item .val {
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+  }
+
+  .mob-metric-item.highlight .val {
+    font-size: 0.95rem !important;
+  }
+
+  .mob-prod-rep-hint {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 0.76rem !important;
+    color: #64748b !important;
+    padding-top: 6px !important;
+    border-top: 1px dashed #f1f5f9 !important;
+  }
+
+  /* User Mobile Cards */
+  .mobile-user-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mob-user-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+
+  .mob-user-avatar-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .mob-user-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mob-user-avatar.admin {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+  }
+
+  .mob-user-avatar.staff {
+    background: #f0fdf4 !important;
+    color: #16a34a !important;
+  }
+
+  .mob-user-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .mob-user-name {
+    font-size: 0.95rem !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .mob-user-date {
+    font-size: 0.75rem !important;
+  }
+
+  .mob-user-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #f1f5f9 !important;
+  }
+
+  .mob-user-scope {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .mob-user-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Generic Mobile Card Action Buttons */
+  .btn-card-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-height: 44px !important;
+    padding: 8px 14px !important;
+    border-radius: 10px !important;
+    font-size: 0.88rem !important;
+    font-weight: 750 !important;
+    font-family: 'Cairo', sans-serif !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    transition: all 0.12s ease !important;
+  }
+
+  .btn-card-action.btn-action-edit {
+    color: #2563eb !important;
+    border-color: #bfdbfe !important;
+    background: #eff6ff !important;
+  }
+
+  .btn-card-action.btn-action-delete {
+    color: #ef4444 !important;
+    border-color: #fca5a5 !important;
+    background: #fef2f2 !important;
+  }
+
+  /* Analytics Rank Cards */
+  .mob-analytics-rank-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .mob-rank-badge {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.85rem !important;
+    font-weight: 900 !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mob-rank-badge.top-1 {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+  }
+
+  .mob-rank-badge.top-2 {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+  }
+
+  .mob-rank-badge.top-3 {
+    background: #ffedd5 !important;
+    color: #c2410c !important;
+  }
+
+  .mob-rank-icon-wrap {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mob-rank-icon-wrap.warning {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+  }
+
+  .mob-rank-icon-wrap.danger {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+  }
+
+  .mob-rank-details {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .mob-rank-title {
+    font-size: 0.92rem !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .mob-rank-metrics {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .mob-metric-tag {
+    font-size: 0.8rem !important;
+    border-radius: 6px !important;
+  }
+
+  .mob-metric-tag.badge-category {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    padding: 2px 8px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+  }
+
   /* ==========================================================================
      MOBILE VIEWPORT (<= 768px): KEYBOARD SELECTION HIGHLIGHT SUPPRESSION
      ========================================================================== */
