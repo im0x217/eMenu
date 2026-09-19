@@ -2963,9 +2963,6 @@
           <span v-if="resetLoading" class="spinner-border spinner-border-sm"></span>
           <span>{{ resetLoading ? 'جاري المسح…' : 'نعم، قم بالمسح النهائي' }}</span>
         </button>
-        <button type="button" @click="resetModalOpen = false" class="btn btn-outline">
-          <span>إلغاء</span>
-        </button>
       </div>
     </div>
   </div>
@@ -3597,8 +3594,6 @@
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="auto-print-icon" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span class="auto-print-text">طباعة فورية</span>
               </label>
-
-              <button type="button" @click="newOrderModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="newOrderLoading">إلغاء</button>
             </div>
 
             <button 
@@ -4096,8 +4091,6 @@
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
               <span>طباعة الإيصال</span>
             </button>
-
-            <button type="button" @click="orderEditModalOpen = false" class="btn btn-outline pos-btn-cancel" :disabled="loading">إلغاء</button>
             
             <button type="button" @click="saveOrder" class="btn btn-primary pos-btn-submit" :disabled="loading || editingOrder.items.length === 0 || !editingOrder.customerName || !editingOrder.customerPhone" title="حفظ وتحديث الطلب">
               <svg aria-hidden="true" v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -4162,9 +4155,6 @@
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>{{ editingChef._id ? 'حفظ التعديلات' : 'إضافة الشيف' }}</span>
-            </button>
-            <button type="button" @click="chefModalOpen = false" class="btn btn-outline btn-modal-cancel">
-              <span>إلغاء</span>
             </button>
           </div>
         </form>
@@ -4251,9 +4241,6 @@
           <button type="button" @click="saveProductAssignments" class="btn btn-primary btn-modal-save" :disabled="loading">
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
             <span>حفظ تخصيص الأصناف ({{ selectedProductIdsForChef.length }} صنف)</span>
-          </button>
-          <button type="button" @click="assignProductsModalOpen = false" class="btn btn-outline btn-modal-cancel">
-            <span>إلغاء</span>
           </button>
         </div>
       </div>
@@ -4436,7 +4423,6 @@
               <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
               حفظ المنتج
             </button>
-            <button type="button" @click="productModalOpen = false" class="btn btn-outline">إلغاء</button>
           </div>
         </form>
       </div>
@@ -4494,7 +4480,6 @@
 
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary">حفظ الصنف</button>
-            <button type="button" @click="categoryModalOpen = false" class="btn btn-outline">إلغاء</button>
           </div>
         </form>
       </div>
@@ -4572,13 +4557,10 @@
             </div>
           </div>
 
-          <div class="modal-actions">
+          <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
               {{ loading ? 'جاري الحفظ…' : 'حفظ العلامة' }}
-            </button>
-            <button type="button" @click="tagModalOpen = false" class="btn btn-outline btn-modal-cancel">
-              إلغاء
             </button>
           </div>
         </form>
@@ -4845,9 +4827,6 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>حفظ التغييرات</span>
             </button>
-            <button type="button" @click="customerModalOpen = false" class="btn btn-outline btn-modal-cancel">
-              <span>إلغاء</span>
-            </button>
           </div>
         </form>
       </div>
@@ -4965,7 +4944,6 @@
             <button type="submit" class="btn btn-primary" :disabled="loading">
               {{ loading ? 'جاري الحفظ…' : (editingCarouselId ? 'حفظ التعديلات' : 'رفع ونشر البنر الإعلاني') }}
             </button>
-            <button type="button" @click="carouselModalOpen = false" class="btn btn-outline" :disabled="loading">إلغاء</button>
           </div>
         </form>
       </div>
@@ -5054,7 +5032,6 @@
         </div>
         
         <div class="premium-cropper-footer">
-          <button @click="cropperModalOpen = false" class="btn premium-btn-outline">إلغاء</button>
           <button @click="cropAndSaveImage" class="btn premium-btn-primary">
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
             تأكيد القص
@@ -5111,13 +5088,10 @@
           </div>
         </div>
 
-        <div class="modal-actions">
+        <div class="modal-footer mt-4">
           <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
             {{ loading ? 'جاري الحفظ…' : 'حفظ البيانات' }}
-          </button>
-          <button type="button" @click="userModalOpen = false" class="btn btn-outline btn-modal-cancel">
-            إلغاء
           </button>
         </div>
       </form>
@@ -6258,10 +6232,6 @@
         <button type="button" @click="recordPayment" class="btn btn-primary btn-modal-save" :disabled="paymentLoading || !Number(paymentTarget.amount)">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
           <span>تأكيد وطباعة إيصال</span>
-        </button>
-        <button type="button" @click="paymentModalOpen = false" class="btn btn-outline btn-modal-cancel">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          <span>إلغاء</span>
         </button>
       </div>
     </div>
