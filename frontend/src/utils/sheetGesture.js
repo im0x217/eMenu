@@ -32,6 +32,21 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
   let lastTime = 0;
   let velocity = 0; // px/ms
 
+  const getOverlay = () => {
+    return sheetEl.closest('.modal-overlay, .confirm-modal-backdrop, .password-modal-overlay, .zoom-backdrop, .command-palette-backdrop') || sheetEl.parentElement;
+  };
+
+  // Reset any residual dismissal state from previous lifecycle
+  sheetEl.classList.remove('sheet-gesture-dismissing');
+  sheetEl.style.transform = '';
+  sheetEl.style.opacity = '';
+  sheetEl.style.visibility = '';
+  const initialOverlay = getOverlay();
+  if (initialOverlay) {
+    initialOverlay.classList.remove('sheet-gesture-dismissing');
+    initialOverlay.style.opacity = '';
+  }
+
   const handlePointerDown = (e) => {
     // Only respond to primary mouse click or direct touch
     if (e.button && e.button !== 0) return;
@@ -66,6 +81,8 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
 
     sheetEl.setPointerCapture?.(e.pointerId);
     gsap.killTweensOf(sheetEl);
+    const overlay = getOverlay();
+    if (overlay) gsap.killTweensOf(overlay);
   };
 
   const handlePointerMove = (e) => {
@@ -89,6 +106,15 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
     }
 
     sheetEl.style.transform = `translate3d(0, ${currentY}px, 0)`;
+
+    // Direct manipulation of backdrop opacity while dragging down
+    if (deltaRaw > 0) {
+      const overlay = getOverlay();
+      if (overlay) {
+        const progress = Math.min(1, currentY / (sheetEl.clientHeight || 400));
+        overlay.style.opacity = `${Math.max(0.15, 1 - progress * 0.75)}`;
+      }
+    }
   };
 
   const handlePointerUp = (e) => {
@@ -103,23 +129,47 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
     // Dismiss if pulled down > 80px OR if flicked downward with fluid velocity (RICO Mobile benchmark)
     const shouldDismiss = currentY > 80 || projectedY > 140 || (velocity > 0.55 && currentY > 15);
 
+    const overlay = getOverlay();
+
     if (shouldDismiss) {
       triggerHaptic('light');
       // Animate downward off-screen smoothly inheriting velocity (Apple Design §5 & §6)
       const absV = Math.abs(velocity);
       const duration = Math.min(0.32, Math.max(0.18, 0.28 / (absV + 0.8)));
+
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 0,
+          duration: duration,
+          ease: 'power2.in'
+        });
+      }
+
       gsap.to(sheetEl, {
         y: '105%',
         duration: duration,
         ease: 'power2.in',
         onComplete: () => {
+          sheetEl.classList.add('sheet-gesture-dismissing');
+          if (overlay) {
+            overlay.classList.add('sheet-gesture-dismissing');
+          }
           onDismiss?.();
-          sheetEl.style.transform = '';
         }
       });
     } else {
       // Apple Design §4: Critically damped settle (damping 1.0) unless released with upward momentum
       const hasUpwardMomentum = velocity < -0.3;
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 1,
+          duration: 0.32,
+          ease: 'power3.out',
+          onComplete: () => {
+            overlay.style.opacity = '';
+          }
+        });
+      }
       gsap.to(sheetEl, {
         y: 0,
         duration: 0.32,
@@ -134,6 +184,17 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
   const handlePointerCancel = () => {
     if (!isDragging) return;
     isDragging = false;
+    const overlay = getOverlay();
+    if (overlay) {
+      gsap.to(overlay, {
+        opacity: 1,
+        duration: 0.25,
+        ease: 'power1.out',
+        onComplete: () => {
+          overlay.style.opacity = '';
+        }
+      });
+    }
     gsap.to(sheetEl, {
       y: 0,
       duration: 0.25,
@@ -164,6 +225,15 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
  */
 export const vSheetGesture = {
   mounted(el, binding) {
+    el.classList.remove('sheet-gesture-dismissing');
+    el.style.transform = '';
+    el.style.opacity = '';
+    el.style.visibility = '';
+    const overlay = el.closest('.modal-overlay, .confirm-modal-backdrop, .password-modal-overlay, .zoom-backdrop, .command-palette-backdrop') || el.parentElement;
+    if (overlay) {
+      overlay.classList.remove('sheet-gesture-dismissing');
+      overlay.style.opacity = '';
+    }
     if (typeof binding.value === 'function') {
       el._currentSheetDismiss = binding.value;
       el._cleanupSheetGesture = bindSheetGesture(el, (arg) => {

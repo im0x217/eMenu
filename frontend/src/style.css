@@ -872,14 +872,36 @@ body.modal-open .floating-cart-bar {
 }
 
 @keyframes modalMobileSpringDown {
-  from {
+  0% {
     transform: translateY(0);
     opacity: 1;
   }
-  to {
-    transform: translateY(100%);
-    opacity: 1; /* Retains 100% visibility as it smoothly glides down past screen bottom */
+  75% {
+    opacity: 1;
   }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Sheet gesture dismiss suppression: prevents Vue CSS leave transition from flashing or snapping back */
+.sheet-gesture-dismissing,
+.modal-overlay.sheet-gesture-dismissing,
+.confirm-modal-backdrop.sheet-gesture-dismissing,
+.password-modal-overlay.sheet-gesture-dismissing,
+.modal-spring-fade-leave-active.sheet-gesture-dismissing,
+.modal-spring-fade-leave-active > div.sheet-gesture-dismissing,
+.modal-spring-fade-leave-active .sheet-gesture-dismissing,
+.confirm-modal-fade-leave-active.sheet-gesture-dismissing,
+.confirm-modal-fade-leave-active .sheet-gesture-dismissing,
+.modal-sheet-leave-active.sheet-gesture-dismissing,
+.modal-sheet-leave-active .sheet-gesture-dismissing {
+  animation: none !important;
+  transition: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* --- Fullscreen Zoom Image Fade Transitions --- */
