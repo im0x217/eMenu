@@ -441,15 +441,41 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* Touch Action & Tap Delay Optimization */
-button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
+button, input, select, textarea, a, label, .glass-panel, .btn, .cat-btn, .subcat-btn, .product-card,
+.segmented-pill, .control-pill, .shop-pill, .cat-chip-btn, .quick-prod-card, .quick-prod-add-btn,
+.stepper-btn, .btn-table-action, .pagination-btn, .btn-datepicker-trigger, .btn-today-shortcut,
+.dp-nav-btn, .dp-day-cell, .action-btn, .cust-btn, .pos-btn-submit, .pos-btn-cancel, .suggestion-item,
+[role="button"] {
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Instant Tactile Press Response (Apple Design §1) */
+/* Universal Instant Tactile Press Response (Apple Design §1 & Web Interface Guidelines 18.4) */
+button:active:not(:disabled),
+.btn:active:not(:disabled),
+.btn-primary:active:not(:disabled),
+.menu-item:active,
+.segmented-pill:active,
+.control-pill:active,
+.shop-pill:active,
 .cat-btn:active,
-.subcat-btn:active {
-  transform: scale(0.95) !important;
-  transition: transform 80ms ease-out !important;
+.subcat-btn:active,
+.cat-chip-btn:active,
+.quick-prod-card:active,
+.quick-prod-add-btn:active,
+.stepper-btn:active:not(:disabled),
+.btn-table-action:active:not(:disabled),
+.pagination-btn:active:not(:disabled),
+.btn-datepicker-trigger:active,
+.btn-today-shortcut:active,
+.dp-nav-btn:active,
+.dp-day-cell:active,
+.pos-btn-submit:active:not(:disabled),
+.pos-btn-cancel:active:not(:disabled),
+.suggestion-item:active,
+[role="button"]:active {
+  transform: scale(0.97) !important;
+  transition: transform 60ms ease-out !important;
 }
 
 /* Accessible Keyboard Focus States */
@@ -541,7 +567,7 @@ button, input, textarea, a, .glass-panel, .cat-btn, .subcat-btn, .product-card {
   padding: 8px 12px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
   border-bottom: 1px solid #f8fafc;
   position: relative;
   user-select: none;

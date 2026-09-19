@@ -6821,7 +6821,7 @@ export default {
           adminMainRef.value.scrollTop = 0;
         }
       }
-    }, { flush: 'sync' });
+    }, { flush: 'post' });
 
     // Also watch route.query.tab if user clicks browser back/forward
     watch(() => route.query.tab, (qTab) => {
@@ -7084,6 +7084,46 @@ export default {
       return (orders.value || []).filter(o => !o.printed && o.status !== 'cancelled').length;
     });
     const customerFilters = reactive({ search: '', dateFrom: '', dateTo: '' });
+
+    // High-performance debounced search refs (kills input latency on typing)
+    const debouncedProductSearch = ref(filters.search);
+    let productSearchTimer = null;
+    watch(() => filters.search, (val) => {
+      clearTimeout(productSearchTimer);
+      if (!val) {
+        debouncedProductSearch.value = '';
+      } else {
+        productSearchTimer = setTimeout(() => {
+          debouncedProductSearch.value = val;
+        }, 150);
+      }
+    });
+
+    const debouncedOrderSearch = ref(orderFilters.search);
+    let orderSearchTimer = null;
+    watch(() => orderFilters.search, (val) => {
+      clearTimeout(orderSearchTimer);
+      if (!val) {
+        debouncedOrderSearch.value = '';
+      } else {
+        orderSearchTimer = setTimeout(() => {
+          debouncedOrderSearch.value = val;
+        }, 150);
+      }
+    });
+
+    const debouncedCustomerSearch = ref(customerFilters.search);
+    let customerSearchTimer = null;
+    watch(() => customerFilters.search, (val) => {
+      clearTimeout(customerSearchTimer);
+      if (!val) {
+        debouncedCustomerSearch.value = '';
+      } else {
+        customerSearchTimer = setTimeout(() => {
+          debouncedCustomerSearch.value = val;
+        }, 150);
+      }
+    });
 
     // Custom DatePicker State & Calendar Logic
     const datePickerOpen = ref(false);
@@ -7665,9 +7705,11 @@ export default {
 
     // Filter Products (Sorted Alphabetically by Arabic Name)
     const filteredProducts = computed(() => {
+      const q = debouncedProductSearch.value ? debouncedProductSearch.value.trim().toLowerCase() : '';
       return products.value.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || 
-                             (p.desc && p.desc.toLowerCase().includes(filters.search.toLowerCase()));
+        const matchesSearch = !q || 
+                              p.name.toLowerCase().includes(q) || 
+                              (p.desc && p.desc.toLowerCase().includes(q));
         const matchesCat = !filters.category || p.category === filters.category;
         const matchesSubCat = !filters.category || !filters.subCategory || p.subCategory === filters.subCategory;
         return matchesSearch && matchesCat && matchesSubCat;
@@ -10652,10 +10694,22 @@ export default {
         .slice(0, 10);
     });
 
+    const editOrderQtyMap = computed(() => {
+      const map = new Map();
+      if (editingOrder && Array.isArray(editingOrder.items)) {
+        for (let i = 0; i < editingOrder.items.length; i++) {
+          const it = editingOrder.items[i];
+          if (it && it.productId) {
+            map.set(String(it.productId), it.quantity || 0);
+          }
+        }
+      }
+      return map;
+    });
+
     const getEditOrderItemQty = (prodId) => {
-      if (!prodId || !editingOrder.items) return 0;
-      const item = editingOrder.items.find(i => i.productId && i.productId.toString() === prodId.toString());
-      return item ? item.quantity : 0;
+      if (!prodId) return 0;
+      return editOrderQtyMap.value.get(String(prodId)) || 0;
     };
 
     const adjustEditOrderItemQty = (item, delta) => {
@@ -10956,8 +11010,21 @@ const closeSuggestionsWithDelay = () => {
       ).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })).slice(0, 8);
     });
 
+    const debouncedNewOrderProductSearch = ref(newOrderProductSearch.value);
+    let newOrderProductSearchTimer = null;
+    watch(newOrderProductSearch, (val) => {
+      clearTimeout(newOrderProductSearchTimer);
+      if (!val) {
+        debouncedNewOrderProductSearch.value = '';
+      } else {
+        newOrderProductSearchTimer = setTimeout(() => {
+          debouncedNewOrderProductSearch.value = val;
+        }, 150);
+      }
+    });
+
     const filteredNewOrderProducts = computed(() => {
-      const q = newOrderProductSearch.value.trim().toLowerCase();
+      const q = debouncedNewOrderProductSearch.value.trim().toLowerCase();
       const cat = newOrderCategoryFilter.value;
       let list = products.value || [];
       if (cat) {
@@ -10989,14 +11056,26 @@ const closeSuggestionsWithDelay = () => {
       }
     };
 
-    watch([newOrderProductSearch, newOrderCategoryFilter], () => {
+    watch([debouncedNewOrderProductSearch, newOrderCategoryFilter], () => {
       posProductDisplayLimit.value = 24;
+    });
+
+    const newOrderQtyMap = computed(() => {
+      const map = new Map();
+      if (Array.isArray(newOrder.items)) {
+        for (let i = 0; i < newOrder.items.length; i++) {
+          const it = newOrder.items[i];
+          if (it && it.productId) {
+            map.set(String(it.productId), it.quantity || 0);
+          }
+        }
+      }
+      return map;
     });
 
     const getItemQtyInCart = (productId) => {
       if (!productId) return 0;
-      const item = newOrder.items.find(i => i.productId && i.productId.toString() === productId.toString());
-      return item ? item.quantity : 0;
+      return newOrderQtyMap.value.get(String(productId)) || 0;
     };
 
     const focusProductSearch = () => {
@@ -11509,7 +11588,7 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const filteredOrders = computed(() => {
-      const query = orderFilters.search ? orderFilters.search.trim().toLowerCase().replace(/^#/, '') : '';
+      const query = debouncedOrderSearch.value ? debouncedOrderSearch.value.trim().toLowerCase().replace(/^#/, '') : '';
       return orders.value.filter(o => {
         const orderIdStr = o._id ? o._id.toString().toLowerCase() : '';
         const orderIdShort = orderIdStr.slice(-6);
@@ -11549,9 +11628,11 @@ const closeSuggestionsWithDelay = () => {
     });
 
     const filteredCustomers = computed(() => {
+      const query = debouncedCustomerSearch.value ? debouncedCustomerSearch.value.trim().toLowerCase() : '';
       return customers.value.filter(c => {
-        return c.name.toLowerCase().includes(customerFilters.search.toLowerCase()) || 
-               c.phone.includes(customerFilters.search);
+        return !query ||
+               (c.name && c.name.toLowerCase().includes(query)) || 
+               (c.phone && c.phone.includes(query));
       }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
@@ -12137,15 +12218,27 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const closeAllDatePickers = () => {
-      if (analyticsFromOpen) analyticsFromOpen.value = false;
-      if (analyticsToOpen) analyticsToOpen.value = false;
-      if (datePickerOpen) datePickerOpen.value = false;
-      if (posDatePickerOpen) posDatePickerOpen.value = false;
-      if (editOrderDatePickerOpen) editOrderDatePickerOpen.value = false;
-      if (custDateFromOpen) custDateFromOpen.value = false;
-      if (custDateToOpen) custDateToOpen.value = false;
-      if (prodDateFromOpen) prodDateFromOpen.value = false;
-      if (prodDateToOpen) prodDateToOpen.value = false;
+      if (
+        analyticsFromOpen?.value ||
+        analyticsToOpen?.value ||
+        datePickerOpen?.value ||
+        posDatePickerOpen?.value ||
+        editOrderDatePickerOpen?.value ||
+        custDateFromOpen?.value ||
+        custDateToOpen?.value ||
+        prodDateFromOpen?.value ||
+        prodDateToOpen?.value
+      ) {
+        if (analyticsFromOpen) analyticsFromOpen.value = false;
+        if (analyticsToOpen) analyticsToOpen.value = false;
+        if (datePickerOpen) datePickerOpen.value = false;
+        if (posDatePickerOpen) posDatePickerOpen.value = false;
+        if (editOrderDatePickerOpen) editOrderDatePickerOpen.value = false;
+        if (custDateFromOpen) custDateFromOpen.value = false;
+        if (custDateToOpen) custDateToOpen.value = false;
+        if (prodDateFromOpen) prodDateFromOpen.value = false;
+        if (prodDateToOpen) prodDateToOpen.value = false;
+      }
     };
 
     const updateHeadIcon = () => {
@@ -12864,7 +12957,7 @@ const closeSuggestionsWithDelay = () => {
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .color-swatch-btn .swatch-circle {
@@ -12981,7 +13074,7 @@ const closeSuggestionsWithDelay = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 .premium-close-btn:hover {
@@ -13075,7 +13168,7 @@ const closeSuggestionsWithDelay = () => {
   color: #475569;
   border: 1px solid #cbd5e1;
   background: transparent;
-  transition: all 0.2s;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 .premium-btn-outline:hover {
   background: #f8fafc;
@@ -13092,7 +13185,7 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
   display: flex;
   align-items: center;
-  transition: all 0.2s;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 .premium-btn-primary:hover {
   transform: translateY(-2px);
@@ -13215,7 +13308,7 @@ const closeSuggestionsWithDelay = () => {
   color: #1e3a5f;
   border-radius: 12px;
   border: 1.5px solid rgba(30, 58, 95, 0.2);
-  transition: all 0.25s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   cursor: pointer;
 }
 
@@ -13414,7 +13507,7 @@ const closeSuggestionsWithDelay = () => {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   user-select: none;
 }
 
@@ -13468,7 +13561,7 @@ const closeSuggestionsWithDelay = () => {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
 }
 
@@ -13517,9 +13610,8 @@ const closeSuggestionsWithDelay = () => {
   font-family: inherit;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transform: none !important;
   user-select: none;
-  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
 }
 
 .menu-item span {
@@ -13533,11 +13625,11 @@ const closeSuggestionsWithDelay = () => {
 .menu-item:hover {
   background: rgba(var(--primary-color-rgb, 217, 119, 6), 0.08);
   color: var(--primary-color);
-  transform: none !important;
 }
 
 .menu-item:active {
-  transform: none !important;
+  transform: scale(0.97) !important;
+  transition: transform 60ms ease-out !important;
   background: rgba(var(--primary-color-rgb, 217, 119, 6), 0.12);
 }
 
@@ -13655,7 +13747,7 @@ const closeSuggestionsWithDelay = () => {
   color: #495057;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
 }
 
@@ -14007,7 +14099,7 @@ const closeSuggestionsWithDelay = () => {
   color: var(--primary-color);
   border: 1px solid rgba(253, 181, 24, 0.25);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .admin-table tbody tr:hover .cat-icon-badge {
@@ -14077,7 +14169,7 @@ const closeSuggestionsWithDelay = () => {
   font-family: inherit;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .svg-pool-item:hover {
@@ -14264,7 +14356,7 @@ const closeSuggestionsWithDelay = () => {
   border-color: rgba(30, 58, 95, 0.2);
   color: #1e3a5f;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .order-notes-print-btn:hover {
@@ -14359,7 +14451,7 @@ const closeSuggestionsWithDelay = () => {
   font-size: 0.88rem;
   color: #0f172a;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -14427,7 +14519,7 @@ select.form-control:focus {
   flex-shrink: 0;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-datepicker-trigger span,
@@ -14447,6 +14539,11 @@ select.form-control:focus {
   background: var(--primary-glow);
   color: var(--primary-color);
   box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.btn-datepicker-trigger:active {
+  transform: scale(0.97) !important;
+  transition: transform 60ms ease-out !important;
 }
 
 .selected-date-badge {
@@ -14480,7 +14577,7 @@ select.form-control:focus {
   font-size: 14px;
   cursor: pointer;
   line-height: 1;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-remove-date:hover {
@@ -14542,7 +14639,7 @@ select.form-control:focus {
   font-size: 1.2rem;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .dp-nav-btn:hover {
@@ -14581,7 +14678,7 @@ select.form-control:focus {
   color: #334155;
   cursor: pointer;
   font-family: 'Fira Code', 'Courier New', monospace, inherit;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .dp-day-cell:hover {
@@ -14624,7 +14721,7 @@ select.form-control:focus {
   border: 1px solid #e2e8f0;
   color: #475569;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
   touch-action: manipulation;
 }
@@ -14644,7 +14741,7 @@ select.form-control:focus {
   border: 1px solid #e2e8f0;
   color: #475569;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   height: 38px;
   touch-action: manipulation;
   font-family: inherit;
@@ -14663,6 +14760,11 @@ select.form-control:focus {
   box-shadow: 0 3px 10px var(--primary-glow);
 }
 
+.btn-today-shortcut:active {
+  transform: scale(0.96) !important;
+  transition: transform 60ms ease-out !important;
+}
+
 .form-control:focus {
   border-color: var(--chart-primary);
 }
@@ -14678,9 +14780,14 @@ select.form-control:focus {
   font-size: 0.92rem;
   cursor: pointer;
   border: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
   letter-spacing: 0.2px;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97) !important;
+  transition: transform 60ms ease-out !important;
 }
 
 .btn-group-row {
@@ -15035,7 +15142,7 @@ select.form-control:focus {
   border-radius: 10px !important;
   cursor: pointer !important;
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
 }
 
 .modal-box .btn-modal-save:hover,
@@ -15072,7 +15179,7 @@ select.form-control:focus {
   padding: 10px 18px !important;
   border-radius: 10px !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
 }
 
 .modal-box .btn-modal-cancel:hover,
@@ -15142,7 +15249,7 @@ select.form-control:focus {
   text-align: center;
   cursor: pointer;
   background: #f8fafc;
-  transition: all 0.25s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   position: relative;
   overflow: hidden;
   min-height: 120px;
@@ -15283,7 +15390,7 @@ select.form-control:focus {
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .radio-label:hover {
@@ -15650,7 +15757,7 @@ select.form-control:focus {
   cursor: pointer;
   outline: none;
   font-weight: 800;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   display: inline-flex;
   align-items: center;
   font-family: inherit;
@@ -15701,7 +15808,7 @@ select.form-control:focus {
   border: 1px solid #e2e8f0;
   background: #ffffff;
   color: #334155;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   touch-action: manipulation;
   white-space: nowrap;
 }
@@ -15950,7 +16057,7 @@ select.form-control:focus {
   justify-content: center;
   padding: 0 !important;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 .btn-remove-item:hover {
   transform: scale(1.1);
@@ -16002,7 +16109,7 @@ select.form-control:focus {
   border: 1px solid #d97706 !important;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28) !important;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
 }
 
@@ -16023,7 +16130,7 @@ select.form-control:focus {
   color: #64748b;
   border: 1px solid #cbd5e1;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
 }
 
@@ -16311,7 +16418,7 @@ select.form-control:focus {
   width: 30px;
   height: 30px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   padding: 0;
 }
 
@@ -16356,7 +16463,7 @@ select.form-control:focus {
   border-color: rgba(30, 58, 95, 0.2);
   color: #1e3a5f;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .reconciliation-print-btn:hover {
@@ -17487,7 +17594,7 @@ select.form-control:focus {
   border-radius: 20px;
   cursor: pointer;
   user-select: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   border: 2px solid transparent;
   font-weight: 600;
   font-size: 0.85rem;
@@ -17519,7 +17626,7 @@ select.form-control:focus {
   justify-content: center;
   background: rgba(255, 255, 255, 0.7);
   border: 1.5px solid currentColor;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .tag-picker-chip.is-selected .tag-chip-checkbox {
@@ -17909,7 +18016,7 @@ select.form-control:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   touch-action: manipulation;
 }
 
@@ -17950,7 +18057,7 @@ select.form-control:focus {
   font-size: 0.86rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   touch-action: manipulation;
 }
 
@@ -18064,7 +18171,7 @@ select.form-control:focus {
   white-space: nowrap !important;
   word-break: keep-all !important;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   border: none;
   outline: none;
   user-select: none;
@@ -18295,7 +18402,7 @@ select.form-control:focus {
   padding: 6px 14px;
   border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
 }
 
@@ -18565,7 +18672,7 @@ select.form-control:focus {
   padding: 4px 12px !important;
   gap: 6px !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
 }
 
 .btn-payment-print:hover {
@@ -18656,7 +18763,7 @@ select.form-control:focus {
   font-weight: 700;
   font-family: 'Cairo', sans-serif;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   border: 1px solid transparent;
   outline: none;
   user-select: none;
@@ -18769,7 +18876,7 @@ select.form-control:focus {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   text-decoration: none;
 }
 
@@ -18910,7 +19017,7 @@ select.form-control:focus {
   font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   border: 1px solid transparent;
   touch-action: manipulation;
   user-select: none;
@@ -19018,7 +19125,7 @@ select.form-control:focus {
   background: #f8fafc;
   color: #334155;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .modal-header-btn:hover:not(:disabled) {
@@ -19151,7 +19258,7 @@ select.form-control:focus {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-make-order svg {
@@ -19304,7 +19411,7 @@ select.form-control:focus {
   color: #64748b;
   border-radius: 9px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .price-mode-pill.active {
@@ -19447,7 +19554,7 @@ select.form-control:focus {
   border-radius: 10px !important;
   border: 1.5px solid #cbd5e1 !important;
   height: 40px !important;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -19577,7 +19684,7 @@ select.pos-control {
   padding: 1px 6px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   line-height: 1.3;
 }
 .date-quick-btn-mini:hover {
@@ -19603,7 +19710,7 @@ select.pos-control {
   border-radius: 8px;
   cursor: pointer;
   text-align: center;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .date-quick-btn:hover {
@@ -19646,7 +19753,7 @@ select.pos-control {
   font-family: inherit;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .cat-chip-btn:hover {
@@ -19657,6 +19764,11 @@ select.pos-control {
   background: #0f172a;
   color: #ffffff;
   border-color: #0f172a;
+}
+
+.cat-chip-btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 60ms ease-out !important;
 }
 
 .quick-products-grid {
@@ -19677,13 +19789,18 @@ select.pos-control {
   border-radius: 12px;
   padding: 8px 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .quick-prod-card:hover {
   background: #ffffff;
   border-color: #cbd5e1;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.quick-prod-card:active {
+  transform: scale(0.97) !important;
+  transition: transform 60ms ease-out !important;
 }
 
 .quick-prod-thumb {
@@ -19773,13 +19890,18 @@ select.pos-control {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .quick-prod-card:hover .quick-prod-add-btn {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
   border-color: #d97706;
+}
+
+.quick-prod-add-btn:active {
+  transform: scale(0.92) !important;
+  transition: transform 60ms ease-out !important;
 }
 
 .btn-quick-add {
@@ -19847,6 +19969,11 @@ select.pos-control {
   background: #e2e8f0;
 }
 
+.stepper-btn:active:not(:disabled) {
+  transform: scale(0.90) !important;
+  transition: transform 60ms ease-out !important;
+}
+
 .stepper-input {
   border: none !important;
   box-shadow: none !important;
@@ -19876,7 +20003,7 @@ select.pos-control {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-item-delete:hover {
@@ -19950,7 +20077,7 @@ select.pos-control {
   user-select: none !important;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
 }
 
 .auto-print-checkbox-label:hover {
@@ -19998,7 +20125,7 @@ select.pos-control {
   background: #ffffff !important;
   border: 1.5px solid #cbd5e1 !important;
   color: #475569 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   cursor: pointer !important;
 }
 
@@ -20022,7 +20149,7 @@ select.pos-control {
   border: 1px solid #d97706 !important;
   box-shadow: 0 4px 16px rgba(217, 119, 6, 0.32) !important;
   cursor: pointer !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   font-family: 'Cairo', sans-serif !important;
   user-select: none !important;
 }
@@ -20105,7 +20232,7 @@ select.pos-control {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-sugg-qty-minus:hover {
@@ -20229,7 +20356,7 @@ select.pos-control {
     font-weight: 750 !important;
     font-family: 'Cairo', sans-serif !important;
     cursor: pointer !important;
-    transition: all 0.18s ease !important;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
     touch-action: manipulation !important;
   }
 
@@ -20756,7 +20883,7 @@ select.pos-control {
   border: 1px solid #cbd5e1;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: inherit;
   line-height: 1.2;
 }
@@ -20799,7 +20926,7 @@ select.pos-control {
   font-weight: 800;
   cursor: pointer;
   touch-action: manipulation;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   box-sizing: border-box;
   user-select: none;
 }
@@ -20836,7 +20963,7 @@ select.pos-control {
   font-family: inherit !important;
   font-size: 0.88rem !important;
   text-align: right !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
 }
 
@@ -20880,7 +21007,7 @@ select.pos-control {
   font-weight: 800 !important;
   cursor: pointer !important;
   touch-action: manipulation !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
   user-select: none !important;
 }
@@ -20928,7 +21055,7 @@ select.pos-control {
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.9rem !important;
   text-align: right !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
 }
 
@@ -21200,7 +21327,7 @@ select.pos-control {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
     padding: 0;
     position: relative;
   }
@@ -21744,7 +21871,7 @@ select.pos-control {
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-pass-action:hover {
@@ -21809,7 +21936,7 @@ select.pos-control {
   font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .cust-password-pill:hover {
@@ -21855,7 +21982,7 @@ select.pos-control {
   border: 1.5px solid #cbd5e1 !important;
   background: #ffffff !important;
   color: #0f172a !important;
-  transition: all 0.2s ease !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
 }
 
 .cust-debt-print-btn:hover {
@@ -22531,7 +22658,7 @@ select.pos-control {
   font-size: 0.92rem;
   font-weight: 750;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .prod-tab-pill.active {
@@ -22561,7 +22688,7 @@ select.pos-control {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
@@ -22630,7 +22757,7 @@ select.pos-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .chef-icon-btn.whatsapp {
@@ -22727,7 +22854,7 @@ select.pos-control {
   font-size: 0.84rem;
   font-weight: 750;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-chef-action.btn-chef-assign {
@@ -22776,7 +22903,7 @@ select.pos-control {
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   position: relative;
 }
 
@@ -22951,7 +23078,7 @@ select.pos-control {
   font-weight: 750;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-bulk-pick:hover {
@@ -22988,7 +23115,7 @@ select.pos-control {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   position: relative;
   user-select: none;
 }
@@ -23018,7 +23145,7 @@ select.pos-control {
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .assign-product-card.is-selected .card-selection-check {
@@ -23104,7 +23231,7 @@ select.pos-control {
   font-size: 0.92rem;
   font-weight: 750;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .prod-tab-pill.active {
@@ -23134,7 +23261,7 @@ select.pos-control {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   border: 1px solid #e2e8f0;
   background: #ffffff;
 }
@@ -23210,7 +23337,7 @@ select.pos-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .chef-icon-btn.whatsapp {
@@ -23341,7 +23468,7 @@ select.pos-control {
   font-weight: 750;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-filter-shortcut:hover {
@@ -23364,7 +23491,7 @@ select.pos-control {
   display: flex;
   align-items: center;
   gap: 14px;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .report-kpi-box:hover {
@@ -23505,7 +23632,7 @@ select.pos-control {
   justify-content: center !important;
   gap: 6px !important;
   white-space: nowrap !important;
-  transition: all 0.2s ease !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
 }
 
 .report-standard-filters-row {
@@ -24008,7 +24135,7 @@ select.pos-control {
   padding: 10px 14px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .palette-item.highlighted, .palette-item:hover {
@@ -24103,7 +24230,7 @@ select.pos-control {
   font-size: 0.88rem;
   color: #1e293b;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .edit-order-date-trigger:hover,
@@ -24136,7 +24263,7 @@ select.pos-control {
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-date-chip:hover {
@@ -24256,7 +24383,7 @@ select.pos-control {
   background: #ffffff;
   border: 1.5px solid #fca5a5;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-payment-cancel:hover:not(:disabled) {
@@ -24709,7 +24836,7 @@ select.pos-control {
   padding: 10px 20px;
   border-radius: 10px;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
 .btn-reset-trigger:hover {
@@ -24951,7 +25078,7 @@ select.pos-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   text-decoration: none;
 }
 
