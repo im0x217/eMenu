@@ -200,8 +200,13 @@
                 @click.stop="openAnalyticsFromPicker"
                 title="تاريخ البداية (من)"
               >
-                <span>{{ analyticsStartDate ? ('من: ' + formatArabicDate(analyticsStartDate)) : 'من تاريخ' }}</span>
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span class="dp-trigger-main">
+                  <span class="dp-icon-wrap" aria-hidden="true">
+                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </span>
+                  <span class="dp-text-label">{{ analyticsStartDate ? ('من: ' + formatArabicDate(analyticsStartDate)) : 'من تاريخ' }}</span>
+                </span>
+                <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </button>
 
               <!-- From Date Popover -->
@@ -252,8 +257,13 @@
                 @click.stop="openAnalyticsToPicker"
                 title="تاريخ النهاية (إلى)"
               >
-                <span>{{ analyticsEndDate ? ('إلى: ' + formatArabicDate(analyticsEndDate)) : 'إلى تاريخ' }}</span>
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span class="dp-trigger-main">
+                  <span class="dp-icon-wrap" aria-hidden="true">
+                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </span>
+                  <span class="dp-text-label">{{ analyticsEndDate ? ('إلى: ' + formatArabicDate(analyticsEndDate)) : 'إلى تاريخ' }}</span>
+                </span>
+                <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </button>
 
               <!-- To Date Popover -->
@@ -1380,8 +1390,13 @@
                         @click.stop="datePickerOpen = !datePickerOpen"
                         title="التصفية بحسب تاريخ الاستلام"
                       >
-                        <span>تاريخ الاستلام</span>
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span class="dp-trigger-main">
+                          <span class="dp-icon-wrap" aria-hidden="true">
+                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          </span>
+                          <span class="dp-text-label">{{ orderFilters.selectedDate ? ('الاستلام: ' + formatArabicDate(orderFilters.selectedDate)) : 'تاريخ الاستلام' }}</span>
+                        </span>
+                        <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </button>
 
                       <!-- Today Shortcut Button -->
@@ -1839,8 +1854,13 @@
                         @click.stop="openCustDateFromPicker"
                         title="تاريخ البداية (من)"
                       >
-                        <span>{{ customerFilters.dateFrom ? ('من: ' + formatArabicDate(customerFilters.dateFrom)) : 'من تاريخ' }}</span>
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span class="dp-trigger-main">
+                          <span class="dp-icon-wrap" aria-hidden="true">
+                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          </span>
+                          <span class="dp-text-label">{{ customerFilters.dateFrom ? ('من: ' + formatArabicDate(customerFilters.dateFrom)) : 'من تاريخ' }}</span>
+                        </span>
+                        <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </button>
 
                       <!-- From Date Popover -->
@@ -1891,8 +1911,13 @@
                         @click.stop="openCustDateToPicker"
                         title="تاريخ النهاية (إلى)"
                       >
-                        <span>{{ customerFilters.dateTo ? ('إلى: ' + formatArabicDate(customerFilters.dateTo)) : 'إلى تاريخ' }}</span>
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span class="dp-trigger-main">
+                          <span class="dp-icon-wrap" aria-hidden="true">
+                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          </span>
+                          <span class="dp-text-label">{{ customerFilters.dateTo ? ('إلى: ' + formatArabicDate(customerFilters.dateTo)) : 'إلى تاريخ' }}</span>
+                        </span>
+                        <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </button>
 
                       <!-- To Date Popover -->
@@ -2375,8 +2400,13 @@
                             @click.stop="openProdDateFromPicker"
                             title="تاريخ البداية (من)"
                           >
-                            <span>{{ productionReportFilters.dateFrom ? ('من: ' + formatArabicDate(productionReportFilters.dateFrom)) : 'من تاريخ' }}</span>
-                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span class="dp-trigger-main">
+                              <span class="dp-icon-wrap" aria-hidden="true">
+                                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                              </span>
+                              <span class="dp-text-label">{{ productionReportFilters.dateFrom ? ('من: ' + formatArabicDate(productionReportFilters.dateFrom)) : 'من تاريخ' }}</span>
+                            </span>
+                            <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                           </button>
 
                           <!-- From Date Popover -->
@@ -2427,8 +2457,13 @@
                             @click.stop="openProdDateToPicker"
                             title="تاريخ النهاية (إلى)"
                           >
-                            <span>{{ productionReportFilters.dateTo ? ('إلى: ' + formatArabicDate(productionReportFilters.dateTo)) : 'إلى تاريخ' }}</span>
-                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span class="dp-trigger-main">
+                              <span class="dp-icon-wrap" aria-hidden="true">
+                                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                              </span>
+                              <span class="dp-text-label">{{ productionReportFilters.dateTo ? ('إلى: ' + formatArabicDate(productionReportFilters.dateTo)) : 'إلى تاريخ' }}</span>
+                            </span>
+                            <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                           </button>
 
                           <!-- To Date Popover -->
@@ -3141,11 +3176,16 @@
                         <button 
                           type="button" 
                           class="form-control pos-control btn-standard-datepicker-trigger" 
-                          :class="{ active: posDatePickerOpen }"
+                          :class="{ active: posDatePickerOpen || newOrder.deliveryDate }"
                           @click.stop="posDatePickerOpen = !posDatePickerOpen"
                         >
-                          <span class="font-bold">{{ newOrder.deliveryDate ? formatArabicDate(newOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
-                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          <span class="dp-trigger-main">
+                            <span class="dp-icon-wrap" aria-hidden="true">
+                              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </span>
+                            <span class="dp-text-label font-bold">{{ newOrder.deliveryDate ? formatArabicDate(newOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                          </span>
+                          <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         </button>
 
                         <!-- Standardized Popover Calendar for POS Modal -->
@@ -3794,11 +3834,16 @@
                       <button 
                         type="button" 
                         class="form-control pos-control btn-standard-datepicker-trigger" 
-                        :class="{ active: editOrderDatePickerOpen }"
+                        :class="{ active: editOrderDatePickerOpen || editingOrder.deliveryDate }"
                         @click.stop="editOrderDatePickerOpen = !editOrderDatePickerOpen"
                       >
-                        <span class="font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span class="dp-trigger-main">
+                          <span class="dp-icon-wrap" aria-hidden="true">
+                            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          </span>
+                          <span class="dp-text-label font-bold">{{ editingOrder.deliveryDate ? formatArabicDate(editingOrder.deliveryDate) : 'اختر تاريخ الاستلام…' }}</span>
+                        </span>
+                        <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </button>
 
                       <!-- Popover Calendar -->
@@ -14523,10 +14568,11 @@ select.form-control:focus {
 .btn-datepicker-trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   direction: rtl;
   text-align: right;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 10px;
+  padding: 6px 12px;
   height: 38px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -14539,29 +14585,88 @@ select.form-control:focus {
   flex-shrink: 0;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
 }
 
-.btn-datepicker-trigger span,
-.btn-standard-datepicker-trigger span {
+.dp-trigger-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dp-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(30, 58, 95, 0.06);
+  color: var(--primary-color, #1e3a5f);
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dp-icon-wrap svg {
+  stroke: currentColor;
+}
+
+.dp-text-label {
   text-align: right;
   direction: rtl;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
 }
 
-.btn-datepicker-trigger:hover {
+.dp-chevron-icon {
+  flex-shrink: 0;
+  stroke: currentColor;
+  opacity: 0.55;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+}
+
+.btn-datepicker-trigger:hover,
+.btn-standard-datepicker-trigger:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
   background: var(--primary-glow);
 }
 
-.btn-datepicker-trigger.active {
+.btn-datepicker-trigger:hover .dp-icon-wrap,
+.btn-standard-datepicker-trigger:hover .dp-icon-wrap {
+  background: rgba(30, 58, 95, 0.12);
+}
+
+.btn-datepicker-trigger:hover .dp-chevron-icon,
+.btn-standard-datepicker-trigger:hover .dp-chevron-icon {
+  opacity: 0.9;
+}
+
+.btn-datepicker-trigger.active,
+.btn-standard-datepicker-trigger.active {
   border-color: var(--primary-color);
   background: var(--primary-glow);
   color: var(--primary-color);
   box-shadow: 0 2px 8px var(--primary-glow);
 }
 
-.btn-datepicker-trigger:active {
+.btn-datepicker-trigger.active .dp-icon-wrap,
+.btn-standard-datepicker-trigger.active .dp-icon-wrap {
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+.btn-datepicker-trigger.active .dp-chevron-icon,
+.btn-standard-datepicker-trigger.active .dp-chevron-icon {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+.btn-datepicker-trigger:active,
+.btn-standard-datepicker-trigger:active {
   transform: scale(0.97) !important;
   transition: transform 60ms ease-out !important;
 }
@@ -21068,6 +21173,7 @@ select.pos-control {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
+  gap: 10px !important;
   background: #ffffff !important;
   cursor: pointer !important;
   padding: 8px 14px !important;
@@ -21089,9 +21195,30 @@ select.pos-control {
   background: rgba(245, 158, 11, 0.04) !important;
 }
 
+.btn-standard-datepicker-trigger:hover .dp-icon-wrap {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #d97706 !important;
+}
+
+.btn-standard-datepicker-trigger:hover .dp-chevron-icon {
+  opacity: 0.9 !important;
+  color: #d97706 !important;
+}
+
 .btn-standard-datepicker-trigger.active {
   border-color: #f59e0b !important;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+.btn-standard-datepicker-trigger.active .dp-icon-wrap {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+.btn-standard-datepicker-trigger.active .dp-chevron-icon {
+  transform: rotate(180deg) !important;
+  opacity: 1 !important;
+  color: #d97706 !important;
 }
 
 /* ==========================================================================
@@ -21686,6 +21813,21 @@ select.pos-control {
     padding: 0 10px !important;
     box-sizing: border-box !important;
     justify-content: space-between !important;
+  }
+
+  .dp-icon-wrap {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+  }
+
+  .dp-icon-wrap svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .dp-text-label {
+    font-size: 0.82rem !important;
   }
 
   .btn-make-order,

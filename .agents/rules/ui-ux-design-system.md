@@ -59,8 +59,10 @@ All UI components, views, styles, and interaction workflows in this project must
 ---
 
 ## 5. Form Controls, Date Pickers & RTL Ergonomics
-- **RTL Datepicker Trigger Inversion**:
-  - In RTL layouts, date picker trigger buttons must display the text label on the right (`<span>` first) and the calendar SVG icon on the left (`<svg>` second), styled with `direction: rtl; text-align: right;`.
+- **Cohesive Datepicker Trigger Architecture**:
+  - In RTL layouts, date picker trigger buttons must encapsulate the leading calendar SVG inside `.dp-icon-wrap` and the Arabic text inside `.dp-text-label`, both grouped together inside `.dp-trigger-main`.
+  - A subtle trailing dropdown chevron (`.dp-chevron-icon`) sits at the opposing edge (using `justify-content: space-between`) and smoothly rotates 180° (`transform: rotate(180deg)`) when the popover calendar is open.
+  - This prevents the awkward visual detachment of the calendar icon from the label on wide or mobile screens, keeping the icon and text tightly bonded while clearly communicating dropdown functionality.
 - **RTL Calendar Navigation Chevrons**:
   - In RTL reading direction, "Previous Month" advances backward in time and points to the right:
     `<polyline points="9 18 15 12 9 6"></polyline>` with explicit `title="الشهر السابق"` and `aria-label="الشهر السابق"`.
