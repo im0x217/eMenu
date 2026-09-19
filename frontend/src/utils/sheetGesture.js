@@ -42,6 +42,21 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
       return;
     }
 
+    // If target is inside a scrollable child currently scrolled down, defer to native scroll
+    const isGrabHandle = !!e.target.closest('.sheet-grab-handle');
+    if (!isGrabHandle) {
+      let el = e.target;
+      while (el && el !== sheetEl) {
+        if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
+          const overflowY = window.getComputedStyle(el).overflowY;
+          if (overflowY === 'auto' || overflowY === 'scroll') {
+            return;
+          }
+        }
+        el = el.parentElement;
+      }
+    }
+
     isDragging = true;
     startY = e.clientY;
     currentY = 0;
@@ -141,3 +156,34 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
     window.removeEventListener('pointercancel', handlePointerCancel);
   };
 };
+
+/**
+ * Vue 3 Custom Directive `v-sheet-gesture`
+ * Binds fluid bottom sheet swipe-to-dismiss gesture to any modal card.
+ * Usage: `v-sheet-gesture="onDismissHandler"`
+ */
+export const vSheetGesture = {
+  mounted(el, binding) {
+    if (typeof binding.value === 'function') {
+      el._currentSheetDismiss = binding.value;
+      el._cleanupSheetGesture = bindSheetGesture(el, (arg) => {
+        if (typeof el._currentSheetDismiss === 'function') {
+          el._currentSheetDismiss(arg);
+        }
+      });
+    }
+  },
+  updated(el, binding) {
+    if (typeof binding.value === 'function') {
+      el._currentSheetDismiss = binding.value;
+    }
+  },
+  unmounted(el) {
+    if (el._cleanupSheetGesture) {
+      el._cleanupSheetGesture();
+      delete el._cleanupSheetGesture;
+      delete el._currentSheetDismiss;
+    }
+  }
+};
+

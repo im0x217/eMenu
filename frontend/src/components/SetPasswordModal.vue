@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
+import { vSheetGesture } from '../utils/sheetGesture';
 
 const authStore = useAuthStore();
 const toastStore = useToastStore();
@@ -67,7 +68,14 @@ onUnmounted(() => {
 <template>
   <Transition name="modal-spring-fade">
     <div v-if="authStore.showSetPasswordModal" class="password-modal-overlay" @click.self="handleDismiss">
-      <div class="password-modal-card glass-panel" role="dialog" aria-modal="true" aria-label="تأمين حسابك بكلمة مرور">
+      <div 
+        class="password-modal-card glass-panel" 
+        role="dialog" 
+        aria-modal="true" 
+        aria-label="تأمين حسابك بكلمة مرور"
+        v-sheet-gesture="handleDismiss"
+      >
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-badge-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -188,7 +196,22 @@ onUnmounted(() => {
   transform: translateZ(0);
 }
 
+.sheet-grab-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.45);
+  margin: 0 auto 14px auto;
+  display: none;
+  touch-action: none;
+  cursor: grab;
+}
+
 @media (max-width: 768px) {
+  .sheet-grab-handle {
+    display: block;
+  }
+
   .password-modal-overlay {
     align-items: flex-end !important;
     padding: 0 !important;

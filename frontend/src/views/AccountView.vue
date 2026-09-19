@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth';
 import { useFavoritesStore } from '../stores/favorites';
 import { useCartStore } from '../stores/cart';
 import { useToastStore } from '../stores/toast';
+import { vSheetGesture } from '../utils/sheetGesture';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -668,7 +669,8 @@ const handleResendWhatsApp = () => {
     <!-- WhatsApp Details Modal -->
     <Transition name="modal-spring-fade">
       <div v-if="isModalOpen" class="modal-backdrop" @click="closeModal">
-        <div class="modal-content glass-panel" role="dialog" aria-modal="true" aria-labelledby="order-details-title" @click.stop>
+        <div class="modal-content glass-panel" role="dialog" aria-modal="true" aria-labelledby="order-details-title" @click.stop v-sheet-gesture="closeModal">
+          <div class="sheet-grab-handle" aria-hidden="true"></div>
           <div class="modal-header">
             <div class="modal-title-group">
               <h4 id="order-details-title" class="modal-title">تفاصيل الطلب</h4>
@@ -1534,7 +1536,22 @@ const handleResendWhatsApp = () => {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
+.sheet-grab-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.45);
+  margin: 0 auto 12px auto;
+  display: none;
+  touch-action: none;
+  cursor: grab;
+}
+
 @media (max-width: 768px) {
+  .sheet-grab-handle {
+    display: block;
+  }
+
   .modal-backdrop {
     align-items: flex-end !important;
     padding: 0 !important;

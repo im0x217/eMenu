@@ -2912,7 +2912,8 @@
   <!-- RESET ORDERS CONFIRMATION MODAL -->
     <Transition name="modal-spring-fade">
   <div v-if="resetModalOpen" class="modal-overlay" @click.self="resetModalOpen = false">
-    <div class="modal-content reset-confirm-modal-box" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+    <div class="modal-content reset-confirm-modal-box" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title" v-sheet-gesture="() => resetModalOpen = false">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
       <div class="modal-header reset-modal-header">
         <div class="d-flex align-items-center gap-3">
           <div class="reset-header-icon" aria-hidden="true">
@@ -2978,9 +2979,9 @@
       aria-modal="true"
       aria-labelledby="fast-order-modal-title"
     >
-      <div class="modal-content glass-panel fast-order-modal">
+      <div class="modal-content glass-panel fast-order-modal" v-sheet-gesture="() => newOrderModalOpen = false">
         <!-- Mobile Bottom-Sheet Drag Handle -->
-        <div class="mobile-modal-drag-pill" aria-hidden="true"></div>
+        <div class="mobile-modal-drag-pill sheet-grab-handle" aria-hidden="true"></div>
         
         <!-- Modal Header -->
         <div class="fast-order-header">
@@ -3624,9 +3625,9 @@
       aria-modal="true"
       aria-labelledby="order-edit-title"
     >
-      <div class="modal-content glass-panel fast-order-modal">
+      <div class="modal-content glass-panel fast-order-modal" v-sheet-gesture="() => orderEditModalOpen = false">
         <!-- Mobile Bottom-Sheet Drag Handle -->
-        <div class="mobile-modal-drag-pill" aria-hidden="true"></div>
+        <div class="mobile-modal-drag-pill sheet-grab-handle" aria-hidden="true"></div>
         
         <!-- Modal Header -->
         <div class="fast-order-header">
@@ -4107,7 +4108,8 @@
     <!-- Chef Create/Edit Modal -->
     <Transition name="modal-spring-fade">
     <div v-if="chefModalOpen" class="modal-overlay" @click.self="chefModalOpen = false">
-      <div class="modal-content modal-md chef-form-modal" role="dialog" aria-modal="true" aria-labelledby="chef-modal-title">
+      <div class="modal-content modal-md chef-form-modal" role="dialog" aria-modal="true" aria-labelledby="chef-modal-title" v-sheet-gesture="() => chefModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="d-flex align-items-center gap-3">
@@ -4165,7 +4167,8 @@
     <!-- Assign Products to Chef Modal (Spacious Card Picker) -->
     <Transition name="modal-spring-fade">
     <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay" @click.self="assignProductsModalOpen = false">
-      <div class="modal-content modal-lg assign-products-modal-box" role="dialog" aria-modal="true" aria-labelledby="assign-products-title">
+      <div class="modal-content modal-lg assign-products-modal-box" role="dialog" aria-modal="true" aria-labelledby="assign-products-title" v-sheet-gesture="() => assignProductsModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="d-flex align-items-center gap-3">
@@ -4250,7 +4253,8 @@
     <!-- Product Modal Form -->
     <Transition name="modal-spring-fade">
     <div v-if="productModalOpen" class="modal-overlay" @click.self="productModalOpen = false">
-      <div class="modal-box glass-panel max-w-lg product-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+      <div class="modal-box glass-panel max-w-lg product-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title" v-sheet-gesture="() => productModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="modal-title-icon" aria-hidden="true">
@@ -4432,7 +4436,8 @@
     <!-- Category Modal Form -->
     <Transition name="modal-spring-fade">
     <div v-if="categoryModalOpen" class="modal-overlay" @click.self="categoryModalOpen = false">
-      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
+      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="category-modal-title" v-sheet-gesture="() => categoryModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <h3 id="category-modal-title">{{ editingCategory._id ? 'تعديل الصنف' : 'إضافة صنف جديد' }}</h3>
           <button @click="categoryModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
@@ -4489,7 +4494,8 @@
     <!-- Tag Modal Form -->
     <Transition name="modal-spring-fade">
     <div v-if="tagModalOpen" class="modal-overlay" @click.self="tagModalOpen = false">
-      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="tag-modal-title">
+      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="tag-modal-title" v-sheet-gesture="() => tagModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="modal-title-icon" aria-hidden="true">
@@ -4580,7 +4586,8 @@
       aria-labelledby="customer-profile-modal-title"
       aria-describedby="customer-profile-modal-phone"
     >
-      <div class="modal-content modal-md customer-profile-modal">
+      <div class="modal-content modal-md customer-profile-modal" v-sheet-gesture="() => customerDetailsModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <h2 id="customer-profile-modal-title" class="modal-title">الملف التعريفي للعميل</h2>
@@ -4771,7 +4778,8 @@
     <!-- Customer Modal Form -->
     <Transition name="modal-spring-fade">
     <div v-if="customerModalOpen" class="modal-overlay" @click.self="customerModalOpen = false">
-      <div class="modal-content modal-md" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
+      <div class="modal-content modal-md" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title" v-sheet-gesture="() => customerModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <h2 id="customer-modal-title" class="modal-title">تعديل بيانات العميل</h2>
@@ -4836,7 +4844,8 @@
     <!-- Customer Favorites Modal -->
     <Transition name="modal-spring-fade">
     <div v-if="customerFavsModalOpen" class="modal-overlay" @click.self="customerFavsModalOpen = false">
-      <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="customer-favs-title">
+      <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="customer-favs-title" v-sheet-gesture="() => customerFavsModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
             <h2 id="customer-favs-title" class="modal-title">المنتجات المفضلة للعميل</h2>
@@ -4898,7 +4907,8 @@
     <!-- Marketing Carousel Modal Form -->
     <Transition name="modal-spring-fade">
     <div v-if="carouselModalOpen" class="modal-overlay" @click.self="carouselModalOpen = false">
-      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="carousel-modal-title">
+      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="carousel-modal-title" v-sheet-gesture="() => carouselModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <h3 id="carousel-modal-title">{{ editingCarouselId ? 'تعديل البنر الإعلاني' : 'إضافة بنر إعلاني جديد' }}</h3>
           <button @click="carouselModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
@@ -5045,7 +5055,8 @@
   <!-- User Modal Form -->
   <Transition name="modal-spring-fade">
   <div v-if="userModalOpen" class="modal-overlay" @click.self="userModalOpen = false">
-    <div class="modal-box glass-panel max-w-lg user-form-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+    <div class="modal-box glass-panel max-w-lg user-form-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title" v-sheet-gesture="() => userModalOpen = false">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
       <div class="modal-header">
         <div class="modal-title-group">
           <div class="modal-title-icon" aria-hidden="true">
@@ -5774,7 +5785,8 @@
     aria-modal="true"
     aria-labelledby="prod-cust-modal-title"
   >
-    <div class="modal-box glass-panel max-w-4xl product-customers-modal">
+    <div class="modal-box glass-panel max-w-4xl product-customers-modal" v-sheet-gesture="closeProductCustomersModal">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
       <!-- Modal Header -->
       <div class="modal-header pb-3 mb-4">
         <div class="modal-title-group">
@@ -6063,7 +6075,8 @@
   <!-- ============ PAYMENT RECORDING MODAL ============ -->
   <Transition name="modal-spring-fade">
   <div v-if="paymentModalOpen" class="modal-overlay" @click.self="paymentModalOpen = false">
-    <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+    <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" v-sheet-gesture="() => paymentModalOpen = false">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
       <div class="modal-header">
         <div class="modal-title-group">
           <h2 id="payment-modal-title" class="modal-title">تسجيل دفعة نقدية</h2>
@@ -6241,7 +6254,8 @@
   <!-- ============ PAYMENT HISTORY MODAL ============ -->
   <Transition name="modal-spring-fade">
   <div v-if="paymentHistoryModalOpen" class="modal-overlay" @click.self="paymentHistoryModalOpen = false">
-    <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-history-title">
+    <div class="modal-content modal-lg" role="dialog" aria-modal="true" aria-labelledby="payment-history-title" v-sheet-gesture="() => paymentHistoryModalOpen = false">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
       <div class="modal-header">
         <div class="modal-title-group">
           <h2 id="payment-history-title" class="modal-title">سجل المدفوعات والتحصيلات</h2>
@@ -6438,7 +6452,8 @@
   <!-- KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
   <Transition name="modal-spring-fade">
   <div v-if="shortcutsModalOpen" class="modal-overlay" @click.self="shortcutsModalOpen = false">
-    <div class="modal-content shortcuts-modal-box" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
+    <div class="modal-content shortcuts-modal-box" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title" v-sheet-gesture="() => shortcutsModalOpen = false">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
       <!-- Fixed Modal Header -->
       <div class="shortcuts-modal-header">
         <div class="d-flex align-items-center gap-3">
@@ -6658,11 +6673,15 @@ import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import JsBarcode from 'jsbarcode';
 import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl } from '../utils/phone';
+import { vSheetGesture } from '../utils/sheetGesture';
 
 export default {
   name: 'AdminView',
   components: {
     CategoryIcon
+  },
+  directives: {
+    sheetGesture: vSheetGesture
   },
   setup() {
     const route = useRoute();
@@ -19286,6 +19305,7 @@ select.form-control:focus {
   outline-offset: 2px;
 }
 
+.sheet-grab-handle,
 .mobile-modal-drag-pill {
   display: none;
 }
@@ -20277,14 +20297,17 @@ select.pos-control {
     flex-direction: column !important;
   }
 
+  .sheet-grab-handle,
   .mobile-modal-drag-pill {
     display: block !important;
     width: 38px;
-    height: 4px;
-    background: #cbd5e1;
+    height: 4.5px;
+    background: rgba(148, 163, 184, 0.45);
     border-radius: 3px;
-    margin: 3px auto 8px auto;
+    margin: 6px auto 10px auto;
     flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
   }
 
   .fast-order-header {
