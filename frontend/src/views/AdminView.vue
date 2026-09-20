@@ -960,19 +960,9 @@
           <!-- PRODUCTS CRUD TAB -->
           <div v-else-if="activeTab === 'products' && userRole === 'admin'" class="products-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-split">
-                <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">إدارة قائمة المنتجات</h3>
-                    <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
-                  </div>
-                  <button @click="openProductModal()" class="btn btn-primary">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة منتج جديد
-                  </button>
-                </div>
-                <div class="card-toolbar-bottom">
-                  <div class="search-input-wrapper">
+              <div class="card-toolbar card-toolbar-unified products-toolbar-unified">
+                <div class="toolbar-search-filter-group">
+                  <div class="search-input-wrapper flex-grow-1">
                     <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input 
                       v-model="filters.search" 
@@ -996,6 +986,14 @@
                       <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
                     </select>
                   </div>
+                  <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
+                </div>
+
+                <div class="toolbar-actions-group">
+                  <button @click="openProductModal()" class="btn btn-primary">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>إضافة منتج جديد</span>
+                  </button>
                 </div>
               </div>
 
@@ -1260,48 +1258,9 @@
             <!-- 2. Main Section Card -->
             <div class="table-card glass-panel overflow-hidden">
               <!-- Toolbar -->
-              <div class="card-toolbar card-toolbar-split">
-                <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">أصناف المنيو والأقسام الفرعية</h3>
-                    <span class="toolbar-badge">{{ formatArabicPlural(filteredCategories.length, 'category') }}</span>
-                  </div>
-                  <div class="toolbar-actions-group">
-                    <!-- View Mode Toggle (Desktop Only) -->
-                    <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
-                      <button 
-                        type="button" 
-                        class="btn-toggle-mode" 
-                        :class="{ active: categoriesViewMode === 'cards' }" 
-                        @click="categoriesViewMode = 'cards'"
-                        title="عرض البطاقات البصرية"
-                      >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                        <span>بطاقات</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="btn-toggle-mode" 
-                        :class="{ active: categoriesViewMode === 'table' }" 
-                        @click="categoriesViewMode = 'table'"
-                        title="عرض الجدول المنظم"
-                      >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                        <span>جدول</span>
-                      </button>
-                    </div>
-
-                    <!-- Add Category Button -->
-                    <button @click="openCategoryModal()" class="btn btn-primary btn-add-highlight">
-                      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      <span>إضافة صنف جديد</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Search Row -->
-                <div class="card-toolbar-bottom">
-                  <div class="search-input-wrapper">
+              <div class="card-toolbar card-toolbar-unified">
+                <div class="toolbar-search-filter-group">
+                  <div class="search-input-wrapper flex-grow-1">
                     <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input 
                       v-model="categorySearchQuery" 
@@ -1317,6 +1276,39 @@
                       aria-label="مسح البحث"
                     >&times;</button>
                   </div>
+                  <span class="toolbar-badge">{{ formatArabicPlural(filteredCategories.length, 'category') }}</span>
+                </div>
+
+                <div class="toolbar-actions-group">
+                  <!-- View Mode Toggle (Desktop Only) -->
+                  <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
+                    <button 
+                      type="button" 
+                      class="btn-toggle-mode" 
+                      :class="{ active: categoriesViewMode === 'cards' }" 
+                      @click="categoriesViewMode = 'cards'"
+                      title="عرض البطاقات البصرية"
+                    >
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      <span>بطاقات</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn-toggle-mode" 
+                      :class="{ active: categoriesViewMode === 'table' }" 
+                      @click="categoriesViewMode = 'table'"
+                      title="عرض الجدول المنظم"
+                    >
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      <span>جدول</span>
+                    </button>
+                  </div>
+
+                  <!-- Add Category Button -->
+                  <button @click="openCategoryModal()" class="btn btn-primary btn-add-highlight">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>إضافة صنف جديد</span>
+                  </button>
                 </div>
               </div>
 
@@ -1537,48 +1529,9 @@
             <!-- 2. Main Section Card -->
             <div class="table-card glass-panel overflow-hidden">
               <!-- Toolbar -->
-              <div class="card-toolbar card-toolbar-split">
-                <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">العلامات المميزة والشارات الترويجية</h3>
-                    <span class="toolbar-badge">{{ formatArabicPlural(filteredTags.length, 'tag') }}</span>
-                  </div>
-                  <div class="toolbar-actions-group">
-                    <!-- View Mode Toggle (Desktop Only) -->
-                    <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
-                      <button 
-                        type="button" 
-                        class="btn-toggle-mode" 
-                        :class="{ active: tagsViewMode === 'cards' }" 
-                        @click="tagsViewMode = 'cards'"
-                        title="عرض البطاقات البصرية"
-                      >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                        <span>بطاقات</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="btn-toggle-mode" 
-                        :class="{ active: tagsViewMode === 'table' }" 
-                        @click="tagsViewMode = 'table'"
-                        title="عرض الجدول المنظم"
-                      >
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                        <span>جدول</span>
-                      </button>
-                    </div>
-
-                    <!-- Add Tag Button -->
-                    <button @click="openTagModal()" class="btn btn-primary btn-add-highlight">
-                      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      <span>إضافة علامة مميزة</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Search Row -->
-                <div class="card-toolbar-bottom">
-                  <div class="search-input-wrapper">
+              <div class="card-toolbar card-toolbar-unified">
+                <div class="toolbar-search-filter-group">
+                  <div class="search-input-wrapper flex-grow-1">
                     <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input 
                       v-model="tagSearchQuery" 
@@ -1594,6 +1547,39 @@
                       aria-label="مسح البحث"
                     >&times;</button>
                   </div>
+                  <span class="toolbar-badge">{{ formatArabicPlural(filteredTags.length, 'tag') }}</span>
+                </div>
+
+                <div class="toolbar-actions-group">
+                  <!-- View Mode Toggle (Desktop Only) -->
+                  <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
+                    <button 
+                      type="button" 
+                      class="btn-toggle-mode" 
+                      :class="{ active: tagsViewMode === 'cards' }" 
+                      @click="tagsViewMode = 'cards'"
+                      title="عرض البطاقات البصرية"
+                    >
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      <span>بطاقات</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn-toggle-mode" 
+                      :class="{ active: tagsViewMode === 'table' }" 
+                      @click="tagsViewMode = 'table'"
+                      title="عرض الجدول المنظم"
+                    >
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      <span>جدول</span>
+                    </button>
+                  </div>
+
+                  <!-- Add Tag Button -->
+                  <button @click="openTagModal()" class="btn btn-primary btn-add-highlight">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>إضافة علامة مميزة</span>
+                  </button>
                 </div>
               </div>
 
@@ -1756,17 +1742,14 @@
           <!-- MARKETING CAROUSEL TAB -->
           <div v-else-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
             <div class="table-card glass-panel overflow-hidden p-0">
-              <div class="card-toolbar card-toolbar-split">
-                <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">بنرات العروض التسويقية</h3>
-                    <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
-                  </div>
-                  <button @click="openCarouselModal()" class="btn btn-primary">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة بنر جديد
-                  </button>
+              <div class="card-toolbar card-toolbar-unified">
+                <div class="toolbar-title-group">
+                  <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
                 </div>
+                <button @click="openCarouselModal()" class="btn btn-primary">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>إضافة بنر جديد</span>
+                </button>
               </div>
 
               <div class="p-3">
@@ -1824,7 +1807,6 @@
               <div class="card-toolbar card-toolbar-split orders-toolbar-container">
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">سجل الطلبات الواردة</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
                     <span v-if="unprintedOrdersCount > 0" class="unprinted-orders-alert-pill animate-fade-in" title="طلبات جديدة لم تتم طباعتها بعد">
                       <span class="unprinted-pulse-dot"></span>
@@ -2323,7 +2305,6 @@
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">دليل وقائمة العملاء</h3>
                     <span class="toolbar-badge">{{ formatArabicPlural(filteredCustomers.length, 'customer') }}</span>
                   </div>
                   <div class="customer-toolbar-actions">
@@ -2738,17 +2719,14 @@
             <div v-if="productionSubTab === 'chefs'" class="chefs-view-section animate-fade-in">
               <div class="table-card glass-panel overflow-hidden">
                 <!-- Toolbar Header -->
-                <div class="card-toolbar card-toolbar-split">
-                  <div class="card-toolbar-top">
-                    <div class="toolbar-title-group">
-                      <h3 class="toolbar-title">دليل وقائمة الشيفات المسجلين</h3>
-                      <span class="toolbar-badge">{{ formatArabicPlural(chefs.length, 'customer') }}</span>
-                    </div>
-                    <button @click="openAddChefModal" class="btn btn-primary">
-                      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      إضافة شيف جديد
-                    </button>
+                <div class="card-toolbar card-toolbar-unified">
+                  <div class="toolbar-title-group">
+                    <span class="toolbar-badge">{{ formatArabicPlural(chefs.length, 'customer') }}</span>
                   </div>
+                  <button @click="openAddChefModal" class="btn btn-primary">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>إضافة شيف جديد</span>
+                  </button>
                 </div>
 
                 <!-- Card Content Body -->
@@ -2875,7 +2853,6 @@
                 <div class="card-toolbar card-toolbar-split">
                   <div class="card-toolbar-top">
                     <div class="toolbar-title-group">
-                      <h3 class="toolbar-title">تقرير مبيعات وإنتاج الشيفات</h3>
                       <span class="toolbar-badge">{{ productionReportData.chefReport ? productionReportData.chefReport.length : 0 }} شيف منتج</span>
                     </div>
                     <!-- Matched Action Buttons -->
@@ -3334,17 +3311,14 @@
           <!-- USERS MANAGEMENT TAB -->
           <div v-else-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-split">
-                <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">إدارة حسابات ومستخدمي النظام</h3>
-                    <span class="toolbar-badge">{{ formatArabicPlural(adminUsers.length, 'customer') }}</span>
-                  </div>
-                  <button @click="openUserModal()" class="btn btn-primary">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة مستخدم جديد
-                  </button>
+              <div class="card-toolbar card-toolbar-unified">
+                <div class="toolbar-title-group">
+                  <span class="toolbar-badge">{{ formatArabicPlural(adminUsers.length, 'customer') }}</span>
                 </div>
+                <button @click="openUserModal()" class="btn btn-primary">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>إضافة مستخدم جديد</span>
+                </button>
               </div>
 
               <div class="table-container">
@@ -4848,7 +4822,7 @@
     </div>
     </Transition>
 
-    <!-- Assign Products to Chef Modal (Spacious Card Picker) -->
+    <!-- Assign Products to Chef Modal (Spacious Card Picker & Bottom Sheet on Mobile) -->
     <Transition name="modal-spring-fade">
     <div v-if="assignProductsModalOpen && selectedChefForAssign" class="modal-overlay" @click.self="assignProductsModalOpen = false">
       <div class="modal-content modal-lg assign-products-modal-box" role="dialog" aria-modal="true" aria-labelledby="assign-products-title" v-sheet-gesture="() => assignProductsModalOpen = false">
@@ -4861,7 +4835,7 @@
               </div>
               <div>
                 <h2 id="assign-products-title" class="modal-title">تخصيص وإسناد الأصناف للشيف</h2>
-                <span class="modal-subtitle">اختر الأصناف التي يتولى إنتاجها الشيف <strong class="text-primary">{{ selectedChefForAssign.name }}</strong></span>
+                <span class="modal-subtitle">اختر أصناف إنتاج الشيف <strong class="text-primary">{{ selectedChefForAssign.name }}</strong></span>
               </div>
             </div>
           </div>
@@ -4872,19 +4846,50 @@
 
         <div class="modal-body py-2">
           <!-- Filter & Bulk Actions Toolbar -->
-          <div class="assign-toolbar-container mb-3">
+          <div class="assign-toolbar-container mb-2">
             <div class="search-input-wrapper flex-grow-1">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input v-model="assignProductSearch" type="text" placeholder="بحث باسم الصنف أو التصنيف…" class="form-control search-input" autocomplete="off" spellcheck="false" />
+              <button 
+                v-if="assignProductSearch" 
+                type="button" 
+                class="btn-clear-search" 
+                @click="assignProductSearch = ''"
+                aria-label="مسح البحث"
+              >&times;</button>
+            </div>
+
+            <!-- Horizontal Category Quick Filter Pills -->
+            <div class="assign-category-pills no-scrollbar">
+              <button 
+                type="button" 
+                class="assign-cat-pill" 
+                :class="{ active: !assignProductCategory }" 
+                @click="assignProductCategory = ''"
+              >
+                الكل ({{ products.length }})
+              </button>
+              <button 
+                v-for="cat in categories" 
+                :key="cat._id" 
+                type="button" 
+                class="assign-cat-pill" 
+                :class="{ active: assignProductCategory === cat.name }" 
+                @click="assignProductCategory = cat.name"
+              >
+                {{ cat.name }}
+              </button>
             </div>
 
             <div class="assign-toolbar-actions">
-              <button type="button" @click="selectAllProductsForChef" class="btn-bulk-pick" title="تحديد جميع الأصناف المعروضة">
-                تحديد الكل
-              </button>
-              <button type="button" @click="deselectAllProductsForChef" class="btn-bulk-pick" title="إلغاء تحديد الكل">
-                إلغاء التحديد
-              </button>
+              <div class="assign-bulk-buttons">
+                <button type="button" @click="selectAllProductsForChef" class="btn-bulk-pick" title="تحديد جميع الأصناف المعروضة">
+                  تحديد الكل
+                </button>
+                <button type="button" @click="deselectAllProductsForChef" class="btn-bulk-pick" title="إلغاء تحديد الكل">
+                  إلغاء التحديد
+                </button>
+              </div>
               <div class="selected-counter-badge">
                 <span>المحدد: <strong class="text-primary text-mono">{{ selectedProductIdsForChef.length }}</strong> / {{ products.length }}</span>
               </div>
@@ -4904,11 +4909,7 @@
               @click="toggleProductAssignment(prod._id)"
               :title="isProductAssignedToOtherChef(prod) ? ('هذا الصنف مخصص ومقفل للشيف: ' + getOtherChefName(prod)) : ''"
             >
-              <div class="card-selection-check" :class="{ 'is-lock-badge': isProductAssignedToOtherChef(prod) }">
-                <svg v-if="isProductAssignedToOtherChef(prod)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <svg v-else-if="selectedProductIdsForChef.includes(String(prod._id))" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <img :src="prod.img || '/res/logo.jpg'" :alt="prod.name" class="assign-prod-img" />
+              <img :src="prod.img || '/res/logo.jpg'" :alt="prod.name" class="assign-prod-img" loading="lazy" />
               <div class="assign-prod-info">
                 <h5 class="assign-prod-title font-bold">{{ prod.name }}</h5>
                 <div class="d-flex align-items-center gap-1 flex-wrap my-1">
@@ -4920,11 +4921,20 @@
                 </div>
                 <span class="assign-prod-price text-mono font-bold">{{ formatCurrency(prod.price_regular || prod.price || 0) }}</span>
               </div>
+              <div class="card-selection-check" :class="{ 'is-lock-badge': isProductAssignedToOtherChef(prod) }">
+                <svg v-if="isProductAssignedToOtherChef(prod)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg v-else-if="selectedProductIdsForChef.includes(String(prod._id))" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+
+            <!-- Empty Search Results Feedback -->
+            <div v-if="filteredProductsForAssign.length === 0" class="assign-empty-state">
+              <p>لا توجد منتجات مطابقة للبحث أو التصنيف المحدد.</p>
             </div>
           </div>
         </div>
 
-        <div class="modal-footer mt-3">
+        <div class="modal-footer">
           <button type="button" @click="saveProductAssignments" class="btn btn-primary btn-modal-save" :disabled="loading">
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
             <span>حفظ تخصيص الأصناف ({{ selectedProductIdsForChef.length }} صنف)</span>
@@ -8079,6 +8089,7 @@ export default {
     const selectedChefForAssign = ref(null);
     const selectedProductIdsForChef = ref([]);
     const assignProductSearch = ref('');
+    const assignProductCategory = ref('');
     const productionReportFilters = reactive({
       dateFrom: '',
       dateTo: '',
@@ -10891,6 +10902,7 @@ export default {
         .filter(p => String(p.chefId) === idStr)
         .map(p => String(p._id));
       assignProductSearch.value = '';
+      assignProductCategory.value = '';
       assignProductsModalOpen.value = true;
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
@@ -10928,12 +10940,14 @@ export default {
 
     const filteredProductsForAssign = computed(() => {
       const q = assignProductSearch.value.trim().toLowerCase();
-      const list = !q
-        ? [...products.value]
-        : products.value.filter(p => 
-            (p.name && p.name.toLowerCase().includes(q)) || 
-            (p.category && p.category.toLowerCase().includes(q))
-          );
+      const cat = assignProductCategory.value;
+      const list = products.value.filter(p => {
+        const matchQ = !q || 
+          (p.name && p.name.toLowerCase().includes(q)) || 
+          (p.category && p.category.toLowerCase().includes(q));
+        const matchCat = !cat || p.category === cat;
+        return matchQ && matchCat;
+      });
       return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
 
@@ -13499,6 +13513,7 @@ const closeSuggestionsWithDelay = () => {
       selectedChefForAssign,
       selectedProductIdsForChef,
       assignProductSearch,
+      assignProductCategory,
       filteredProductsForAssign,
       productionReportFilters,
       productionReportData,
@@ -23965,29 +23980,71 @@ select.pos-control {
 }
 
 .assign-products-modal-box {
-  max-width: 840px !important;
+  max-width: 860px !important;
 }
 
 .assign-toolbar-container {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.assign-category-pills {
+  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 6px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.assign-cat-pill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.assign-cat-pill:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.assign-cat-pill.active {
+  background: #d97706;
+  color: #ffffff;
+  border-color: #d97706;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
 }
 
 .assign-toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.assign-bulk-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-bulk-pick {
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 750;
@@ -24015,23 +24072,22 @@ select.pos-control {
 .assign-products-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 12px;
+  gap: 10px;
   max-height: 52vh;
   overflow-y: auto;
-  padding: 6px;
+  padding: 6px 4px;
 }
 
 .assign-product-card {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
   border-radius: 14px;
-  padding: 12px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  position: relative;
+  transition: all 0.15s ease;
   user-select: none;
 }
 
@@ -24048,29 +24104,30 @@ select.pos-control {
 }
 
 .card-selection-check {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
   border-radius: 50%;
-  border: 1.5px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .assign-product-card.is-selected .card-selection-check {
   background: #f59e0b;
   border-color: #f59e0b;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
 }
 
 .assign-prod-img {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid #f1f5f9;
@@ -24086,7 +24143,7 @@ select.pos-control {
 }
 
 .assign-prod-title {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
@@ -24108,10 +24165,112 @@ select.pos-control {
   color: #d97706;
 }
 
-@media (max-width: 640px) {
+.assign-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 24px 16px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .assign-products-modal-box {
+    height: 92vh !important;
+    max-height: 92vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
+  .assign-products-modal-box .modal-header {
+    padding: 14px 16px 10px 16px !important;
+    flex-shrink: 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  .assign-products-modal-box .modal-header .modal-subtitle {
+    font-size: 0.8rem !important;
+  }
+
+  .assign-products-modal-box .modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 14px !important;
+  }
+
+  .assign-toolbar-container {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .assign-toolbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .assign-bulk-buttons {
+    display: flex !important;
+    gap: 6px !important;
+    flex: 1 !important;
+  }
+
+  .btn-bulk-pick {
+    min-height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 0.84rem !important;
+    flex: 1 !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .selected-counter-badge {
+    min-height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+
   .assign-products-picker-grid {
-    grid-template-columns: 1fr;
-    max-height: 48vh;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 2px 2px 12px 2px !important;
+  }
+
+  .assign-products-modal-box .modal-footer {
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+    padding: 12px 16px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(10px) !important;
+    border-top: 1px solid #e2e8f0 !important;
+  }
+
+  .assign-products-modal-box .btn-modal-save {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+    justify-content: center !important;
   }
 }
 
@@ -27159,6 +27318,68 @@ select.pos-control {
   padding: 18px 20px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   background: rgba(255, 255, 255, 0.6);
+}
+
+.card-toolbar-unified {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.toolbar-search-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.products-toolbar-unified .toolbar-search-filter-group {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .card-toolbar-unified {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .card-toolbar-unified .toolbar-actions-group {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .card-toolbar-unified .toolbar-actions-group .btn-add-highlight,
+  .card-toolbar-unified .toolbar-actions-group .btn-primary {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+
+  .card-toolbar-unified .toolbar-search-filter-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .card-toolbar-unified .search-input-wrapper {
+    width: 100% !important;
+  }
+
+  .card-toolbar-unified .toolbar-badge {
+    align-self: flex-start !important;
+  }
 }
 
 .card-toolbar-top {
