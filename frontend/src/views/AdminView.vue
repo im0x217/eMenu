@@ -11423,24 +11423,42 @@ export default {
     };
 
     const updateOrderStatus = async (orderId, status) => {
+      const order = (orders.value || []).find(o => String(o._id) === String(orderId));
+      if (!order) return;
+      const previousStatus = order.status;
+      const previousUpdatedAt = order.updatedAt;
+      if (previousStatus === status) return;
+
+      // 1. Optimistic UI update: immediately apply new status with smooth CSS transitions
+      order.status = status;
+      if (status === 'cancelled') {
+        order.updatedAt = new Date().toISOString();
+      }
+
       try {
         const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
         const res = await adminFetch(url, {
           method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status })
         });
         if (res.ok) {
           if (status === 'cancelled') {
-            toast.show('تم إلغاء الطلب — سيتم حذفه نهائياً وتلقائياً بعد 24 ساعة', 'warning');
-          } else {
-            toast.show('تم تحديث حالة الطلب بنجاح', 'success');
+            toast.show('تم إلغاء الطلب — سيتم حذفه تلقائياً بعد 24 ساعة', 'warning');
           }
-          await Promise.all([fetchOrders(), fetchAnalytics()]);
+          // Quiet background sync for analytics without triggering full skeleton loaders
+          fetchAnalytics();
         } else {
-          toast.show('فشل تحديث حالة الطلب', 'danger');
+          // Revert optimistic update on server error
+          order.status = previousStatus;
+          order.updatedAt = previousUpdatedAt;
+          toast.show('فشل تحديث حالة الطلب، تمت استعادة الحالة السابقة', 'danger');
         }
       } catch (err) {
-        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+        // Revert optimistic update on network drop / exception
+        order.status = previousStatus;
+        order.updatedAt = previousUpdatedAt;
+        toast.show('تعذر الاتصال بالخادم، تمت استعادة الحالة السابقة', 'danger');
       }
     };
 
@@ -16683,7 +16701,7 @@ select.form-control:focus {
   cursor: pointer;
   outline: none;
   font-weight: 800;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease, box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
   font-family: inherit;
@@ -22071,7 +22089,7 @@ select.pos-control {
     flex-direction: column;
     gap: 7px;
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-right-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .mobile-order-card.border-status-pending { border-right: 4px solid #f59e0b; }
