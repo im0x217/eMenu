@@ -176,7 +176,14 @@
       <!-- Main Content -->
       <main class="admin-main" ref="adminMainRef">
         <div class="main-header no-print">
-          <h1>{{ tabTitles[activeTab] }}</h1>
+          <div class="main-title-wrap">
+            <h1>{{ tabTitles[activeTab] }}</h1>
+            <Transition name="fade-badge" mode="out-in">
+              <span v-if="currentTabCountBadge" class="header-count-badge" :key="activeTab + (activeTab === 'production' ? productionSubTab : '')">
+                {{ currentTabCountBadge }}
+              </span>
+            </Transition>
+          </div>
           <!-- Period & Actions for Analytics -->
           <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
             <!-- Period Selector -->
@@ -986,7 +993,6 @@
                       <option v-for="sub in availableSubcategories" :key="sub" :value="sub">{{ sub }}</option>
                     </select>
                   </div>
-                  <span class="toolbar-badge">{{ formatArabicPlural(filteredProducts.length, 'product') }}</span>
                 </div>
 
                 <div class="toolbar-actions-group">
@@ -1276,7 +1282,6 @@
                       aria-label="مسح البحث"
                     >&times;</button>
                   </div>
-                  <span class="toolbar-badge">{{ formatArabicPlural(filteredCategories.length, 'category') }}</span>
                 </div>
 
                 <div class="toolbar-actions-group">
@@ -1547,7 +1552,6 @@
                       aria-label="مسح البحث"
                     >&times;</button>
                   </div>
-                  <span class="toolbar-badge">{{ formatArabicPlural(filteredTags.length, 'tag') }}</span>
                 </div>
 
                 <div class="toolbar-actions-group">
@@ -1742,10 +1746,7 @@
           <!-- MARKETING CAROUSEL TAB -->
           <div v-else-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
             <div class="table-card glass-panel overflow-hidden p-0">
-              <div class="card-toolbar card-toolbar-unified">
-                <div class="toolbar-title-group">
-                  <span class="toolbar-badge">{{ carouselItems.length }} بنر</span>
-                </div>
+              <div class="card-toolbar card-toolbar-unified justify-content-end">
                 <button @click="openCarouselModal()" class="btn btn-primary">
                   <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   <span>إضافة بنر جديد</span>
@@ -1807,7 +1808,6 @@
               <div class="card-toolbar card-toolbar-split orders-toolbar-container">
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
-                    <span class="toolbar-badge">{{ formatArabicPlural(filteredOrders.length, 'order') }}</span>
                     <span v-if="unprintedOrdersCount > 0" class="unprinted-orders-alert-pill animate-fade-in" title="طلبات جديدة لم تتم طباعتها بعد">
                       <span class="unprinted-pulse-dot"></span>
                       <span>{{ unprintedOrdersCount }} بانتظار الطباعة</span>
@@ -2304,9 +2304,7 @@
             <div class="table-card glass-panel overflow-hidden">
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <span class="toolbar-badge">{{ formatArabicPlural(filteredCustomers.length, 'customer') }}</span>
-                  </div>
+
                   <div class="customer-toolbar-actions">
                     <button @click="printCustomerDebtReport" class="btn btn-outline btn-sm flex-center cust-debt-print-btn" title="طباعة كشف مديونيات وحسابات العملاء">
                       <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -2719,10 +2717,7 @@
             <div v-if="productionSubTab === 'chefs'" class="chefs-view-section animate-fade-in">
               <div class="table-card glass-panel overflow-hidden">
                 <!-- Toolbar Header -->
-                <div class="card-toolbar card-toolbar-unified">
-                  <div class="toolbar-title-group">
-                    <span class="toolbar-badge">{{ formatArabicPlural(chefs.length, 'customer') }}</span>
-                  </div>
+                <div class="card-toolbar card-toolbar-unified justify-content-end">
                   <button @click="openAddChefModal" class="btn btn-primary">
                     <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>إضافة شيف جديد</span>
@@ -2851,10 +2846,7 @@
               <div class="table-card glass-panel" style="overflow: visible;">
                 <!-- Toolbar Header with Title & Matched Action Buttons -->
                 <div class="card-toolbar card-toolbar-split">
-                  <div class="card-toolbar-top">
-                    <div class="toolbar-title-group">
-                      <span class="toolbar-badge">{{ productionReportData.chefReport ? productionReportData.chefReport.length : 0 }} شيف منتج</span>
-                    </div>
+                  <div class="card-toolbar-top justify-content-end">
                     <!-- Matched Action Buttons -->
                     <div class="report-header-actions-row">
                       <button @click="printProductionReport" class="btn btn-outline btn-report-action" title="طباعة كشف الإنتاج الرسمي بصيغة A4">
@@ -3311,10 +3303,7 @@
           <!-- USERS MANAGEMENT TAB -->
           <div v-else-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-unified">
-                <div class="toolbar-title-group">
-                  <span class="toolbar-badge">{{ formatArabicPlural(adminUsers.length, 'customer') }}</span>
-                </div>
+              <div class="card-toolbar card-toolbar-unified justify-content-end">
                 <button @click="openUserModal()" class="btn btn-primary">
                   <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   <span>إضافة مستخدم جديد</span>
@@ -8362,6 +8351,31 @@ export default {
     };
 
     // Helper functions
+    const currentTabCountBadge = computed(() => {
+      switch (activeTab.value) {
+        case 'products':
+          return formatArabicPlural(filteredProducts.value.length, 'product');
+        case 'categories':
+          return formatArabicPlural(filteredCategories.value.length, 'category');
+        case 'tags':
+          return formatArabicPlural(filteredTags.value.length, 'tag');
+        case 'orders':
+          return formatArabicPlural(filteredOrders.value.length, 'order');
+        case 'customers':
+          return formatArabicPlural(filteredCustomers.value.length, 'customer');
+        case 'production':
+          return productionSubTab.value === 'chefs'
+            ? formatArabicPlural(chefs.value.length, 'chef')
+            : `${productionReportData.chefReport ? productionReportData.chefReport.length : 0} شيف منتج`;
+        case 'carousel':
+          return formatArabicPlural(carouselItems.value.length, 'banner');
+        case 'users':
+          return formatArabicPlural(adminUsers.value.length, 'user');
+        default:
+          return null;
+      }
+    });
+
     const formatArabicPlural = (count, nounType = 'order') => {
       const n = Math.abs(Number(count) || 0);
       const mod100 = n % 100;
@@ -8373,7 +8387,10 @@ export default {
         category: { s: 'صنف', d: 'صنفان', p: 'أصناف', a: 'صنفاً' },
         tag: { s: 'علامة', d: 'علامتان', p: 'علامات', a: 'علامةً' },
         unit: { s: 'وحدة', d: 'وحدتان', p: 'وحدات', a: 'وحدةً' },
-        sale: { s: 'عملية بيع', d: 'عمليتا بيع', p: 'عمليات بيع', a: 'عملية بيع' }
+        sale: { s: 'عملية بيع', d: 'عمليتا بيع', p: 'عمليات بيع', a: 'عملية بيع' },
+        chef: { s: 'شيف', d: 'شيفان', p: 'شيفات', a: 'شيفاً' },
+        banner: { s: 'بنر', d: 'بنران', p: 'بنرات', a: 'بنراً' },
+        user: { s: 'مستخدم', d: 'مستخدمان', p: 'مستخدمين', a: 'مستخدماً' }
       };
       
       const dict = dictionaries[nounType] || dictionaries.order;
@@ -13373,6 +13390,7 @@ const closeSuggestionsWithDelay = () => {
       formatPrice,
       handleSearchEnter,
       handleSearchArrowDown,
+      currentTabCountBadge,
       formatArabicPlural,
       handleLogin,
       handleLogout,
@@ -14515,11 +14533,59 @@ const closeSuggestionsWithDelay = () => {
   margin-bottom: 25px;
 }
 
+.main-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .main-header h1 {
   font-size: 1.5rem;
   font-weight: 800;
   color: #1e3a5f;
   margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.header-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 750;
+  font-family: 'Cairo', 'Fira Code', sans-serif;
+  letter-spacing: -0.2px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.08);
+  line-height: 1.3;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-count-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+.fade-badge-enter-active,
+.fade-badge-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-badge-enter-from,
+.fade-badge-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
 }
 
 .segmented-control {
