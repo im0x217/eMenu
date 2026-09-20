@@ -667,51 +667,53 @@ const handleResendWhatsApp = () => {
     </div>
 
     <!-- WhatsApp Details Modal -->
-    <Transition name="modal-spring-fade">
-      <div v-if="isModalOpen" class="modal-backdrop" @click="closeModal">
-        <div class="modal-content glass-panel" role="dialog" aria-modal="true" aria-labelledby="order-details-title" @click.stop v-sheet-gesture="closeModal">
-          <div class="sheet-grab-handle" aria-hidden="true"></div>
-          <div class="modal-header">
-            <div class="modal-title-group">
-              <h4 id="order-details-title" class="modal-title">تفاصيل الطلب</h4>
-              <span class="modal-subtitle">رسالة جاهزة لإعادة الإرسال عبر واتساب</span>
+    <Teleport to="body">
+      <Transition name="modal-spring-fade">
+        <div v-if="isModalOpen" class="modal-backdrop" @click="closeModal">
+          <div class="modal-content glass-panel" role="dialog" aria-modal="true" aria-labelledby="order-details-title" @click.stop v-sheet-gesture="closeModal">
+            <div class="sheet-grab-handle" aria-hidden="true"></div>
+            <div class="modal-header">
+              <div class="modal-title-group">
+                <h4 id="order-details-title" class="modal-title">تفاصيل الطلب</h4>
+                <span class="modal-subtitle">رسالة جاهزة لإعادة الإرسال عبر واتساب</span>
+              </div>
+              <button type="button" class="btn-close" @click="closeModal" aria-label="إغلاق">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
             </div>
-            <button type="button" class="btn-close" @click="closeModal" aria-label="إغلاق">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
 
-          <div class="modal-body">
-            <textarea 
-              aria-label="نص رسالة الواتساب"
-              class="whatsapp-textarea" 
-              readonly 
-              v-model="whatsappMessageText"
-              rows="9"
-            ></textarea>
-          </div>
+            <div class="modal-body">
+              <textarea 
+                aria-label="نص رسالة الواتساب"
+                class="whatsapp-textarea" 
+                readonly 
+                v-model="whatsappMessageText"
+                rows="9"
+              ></textarea>
+            </div>
 
-          <div class="modal-footer">
-            <button class="btn-modal-action btn-copy" @click="handleCopyMessage">
-              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-              نسخ الرسالة
-            </button>
-            <button class="btn-modal-action btn-send-wa" @click="handleResendWhatsApp">
-              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-              </svg>
-              إعادة الإرسال عبر واتساب
-            </button>
+            <div class="modal-footer">
+              <button class="btn-modal-action btn-copy" @click="handleCopyMessage">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                نسخ الرسالة
+              </button>
+              <button class="btn-modal-action btn-send-wa" @click="handleResendWhatsApp">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                </svg>
+                إعادة الإرسال عبر واتساب
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
 
   </div>
 </template>
@@ -1520,11 +1522,13 @@ const handleResendWhatsApp = () => {
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 2500;
   padding: 16px;
+  overscroll-behavior: contain;
 }
 
 .modal-content {
@@ -1561,6 +1565,7 @@ const handleResendWhatsApp = () => {
     border-radius: 20px 20px 0 0 !important;
     max-width: 100% !important;
     margin: 0 !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
   }
 }
 

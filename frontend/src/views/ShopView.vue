@@ -1198,7 +1198,7 @@ watch(carouselItems, (newItems) => {
   background: rgba(44, 37, 32, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 2000;
+  z-index: 2500;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1229,6 +1229,7 @@ watch(carouselItems, (newItems) => {
     border-radius: 20px 20px 0 0 !important;
     max-width: 100% !important;
     margin: 0 !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
   }
 }
 
