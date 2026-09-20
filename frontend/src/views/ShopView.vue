@@ -666,7 +666,7 @@ watch(carouselItems, (newItems) => {
         inputmode="search"
         aria-label="البحث عن منتج"
         v-model="searchQuery" 
-        placeholder="ابحث عن منتج…" 
+        placeholder="بحث عن منتج…" 
         class="search-input" 
       />
       <button 
@@ -809,12 +809,12 @@ watch(carouselItems, (newItems) => {
           <div class="modal-content bulk-sheet-card glass-panel" @click.stop>
             <div class="sheet-grab-handle" aria-hidden="true"></div>
             <h3 class="modal-title">تفعيل أسعار الجملة</h3>
-            <p class="modal-desc">يرجى إدخال رمز التحقق المكون من 4 أرقام لتفعيل تسعير الجملة.</p>
+            <p class="modal-desc">رمز التحقق المكون من 4 أرقام لتفعيل أسعار الجملة:</p>
             
             <input 
               type="password" 
               v-model="bulkCodeInput" 
-              placeholder="رمز التحقق (4 أرقام)" 
+              placeholder="رمز التحقق (4 أرقام)…" 
               maxlength="4"
               inputmode="numeric"
               autocomplete="one-time-code"
@@ -823,7 +823,7 @@ watch(carouselItems, (newItems) => {
               @keyup.enter="handleVerifyBulk"
             />
             
-            <p v-if="bulkError" class="error-msg">الرمز غير صحيح! يرجى المحاولة مرة أخرى.</p>
+            <p v-if="bulkError" class="error-msg">رمز التحقق غير صحيح، أعد المحاولة.</p>
 
             <div class="modal-actions">
               <button type="button" class="modal-btn confirm" @click="handleVerifyBulk">تأكيد الرمز</button>

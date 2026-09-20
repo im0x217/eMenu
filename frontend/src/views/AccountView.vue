@@ -109,7 +109,7 @@ watch(() => authStore.customerPhone, () => {
 
 const handleLogin = async () => {
   if (!loginPhone.value.trim() || !loginPassword.value) {
-    authError.value = 'يرجى كتابة رقم الهاتف وكلمة المرور';
+    authError.value = 'رقم الهاتف وكلمة المرور مطلوبان';
     return;
   }
 
@@ -119,7 +119,7 @@ const handleLogin = async () => {
   try {
     const res = await authStore.login(loginPhone.value.trim(), loginPassword.value);
     if (res.requiresPasswordSetup) {
-      toastStore.show('يرجى تعيين كلمة مرور لحسابك للمتابعة', 'warning');
+      toastStore.show('عيّن كلمة مرور لحسابك للمتابعة', 'warning');
     } else {
       toastStore.show('مرحباً بك مجدداً!', 'success');
       loginPhone.value = '';
@@ -136,11 +136,11 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
   if (!registerName.value.trim()) {
-    authError.value = 'يرجى كتابة الاسم بالكامل';
+    authError.value = 'الاسم بالكامل مطلوب';
     return;
   }
   if (!registerPhone.value.trim() || registerPhone.value.trim().length < 9) {
-    authError.value = 'يرجى كتابة رقم هاتف صحيح';
+    authError.value = 'رقم الهاتف غير صحيح';
     return;
   }
   if (!registerPassword.value || registerPassword.value.length < 4) {
@@ -315,7 +315,7 @@ const handleCopyMessage = async () => {
     await navigator.clipboard.writeText(whatsappMessageText.value);
     toastStore.show('تم نسخ نص الرسالة بنجاح!');
   } catch (err) {
-    toastStore.show('فشل نسخ النص، يرجى المحاولة يدوياً', 'error');
+    toastStore.show('فشل نسخ النص، حاول يدوياً', 'error');
   }
 };
 
@@ -365,7 +365,7 @@ const handleResendWhatsApp = () => {
 
       <div class="profile-security-notice">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>البيانات مؤمنة ومربوطة برقم هاتفك. لتعديل الاسم أو رقم الهاتف، يرجى التواصل مع إدارة المحل.</span>
+        <span>البيانات مؤمنة برقم الهاتف. لتعديل الاسم أو الرقم، تواصل مع الإدارة.</span>
       </div>
 
       <!-- Account Actions (Sign Out & Switch Account) -->
@@ -423,7 +423,7 @@ const handleResendWhatsApp = () => {
             <input 
               v-model="loginPassword" 
               :type="showLoginPassword ? 'text' : 'password'" 
-              placeholder="اكتب كلمة المرور…" 
+              placeholder="كلمة المرور…" 
               class="form-input" 
               autocomplete="current-password"
               required
@@ -452,7 +452,7 @@ const handleResendWhatsApp = () => {
           <input 
             v-model="registerName" 
             type="text" 
-            placeholder="اكتب اسمك الثلاثي…" 
+            placeholder="الاسم الثلاثي…" 
             class="form-input" 
             autocomplete="name"
             required
@@ -478,13 +478,13 @@ const handleResendWhatsApp = () => {
             <input 
               v-model="registerPassword" 
               :type="showRegisterPassword ? 'text' : 'password'" 
-              placeholder="اكتب كلمة مرور خاصة بك…" 
+              placeholder="كلمة المرور…" 
               class="form-input" 
               autocomplete="new-password"
               required
             />
             <button type="button" class="btn-pwd-eye" @click="showRegisterPassword = !showRegisterPassword" tabindex="-1" aria-label="إظهار أو إخفاء كلمة المرور">
-              <svg v-if="!showRegisterPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg v-if="!showRegisterPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </button>
           </div>
@@ -546,7 +546,7 @@ const handleResendWhatsApp = () => {
         <h3 class="section-title">الطلبات السابقة</h3>
         <span v-if="orders.length" class="orders-count-badge">آخر {{ displayedOrders.length }} طلبات</span>
       </div>
-      <p class="section-desc">ملاحظة: تظهر هنا الطلبات المرتبطة برقم هاتفك الحالي والمحفوظة في قاعدة البيانات.</p>
+      <p class="section-desc">سجل الطلبات المرتبطة برقم هاتفك.</p>
 
       <!-- SKELETON LOADER (Orders Loading) -->
       <div v-if="isLoadingOrders" class="orders-list animate-fade-in">
@@ -566,7 +566,7 @@ const handleResendWhatsApp = () => {
 
       <!-- No Phone State -->
       <div v-else-if="!authStore.customerPhone" class="empty-orders">
-        <p>يرجى تسجيل الدخول أو إنشاء حساب لعرض سجل طلباتك.</p>
+        <p>سجل الدخول أو أنشئ حساباً لعرض سجل طلباتك.</p>
       </div>
 
       <!-- Empty Orders State -->

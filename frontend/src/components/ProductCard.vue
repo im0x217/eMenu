@@ -159,7 +159,7 @@ const toggleSave = () => {
   
   if (!authStore.isIdentified()) {
     if (isNowFav) {
-      toastStore.show('تم الحفظ محلياً! يرجى تسجيل الدخول باسمك ورقم نشاطك التجاري من صفحة "حسابي" لتفعيل وحفظ المفضلة سحابياً');
+      toastStore.show('تم الحفظ محلياً. سجّل دخولك من صفحة "حسابي" للمزامنة السحابية');
     } else {
       toastStore.show('تم إزالة المنتج من المفضلة');
     }

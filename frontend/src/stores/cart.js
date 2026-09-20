@@ -70,12 +70,12 @@ export const useCartStore = defineStore('cart', () => {
   const addToCart = (product, shopId, priceMode = 'regular', qty = 1, notes = '') => {
     // 1. Check shop consistency
     if (getShopType.value && getShopType.value !== shopId) {
-      throw new Error('لا يمكن خلط منتجات من المتجر الرئيسي وقسم النواشف في نفس السلة. يرجى إتمام الطلب الحالي أو إفراغ السلة.');
+      throw new Error('لا يمكن خلط منتجات من متجرين مختلفين في نفس السلة.');
     }
 
     // 2. Check price mode consistency (bulk vs regular)
     if (getPriceMode.value && getPriceMode.value !== priceMode && items.value.length > 0) {
-      throw new Error('لا يمكن خلط طلب الجملة والطلب العادي في نفس السلة. يرجى مطابقة نوع السعر لجميع المنتجات.');
+      throw new Error('لا يمكن خلط طلبات الجملة والمفرد في نفس السلة.');
     }
 
     const existingIndex = items.value.findIndex(i => i._id === product._id);
@@ -236,7 +236,7 @@ export const useCartStore = defineStore('cart', () => {
   // Submit new order OR update existing edited order
   const submitOrder = async () => {
     if (!authStore.isIdentified()) {
-      throw new Error('يرجى ملء بيانات الاسم والهاتف أولاً لإرسال الطلب.');
+      throw new Error('بيانات الاسم والهاتف مطلوبة لإرسال الطلب.');
     }
 
     if (items.value.length === 0) {
@@ -318,12 +318,12 @@ export const useCartStore = defineStore('cart', () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || 'عذراً، فشل إرسال الطلب. يرجى المحاولة مرة أخرى.');
+        throw new Error(data.error || 'فشل إرسال الطلب، أعد المحاولة.');
       }
       assignedOrderNumber = data.orderNumber || null;
     } catch (e) {
       console.error('Order submission failed:', e);
-      throw new Error(e.message || 'عذراً، فشل إرسال الطلب بسبب مشكلة في الاتصال.');
+      throw new Error(e.message || 'فشل إرسال الطلب بسبب مشكلة في الاتصال.');
     }
 
     // Track GA4 Purchase Event

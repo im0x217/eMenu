@@ -74,7 +74,7 @@ const closeZoomModal = () => {
       <div class="notice-text">
         <h3 class="notice-title">المفضلة السحابية غير نشطة</h3>
         <p class="notice-desc">
-          يرجى الانتقال إلى صفحة <router-link to="/account" class="notice-link">حسابي</router-link> وتدوين <strong>اسمك ورقم هاتفك</strong> لمزامنة مفضلتك سحابياً والوصول إليها من أي جهاز.
+          سجّل الدخول من صفحة <router-link to="/account" class="notice-link">حسابي</router-link> لمزامنة مفضلتك سحابياً عبر أجهزتك.
         </p>
       </div>
     </div>
@@ -105,7 +105,7 @@ const closeZoomModal = () => {
         </svg>
       </div>
       <h2 class="empty-title">المفضلة فارغة</h2>
-      <p class="empty-desc">اضغط على زر القلب في بطاقات المنتجات لإضافتها هنا والوصول إليها بسرعة لاحقاً.</p>
+      <p class="empty-desc">احفظ منتجاتك المفضلة للوصول إليها بسرعة في أي وقت.</p>
     </div>
 
     <!-- Image Zoom Modal -->

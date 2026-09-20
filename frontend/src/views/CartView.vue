@@ -68,13 +68,13 @@ const showOrderConfirmModal = ref(false);
 
 const handleSaveIdentity = () => {
   if (!nameInput.value.trim() || !phoneInput.value.trim()) {
-    errorMsg.value = 'يرجى كتابة الاسم ورقم الهاتف بشكل صحيح لتتمكن من الطلب.';
+    errorMsg.value = 'الاسم ورقم الهاتف مطلوبان لإتمام الطلب.';
     return;
   }
   
   const phone = phoneInput.value.trim();
   if (phone.length < 9) {
-    errorMsg.value = 'يرجى إدخال رقم هاتف صحيح.';
+    errorMsg.value = 'رقم الهاتف غير صحيح.';
     return;
   }
   
@@ -124,7 +124,7 @@ const handleConfirmSubmit = async () => {
     }
   } catch (err) {
     triggerHaptic('warning');
-    toastStore.show(err.message || 'عذراً، فشل إرسال الطلب. يرجى المحاولة مرة أخرى.', 'error');
+    toastStore.show(err.message || 'فشل إرسال الطلب، أعد المحاولة.', 'error');
   } finally {
     isSubmitting.value = false;
   }
@@ -321,7 +321,7 @@ const handleClearCart = () => {
       </div>
       <h2 class="empty-title">{{ cartStore.isEditingOrder ? 'تم حذف جميع الأصناف من الطلب' : 'السلة فارغة حالياً' }}</h2>
       <p class="empty-desc">
-        {{ cartStore.isEditingOrder ? 'يرجى إضافة صنف واحد على الأقل من المتجر لإتمام التعديل أو إلغاء وضع التعديل.' : 'اذهب لقسم المنتجات وأضف ما ترغب به لتجده هنا.' }}
+        {{ cartStore.isEditingOrder ? 'أضف صنفاً واحداً على الأقل لإتمام التعديل أو ألغِ التعديل.' : 'تصفح قائمة المنتجات وأضف ما يناسبك.' }}
       </p>
       <button 
         type="button" 
@@ -384,10 +384,10 @@ const handleClearCart = () => {
             <div class="item-note-wrapper">
               <input 
                 type="text" 
-                aria-label="ملاحظة خاصة بالمنتج"
+                aria-label="ملاحظة خاصة بالمنتج" 
                 :value="item.itemNotes" 
                 @input="handleUpdateNote(item._id, $event.target.value)" 
-                placeholder="إضافة ملاحظة خاصة بهذا المنتج (مثال: بدون مكسرات)…" 
+                placeholder="ملاحظة خاصة بالمنتج (مثال: بدون مكسرات)…" 
                 class="item-note-input"
               />
             </div>
@@ -398,7 +398,7 @@ const handleClearCart = () => {
       <!-- Identity Section (Guest Form) -->
       <div v-if="showIdentityForm" class="identity-section glass-panel">
         <h3 class="section-title">البيانات الشخصية للطلب</h3>
-        <p class="section-desc">يرجى كتابة الاسم ورقم الهاتف لإكمال عملية إرسال الطلب.</p>
+        <p class="section-desc">بيانات الاتصال والتسليم الخاصة بالطلب.</p>
         
         <div class="form-group">
           <label for="cart-customer-name" class="form-label">الاسم بالكامل</label>
@@ -409,7 +409,7 @@ const handleClearCart = () => {
             autocomplete="name" 
             v-model="nameInput" 
             @blur="handleSaveIdentity" 
-            placeholder="أدخل اسمك الكريم…" 
+            placeholder="الاسم الكريم…" 
             class="form-input" 
           />
         </div>
@@ -479,7 +479,7 @@ const handleClearCart = () => {
             id="cart-order-notes" 
             v-model="cartStore.orderNotes" 
             @input="cartStore.persist" 
-            placeholder="أضف أي ملاحظات عامة حول الاستلام والتغليف هنا…" 
+            placeholder="ملاحظات الاستلام أو التغليف…" 
             class="form-input text-area"
             rows="3"
           ></textarea>
@@ -550,7 +550,7 @@ const handleClearCart = () => {
                   <h3 id="confirm-order-title" class="confirm-title">
                     {{ cartStore.isEditingOrder ? `تأكيد تحديث الطلب (#${cartStore.editingOrderNumber})` : 'تأكيد إرسال الطلب' }}
                   </h3>
-                  <span class="confirm-subtitle">يرجى مراجعة تفاصيل طلبك قبل الإرسال النهائي عبر الواتساب</span>
+                  <span class="confirm-subtitle">مراجعة تفاصيل الطلب قبل الإرسال عبر الواتساب</span>
                 </div>
               </div>
               <button 

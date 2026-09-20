@@ -16,7 +16,7 @@ const errorMessage = ref('');
 
 const handleSubmit = async () => {
   if (!newPassword.value) {
-    errorMessage.value = 'يرجى إدخال كلمة المرور';
+    errorMessage.value = 'كلمة المرور مطلوبة';
     return;
   }
   if (newPassword.value.length < 4) {
@@ -85,7 +85,7 @@ onUnmounted(() => {
 
         <h3 class="modal-title">تأمين حسابك بكلمة مرور</h3>
         <p class="modal-desc">
-          لحماية سجل طلباتك وعنوانك ونقاطك، يرجى تعيين كلمة مرور خاصة بحسابك لتسجيل الدخول بأمان في أي وقت.
+          لحماية سجل طلباتك وبياناتك، عيّن كلمة مرور لتسجيل الدخول بأمان.
         </p>
 
         <div class="account-identity-pill">
@@ -104,7 +104,7 @@ onUnmounted(() => {
                 v-model="newPassword" 
                 :type="showNewPassword ? 'text' : 'password'" 
                 class="form-control-modal text-mono" 
-                placeholder="أدخل كلمة المرور الجديدة…" 
+                placeholder="كلمة المرور الجديدة…" 
                 autocomplete="new-password"
                 required
                 minlength="4"
@@ -129,7 +129,7 @@ onUnmounted(() => {
                 v-model="confirmPassword" 
                 :type="showConfirmPassword ? 'text' : 'password'" 
                 class="form-control-modal text-mono" 
-                placeholder="أعد كتابة كلمة المرور…" 
+                placeholder="تأكيد كلمة المرور…" 
                 autocomplete="new-password"
                 required
                 minlength="4"

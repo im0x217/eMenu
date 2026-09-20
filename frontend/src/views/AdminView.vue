@@ -12,7 +12,7 @@
         <div class="login-header">
           <img :src="loginShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="login-logo" />
           <h2>لوحة الإدارة الذكية</h2>
-          <p>يرجى تسجيل الدخول للوصول إلى لوحة التحكم</p>
+          <p>تسجيل الدخول للوصول إلى لوحة التحكم</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="login-form">
@@ -1788,7 +1788,7 @@
                   <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
                     <div class="card-image-wrapper">
                       <div class="admin-banner-shimmer"></div>
-                      <img :src="item.image" alt="Banner Preview" class="card-image" loading="lazy" decoding="async" @click="zoomImage(item.image)" title="انقر لتكبير المعاينة" />
+                      <img :src="item.image" alt="Banner Preview" class="card-image" loading="lazy" decoding="async" @click="zoomImage(item.image)" title="تكبير المعاينة" />
                     </div>
                     <div class="card-info-bar">
                       <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
@@ -1812,7 +1812,7 @@
                   </div>
                 </div>
                 <div v-else class="text-center p-5 text-muted">
-                  لا توجد بنرات عروض تسويقية مضافة حالياً. اضغط على زر "إضافة بنر جديد" للبدء.
+                  لا توجد بنرات عروض تسويقية مضافة حالياً.
                 </div>
               </div>
             </div>
@@ -2044,7 +2044,7 @@
                           class="payment-status-badge" 
                           :class="[order.paymentStatus || 'unpaid', { 'is-cancelled': order.status === 'cancelled' }]" 
                           @click="order.status !== 'cancelled' && openPaymentModal(order.customerInfo, order)"
-                          :title="order.status === 'cancelled' ? 'الطلب ملغي' : (order.paymentStatus === 'paid' ? 'تم دفع الطلب بالكامل — انقر لعرض رصيد العميل' : 'انقر لتسجيل دفع لهذا الطلب')"
+                          :title="order.status === 'cancelled' ? 'الطلب ملغي' : (order.paymentStatus === 'paid' ? 'تم دفع الطلب بالكامل — عرض رصيد العميل' : 'تسجيل دفع لهذا الطلب')"
                         >
                           <span class="badge-icon">
                             <svg aria-hidden="true" v-if="order.paymentStatus === 'paid'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -2547,7 +2547,7 @@
                     </tr>
                     <tr v-else v-for="(cust, idx) in paginatedCustomers" :key="cust._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td>
-                        <div class="customer-profile-cell" @click="openCustomerDetails(cust)" title="انقر لعرض الملف التعريفي الكامل">
+                        <div class="customer-profile-cell" @click="openCustomerDetails(cust)" title="عرض الملف التعريفي الكامل">
                           <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
                           <div class="customer-names-group">
                             <span class="customer-name-text">{{ cust.name }}</span>
@@ -2560,7 +2560,7 @@
                           <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                           <span class="text-mono">{{ cust.password }}</span>
                         </span>
-                        <span v-else class="cust-password-pill empty" @click="openCustomerEditModal(cust)" title="انقر لتعيين كلمة مرور">
+                        <span v-else class="cust-password-pill empty" @click="openCustomerEditModal(cust)" title="تعيين كلمة مرور">
                           <span>غير معينة</span>
                         </span>
                       </td>
@@ -3195,7 +3195,7 @@
                                 :key="p.name" 
                                 class="clickable-product-row"
                                 @click="openProductCustomersModal(p, cReport)"
-                                title="اضغط لعرض تفاصيل العملاء والطلبات لهذا الصنف"
+                                title="تفاصيل العملاء والطلبات لهذا الصنف"
                               >
                                 <td class="font-bold product-cell-interactive">
                                   <span class="product-name-text">{{ p.name }}</span>
@@ -3240,7 +3240,7 @@
                                 </div>
                               </div>
                               <div class="mob-prod-rep-hint">
-                                <span>انقر لعرض تفاصيل الطلبات والعملاء</span>
+                                <span>تفاصيل الطلبات والعملاء</span>
                                 <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                               </div>
                             </div>
@@ -3276,7 +3276,7 @@
                               :key="u.name" 
                               class="clickable-product-row"
                               @click="openProductCustomersModal(u, null)"
-                              title="اضغط لعرض تفاصيل العملاء والطلبات لهذا الصنف"
+                              title="تفاصيل العملاء والطلبات لهذا الصنف"
                             >
                               <td class="font-bold product-cell-interactive">
                                 <span class="product-name-text">{{ u.name }}</span>
@@ -3310,7 +3310,7 @@
                               </div>
                             </div>
                             <div class="mob-prod-rep-hint">
-                              <span>انقر لعرض تفاصيل الطلبات والعملاء</span>
+                              <span>تفاصيل الطلبات والعملاء</span>
                               <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             </div>
                           </div>
@@ -3490,7 +3490,7 @@
                       </thead>
                       <tbody>
                         <tr v-if="backups.length === 0">
-                          <td colspan="4" class="text-center p-4 text-muted">لا توجد نسخ احتياطية محفوظة بعد. انقر على "إنشاء نسخة احتياطية الآن" لحفظ قاعدة البيانات.</td>
+                          <td colspan="4" class="text-center p-4 text-muted">لا توجد نسخ احتياطية محفوظة بعد.</td>
                         </tr>
                         <tr v-for="b in backups" :key="b._id">
                           <td class="text-mono font-bold">{{ new Date(b.createdAt).toLocaleString('ar-LY') }}</td>
@@ -3533,7 +3533,7 @@
 
                 <div class="danger-zone-body">
                   <p class="danger-zone-desc">
-                    يمكنك من هنا تصفير سجل الطلبات والمبيعات والتحليلات للبدء بموسم عمل جديد. يُرجى التأكد من أخذ نسخة احتياطية أولاً.
+                    تصفير سجل الطلبات والمبيعات والتحليلات لبدء موسم عمل جديد. تأكد من أخذ نسخة احتياطية أولاً.
                   </p>
                   <div class="danger-points-list">
                     <div class="danger-point-item">
@@ -3549,7 +3549,7 @@
                       <span>سيتم إعادة ترقيم الطلبات التلقائي ليبدأ من الرقم <strong>#1001</strong> مجدداً.</span>
                     </div>
                     <div class="danger-point-item safe-point">
-                      <span class="safe-bullet">✓</span>
+                      <span class="safe-bullet"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                       <span><strong>محفوظات آمنة:</strong> لن يتم حذف الأصناف، المنتجات، التصنيفات، حسابات العملاء، أو حسابات المدراء.</span>
                     </div>
                   </div>
@@ -3608,7 +3608,7 @@
         </div>
 
         <div class="form-group mb-2">
-          <label class="form-label font-bold">للتأكيد، يرجى كتابة العبارة التالية في الحقل أدناه: <span class="text-danger font-bold">مسح البيانات</span></label>
+          <label class="form-label font-bold">اكتب العبارة التالية للتأكيد: <span class="text-danger font-bold">مسح البيانات</span></label>
           <input 
             v-model="resetConfirmText" 
             type="text" 
@@ -3713,7 +3713,7 @@
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span>بيانات العميل والتسليم</span>
-            <span v-if="newOrder.customerName && newOrder.customerPhone" class="pos-mobile-check-badge">✓</span>
+            <span v-if="newOrder.customerName && newOrder.customerPhone" class="pos-mobile-check-badge"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
           </button>
         </div>
 
@@ -4050,7 +4050,7 @@
                     class="quick-prod-card" 
                     :class="{ 'is-in-cart': getItemQtyInCart(prod._id) > 0 }"
                     @click="addProductToNewOrder(prod)"
-                    title="انقر للإضافة للطلب"
+                    title="إضافة للطلب"
                   >
                     <img 
                       :src="prod.img || (activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg')" 
@@ -4114,7 +4114,7 @@
                         <td colspan="5" class="pos-empty-cart-msg">
                           <div class="pos-empty-cart-inner">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                            <span>لم يتم إضافة أصناف بعد. ابحث عن المنتجات أو انقر عليها أعلاه لإضافتها للطلب.</span>
+                            <span>لم تتم إضافة أصناف بعد. اختر المنتجات من القائمة لإضافتها للطلب.</span>
                           </div>
                         </td>
                       </tr>
@@ -4991,7 +4991,7 @@
                   <svg aria-hidden="true" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                 </div>
                 <div class="dropzone-text">
-                  <span class="dropzone-title">انقر هنا أو اسحب صورة المنتج لوضعها</span>
+                  <span class="dropzone-title">اسحب صورة المنتج إلى هنا أو تصفح الملفات</span>
                   <span class="dropzone-sub">يدعم JPG, PNG, WEBP (حجم أقصى 5 ميجابايت)</span>
                 </div>
               </div>
@@ -5614,11 +5614,11 @@
               
               <div v-if="!newCarouselItem.filePreview" class="dropzone-prompt">
                 <svg aria-hidden="true" class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>اسحب صورة البنر هنا أو اضغط للتصفح</span>
+                <span>اسحب صورة البنر إلى هنا أو تصفح الملفات</span>
               </div>
               <div v-else class="dropzone-preview" @click.stop>
                 <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px; margin-bottom: 8px;" />
-                <span class="file-name">{{ newCarouselItem.file ? newCarouselItem.file.name : 'البنر الحالي (اضغط للتغيير)' }}</span>
+                <span class="file-name">{{ newCarouselItem.file ? newCarouselItem.file.name : 'البنر الحالي (تغيير الصورة)' }}</span>
                 <span v-if="newCarouselItem.dimensions" class="file-dimensions block text-muted text-small mt-1" style="font-size: 0.75rem; color: #868e96; font-weight: 500;">
                   المقاسات: {{ newCarouselItem.dimensions }}
                 </span>
@@ -5761,7 +5761,7 @@
 
         <div class="form-group mb-3">
           <label class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
-          <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'اتركه فارغاً للإبقاء…' : 'كلمة السر…'" :required="!editingUser._id" />
+          <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'بدون تغيير إذا تُرك فارغاً…' : 'كلمة المرور…'" :required="!editingUser._id" />
         </div>
 
         <div class="form-row">
@@ -7290,7 +7290,7 @@
       <!-- Fixed Modal Footer -->
       <div class="shortcuts-modal-footer">
         <button type="button" @click="shortcutsModalOpen = false" class="btn btn-primary btn-shortcuts-done">
-          <span>فهمت ذلك ✓</span>
+          <span>فهمت ذلك</span>
         </button>
       </div>
     </div>
@@ -7308,7 +7308,7 @@
           v-model="commandPaletteQuery" 
           type="text" 
           class="palette-input" 
-          placeholder="ابحث أو اكتب أمراً… (Ctrl+K)" 
+          placeholder="بحث أو أمر… (Ctrl+K)" 
           autocomplete="off"
         />
         <kbd class="kbd-badge kbd-esc-badge" @click="commandPaletteOpen = false">Esc</kbd>
@@ -8323,11 +8323,11 @@ export default {
       if (resultCount === 1) {
         if (tabType === 'orders') {
           const ord = filteredOrders.value[0];
-          toast.show(`تم العثور على الطلب #${ord.orderNumber || ord._id.toString().slice(-6)} (اضغط P للطباعة أو Enter للتعديل)`, 'success');
+          toast.show(`الطلب #${ord.orderNumber || ord._id.toString().slice(-6)}: [P] طباعة / [Enter] تعديل`, 'success');
         } else if (tabType === 'products') {
-          toast.show(`تم تحديد المنتج: ${filteredProducts.value[0].name} (اضغط Enter للتعديل)`, 'info');
+          toast.show(`المنتج: ${filteredProducts.value[0].name} — [Enter] للتعديل`, 'info');
         } else if (tabType === 'customers') {
-          toast.show(`تم تحديد العميل: ${filteredCustomers.value[0].name} (اضغط Enter للملف)`, 'info');
+          toast.show(`العميل: ${filteredCustomers.value[0].name} — [Enter] للملف`, 'info');
         }
       } else if (resultCount > 1) {
         toast.show(`تم تثبيت البحث: ${resultCount} نتائج (استخدم ↑ ↓ للتنقل)`, 'info');
@@ -9124,7 +9124,7 @@ export default {
 
     const saveCarouselItem = async () => {
       if (!editingCarouselId.value && !newCarouselItem.file) {
-        toast.show('يرجى تحديد صورة للبنر الإعلاني', 'danger');
+        toast.show('حدد صورة للبنر الإعلاني', 'danger');
         return;
       }
       
@@ -9554,7 +9554,7 @@ export default {
 
     const saveUser = async () => {
       if (!editingUser.name || (!editingUser._id && !editingUser.password)) {
-        toast.show('يرجى تعبئة جميع الحقول المطلوبة', 'danger');
+        toast.show('جميع الحقول المطلوبة إلزامية', 'danger');
         return;
       }
       loading.value = true;
@@ -9628,7 +9628,7 @@ export default {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          toast.show('تم إنشاء النسخة الاحتياطية بنجاح ✓', 'success');
+          toast.show('تم إنشاء النسخة الاحتياطية بنجاح', 'success');
           newBackupLabel.value = '';
           await fetchBackups();
         } else {
@@ -9655,7 +9655,7 @@ export default {
           a.click();
           a.remove();
           window.URL.revokeObjectURL(dlUrl);
-          toast.show('تم بدء تنزيل النسخة الاحتياطية ✓', 'success');
+          toast.show('تم بدء تنزيل النسخة الاحتياطية', 'success');
         })
         .catch(err => {
           console.error('Download backup error', err);
@@ -9699,7 +9699,7 @@ export default {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          toast.show('تم مسح وإعادة ضبط سجل الطلبات والمبيعات بنجاح ✓', 'success');
+          toast.show('تم مسح وإعادة ضبط سجل الطلبات والمبيعات بنجاح', 'success');
           resetModalOpen.value = false;
           resetConfirmText.value = '';
           await Promise.all([
@@ -10343,7 +10343,7 @@ export default {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          toast.show('تم إلغاء واسترجاع الدفعة بنجاح ✓', 'success');
+          toast.show('تم إلغاء واسترجاع الدفعة بنجاح', 'success');
           payment.status = 'cancelled';
           payment.isCancelled = true;
           payment.cancelledAt = new Date();
@@ -10813,7 +10813,7 @@ export default {
 
     const saveChef = async () => {
       if (!editingChef.name.trim()) {
-        toast.show('يرجى إدخال اسم الشيف', 'warning');
+        toast.show('اسم الشيف مطلوب', 'warning');
         return;
       }
       loading.value = true;
@@ -12105,11 +12105,11 @@ const closeSuggestionsWithDelay = () => {
 
     const submitNewOrder = async () => {
       if (!newOrder.customerName.trim() || !newOrder.customerPhone.trim()) {
-        toast.show('يرجى إدخال اسم العميل ورقم هاتفه', 'danger');
+        toast.show('اسم العميل ورقم هاتفه مطلوبان', 'danger');
         return;
       }
       if (newOrder.items.length === 0) {
-        toast.show('يرجى إضافة صنف واحد على الأقل للطلب', 'danger');
+        toast.show('أضف صنفاً واحداً على الأقل للطلب', 'danger');
         return;
       }
 
@@ -12524,9 +12524,9 @@ const closeSuggestionsWithDelay = () => {
           if (!newOrderLoading.value && newOrder.items.length > 0 && newOrder.customerName && newOrder.customerPhone) {
             submitNewOrder();
           } else if (newOrder.items.length === 0) {
-            toast.show('يرجى إضافة صنف واحد على الأقل للطلب قبل الحفظ', 'warning');
+            toast.show('أضف صنفاً واحداً على الأقل للطلب قبل الحفظ', 'warning');
           } else if (!newOrder.customerName || !newOrder.customerPhone) {
-            toast.show('يرجى إدخال اسم العميل ورقم هاتفه', 'warning');
+            toast.show('اسم العميل ورقم هاتفه مطلوبان', 'warning');
           }
           return;
         }
