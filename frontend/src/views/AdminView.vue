@@ -1203,170 +1203,284 @@
             </div>
           </div>
 
-          <!-- CATEGORIES CRUD TAB -->
+          <!-- CATEGORIES CRUD TAB (REDESIGNED SHOWCASE & MANAGEMENT) -->
           <div v-else-if="activeTab === 'categories' && userRole === 'admin'" class="categories-tab-content">
-            <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-split">
-                <div class="card-toolbar-top">
-                  <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">إدارة أصناف المنيو</h3>
-                    <span class="toolbar-badge">{{ formatArabicPlural(categories.length, 'category') }}</span>
-                  </div>
-                  <button @click="openCategoryModal()" class="btn btn-primary">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة صنف جديد
-                  </button>
+            
+            <!-- 1. Executive KPI Summary Cards Grid -->
+            <div class="cat-kpi-grid">
+              <!-- Total Categories -->
+              <div class="cat-kpi-card glass-panel">
+                <div class="cat-kpi-icon cat-kpi-gold" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div class="cat-kpi-info">
+                  <span class="cat-kpi-label">إجمالي الأصناف الرئيسية</span>
+                  <div class="cat-kpi-value text-mono">{{ categories.length }}</div>
+                  <span class="cat-kpi-desc">تصنيف رئيسي في القائمة</span>
                 </div>
               </div>
 
-              <div class="table-container">
-                <table class="admin-table desktop-categories-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 80px;">الرمز</th>
-                      <th>اسم الصنف</th>
-                      <th>الأصناف الفرعية</th>
-                      <th>إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- SKELETON ROWS (Categories Loading) -->
-                    <template v-if="categoriesLoading">
-                      <tr v-for="i in 4" :key="'cat-skel-' + i" class="skeleton-table-row-wrapper">
-                        <td><div class="skeleton-shimmer mx-auto" style="width: 42px; height: 42px; border-radius: 12px;"></div></td>
-                        <td><div class="skeleton-shimmer" style="width: 120px; height: 18px;"></div></td>
-                        <td>
-                          <div class="d-flex gap-2">
-                            <div class="skeleton-shimmer" style="width: 65px; height: 22px; border-radius: 12px;"></div>
-                            <div class="skeleton-shimmer" style="width: 80px; height: 22px; border-radius: 12px;"></div>
-                          </div>
-                        </td>
-                        <td>
-                          <div class="d-flex gap-2">
-                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
-                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
-                          </div>
-                        </td>
-                      </tr>
-                    </template>
+              <!-- Total Subcategories -->
+              <div class="cat-kpi-card glass-panel">
+                <div class="cat-kpi-icon cat-kpi-sky" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                </div>
+                <div class="cat-kpi-info">
+                  <span class="cat-kpi-label">الأصناف الفرعية</span>
+                  <div class="cat-kpi-value text-mono">{{ totalSubcategoriesCount }}</div>
+                  <span class="cat-kpi-desc">قسم فرعي مفعل</span>
+                </div>
+              </div>
 
-                    <tr v-else-if="categories.length === 0">
-                      <td colspan="4" class="text-center">لا توجد أصناف مدخلة.</td>
-                    </tr>
-                    <tr v-else v-for="(cat, idx) in categories" :key="cat._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
-                      <td class="text-center">
-                        <div class="cat-icon-badge">
-                          <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
-                        </div>
-                      </td>
-                      <td class="text-bold">{{ cat.name }}</td>
-                      <td>
-                        <div class="chips-list">
-                          <span v-if="!cat.subCategories || cat.subCategories.length === 0" class="text-muted text-small">لا يوجد أصناف فرعية</span>
-                          <span v-for="sub in cat.subCategories" :key="sub" class="sub-chip">{{ sub }}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="btn-group-row">
-                          <button @click="openCategoryModal(cat)" class="btn btn-sm btn-outline">تعديل</button>
-                          <button @click="deleteCategory(cat._id)" class="btn btn-sm btn-danger">حذف</button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <!-- Total Categorized Products -->
+              <div class="cat-kpi-card glass-panel">
+                <div class="cat-kpi-icon cat-kpi-emerald" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+                <div class="cat-kpi-info">
+                  <span class="cat-kpi-label">المنتجات المصنفة</span>
+                  <div class="cat-kpi-value text-mono">{{ categorizedProductsCount }}</div>
+                  <span class="cat-kpi-desc">من إجمالي {{ products.length }} منتج</span>
+                </div>
+              </div>
 
-                <!-- Mobile Categories Cards Grid (Active on screens <= 768px) -->
-                <div class="mobile-categories-cards-grid">
-                  <div v-if="categories.length === 0" class="mobile-empty-card glass-panel">
-                    <span>لا توجد أصناف مدخلة.</span>
-                  </div>
-                  <div 
-                    v-for="cat in categories" 
-                    :key="'mob-cat-' + cat._id"
-                    class="mobile-category-card glass-panel"
-                  >
-                    <div class="mob-cat-main">
-                      <div class="cat-icon-badge mob-cat-icon">
-                        <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" />
-                      </div>
-                      <div class="mob-cat-info">
-                        <span class="mob-cat-title font-bold">{{ cat.name }}</span>
-                        <span class="mob-cat-sub-count text-small text-muted">{{ (cat.subCategories && cat.subCategories.length) ? (cat.subCategories.length + ' أصناف فرعية') : 'بدون أصناف فرعية' }}</span>
-                      </div>
-                      <div class="mob-cat-actions">
-                        <button @click="openCategoryModal(cat)" class="btn btn-sm btn-outline" title="تعديل">تعديل</button>
-                        <button @click="deleteCategory(cat._id)" class="btn btn-sm btn-danger" title="حذف">حذف</button>
-                      </div>
-                    </div>
-                    <div v-if="cat.subCategories && cat.subCategories.length" class="mob-cat-subs-chips mt-2">
-                      <span v-for="sub in cat.subCategories" :key="'mob-sub-' + sub" class="sub-chip">{{ sub }}</span>
-                    </div>
-                  </div>
+              <!-- Avg Products per Category -->
+              <div class="cat-kpi-card glass-panel">
+                <div class="cat-kpi-icon cat-kpi-purple" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10h-10z"/></svg>
+                </div>
+                <div class="cat-kpi-info">
+                  <span class="cat-kpi-label">متوسط التوزيع</span>
+                  <div class="cat-kpi-value text-mono">{{ categories.length ? Math.round(categorizedProductsCount / categories.length) : 0 }}</div>
+                  <span class="cat-kpi-desc">منتج / صنف رئيسي</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAGS MANAGEMENT TAB -->
-          <div v-else-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
+            <!-- 2. Main Section Card -->
             <div class="table-card glass-panel overflow-hidden">
+              <!-- Toolbar -->
               <div class="card-toolbar card-toolbar-split">
                 <div class="card-toolbar-top">
                   <div class="toolbar-title-group">
-                    <h3 class="toolbar-title">إدارة العلامات المميزة (Tags)</h3>
-                    <span class="toolbar-badge">{{ formatArabicPlural(tags.length, 'tag') }}</span>
+                    <h3 class="toolbar-title">أصناف المنيو والأقسام الفرعية</h3>
+                    <span class="toolbar-badge">{{ formatArabicPlural(filteredCategories.length, 'category') }}</span>
                   </div>
-                  <button @click="openTagModal()" class="btn btn-primary">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    إضافة علامة مميزة
-                  </button>
+                  <div class="toolbar-actions-group">
+                    <!-- View Mode Toggle (Desktop Only) -->
+                    <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
+                      <button 
+                        type="button" 
+                        class="btn-toggle-mode" 
+                        :class="{ active: categoriesViewMode === 'cards' }" 
+                        @click="categoriesViewMode = 'cards'"
+                        title="عرض البطاقات البصرية"
+                      >
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        <span>بطاقات</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-toggle-mode" 
+                        :class="{ active: categoriesViewMode === 'table' }" 
+                        @click="categoriesViewMode = 'table'"
+                        title="عرض الجدول المنظم"
+                      >
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        <span>جدول</span>
+                      </button>
+                    </div>
+
+                    <!-- Add Category Button -->
+                    <button @click="openCategoryModal()" class="btn btn-primary btn-add-highlight">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      <span>إضافة صنف جديد</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search Row -->
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper">
+                    <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input 
+                      v-model="categorySearchQuery" 
+                      type="text" 
+                      placeholder="بحث في الأصناف الرئيسية والأقسام الفرعية…" 
+                      class="form-control search-input"
+                    />
+                    <button 
+                      v-if="categorySearchQuery" 
+                      type="button" 
+                      class="btn-clear-search" 
+                      @click="categorySearchQuery = ''"
+                      aria-label="مسح البحث"
+                    >&times;</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="table-container">
-                <table class="admin-table desktop-tags-table">
+              <!-- Loading Skeleton -->
+              <div v-if="categoriesLoading" class="categories-skeleton-grid">
+                <div v-for="i in 6" :key="'cat-skel-' + i" class="cat-skeleton-card glass-panel">
+                  <div class="cat-skel-top">
+                    <div class="skeleton-shimmer cat-skel-icon"></div>
+                    <div class="cat-skel-meta">
+                      <div class="skeleton-shimmer cat-skel-title"></div>
+                      <div class="skeleton-shimmer cat-skel-badge"></div>
+                    </div>
+                  </div>
+                  <div class="cat-skel-chips">
+                    <div class="skeleton-shimmer cat-skel-chip" v-for="j in 3" :key="j"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div v-else-if="filteredCategories.length === 0" class="mgmt-empty-state glass-panel">
+                <div class="empty-icon-wrap" aria-hidden="true">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <h4 class="empty-title">{{ categorySearchQuery ? 'لا توجد نتائج تطابق بحثك' : 'لا توجد أصناف مدخلة حتى الآن' }}</h4>
+                <p class="empty-desc">{{ categorySearchQuery ? 'جرب البحث بكلمة أخرى أو امسح شريط البحث' : 'ابدأ بإضافة أول صنف رئيسي لقائمتك لتنظيم المنتجات' }}</p>
+                <button v-if="!categorySearchQuery" @click="openCategoryModal()" class="btn btn-primary mt-2">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>إضافة أول صنف الآن</span>
+                </button>
+                <button v-else @click="categorySearchQuery = ''" class="btn btn-outline mt-2">مسح البحث</button>
+              </div>
+
+              <!-- 3. Cards Showcase Grid (Default on mobile and when viewMode === 'cards') -->
+              <div v-else-if="isMobileScreen || categoriesViewMode === 'cards'" class="categories-showcase-grid">
+                <div 
+                  v-for="cat in filteredCategories" 
+                  :key="cat._id" 
+                  class="category-showcase-card glass-panel"
+                >
+                  <!-- Card Top Row: Icon, Title, Product Count, Actions -->
+                  <div class="cat-card-header">
+                    <div class="cat-card-visual">
+                      <div class="cat-icon-container">
+                        <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" size="28" />
+                      </div>
+                      <div class="cat-title-stack">
+                        <h4 class="cat-card-title">{{ cat.name }}</h4>
+                        <button 
+                          type="button" 
+                          class="cat-product-count-badge" 
+                          @click="filterProductsByCategory(cat.name)"
+                          :title="'عرض منتجات ' + cat.name + ' في القائمة'"
+                        >
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                          <span>{{ getCategoryProductCount(cat.name) }} منتج</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Quick Action Buttons -->
+                    <div class="cat-actions-cluster">
+                      <button 
+                        type="button" 
+                        class="btn-cat-action btn-cat-edit" 
+                        @click="openCategoryModal(cat)" 
+                        title="تعديل الصنف"
+                        aria-label="تعديل الصنف"
+                      >
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="btn-text-label">تعديل</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-cat-action btn-cat-delete" 
+                        @click="deleteCategory(cat._id)" 
+                        title="حذف الصنف"
+                        aria-label="حذف الصنف"
+                      >
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <span class="btn-text-label">حذف</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Subcategories Section -->
+                  <div class="cat-card-subcats">
+                    <div class="subcats-header">
+                      <span class="subcats-label">الأقسام الفرعية</span>
+                      <span class="subcats-count-badge">{{ cat.subCategories?.length || 0 }}</span>
+                    </div>
+                    <div v-if="cat.subCategories && cat.subCategories.length" class="subcats-cloud">
+                      <span v-for="sub in cat.subCategories" :key="sub" class="subcat-pill">
+                        <span class="subcat-dot" aria-hidden="true"></span>
+                        <span>{{ sub }}</span>
+                      </span>
+                    </div>
+                    <div v-else class="subcats-empty">
+                      <span class="subcats-empty-text">صنف مباشر (بدون أقسام فرعية)</span>
+                    </div>
+                  </div>
+
+                  <!-- Card Footer Link -->
+                  <div class="cat-card-footer">
+                    <button 
+                      type="button" 
+                      class="btn-cat-view-products" 
+                      @click="filterProductsByCategory(cat.name)"
+                    >
+                      <span>استعراض منتجات الصنف ({{ getCategoryProductCount(cat.name) }})</span>
+                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. Table View (Desktop Only when viewMode === 'table') -->
+              <div v-else class="table-container">
+                <table class="admin-table desktop-categories-table">
                   <thead>
                     <tr>
-                      <th>اسم العلامة</th>
-                      <th>معاينة الشكل واللون (Hugeicons SVG)</th>
-                      <th style="width: 150px; text-align: center;">إجراءات</th>
+                      <th style="width: 70px;">الرمز</th>
+                      <th>اسم الصنف الرئيسي</th>
+                      <th style="width: 140px;">المنتجات المرتبطة</th>
+                      <th>الأقسام الفرعية</th>
+                      <th style="width: 160px; text-align: center;">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <!-- SKELETON ROWS (Tags Loading) -->
-                    <template v-if="tagsLoading">
-                      <tr v-for="i in 4" :key="'tag-skel-' + i" class="skeleton-table-row-wrapper">
-                        <td><div class="skeleton-shimmer" style="width: 110px; height: 18px;"></div></td>
-                        <td><div class="skeleton-shimmer" style="width: 130px; height: 28px; border-radius: 8px;"></div></td>
-                        <td>
-                          <div class="d-flex justify-content-center gap-2">
-                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
-                            <div class="skeleton-shimmer" style="width: 60px; height: 28px; border-radius: 8px;"></div>
-                          </div>
-                        </td>
-                      </tr>
-                    </template>
-
-                    <tr v-else-if="tags.length === 0">
-                      <td colspan="3" class="text-center p-4">لا توجد علامات مميزة مدخلة.</td>
-                    </tr>
-                    <tr v-else v-for="(t, idx) in tags" :key="t._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
-                      <td class="text-bold">{{ t.name }}</td>
+                    <tr v-for="(cat, idx) in filteredCategories" :key="cat._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
+                      <td class="text-center">
+                        <div class="cat-icon-container cat-icon-table">
+                          <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" size="22" />
+                        </div>
+                      </td>
+                      <td class="text-bold text-dark">{{ cat.name }}</td>
                       <td>
-                        <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
-                          <CategoryIcon :icon="t.icon" :name="t.name" size="16" />
-                          <span>{{ t.name }}</span>
-                        </span>
+                        <button 
+                          type="button" 
+                          class="cat-product-count-badge" 
+                          @click="filterProductsByCategory(cat.name)"
+                          :title="'عرض منتجات ' + cat.name"
+                        >
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                          <span>{{ getCategoryProductCount(cat.name) }} منتج</span>
+                        </button>
                       </td>
                       <td>
-                        <div class="order-actions-btns" style="justify-content: center;">
-                          <button @click="openTagModal(t)" class="btn-table-action btn-action-edit" title="تعديل العلامة">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <div class="chips-list">
+                          <span v-if="!cat.subCategories || cat.subCategories.length === 0" class="text-muted text-small">بدون أقسام فرعية</span>
+                          <span v-for="sub in cat.subCategories" :key="sub" class="subcat-pill">
+                            <span class="subcat-dot" aria-hidden="true"></span>
+                            {{ sub }}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="btn-group-row justify-center">
+                          <button @click="openCategoryModal(cat)" class="btn-table-action btn-action-edit" title="تعديل الصنف">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             <span>تعديل</span>
                           </button>
-                          <button @click="deleteTag(t._id)" class="btn-table-action" style="color: #ef4444; border-color: #fca5a5;" title="حذف العلامة">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          <button @click="deleteCategory(cat._id)" class="btn-table-action btn-action-delete" title="حذف الصنف">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             <span>حذف</span>
                           </button>
                         </div>
@@ -1374,31 +1488,265 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
 
-                <!-- Mobile Tags Cards Grid (Active on screens <= 768px) -->
-                <div class="mobile-tags-cards-grid">
-                  <div v-if="tags.length === 0" class="mobile-empty-card glass-panel">
-                    <span>لا توجد علامات مميزة مدخلة.</span>
+          <!-- TAGS MANAGEMENT TAB (REDESIGNED SHOWCASE & MANAGEMENT) -->
+          <div v-else-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
+            
+            <!-- 1. Executive KPI Summary Cards Grid -->
+            <div class="tag-kpi-grid">
+              <!-- Total Tags -->
+              <div class="tag-kpi-card glass-panel">
+                <div class="tag-kpi-icon tag-kpi-gold" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                </div>
+                <div class="tag-kpi-info">
+                  <span class="tag-kpi-label">إجمالي العلامات المميزة</span>
+                  <div class="tag-kpi-value text-mono">{{ tags.length }}</div>
+                  <span class="tag-kpi-desc">وسم ترويجي نشط</span>
+                </div>
+              </div>
+
+              <!-- Tagged Products Count -->
+              <div class="tag-kpi-card glass-panel">
+                <div class="tag-kpi-icon tag-kpi-amber" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <div class="tag-kpi-info">
+                  <span class="tag-kpi-label">المنتجات المميزة بالوسوم</span>
+                  <div class="tag-kpi-value text-mono">{{ taggedProductsCount }}</div>
+                  <span class="tag-kpi-desc">منتج يحمل شارة في المنيو</span>
+                </div>
+              </div>
+
+              <!-- Active Color Themes -->
+              <div class="tag-kpi-card glass-panel">
+                <div class="tag-kpi-icon tag-kpi-rose" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"/></svg>
+                </div>
+                <div class="tag-kpi-info">
+                  <span class="tag-kpi-label">أنماط الألوان المتاحة</span>
+                  <div class="tag-kpi-value text-mono">{{ tagColors.length }}</div>
+                  <span class="tag-kpi-desc">ألوان بصرية لتصنيف العروض</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Main Section Card -->
+            <div class="table-card glass-panel overflow-hidden">
+              <!-- Toolbar -->
+              <div class="card-toolbar card-toolbar-split">
+                <div class="card-toolbar-top">
+                  <div class="toolbar-title-group">
+                    <h3 class="toolbar-title">العلامات المميزة والشارات الترويجية</h3>
+                    <span class="toolbar-badge">{{ formatArabicPlural(filteredTags.length, 'tag') }}</span>
                   </div>
-                  <div 
-                    v-for="t in tags" 
-                    :key="'mob-tag-' + t._id"
-                    class="mobile-tag-card glass-panel"
-                  >
-                    <div class="mob-tag-main">
-                      <div class="mob-tag-info">
+                  <div class="toolbar-actions-group">
+                    <!-- View Mode Toggle (Desktop Only) -->
+                    <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
+                      <button 
+                        type="button" 
+                        class="btn-toggle-mode" 
+                        :class="{ active: tagsViewMode === 'cards' }" 
+                        @click="tagsViewMode = 'cards'"
+                        title="عرض البطاقات البصرية"
+                      >
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        <span>بطاقات</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-toggle-mode" 
+                        :class="{ active: tagsViewMode === 'table' }" 
+                        @click="tagsViewMode = 'table'"
+                        title="عرض الجدول المنظم"
+                      >
+                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        <span>جدول</span>
+                      </button>
+                    </div>
+
+                    <!-- Add Tag Button -->
+                    <button @click="openTagModal()" class="btn btn-primary btn-add-highlight">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      <span>إضافة علامة مميزة</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search Row -->
+                <div class="card-toolbar-bottom">
+                  <div class="search-input-wrapper">
+                    <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input 
+                      v-model="tagSearchQuery" 
+                      type="text" 
+                      placeholder="بحث في العلامات المميزة والشارات…" 
+                      class="form-control search-input"
+                    />
+                    <button 
+                      v-if="tagSearchQuery" 
+                      type="button" 
+                      class="btn-clear-search" 
+                      @click="tagSearchQuery = ''"
+                      aria-label="مسح البحث"
+                    >&times;</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading Skeleton -->
+              <div v-if="tagsLoading" class="tags-skeleton-grid">
+                <div v-for="i in 6" :key="'tag-skel-' + i" class="tag-skeleton-card glass-panel">
+                  <div class="skeleton-shimmer tag-skel-pill"></div>
+                  <div class="skeleton-shimmer tag-skel-line"></div>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div v-else-if="filteredTags.length === 0" class="mgmt-empty-state glass-panel">
+                <div class="empty-icon-wrap" aria-hidden="true">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                </div>
+                <h4 class="empty-title">{{ tagSearchQuery ? 'لا توجد علامات تطابق بحثك' : 'لا توجد علامات مميزة حتى الآن' }}</h4>
+                <p class="empty-desc">{{ tagSearchQuery ? 'جرب البحث بكلمة أخرى أو امسح شريط البحث' : 'أضف شارات ترويجية مثل الأكثر طلباً أو جديد لتظهر على منتجاتك في المنيو' }}</p>
+                <button v-if="!tagSearchQuery" @click="openTagModal()" class="btn btn-primary mt-2">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>إضافة أول علامة مميزة</span>
+                </button>
+                <button v-else @click="tagSearchQuery = ''" class="btn btn-outline mt-2">مسح البحث</button>
+              </div>
+
+              <!-- 3. Tags Showcase Cards Grid (Default on mobile and when viewMode === 'cards') -->
+              <div v-else-if="isMobileScreen || tagsViewMode === 'cards'" class="tags-showcase-grid">
+                <div 
+                  v-for="t in filteredTags" 
+                  :key="t._id" 
+                  class="tag-showcase-card glass-panel"
+                >
+                  <!-- Top: Live Badge Preview + Actions -->
+                  <div class="tag-card-header">
+                    <!-- Live Storefront Tag Pill Preview -->
+                    <span class="tag-pill tag-showcase-pill" :class="'tag-' + (t.color || 'default')">
+                      <CategoryIcon :icon="t.icon" :name="t.name" size="18" />
+                      <span class="tag-pill-text">{{ t.name }}</span>
+                    </span>
+
+                    <div class="cat-actions-cluster">
+                      <button 
+                        type="button" 
+                        class="btn-cat-action btn-cat-edit" 
+                        @click="openTagModal(t)" 
+                        title="تعديل العلامة"
+                        aria-label="تعديل العلامة"
+                      >
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="btn-text-label">تعديل</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-cat-action btn-cat-delete" 
+                        @click="deleteTag(t._id)" 
+                        title="حذف العلامة"
+                        aria-label="حذف العلامة"
+                      >
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <span class="btn-text-label">حذف</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Tag Details & Color Info -->
+                  <div class="tag-card-body">
+                    <div class="tag-meta-item">
+                      <span class="tag-meta-label">النمط اللوني:</span>
+                      <span class="tag-color-badge" :class="'color-' + (t.color || 'default')">
+                        <span class="color-dot" aria-hidden="true"></span>
+                        <span>{{ getTagColorLabel(t.color) }}</span>
+                      </span>
+                    </div>
+
+                    <div class="tag-meta-item">
+                      <span class="tag-meta-label">المنتجات المرتبطة:</span>
+                      <button 
+                        type="button" 
+                        class="tag-product-count-link" 
+                        @click="filterProductsByTag(t.name)"
+                        :title="'عرض منتجات ' + t.name"
+                      >
+                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                        <span>{{ getTagProductCount(t.name) }} منتج</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Card Footer -->
+                  <div class="tag-card-footer">
+                    <button 
+                      type="button" 
+                      class="btn-cat-view-products" 
+                      @click="filterProductsByTag(t.name)"
+                    >
+                      <span>عرض المنتجات المرتبطة بهذا الوسم ({{ getTagProductCount(t.name) }})</span>
+                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. Table View (Desktop Only when viewMode === 'table') -->
+              <div v-else class="table-container">
+                <table class="admin-table desktop-tags-table">
+                  <thead>
+                    <tr>
+                      <th>اسم العلامة</th>
+                      <th>معاينة المظهر في المنيو (Live Preview)</th>
+                      <th>النمط اللوني</th>
+                      <th style="width: 140px;">المنتجات المرتبطة</th>
+                      <th style="width: 160px; text-align: center;">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(t, idx) in filteredTags" :key="t._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
+                      <td class="text-bold text-dark">{{ t.name }}</td>
+                      <td>
                         <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
                           <CategoryIcon :icon="t.icon" :name="t.name" size="16" />
                           <span class="font-bold">{{ t.name }}</span>
                         </span>
-                      </div>
-                      <div class="mob-tag-actions">
-                        <button @click="openTagModal(t)" class="btn btn-sm btn-outline" title="تعديل">تعديل</button>
-                        <button @click="deleteTag(t._id)" class="btn btn-sm btn-danger" title="حذف">حذف</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </td>
+                      <td>
+                        <span class="tag-color-badge" :class="'color-' + (t.color || 'default')">
+                          <span class="color-dot" aria-hidden="true"></span>
+                          <span>{{ getTagColorLabel(t.color) }}</span>
+                        </span>
+                      </td>
+                      <td>
+                        <button 
+                          type="button" 
+                          class="tag-product-count-link" 
+                          @click="filterProductsByTag(t.name)"
+                        >
+                          <span>{{ getTagProductCount(t.name) }} منتج</span>
+                        </button>
+                      </td>
+                      <td>
+                        <div class="btn-group-row justify-center">
+                          <button @click="openTagModal(t)" class="btn-table-action btn-action-edit" title="تعديل العلامة">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span>تعديل</span>
+                          </button>
+                          <button @click="deleteTag(t._id)" class="btn-table-action btn-action-delete" title="حذف العلامة">
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span>حذف</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -8664,6 +9012,66 @@ export default {
       }
     };
 
+    // --- CATEGORIES & TAGS REDESIGNED SHOWCASE LOGIC ---
+    const categorySearchQuery = ref('');
+    const tagSearchQuery = ref('');
+    const categoriesViewMode = ref('cards');
+    const tagsViewMode = ref('cards');
+
+    const filteredCategories = computed(() => {
+      const q = categorySearchQuery.value.trim().toLowerCase();
+      if (!q) return categories.value || [];
+      return (categories.value || []).filter(c => {
+        const matchName = (c.name || '').toLowerCase().includes(q);
+        const matchSubs = (c.subCategories || []).some(s => s.toLowerCase().includes(q));
+        return matchName || matchSubs;
+      });
+    });
+
+    const filteredTags = computed(() => {
+      const q = tagSearchQuery.value.trim().toLowerCase();
+      if (!q) return tags.value || [];
+      return (tags.value || []).filter(t => (t.name || '').toLowerCase().includes(q));
+    });
+
+    const totalSubcategoriesCount = computed(() => {
+      return (categories.value || []).reduce((acc, c) => acc + (c.subCategories?.length || 0), 0);
+    });
+
+    const categorizedProductsCount = computed(() => {
+      return (products.value || []).filter(p => p.category).length;
+    });
+
+    const taggedProductsCount = computed(() => {
+      return (products.value || []).filter(p => p.tags && p.tags.length > 0).length;
+    });
+
+    const getCategoryProductCount = (catName) => {
+      if (!catName) return 0;
+      return (products.value || []).filter(p => p.category === catName).length;
+    };
+
+    const getTagProductCount = (tagName) => {
+      if (!tagName) return 0;
+      return (products.value || []).filter(p => (p.tags || []).includes(tagName)).length;
+    };
+
+    const getTagColorLabel = (colorKey) => {
+      const match = tagColors.find(c => c.key === colorKey);
+      return match ? match.label.split(' ')[0] : 'افتراضي';
+    };
+
+    const filterProductsByCategory = (catName) => {
+      filters.category = catName;
+      filters.search = '';
+      setTab('products');
+    };
+
+    const filterProductsByTag = (tagName) => {
+      filters.search = tagName;
+      filters.category = '';
+      setTab('products');
+    };
 
     // IMAGE RECOVERY TAB LOGIC
     // MARKETING CAROUSEL LOGIC
@@ -12995,6 +13403,20 @@ const closeSuggestionsWithDelay = () => {
       openCategoryModal,
       saveCategory,
       deleteCategory,
+      categorySearchQuery,
+      tagSearchQuery,
+      categoriesViewMode,
+      tagsViewMode,
+      filteredCategories,
+      filteredTags,
+      totalSubcategoriesCount,
+      categorizedProductsCount,
+      taggedProductsCount,
+      getCategoryProductCount,
+      getTagProductCount,
+      getTagColorLabel,
+      filterProductsByCategory,
+      filterProductsByTag,
       trendCoordinates,
       svgTrendLinePath,
       svgTrendAreaPath,
@@ -26615,7 +27037,935 @@ select.pos-control {
   display: none;
 }
 
+/* ==========================================================================
+   CATEGORIES & TAGS REDESIGN (EXECUTIVE KPIS, SHOWCASE CARDS, TOOLBAR)
+   ========================================================================== */
+
+/* 1. Executive KPI Summary Cards */
+.cat-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tag-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cat-kpi-card,
+.tag-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cat-kpi-card:hover,
+.tag-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+  border-color: rgba(203, 213, 225, 0.9);
+}
+
+.cat-kpi-icon,
+.tag-kpi-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.cat-kpi-card:hover .cat-kpi-icon,
+.tag-kpi-card:hover .tag-kpi-icon {
+  transform: scale(1.05);
+}
+
+.cat-kpi-gold,
+.tag-kpi-gold {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.cat-kpi-amber,
+.tag-kpi-amber {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.cat-kpi-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.cat-kpi-blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.tag-kpi-rose {
+  background: rgba(244, 63, 94, 0.12);
+  color: #e11d48;
+}
+
+.cat-kpi-info,
+.tag-kpi-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cat-kpi-label,
+.tag-kpi-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.cat-kpi-value,
+.tag-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.cat-kpi-desc,
+.tag-kpi-desc {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* 2. Card Toolbar */
+.card-toolbar-split {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.card-toolbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.toolbar-badge {
+  background: rgba(241, 245, 249, 0.9);
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.toolbar-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* View Mode Segmented Control */
+.view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-toggle-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-toggle-mode:hover {
+  color: #0f172a;
+}
+
+.btn-toggle-mode.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-add-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
+}
+
+.card-toolbar-bottom {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 42px 10px 40px !important;
+  border-radius: 12px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  font-size: 0.9rem !important;
+  font-family: 'Cairo', sans-serif !important;
+  transition: all 0.2s ease !important;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  background: #ffffff !important;
+  border-color: var(--primary-color, #d97706) !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12) !important;
+  outline: none !important;
+}
+
+.btn-clear-search {
+  position: absolute;
+  left: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-clear-search:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+/* 3. Skeleton Loading States */
+.categories-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.cat-skeleton-card,
+.tag-skeleton-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cat-skel-top {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cat-skel-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #e2e8f0;
+}
+
+.cat-skel-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cat-skel-title {
+  height: 18px;
+  width: 60%;
+  border-radius: 6px;
+  background: #e2e8f0;
+}
+
+.cat-skel-badge {
+  height: 14px;
+  width: 35%;
+  border-radius: 6px;
+  background: #e2e8f0;
+}
+
+.cat-skel-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.cat-skel-chip {
+  height: 24px;
+  width: 64px;
+  border-radius: 8px;
+  background: #e2e8f0;
+}
+
+.tags-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.tag-skel-pill {
+  height: 36px;
+  width: 120px;
+  border-radius: 20px;
+  background: #e2e8f0;
+  margin-bottom: 14px;
+}
+
+.tag-skel-line {
+  height: 16px;
+  width: 75%;
+  border-radius: 6px;
+  background: #e2e8f0;
+}
+
+/* 4. Empty State */
+.mgmt-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: 16px;
+  margin: 24px;
+  background: rgba(248, 250, 252, 0.6);
+  border: 1.5px dashed #cbd5e1;
+}
+
+.mgmt-empty-state .empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: rgba(241, 245, 249, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.mgmt-empty-state .empty-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.mgmt-empty-state .empty-desc {
+  font-size: 0.88rem;
+  color: #64748b;
+  max-width: 380px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+/* 5. Categories Showcase Grid & Cards */
+.categories-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+  padding: 20px;
+}
+
+.category-showcase-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-showcase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.cat-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cat-card-visual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cat-icon-container {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.85) 0%, rgba(253, 230, 138, 0.6) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.cat-icon-table {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  margin: 0 auto;
+}
+
+.cat-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cat-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-product-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  color: #0284c7;
+  border: 1px solid #e0f2fe;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  width: fit-content;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.cat-product-count-badge:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.cat-actions-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-cat-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-cat-edit {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.btn-cat-edit:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn-cat-delete {
+  background: rgba(254, 242, 242, 0.8);
+  color: #dc2626;
+  border-color: rgba(254, 202, 202, 0.8);
+}
+
+.btn-cat-delete:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.cat-card-subcats {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subcats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subcats-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.subcats-count-badge {
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 9999px;
+}
+
+.subcats-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.subcat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #334155;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.subcat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+  flex-shrink: 0;
+}
+
+.subcats-empty {
+  padding: 4px 0;
+}
+
+.subcats-empty-text {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.cat-card-footer {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.btn-cat-view-products {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-cat-view-products:hover {
+  background: #f1f5f9;
+  color: var(--primary-color, #d97706);
+  border-color: var(--primary-color, #d97706);
+  border-style: solid;
+}
+
+/* 6. Tags Showcase Grid & Cards */
+.tags-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+  padding: 20px;
+}
+
+.tag-showcase-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tag-showcase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+.tag-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tag-showcase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.tag-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.tag-meta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tag-meta-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.tag-color-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.color-gold .color-dot { background: #eab308; }
+.color-fire .color-dot { background: #f97316; }
+.color-leaf .color-dot { background: #22c55e; }
+.color-sky .color-dot { background: #0ea5e9; }
+.color-royal .color-dot { background: #a855f7; }
+.color-rose .color-dot { background: #f43f5e; }
+.color-default .color-dot { background: #64748b; }
+
+.tag-product-count-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.tag-product-count-link:hover {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+.tag-card-footer {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* 7. Table View Enhancements */
+.desktop-categories-table th,
+.desktop-tags-table th {
+  padding: 12px 14px;
+  font-weight: 700;
+  color: #475569;
+  background: #f8fafc;
+}
+
+.desktop-categories-table td,
+.desktop-tags-table td {
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+.btn-table-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.btn-action-edit {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.btn-action-edit:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn-action-delete {
+  background: rgba(254, 242, 242, 0.8);
+  color: #dc2626;
+  border-color: rgba(254, 202, 202, 0.8);
+}
+
+.btn-action-delete:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
 @media (max-width: 768px) {
+  /* Categories & Tags Mobile Ergonomics */
+  .cat-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .tag-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .tag-kpi-grid .tag-kpi-card:last-child {
+    grid-column: span 2 !important;
+  }
+
+  .cat-kpi-card,
+  .tag-kpi-card {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .cat-kpi-icon,
+  .tag-kpi-icon {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  .cat-kpi-icon svg,
+  .tag-kpi-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .cat-kpi-value,
+  .tag-kpi-value {
+    font-size: 1.25rem !important;
+  }
+
+  .cat-kpi-label,
+  .tag-kpi-label {
+    font-size: 0.74rem !important;
+  }
+
+  .cat-kpi-desc,
+  .tag-kpi-desc {
+    font-size: 0.68rem !important;
+  }
+
+  .categories-showcase-grid,
+  .tags-showcase-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  .category-showcase-card,
+  .tag-showcase-card {
+    padding: 14px !important;
+    border-radius: 14px !important;
+    gap: 12px !important;
+  }
+
+  .cat-icon-container {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .card-toolbar-split {
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .card-toolbar-top {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .toolbar-actions-group {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .btn-add-highlight {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 48px !important;
+  }
+
+  .btn-cat-action {
+    min-height: 40px !important;
+    padding: 8px 12px !important;
+  }
+
+  .btn-cat-view-products {
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+  }
+
+  .card-toolbar-bottom .search-input {
+    font-size: 16px !important;
+    min-height: 48px !important;
+  }
+
   /* ==========================================================================
      MOBILE VIEWPORT (<= 768px): TABLE TO TOUCH-FIRST CARDS CONVERSION
      ========================================================================== */
