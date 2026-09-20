@@ -69,6 +69,11 @@ All UI components, views, styles, and interaction workflows in this project must
   - "Next Month" advances forward in time and points to the left:
     `<polyline points="15 18 9 12 15 6"></polyline>` with explicit `title="الشهر التالي"` and `aria-label="الشهر التالي"`.
   - Header month/year labels must be centered (`text-align: center; flex: 1 1 auto;`).
+- **Mobile Datepicker Modal Teleport & Overlay Architecture**:
+  - On mobile screens ($\le 768\text{px}$), datepicker popovers must be rendered via `<Teleport to="body" :disabled="!isMobileScreen">` inside `.datepicker-modal-wrapper.is-mobile` to escape ancestor clipping (`overflow: hidden`), backdrop-filter, or transform containing block traps.
+  - The wrapper provides a full-screen blurred backdrop (`background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(5px); z-index: 999999;`) with flex centering (`align-items: center; justify-content: center;`).
+  - Popover positioning on mobile is reset to `position: relative !important; margin: auto !important; transform: none !important;` with GPU-accelerated pop animation (`datePickerModalPop`), completely avoiding fragile `top: 50%; left: 50%; transform: translate(-50%, -50%)`.
+  - On desktop (`isMobileScreen === false`), the wrapper defaults to `display: contents;`, allowing the popover to cleanly anchor directly under the trigger button without layout disruption.
 - **Placeholder Standards (Habit 19)**:
   - Never prefix placeholders with redundant imperative verbs ("اكتب…", "أدخل…").
   - Always use the true typographic Arabic ellipsis (`…`) rather than ASCII triple dots (`...`).

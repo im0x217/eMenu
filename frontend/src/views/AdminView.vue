@@ -210,42 +210,46 @@
               </button>
 
               <!-- From Date Popover -->
-              <div v-if="analyticsFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
-                <div class="datepicker-header">
-                  <button type="button" class="dp-nav-btn" @click="analyticsFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                  </button>
-                  <span class="dp-month-title">{{ analyticsFromMonthYearLabel }}</span>
-                  <button type="button" class="dp-nav-btn" @click="analyticsFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                  </button>
-                </div>
+              <Teleport to="body" :disabled="!isMobileScreen">
+                <div v-if="analyticsFromOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (analyticsFromOpen = false) : null">
+                  <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                    <div class="datepicker-header">
+                      <button type="button" class="dp-nav-btn" @click="analyticsFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                      <span class="dp-month-title">{{ analyticsFromMonthYearLabel }}</span>
+                      <button type="button" class="dp-nav-btn" @click="analyticsFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      </button>
+                    </div>
 
-                <div class="dp-weekdays">
-                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                </div>
+                    <div class="dp-weekdays">
+                      <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                    </div>
 
-                <div class="dp-days-grid">
-                  <button 
-                    type="button"
-                    v-for="(dayObj, idx) in analyticsFromCalendarDays" 
-                    :key="idx" 
-                    class="dp-day-cell"
-                    :class="{ 
-                      'other-month': !dayObj.inMonth,
-                      'is-today': dayObj.isToday,
-                      'is-selected': analyticsStartDate === dayObj.dateStr
-                    }"
-                    @click="selectAnalyticsFrom(dayObj.dateStr)"
-                  >
-                    {{ dayObj.dayNum }}
-                  </button>
-                </div>
+                    <div class="dp-days-grid">
+                      <button 
+                        type="button"
+                        v-for="(dayObj, idx) in analyticsFromCalendarDays" 
+                        :key="idx" 
+                        class="dp-day-cell"
+                        :class="{ 
+                          'other-month': !dayObj.inMonth,
+                          'is-today': dayObj.isToday,
+                          'is-selected': analyticsStartDate === dayObj.dateStr
+                        }"
+                        @click="selectAnalyticsFrom(dayObj.dateStr)"
+                      >
+                        {{ dayObj.dayNum }}
+                      </button>
+                    </div>
 
-                <div class="datepicker-footer">
-                  <button type="button" class="btn-dp-show-all" @click="selectAnalyticsFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                    <div class="datepicker-footer">
+                      <button type="button" class="btn-dp-show-all" @click="selectAnalyticsFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Teleport>
             </div>
 
             <!-- To Date Trigger -->
@@ -267,42 +271,46 @@
               </button>
 
               <!-- To Date Popover -->
-              <div v-if="analyticsToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 6px); right: 0; z-index: 1200;">
-                <div class="datepicker-header">
-                  <button type="button" class="dp-nav-btn" @click="analyticsToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                  </button>
-                  <span class="dp-month-title">{{ analyticsToMonthYearLabel }}</span>
-                  <button type="button" class="dp-nav-btn" @click="analyticsToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                  </button>
-                </div>
+              <Teleport to="body" :disabled="!isMobileScreen">
+                <div v-if="analyticsToOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (analyticsToOpen = false) : null">
+                  <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                    <div class="datepicker-header">
+                      <button type="button" class="dp-nav-btn" @click="analyticsToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                      <span class="dp-month-title">{{ analyticsToMonthYearLabel }}</span>
+                      <button type="button" class="dp-nav-btn" @click="analyticsToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      </button>
+                    </div>
 
-                <div class="dp-weekdays">
-                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                </div>
+                    <div class="dp-weekdays">
+                      <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                    </div>
 
-                <div class="dp-days-grid">
-                  <button 
-                    type="button"
-                    v-for="(dayObj, idx) in analyticsToCalendarDays" 
-                    :key="idx"
-                    class="dp-day-cell"
-                    :class="{ 
-                      'other-month': !dayObj.inMonth,
-                      'is-today': dayObj.isToday,
-                      'is-selected': analyticsEndDate === dayObj.dateStr
-                    }"
-                    @click="selectAnalyticsTo(dayObj.dateStr)"
-                  >
-                    {{ dayObj.dayNum }}
-                  </button>
-                </div>
+                    <div class="dp-days-grid">
+                      <button 
+                        type="button"
+                        v-for="(dayObj, idx) in analyticsToCalendarDays" 
+                        :key="idx" 
+                        class="dp-day-cell"
+                        :class="{ 
+                          'other-month': !dayObj.inMonth,
+                          'is-today': dayObj.isToday,
+                          'is-selected': analyticsEndDate === dayObj.dateStr
+                        }"
+                        @click="selectAnalyticsTo(dayObj.dateStr)"
+                      >
+                        {{ dayObj.dayNum }}
+                      </button>
+                    </div>
 
-                <div class="datepicker-footer">
-                  <button type="button" class="btn-dp-show-all" @click="selectAnalyticsTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                    <div class="datepicker-footer">
+                      <button type="button" class="btn-dp-show-all" @click="selectAnalyticsTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Teleport>
             </div>
 
             <!-- Quick Preset Shortcuts -->
@@ -1561,42 +1569,46 @@
                       </div>
 
                       <!-- Custom Date Picker Popover Panel -->
-                      <div v-if="datePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                        <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                          </button>
-                          <span class="dp-month-title">{{ currentMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                          </button>
-                        </div>
+                      <Teleport to="body" :disabled="!isMobileScreen">
+                        <div v-if="datePickerOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (datePickerOpen = false) : null">
+                          <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                            <div class="datepicker-header">
+                              <button type="button" class="dp-nav-btn" @click="prevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                              <span class="dp-month-title">{{ currentMonthYearLabel }}</span>
+                              <button type="button" class="dp-nav-btn" @click="nextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </button>
+                            </div>
 
-                        <div class="dp-weekdays">
-                          <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                        </div>
+                            <div class="dp-weekdays">
+                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                            </div>
 
-                        <div class="dp-days-grid">
-                          <button 
-                            type="button"
-                            v-for="(dayObj, idx) in calendarDays" 
-                            :key="idx"
-                            class="dp-day-cell"
-                            :class="{ 
-                              'other-month': !dayObj.inMonth,
-                              'is-today': dayObj.isToday,
-                              'is-selected': orderFilters.selectedDate === dayObj.dateStr
-                            }"
-                            @click="selectDateFromPicker(dayObj.dateStr)"
-                          >
-                            {{ dayObj.dayNum }}
-                          </button>
-                        </div>
+                            <div class="dp-days-grid">
+                              <button 
+                                type="button"
+                                v-for="(dayObj, idx) in calendarDays" 
+                                :key="idx" 
+                                class="dp-day-cell"
+                                :class="{ 
+                                  'other-month': !dayObj.inMonth,
+                                  'is-today': dayObj.isToday,
+                                  'is-selected': orderFilters.selectedDate === dayObj.dateStr
+                                }"
+                                @click="selectDateFromPicker(dayObj.dateStr)"
+                              >
+                                {{ dayObj.dayNum }}
+                              </button>
+                            </div>
 
-                        <div class="datepicker-footer">
-                          <button type="button" class="btn-dp-show-all" @click="orderFilters.selectedDate = ''; datePickerOpen = false;">عرض جميع التواريخ</button>
+                            <div class="datepicker-footer">
+                              <button type="button" class="btn-dp-show-all" @click="orderFilters.selectedDate = ''; datePickerOpen = false;">عرض جميع التواريخ</button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </Teleport>
                     </div>
                   </div>
                 </div>
@@ -2010,42 +2022,46 @@
                       </button>
 
                       <!-- From Date Popover -->
-                      <div v-if="custDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                        <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="custFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                          </button>
-                          <span class="dp-month-title">{{ custFromMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="custFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                          </button>
-                        </div>
+                      <Teleport to="body" :disabled="!isMobileScreen">
+                        <div v-if="custDateFromOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (custDateFromOpen = false) : null">
+                          <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                            <div class="datepicker-header">
+                              <button type="button" class="dp-nav-btn" @click="custFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                              <span class="dp-month-title">{{ custFromMonthYearLabel }}</span>
+                              <button type="button" class="dp-nav-btn" @click="custFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </button>
+                            </div>
 
-                        <div class="dp-weekdays">
-                          <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                        </div>
+                            <div class="dp-weekdays">
+                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                            </div>
 
-                        <div class="dp-days-grid">
-                          <button 
-                            type="button"
-                            v-for="(dayObj, idx) in custFromCalendarDays" 
-                            :key="idx"
-                            class="dp-day-cell"
-                            :class="{ 
-                              'other-month': !dayObj.inMonth,
-                              'is-today': dayObj.isToday,
-                              'is-selected': customerFilters.dateFrom === dayObj.dateStr
-                            }"
-                            @click="selectCustDateFrom(dayObj.dateStr)"
-                          >
-                            {{ dayObj.dayNum }}
-                          </button>
-                        </div>
+                            <div class="dp-days-grid">
+                              <button 
+                                type="button"
+                                v-for="(dayObj, idx) in custFromCalendarDays" 
+                                :key="idx" 
+                                class="dp-day-cell"
+                                :class="{ 
+                                  'other-month': !dayObj.inMonth,
+                                  'is-today': dayObj.isToday,
+                                  'is-selected': customerFilters.dateFrom === dayObj.dateStr
+                                }"
+                                @click="selectCustDateFrom(dayObj.dateStr)"
+                              >
+                                {{ dayObj.dayNum }}
+                              </button>
+                            </div>
 
-                        <div class="datepicker-footer">
-                          <button type="button" class="btn-dp-show-all" @click="selectCustDateFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                            <div class="datepicker-footer">
+                              <button type="button" class="btn-dp-show-all" @click="selectCustDateFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </Teleport>
                     </div>
 
                     <!-- To Date Trigger -->
@@ -2067,42 +2083,46 @@
                       </button>
 
                       <!-- To Date Popover -->
-                      <div v-if="custDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                        <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="custToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                          </button>
-                          <span class="dp-month-title">{{ custToMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="custToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                          </button>
-                        </div>
+                      <Teleport to="body" :disabled="!isMobileScreen">
+                        <div v-if="custDateToOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (custDateToOpen = false) : null">
+                          <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                            <div class="datepicker-header">
+                              <button type="button" class="dp-nav-btn" @click="custToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                              <span class="dp-month-title">{{ custToMonthYearLabel }}</span>
+                              <button type="button" class="dp-nav-btn" @click="custToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </button>
+                            </div>
 
-                        <div class="dp-weekdays">
-                          <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                        </div>
+                            <div class="dp-weekdays">
+                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                            </div>
 
-                        <div class="dp-days-grid">
-                          <button 
-                            type="button"
-                            v-for="(dayObj, idx) in custToCalendarDays" 
-                            :key="idx"
-                            class="dp-day-cell"
-                            :class="{ 
-                              'other-month': !dayObj.inMonth,
-                              'is-today': dayObj.isToday,
-                              'is-selected': customerFilters.dateTo === dayObj.dateStr
-                            }"
-                            @click="selectCustDateTo(dayObj.dateStr)"
-                          >
-                            {{ dayObj.dayNum }}
-                          </button>
-                        </div>
+                            <div class="dp-days-grid">
+                              <button 
+                                type="button"
+                                v-for="(dayObj, idx) in custToCalendarDays" 
+                                :key="idx" 
+                                class="dp-day-cell"
+                                :class="{ 
+                                  'other-month': !dayObj.inMonth,
+                                  'is-today': dayObj.isToday,
+                                  'is-selected': customerFilters.dateTo === dayObj.dateStr
+                                }"
+                                @click="selectCustDateTo(dayObj.dateStr)"
+                              >
+                                {{ dayObj.dayNum }}
+                              </button>
+                            </div>
 
-                        <div class="datepicker-footer">
-                          <button type="button" class="btn-dp-show-all" @click="selectCustDateTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                            <div class="datepicker-footer">
+                              <button type="button" class="btn-dp-show-all" @click="selectCustDateTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </Teleport>
                     </div>
 
                     <!-- Today Shortcut Button (Order Management Style) -->
@@ -2556,42 +2576,46 @@
                           </button>
 
                           <!-- From Date Popover -->
-                          <div v-if="prodDateFromOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                            <div class="datepicker-header">
-                              <button type="button" class="dp-nav-btn" @click="prodFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                              </button>
-                              <span class="dp-month-title">{{ prodFromMonthYearLabel }}</span>
-                              <button type="button" class="dp-nav-btn" @click="prodFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                              </button>
-                            </div>
+                          <Teleport to="body" :disabled="!isMobileScreen">
+                            <div v-if="prodDateFromOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (prodDateFromOpen = false) : null">
+                              <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                                <div class="datepicker-header">
+                                  <button type="button" class="dp-nav-btn" @click="prodFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                  </button>
+                                  <span class="dp-month-title">{{ prodFromMonthYearLabel }}</span>
+                                  <button type="button" class="dp-nav-btn" @click="prodFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                  </button>
+                                </div>
 
-                            <div class="dp-weekdays">
-                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                            </div>
+                                <div class="dp-weekdays">
+                                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                                </div>
 
-                            <div class="dp-days-grid">
-                              <button 
-                                type="button"
-                                v-for="(dayObj, idx) in prodFromCalendarDays" 
-                                :key="idx"
-                                class="dp-day-cell"
-                                :class="{ 
-                                  'other-month': !dayObj.inMonth,
-                                  'is-today': dayObj.isToday,
-                                  'is-selected': productionReportFilters.dateFrom === dayObj.dateStr
-                                }"
-                                @click="selectProdDateFrom(dayObj.dateStr)"
-                              >
-                                {{ dayObj.dayNum }}
-                              </button>
-                            </div>
+                                <div class="dp-days-grid">
+                                  <button 
+                                    type="button"
+                                    v-for="(dayObj, idx) in prodFromCalendarDays" 
+                                    :key="idx" 
+                                    class="dp-day-cell"
+                                    :class="{ 
+                                      'other-month': !dayObj.inMonth,
+                                      'is-today': dayObj.isToday,
+                                      'is-selected': productionReportFilters.dateFrom === dayObj.dateStr
+                                    }"
+                                    @click="selectProdDateFrom(dayObj.dateStr)"
+                                  >
+                                    {{ dayObj.dayNum }}
+                                  </button>
+                                </div>
 
-                            <div class="datepicker-footer">
-                              <button type="button" class="btn-dp-show-all" @click="selectProdDateFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                                <div class="datepicker-footer">
+                                  <button type="button" class="btn-dp-show-all" @click="selectProdDateFrom(getTodayStr())">تحديد تاريخ اليوم</button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          </Teleport>
                         </div>
 
                         <!-- To Date Trigger -->
@@ -2613,42 +2637,46 @@
                           </button>
 
                           <!-- To Date Popover -->
-                          <div v-if="prodDateToOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                            <div class="datepicker-header">
-                              <button type="button" class="dp-nav-btn" @click="prodToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                              </button>
-                              <span class="dp-month-title">{{ prodToMonthYearLabel }}</span>
-                              <button type="button" class="dp-nav-btn" @click="prodToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                              </button>
-                            </div>
+                          <Teleport to="body" :disabled="!isMobileScreen">
+                            <div v-if="prodDateToOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (prodDateToOpen = false) : null">
+                              <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                                <div class="datepicker-header">
+                                  <button type="button" class="dp-nav-btn" @click="prodToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                  </button>
+                                  <span class="dp-month-title">{{ prodToMonthYearLabel }}</span>
+                                  <button type="button" class="dp-nav-btn" @click="prodToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                  </button>
+                                </div>
 
-                            <div class="dp-weekdays">
-                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                            </div>
+                                <div class="dp-weekdays">
+                                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                                </div>
 
-                            <div class="dp-days-grid">
-                              <button 
-                                type="button"
-                                v-for="(dayObj, idx) in prodToCalendarDays" 
-                                :key="idx"
-                                class="dp-day-cell"
-                                :class="{ 
-                                  'other-month': !dayObj.inMonth,
-                                  'is-today': dayObj.isToday,
-                                  'is-selected': productionReportFilters.dateTo === dayObj.dateStr
-                                }"
-                                @click="selectProdDateTo(dayObj.dateStr)"
-                              >
-                                {{ dayObj.dayNum }}
-                              </button>
-                            </div>
+                                <div class="dp-days-grid">
+                                  <button 
+                                    type="button"
+                                    v-for="(dayObj, idx) in prodToCalendarDays" 
+                                    :key="idx" 
+                                    class="dp-day-cell"
+                                    :class="{ 
+                                      'other-month': !dayObj.inMonth,
+                                      'is-today': dayObj.isToday,
+                                      'is-selected': productionReportFilters.dateTo === dayObj.dateStr
+                                    }"
+                                    @click="selectProdDateTo(dayObj.dateStr)"
+                                  >
+                                    {{ dayObj.dayNum }}
+                                  </button>
+                                </div>
 
-                            <div class="datepicker-footer">
-                              <button type="button" class="btn-dp-show-all" @click="selectProdDateTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                                <div class="datepicker-footer">
+                                  <button type="button" class="btn-dp-show-all" @click="selectProdDateTo(getTodayStr())">تحديد تاريخ اليوم</button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          </Teleport>
                         </div>
 
                         <!-- Date Shortcuts -->
@@ -3444,42 +3472,46 @@
                         </button>
 
                         <!-- Standardized Popover Calendar for POS Modal -->
-                        <div v-if="posDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1200;">
-                          <div class="datepicker-header">
-                            <button type="button" class="dp-nav-btn" @click="posPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
-                            <span class="dp-month-title">{{ posCurrentMonthYearLabel }}</span>
-                            <button type="button" class="dp-nav-btn" @click="posNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                            </button>
-                          </div>
+                        <Teleport to="body" :disabled="!isMobileScreen">
+                          <div v-if="posDatePickerOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (posDatePickerOpen = false) : null">
+                            <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                              <div class="datepicker-header">
+                                <button type="button" class="dp-nav-btn" @click="posPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                                <span class="dp-month-title">{{ posCurrentMonthYearLabel }}</span>
+                                <button type="button" class="dp-nav-btn" @click="posNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                </button>
+                              </div>
 
-                          <div class="dp-weekdays">
-                            <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                          </div>
+                              <div class="dp-weekdays">
+                                <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                              </div>
 
-                          <div class="dp-days-grid">
-                            <button 
-                              type="button"
-                              v-for="(dayObj, idx) in posCalendarDays" 
-                              :key="idx"
-                              class="dp-day-cell"
-                              :class="{ 
-                                'other-month': !dayObj.inMonth,
-                                'is-today': dayObj.isToday,
-                                'is-selected': newOrder.deliveryDate === dayObj.dateStr
-                              }"
-                              @click="selectPosDateFromPicker(dayObj.dateStr)"
-                            >
-                              {{ dayObj.dayNum }}
-                            </button>
-                          </div>
+                              <div class="dp-days-grid">
+                                <button 
+                                  type="button"
+                                  v-for="(dayObj, idx) in posCalendarDays" 
+                                  :key="idx"
+                                  class="dp-day-cell"
+                                  :class="{ 
+                                    'other-month': !dayObj.inMonth,
+                                    'is-today': dayObj.isToday,
+                                    'is-selected': newOrder.deliveryDate === dayObj.dateStr
+                                  }"
+                                  @click="selectPosDateFromPicker(dayObj.dateStr)"
+                                >
+                                  {{ dayObj.dayNum }}
+                                </button>
+                              </div>
 
-                          <div class="datepicker-footer">
-                            <button type="button" class="btn-dp-show-all" @click="setNewOrderDateShortcut(0); posDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                              <div class="datepicker-footer">
+                                <button type="button" class="btn-dp-show-all" @click="setNewOrderDateShortcut(0); posDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        </Teleport>
                       </div>
 
                       <!-- Touch-Friendly 50/50 Dual Shortcut Buttons (Under the Date Picker) -->
@@ -4102,42 +4134,46 @@
                       </button>
 
                       <!-- Popover Calendar -->
-                      <div v-if="editOrderDatePickerOpen" class="datepicker-popover glass-panel animate-fade-in" @click.stop style="top: calc(100% + 4px); right: 0; z-index: 1300;">
-                        <div class="datepicker-header">
-                          <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                          </button>
-                          <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
-                          <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                          </button>
-                        </div>
+                      <Teleport to="body" :disabled="!isMobileScreen">
+                        <div v-if="editOrderDatePickerOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (editOrderDatePickerOpen = false) : null">
+                          <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
+                            <div class="datepicker-header">
+                              <button type="button" class="dp-nav-btn" @click="editOrderPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                              <span class="dp-month-title">{{ editOrderCurrentMonthYearLabel }}</span>
+                              <button type="button" class="dp-nav-btn" @click="editOrderNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
+                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                              </button>
+                            </div>
 
-                        <div class="dp-weekdays">
-                          <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                        </div>
+                            <div class="dp-weekdays">
+                              <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
+                            </div>
 
-                        <div class="dp-days-grid">
-                          <button 
-                            type="button" 
-                            v-for="(dayObj, idx) in editOrderCalendarDays" 
-                            :key="idx" 
-                            class="dp-day-cell"
-                            :class="{ 
-                              'other-month': !dayObj.inMonth,
-                              'is-today': dayObj.isToday,
-                              'is-selected': editingOrder.deliveryDate === dayObj.dateStr
-                            }"
-                            @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
-                          >
-                            {{ dayObj.dayNum }}
-                          </button>
-                        </div>
+                            <div class="dp-days-grid">
+                              <button 
+                                type="button" 
+                                v-for="(dayObj, idx) in editOrderCalendarDays" 
+                                :key="idx" 
+                                class="dp-day-cell"
+                                :class="{ 
+                                  'other-month': !dayObj.inMonth,
+                                  'is-today': dayObj.isToday,
+                                  'is-selected': editingOrder.deliveryDate === dayObj.dateStr
+                                }"
+                                @click="selectEditOrderDateFromPicker(dayObj.dateStr)"
+                              >
+                                {{ dayObj.dayNum }}
+                              </button>
+                            </div>
 
-                        <div class="datepicker-footer">
-                          <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                            <div class="datepicker-footer">
+                              <button type="button" class="btn-dp-show-all" @click="setEditOrderDateShortcut(0); editOrderDatePickerOpen = false;">تحديد تاريخ اليوم</button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </Teleport>
                     </div>
 
                     <!-- Habit #10: Touch-Friendly 50/50 Dual Shortcut Split Buttons -->
@@ -14972,6 +15008,11 @@ select.form-control:focus {
   position: relative !important;
 }
 
+/* DatePicker Modal Teleport Wrapper */
+.datepicker-modal-wrapper {
+  display: contents;
+}
+
 /* DatePicker Popover Panel */
 .datepicker-popover {
   position: absolute !important;
@@ -22179,18 +22220,39 @@ select.pos-control {
 }
 
 @media (max-width: 768px) {
-  /* Center DatePicker Popover as a clean modal on mobile viewports */
-  .datepicker-popover {
+  /* Modal Overlay Backdrop for Teleported Datepickers */
+  .datepicker-modal-wrapper.is-mobile {
+    display: flex !important;
     position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    z-index: 999999 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+    animation: datePickerBackdropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  /* Center DatePicker Popover Card within Teleported Modal Overlay */
+  .datepicker-modal-wrapper.is-mobile .datepicker-popover,
+  .datepicker-popover {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
     right: auto !important;
     bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: calc(100vw - 32px) !important;
+    transform: none !important;
+    margin: auto !important;
+    width: 100% !important;
     max-width: 320px !important;
-    z-index: 99999 !important;
-    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.4) !important;
+    z-index: 999999 !important;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.45) !important;
     border: 1px solid rgba(226, 232, 240, 0.9) !important;
     border-radius: 20px !important;
     box-sizing: border-box !important;
@@ -22198,8 +22260,13 @@ select.pos-control {
   }
 
   @keyframes datePickerModalPop {
-    0% { transform: translate(-50%, -46%) scale(0.95); opacity: 0; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    0% { transform: scale(0.92); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes datePickerBackdropFade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
 
   .autocomplete-suggestions-dropdown {
