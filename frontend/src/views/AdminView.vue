@@ -14823,11 +14823,11 @@ select.form-control:focus {
 .btn-datepicker-trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   direction: rtl;
-  text-align: right;
-  gap: 10px;
-  padding: 6px 12px;
+  text-align: center;
+  gap: 8px;
+  padding: 6px 14px;
   height: 38px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -14846,6 +14846,7 @@ select.form-control:focus {
 .dp-trigger-main {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-width: 0;
 }
@@ -14868,7 +14869,7 @@ select.form-control:focus {
 }
 
 .dp-text-label {
-  text-align: right;
+  text-align: center;
   direction: rtl;
   white-space: nowrap;
   overflow: hidden;
@@ -14880,6 +14881,7 @@ select.form-control:focus {
   flex-shrink: 0;
   stroke: currentColor;
   opacity: 0.55;
+  margin-inline-start: 2px;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
 }
 
@@ -21336,7 +21338,8 @@ select.pos-control {
 .btn-standard-datepicker-trigger {
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
+  justify-content: center !important;
+  gap: 8px !important;
   background: #ffffff !important;
   cursor: pointer !important;
   padding: 8px 14px !important;
@@ -21346,7 +21349,7 @@ select.pos-control {
   border-radius: 10px !important;
   font-family: inherit !important;
   font-size: 0.88rem !important;
-  text-align: right !important;
+  text-align: center !important;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
 }
@@ -21427,8 +21430,8 @@ select.pos-control {
 .btn-standard-datepicker-trigger {
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
-  gap: 10px !important;
+  justify-content: center !important;
+  gap: 8px !important;
   background: #ffffff !important;
   cursor: pointer !important;
   padding: 8px 14px !important;
@@ -21439,7 +21442,7 @@ select.pos-control {
   border-radius: 10px !important;
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.9rem !important;
-  text-align: right !important;
+  text-align: center !important;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
 }
@@ -22067,7 +22070,9 @@ select.pos-control {
     font-size: 0.82rem !important;
     padding: 0 10px !important;
     box-sizing: border-box !important;
-    justify-content: space-between !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 8px !important;
   }
 
   .dp-icon-wrap {
