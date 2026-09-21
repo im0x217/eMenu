@@ -4904,7 +4904,7 @@
 
     <!-- Product Modal Form -->
     <Transition name="modal-spring-fade">
-    <div v-if="productModalOpen" class="modal-overlay" @click.self="productModalOpen = false">
+    <div v-if="productModalOpen" class="modal-overlay" @click.self="productModalOpen = false" @dragover.prevent @drop.prevent>
       <div class="modal-box glass-panel max-w-lg product-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title" v-sheet-gesture="() => productModalOpen = false">
         <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
@@ -4923,7 +4923,19 @@
           
           <!-- Product Image Upload Dropzone -->
           <div class="form-group mb-4">
-            <label class="form-label text-bold mb-2 block" style="font-size: 0.9rem;">صورة المنتج</label>
+            <label class="form-label text-bold mb-2 block" style="font-size: 0.9rem;" for="product-modal-file-input">صورة المنتج</label>
+            
+            <input 
+              type="file" 
+              id="product-modal-file-input"
+              ref="modalFileInput" 
+              accept="image/*" 
+              class="hidden-file-input"
+              style="display: none;" 
+              @click.stop
+              @change="handleModalImageFileSelect" 
+            />
+
             <div 
               class="image-upload-dropzone"
               :class="{ 'has-preview': modalFilePreview || editingProduct.img, 'is-dragging': modalDragActive }"
@@ -4931,15 +4943,11 @@
               @dragover.prevent="modalDragActive = true"
               @dragleave.prevent="modalDragActive = false"
               @drop.prevent="handleModalImageDrop"
+              role="button"
+              tabindex="0"
+              @keydown.enter.prevent="triggerModalImageSelect"
+              @keydown.space.prevent="triggerModalImageSelect"
             >
-              <input 
-                type="file" 
-                ref="modalFileInput" 
-                accept="image/*" 
-                style="display: none;" 
-                @change="handleModalImageFileSelect" 
-              />
-              
               <div v-if="modalFilePreview || editingProduct.img" class="image-preview-container">
                 <div class="admin-preview-shimmer"></div>
                 <img :src="modalFilePreview || editingProduct.img" alt="Product Preview" class="upload-preview-img" decoding="async" loading="eager" />
@@ -4960,7 +4968,7 @@
                 </div>
                 <div class="dropzone-text">
                   <span class="dropzone-title">اسحب صورة المنتج إلى هنا أو تصفح الملفات</span>
-                  <span class="dropzone-sub">يدعم JPG, PNG, WEBP (حجم أقصى 5 ميجابايت)</span>
+                  <span class="dropzone-sub">يدعم JPG, PNG, WEBP (حجم أقصى 100 ميجابايت)</span>
                 </div>
               </div>
             </div>
@@ -5572,13 +5580,17 @@
           
           <!-- S3 Image Upload Dropzone -->
           <div class="form-group animate-fade-in">
+            <input type="file" ref="carouselFileInput" class="hidden-file-input" style="display: none;" accept="image/*" @click.stop @change="handleCarouselImageFileSelect" />
             <div class="image-dropzone" 
                  :class="{ active: carouselDragActive }" 
                  @dragover.prevent="carouselDragActive = true"
                  @dragleave.prevent="carouselDragActive = false"
                  @drop.prevent="handleCarouselDrop($event)"
-                 @click="triggerCarouselImageSelect">
-              <input type="file" ref="carouselFileInput" class="hidden-file-input" accept="image/*" @change="handleCarouselImageFileSelect" />
+                 @click="triggerCarouselImageSelect"
+                 role="button"
+                 tabindex="0"
+                 @keydown.enter.prevent="triggerCarouselImageSelect"
+                 @keydown.space.prevent="triggerCarouselImageSelect">
               
               <div v-if="!newCarouselItem.filePreview" class="dropzone-prompt">
                 <svg aria-hidden="true" class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -8479,6 +8491,9 @@ export default {
         subCategoriesForEditing.value = [];
       }
       productModalOpen.value = true;
+      if (modalFileInput.value) {
+        modalFileInput.value.value = '';
+      }
       nextTick(() => {
         const el = document.querySelector('.modal-overlay input[type="text"]');
         if (!isMobileScreen.value && el) el.focus();
@@ -8550,27 +8565,49 @@ export default {
 
     // Product Modal Image Handling
     const triggerModalImageSelect = () => {
-      modalFileInput.value.click();
+      if (modalFileInput.value) {
+        modalFileInput.value.click();
+      }
+    };
+
+    const isImageFile = (file) => {
+      if (!file) return false;
+      if (file.type && file.type.startsWith('image/')) return true;
+      const name = (file.name || '').toLowerCase();
+      return /\.(jpe?g|png|webp|gif|bmp|svg|jfif|avif|heic|heif)$/i.test(name);
     };
 
     const handleModalImageFileSelect = (e) => {
-      const file = e.target.files[0];
-      if (file) setModalFile(file);
+      const file = (e.target.files && e.target.files[0]) ? e.target.files[0] : null;
+      if (file && isImageFile(file)) {
+        setModalFile(file);
+      }
+      e.target.value = '';
     };
 
     const handleModalImageDrop = (e) => {
       modalDragActive.value = false;
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) setModalFile(file);
+      const file = (e.dataTransfer && e.dataTransfer.files) ? e.dataTransfer.files[0] : null;
+      if (file && isImageFile(file)) {
+        setModalFile(file);
+      } else if (file) {
+        toast.show('يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP...)', 'warning');
+      }
     };
 
     const compressProductFileToWebp = (file) => {
       return new Promise((resolve) => {
+        // Fallback timeout protection (4s) in case reader hangs on corrupt file
+        const timeout = setTimeout(() => {
+          resolve({ file, preview: '', sizeKb: (file.size / 1024).toFixed(1) });
+        }, 4000);
+
         const reader = new FileReader();
         reader.onload = (e) => {
           const img = new Image();
           img.src = e.target.result;
           img.onload = () => {
+            clearTimeout(timeout);
             const maxW = 800;
             const maxH = 800;
             let width = img.width;
@@ -8595,7 +8632,10 @@ export default {
             
             canvas.toBlob((webpBlob) => {
               if (webpBlob) {
-                const compressedFile = new File([webpBlob], 'product_compressed.webp', {
+                const safeName = (file.name || 'product')
+                  .replace(/\.[^/.]+$/, '')
+                  .replace(/[^a-zA-Z0-9_\u0600-\u06FF-]/g, '_') || 'product';
+                const compressedFile = new File([webpBlob], `${safeName}.webp`, {
                   type: 'image/webp',
                   lastModified: Date.now()
                 });
@@ -8610,7 +8650,14 @@ export default {
               }
             }, 'image/webp', 0.82);
           };
-          img.onerror = () => resolve({ file, preview: e.target.result, sizeKb: (file.size / 1024).toFixed(1) });
+          img.onerror = () => {
+            clearTimeout(timeout);
+            resolve({ file, preview: e.target.result, sizeKb: (file.size / 1024).toFixed(1) });
+          };
+        };
+        reader.onerror = () => {
+          clearTimeout(timeout);
+          resolve({ file, preview: '', sizeKb: (file.size / 1024).toFixed(1) });
         };
         reader.readAsDataURL(file);
       });
@@ -8779,6 +8826,9 @@ export default {
       modalFile.value = null;
       modalFilePreview.value = '';
       editingProduct.img = '';
+      if (modalFileInput.value) {
+        modalFileInput.value.value = '';
+      }
     };
 
     // Zoom Image Preview
@@ -9162,18 +9212,27 @@ export default {
     };
 
     const triggerCarouselImageSelect = () => {
-      carouselFileInput.value.click();
+      if (carouselFileInput.value) {
+        carouselFileInput.value.click();
+      }
     };
 
     const handleCarouselImageFileSelect = (e) => {
-      const file = e.target.files[0];
-      if (file) setCarouselFile(file);
+      const file = (e.target.files && e.target.files[0]) ? e.target.files[0] : null;
+      if (file && isImageFile(file)) {
+        setCarouselFile(file);
+      }
+      e.target.value = '';
     };
 
     const handleCarouselDrop = (e) => {
       carouselDragActive.value = false;
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) setCarouselFile(file);
+      const file = (e.dataTransfer && e.dataTransfer.files) ? e.dataTransfer.files[0] : null;
+      if (file && isImageFile(file)) {
+        setCarouselFile(file);
+      } else if (file) {
+        toast.show('يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP...)', 'warning');
+      }
     };
 
     const setCarouselFile = (file) => {

@@ -51,9 +51,23 @@ export const bindSheetGesture = (sheetEl, onDismiss) => {
     // Only respond to primary mouse click or direct touch
     if (e.button && e.button !== 0) return;
 
-    // Do not initiate drag if user tapped inside an input, textarea or button
+    // Bottom sheet swipe-to-dismiss is strictly a mobile pattern (<= 768px) or touch pointer.
+    // Never hijack mouse pointer on desktop PC viewports.
+    const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (!isMobileViewport && e.pointerType === 'mouse') {
+      return;
+    }
+
+    // Do not initiate drag if user clicked/tapped inside form controls, dropzones, or interactive elements
     const targetTag = (e.target.tagName || '').toLowerCase();
-    if (targetTag === 'input' || targetTag === 'textarea' || targetTag === 'button' || e.target.closest('button')) {
+    if (
+      targetTag === 'input' || 
+      targetTag === 'textarea' || 
+      targetTag === 'button' || 
+      targetTag === 'select' || 
+      targetTag === 'label' || 
+      e.target.closest('button, input, textarea, select, label, .image-upload-dropzone, .image-dropzone, .dropzone-placeholder, .image-preview-container, .hidden-file-input, [role="button"]')
+    ) {
       return;
     }
 
