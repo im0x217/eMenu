@@ -11451,42 +11451,63 @@ export default {
     };
 
     const updateOrderStatus = async (orderId, status) => {
-      const order = (orders.value || []).find(o => String(o._id) === String(orderId));
-      if (!order) return;
-      const previousStatus = order.status;
-      const previousUpdatedAt = order.updatedAt;
-      if (previousStatus === status) return;
+      // Mobile View: Keep optimistic quick-touch transitions
+      if (isMobileScreen.value) {
+        const order = (orders.value || []).find(o => String(o._id) === String(orderId));
+        if (!order) return;
+        const previousStatus = order.status;
+        const previousUpdatedAt = order.updatedAt;
+        if (previousStatus === status) return;
 
-      // 1. Optimistic UI update: immediately apply new status with smooth CSS transitions
-      order.status = status;
-      if (status === 'cancelled') {
-        order.updatedAt = new Date().toISOString();
-      }
+        order.status = status;
+        if (status === 'cancelled') {
+          order.updatedAt = new Date().toISOString();
+        }
 
-      try {
-        const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
-        const res = await adminFetch(url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status })
-        });
-        if (res.ok) {
-          if (status === 'cancelled') {
-            toast.show('تم إلغاء الطلب — سيتم حذفه تلقائياً بعد 24 ساعة', 'warning');
+        try {
+          const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
+          const res = await adminFetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+          });
+          if (res.ok) {
+            if (status === 'cancelled') {
+              toast.show('تم إلغاء الطلب — سيتم حذفه تلقائياً بعد 24 ساعة', 'warning');
+            }
+            fetchAnalytics();
+          } else {
+            order.status = previousStatus;
+            order.updatedAt = previousUpdatedAt;
+            toast.show('فشل تحديث حالة الطلب، تمت استعادة الحالة السابقة', 'danger');
           }
-          // Quiet background sync for analytics without triggering full skeleton loaders
-          fetchAnalytics();
-        } else {
-          // Revert optimistic update on server error
+        } catch (err) {
           order.status = previousStatus;
           order.updatedAt = previousUpdatedAt;
-          toast.show('فشل تحديث حالة الطلب، تمت استعادة الحالة السابقة', 'danger');
+          toast.show('تعذر الاتصال بالخادم، تمت استعادة الحالة السابقة', 'danger');
         }
-      } catch (err) {
-        // Revert optimistic update on network drop / exception
-        order.status = previousStatus;
-        order.updatedAt = previousUpdatedAt;
-        toast.show('تعذر الاتصال بالخادم، تمت استعادة الحالة السابقة', 'danger');
+      } else {
+        // Desktop View: Reverted to previous behavior (wait for backend update, toast on success, refresh orders)
+        try {
+          const url = `/api/admin/orders/${orderId}/status?shop=${activeShop.value}`;
+          const res = await adminFetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+          });
+          if (res.ok) {
+            if (status === 'cancelled') {
+              toast.show('تم إلغاء الطلب — سيتم حذفه نهائياً وتلقائياً بعد 24 ساعة', 'warning');
+            } else {
+              toast.show('تم تحديث حالة الطلب بنجاح', 'success');
+            }
+            await Promise.all([fetchOrders(), fetchAnalytics()]);
+          } else {
+            toast.show('فشل تحديث حالة الطلب', 'danger');
+          }
+        } catch (err) {
+          toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+        }
       }
     };
 
@@ -16630,7 +16651,7 @@ select.form-control:focus {
   cursor: pointer;
   outline: none;
   font-weight: 800;
-  transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease, box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   display: inline-flex;
   align-items: center;
   font-family: inherit;
