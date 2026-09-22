@@ -54,6 +54,19 @@
   --safe-right: env(safe-area-inset-right, 0px);
 }
 
+/* Screen reader only utility (WCAG AA Accessibility) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 /* Shop Theme Overrides */
 .shop-theme-shop1 {
   --primary-color: #fdb518; /* Gold */
@@ -378,6 +391,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .btn-primary {
   width: 100%;
+  min-height: 44px;
   padding: 0.85rem 1.5rem;
   background: var(--primary-color);
   color: #ffffff;

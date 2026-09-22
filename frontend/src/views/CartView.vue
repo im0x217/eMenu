@@ -287,6 +287,7 @@ const handleClearCart = () => {
 
 <template>
   <div class="cart-view-container animate-fade-in">
+    <h1 class="sr-only">سلة المشتريات</h1>
     
     <!-- 1. ORDER EDIT MODE BANNER (WHEN IMPORTED FROM MY ACCOUNT) -->
     <div v-if="cartStore.isEditingOrder" class="order-edit-mode-banner glass-panel animate-fade-in">
@@ -890,6 +891,16 @@ const handleClearCart = () => {
   line-height: 1.4;
   margin: 0;
   max-width: 280px;
+  color: #57534e;
+}
+
+.empty-state .btn-primary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800 !important;
+  color: #0c0603 !important;
 }
 
 .cart-content-wrapper {

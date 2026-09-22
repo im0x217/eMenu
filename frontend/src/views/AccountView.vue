@@ -329,6 +329,7 @@ const handleResendWhatsApp = () => {
 
 <template>
   <div class="account-view-container animate-fade-in">
+    <h1 class="sr-only">حساب العميل والطلبات</h1>
     
     <!-- 1. VERIFIED PROFILE CARD (WHEN LOGGED IN) -->
     <div v-if="isUserIdentified" class="verified-profile-card glass-panel animate-fade-in">
@@ -341,7 +342,7 @@ const handleResendWhatsApp = () => {
         </div>
         <div class="profile-header-info">
           <div class="profile-name-row">
-            <h3 class="profile-name">{{ authStore.customerName }}</h3>
+            <h2 class="profile-name">{{ authStore.customerName }}</h2>
             <span class="verified-badge">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <span>حساب موثق</span>
@@ -512,7 +513,7 @@ const handleResendWhatsApp = () => {
             <rect x="2" y="5" width="20" height="14" rx="2"/>
             <line x1="2" y1="10" x2="22" y2="10"/>
           </svg>
-          <h3 class="section-title">كشف الرصيد والمستحقات</h3>
+          <h2 class="section-title">كشف الرصيد والمستحقات</h2>
         </div>
         <span class="balance-status-badge" :class="balanceData.outstandingBalance > 0 ? 'has-debt' : 'paid-up'">
           {{ balanceData.outstandingBalance > 0 ? 'مبالغ غير مسددة' : 'الحساب مسدد بالكامل' }}
@@ -543,7 +544,7 @@ const handleResendWhatsApp = () => {
     <!-- 4. ORDERS HISTORY SECTION (RESTORED ORIGINAL DESIGN & LIMITED TO LAST 5) -->
     <div class="orders-history-section glass-panel">
       <div class="orders-header-row">
-        <h3 class="section-title">الطلبات السابقة</h3>
+        <h2 class="section-title">الطلبات السابقة</h2>
         <span v-if="orders.length" class="orders-count-badge">آخر {{ displayedOrders.length }} طلبات</span>
       </div>
 
@@ -1036,9 +1037,13 @@ const handleResendWhatsApp = () => {
 
 .auth-tab-btn {
   padding: 9px 12px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #475569;
   font-family: inherit;
   font-size: 0.88rem;
   font-weight: 800;
@@ -1073,12 +1078,13 @@ const handleResendWhatsApp = () => {
 
 .form-input {
   width: 100%;
-  height: 42px;
+  min-height: 44px;
+  height: 44px;
   padding: 8px 12px;
   border: 1.5px solid #cbd5e1;
   border-radius: 10px;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 16px;
   color: #0f172a;
   background: #ffffff;
   transition: all 0.2s ease;
@@ -1103,15 +1109,29 @@ const handleResendWhatsApp = () => {
 
 .btn-pwd-eye {
   position: absolute;
-  left: 10px;
+  left: 6px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #475569;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px;
+}
+
+.btn-pwd-eye::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .btn-auth-submit {

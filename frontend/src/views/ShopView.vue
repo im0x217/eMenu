@@ -923,12 +923,30 @@ watch(carouselItems, (newItems) => {
 }
 
 .back-home-btn {
-  color: var(--primary-color);
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  color: #b45309;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition: transform 0.2s;
+}
+
+:global(.shop-theme-shop2) .back-home-btn {
+  color: #1d4ed8;
+}
+
+.back-home-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .back-home-btn:hover {
@@ -963,6 +981,7 @@ watch(carouselItems, (newItems) => {
   font-weight: 750;
   font-size: 0.85rem;
   padding: 8px 12px;
+  min-height: 44px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -1080,6 +1099,7 @@ watch(carouselItems, (newItems) => {
   align-items: center;
   gap: 6px;
   padding: 0.6rem 1rem;
+  min-height: 44px;
   font-family: 'Cairo', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
@@ -1133,11 +1153,18 @@ watch(carouselItems, (newItems) => {
 .subcat-plain-badge {
   font-family: 'Cairo', sans-serif;
   font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  background: rgba(var(--primary-color-rgb), 0.1);
+  font-weight: 800;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid rgba(217, 119, 6, 0.25);
   padding: 2px 8px;
   border-radius: 12px;
+}
+
+:global(.shop-theme-shop2) .subcat-plain-badge {
+  color: #1e40af;
+  background: #dbeafe;
+  border-color: rgba(37, 99, 235, 0.25);
 }
 
 .subcat-products-grid-1row {
@@ -1727,9 +1754,10 @@ watch(carouselItems, (newItems) => {
   }
   
   .bulk-toggle-btn {
-    padding: 6px 10px;
-    font-size: 0.76rem;
-    border-radius: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 0.84rem;
+    border-radius: 10px;
   }
   
   .search-box-wrapper {
@@ -1738,14 +1766,16 @@ watch(carouselItems, (newItems) => {
   }
   
   .search-input {
+    min-height: 44px;
     padding: 0.55rem 2.2rem 0.55rem 1.8rem;
-    font-size: 0.88rem !important;
+    font-size: 16px !important;
   }
   
   .cat-btn {
-    padding: 0.45rem 0.8rem;
-    gap: 5px;
-    font-size: 0.8rem;
+    min-height: 44px;
+    padding: 0.5rem 0.85rem;
+    gap: 6px;
+    font-size: 0.84rem;
     border-radius: 10px;
   }
 
@@ -1759,8 +1789,8 @@ watch(carouselItems, (newItems) => {
   }
   
   .subcat-plain-badge {
-    font-size: 0.68rem;
-    padding: 1px 6px;
+    font-size: 0.74rem;
+    padding: 2px 7px;
   }
 
   /* Compact 1-row product grid matching 80% zoom scale */

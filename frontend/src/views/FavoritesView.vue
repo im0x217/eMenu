@@ -165,12 +165,30 @@ const closeZoomModal = () => {
 }
 
 .back-home-btn {
-  color: var(--primary-color);
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  color: #b45309;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition: transform 0.2s;
+}
+
+:global(.shop-theme-shop2) .back-home-btn {
+  color: #1d4ed8;
+}
+
+.back-home-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .back-home-btn:hover {
@@ -187,11 +205,18 @@ const closeZoomModal = () => {
 .favorites-count-badge {
   font-family: 'Cairo', sans-serif;
   font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  background: rgba(var(--primary-color-rgb), 0.1);
+  font-weight: 800;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid rgba(217, 119, 6, 0.25);
   padding: 3px 10px;
   border-radius: 12px;
+}
+
+:global(.shop-theme-shop2) .favorites-count-badge {
+  color: #1e40af;
+  background: #dbeafe;
+  border-color: rgba(37, 99, 235, 0.25);
 }
 
 /* Notice Banner */
@@ -209,7 +234,7 @@ const closeZoomModal = () => {
 
 .notice-icon-svg {
   flex-shrink: 0;
-  color: var(--primary-color, #d97706);
+  color: #b45309;
 }
 
 .notice-text {
@@ -227,15 +252,35 @@ const closeZoomModal = () => {
 }
 
 .notice-desc {
-  font-size: 0.8rem;
-  color: var(--text-muted, #64748b);
+  font-size: 0.88rem;
+  color: #57534e;
   margin: 0;
 }
 
 .notice-link {
-  color: var(--primary-color);
+  position: relative;
+  color: #b45309;
   text-decoration: underline;
-  font-weight: 700;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 4px;
+}
+
+.notice-link::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+:global(.shop-theme-shop2) .notice-link {
+  color: #1d4ed8;
 }
 
 .favorites-product-grid {
@@ -298,10 +343,11 @@ const closeZoomModal = () => {
 }
 
 .empty-desc {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   line-height: 1.5;
   max-width: 280px;
   margin: 0;
+  color: #57534e;
 }
 
 /* Zoom Image Modal */

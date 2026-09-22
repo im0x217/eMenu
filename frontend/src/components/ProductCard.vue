@@ -691,14 +691,14 @@ const activeTagsList = computed(() => {
 }
 
 .product-desc {
-  font-size: 0.76rem;
-  color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  color: #57534e;
   margin-bottom: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.22;
+  line-height: 1.4;
   height: auto;
 }
 
@@ -895,17 +895,19 @@ const activeTagsList = computed(() => {
     line-height: 1.25;
   }
   .product-desc {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: #57534e;
   }
   .price-pill {
-    font-size: 0.76rem;
-    padding: 2px 6px;
+    font-size: 0.8rem;
+    padding: 2px 7px;
   }
   .add-btn-wide {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    border-radius: 10px;
-    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    border-radius: 11px;
+    min-height: 44px;
   }
   .card-stepper-control {
     border-radius: 10px;

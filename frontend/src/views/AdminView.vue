@@ -11,7 +11,7 @@
       <div class="login-card glass-panel">
         <div class="login-header">
           <img :src="loginShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="login-logo" />
-          <h2>لوحة الإدارة الذكية</h2>
+          <h1 class="login-title">لوحة الإدارة الذكية</h1>
           <p>تسجيل الدخول للوصول إلى لوحة التحكم</p>
         </div>
 
@@ -14197,12 +14197,26 @@ const closeSuggestionsWithDelay = () => {
   background-repeat: no-repeat;
   background-position: left 14px center;
   padding-left: 38px;
+  min-height: 44px;
+  font-size: 16px;
   font-weight: 700;
   color: #1e3a5f;
   border-radius: 12px;
   border: 1.5px solid rgba(30, 58, 95, 0.2);
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   cursor: pointer;
+}
+
+.login-card .form-control {
+  height: 46px !important;
+  min-height: 46px !important;
+  font-size: 16px !important;
+}
+
+.login-form .btn-primary {
+  min-height: 46px;
+  color: #0c0603 !important;
+  font-weight: 850 !important;
 }
 
 .login-user-select:focus {
@@ -14232,6 +14246,7 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+.login-header h1,
 .login-header h2 {
   font-size: 1.5rem;
   color: #1e3a5f;
@@ -14240,7 +14255,7 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .login-header p {
-  color: #6c757d;
+  color: #475569;
   font-size: 0.9rem;
 }
 
@@ -14341,12 +14356,16 @@ const closeSuggestionsWithDelay = () => {
   flex: 1;
   padding: 7px 10px;
   font-size: 0.82rem;
-  min-height: 38px;
+  min-height: 40px;
 }
 
 .shop-pill {
   flex: 1;
   padding: 8px 12px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
@@ -14362,8 +14381,13 @@ const closeSuggestionsWithDelay = () => {
 .shop-pill.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
-  color: #ffffff;
+  color: #0c0603 !important;
+  font-weight: 850;
   box-shadow: 0 3px 10px var(--primary-glow);
+}
+
+.shop-theme-shop2 .shop-pill.active {
+  color: #ffffff !important;
 }
 
 /* Strictly lock sidebar tabs horizontally */
@@ -15079,12 +15103,13 @@ const closeSuggestionsWithDelay = () => {
 
 .form-control {
   width: 100%;
+  min-height: 44px;
   box-sizing: border-box;
   padding: 10px 14px;
   background: #fff;
   border: 1px solid #ced4da;
   border-radius: 8px;
-  color: #495057;
+  color: #334155;
   font-weight: 500;
   outline: none;
   font-family: inherit;
@@ -15889,7 +15914,7 @@ select.form-control:focus {
   display: block;
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.86rem;
-  color: #64748b !important;
+  color: #475569 !important;
   margin-top: 4px;
   font-weight: 500;
   line-height: 1.45;
@@ -15898,16 +15923,18 @@ select.form-control:focus {
 .modal-close-btn {
   position: relative;
   background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-  width: 32px;
-  height: 32px;
+  border: 1px solid #cbd5e1 !important;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
   cursor: pointer;
-  color: #64748b !important;
+  color: #475569 !important;
   touch-action: manipulation;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
@@ -15915,10 +15942,10 @@ select.form-control:focus {
 .modal-close-btn::before {
   content: '';
   position: absolute;
-  top: -6px;
-  right: -6px;
-  bottom: -6px;
-  left: -6px;
+  top: -4px;
+  right: -4px;
+  bottom: -4px;
+  left: -4px;
 }
 
 .modal-close-btn:hover {
@@ -15955,13 +15982,8 @@ select.form-control:focus {
 
 /* Modal Form Labels & Inputs Clean Light Theme */
 .modal-box .form-group label,
-.modal-content .form-group label,
-.modal-box label,
-.modal-content label,
-.modal-box .form-label,
-.modal-content .form-label {
-  font-family: 'Cairo', sans-serif !important;
-  font-size: 0.88rem !important;
+.modal-content .form-group label {
+  font-size: 0.9rem !important;
   font-weight: 700 !important;
   color: #1e293b !important;
   text-align: right !important;
@@ -15976,6 +15998,7 @@ select.form-control:focus {
   color: #0f172a !important;
   border-radius: 10px !important;
   padding: 10px 14px !important;
+  min-height: 44px !important;
   font-size: 0.92rem !important;
   font-family: 'Cairo', sans-serif !important;
   line-height: 1.45 !important;
@@ -16048,6 +16071,10 @@ select.form-control:focus {
   font-family: 'Cairo', sans-serif !important;
   font-weight: 700 !important;
   padding: 10px 24px !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   border-radius: 10px !important;
   cursor: pointer !important;
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.28) !important;
@@ -16081,11 +16108,15 @@ select.form-control:focus {
 .modal-box .btn-outline,
 .modal-content .btn-outline {
   background: #ffffff !important;
-  color: #374151 !important;
+  color: #1e293b !important;
   border: 1.5px solid #cbd5e1 !important;
   font-family: 'Cairo', sans-serif !important;
   font-weight: 600 !important;
   padding: 10px 18px !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   border-radius: 10px !important;
   cursor: pointer !important;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
@@ -19115,17 +19146,46 @@ select.form-control:focus {
   }
 
   .page-num-pill {
-    min-width: 38px;
-    height: 38px;
+    position: relative;
+    min-width: 40px;
+    height: 40px;
     font-size: 0.88rem;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-num-pill::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .pagination-btn {
-    height: 38px;
+    position: relative;
+    height: 40px;
+    min-height: 40px;
     padding: 0 12px;
     font-size: 0.84rem;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pagination-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -19136,13 +19196,14 @@ select.form-control:focus {
 
   .pagination-btn {
     padding: 0 10px;
-    min-width: 38px;
+    min-width: 40px;
+    height: 40px;
     justify-content: center;
   }
 
   .page-num-pill {
-    min-width: 34px;
-    height: 36px;
+    min-width: 38px;
+    height: 40px;
     padding: 0 4px;
     font-size: 0.84rem;
   }
@@ -19154,12 +19215,14 @@ select.form-control:focus {
 
 /* Payment Status Badges */
 .payment-status-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 11px;
+  padding: 6px 12px;
+  min-height: 32px;
   border-radius: 20px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   font-family: 'Cairo', sans-serif;
   line-height: 1.2;
@@ -19170,6 +19233,16 @@ select.form-control:focus {
   border: none;
   outline: none;
   user-select: none;
+}
+
+.payment-status-badge::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .payment-status-badge:hover {
@@ -21324,8 +21397,8 @@ select.pos-control {
   .price-mode-pill {
     justify-content: center !important;
     padding: 6px 10px !important;
-    font-size: 0.8rem !important;
-    min-height: 34px !important;
+    font-size: 0.84rem !important;
+    min-height: 44px !important;
   }
 
   /* Mobile Segmented Nav Pills */
@@ -21345,13 +21418,13 @@ select.pos-control {
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
-    padding: 6px 8px !important;
-    min-height: 36px !important;
+    padding: 8px 10px !important;
+    min-height: 44px !important;
     border-radius: 8px !important;
     border: none !important;
     background: transparent !important;
-    color: #64748b !important;
-    font-size: 0.8rem !important;
+    color: #475569 !important;
+    font-size: 0.84rem !important;
     font-weight: 750 !important;
     font-family: 'Cairo', sans-serif !important;
     cursor: pointer !important;
@@ -22199,14 +22272,27 @@ select.pos-control {
   }
 
   .mob-action-circle {
-    width: 30px;
-    height: 30px;
+    position: relative;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     transition: transform 0.15s ease;
+  }
+
+  .mob-action-circle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .mob-action-circle.whatsapp-circle {
@@ -22339,12 +22425,14 @@ select.pos-control {
   }
 
   .mob-status-btn {
-    width: 32px;
-    height: 34px;
+    width: 36px;
+    height: 38px;
+    min-width: 36px;
+    min-height: 38px;
     border-radius: 7px;
     border: none;
     background: transparent;
-    color: #94a3b8;
+    color: #475569;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -22352,6 +22440,16 @@ select.pos-control {
     transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
     padding: 0;
     position: relative;
+  }
+
+  .mob-status-btn::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: -2px;
+    right: -2px;
+    min-height: 44px;
   }
 
   .mob-status-btn:focus-visible {
@@ -22415,20 +22513,32 @@ select.pos-control {
   .mob-action-buttons-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
   }
 
   .mob-action-buttons-group .btn-table-action {
-    height: 34px;
-    padding: 0 10px;
-    font-size: 0.8rem;
+    position: relative;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.84rem;
     border-radius: 8px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     white-space: nowrap;
     box-sizing: border-box;
+  }
+
+  .mob-action-buttons-group .btn-table-action::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: -2px;
+    right: -2px;
+    min-height: 44px;
   }
 
   @media (max-width: 340px) {
@@ -22436,7 +22546,8 @@ select.pos-control {
       display: none;
     }
     .mob-action-buttons-group .btn-table-action {
-      width: 34px;
+      width: 40px;
+      min-width: 40px;
       padding: 0;
       justify-content: center;
     }
@@ -26148,7 +26259,7 @@ select.pos-control {
 .btn-action-print.needs-print {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
   border-color: #f59e0b;
-  color: #d97706;
+  color: #92400e;
   font-weight: 800;
 }
 

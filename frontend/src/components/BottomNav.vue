@@ -128,7 +128,7 @@ const navToShop = () => {
 .nav-tab-btn {
   background: transparent;
   border: none;
-  color: #8a8078;
+  color: #57534e;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -149,21 +149,36 @@ const navToShop = () => {
 
 .nav-tab-btn svg {
   transition: transform 0.2s;
+  color: #57534e;
 }
 
 .nav-tab-btn.active {
-  color: var(--primary-color);
+  color: #b45309;
+}
+
+:global(.shop-theme-shop2) .nav-tab-btn.active {
+  color: #1d4ed8;
 }
 
 .nav-tab-btn.active svg {
   transform: scale(1.08);
-  fill: rgba(var(--primary-color-rgb), 0.12);
+  color: #b45309;
+  fill: rgba(180, 83, 9, 0.12);
+}
+
+:global(.shop-theme-shop2) .nav-tab-btn.active svg {
+  color: #1d4ed8;
+  fill: rgba(29, 78, 216, 0.12);
 }
 
 .tab-label {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.nav-tab-btn.active .tab-label {
+  font-weight: 800;
 }
 
 .icon-wrapper {
