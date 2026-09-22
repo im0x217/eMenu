@@ -286,9 +286,6 @@ const serveSpaShell = (req, res) => {
 };
 
 // Route app navigations through shell generator (excluding static assets like .js, .css, etc.)
-app.get(['/admin-preview', '/admin-preview/*'], (req, res) => {
-  res.redirect(302, '/app/#/admin-preview');
-});
 app.get(['/app', '/app/', '/admin', '/admin/'], serveSpaShell);
 app.get(['/app/*', '/admin/*'], (req, res, next) => {
   if (req.path.startsWith('/app/assets/') || req.path.includes('.')) {

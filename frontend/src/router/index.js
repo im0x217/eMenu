@@ -7,7 +7,6 @@ const FavoritesView = () => import('../views/FavoritesView.vue');
 const CartView = () => import('../views/CartView.vue');
 const AccountView = () => import('../views/AccountView.vue');
 const AdminView = () => import('../views/AdminView.vue');
-const AdminPreviewView = () => import('../views/AdminPreviewView.vue');
 
 const routes = [
   {
@@ -22,9 +21,6 @@ const routes = [
         window.location.pathname.startsWith('/admin')
       ) {
         return '/admin';
-      }
-      if (urlParams.get('view') === 'admin-preview' || urlParams.has('admin-preview')) {
-        return '/admin-preview';
       }
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') {
@@ -81,11 +77,6 @@ const routes = [
     component: AdminView
   },
   {
-    path: '/admin-preview',
-    name: 'admin-preview',
-    component: AdminPreviewView
-  },
-  {
     path: '/:catchAll(.*)',
     redirect: () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -122,20 +113,12 @@ router.beforeEach((to, from, next) => {
   if (isInitialNavigation) {
     isInitialNavigation = false;
 
-    // Admin Preview launch (?view=admin-preview or ?admin-preview or /admin-preview pathname)
-    const isAdminPreviewIntent = urlParams.get('view') === 'admin-preview' || 
-                                 urlParams.has('admin-preview') || 
-                                 window.location.pathname.startsWith('/admin-preview');
-    if (isAdminPreviewIntent && to.path !== '/admin-preview') {
-      return next('/admin-preview');
-    }
-
     // Admin PWA launch (?view=admin or /admin pathname)
     const isAdminIntent = urlParams.get('view') === 'admin' || 
                           urlParams.get('mode') === 'admin' || 
                           urlParams.has('admin') || 
-                          (window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/admin-preview'));
-    if (isAdminIntent && to.path !== '/admin' && to.path !== '/admin-preview') {
+                          window.location.pathname.startsWith('/admin');
+    if (isAdminIntent && to.path !== '/admin') {
       return next('/admin');
     }
 

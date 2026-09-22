@@ -128,9 +128,6 @@
         </nav>
 
         <div class="sidebar-footer">
-          <router-link to="/admin-preview" class="btn btn-outline w-100 mb-2" style="border-color: #3b82f6; color: #3b82f6; font-weight: 700;">
-            ✨ مركز العمليات V2
-          </router-link>
           <a href="/" class="btn btn-outline w-100 mb-2">معاينة المتجر</a>
           <button @click="handleLogout" class="btn btn-danger w-100">تسجيل الخروج</button>
         </div>
@@ -142,12 +139,7 @@
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
         <h2>لوحة إدارة e-Menu</h2>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <router-link to="/admin-preview" class="v2-header-pill" title="معاينة مركز العمليات V2" style="padding: 3px 8px; border-radius: 9999px; background: #3b82f6; color: #ffffff; font-size: 0.72rem; font-weight: 800; text-decoration: none;">
-            V2
-          </router-link>
-          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
-        </div>
+        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
       </header>
 
       <!-- Main Content -->
