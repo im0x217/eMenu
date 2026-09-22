@@ -7,6 +7,7 @@ const FavoritesView = () => import('../views/FavoritesView.vue');
 const CartView = () => import('../views/CartView.vue');
 const AccountView = () => import('../views/AccountView.vue');
 const AdminView = () => import('../views/AdminView.vue');
+const ShopPreviewView = () => import('../views/ShopPreviewView.vue');
 
 const routes = [
   {
@@ -21,6 +22,9 @@ const routes = [
         window.location.pathname.startsWith('/admin')
       ) {
         return '/admin';
+      }
+      if (urlParams.get('view') === 'preview' || urlParams.has('preview')) {
+        return '/preview';
       }
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') {
@@ -77,6 +81,11 @@ const routes = [
     component: AdminView
   },
   {
+    path: '/preview',
+    name: 'preview',
+    component: ShopPreviewView
+  },
+  {
     path: '/:catchAll(.*)',
     redirect: () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -120,6 +129,12 @@ router.beforeEach((to, from, next) => {
                           window.location.pathname.startsWith('/admin');
     if (isAdminIntent && to.path !== '/admin') {
       return next('/admin');
+    }
+
+    // Preview sandbox launch (?view=preview or ?preview)
+    const isPreviewIntent = urlParams.get('view') === 'preview' || urlParams.has('preview');
+    if (isPreviewIntent && to.path !== '/preview') {
+      return next('/preview');
     }
 
     // Shop 2 PWA launch (?shop=shop2) - if hash resolved to shop1 on cold start, redirect to shop2
