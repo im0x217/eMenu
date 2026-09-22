@@ -11,7 +11,7 @@ console.log('============================================================\n');
 
 // 1. Verify if local server is running on PORT
 function checkServer(callback) {
-  const req = http.get(`http://localhost:${PORT}/api/public/categories?shop=shop1`, (res) => {
+  const req = http.get(`http://localhost:${PORT}/api/categories`, (res) => {
     callback(true);
   });
   req.on('error', () => {
