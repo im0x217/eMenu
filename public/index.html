@@ -12,6 +12,16 @@
     <meta name="theme-color" content="#fdb518" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Automatic SPA hash router forwarder -->
+    <script>
+      (function() {
+        var hash = window.location.hash || '';
+        var search = window.location.search || '';
+        if (hash && hash.length > 1) {
+          window.location.replace('/app/' + search + hash);
+        }
+      })();
+    </script>
     <!-- Google Fonts: Cairo -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
     <link

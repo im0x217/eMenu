@@ -122,19 +122,21 @@ router.beforeEach((to, from, next) => {
   if (isInitialNavigation) {
     isInitialNavigation = false;
 
+    // Admin Preview launch (?view=admin-preview or ?admin-preview or /admin-preview pathname)
+    const isAdminPreviewIntent = urlParams.get('view') === 'admin-preview' || 
+                                 urlParams.has('admin-preview') || 
+                                 window.location.pathname.startsWith('/admin-preview');
+    if (isAdminPreviewIntent && to.path !== '/admin-preview') {
+      return next('/admin-preview');
+    }
+
     // Admin PWA launch (?view=admin or /admin pathname)
     const isAdminIntent = urlParams.get('view') === 'admin' || 
                           urlParams.get('mode') === 'admin' || 
                           urlParams.has('admin') || 
-                          window.location.pathname.startsWith('/admin');
-    if (isAdminIntent && to.path !== '/admin') {
+                          (window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/admin-preview'));
+    if (isAdminIntent && to.path !== '/admin' && to.path !== '/admin-preview') {
       return next('/admin');
-    }
-
-    // Preview sandbox launch (?view=preview or ?preview)
-    const isPreviewIntent = urlParams.get('view') === 'preview' || urlParams.has('preview');
-    if (isPreviewIntent && to.path !== '/preview') {
-      return next('/preview');
     }
 
     // Shop 2 PWA launch (?shop=shop2) - if hash resolved to shop1 on cold start, redirect to shop2
