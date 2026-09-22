@@ -7,7 +7,7 @@ const FavoritesView = () => import('../views/FavoritesView.vue');
 const CartView = () => import('../views/CartView.vue');
 const AccountView = () => import('../views/AccountView.vue');
 const AdminView = () => import('../views/AdminView.vue');
-const ShopPreviewView = () => import('../views/ShopPreviewView.vue');
+const AdminPreviewView = () => import('../views/AdminPreviewView.vue');
 
 const routes = [
   {
@@ -23,8 +23,8 @@ const routes = [
       ) {
         return '/admin';
       }
-      if (urlParams.get('view') === 'preview' || urlParams.has('preview')) {
-        return '/preview';
+      if (urlParams.get('view') === 'admin-preview' || urlParams.has('admin-preview')) {
+        return '/admin-preview';
       }
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') {
@@ -81,9 +81,9 @@ const routes = [
     component: AdminView
   },
   {
-    path: '/preview',
-    name: 'preview',
-    component: ShopPreviewView
+    path: '/admin-preview',
+    name: 'admin-preview',
+    component: AdminPreviewView
   },
   {
     path: '/:catchAll(.*)',

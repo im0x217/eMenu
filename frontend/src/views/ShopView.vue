@@ -576,13 +576,7 @@ watch(carouselItems, (newItems) => {
             <polyline points="12 19 19 12 12 5"></polyline>
           </svg>
         </a>
-        <div class="title-with-preview">
-          <h1 class="shop-title">{{ shopTitle }}</h1>
-          <router-link to="/preview" class="preview-mode-link" title="معاينة التصميم الجديد المطور V2">
-            <span class="preview-dot"></span>
-            <span>تصميم V2</span>
-          </router-link>
-        </div>
+        <h1 class="shop-title">{{ shopTitle }}</h1>
         <div class="logo-placeholder">
           <img :src="shopStore.activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="shop-logo" />
         </div>
@@ -940,59 +934,10 @@ watch(carouselItems, (newItems) => {
   transform: translateX(4px);
 }
 
-.title-with-preview {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .shop-title {
   font-size: 1.25rem;
   font-weight: 800;
   color: #2c2520;
-}
-
-.preview-mode-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #059669;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);
-}
-
-.preview-mode-link:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.16) 100%);
-  border-color: rgba(16, 185, 129, 0.5);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.15);
-}
-
-.preview-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 8px #10b981;
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
 }
 
 .logo-placeholder {
@@ -1764,12 +1709,6 @@ watch(carouselItems, (newItems) => {
   
   .shop-title {
     font-size: 1.05rem;
-  }
-
-  .preview-mode-link {
-    padding: 3px 8px;
-    font-size: 0.68rem;
-    gap: 4px;
   }
   
   .logo-placeholder {
