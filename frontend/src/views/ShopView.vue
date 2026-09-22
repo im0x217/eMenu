@@ -589,18 +589,19 @@ watch(carouselItems, (newItems) => {
         class="bulk-toggle-btn"
         :class="{ active: shopStore.isBulkVerified, disabled: !shopStore.isBulkVerified }"
         @click="handleOpenBulkModal"
+        :aria-label="shopStore.isBulkVerified ? 'أسعار الجملة مفعّلة، انقر لإلغاء التفعيل' : 'تفعيل أسعار الجملة'"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
         </svg>
-        <span>أسعار الجملة: {{ shopStore.isBulkVerified ? 'مفعّلة' : 'معطّلة' }}</span>
+        <span>{{ shopStore.isBulkVerified ? 'أسعار الجملة: مفعّلة' : 'أسعار الجملة' }}</span>
         <svg v-if="shopStore.isBulkVerified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
       </button>
     </header>
@@ -955,11 +956,11 @@ watch(carouselItems, (newItems) => {
 }
 
 .bulk-toggle-btn {
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.2);
-  color: #ff4d4f;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--text-color, #2c2520);
   font-family: 'Cairo', sans-serif;
-  font-weight: 700;
+  font-weight: 750;
   font-size: 0.85rem;
   padding: 8px 12px;
   border-radius: 10px;
@@ -970,17 +971,26 @@ watch(carouselItems, (newItems) => {
   cursor: pointer;
   width: 100%;
   margin-top: 4px;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bulk-toggle-btn.disabled {
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.2);
-  color: #ff4d4f;
+  background: rgba(255, 253, 249, 0.9);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  color: #64748b;
 }
+
+.bulk-toggle-btn.disabled:hover {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #d97706;
+}
+
 .bulk-toggle-btn.active {
-  background: #37b24d;
-  color: #fff;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #059669;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
 }
 
 

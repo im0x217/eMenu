@@ -22,7 +22,7 @@
               <select v-model="loginForm.username" required aria-label="حساب المستخدم" class="form-control login-user-select">
                 <option value="" disabled>اختر حساب المستخدم…</option>
                 <option v-for="u in publicAdminUsers" :key="u.username" :value="u.username">
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'إدارة الطلبات والإنتاج' : 'مستخدم' }})
+                  {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'إدارة الطلبات والإنتاج' : 'مستخدم' }})
                 </option>
               </select>
             </div>
@@ -1054,9 +1054,9 @@
                         </div>
                       </td>
                       <td>
-                        <span v-if="prod.purchaseType === 'both'" class="badge">كلاهما</span>
-                        <span v-else-if="prod.purchaseType === 'regular'" class="badge badge-gold">مفرد فقط</span>
+                        <span v-if="prod.purchaseType === 'regular'" class="badge badge-gold">مفرد فقط</span>
                         <span v-else-if="prod.purchaseType === 'bulk'" class="badge badge-green">جملة فقط</span>
+                        <span v-else class="text-muted text-small">-</span>
                       </td>
                       <td>
                         <div class="toggle-switch">
@@ -2012,9 +2012,8 @@
                         </button>
                       </td>
                       <td>
-                        <span class="price-mode-badge" :class="order.priceMode">
-                          {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
-                        </span>
+                        <span v-if="order.priceMode === 'bulk'" class="price-mode-badge bulk">جملة</span>
+                        <span v-else class="text-muted text-small">-</span>
                       </td>
                       <td>
                         <div class="d-flex flex-column gap-1 align-items-center">
@@ -2103,9 +2102,7 @@
                     <div class="mob-card-header">
                       <div class="mob-card-id-group">
                         <span class="order-id-pill">#{{ order.orderNumber || order._id.toString().slice(-6) }}</span>
-                        <span class="price-mode-badge" :class="order.priceMode">
-                          {{ order.priceMode === 'bulk' ? 'جملة' : 'مفرد' }}
-                        </span>
+                        <span v-if="order.priceMode === 'bulk'" class="price-mode-badge bulk">جملة</span>
                         <span 
                           class="order-print-badge" 
                           :class="order.printed ? 'is-printed' : 'is-unprinted'"
@@ -3337,7 +3334,7 @@
                       <td class="text-bold">{{ u.name }}</td>
                       <td>
                         <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
-                          {{ u.role === 'admin' ? 'مدير النظام (Admin)' : 'إدارة الطلبات والإنتاج (Order & Production)' }}
+                          {{ u.role === 'admin' ? 'مدير النظام' : 'إدارة الطلبات والإنتاج' }}
                         </span>
                       </td>
                       <td>

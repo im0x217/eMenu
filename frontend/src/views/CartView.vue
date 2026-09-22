@@ -302,7 +302,7 @@ const handleClearCart = () => {
         </button>
       </div>
       <p class="edit-banner-instructions">
-        يمكنك تعديل كميات الأصناف الحالية، أو تصفح المتجر وإضافة منتجات جديدة للسلة، ثم الضغط على "حفظ وتحديث الطلب" لتثبيت التغييرات.
+        تعديل محتويات الطلب الحالي. يمكنك تعديل الكميات أو إضافة أصناف جديدة، ثم الضغط على حفظ وتحديث الطلب.
       </p>
       <button type="button" class="btn-browse-store-add" @click="router.push(`/shop/${cartStore.editingOrderShop}`)">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
@@ -429,8 +429,6 @@ const handleClearCart = () => {
         </div>
         
         <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
-        
-        <button type="button" class="btn-primary" @click="handleSaveIdentity">حفظ وتأكيد البيانات</button>
       </div>
 
       <!-- Logged-in info preview -->
@@ -601,7 +599,7 @@ const handleClearCart = () => {
                     <polyline points="9 22 9 12 15 12 15 22"/>
                   </svg>
                   <span class="confirm-meta-val">{{ storeDisplayName }}</span>
-                  <span class="confirm-price-tier-tag">{{ priceModeDisplayName }}</span>
+                  <span v-if="cartStore.getPriceMode === 'bulk'" class="confirm-price-tier-tag">{{ priceModeDisplayName }}</span>
                 </div>
               </div>
 

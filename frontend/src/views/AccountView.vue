@@ -364,8 +364,8 @@ const handleResendWhatsApp = () => {
       </div>
 
       <div class="profile-security-notice">
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>البيانات مؤمنة برقم الهاتف. لتعديل الاسم أو الرقم، تواصل مع الإدارة.</span>
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>البيانات مؤمنة برقم الهاتف. لتعديل البيانات تواصل مع الإدارة.</span>
       </div>
 
       <!-- Account Actions (Sign Out & Switch Account) -->
@@ -546,7 +546,6 @@ const handleResendWhatsApp = () => {
         <h3 class="section-title">الطلبات السابقة</h3>
         <span v-if="orders.length" class="orders-count-badge">آخر {{ displayedOrders.length }} طلبات</span>
       </div>
-      <p class="section-desc">سجل الطلبات المرتبطة برقم هاتفك.</p>
 
       <!-- SKELETON LOADER (Orders Loading) -->
       <div v-if="isLoadingOrders" class="orders-list animate-fade-in">
@@ -598,8 +597,7 @@ const handleResendWhatsApp = () => {
           </div>
 
           <!-- Order Summary Details -->
-          <div class="order-summary-details">
-            <span class="items-count">{{ order.items ? order.items.length : 0 }} أصناف</span>
+          <div v-if="order.deliveryDate || order.priceMode === 'bulk'" class="order-summary-details">
             <span v-if="order.deliveryDate" class="delivery-badge">استلام: {{ order.deliveryDate }}</span>
             <span v-if="order.priceMode === 'bulk'" class="price-mode-badge">سعر جملة</span>
           </div>
@@ -609,7 +607,7 @@ const handleResendWhatsApp = () => {
             <div v-for="(item, idx) in order.items" :key="idx" class="order-item-row">
               <div class="item-main-info">
                 <span class="item-name">{{ item.name }}</span>
-                <span v-if="item.notes" class="item-note-pill">ملاحظة: {{ item.notes }}</span>
+                <span v-if="item.notes" class="item-note-pill">{{ item.notes }}</span>
               </div>
               <div class="item-pricing">
                 <span class="item-qty">× {{ item.quantity }}</span>
@@ -837,21 +835,15 @@ const handleResendWhatsApp = () => {
 
 .profile-security-notice {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.78rem;
-  color: #64748b;
-  line-height: 1.4;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin-bottom: 14px;
 }
 
 .profile-security-notice svg {
   flex-shrink: 0;
-  margin-top: 2px;
   color: #94a3b8;
 }
 

@@ -64,18 +64,16 @@ const closeZoomModal = () => {
       </div>
     </header>
 
-    <!-- Warning Notice if not logged in -->
+    <!-- Notice if not logged in -->
     <div v-if="!isLoggedIn" class="login-notice-banner glass-panel">
-      <svg class="notice-icon-svg" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      <svg class="notice-icon-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
       </svg>
       <div class="notice-text">
-        <h3 class="notice-title">المفضلة السحابية غير نشطة</h3>
-        <p class="notice-desc">
-          سجّل الدخول من صفحة <router-link to="/account" class="notice-link">حسابي</router-link> لمزامنة مفضلتك سحابياً عبر أجهزتك.
-        </p>
+        <span class="notice-title">المفضلة محفوظة محلياً.</span>
+        <span class="notice-desc">
+          سجّل الدخول من صفحة <router-link to="/account" class="notice-link">حسابي</router-link> لمزامنتها سحابياً.
+        </span>
       </div>
     </div>
 
@@ -199,11 +197,11 @@ const closeZoomModal = () => {
 /* Notice Banner */
 .login-notice-banner {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 1rem;
-  background: rgba(220, 53, 69, 0.06);
-  border: 1px solid rgba(220, 53, 69, 0.25);
+  padding: 0.75rem 1rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
   border-radius: 14px;
   color: var(--text-color, #2c2520);
   text-align: right;
@@ -211,26 +209,26 @@ const closeZoomModal = () => {
 
 .notice-icon-svg {
   flex-shrink: 0;
-  margin-top: 2px;
+  color: var(--primary-color, #d97706);
 }
 
 .notice-text {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .notice-title {
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   font-weight: 800;
-  color: var(--primary-color);
+  color: var(--text-color, #2c2520);
   margin: 0;
 }
 
 .notice-desc {
   font-size: 0.8rem;
   color: var(--text-muted, #64748b);
-  line-height: 1.45;
   margin: 0;
 }
 

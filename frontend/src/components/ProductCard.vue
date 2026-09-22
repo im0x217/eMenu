@@ -345,7 +345,7 @@ const activeTagsList = computed(() => {
 
           <!-- Bulk Price -->
           <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode }">
-            <span class="price-label">جملة:</span>
+            <span v-if="showRegularPrice" class="price-label">جملة:</span>
             <span class="price-val">{{ product.price_bulk }}</span>
             <span class="price-unit">د.ل</span>
           </div>
@@ -368,7 +368,6 @@ const activeTagsList = computed(() => {
           </button>
           <div class="card-stepper-qty">
             <span class="card-stepper-val text-mono">{{ cartItemQuantity }}</span>
-            <span class="card-stepper-label">في السلة</span>
           </div>
           <button 
             type="button" 
@@ -822,7 +821,6 @@ const activeTagsList = computed(() => {
 
 .card-stepper-qty {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   flex: 1;
@@ -830,16 +828,9 @@ const activeTagsList = computed(() => {
 }
 
 .card-stepper-val {
-  font-size: 0.95rem;
-  font-weight: 900;
+  font-size: 1rem;
+  font-weight: 850;
   color: #0f172a;
-}
-
-.card-stepper-label {
-  font-size: 0.62rem;
-  color: #64748b;
-  font-weight: 700;
-  margin-top: 1px;
 }
 
 .add-btn-wide {
