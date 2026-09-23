@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { formatLibyanPhone } from '../utils/phone';
 
 export const useAuthStore = defineStore('auth', () => {
   const customerName = ref(localStorage.getItem('customer_name') || '');
-  const customerPhone = ref(localStorage.getItem('customer_phone') || '');
+  const customerPhone = ref(formatLibyanPhone(localStorage.getItem('customer_phone') || ''));
   const customerToken = ref(localStorage.getItem('customer_token') || '');
   const hasPassword = ref(localStorage.getItem('customer_has_password') === 'true');
   const showSetPasswordModal = ref(false);
@@ -50,7 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const setSession = (name, phone, token = '', passwordFlag = true) => {
     customerName.value = (name || '').trim();
-    customerPhone.value = (phone || '').trim();
+    customerPhone.value = formatLibyanPhone(phone);
     if (token) {
       customerToken.value = token;
       localStorage.setItem('customer_token', customerToken.value);

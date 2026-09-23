@@ -1,5 +1,5 @@
 <script setup>
-import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl } from '../utils/phone';
+import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput } from '../utils/phone';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -139,8 +139,9 @@ const handleRegister = async () => {
     authError.value = 'الاسم بالكامل مطلوب';
     return;
   }
-  if (!registerPhone.value.trim() || registerPhone.value.trim().length < 9) {
-    authError.value = 'رقم الهاتف غير صحيح';
+  const digits = registerPhone.value.replace(/\D/g, '');
+  if (!registerPhone.value.trim() || digits.length < 9) {
+    authError.value = 'رقم الهاتف غير صحيح (يجب أن يتكون من 10 أرقام ليبية، مثل: 091-XXXXXXX)';
     return;
   }
   if (!registerPassword.value || registerPassword.value.length < 4) {
@@ -264,7 +265,7 @@ const generateWhatsAppMessage = (order) => {
   text += `*المحل:* ${shopName} (${priceLabel})\n`;
   text += `--------------------------------\n`;
   text += `*العميل:* ${order.customerInfo?.name || authStore.customerName}\n`;
-  text += `*الهاتف:* ${order.customerInfo?.phone || authStore.customerPhone}\n`;
+  text += `*الهاتف:* ${formatLibyanPhone(order.customerInfo?.phone || authStore.customerPhone)}\n`;
   if (order.deliveryDate) {
     text += `*تاريخ الاستلام:* ${order.deliveryDate}\n`;
   }
@@ -348,7 +349,7 @@ const handleResendWhatsApp = () => {
               <span>حساب موثق</span>
             </span>
           </div>
-          <span class="profile-phone text-mono" dir="ltr">{{ authStore.customerPhone }}</span>
+          <span class="profile-phone text-mono" dir="ltr">{{ formatLibyanPhone(authStore.customerPhone) }}</span>
         </div>
       </div>
 
@@ -409,9 +410,10 @@ const handleResendWhatsApp = () => {
           <label class="form-label">رقم الهاتف</label>
           <input 
             v-model="loginPhone" 
+            @input="loginPhone = formatPhoneInput($event.target.value)"
             type="tel" 
-            placeholder="09XXXXXXXX" 
-            class="form-input" 
+            placeholder="09X-XXXXXXX" 
+            class="form-input text-mono" 
             dir="ltr"
             autocomplete="username tel"
             required
@@ -464,9 +466,10 @@ const handleResendWhatsApp = () => {
           <label class="form-label">رقم الهاتف</label>
           <input 
             v-model="registerPhone" 
+            @input="registerPhone = formatPhoneInput($event.target.value)"
             type="tel" 
-            placeholder="09XXXXXXXX" 
-            class="form-input" 
+            placeholder="09X-XXXXXXX" 
+            class="form-input text-mono" 
             dir="ltr"
             autocomplete="tel"
             required

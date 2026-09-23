@@ -8,6 +8,7 @@ import { useShopStore } from '../stores/shop';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
 import { telemetry } from '../utils/telemetry';
+import { formatLibyanPhone, formatPhoneInput } from '../utils/phone';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -19,7 +20,7 @@ const activeShop = computed(() => shopStore.activeShop || 'shop1');
 
 // Guest checkout details (Name and Phone)
 const nameInput = ref(authStore.customerName);
-const phoneInput = ref(authStore.customerPhone);
+const phoneInput = ref(formatLibyanPhone(authStore.customerPhone));
 const showIdentityForm = computed(() => !authStore.isIdentified());
 
 // Minimum delivery date is today
@@ -72,14 +73,15 @@ const handleSaveIdentity = () => {
     return;
   }
   
-  const phone = phoneInput.value.trim();
-  if (phone.length < 9) {
-    errorMsg.value = 'رقم الهاتف غير صحيح.';
+  phoneInput.value = formatPhoneInput(phoneInput.value);
+  const rawDigits = phoneInput.value.replace(/\D/g, '');
+  if (rawDigits.length < 9) {
+    errorMsg.value = 'رقم الهاتف غير صحيح (يجب أن يتكون من 10 أرقام ليبية، مثل: 091-XXXXXXX).';
     return;
   }
   
   errorMsg.value = '';
-  authStore.setSession(nameInput.value.trim(), phone, '', false);
+  authStore.setSession(nameInput.value.trim(), phoneInput.value.trim(), '', false);
   authStore.showSetPasswordModal = true;
 };
 
@@ -423,9 +425,11 @@ const handleClearCart = () => {
             name="phone" 
             autocomplete="tel" 
             v-model="phoneInput" 
+            @input="phoneInput = formatPhoneInput($event.target.value)"
             @blur="handleSaveIdentity" 
-            placeholder="09XXXXXXXX" 
-            class="form-input" 
+            placeholder="09X-XXXXXXX" 
+            class="form-input text-mono" 
+            dir="ltr"
           />
         </div>
         
@@ -442,7 +446,7 @@ const handleClearCart = () => {
               <span>حساب موثق</span>
             </span>
           </div>
-          <p class="phone" dir="ltr">الهاتف: <strong class="text-mono">{{ authStore.customerPhone }}</strong></p>
+          <p class="phone">الهاتف: <strong class="text-mono" dir="ltr">{{ formatLibyanPhone(authStore.customerPhone) }}</strong></p>
         </div>
         <button type="button" class="change-btn" @click="authStore.clearIdentity()" title="تسجيل الدخول بحساب آخر">تبديل الحساب</button>
       </div>
@@ -572,7 +576,7 @@ const handleClearCart = () => {
               <div class="confirm-identity-strip">
                 <div class="confirm-identity-info">
                   <span class="confirm-customer-name">{{ authStore.customerName || 'عميل مسجل' }}</span>
-                  <span class="confirm-customer-phone text-mono" dir="ltr">{{ authStore.customerPhone }}</span>
+                  <span class="confirm-customer-phone text-mono" dir="ltr">{{ formatLibyanPhone(authStore.customerPhone) }}</span>
                 </div>
                 <span class="confirm-verified-tag">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

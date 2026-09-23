@@ -674,7 +674,7 @@
                       </tr>
                       <tr v-for="cust in analyticsData.topCustomers" :key="cust.phone">
                         <td>{{ cust.name }}</td>
-                        <td class="text-mono">{{ cust.phone }}</td>
+                        <td class="text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</td>
                         <td class="text-semibold text-mono text-primary">{{ formatCurrency(cust.totalSpent) }}</td>
                       </tr>
                     </tbody>
@@ -696,7 +696,7 @@
                       <div class="mob-rank-details">
                         <span class="mob-rank-title font-bold">{{ cust.name }}</span>
                         <div class="mob-rank-metrics">
-                          <span class="mob-metric-tag text-mono text-muted">{{ cust.phone }}</span>
+                          <span class="mob-metric-tag text-mono text-muted" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                           <span class="mob-metric-tag text-mono text-primary font-bold">{{ formatCurrency(cust.totalSpent) }}</span>
                         </div>
                       </div>
@@ -727,7 +727,7 @@
                       </tr>
                       <tr v-for="cust in analyticsData.inactiveCustomers" :key="cust.phone">
                         <td>{{ cust.name }}</td>
-                        <td>{{ cust.phone }}</td>
+                        <td class="text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</td>
                         <td class="text-muted">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</td>
                       </tr>
                     </tbody>
@@ -749,7 +749,7 @@
                       <div class="mob-rank-details">
                         <span class="mob-rank-title font-bold">{{ cust.name }}</span>
                         <div class="mob-rank-metrics">
-                          <span class="mob-metric-tag text-mono text-muted">{{ cust.phone }}</span>
+                          <span class="mob-metric-tag text-mono text-muted" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                           <span class="mob-metric-tag text-muted text-small">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</span>
                         </div>
                       </div>
@@ -2003,7 +2003,7 @@
                       <td>
                         <div class="customer-info-cell">
                           <span class="name block text-bold">{{ order.customerInfo.name }}</span>
-                          <span class="phone text-muted block text-mono" style="direction: ltr; display: inline-block;">{{ order.customerInfo.phone }}</span>
+                          <span class="phone text-muted block text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(order.customerInfo.phone) }}</span>
                         </div>
                       </td>
                       <td>
@@ -2150,7 +2150,7 @@
                     <div class="mob-card-customer-row">
                       <div class="mob-cust-details">
                         <span class="mob-cust-name font-bold">{{ order.customerInfo.name }}</span>
-                        <span class="mob-cust-phone text-mono" dir="ltr">{{ order.customerInfo.phone }}</span>
+                        <span class="mob-cust-phone text-mono" dir="ltr">{{ formatLibyanPhone(order.customerInfo.phone) }}</span>
                       </div>
                       <div class="mob-cust-quick-actions">
                         <a :href="getLibyanWhatsAppUrl(order.customerInfo.phone)" target="_blank" class="mob-action-circle whatsapp-circle" title="مراسلة عبر واتساب">
@@ -2560,7 +2560,7 @@
                           <div class="customer-avatar-badge">{{ (cust.name || 'ع').charAt(0) }}</div>
                           <div class="customer-names-group">
                             <span class="customer-name-text">{{ cust.name }}</span>
-                            <span class="customer-phone-subtext text-mono">{{ cust.phone }}</span>
+                            <span class="customer-phone-subtext text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                           </div>
                         </div>
                       </td>
@@ -2628,7 +2628,7 @@
                             <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                           </span>
                         </div>
-                        <span class="customer-phone-subtext text-mono" dir="ltr">{{ cust.phone }}</span>
+                        <span class="customer-phone-subtext text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                       </div>
                       <span 
                         class="customer-balance-badge font-bold" 
@@ -2801,7 +2801,7 @@
                         <div class="chef-details">
                           <h4 class="chef-name font-bold">{{ chef.name }}</h4>
                           <div class="chef-phone-row" v-if="chef.phone">
-                            <span class="chef-phone text-mono" dir="ltr">{{ chef.phone }}</span>
+                            <span class="chef-phone text-mono" dir="ltr">{{ formatLibyanPhone(chef.phone) }}</span>
                             <div class="chef-quick-actions">
                               <a :href="getLibyanWhatsAppUrl(chef.phone)" target="_blank" class="chef-icon-btn whatsapp" title="واتساب">
                                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -3727,8 +3727,8 @@
                     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span>بيانات العميل</span>
                   </div>
-                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone === newOrder.customerPhone) ? 'is-registered' : 'is-new'">
-                    {{ customers.find(c => c.phone === newOrder.customerPhone) ? 'عميل مسجل' : 'عميل جديد' }}
+                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone && (c.phone === newOrder.customerPhone || c.phone.replace(/[^0-9]/g, '') === newOrder.customerPhone.replace(/[^0-9]/g, ''))) ? 'is-registered' : 'is-new'">
+                    {{ customers.find(c => c.phone && (c.phone === newOrder.customerPhone || c.phone.replace(/[^0-9]/g, '') === newOrder.customerPhone.replace(/[^0-9]/g, ''))) ? 'عميل مسجل' : 'عميل جديد' }}
                   </span>
                 </div>
 
@@ -3763,7 +3763,7 @@
                       <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
                       <div class="cust-info-group">
                         <span class="cust-sugg-name">{{ cust.name }}</span>
-                        <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                        <span class="cust-sugg-phone text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                       </div>
                       <div class="cust-badge-stats">
                         <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
@@ -3781,7 +3781,7 @@
                   </div>
                   <div class="pos-field">
                     <label class="pos-label">رقم الهاتف *</label>
-                    <input v-model="newOrder.customerPhone" type="tel" dir="ltr" class="form-control pos-control text-mono text-center" placeholder="09xxxxxxxx" required />
+                    <input v-model="newOrder.customerPhone" @input="newOrder.customerPhone = formatPhoneInput($event.target.value)" type="tel" dir="ltr" class="form-control pos-control text-mono text-center" placeholder="09x-xxxxxxx" required />
                   </div>
                 </div>
               </div>
@@ -4369,7 +4369,7 @@
                     <div class="cust-avatar-md">{{ (editingOrder.customerName || 'ع').charAt(0) }}</div>
                     <div class="edit-cust-name-col">
                       <span class="edit-cust-name" :title="editingOrder.customerName || 'عميل غير محدد'">{{ editingOrder.customerName || 'عميل غير محدد' }}</span>
-                      <span class="edit-cust-phone text-mono" dir="ltr">{{ editingOrder.customerPhone || 'لا يوجد هاتف' }}</span>
+                      <span class="edit-cust-phone text-mono" dir="ltr">{{ formatLibyanPhone(editingOrder.customerPhone) || 'لا يوجد هاتف' }}</span>
                     </div>
                     <div v-if="editingOrder.customerPhone" class="edit-cust-quick-actions">
                       <a 
@@ -4433,7 +4433,7 @@
                       <div class="cust-avatar-sm">{{ (cust.name || 'ع').charAt(0) }}</div>
                       <div class="cust-info-group">
                         <span class="cust-sugg-name">{{ cust.name }}</span>
-                        <span class="cust-sugg-phone text-mono">{{ cust.phone }}</span>
+                        <span class="cust-sugg-phone text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                       </div>
                       <div class="cust-badge-stats">
                         <span class="badge-orders">{{ formatArabicPlural(cust.orderCount || 0, 'order') }}</span>
@@ -4816,7 +4816,7 @@
 
             <div class="form-group mb-3">
               <label class="form-label font-bold">رقم الهاتف (اختياري)</label>
-              <input v-model="editingChef.phone" type="tel" inputmode="tel" spellcheck="false" class="form-control text-mono" placeholder="0910000000…" />
+              <input v-model="editingChef.phone" @input="editingChef.phone = formatPhoneInput($event.target.value)" type="tel" inputmode="tel" spellcheck="false" class="form-control text-mono" dir="ltr" placeholder="09x-xxxxxxx…" />
               <small class="form-text text-muted mt-1 d-block">للتواصل السريع والمباشر مع الشيف عبر واتساب أو الاتصال.</small>
             </div>
 
@@ -5070,7 +5070,7 @@
               <label class="form-label font-bold">الشيف المسؤول عن الإنتاج</label>
               <select v-model="editingProduct.chefId" class="form-control">
                 <option value="">-- بدون شيف محدد --</option>
-                <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }} {{ c.phone ? ('(' + c.phone + ')') : '' }}</option>
+                <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }} {{ c.phone ? ('(' + formatLibyanPhone(c.phone) + ')') : '' }}</option>
               </select>
             </div>
             <div class="form-group">
@@ -5315,7 +5315,7 @@
         <div class="modal-header">
           <div class="modal-title-group">
             <h2 id="customer-profile-modal-title" class="modal-title">الملف التعريفي للعميل</h2>
-            <span id="customer-profile-modal-phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ selectedCustomer.phone }}</span>
+            <span id="customer-profile-modal-phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(selectedCustomer.phone) }}</span>
           </div>
           <div class="modal-header-actions">
             <button 
@@ -5341,7 +5341,7 @@
             <div class="profile-info">
               <h3 class="profile-name">{{ selectedCustomer.name }}</h3>
               <div class="profile-phone-row">
-                <span class="profile-phone-text text-mono">{{ selectedCustomer.phone }}</span>
+                <span class="profile-phone-text text-mono" dir="ltr">{{ formatLibyanPhone(selectedCustomer.phone) }}</span>
                 <div class="profile-quick-actions">
                   <a :href="getLibyanWhatsAppUrl(selectedCustomer.phone)" target="_blank" class="profile-action-icon whatsapp-icon" aria-label="مراسلة عبر واتساب" title="مراسلة عبر واتساب">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -5507,7 +5507,7 @@
         <div class="modal-header">
           <div class="modal-title-group">
             <h2 id="customer-modal-title" class="modal-title">تعديل بيانات العميل</h2>
-            <span v-if="editingCustomer.phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ editingCustomer.phone }}</span>
+            <span v-if="editingCustomer.phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(editingCustomer.phone) }}</span>
           </div>
           <button @click="customerModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -5522,7 +5522,7 @@
 
             <div class="form-group mb-3">
               <label class="form-label">رقم الهاتف *</label>
-              <input v-model="editingCustomer.phone" type="tel" inputmode="tel" spellcheck="false" required class="form-control text-mono" placeholder="0910000000…" />
+              <input v-model="editingCustomer.phone" @input="editingCustomer.phone = formatPhoneInput($event.target.value)" type="tel" inputmode="tel" spellcheck="false" required class="form-control text-mono" dir="ltr" placeholder="09x-xxxxxxx…" />
             </div>
 
             <div class="form-group mb-3">
@@ -5574,7 +5574,7 @@
           <div class="modal-title-group">
             <h2 id="customer-favs-title" class="modal-title">المنتجات المفضلة للعميل</h2>
             <span v-if="viewingCustomer" class="modal-subtitle">
-              {{ viewingCustomer.name }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ viewingCustomer.phone }}</span>
+              {{ viewingCustomer.name }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(viewingCustomer.phone) }}</span>
             </span>
           </div>
           <button @click="customerFavsModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
@@ -6013,7 +6013,7 @@
               <td>
                 <div class="debt-cust-cell">
                   <span class="debt-cust-name font-bold">{{ cust.name }}</span>
-                  <span class="debt-cust-phone text-mono font-bold" dir="ltr">{{ cust.phone }}</span>
+                  <span class="debt-cust-phone text-mono font-bold" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                 </div>
               </td>
               <td class="text-bold text-mono">{{ formatCurrency(cust.totalSpent || 0) }}</td>
@@ -6085,7 +6085,7 @@
           </div>
           <div class="cust-print-info-item">
             <span class="cust-print-info-label">رقم الهاتف:</span>
-            <span class="cust-print-info-val text-mono" dir="ltr">{{ customerOrdersPrintData.customer.phone }}</span>
+            <span class="cust-print-info-val text-mono" dir="ltr">{{ formatLibyanPhone(customerOrdersPrintData.customer.phone) }}</span>
           </div>
           <div class="cust-print-info-item">
             <span class="cust-print-info-label">إجمالي الطلبات:</span>
@@ -6251,7 +6251,7 @@
             </td>
             <td class="notes-customer-cell">
               <div class="cust-name-line font-bold">{{ row.customerName }}</div>
-              <div v-if="row.customerPhone" class="cust-phone-line text-mono text-small text-muted" dir="ltr">{{ row.customerPhone }}</div>
+              <div v-if="row.customerPhone" class="cust-phone-line text-mono text-small text-muted" dir="ltr">{{ formatLibyanPhone(row.customerPhone) }}</div>
             </td>
             <td class="text-center">
               <span class="order-badge-pill">#{{ row.orderNumber }}</span>
@@ -6409,7 +6409,7 @@
         </div>
         <div class="receipt-meta-row">
           <span class="receipt-label">الهاتف:</span>
-          <span class="receipt-value receipt-phone">{{ printingOrder.customerInfo.phone }}</span>
+          <span class="receipt-value receipt-phone text-mono" dir="ltr">{{ formatLibyanPhone(printingOrder.customerInfo.phone) }}</span>
         </div>
         <div class="receipt-meta-row" v-if="printingOrder.deliveryDate">
           <span class="receipt-label">تاريخ التسليم:</span>
@@ -6672,7 +6672,7 @@
                 <div class="cust-meta-text min-w-0">
                   <h4 class="cust-name font-bold text-dark text-truncate mb-0">{{ cust.customerName }}</h4>
                   <div class="cust-phone-actions-row" v-if="cust.customerPhone">
-                    <span class="cust-phone text-mono" dir="ltr">{{ cust.customerPhone }}</span>
+                    <span class="cust-phone text-mono" dir="ltr">{{ formatLibyanPhone(cust.customerPhone) }}</span>
                     <div class="cust-action-buttons">
                       <a 
                         :href="getLibyanWhatsAppUrl(cust.customerPhone)" 
@@ -6763,7 +6763,7 @@
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                     </a>
                   </div>
-                  <span v-if="ord.customerPhone" class="text-muted text-mono text-small d-block" dir="ltr">{{ ord.customerPhone }}</span>
+                  <span v-if="ord.customerPhone" class="text-muted text-mono text-small d-block" dir="ltr">{{ formatLibyanPhone(ord.customerPhone) }}</span>
                   <span v-if="ord.notes" class="text-small text-primary d-block mt-1">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     {{ ord.notes }}
@@ -6809,7 +6809,7 @@
         <div class="modal-title-group">
           <h2 id="payment-modal-title" class="modal-title">تسجيل دفعة نقدية</h2>
           <span class="modal-subtitle">
-            {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ paymentTarget.customerPhone }}</span>
+            {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(paymentTarget.customerPhone) }}</span>
           </span>
         </div>
         <button @click="paymentModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
@@ -6988,7 +6988,7 @@
         <div class="modal-title-group">
           <h2 id="payment-history-title" class="modal-title">سجل المدفوعات والتحصيلات</h2>
           <span class="modal-subtitle">
-            {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ paymentTarget.customerPhone }}</span>
+            {{ paymentTarget.customerName }} — <span class="text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(paymentTarget.customerPhone) }}</span>
           </span>
         </div>
         <button @click="paymentHistoryModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
@@ -7111,7 +7111,7 @@
         </div>
         <div class="receipt-meta-row">
           <span class="receipt-label">الهاتف:</span>
-          <span class="receipt-value receipt-phone">{{ printingPayment.customerPhone }}</span>
+          <span class="receipt-value receipt-phone" dir="ltr">{{ formatLibyanPhone(printingPayment.customerPhone) }}</span>
         </div>
         <div class="receipt-meta-row">
           <span class="receipt-label">طريقة الدفع:</span>
@@ -7400,7 +7400,7 @@ import CategoryIcon from '../components/CategoryIcon.vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import JsBarcode from 'jsbarcode';
-import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl } from '../utils/phone';
+import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput } from '../utils/phone';
 import { vSheetGesture } from '../utils/sheetGesture';
 
 export default {
@@ -13408,6 +13408,8 @@ const closeSuggestionsWithDelay = () => {
       handleSidebarKeydown,
       formatLibyanWhatsappNumber,
       getLibyanWhatsAppUrl,
+      formatLibyanPhone,
+      formatPhoneInput,
       loading,
       isAuthenticated,
       sidebarOpen,
