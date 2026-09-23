@@ -18,6 +18,7 @@ const activeSubCategory = ref('');
 
 const carouselItems = ref([]);
 const carouselTrack = ref(null);
+const isCarouselLoading = ref(true);
 const loadedBannerIds = ref(new Set());
 
 const markBannerLoaded = (id) => {
@@ -31,13 +32,25 @@ const showScrollHint = ref(false);
 let hintInterval = null;
 
 const fetchCarousel = async () => {
+  isCarouselLoading.value = true;
   try {
     const res = await fetch(`/api/marketing-carousel?shop=${shopStore.activeShop || 'shop1'}`);
     if (res.ok) {
-      carouselItems.value = await res.json();
+      const items = await res.json();
+      carouselItems.value = items;
+      items.forEach(item => {
+        if (item.image && isImageCached(item.image)) {
+          loadedBannerIds.value.add(item._id);
+        }
+      });
+    } else {
+      carouselItems.value = [];
     }
   } catch (err) {
     console.error('Failed to fetch marketing carousel:', err);
+    carouselItems.value = [];
+  } finally {
+    isCarouselLoading.value = false;
   }
 };
 
@@ -106,6 +119,8 @@ onMounted(async () => {
 
 // Watch shop parameter change to refetch items
 watch(() => shopStore.activeShop, async () => {
+  isCarouselLoading.value = true;
+  loadedBannerIds.value.clear();
   await Promise.all([shopStore.fetchMenu(), fetchCarousel()]);
   if (shopStore.categories.length > 0) {
     activeCategory.value = shopStore.categories[0].name;
@@ -583,74 +598,105 @@ watch(carouselItems, (newItems) => {
       </div>
       
       <!-- Wholesale toggle button (only shown if bulk prices are offered) -->
-      <button 
-        v-if="hasBulkProducts"
-        type="button"
-        class="bulk-toggle-btn"
-        :class="{ active: shopStore.isBulkVerified, disabled: !shopStore.isBulkVerified }"
-        @click="handleOpenBulkModal"
-        :aria-label="shopStore.isBulkVerified ? 'أسعار الجملة مفعّلة، انقر لإلغاء التفعيل' : 'تفعيل أسعار الجملة'"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-        </svg>
-        <span>{{ shopStore.isBulkVerified ? 'أسعار الجملة: مفعّلة' : 'أسعار الجملة' }}</span>
-        <svg v-if="shopStore.isBulkVerified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </button>
+      <Transition name="bulk-btn-slide" appear>
+        <button 
+          v-if="hasBulkProducts"
+          type="button"
+          class="bulk-toggle-btn"
+          :class="{ active: shopStore.isBulkVerified, disabled: !shopStore.isBulkVerified }"
+          @click="handleOpenBulkModal"
+          :aria-label="shopStore.isBulkVerified ? 'أسعار الجملة مفعّلة، انقر لإلغاء التفعيل' : 'تفعيل أسعار الجملة'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+          <span>{{ shopStore.isBulkVerified ? 'أسعار الجملة: مفعّلة' : 'أسعار الجملة' }}</span>
+          <svg v-if="shopStore.isBulkVerified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span class="bulk-btn-arrival-sheen" aria-hidden="true"></span>
+        </button>
+      </Transition>
     </header>
 
-    <!-- Marketing Carousel -->
-    <div v-if="!searchQuery && carouselItems.length > 0" class="carousel-wrapper">
+    <!-- Marketing Carousel & Banner Skeleton Loader -->
+    <Transition name="carousel-crossfade">
       <div 
-        ref="carouselTrack"
-        class="carousel-track" 
-        @wheel.prevent="handleHorizontalScroll"
-        @mousedown="startDrag"
-        @mousemove="drag"
-        @mouseup="endDrag"
-        @mouseleave="endDrag"
-        @mouseenter="isPaused = true"
-        @touchstart="isPaused = true"
-        @touchend="isPaused = false"
-        @touchcancel="isPaused = false"
+        v-if="!searchQuery && isCarouselLoading" 
+        class="carousel-wrapper carousel-skeleton-wrapper" 
+        aria-hidden="true"
+        key="banner-skeleton"
       >
-        <component
-          :is="item.link ? 'a' : 'div'"
-          v-for="(item, idx) in carouselItems"
-          :key="item._id"
-          :href="item.link || undefined"
-          :aria-label="item.link ? (item.title || 'إعلان ترويجي') : undefined"
-          class="carousel-card"
-          @click="handleCarouselClick"
-          draggable="false"
-        >
-          <!-- Shimmer Placeholder until banner is loaded -->
-          <div v-if="!loadedBannerIds.has(item._id)" class="carousel-skeleton-shimmer">
-            <div class="shimmer-wave"></div>
+        <div class="carousel-track skeleton-carousel-track">
+          <div class="carousel-card carousel-skeleton-card glass-panel">
+            <div class="carousel-skeleton-shimmer">
+              <div class="shimmer-wave"></div>
+            </div>
+            <div class="carousel-skeleton-badge">
+              <svg class="carousel-skeleton-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
           </div>
-
-          <!-- Banner Image with View-Aware Prioritization & Smooth Fade-in -->
-          <img 
-            :src="item.image"
-            :alt="item.title || 'Banner'"
-            class="carousel-banner-img"
-            :class="{ 'loaded': loadedBannerIds.has(item._id) }"
-            :fetchpriority="idx === 0 ? 'high' : 'auto'"
-            :loading="idx === 0 ? 'eager' : 'lazy'"
-            decoding="async"
-            @load="markBannerLoaded(item._id)"
-            @error="markBannerLoaded(item._id)"
-          />
-        </component>
+        </div>
       </div>
-    </div>
+
+      <div 
+        v-else-if="!searchQuery && carouselItems.length > 0" 
+        class="carousel-wrapper"
+        key="banner-carousel"
+      >
+        <div 
+          ref="carouselTrack"
+          class="carousel-track" 
+          @wheel.prevent="handleHorizontalScroll"
+          @mousedown="startDrag"
+          @mousemove="drag"
+          @mouseup="endDrag"
+          @mouseleave="endDrag"
+          @mouseenter="isPaused = true"
+          @touchstart="isPaused = true"
+          @touchend="isPaused = false"
+          @touchcancel="isPaused = false"
+        >
+          <component
+            :is="item.link ? 'a' : 'div'"
+            v-for="(item, idx) in carouselItems"
+            :key="item._id"
+            :href="item.link || undefined"
+            :aria-label="item.link ? (item.title || 'إعلان ترويجي') : undefined"
+            class="carousel-card"
+            @click="handleCarouselClick"
+            draggable="false"
+          >
+            <!-- Shimmer Placeholder until banner is loaded -->
+            <div v-if="!loadedBannerIds.has(item._id)" class="carousel-skeleton-shimmer">
+              <div class="shimmer-wave"></div>
+            </div>
+
+            <!-- Banner Image with View-Aware Prioritization & Smooth Fade-in -->
+            <img 
+              :src="item.image"
+              :alt="item.title || 'Banner'"
+              class="carousel-banner-img"
+              :class="{ 'loaded': loadedBannerIds.has(item._id) }"
+              :fetchpriority="idx === 0 ? 'high' : 'auto'"
+              :loading="idx === 0 ? 'eager' : 'lazy'"
+              decoding="async"
+              @load="markBannerLoaded(item._id)"
+              @error="markBannerLoaded(item._id)"
+            />
+          </component>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Search Input -->
     <div class="search-box-wrapper glass-panel">
@@ -974,6 +1020,8 @@ watch(carouselItems, (newItems) => {
 }
 
 .bulk-toggle-btn {
+  position: relative;
+  overflow: hidden;
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(245, 158, 11, 0.25);
   color: var(--text-color, #2c2520);
@@ -990,7 +1038,7 @@ watch(carouselItems, (newItems) => {
   cursor: pointer;
   width: 100%;
   margin-top: 4px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, color 0.2s ease, box-shadow 0.25s ease;
 }
 
 .bulk-toggle-btn.disabled {
@@ -1010,6 +1058,118 @@ watch(carouselItems, (newItems) => {
   border-color: #059669;
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+}
+
+/* Fancy Slide-Down Entrance for Bulk Prices Button */
+.bulk-btn-slide-enter-active {
+  animation: bulkBtnFancySlideDown 0.65s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+  will-change: transform, opacity, filter, max-height, margin-top;
+}
+
+.bulk-btn-slide-leave-active {
+  animation: bulkBtnSlideUpExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes bulkBtnFancySlideDown {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -22px, 0) scale(0.94);
+    filter: blur(5px);
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+  }
+  25% {
+    max-height: 52px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-width: 1px;
+    margin-top: 4px;
+  }
+  65% {
+    opacity: 1;
+    transform: translate3d(0, 4px, 0) scale(1.018);
+    filter: blur(0);
+  }
+  85% {
+    transform: translate3d(0, -1.5px, 0) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+    max-height: 52px;
+    margin-top: 4px;
+  }
+}
+
+@keyframes bulkBtnSlideUpExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    max-height: 52px;
+    margin-top: 4px;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -16px, 0) scale(0.96);
+    filter: blur(4px);
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+  }
+}
+
+/* Subtle Specular Arrival Sheen */
+.bulk-btn-arrival-sheen {
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 100%
+  );
+  transform: skewX(-22deg);
+  pointer-events: none;
+  animation: bulkBtnSheenWave 0.85s 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes bulkBtnSheenWave {
+  0% {
+    left: -120%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    left: 200%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulk-btn-slide-enter-active,
+  .bulk-btn-slide-leave-active {
+    animation: none;
+    transition: opacity 0.2s ease;
+  }
+  .bulk-btn-slide-enter-from,
+  .bulk-btn-slide-leave-to {
+    opacity: 0;
+  }
+  .bulk-btn-arrival-sheen {
+    display: none;
+    animation: none;
+  }
 }
 
 
@@ -1475,12 +1635,115 @@ watch(carouselItems, (newItems) => {
   -webkit-user-select: none;
 }
 
+.carousel-skeleton-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-carousel-track {
+  display: flex;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.carousel-skeleton-card {
+  flex: 0 0 100%;
+  position: relative;
+  aspect-ratio: 3 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-card, rgba(255, 253, 249, 0.95));
+  border: 1px solid rgba(44, 37, 32, 0.08);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.carousel-skeleton-card .carousel-skeleton-shimmer {
+  background: linear-gradient(135deg, rgba(241, 245, 249, 0.88), rgba(226, 232, 240, 0.72));
+}
+
 .carousel-skeleton-shimmer {
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%;
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9));
   z-index: 1;
   overflow: hidden;
+  contain: layout paint;
+}
+
+/* Hardware Accelerated Banner Shimmer Wave */
+.shimmer-wave {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: bannerShimmerWave 1.7s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.carousel-card:not(.carousel-skeleton-card) .shimmer-wave {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes bannerShimmerWave {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(200%, 0, 0); }
+}
+
+.carousel-skeleton-badge {
+  position: relative;
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  opacity: 0.9;
+}
+
+/* Smooth Crossfade between Banner Skeleton and Real Banners */
+.carousel-crossfade-enter-active,
+.carousel-crossfade-leave-active {
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.carousel-crossfade-enter-from {
+  opacity: 0;
+  transform: scale(0.99);
+}
+
+.carousel-crossfade-leave-to {
+  opacity: 0;
+  transform: scale(1.01);
 }
 
 .carousel-banner-img {
