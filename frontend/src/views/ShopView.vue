@@ -433,12 +433,34 @@ const shopTitle = computed(() => {
   return shopStore.activeShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي';
 });
 
+const cachedHasBulk = ref((() => {
+  try {
+    const val = localStorage.getItem(`emenu_has_bulk_${shopStore.activeShop || 'shop1'}`);
+    if (val !== null) return val === 'true';
+  } catch (e) {}
+  return true; // Default to true so space is preserved without header height pop
+})());
+
 const hasBulkProducts = computed(() => {
-  // Check if any product in shop catalog offers bulk pricing with a valid bulk price
-  return shopStore.products.some(p => 
-    (p.purchaseType === 'bulk' || p.purchaseType === 'both') &&
-    p.price_bulk !== null && p.price_bulk !== undefined && p.price_bulk !== ''
-  );
+  if (shopStore.products.length > 0) {
+    const has = shopStore.products.some(p => 
+      (p.purchaseType === 'bulk' || p.purchaseType === 'both') &&
+      p.price_bulk !== null && p.price_bulk !== undefined && p.price_bulk !== ''
+    );
+    try {
+      localStorage.setItem(`emenu_has_bulk_${shopStore.activeShop || 'shop1'}`, String(has));
+    } catch (e) {}
+    return has;
+  }
+  // While loading products, use the cached knowledge to prevent layout shift
+  return cachedHasBulk.value;
+});
+
+const shouldShowBannerSkeleton = computed(() => {
+  // Only show skeleton if carousel is loading and active shop expects banners
+  // shop1 has marketing carousel banners; shop2 does not
+  if (shopStore.activeShop === 'shop2') return false;
+  return isCarouselLoading.value && carouselItems.value.length === 0;
 });
 
 // Horizontal scrolling for mouse users on PC views
@@ -624,48 +646,26 @@ watch(carouselItems, (newItems) => {
       </Transition>
     </header>
 
-    <!-- Marketing Carousel & Banner Skeleton Loader -->
-    <Transition name="carousel-crossfade">
+    <!-- Marketing Carousel (Single Stable Container, Zero Layout Shift) -->
+    <div 
+      v-if="!searchQuery && (carouselItems.length > 0 || shouldShowBannerSkeleton)" 
+      class="carousel-wrapper"
+    >
       <div 
-        v-if="!searchQuery && isCarouselLoading" 
-        class="carousel-wrapper carousel-skeleton-wrapper" 
-        aria-hidden="true"
-        key="banner-skeleton"
+        ref="carouselTrack"
+        class="carousel-track" 
+        @wheel.prevent="handleHorizontalScroll"
+        @mousedown="startDrag"
+        @mousemove="drag"
+        @mouseup="endDrag"
+        @mouseleave="endDrag"
+        @mouseenter="isPaused = true"
+        @touchstart="isPaused = true"
+        @touchend="isPaused = false"
+        @touchcancel="isPaused = false"
       >
-        <div class="carousel-track skeleton-carousel-track">
-          <div class="carousel-card carousel-skeleton-card glass-panel">
-            <div class="carousel-skeleton-shimmer">
-              <div class="shimmer-wave"></div>
-            </div>
-            <div class="carousel-skeleton-badge">
-              <svg class="carousel-skeleton-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div 
-        v-else-if="!searchQuery && carouselItems.length > 0" 
-        class="carousel-wrapper"
-        key="banner-carousel"
-      >
-        <div 
-          ref="carouselTrack"
-          class="carousel-track" 
-          @wheel.prevent="handleHorizontalScroll"
-          @mousedown="startDrag"
-          @mousemove="drag"
-          @mouseup="endDrag"
-          @mouseleave="endDrag"
-          @mouseenter="isPaused = true"
-          @touchstart="isPaused = true"
-          @touchend="isPaused = false"
-          @touchcancel="isPaused = false"
-        >
+        <!-- Real items when available -->
+        <template v-if="carouselItems.length > 0">
           <component
             :is="item.link ? 'a' : 'div'"
             v-for="(item, idx) in carouselItems"
@@ -694,9 +694,25 @@ watch(carouselItems, (newItems) => {
               @error="markBannerLoaded(item._id)"
             />
           </component>
-        </div>
+        </template>
+
+        <!-- Skeleton placeholder card while fetching items (exact same geometry) -->
+        <template v-else-if="shouldShowBannerSkeleton">
+          <div class="carousel-card carousel-skeleton-card" aria-hidden="true">
+            <div class="carousel-skeleton-shimmer">
+              <div class="shimmer-wave"></div>
+            </div>
+            <div class="carousel-skeleton-badge">
+              <svg class="carousel-skeleton-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+          </div>
+        </template>
       </div>
-    </Transition>
+    </div>
 
     <!-- Search Input -->
     <div class="search-box-wrapper glass-panel">
@@ -1617,52 +1633,35 @@ watch(carouselItems, (newItems) => {
   display: none;
 }
 
-.carousel-card {
+.carousel-card,
+.carousel-skeleton-card {
   flex: 0 0 100%;
   scroll-snap-align: start;
   position: relative;
   aspect-ratio: 3 / 1;
   border-radius: 16px;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.4);
   box-shadow: var(--shadow-md);
-  display: block;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-drag: none;
   -webkit-user-drag: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-.carousel-skeleton-wrapper {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  margin-top: 0.25rem;
-  margin-bottom: 0.5rem;
-}
-
-.skeleton-carousel-track {
-  display: flex;
-  width: 100%;
-  padding: 4px 0;
+.carousel-card {
+  background: rgba(15, 23, 42, 0.4);
+  display: block;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .carousel-skeleton-card {
-  flex: 0 0 100%;
-  position: relative;
-  aspect-ratio: 3 / 1;
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--bg-card, rgba(255, 253, 249, 0.95));
-  border: 1px solid rgba(44, 37, 32, 0.08);
-  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
+  background: linear-gradient(135deg, rgba(241, 245, 249, 0.95), rgba(226, 232, 240, 0.85));
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  user-select: none;
+  cursor: default;
 }
 
 .carousel-skeleton-card .carousel-skeleton-shimmer {
@@ -1728,22 +1727,6 @@ watch(carouselItems, (newItems) => {
   justify-content: center;
   color: #94a3b8;
   opacity: 0.9;
-}
-
-/* Smooth Crossfade between Banner Skeleton and Real Banners */
-.carousel-crossfade-enter-active,
-.carousel-crossfade-leave-active {
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.carousel-crossfade-enter-from {
-  opacity: 0;
-  transform: scale(0.99);
-}
-
-.carousel-crossfade-leave-to {
-  opacity: 0;
-  transform: scale(1.01);
 }
 
 .carousel-banner-img {
