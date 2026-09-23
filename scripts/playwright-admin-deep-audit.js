@@ -48,6 +48,24 @@ async function runAdminDeepAudit() {
 
     const page = await context.newPage();
 
+    // Helper: wait for spinner overlay to disappear before interacting
+    async function waitForSpinnerGone() {
+      try {
+        await page.waitForFunction(() => {
+          const spinner = document.querySelector('.spinner-overlay');
+          if (!spinner) return true;
+          const style = window.getComputedStyle(spinner);
+          return style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0' || style.pointerEvents === 'none';
+        }, { timeout: 15000 });
+      } catch {
+        // Force-remove spinner if it's stuck
+        await page.evaluate(() => {
+          const spinner = document.querySelector('.spinner-overlay');
+          if (spinner) spinner.style.display = 'none';
+        });
+      }
+    }
+
     // Step 1: Login
     console.log('Logging into Admin Console...');
     await page.goto(`${BASE_URL}/app?mode=admin#/admin`, { waitUntil: 'networkidle' });
@@ -59,6 +77,7 @@ async function runAdminDeepAudit() {
 
     // Wait for admin layout to load
     await page.waitForSelector('.admin-container, .admin-sidebar, .main-header', { timeout: 8000 });
+    await waitForSpinnerGone();
     console.log('✓ Successfully logged in to Admin Console!');
 
     await page.waitForTimeout(500);
@@ -81,6 +100,9 @@ async function runAdminDeepAudit() {
     for (const t of tabsToTest) {
       console.log(`\nTesting Tab: [${t.title}] (${t.id})`);
       
+      // Wait for any active spinner to clear before interacting
+      await waitForSpinnerGone();
+
       // On mobile, if sidebar is closed, open it or navigate
       if (vp.isMobile) {
         const sidebarOpen = await page.$eval('.admin-sidebar', el => el.classList.contains('open')).catch(() => false);
@@ -91,11 +113,16 @@ async function runAdminDeepAudit() {
         }
       }
 
-      // Click tab
+      // Click tab (use force if spinner is stuck)
       const tabBtn = await page.$(`button.menu-item:has-text("${t.title}")`);
       if (tabBtn) {
-        await tabBtn.click();
+        try {
+          await tabBtn.click({ timeout: 10000 });
+        } catch {
+          await tabBtn.click({ force: true });
+        }
         await page.waitForTimeout(600);
+        await waitForSpinnerGone();
       }
 
       // Capture screenshot

@@ -854,16 +854,18 @@ const activeTagsList = computed(() => {
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Shop 1 Theme: Warm Gold/Amber gradient with dark text */
+/* Shop 1 Theme: Warm Gold/Amber gradient with white text */
 .shop-theme-shop1 .add-btn-wide {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #0c0603;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
 }
 
 .shop-theme-shop1 .add-btn-wide:hover {
   transform: translateY(-1px);
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #ffffff;
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.55);
 }
 

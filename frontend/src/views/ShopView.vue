@@ -1098,7 +1098,7 @@ watch(carouselItems, (newItems) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0.6rem 1rem;
+  padding: 0.5rem 1.1rem;
   min-height: 44px;
   font-family: 'Cairo', sans-serif;
   font-size: 0.85rem;
@@ -1106,6 +1106,7 @@ watch(carouselItems, (newItems) => {
   color: #5c534a;
   white-space: nowrap;
   cursor: pointer;
+  border-radius: 9999px !important;
   border-color: rgba(44, 37, 32, 0.06);
   background: rgba(255, 253, 249, 0.9);
   transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
@@ -1773,10 +1774,10 @@ watch(carouselItems, (newItems) => {
   
   .cat-btn {
     min-height: 44px;
-    padding: 0.5rem 0.85rem;
+    padding: 0.45rem 1rem;
     gap: 6px;
     font-size: 0.84rem;
-    border-radius: 10px;
+    border-radius: 9999px !important;
   }
 
   .subcat-sections-wrapper {

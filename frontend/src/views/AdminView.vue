@@ -12,7 +12,6 @@
         <div class="login-header">
           <img :src="loginShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="login-logo" />
           <h1 class="login-title">لوحة الإدارة الذكية</h1>
-          <p>تسجيل الدخول للوصول إلى لوحة التحكم</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="login-form">
@@ -1240,7 +1239,7 @@
                     <input 
                       v-model="categorySearchQuery" 
                       type="text" 
-                      placeholder="بحث في الأصناف الرئيسية والأقسام الفرعية…" 
+                      placeholder="بحث في الأصناف…" 
                       class="form-control search-input"
                     />
                     <button 
@@ -1800,7 +1799,7 @@
                       type="text" 
                       name="search" 
                       autocomplete="off" 
-                      placeholder="بحث بالرقم، العميل، الهاتف أو الصنف…" 
+                      placeholder="بحث بالرقم أو العميل…" 
                       class="form-control search-input" 
                       @keydown.enter="handleSearchEnter('orders', $event)"
                       @keydown.down="handleSearchArrowDown($event)"
@@ -2605,7 +2604,10 @@
                         </div>
                         <span class="customer-phone-subtext text-mono" dir="ltr">{{ cust.phone }}</span>
                       </div>
-                      <span class="customer-balance-cell font-bold" :style="{ color: (cust.outstandingBalance || 0) > 0 ? '#ef4444' : '#10b981' }">
+                      <span 
+                        class="customer-balance-badge font-bold" 
+                        :class="(cust.outstandingBalance || 0) > 0 ? 'badge-debt' : 'badge-settled'"
+                      >
                         {{ (cust.outstandingBalance || 0) > 0 ? formatCurrency(cust.outstandingBalance) : 'مُسدد بالكامل' }}
                       </span>
                     </div>
@@ -3630,7 +3632,6 @@
                   {{ activeShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}
                 </span>
               </div>
-              <p class="fast-order-subtitle">إدخال سريع لطلبات الزبائن مع تسعير فوري وخيارات تسليم ودفع مرنة</p>
             </div>
           </div>
 
@@ -4286,7 +4287,6 @@
                   {{ editingOrder.status === 'ready' ? 'جاهز للاستلام' : (editingOrder.status === 'received' ? 'تم الاستلام' : (editingOrder.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار')) }}
                 </span>
               </div>
-              <p class="fast-order-subtitle">تعديل بيانات العميل، موعد الاستلام، وحالة الطلب وإدارة قائمة الأصناف والكميات</p>
             </div>
           </div>
 
@@ -9476,12 +9476,12 @@ export default {
     const formatTotal = (val) => {
       const rounded = Math.round(Number(val) || 0);
       const formatted = rounded.toLocaleString('ar-LY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-      return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + ' د.ل';
+      return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + '\u00A0د.ل';
     };
 
     const formatPrice = (val) => {
       const formatted = (Number(val) || 0).toLocaleString('ar-LY', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-      return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + ' د.ل';
+      return formatted.replace(/[,.٬٫]/g, m => (m === ',' || m === '٬' ? '.' : ',')) + '\u00A0د.ل';
     };
 
     const formatCurrency = (val, isUnit = false) => {
@@ -14215,8 +14215,12 @@ const closeSuggestionsWithDelay = () => {
 
 .login-form .btn-primary {
   min-height: 46px;
-  color: #0c0603 !important;
-  font-weight: 850 !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #d97706;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
 }
 
 .login-user-select:focus {
@@ -14379,11 +14383,12 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .shop-pill.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #0c0603 !important;
-  font-weight: 850;
-  box-shadow: 0 3px 10px var(--primary-glow);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #d97706;
+  color: #ffffff !important;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.35);
 }
 
 .shop-theme-shop2 .shop-pill.active {
@@ -14685,10 +14690,15 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .kpi-value {
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 1.25rem;
+  font-weight: 800;
   color: #1e3a5f;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap !important;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
 }
 
 /* Charts Grid */
@@ -15065,7 +15075,7 @@ const closeSuggestionsWithDelay = () => {
   font-weight: 700;
 }
 
-.text-mono, .customer-info-cell .phone, .order-date, .kpi-value {
+.text-mono, .customer-info-cell .phone, .order-date {
   font-family: 'Fira Code', 'Courier New', monospace !important;
   letter-spacing: -0.3px;
 }
@@ -16535,7 +16545,38 @@ select.form-control:focus {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  .products-tab-content,
+  .main-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .main-title-wrap {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .main-header h1 {
+    font-size: 1.15rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .header-count-badge {
+    flex-shrink: 0 !important;
+    padding: 3px 10px !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+  }
   .orders-tab-content,
   .customers-tab-content,
   .categories-tab-content,
@@ -16634,9 +16675,15 @@ select.form-control:focus {
   }
 
   .kpi-card {
-    padding: 10px 12px !important;
+    padding: 10px 10px !important;
     border-radius: 12px !important;
-    gap: 10px !important;
+    gap: 8px !important;
+  }
+
+  .kpi-card .kpi-value {
+    font-size: 1.05rem !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.3px !important;
   }
 
   .filter-actions-bar {
@@ -21349,10 +21396,10 @@ select.pos-control {
   .mobile-modal-drag-pill {
     display: block !important;
     width: 38px;
-    height: 4.5px;
+    height: 4px;
     background: rgba(148, 163, 184, 0.45);
     border-radius: 3px;
-    margin: 6px auto 10px auto;
+    margin: 4px auto 6px auto;
     flex-shrink: 0;
     touch-action: none;
     cursor: grab;
@@ -21360,25 +21407,25 @@ select.pos-control {
 
   .fast-order-header {
     flex-wrap: wrap !important;
-    gap: 8px !important;
-    padding-bottom: 8px !important;
+    gap: 4px !important;
+    padding-bottom: 4px !important;
     position: relative !important;
   }
 
   .fast-order-title-group {
-    gap: 8px !important;
+    gap: 6px !important;
     flex: 1 !important;
     min-width: 0 !important;
   }
 
   .new-order-icon {
-    width: 32px !important;
-    height: 32px !important;
+    width: 28px !important;
+    height: 28px !important;
     border-radius: 8px !important;
   }
 
   .fast-order-title-row h3 {
-    font-size: 1.05rem !important;
+    font-size: 1rem !important;
   }
 
   .fast-order-subtitle {
@@ -21390,24 +21437,24 @@ select.pos-control {
     width: 100% !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 6px !important;
-    margin-top: 4px !important;
+    gap: 4px !important;
+    margin-top: 2px !important;
   }
 
   .price-mode-pill {
     justify-content: center !important;
-    padding: 6px 10px !important;
-    font-size: 0.84rem !important;
-    min-height: 44px !important;
+    padding: 5px 8px !important;
+    font-size: 0.82rem !important;
+    min-height: 38px !important;
   }
 
   /* Mobile Segmented Nav Pills */
   .pos-mobile-nav-pills {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 6px !important;
-    margin: 6px 0 !important;
-    padding: 3px !important;
+    gap: 4px !important;
+    margin: 4px 0 !important;
+    padding: 2px !important;
     background: #f1f5f9 !important;
     border-radius: 10px !important;
     flex-shrink: 0 !important;
@@ -21418,13 +21465,13 @@ select.pos-control {
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
-    padding: 8px 10px !important;
-    min-height: 44px !important;
+    padding: 6px 8px !important;
+    min-height: 38px !important;
     border-radius: 8px !important;
     border: none !important;
     background: transparent !important;
     color: #475569 !important;
-    font-size: 0.84rem !important;
+    font-size: 0.82rem !important;
     font-weight: 750 !important;
     font-family: 'Cairo', sans-serif !important;
     cursor: pointer !important;
@@ -22645,18 +22692,18 @@ select.pos-control {
   .mobile-customer-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 9px 10px;
+    border-radius: 14px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
   .mob-cust-card-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
   }
 
@@ -22668,18 +22715,45 @@ select.pos-control {
     gap: 2px;
   }
 
+  .customer-balance-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .customer-balance-badge.badge-debt {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .customer-balance-badge.badge-settled {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+    font-size: 0.74rem;
+  }
+
   .mob-cust-stats-row {
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
     background: #f8fafc;
-    padding: 4px 8px;
-    border-radius: 7px;
-    font-size: 0.76rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    border: 1px solid #f1f5f9;
   }
 
   .mob-cust-stat {
     display: flex;
-    gap: 4px;
+    align-items: baseline;
+    gap: 5px;
   }
 
   .mob-cust-stat .stat-lbl {
@@ -22688,16 +22762,29 @@ select.pos-control {
 
   .mob-cust-card-actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     border-top: 1px solid #f1f5f9;
-    padding-top: 6px;
+    padding-top: 8px;
   }
 
   .mob-cust-card-actions .cust-btn {
     flex: 1;
     justify-content: center;
-    height: 32px;
-    font-size: 0.76rem;
+    height: 40px;
+    min-height: 40px;
+    font-size: 0.82rem;
+    font-weight: 750;
+    border-radius: 8px;
+  }
+
+  .customer-toolbar-actions {
+    width: 100% !important;
+  }
+
+  .cust-debt-print-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 40px !important;
   }
 
   /* Adaptive Bottom-Sheet Modals on Mobile */
@@ -22779,9 +22866,11 @@ select.pos-control {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
-    height: 34px !important;
+    height: 38px !important;
     font-size: 16px !important;
     box-sizing: border-box !important;
+    text-align: center !important;
+    text-align-last: center !important;
   }
 
   .btn-datepicker-trigger,
@@ -23814,27 +23903,40 @@ select.pos-control {
 }
 
 .production-tabs-pills {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   background: rgba(15, 23, 42, 0.05);
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .prod-tab-pill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  min-height: 48px;
+  border-radius: 10px;
   border: none;
   background: transparent;
   color: #64748b;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 750;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.prod-tab-pill svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .prod-tab-pill.active {
@@ -24530,28 +24632,40 @@ select.pos-control {
 }
 
 .production-tabs-pills {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   background: rgba(15, 23, 42, 0.05);
   padding: 4px;
-  border-radius: 10px;
-  width: fit-content;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .prod-tab-pill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 18px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  min-height: 48px;
+  border-radius: 10px;
   border: none;
   background: transparent;
   color: #64748b;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 750;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.prod-tab-pill svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .prod-tab-pill.active {
@@ -27997,6 +28111,9 @@ select.pos-control {
   font-size: 0.76rem;
   font-weight: 700;
   width: fit-content;
+  white-space: nowrap !important;
+  line-height: 1;
+  flex-shrink: 0;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
@@ -28374,7 +28491,7 @@ select.pos-control {
 
   .cat-kpi-desc,
   .tag-kpi-desc {
-    font-size: 0.68rem !important;
+    display: none !important;
   }
 
   .categories-showcase-grid,
