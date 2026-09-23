@@ -1065,8 +1065,24 @@
                       </td>
                       <td>
                         <div class="btn-group-row">
-                          <button @click="openProductModal(prod)" class="btn btn-sm btn-outline">تعديل</button>
-                          <button @click="deleteProduct(prod._id)" class="btn btn-sm btn-danger">حذف</button>
+                          <button 
+                            @click="openProductModal(prod)" 
+                            class="btn-table-action btn-action-edit" 
+                            title="تعديل المنتج" 
+                            :aria-label="`تعديل المنتج ${prod.name}`"
+                          >
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <span>تعديل</span>
+                          </button>
+                          <button 
+                            @click="deleteProduct(prod._id)" 
+                            class="btn-table-action btn-action-delete" 
+                            title="حذف المنتج" 
+                            :aria-label="`حذف المنتج ${prod.name}`"
+                          >
+                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span>حذف</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1122,9 +1138,25 @@
                           <label :for="'mob-avail-'+prod._id"></label>
                         </div>
                       </div>
-                      <div class="btn-group-row">
-                        <button @click="openProductModal(prod)" class="btn btn-sm btn-outline">تعديل</button>
-                        <button @click="deleteProduct(prod._id)" class="btn btn-sm btn-danger">حذف</button>
+                      <div class="mob-prod-actions-group">
+                        <button 
+                          @click="openProductModal(prod)" 
+                          class="btn-table-action btn-action-edit" 
+                          :aria-label="`تعديل المنتج ${prod.name}`"
+                          title="تعديل المنتج"
+                        >
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          <span>تعديل</span>
+                        </button>
+                        <button 
+                          @click="deleteProduct(prod._id)" 
+                          class="btn-table-action btn-action-delete" 
+                          :aria-label="`حذف المنتج ${prod.name}`"
+                          title="حذف المنتج"
+                        >
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          <span>حذف</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1745,18 +1777,12 @@
                     <div class="card-info-bar">
                       <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
                       <div style="display: flex; gap: 8px;">
-                        <button @click="openCarouselModal(item)" class="btn btn-outline btn-sm flex-center" style="border-color: #ced4da; color: #495057;">
-                          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
-                          </svg>
+                        <button @click="openCarouselModal(item)" class="btn-table-action btn-action-edit" title="تعديل البنر" aria-label="تعديل البنر">
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                           <span>تعديل</span>
                         </button>
-                        <button @click="deleteCarouselItem(item._id)" class="btn btn-danger btn-sm flex-center">
-                          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
+                        <button @click="deleteCarouselItem(item._id)" class="btn-table-action btn-action-delete" title="حذف البنر" aria-label="حذف البنر">
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                           <span>حذف</span>
                         </button>
                       </div>
@@ -2838,8 +2864,10 @@
                           @click="deleteChef(chef._id)" 
                           class="btn-chef-action btn-chef-delete"
                           title="حذف الشيف"
+                          aria-label="حذف الشيف"
                         >
                           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          <span>حذف</span>
                         </button>
                       </div>
                     </div>
@@ -3351,7 +3379,7 @@
                             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             <span>تعديل</span>
                           </button>
-                          <button @click="deleteUser(u._id)" class="btn-table-action" style="color: #ef4444; border-color: #fca5a5;" title="حذف حساب المستخدم">
+                          <button @click="deleteUser(u._id)" class="btn-table-action btn-action-delete" title="حذف حساب المستخدم" :aria-label="`حذف حساب المستخدم ${u.name}`">
                             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             <span>حذف</span>
                           </button>
@@ -3479,7 +3507,7 @@
                                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 <span>تنزيل JSON</span>
                               </button>
-                              <button @click="deleteBackup(b._id)" class="btn-table-action" style="color: #ef4444; border-color: #fca5a5;" title="حذف النسخة الاحتياطية">
+                              <button @click="deleteBackup(b._id)" class="btn-table-action btn-action-delete" title="حذف النسخة الاحتياطية" aria-label="حذف النسخة الاحتياطية">
                                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 <span>حذف</span>
                               </button>
@@ -14091,7 +14119,7 @@ const closeSuggestionsWithDelay = () => {
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at 10% 20%, rgba(246, 248, 252, 0.95) 0%, rgba(230, 237, 246, 0.95) 90%);
-  font-family: 'Outfit', 'Inter', 'Cairo', sans-serif;
+  font-family: 'Cairo', sans-serif;
   direction: rtl;
 }
 
@@ -14568,7 +14596,7 @@ const closeSuggestionsWithDelay = () => {
   border-radius: 9999px;
   font-size: 0.82rem;
   font-weight: 750;
-  font-family: 'Cairo', 'Fira Code', sans-serif;
+  font-family: 'Cairo', sans-serif;
   letter-spacing: -0.2px;
   background: rgba(245, 158, 11, 0.12);
   color: #b45309;
@@ -15076,8 +15104,9 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .text-mono, .customer-info-cell .phone, .order-date {
-  font-family: 'Fira Code', 'Courier New', monospace !important;
-  letter-spacing: -0.3px;
+  font-family: 'Cairo', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
 }
 
 .text-semibold { font-weight: 600; }
@@ -15621,7 +15650,7 @@ select.form-control:focus {
   font-weight: 700;
   color: #334155;
   cursor: pointer;
-  font-family: 'Fira Code', 'Courier New', monospace, inherit;
+  font-family: 'Cairo', sans-serif !important;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
@@ -19335,7 +19364,8 @@ select.form-control:focus {
 
 .customer-balance-cell {
   font-weight: 700;
-  font-family: 'Fira Code', 'Cairo', monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
 }
 
@@ -19370,7 +19400,8 @@ select.form-control:focus {
   font-size: 1.3rem;
   font-weight: 800;
   color: #b91c1c !important;
-  font-family: 'Fira Code', 'Cairo', monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .balance-after {
@@ -19388,7 +19419,8 @@ select.form-control:focus {
   font-size: 1.3rem;
   font-weight: 800;
   color: #047857 !important;
-  font-family: 'Fira Code', 'Cairo', monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Section Title */
@@ -19453,7 +19485,8 @@ select.form-control:focus {
 
 .unpaid-order-id {
   font-weight: 700;
-  font-family: monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
   color: #0284c7 !important;
 }
 
@@ -19637,7 +19670,8 @@ select.form-control:focus {
 .payment-history-amount {
   font-weight: 800;
   color: #059669 !important;
-  font-family: monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .payment-history-method {
@@ -19736,7 +19770,8 @@ select.form-control:focus {
 }
 
 .pm-amount {
-  font-family: 'Cairo', 'Fira Code', sans-serif;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 0.95rem;
   font-weight: 800;
   color: #0f172a;
@@ -19766,7 +19801,8 @@ select.form-control:focus {
   background: #e0f2fe !important;
   color: #0284c7 !important;
   border-radius: 4px;
-  font-family: monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 
@@ -19858,7 +19894,7 @@ select.form-control:focus {
   color: var(--text-dark, #334155);
   font-weight: 700;
   font-size: 0.8rem;
-  font-family: 'Cairo', 'Fira Code', monospace;
+  font-family: 'Cairo', sans-serif;
 }
 
 .customer-table-actions {
@@ -22674,6 +22710,13 @@ select.pos-control {
     align-items: center;
     border-top: 1px solid #f1f5f9;
     padding-top: 6px;
+    gap: 8px;
+  }
+
+  .mob-prod-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .mob-avail-switch {
@@ -23335,7 +23378,8 @@ select.pos-control {
     border: 1px solid #333333;
     border-radius: 4px;
     padding: 2px 6px;
-    font-family: 'Fira Code', monospace;
+    font-family: 'Cairo', sans-serif;
+    font-variant-numeric: tabular-nums;
     font-weight: 700;
     font-size: 8pt;
     color: #000000 !important;
@@ -24124,15 +24168,21 @@ select.pos-control {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1.5px solid #cbd5e1;
   background: #ffffff;
-  font-family: inherit;
+  font-family: 'Cairo', sans-serif !important;
   font-size: 0.84rem;
   font-weight: 750;
   cursor: pointer;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  touch-action: manipulation;
+}
+
+.btn-chef-action:active {
+  transform: scale(0.96);
+  transition: transform 60ms ease-out;
 }
 
 .btn-chef-action.btn-chef-assign {
@@ -24146,21 +24196,33 @@ select.pos-control {
   background: #f59e0b;
   color: #ffffff;
   border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.btn-chef-action.btn-chef-edit {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #e2e8f0;
 }
 
 .btn-chef-action.btn-chef-edit:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
 .btn-chef-action.btn-chef-delete {
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
 }
 
 .btn-chef-action.btn-chef-delete:hover {
-  background: #ef4444;
-  color: #ffffff;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #f87171;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
 }
 
 /* Assign Products Modal Grid */
@@ -25330,7 +25392,7 @@ select.pos-control {
   padding: 2px 7px;
   font-size: 0.78rem;
   font-weight: 700;
-  font-family: monospace, system-ui, sans-serif;
+  font-family: 'Cairo', sans-serif;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   min-width: 22px;
   text-align: center;
@@ -25677,7 +25739,8 @@ select.pos-control {
   max-width: 170px;
   padding: 6px 10px;
   border-radius: 8px;
-  font-family: 'Fira Code', monospace;
+  font-family: 'Cairo', sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 0.88rem;
   border: 1px solid #cbd5e1;
 }
@@ -28135,15 +28198,22 @@ select.pos-control {
 .btn-cat-action {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  border: 1px solid transparent;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  border: 1.5px solid transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  font-family: 'Cairo', sans-serif !important;
+  touch-action: manipulation;
+}
+
+.btn-cat-action:active {
+  transform: scale(0.96);
+  transition: transform 60ms ease-out;
 }
 
 .btn-cat-edit {
@@ -28153,21 +28223,23 @@ select.pos-control {
 }
 
 .btn-cat-edit:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
 .btn-cat-delete {
-  background: rgba(254, 242, 242, 0.8);
+  background: #fef2f2;
   color: #dc2626;
-  border-color: rgba(254, 202, 202, 0.8);
+  border-color: #fecaca;
 }
 
 .btn-cat-delete:hover {
   background: #fee2e2;
   color: #b91c1c;
-  border-color: #fca5a5;
+  border-color: #f87171;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
 }
 
 .cat-card-subcats {
@@ -28406,15 +28478,23 @@ select.pos-control {
 .btn-table-action {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  border: 1px solid transparent;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  border: 1.5px solid transparent;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  font-family: 'Cairo', sans-serif !important;
+  touch-action: manipulation;
+  line-height: 1.3;
+}
+
+.btn-table-action:active {
+  transform: scale(0.96);
+  transition: transform 60ms ease-out;
 }
 
 .btn-action-edit {
@@ -28424,21 +28504,23 @@ select.pos-control {
 }
 
 .btn-action-edit:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
 .btn-action-delete {
-  background: rgba(254, 242, 242, 0.8);
+  background: #fef2f2;
   color: #dc2626;
-  border-color: rgba(254, 202, 202, 0.8);
+  border-color: #fecaca;
 }
 
 .btn-action-delete:hover {
   background: #fee2e2;
   color: #b91c1c;
-  border-color: #fca5a5;
+  border-color: #f87171;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
 }
 
 @media (max-width: 768px) {
