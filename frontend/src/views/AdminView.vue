@@ -11476,7 +11476,7 @@ export default {
     };
 
     const deleteCustomer = async (id) => {
-      if (!confirm('تحذير: سيتم حذف العميل، وجميع مفضلاته، وجميع طلباته السابقة بشكل نهائي. هل أنت متأكد؟')) return;
+      if (!confirm('هل أنت متأكد من حذف ملف هذا العميل؟ ستظل طلباته وسجلاته المالية محفوظة لأغراض التدقيق والمحاسبة.')) return;
       
       loading.value = true;
       try {
@@ -11485,7 +11485,7 @@ export default {
         });
         
         if (res.ok) {
-          toast.show('تم حذف العميل وجميع بياناته بنجاح', 'success');
+          toast.show('تم حذف ملف العميل بنجاح مع الحفاظ على سجل طلباته', 'success');
           await fetchCustomers();
         } else {
           toast.show('فشل حذف العميل', 'danger');

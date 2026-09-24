@@ -2514,18 +2514,16 @@ app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res
 
     const phone = customer.phone;
 
-    // Wipe customer
+    // Remove customer profile from directory
     await customersCollection.deleteOne({ _id: new ObjectId(id) });
 
-    // Wipe all related data
+    // Clean up customer preferences (favorites), but preserve historical orders and payments for financial auditability
     if (phone) {
-      await favoritesCollection.deleteMany({ phone });
-      await ordersCollection.deleteMany({ "customerInfo.phone": phone });
-      await ordersCollection2.deleteMany({ "customerInfo.phone": phone });
-      await paymentsCollection.deleteMany({ customerPhone: phone });
+      const phoneVariants = getLibyanPhoneVariants(phone);
+      await favoritesCollection.deleteMany({ phone: { $in: phoneVariants } }).catch(() => {});
     }
 
-    res.json({ success: true, message: "Customer and all associated data deleted successfully." });
+    res.json({ success: true, message: "تم حذف ملف العميل بنجاح مع الحفاظ على سجل الطلبات والمدفوعات." });
   } catch (err) {
     console.error("Delete customer error:", err);
     res.status(500).json({ error: "Failed to delete customer" });
