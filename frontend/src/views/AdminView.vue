@@ -3727,8 +3727,8 @@
                     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span>بيانات العميل</span>
                   </div>
-                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone && (c.phone === newOrder.customerPhone || c.phone.replace(/[^0-9]/g, '') === newOrder.customerPhone.replace(/[^0-9]/g, ''))) ? 'is-registered' : 'is-new'">
-                    {{ customers.find(c => c.phone && (c.phone === newOrder.customerPhone || c.phone.replace(/[^0-9]/g, '') === newOrder.customerPhone.replace(/[^0-9]/g, ''))) ? 'عميل مسجل' : 'عميل جديد' }}
+                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone && cleanPhoneDigits(c.phone) === cleanPhoneDigits(newOrder.customerPhone)) ? 'is-registered' : 'is-new'">
+                    {{ customers.find(c => c.phone && cleanPhoneDigits(c.phone) === cleanPhoneDigits(newOrder.customerPhone)) ? 'عميل مسجل' : 'عميل جديد' }}
                   </span>
                 </div>
 
@@ -7400,7 +7400,7 @@ import CategoryIcon from '../components/CategoryIcon.vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import JsBarcode from 'jsbarcode';
-import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput } from '../utils/phone';
+import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput, cleanPhoneDigits } from '../utils/phone';
 import { vSheetGesture } from '../utils/sheetGesture';
 
 export default {
@@ -7992,7 +7992,11 @@ export default {
 
     const matchedEditingCustomer = computed(() => {
       if (!editingOrder.customerPhone) return null;
-      return (customers.value || []).find(c => c.phone === editingOrder.customerPhone) || null;
+      const cleanTarget = cleanPhoneDigits(editingOrder.customerPhone);
+      return (customers.value || []).find(c => {
+        if (!c.phone) return false;
+        return c.phone === editingOrder.customerPhone || cleanPhoneDigits(c.phone) === cleanTarget;
+      }) || null;
     });
 
     const filteredEditOrderCustomers = computed(() => {
@@ -8009,7 +8013,7 @@ export default {
     const selectCustomerForEditOrder = (cust) => {
       if (!cust) return;
       editingOrder.customerName = cust.name || '';
-      editingOrder.customerPhone = cust.phone || '';
+      editingOrder.customerPhone = formatLibyanPhone(cust.phone) || '';
       editOrderCustomerSearch.value = '';
       showEditOrderCustomerSuggestions.value = false;
       toast.show(`تم تغيير عميل الطلب إلى: ${cust.name}`, 'info');
@@ -11704,7 +11708,7 @@ const closeSuggestionsWithDelay = () => {
       editingOrder._id = order._id;
       editingOrder.orderNumber = order.orderNumber || (order._id ? order._id.toString().slice(-6) : '');
       editingOrder.customerName = order.customerInfo?.name || '';
-      editingOrder.customerPhone = order.customerInfo?.phone || '';
+      editingOrder.customerPhone = formatLibyanPhone(order.customerInfo?.phone) || '';
       editOrderCustomerSearch.value = '';
       showEditOrderCustomerSuggestions.value = false;
       highlightedEditCustomerIndex.value = 0;
@@ -12016,8 +12020,9 @@ const closeSuggestionsWithDelay = () => {
 
     const selectCustomerForNewOrder = (cust) => {
       newOrder.customerName = cust.name || '';
-      newOrder.customerPhone = cust.phone || '';
-      newOrderCustomerSearch.value = cust.name ? `${cust.name} (${cust.phone})` : cust.phone;
+      const formattedPhone = formatLibyanPhone(cust.phone) || '';
+      newOrder.customerPhone = formattedPhone;
+      newOrderCustomerSearch.value = cust.name ? `${cust.name} (${formattedPhone})` : formattedPhone;
       showNewOrderCustomerSuggestions.value = false;
     };
 
@@ -12335,7 +12340,7 @@ const closeSuggestionsWithDelay = () => {
     const openCustomerEditModal = (cust) => {
       editingCustomer._id = cust._id;
       editingCustomer.name = cust.name;
-      editingCustomer.phone = cust.phone;
+      editingCustomer.phone = formatLibyanPhone(cust.phone);
       editingCustomer.password = cust.password || '';
       editingCustomer.showPassword = false;
       customerModalOpen.value = true;
@@ -12358,12 +12363,13 @@ const closeSuggestionsWithDelay = () => {
     const saveCustomerDetails = async () => {
       loading.value = true;
       try {
+        const canonicalPhone = formatLibyanPhone(editingCustomer.phone);
         const url = `/api/admin/customers/${editingCustomer._id}`;
         const res = await adminFetch(url, {
           method: 'PUT',
           body: JSON.stringify({
             name: editingCustomer.name,
-            phone: editingCustomer.phone,
+            phone: canonicalPhone,
             password: editingCustomer.password
           })
         });
@@ -12372,7 +12378,7 @@ const closeSuggestionsWithDelay = () => {
           toast.show('تم تحديث بيانات وكلمة مرور العميل بنجاح', 'success');
           if (selectedCustomer.value && selectedCustomer.value._id === editingCustomer._id) {
             selectedCustomer.value.name = editingCustomer.name;
-            selectedCustomer.value.phone = editingCustomer.phone;
+            selectedCustomer.value.phone = data.phone || canonicalPhone;
             selectedCustomer.value.password = editingCustomer.password;
             selectedCustomer.value.hasPassword = !!editingCustomer.password;
           }
@@ -13410,6 +13416,7 @@ const closeSuggestionsWithDelay = () => {
       getLibyanWhatsAppUrl,
       formatLibyanPhone,
       formatPhoneInput,
+      cleanPhoneDigits,
       loading,
       isAuthenticated,
       sidebarOpen,

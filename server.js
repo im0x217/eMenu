@@ -143,7 +143,59 @@ const findCustomerByPhone = async (phone) => {
   if (!phone) return null;
   const uniqueVariants = getLibyanPhoneVariants(phone);
   if (uniqueVariants.length === 0) return null;
-  return await customersCollection.findOne({ phone: { $in: uniqueVariants } });
+
+  const matches = await customersCollection.find({ phone: { $in: uniqueVariants } }).toArray();
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
+
+  // If duplicate documents exist for this phone number, merge them!
+  // Prioritize document with password
+  matches.sort((a, b) => {
+    const aHasPass = !!(a.passwordHash || a.password || a.plainPassword);
+    const bHasPass = !!(b.passwordHash || b.password || b.plainPassword);
+    if (aHasPass && !bHasPass) return -1;
+    if (!aHasPass && bHasPass) return 1;
+    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : Infinity;
+    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : Infinity;
+    return aDate - bDate;
+  });
+
+  const primary = matches[0];
+  const canonicalPhone = formatCanonicalLibyanPhone(phone);
+  const duplicates = matches.slice(1);
+  const duplicateIds = duplicates.map(d => d._id);
+
+  const combinedName = primary.name || duplicates.find(d => d.name)?.name || 'عميل';
+  const combinedPassword = primary.password || duplicates.find(d => d.password)?.password;
+  const combinedPasswordHash = primary.passwordHash || duplicates.find(d => d.passwordHash)?.passwordHash;
+
+  await customersCollection.updateOne(
+    { _id: primary._id },
+    { 
+      $set: { 
+        name: combinedName, 
+        phone: canonicalPhone,
+        ...(combinedPassword ? { password: combinedPassword } : {}),
+        ...(combinedPasswordHash ? { passwordHash: combinedPasswordHash } : {}),
+        lastActive: new Date()
+      } 
+    }
+  );
+
+  if (duplicateIds.length > 0) {
+    await customersCollection.deleteMany({ _id: { $in: duplicateIds } });
+  }
+  await favoritesCollection.updateMany({ phone: { $in: uniqueVariants } }, { $set: { phone: canonicalPhone } }).catch(() => {});
+  await ordersCollection.updateMany({ "customerInfo.phone": { $in: uniqueVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
+  await ordersCollection2.updateMany({ "customerInfo.phone": { $in: uniqueVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
+  await paymentsCollection.updateMany({ customerPhone: { $in: uniqueVariants } }, { $set: { customerPhone: canonicalPhone } }).catch(() => {});
+
+  primary.name = combinedName;
+  primary.phone = canonicalPhone;
+  if (combinedPassword) primary.password = combinedPassword;
+  if (combinedPasswordHash) primary.passwordHash = combinedPasswordHash;
+
+  return primary;
 };
 
 
@@ -2232,20 +2284,35 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
     // If customer phone is provided/changed, ensure customer document exists/updated
     if (updateDoc.customerInfo && updateDoc.customerInfo.phone) {
       try {
-        await customersCollection.updateOne(
-          { phone: updateDoc.customerInfo.phone },
-          { 
-            $setOnInsert: { 
-              name: updateDoc.customerInfo.name || 'عميل',
-              phone: updateDoc.customerInfo.phone,
-              createdAt: new Date()
-            },
-            $set: {
-              lastActive: new Date()
+        const canonicalPhone = formatCanonicalLibyanPhone(updateDoc.customerInfo.phone);
+        updateDoc.customerInfo.phone = canonicalPhone;
+        const existingCust = await findCustomerByPhone(canonicalPhone);
+        if (existingCust) {
+          await customersCollection.updateOne(
+            { _id: existingCust._id },
+            { 
+              $set: { 
+                phone: canonicalPhone,
+                lastActive: new Date() 
+              } 
             }
-          },
-          { upsert: true }
-        );
+          );
+        } else {
+          await customersCollection.updateOne(
+            { phone: canonicalPhone },
+            { 
+              $setOnInsert: { 
+                name: updateDoc.customerInfo.name || 'عميل',
+                phone: canonicalPhone,
+                createdAt: new Date()
+              },
+              $set: {
+                lastActive: new Date()
+              }
+            },
+            { upsert: true }
+          );
+        }
       } catch (custErr) {
         console.warn("Failed to auto-upsert customer on order edit:", custErr);
       }
@@ -2298,13 +2365,14 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
       return true;
     });
 
-    // Aggregate stats by customer phone
+    // Aggregate stats by customer phone (canonicalized)
     const statsMap = {};
     const balanceMap = {};
 
     for (const order of filteredOrders) {
-      const phone = order.customerInfo && order.customerInfo.phone;
-      if (!phone) continue;
+      const rawPhone = order.customerInfo && order.customerInfo.phone;
+      if (!rawPhone) continue;
+      const phone = formatCanonicalLibyanPhone(rawPhone);
 
       if (!statsMap[phone]) {
         statsMap[phone] = { totalSpent: 0, orderCount: 0 };
@@ -2326,17 +2394,26 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
     const allFavs = await favoritesCollection.find({ shop }).toArray();
     const favsMap = {};
     for (const fav of allFavs) {
-      if (!favsMap[fav.phone]) favsMap[fav.phone] = [];
-      favsMap[fav.phone].push(fav.productId.toString());
+      const phone = formatCanonicalLibyanPhone(fav.phone);
+      if (!favsMap[phone]) favsMap[phone] = [];
+      favsMap[phone].push(fav.productId.toString());
     }
 
-    const customersWithDetails = customers.map(cust => {
-      const phone = cust.phone;
+    const customersWithDetails = [];
+    const seenPhones = new Set();
+
+    for (const cust of customers) {
+      const phone = formatCanonicalLibyanPhone(cust.phone);
+      if (seenPhones.has(phone)) {
+        continue;
+      }
+      seenPhones.add(phone);
+
       const stats = statsMap[phone] || { totalSpent: 0, orderCount: 0 };
       const outstandingBalance = balanceMap[phone] || 0;
       const favorites = favsMap[phone] || [];
       
-      return {
+      customersWithDetails.push({
         _id: cust._id,
         name: cust.name,
         phone,
@@ -2348,8 +2425,8 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
         orderCount: stats.orderCount,
         outstandingBalance,
         favorites
-      };
-    });
+      });
+    }
 
     res.json(customersWithDetails);
   } catch (err) {
@@ -2374,11 +2451,25 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) =
     }
 
     const oldPhone = customer.phone;
-    const newPhone = phone.trim();
+    const canonicalPhone = formatCanonicalLibyanPhone(phone);
+    const oldVariants = getLibyanPhoneVariants(oldPhone);
+    const newVariants = getLibyanPhoneVariants(canonicalPhone);
+    const allVariants = [...new Set([...oldVariants, ...newVariants])];
+
+    // Clean up any other customer documents matching newVariants to prevent duplicates
+    const conflictingCusts = await customersCollection.find({
+      _id: { $ne: new ObjectId(id) },
+      phone: { $in: newVariants }
+    }).toArray();
+
+    if (conflictingCusts.length > 0) {
+      const conflictIds = conflictingCusts.map(c => c._id);
+      await customersCollection.deleteMany({ _id: { $in: conflictIds } });
+    }
 
     const updateDoc = { 
       name: name.trim(), 
-      phone: newPhone, 
+      phone: canonicalPhone, 
       lastActive: new Date() 
     };
 
@@ -2398,15 +2489,13 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) =
       { $set: updateDoc }
     );
 
-    if (oldPhone !== newPhone) {
-      await favoritesCollection.updateMany({ phone: oldPhone }, { $set: { phone: newPhone } });
-      await ordersCollection.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
-      await ordersCollection2.updateMany({ "customerInfo.phone": oldPhone }, { $set: { "customerInfo.phone": newPhone } });
-      // Cascade phone change to payment audit trail
-      await paymentsCollection.updateMany({ customerPhone: oldPhone }, { $set: { customerPhone: newPhone } });
-    }
+    // Cascade phone change across all historical variants to canonicalPhone
+    await favoritesCollection.updateMany({ phone: { $in: allVariants } }, { $set: { phone: canonicalPhone } }).catch(() => {});
+    await ordersCollection.updateMany({ "customerInfo.phone": { $in: allVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
+    await ordersCollection2.updateMany({ "customerInfo.phone": { $in: allVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
+    await paymentsCollection.updateMany({ customerPhone: { $in: allVariants } }, { $set: { customerPhone: canonicalPhone } }).catch(() => {});
 
-    res.json({ success: true, name, phone: newPhone });
+    res.json({ success: true, name: updateDoc.name, phone: canonicalPhone });
   } catch (err) {
     console.error("Update customer error:", err);
     res.status(500).json({ error: "Failed to update customer" });
