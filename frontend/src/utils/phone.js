@@ -5,6 +5,19 @@
  */
 
 /**
+ * Converts Arabic-Indic (٠-٩) and Eastern Arabic (۰-۹) numerals to standard ASCII digits (0-9).
+ * 
+ * @param {string|number} val
+ * @returns {string} String with all digits normalized to 0-9
+ */
+export const convertArabicDigits = (val) => {
+  if (val === null || val === undefined) return '';
+  return val.toString()
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+};
+
+/**
  * Normalizes any Libyan phone number to standard unified display structure: 09x-xxxxxxx
  * Handles:
  *   - '0911002233'     -> '091-1002233'
@@ -14,13 +27,14 @@
  *   - '00218911002233' -> '091-1002233'
  *   - '218911002233'   -> '091-1002233'
  *   - '091 100 2233'   -> '091-1002233'
+ *   - '٠٩١١٠٠٢٢٣٣'     -> '091-1002233'
  * 
  * @param {string|number} phone
  * @returns {string} Formatted phone (09x-xxxxxxx) or fallback
  */
 export const formatLibyanPhone = (phone) => {
   if (!phone) return '';
-  const raw = phone.toString().trim();
+  const raw = convertArabicDigits(phone).trim();
   let digits = raw.replace(/[^0-9]/g, '');
   if (!digits) return raw;
 
@@ -59,7 +73,8 @@ export const formatLibyanPhone = (phone) => {
  */
 export const cleanPhoneDigits = (phone) => {
   if (!phone) return '';
-  let digits = phone.toString().replace(/[^0-9]/g, '');
+  const converted = convertArabicDigits(phone);
+  let digits = converted.toString().replace(/[^0-9]/g, '');
   if (digits.startsWith('00218')) digits = digits.slice(5);
   else if (digits.startsWith('218')) digits = digits.slice(3);
   if (digits.startsWith('9') && digits.length === 9) digits = '0' + digits;
@@ -75,7 +90,8 @@ export const cleanPhoneDigits = (phone) => {
  */
 export const formatPhoneInput = (value) => {
   if (!value) return '';
-  let digits = value.toString().replace(/[^0-9]/g, '');
+  const converted = convertArabicDigits(value);
+  let digits = converted.toString().replace(/[^0-9]/g, '');
   if (!digits) return '';
 
   // Handle pasted international numbers (+218... or 00218...)
@@ -113,8 +129,9 @@ export const formatPhoneInput = (value) => {
  */
 export const formatLibyanWhatsappNumber = (phone) => {
   if (!phone) return '';
+  const converted = convertArabicDigits(phone);
   // 1. Strip all non-digit characters (spaces, dashes, plus, parentheses)
-  let clean = phone.toString().replace(/[^0-9]/g, '');
+  let clean = converted.toString().replace(/[^0-9]/g, '');
   
   if (!clean) return '';
 

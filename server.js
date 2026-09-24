@@ -57,8 +57,8 @@ function verifyCustomerToken(token, expectedPhone) {
     if (signature !== expectedSig) return false;
 
     if (expectedPhone) {
-      const cleanExpected = expectedPhone.toString().replace(/[^0-9]/g, '');
-      const cleanTokenPhone = tokenPhone.replace(/[^0-9]/g, '');
+      const cleanExpected = convertArabicDigits(expectedPhone).toString().replace(/[^0-9]/g, '');
+      const cleanTokenPhone = convertArabicDigits(tokenPhone).toString().replace(/[^0-9]/g, '');
       if (cleanExpected.slice(-9) !== cleanTokenPhone.slice(-9)) {
         return false;
       }
@@ -69,30 +69,80 @@ function verifyCustomerToken(token, expectedPhone) {
   }
 }
 
-// Helper to look up customer by phone with flexible Libyan formatting (09..., 218..., +218...)
-const findCustomerByPhone = async (phone) => {
-  if (!phone) return null;
+// Convert Arabic-Indic (٠-٩) and Eastern Arabic (۰-۹) numerals to standard ASCII digits (0-9)
+const convertArabicDigits = (str) => {
+  if (str === null || str === undefined) return '';
+  return str.toString()
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+};
+
+// Canonical unified Libyan phone display structure: 09x-xxxxxxx
+const formatCanonicalLibyanPhone = (phone) => {
+  if (!phone) return '';
+  const converted = convertArabicDigits(phone).trim();
+  let digits = converted.replace(/[^0-9]/g, '');
+  if (!digits) return converted;
+
+  if (digits.startsWith('00218')) digits = digits.slice(5);
+  else if (digits.startsWith('218')) digits = digits.slice(3);
+
+  if (digits.startsWith('9') && digits.length === 9) {
+    digits = '0' + digits;
+  }
+
+  if (digits.startsWith('09') && digits.length >= 4) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 10)}`;
+  }
+  return converted;
+};
+
+// Generate all possible database variants for a given phone number (for backwards compatibility & flexible search)
+const getLibyanPhoneVariants = (phone) => {
+  if (!phone) return [];
   const raw = phone.toString().trim();
-  const digits = raw.replace(/[^0-9]/g, '');
-  const variants = [raw];
-  if (digits) {
-    variants.push(digits);
-    if (digits.startsWith('00218')) variants.push(digits.slice(2));
-    if (digits.startsWith('218')) {
-      variants.push('0' + digits.slice(3));
-      variants.push(digits.slice(3));
-      variants.push('+' + digits);
-    } else if (digits.startsWith('0')) {
-      variants.push('218' + digits.slice(1));
-      variants.push('+218' + digits.slice(1));
-      variants.push(digits.slice(1));
-    } else if (digits.startsWith('9')) {
-      variants.push('0' + digits);
-      variants.push('218' + digits);
-      variants.push('+218' + digits);
+  const converted = convertArabicDigits(raw).trim();
+  const digits = converted.replace(/[^0-9]/g, '');
+  const variants = new Set();
+  
+  if (raw) variants.add(raw);
+  if (converted) variants.add(converted);
+  if (digits) variants.add(digits);
+
+  let d = digits;
+  if (d.startsWith('00218')) d = d.slice(5);
+  else if (d.startsWith('218')) d = d.slice(3);
+  if (d.startsWith('9') && d.length === 9) d = '0' + d;
+
+  if (d.startsWith('09') && d.length === 10) {
+    const formatted = `${d.slice(0, 3)}-${d.slice(3)}`; // 09x-xxxxxxx
+    const plain10 = d;                                   // 09xxxxxxxx
+    const plain9 = d.slice(1);                          // 9xxxxxxxx
+    const intl218 = '218' + plain9;                     // 2189xxxxxxxx
+    const intlPlus = '+218' + plain9;                   // +2189xxxxxxxx
+    const intl00 = '00218' + plain9;                    // 002189xxxxxxxx
+    
+    variants.add(formatted);
+    variants.add(plain10);
+    variants.add(plain9);
+    variants.add(intl218);
+    variants.add(intlPlus);
+    variants.add(intl00);
+  } else if (d.length >= 7) {
+    variants.add(d);
+    if (d.startsWith('09') && d.length >= 4) {
+      variants.add(`${d.slice(0, 3)}-${d.slice(3)}`);
     }
   }
-  const uniqueVariants = [...new Set(variants.filter(Boolean))];
+
+  return [...variants].filter(Boolean);
+};
+
+// Helper to look up customer by phone with flexible Libyan formatting (any representation)
+const findCustomerByPhone = async (phone) => {
+  if (!phone) return null;
+  const uniqueVariants = getLibyanPhoneVariants(phone);
+  if (uniqueVariants.length === 0) return null;
   return await customersCollection.findOne({ phone: { $in: uniqueVariants } });
 };
 
@@ -2423,12 +2473,22 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
   const { phone } = req.params;
 
   try {
+    const phoneVariants = getLibyanPhoneVariants(phone);
     const unpaidOrders = await ordColl.find({
-      "customerInfo.phone": phone,
-      status: { $ne: "cancelled" },
-      $or: [
-        { paymentStatus: { $in: ["unpaid", "partial"] } },
-        { paymentStatus: { $exists: false } }
+      $and: [
+        {
+          $or: [
+            { "customerInfo.phone": { $in: phoneVariants } },
+            { customerPhone: { $in: phoneVariants } }
+          ]
+        },
+        { status: { $ne: "cancelled" } },
+        {
+          $or: [
+            { paymentStatus: { $in: ["unpaid", "partial"] } },
+            { paymentStatus: { $exists: false } }
+          ]
+        }
       ]
     }).sort({ createdAt: 1 }).toArray();
 
@@ -2451,7 +2511,7 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
     const outstandingBalance = Math.round(Math.max(0, totalOwed - totalPaid) * 100) / 100;
 
     const recentPayments = await paymentsCollection.find({
-      customerPhone: phone,
+      customerPhone: { $in: phoneVariants },
       shop
     }).sort({ createdAt: -1 }).limit(20).toArray();
 
@@ -2472,25 +2532,9 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
 app.get("/api/admin/customers/:phone/orders", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : (req.query.shop === "all" ? "all" : "shop1");
   const { phone } = req.params;
-  const rawPhone = (phone || "").trim();
 
   try {
-    const cleanDigits = rawPhone.replace(/\D/g, "");
-    const variations = [rawPhone];
-    if (cleanDigits) {
-      variations.push(cleanDigits);
-      if (cleanDigits.startsWith("218")) {
-        variations.push(cleanDigits.slice(3));
-        variations.push("0" + cleanDigits.slice(3));
-      } else if (cleanDigits.startsWith("0")) {
-        variations.push(cleanDigits.slice(1));
-        variations.push("218" + cleanDigits.slice(1));
-      } else {
-        variations.push("0" + cleanDigits);
-        variations.push("218" + cleanDigits);
-      }
-    }
-    const uniquePhones = [...new Set(variations.filter(Boolean))];
+    const uniquePhones = getLibyanPhoneVariants(phone);
 
     const phoneFilter = {
       $or: [
@@ -2560,13 +2604,23 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   }
 
   try {
-    // Fetch unpaid/partial orders sorted oldest first (FIFO)
+    // Fetch unpaid/partial orders sorted oldest first (FIFO) across all phone variants
+    const phoneVariants = getLibyanPhoneVariants(customerPhone);
     let unpaidOrders = await ordColl.find({
-      "customerInfo.phone": customerPhone.trim(),
-      status: { $ne: "cancelled" },
-      $or: [
-        { paymentStatus: { $in: ["unpaid", "partial"] } },
-        { paymentStatus: { $exists: false } }
+      $and: [
+        {
+          $or: [
+            { "customerInfo.phone": { $in: phoneVariants } },
+            { customerPhone: { $in: phoneVariants } }
+          ]
+        },
+        { status: { $ne: "cancelled" } },
+        {
+          $or: [
+            { paymentStatus: { $in: ["unpaid", "partial"] } },
+            { paymentStatus: { $exists: false } }
+          ]
+        }
       ]
     }).sort({ createdAt: 1 }).toArray();
 
@@ -3055,11 +3109,11 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
       return res.status(400).json({ error: "كلمة المرور يجب أن لا تقل عن 4 خانات" });
     }
 
-    const normalizedPhone = phone.trim();
+    const canonicalPhone = formatCanonicalLibyanPhone(phone);
     const normalizedName = name.trim();
 
-    // Check if phone already registered
-    const existing = await customersCollection.findOne({ phone: normalizedPhone });
+    // Check if phone already registered (flexible lookup across all formats)
+    const existing = await findCustomerByPhone(phone);
     if (existing) {
       if (existing.passwordHash) {
         return res.status(409).json({ error: "رقم الهاتف مسجل مسبقاً، يرجى تسجيل الدخول بدلاً من ذلك" });
@@ -3071,19 +3125,20 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
           { 
             $set: { 
               name: existing.name || normalizedName,
+              phone: canonicalPhone,
               password: password.trim(),
               passwordHash,
               lastActive: new Date()
             } 
           }
         );
-        const token = generateCustomerToken(normalizedPhone);
+        const token = generateCustomerToken(canonicalPhone);
         return res.json({
           success: true,
           token,
           customer: {
             name: existing.name || normalizedName,
-            phone: normalizedPhone,
+            phone: canonicalPhone,
             hasPassword: true
           }
         });
@@ -3094,7 +3149,7 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
     const passwordHash = hashCustomerPassword(password);
     const newCustomerDoc = {
       name: normalizedName,
-      phone: normalizedPhone,
+      phone: canonicalPhone,
       password: password.trim(),
       passwordHash,
       createdAt: new Date(),
@@ -3102,14 +3157,14 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
     };
 
     await customersCollection.insertOne(newCustomerDoc);
-    const token = generateCustomerToken(normalizedPhone);
+    const token = generateCustomerToken(canonicalPhone);
 
     res.status(201).json({
       success: true,
       token,
       customer: {
         name: normalizedName,
-        phone: normalizedPhone,
+        phone: canonicalPhone,
         hasPassword: true
       }
     });
@@ -3130,12 +3185,14 @@ app.post("/api/customer/login", checkMongoDB, customerLimiter, async (req, res) 
       return res.status(400).json({ error: "يرجى إدخال رقم الهاتف" });
     }
 
-    const normalizedPhone = phone.trim();
-    const customer = await customersCollection.findOne({ phone: normalizedPhone });
+    // Find customer by any phone representation (091..., 091-..., +218..., 218..., etc.)
+    const customer = await findCustomerByPhone(phone);
 
     if (!customer) {
       return res.status(404).json({ error: "رقم الهاتف غير مسجل، يرجى إنشاء حساب جديد" });
     }
+
+    const canonicalPhone = formatCanonicalLibyanPhone(customer.phone || phone);
 
     // If customer has no password (legacy profile from guest ordering)
     if (!customer.passwordHash) {
@@ -3144,7 +3201,7 @@ app.post("/api/customer/login", checkMongoDB, customerLimiter, async (req, res) 
         requiresPasswordSetup: true,
         customer: {
           name: customer.name,
-          phone: customer.phone,
+          phone: canonicalPhone,
           hasPassword: false
         }
       });
@@ -3159,18 +3216,26 @@ app.post("/api/customer/login", checkMongoDB, customerLimiter, async (req, res) 
       return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
     }
 
-    await customersCollection.updateOne(
-      { _id: customer._id },
-      { $set: { lastActive: new Date() } }
-    );
+    // Optionally update customer phone to canonical format
+    if (customer.phone !== canonicalPhone) {
+      await customersCollection.updateOne(
+        { _id: customer._id },
+        { $set: { phone: canonicalPhone, lastActive: new Date() } }
+      ).catch(() => {});
+    } else {
+      await customersCollection.updateOne(
+        { _id: customer._id },
+        { $set: { lastActive: new Date() } }
+      );
+    }
 
-    const token = generateCustomerToken(normalizedPhone);
+    const token = generateCustomerToken(canonicalPhone);
     res.json({
       success: true,
       token,
       customer: {
         name: customer.name,
-        phone: customer.phone,
+        phone: canonicalPhone,
         hasPassword: true
       }
     });
@@ -3191,8 +3256,8 @@ app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req
       return res.status(400).json({ error: "كلمة المرور يجب أن لا تقل عن 4 خانات" });
     }
 
-    const normalizedPhone = phone.trim();
-    const customer = await customersCollection.findOne({ phone: normalizedPhone });
+    // Find customer by any phone representation
+    const customer = await findCustomerByPhone(phone);
 
     if (!customer) {
       return res.status(404).json({ error: "الحساب غير موجود" });
@@ -3206,11 +3271,13 @@ app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req
       }
     }
 
+    const canonicalPhone = formatCanonicalLibyanPhone(customer.phone || phone);
     const newHash = hashCustomerPassword(password);
     await customersCollection.updateOne(
       { _id: customer._id },
       { 
         $set: { 
+          phone: canonicalPhone,
           password: password.trim(),
           passwordHash: newHash,
           lastActive: new Date()
@@ -3218,13 +3285,13 @@ app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req
       }
     );
 
-    const token = generateCustomerToken(normalizedPhone);
+    const token = generateCustomerToken(canonicalPhone);
     res.json({
       success: true,
       token,
       customer: {
         name: customer.name,
-        phone: customer.phone,
+        phone: canonicalPhone,
         hasPassword: true
       }
     });
@@ -3241,13 +3308,13 @@ app.get("/api/customer/profile", checkMongoDB, customerLimiter, async (req, res)
     if (!phone || typeof phone !== 'string') {
       return res.status(400).json({ error: "Missing phone parameter" });
     }
-    const customer = await customersCollection.findOne({ phone: phone.trim() });
+    const customer = await findCustomerByPhone(phone);
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
     res.json({
       name: customer.name,
-      phone: customer.phone,
+      phone: formatCanonicalLibyanPhone(customer.phone || phone),
       hasPassword: !!customer.passwordHash,
       createdAt: customer.createdAt
     });
@@ -3289,7 +3356,7 @@ app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkAdmin, asy
 });
 
 
-// Get customer balance for customer view (combines both shops)
+// Get customer balance for customer view (combines both shops, matches any phone format)
 app.get("/api/customer/balance", checkMongoDB, customerLimiter, checkCustomerAuth, async (req, res) => {
   try {
     const { phone } = req.query;
@@ -3297,11 +3364,11 @@ app.get("/api/customer/balance", checkMongoDB, customerLimiter, checkCustomerAut
       return res.status(400).json({ error: "Missing phone parameter" });
     }
 
-    const normalizedPhone = phone.trim();
+    const phoneVariants = getLibyanPhoneVariants(phone);
 
-    // Query unpaid orders across both shops
+    // Query unpaid orders across both shops matching any phone format
     const unpaid1 = await ordersCollection.find({
-      "customerInfo.phone": normalizedPhone,
+      "customerInfo.phone": { $in: phoneVariants },
       status: { $ne: "cancelled" },
       $or: [
         { paymentStatus: { $in: ["unpaid", "partial"] } },
@@ -3310,7 +3377,7 @@ app.get("/api/customer/balance", checkMongoDB, customerLimiter, checkCustomerAut
     }).toArray();
 
     const unpaid2 = await ordersCollection2.find({
-      "customerInfo.phone": normalizedPhone,
+      "customerInfo.phone": { $in: phoneVariants },
       status: { $ne: "cancelled" },
       $or: [
         { paymentStatus: { $in: ["unpaid", "partial"] } },
@@ -3324,8 +3391,8 @@ app.get("/api/customer/balance", checkMongoDB, customerLimiter, checkCustomerAut
     const outstandingBalance = Math.round(Math.max(0, totalOwed - totalPaid) * 100) / 100;
 
     // Fetch all completed/received orders to get lifetime totals
-    const allCompleted1 = await ordersCollection.find({ "customerInfo.phone": normalizedPhone, status: { $in: ["ready", "received", "completed"] } }).toArray();
-    const allCompleted2 = await ordersCollection2.find({ "customerInfo.phone": normalizedPhone, status: { $in: ["ready", "received", "completed"] } }).toArray();
+    const allCompleted1 = await ordersCollection.find({ "customerInfo.phone": { $in: phoneVariants }, status: { $in: ["ready", "received", "completed"] } }).toArray();
+    const allCompleted2 = await ordersCollection2.find({ "customerInfo.phone": { $in: phoneVariants }, status: { $in: ["ready", "received", "completed"] } }).toArray();
     const lifetimeTotal = Math.round([...allCompleted1, ...allCompleted2].reduce((sum, o) => sum + (o.totalPrice || 0), 0) * 100) / 100;
 
     res.json({
@@ -3349,23 +3416,37 @@ app.post("/api/customer/identify", checkMongoDB, customerLimiter, async (req, re
       return res.status(400).json({ error: "Missing or invalid name or phone number" });
     }
     
-    const normalizedPhone = phone.trim();
+    const canonicalPhone = formatCanonicalLibyanPhone(phone);
+    const existing = await findCustomerByPhone(phone);
     
-    await customersCollection.updateOne(
-      { phone: normalizedPhone },
-      { 
-        $set: { 
-          name: name.trim(), 
-          lastActive: new Date() 
-        },
-        $setOnInsert: {
-          createdAt: new Date()
+    if (existing) {
+      await customersCollection.updateOne(
+        { _id: existing._id },
+        { 
+          $set: { 
+            name: name.trim(), 
+            phone: canonicalPhone,
+            lastActive: new Date() 
+          } 
         }
-      },
-      { upsert: true }
-    );
+      );
+    } else {
+      await customersCollection.updateOne(
+        { phone: canonicalPhone },
+        { 
+          $set: { 
+            name: name.trim(), 
+            lastActive: new Date() 
+          },
+          $setOnInsert: {
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+    }
     
-    const token = generateCustomerToken(normalizedPhone);
+    const token = generateCustomerToken(canonicalPhone);
     res.json({ success: true, token });
   } catch (err) {
     console.error("Identify customer error:", err);
@@ -3380,15 +3461,16 @@ app.post("/api/customer/favorites", checkMongoDB, customerLimiter, checkCustomer
       return res.status(400).json({ error: "Missing or invalid required fields" });
     }
     
-    const normalizedPhone = phone.trim();
+    const canonicalPhone = formatCanonicalLibyanPhone(phone);
+    const phoneVariants = getLibyanPhoneVariants(phone);
     
-    // Clear existing favorites for this shop and phone
-    await favoritesCollection.deleteMany({ phone: normalizedPhone, shop });
+    // Clear existing favorites for this shop and all phone variants
+    await favoritesCollection.deleteMany({ phone: { $in: phoneVariants }, shop });
     
-    // Insert new favorites
+    // Insert new favorites under canonical phone
     if (favorites.length > 0) {
       const docs = favorites.map(id => ({
-        phone: normalizedPhone,
+        phone: canonicalPhone,
         productId: new ObjectId(id),
         shop,
         createdAt: new Date()
@@ -3410,8 +3492,8 @@ app.get("/api/customer/favorites", checkMongoDB, customerLimiter, checkCustomerA
       return res.status(400).json({ error: "Missing or invalid phone parameter" });
     }
     
-    const normalizedPhone = phone.trim();
-    const favs = await favoritesCollection.find({ phone: normalizedPhone }).toArray();
+    const phoneVariants = getLibyanPhoneVariants(phone);
+    const favs = await favoritesCollection.find({ phone: { $in: phoneVariants } }).toArray();
     
     const shop1 = favs.filter(f => f.shop === 'shop1').map(f => f.productId.toString());
     const shop2 = favs.filter(f => f.shop === 'shop2').map(f => f.productId.toString());
@@ -3430,11 +3512,11 @@ app.get("/api/customer/orders", checkMongoDB, customerLimiter, checkCustomerAuth
       return res.status(400).json({ error: "Missing or invalid phone parameter" });
     }
     
-    const normalizedPhone = phone.trim();
+    const phoneVariants = getLibyanPhoneVariants(phone);
     
-    // Query both databases/collections with limits
-    const orders1 = await ordersCollection.find({ "customerInfo.phone": normalizedPhone }).sort({ createdAt: -1 }).limit(50).toArray();
-    const orders2 = await ordersCollection2.find({ "customerInfo.phone": normalizedPhone }).sort({ createdAt: -1 }).limit(50).toArray();
+    // Query both databases/collections with limits matching any phone variant
+    const orders1 = await ordersCollection.find({ "customerInfo.phone": { $in: phoneVariants } }).sort({ createdAt: -1 }).limit(50).toArray();
+    const orders2 = await ordersCollection2.find({ "customerInfo.phone": { $in: phoneVariants } }).sort({ createdAt: -1 }).limit(50).toArray();
     
     // Add shop tags
     const taggedOrders1 = orders1.map(o => ({ ...o, shop: 'shop1' }));
@@ -3476,7 +3558,8 @@ app.put("/api/customer/orders/:id", checkMongoDB, customerLimiter, checkCustomer
       return res.status(404).json({ error: "الطلب غير موجود" });
     }
 
-    if (order.customerInfo?.phone !== phone.trim()) {
+    const phoneVariants = getLibyanPhoneVariants(phone);
+    if (!phoneVariants.includes(order.customerInfo?.phone)) {
       return res.status(403).json({ error: "لا يمكنك تعديل هذا الطلب" });
     }
 
@@ -3551,7 +3634,8 @@ app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, chec
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
-    if (order.customerInfo.phone !== phone.trim()) {
+    const phoneVariants = getLibyanPhoneVariants(phone);
+    if (!phoneVariants.includes(order.customerInfo?.phone)) {
       return res.status(403).json({ error: "Phone mismatch" });
     }
     if (order.status !== 'ready') {
@@ -3694,7 +3778,8 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       return res.status(400).json({ error: "Missing order details" });
     }
 
-    const normalizedPhone = customer.phone.trim();
+    const canonicalPhone = formatCanonicalLibyanPhone(customer.phone);
+    const phoneVariants = getLibyanPhoneVariants(customer.phone);
     const normalizedName = customer.name.trim();
 
     const isStaff = isStaffSession(req);
@@ -3711,7 +3796,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
     if (!force && !bypassDuplicateCheck) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const recentOrders = await ordersCollection.find({
-        "customerInfo.phone": normalizedPhone,
+        "customerInfo.phone": { $in: phoneVariants },
         status: { $ne: "cancelled" },
         createdAt: { $gte: fiveMinutesAgo }
       }).sort({ createdAt: -1 }).toArray();
@@ -3735,30 +3820,43 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       }
     }
 
-    // Upsert customer profile (preserve registered name)
-    const existingCust = await customersCollection.findOne({ phone: normalizedPhone });
+    // Upsert customer profile (preserve registered name, handle all phone formats)
+    const existingCust = await findCustomerByPhone(customer.phone);
     const finalCustName = (existingCust && existingCust.name) ? existingCust.name : normalizedName;
 
-    await customersCollection.updateOne(
-      { phone: normalizedPhone },
-      { 
-        $set: { 
-          name: finalCustName, 
-          lastActive: new Date() 
-        },
-        $setOnInsert: {
-          createdAt: new Date()
+    if (existingCust) {
+      await customersCollection.updateOne(
+        { _id: existingCust._id },
+        { 
+          $set: { 
+            name: finalCustName, 
+            phone: canonicalPhone,
+            lastActive: new Date() 
+          } 
         }
-      },
-      { upsert: true }
-    );
+      );
+    } else {
+      await customersCollection.updateOne(
+        { phone: canonicalPhone },
+        { 
+          $set: { 
+            name: finalCustName, 
+            lastActive: new Date() 
+          },
+          $setOnInsert: {
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+    }
 
     const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
       orderNumber: nextOrderNumber,
       customerInfo: {
         name: normalizedName,
-        phone: normalizedPhone
+        phone: canonicalPhone
       },
       items: sanitizedItems,
       totalPrice: parsedTotal,
@@ -3795,7 +3893,8 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       return res.status(400).json({ error: "Missing order details" });
     }
 
-    const normalizedPhone = customer.phone.trim();
+    const canonicalPhone = formatCanonicalLibyanPhone(customer.phone);
+    const phoneVariants = getLibyanPhoneVariants(customer.phone);
     const normalizedName = customer.name.trim();
 
     const isStaff = isStaffSession(req);
@@ -3812,7 +3911,7 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     if (!force && !bypassDuplicateCheck) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const recentOrders = await ordersCollection2.find({
-        "customerInfo.phone": normalizedPhone,
+        "customerInfo.phone": { $in: phoneVariants },
         status: { $ne: "cancelled" },
         createdAt: { $gte: fiveMinutesAgo }
       }).sort({ createdAt: -1 }).toArray();
@@ -3836,30 +3935,43 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       }
     }
 
-    // Upsert customer profile (preserve registered name)
-    const existingCust = await customersCollection.findOne({ phone: normalizedPhone });
+    // Upsert customer profile (preserve registered name, handle all phone formats)
+    const existingCust = await findCustomerByPhone(customer.phone);
     const finalCustName = (existingCust && existingCust.name) ? existingCust.name : normalizedName;
 
-    await customersCollection.updateOne(
-      { phone: normalizedPhone },
-      { 
-        $set: { 
-          name: finalCustName, 
-          lastActive: new Date() 
-        },
-        $setOnInsert: {
-          createdAt: new Date()
+    if (existingCust) {
+      await customersCollection.updateOne(
+        { _id: existingCust._id },
+        { 
+          $set: { 
+            name: finalCustName, 
+            phone: canonicalPhone,
+            lastActive: new Date() 
+          } 
         }
-      },
-      { upsert: true }
-    );
+      );
+    } else {
+      await customersCollection.updateOne(
+        { phone: canonicalPhone },
+        { 
+          $set: { 
+            name: finalCustName, 
+            lastActive: new Date() 
+          },
+          $setOnInsert: {
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+    }
 
     const nextOrderNumber = await getNextOrderNumber();
     const orderDoc = {
       orderNumber: nextOrderNumber,
       customerInfo: {
         name: normalizedName,
-        phone: normalizedPhone
+        phone: canonicalPhone
       },
       items: sanitizedItems,
       totalPrice: parsedTotal,
