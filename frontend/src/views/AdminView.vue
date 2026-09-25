@@ -3442,6 +3442,12 @@
                 </div>
 
                 <div class="toolbar-actions-group">
+                  <!-- Auto Match By Name -->
+                  <button type="button" @click="openAutoMatchModal" :disabled="autoMatchLoading" class="btn btn-outline btn-sm d-flex align-items-center gap-1 btn-auto-match" title="مطابقة وربط آلي للأصناف المتطابقة بالاسم">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'spin-animation': autoMatchLoading }"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+                    <span>ربط آلي بالاسم</span>
+                  </button>
+
                   <!-- Refresh / Reconcile -->
                   <button @click="triggerInventoryReconcile" :disabled="reconcileLoading" class="btn btn-outline btn-sm d-flex align-items-center gap-1" title="تحديث ومطابقة مع PocketBase">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'spin-animation': reconcileLoading }"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -3485,11 +3491,15 @@
                       <td class="text-bold">{{ item.name }}</td>
                       <td class="col-center"><span class="category-pill">{{ item.category || 'عام' }}</span></td>
                       <td>
-                        <span v-if="item.linkedProduct" class="badge badge-link-success" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون'">
+                        <button v-if="item.linkedProduct" type="button" class="btn-linked-product-badge" @click="openQuickLinkModal(item)" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون. اضغط للتعديل أو فك الربط'">
                           <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                          <span>{{ item.linkedProduct.productName }}</span>
-                        </span>
-                        <span v-else class="text-muted text-small">غير مرتبط</span>
+                          <span class="linked-pname">{{ item.linkedProduct.productName }}</span>
+                          <span class="badge-factor text-mono">×{{ item.linkedProduct.conversionFactor || 1 }}</span>
+                        </button>
+                        <button v-else type="button" class="btn-quick-link-trigger" @click="openQuickLinkModal(item)" title="ربط هذا الصنف بمنتج في المتجر">
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                          <span>ربط بمنتج</span>
+                        </button>
                       </td>
                       <td class="col-center text-mono font-bold">{{ item.quantity }}</td>
                       <td class="col-center text-mono text-muted">{{ item.min_stock }}</td>
@@ -3553,11 +3563,15 @@
 
                   <div class="inv-mob-footer">
                     <div class="inv-mob-link">
-                      <span v-if="item.linkedProduct" class="badge badge-link-success">
+                      <button v-if="item.linkedProduct" type="button" class="btn-linked-product-badge" @click="openQuickLinkModal(item)" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون. اضغط للتعديل أو فك الربط'">
                         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        <span>{{ item.linkedProduct.productName }}</span>
-                      </span>
-                      <span v-else class="text-muted text-small">غير مرتبط بمنتج</span>
+                        <span class="linked-pname">{{ item.linkedProduct.productName }}</span>
+                        <span class="badge-factor text-mono">×{{ item.linkedProduct.conversionFactor || 1 }}</span>
+                      </button>
+                      <button v-else type="button" class="btn-quick-link-trigger" @click="openQuickLinkModal(item)" title="ربط هذا الصنف بمنتج في المتجر">
+                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>ربط بمنتج</span>
+                      </button>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline" @click="openItemReservationsModal(item)">
                       سجل الحجوزات
@@ -3940,6 +3954,322 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" @click="showReservationsModal = false">إغلاق</button>
+        </div>
+      </div>
+    </div>
+    </Transition>
+
+    <!-- Auto Match Review Modal -->
+    <Transition name="modal-spring-fade">
+    <div 
+      v-if="showAutoMatchModal" 
+      class="modal-overlay auto-match-modal-overlay" 
+      @click.self="showAutoMatchModal = false"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="automatch-modal-title"
+    >
+      <div class="modal-box glass-panel automatch-modal-box" v-sheet-gesture="() => showAutoMatchModal = false" style="max-width: 820px;">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-title-icon bg-blue-subtle text-primary" aria-hidden="true">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+            </div>
+            <div>
+              <h3 id="automatch-modal-title">مطابقة وربط الأصناف آلياً بالاسم</h3>
+              <p class="modal-subtitle mb-0">مطابقة أصناف مستودع PocketBase مع منتجات المتجر اعتماداً على الاسم العربي</p>
+            </div>
+          </div>
+          <button @click="showAutoMatchModal = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="modal-body p-3">
+          <!-- Stats Banner -->
+          <div class="automatch-stats-banner mb-3">
+            <div class="automatch-stat-chip">
+              <span class="chip-label">إجمالي التطابقات:</span>
+              <strong class="chip-val text-mono">{{ autoMatches.length }}</strong>
+            </div>
+            <div class="automatch-stat-chip exact">
+              <span class="chip-label">تطابق تام (100%):</span>
+              <strong class="chip-val text-mono text-success">{{ autoMatchesExactCount }}</strong>
+            </div>
+            <div class="automatch-stat-chip partial">
+              <span class="chip-label">تطابق تقريبي:</span>
+              <strong class="chip-val text-mono text-primary">{{ autoMatchesPartialCount }}</strong>
+            </div>
+            <div class="automatch-stat-chip selected">
+              <span class="chip-label">المحدد للربط:</span>
+              <strong class="chip-val text-mono text-amber">{{ selectedMatchIndices.size }}</strong>
+            </div>
+          </div>
+
+          <!-- Filter Tabs & Batch Select -->
+          <div class="automatch-controls mb-3">
+            <div class="filter-pills-row">
+              <button 
+                type="button" 
+                class="pill-btn" 
+                :class="{ active: autoMatchFilter === 'all' }" 
+                @click="autoMatchFilter = 'all'"
+              >
+                الكل ({{ autoMatches.length }})
+              </button>
+              <button 
+                type="button" 
+                class="pill-btn" 
+                :class="{ active: autoMatchFilter === 'exact' }" 
+                @click="autoMatchFilter = 'exact'"
+              >
+                تطابق تام ({{ autoMatchesExactCount }})
+              </button>
+              <button 
+                type="button" 
+                class="pill-btn" 
+                :class="{ active: autoMatchFilter === 'partial' }" 
+                @click="autoMatchFilter = 'partial'"
+              >
+                تطابق تقريبي ({{ autoMatchesPartialCount }})
+              </button>
+            </div>
+
+            <div class="select-actions-row">
+              <button type="button" class="btn-link-action" @click="selectAllFilteredMatches">تحديد المعروض</button>
+              <span class="sep">|</span>
+              <button type="button" class="btn-link-action" @click="deselectAllMatches">إلغاء التحديد</button>
+            </div>
+          </div>
+
+          <!-- Matches List -->
+          <div class="automatch-list-container" style="max-height: 380px; overflow-y: auto;">
+            <div v-if="filteredAutoMatches.length === 0" class="text-center p-4 text-muted">
+              لا توجد عناصر مطابقة في هذا التصنيف.
+            </div>
+            <div 
+              v-else 
+              v-for="match in filteredAutoMatches" 
+              :key="'match-' + match.pbRecordId + '-' + match.productId"
+              class="automatch-item-card"
+              :class="{ 'is-selected': selectedMatchIndices.has(match.matchKey), 'is-exact': match.exact }"
+            >
+              <div class="match-check-wrap">
+                <input 
+                  type="checkbox" 
+                  :id="'chk-' + match.matchKey" 
+                  :checked="selectedMatchIndices.has(match.matchKey)" 
+                  @change="toggleMatchSelection(match.matchKey)"
+                  class="match-checkbox"
+                />
+              </div>
+
+              <div class="match-flow">
+                <!-- PB Side -->
+                <div class="match-box pb-side">
+                  <span class="match-source-badge">المستودع (PocketBase)</span>
+                  <div class="match-name font-bold">{{ match.pbItemName }}</div>
+                  <div class="match-meta text-small text-muted">
+                    <span>{{ match.pbCategory || 'عام' }}</span>
+                    <span class="bullet">•</span>
+                    <span>الرصيد: <strong class="text-mono">{{ match.pbQuantity }}</strong></span>
+                  </div>
+                </div>
+
+                <!-- Link Arrow & Badge -->
+                <div class="match-arrow-col">
+                  <span class="confidence-badge" :class="match.exact ? 'exact' : 'partial'">
+                    {{ match.exact ? 'تطابق تام' : match.confidence + '%' }}
+                  </span>
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="match-arrow-svg"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </div>
+
+                <!-- Product Side -->
+                <div class="match-box prod-side">
+                  <span class="match-source-badge prod">المتجر (e-Menu)</span>
+                  <div class="match-name font-bold">{{ match.productName }}</div>
+                  <div class="match-meta text-small text-muted">
+                    <span>{{ match.productCategory }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Conversion Factor -->
+              <div class="match-factor-wrap">
+                <label :for="'factor-' + match.matchKey" class="factor-label">معامل الخصم:</label>
+                <input 
+                  type="number" 
+                  :id="'factor-' + match.matchKey" 
+                  v-model.number="match.conversionFactor" 
+                  min="0.01" 
+                  step="0.1" 
+                  class="form-control factor-input text-mono" 
+                  placeholder="1"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline" @click="showAutoMatchModal = false">إلغاء</button>
+          <button 
+            type="button" 
+            class="btn btn-primary d-flex align-items-center gap-2" 
+            :disabled="selectedMatchIndices.size === 0 || batchLinkingLoading" 
+            @click="executeBatchLink"
+          >
+            <svg v-if="batchLinkingLoading" class="spin-animation" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>تأكيد وربط ({{ selectedMatchIndices.size }}) صنفاً الآن</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    </Transition>
+
+    <!-- Quick Link Single Item Modal -->
+    <Transition name="modal-spring-fade">
+    <div 
+      v-if="showQuickLinkModal" 
+      class="modal-overlay quick-link-modal-overlay" 
+      @click.self="showQuickLinkModal = false"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quicklink-modal-title"
+    >
+      <div class="modal-box glass-panel quicklink-modal-box" v-sheet-gesture="() => showQuickLinkModal = false" style="max-width: 600px;">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-title-icon bg-blue-subtle text-primary" aria-hidden="true">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </div>
+            <div>
+              <h3 id="quicklink-modal-title">ربط صنف المستودع بمنتج المتجر</h3>
+              <p class="modal-subtitle mb-0">تحديد المنتج المقابل في قائمة المتجر لمعاملة الخصم والحجز التلقائي</p>
+            </div>
+          </div>
+          <button @click="showQuickLinkModal = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="modal-body p-3">
+          <!-- Target Warehouse Item Info -->
+          <div class="target-inv-item-card mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge-source">صنف المستودع المحدد</span>
+              <span class="category-pill">{{ selectedItemForQuickLink?.category || 'عام' }}</span>
+            </div>
+            <h4 class="font-bold mb-2">{{ selectedItemForQuickLink?.name }}</h4>
+            <div class="d-flex gap-2 text-small text-muted flex-wrap align-items-center">
+              <span class="pill-info-chip">الرصيد الفعلي بالمخزن: <strong class="text-mono text-dark">{{ selectedItemForQuickLink?.quantity }}</strong></span>
+              <span class="pill-info-chip">المتاح الصافي: <strong class="text-mono text-success">{{ selectedItemForQuickLink?.available_qty }}</strong></span>
+              <span v-if="selectedItemForQuickLink?.legacy_id" class="pill-info-chip">الرمز: <strong class="text-mono">{{ selectedItemForQuickLink.legacy_id }}</strong></span>
+            </div>
+
+            <!-- Current Link Status if already linked -->
+            <div v-if="selectedItemForQuickLink?.linkedProduct" class="current-link-alert mt-2 p-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-small">مرتبط حالياً بمنتج: <strong>{{ selectedItemForQuickLink.linkedProduct.productName }}</strong> (معامل: ×{{ selectedItemForQuickLink.linkedProduct.conversionFactor || 1 }})</span>
+                <button type="button" class="btn-unlink-action" @click="executeUnlinkItem(selectedItemForQuickLink.id)" :disabled="quickLinkLoading">
+                  فك الربط
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Picker Form -->
+          <div class="form-group mb-3">
+            <label class="form-label font-bold">اختر منتج المتجر (e-Menu Shop 2):</label>
+            <div class="search-input-wrapper mb-2">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input 
+                v-model="quickLinkProductSearch" 
+                type="text" 
+                class="form-control search-input" 
+                placeholder="ابحث بالاسم أو الفئة لتصفية المنتجات…" 
+              />
+              <button v-if="quickLinkProductSearch" type="button" @click="quickLinkProductSearch = ''" class="btn-clear-search">&times;</button>
+            </div>
+
+            <div class="quicklink-products-picker-list" style="max-height: 220px; overflow-y: auto;">
+              <div v-if="filteredQuickLinkProducts.length === 0" class="p-3 text-center text-muted">
+                لا توجد منتجات مطابقة للبحث.
+              </div>
+              <div 
+                v-else 
+                v-for="p in filteredQuickLinkProducts" 
+                :key="p._id" 
+                class="quicklink-product-option"
+                :class="{ 'is-selected': String(quickLinkProductId) === String(p._id), 'is-linked-elsewhere': p.inventoryLink && p.inventoryLink.recordId !== selectedItemForQuickLink?.id }"
+                @click="quickLinkProductId = String(p._id)"
+              >
+                <div class="d-flex align-items-center gap-2">
+                  <input 
+                    type="radio" 
+                    name="quickLinkProd" 
+                    :value="String(p._id)" 
+                    v-model="quickLinkProductId"
+                    class="picker-radio"
+                  />
+                  <div>
+                    <div class="font-bold">{{ p.name }}</div>
+                    <div class="text-small text-muted">
+                      <span>{{ p.category }}</span>
+                      <span v-if="p.subCategory" class="ms-1">/ {{ p.subCategory }}</span>
+                      <span v-if="p.price_regular" class="ms-2 text-mono text-primary">{{ p.price_regular }} د.ل</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <span v-if="p.inventoryLink?.recordId === selectedItemForQuickLink?.id" class="badge badge-link-success text-small">
+                    مرتبط بهذا الصنف
+                  </span>
+                  <span v-else-if="p.inventoryLink?.recordId" class="badge-warning-soft text-small" :title="'مرتبط بصنف آخر: ' + p.inventoryLink.itemName">
+                    مرتبط بـ: {{ p.inventoryLink.itemName }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conversion Factor Field -->
+          <div class="form-group mb-2">
+            <label class="form-label font-bold">معامل الخصم (Conversion Factor):</label>
+            <div class="d-flex align-items-center gap-2">
+              <input 
+                type="number" 
+                v-model.number="quickLinkConversionFactor" 
+                min="0.01" 
+                step="0.1" 
+                class="form-control text-mono" 
+                style="max-width: 140px;" 
+                placeholder="1" 
+              />
+              <span class="text-small text-muted">وحدة مخزون تُخصم لكل طلب زبون واحد (الافتراضي: 1)</span>
+            </div>
+            <p class="text-small text-muted mt-1 mb-0">
+              * مثال: إذا كان الصنف يُباع في المتجر بالنصف كيلو ورصيد المستودع بالكيلو، ضع المعامل 0.5.
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline" @click="showQuickLinkModal = false">إلغاء</button>
+          <button 
+            type="button" 
+            class="btn btn-primary d-flex align-items-center gap-2" 
+            :disabled="!quickLinkProductId || quickLinkLoading" 
+            @click="executeSaveQuickLink"
+          >
+            <svg v-if="quickLinkLoading" class="spin-animation" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>حفظ الربط</span>
+          </button>
         </div>
       </div>
     </div>
@@ -10475,6 +10805,233 @@ export default {
       return inv ? inv.available_qty : null;
     };
 
+    // ============ SMART AUTO-MATCHER STATE & METHODS ============
+    const autoMatchLoading = ref(false);
+    const showAutoMatchModal = ref(false);
+    const autoMatches = ref([]);
+    const selectedMatchIndices = ref(new Set());
+    const autoMatchFilter = ref('all');
+    const batchLinkingLoading = ref(false);
+
+    const autoMatchesExactCount = computed(() => {
+      return autoMatches.value.filter(m => m.exact).length;
+    });
+
+    const autoMatchesPartialCount = computed(() => {
+      return autoMatches.value.filter(m => !m.exact).length;
+    });
+
+    const filteredAutoMatches = computed(() => {
+      if (autoMatchFilter.value === 'exact') {
+        return autoMatches.value.filter(m => m.exact);
+      }
+      if (autoMatchFilter.value === 'partial') {
+        return autoMatches.value.filter(m => !m.exact);
+      }
+      return autoMatches.value;
+    });
+
+    const openAutoMatchModal = async () => {
+      autoMatchLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/inventory/auto-match', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop: activeShop.value })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          autoMatches.value = (data.matches || []).map(m => ({
+            ...m,
+            matchKey: m.pbRecordId + '_' + m.productId,
+            conversionFactor: m.conversionFactor || 1
+          }));
+
+          const initialSelected = new Set();
+          for (const m of autoMatches.value) {
+            if (m.exact || m.confidence >= 80) {
+              initialSelected.add(m.matchKey);
+            }
+          }
+          selectedMatchIndices.value = initialSelected;
+          showAutoMatchModal.value = true;
+
+          if (autoMatches.value.length === 0) {
+            toast.show('لم يتم العثور على تطابقات جديدة بالمخزن', 'info');
+          }
+        } else {
+          const err = await res.json();
+          toast.show(err.error || 'تعذر إجراء المطابقة الآلية', 'danger');
+        }
+      } catch (e) {
+        console.error('Auto match error:', e);
+        toast.show('خطأ في الاتصال أثناء المطابقة', 'danger');
+      } finally {
+        autoMatchLoading.value = false;
+      }
+    };
+
+    const toggleMatchSelection = (key) => {
+      const next = new Set(selectedMatchIndices.value);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      selectedMatchIndices.value = next;
+    };
+
+    const selectAllFilteredMatches = () => {
+      const next = new Set(selectedMatchIndices.value);
+      for (const m of filteredAutoMatches.value) {
+        next.add(m.matchKey);
+      }
+      selectedMatchIndices.value = next;
+    };
+
+    const deselectAllMatches = () => {
+      selectedMatchIndices.value = new Set();
+    };
+
+    const executeBatchLink = async () => {
+      if (selectedMatchIndices.value.size === 0) return;
+      batchLinkingLoading.value = true;
+      try {
+        const selectedLinks = autoMatches.value
+          .filter(m => selectedMatchIndices.value.has(m.matchKey))
+          .map(m => ({
+            productId: m.productId,
+            pbRecordId: m.pbRecordId,
+            pbLegacyId: m.pbLegacyId,
+            pbItemName: m.pbItemName,
+            conversionFactor: Number(m.conversionFactor) > 0 ? Number(m.conversionFactor) : 1
+          }));
+
+        const res = await adminFetch('/api/admin/inventory/batch-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ links: selectedLinks, shop: activeShop.value })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          toast.show(`تم ربط ${data.count || selectedLinks.length} صنفاً بنجاح بالمستودع`, 'success');
+          showAutoMatchModal.value = false;
+          await Promise.all([fetchProducts(), fetchInventoryItems(), fetchInventoryStatus()]);
+        } else {
+          const err = await res.json();
+          toast.show(err.error || 'فشلت عملية الربط المتعدد', 'danger');
+        }
+      } catch (e) {
+        console.error('Batch link execute error:', e);
+        toast.show('خطأ أثناء حفظ الروابط', 'danger');
+      } finally {
+        batchLinkingLoading.value = false;
+      }
+    };
+
+    // ============ INLINE QUICK-LINK SINGLE ITEM STATE & METHODS ============
+    const showQuickLinkModal = ref(false);
+    const selectedItemForQuickLink = ref(null);
+    const quickLinkProductId = ref('');
+    const quickLinkConversionFactor = ref(1);
+    const quickLinkProductSearch = ref('');
+    const quickLinkLoading = ref(false);
+    const quickLinkProductsList = ref([]);
+
+    const fetchQuickLinkProducts = async () => {
+      try {
+        const res = await adminFetch(`/api/admin/inventory/products-list?shop=${activeShop.value}`);
+        if (res.ok) {
+          const data = await res.json();
+          quickLinkProductsList.value = data.products || [];
+        }
+      } catch (e) {
+        console.error('Fetch quicklink products error:', e);
+      }
+    };
+
+    const openQuickLinkModal = async (item) => {
+      selectedItemForQuickLink.value = item;
+      quickLinkProductSearch.value = '';
+      quickLinkConversionFactor.value = item.linkedProduct?.conversionFactor || 1;
+      quickLinkProductId.value = item.linkedProduct?.productId ? String(item.linkedProduct.productId) : '';
+      showQuickLinkModal.value = true;
+      if (quickLinkProductsList.value.length === 0) {
+        await fetchQuickLinkProducts();
+      }
+    };
+
+    const filteredQuickLinkProducts = computed(() => {
+      let list = quickLinkProductsList.value;
+      if (quickLinkProductSearch.value && quickLinkProductSearch.value.trim()) {
+        const q = quickLinkProductSearch.value.trim().toLowerCase();
+        list = list.filter(p => 
+          (p.name || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q) ||
+          (p.subCategory || '').toLowerCase().includes(q)
+        );
+      }
+      return list;
+    });
+
+    const executeSaveQuickLink = async () => {
+      if (!selectedItemForQuickLink.value || !quickLinkProductId.value) return;
+      quickLinkLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/inventory/link-item', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pbRecordId: selectedItemForQuickLink.value.id,
+            productId: quickLinkProductId.value,
+            conversionFactor: Number(quickLinkConversionFactor.value) > 0 ? Number(quickLinkConversionFactor.value) : 1,
+            shop: activeShop.value
+          })
+        });
+
+        if (res.ok) {
+          toast.show('تم ربط صنف المستودع بالمنتج بنجاح', 'success');
+          showQuickLinkModal.value = false;
+          await Promise.all([fetchProducts(), fetchInventoryItems(), fetchInventoryStatus()]);
+        } else {
+          const err = await res.json();
+          toast.show(err.error || 'فشل في ربط الصنف', 'danger');
+        }
+      } catch (e) {
+        console.error('Save quick link error:', e);
+        toast.show('خطأ أثناء حفظ الربط', 'danger');
+      } finally {
+        quickLinkLoading.value = false;
+      }
+    };
+
+    const executeUnlinkItem = async (pbRecordId) => {
+      quickLinkLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/inventory/link-item', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pbRecordId,
+            productId: null,
+            shop: activeShop.value
+          })
+        });
+
+        if (res.ok) {
+          toast.show('تم فك ارتباط الصنف بنجاح', 'success');
+          showQuickLinkModal.value = false;
+          await Promise.all([fetchProducts(), fetchInventoryItems(), fetchInventoryStatus()]);
+        } else {
+          const err = await res.json();
+          toast.show(err.error || 'فشل في فك الارتباط', 'danger');
+        }
+      } catch (e) {
+        console.error('Unlink item error:', e);
+        toast.show('خطأ أثناء فك الارتباط', 'danger');
+      } finally {
+        quickLinkLoading.value = false;
+      }
+    };
+
     // Load Data
     const loadAllData = async () => {
       loading.value = true;
@@ -14093,6 +14650,30 @@ const closeSuggestionsWithDelay = () => {
       itemReservationsList,
       openItemReservationsModal,
       getProductAvailableStock,
+      autoMatchLoading,
+      showAutoMatchModal,
+      autoMatches,
+      selectedMatchIndices,
+      autoMatchFilter,
+      batchLinkingLoading,
+      autoMatchesExactCount,
+      autoMatchesPartialCount,
+      filteredAutoMatches,
+      openAutoMatchModal,
+      toggleMatchSelection,
+      selectAllFilteredMatches,
+      deselectAllMatches,
+      executeBatchLink,
+      showQuickLinkModal,
+      selectedItemForQuickLink,
+      quickLinkProductId,
+      quickLinkConversionFactor,
+      quickLinkProductSearch,
+      quickLinkLoading,
+      filteredQuickLinkProducts,
+      openQuickLinkModal,
+      executeSaveQuickLink,
+      executeUnlinkItem,
       analyticsPeriod,
       analyticsStartDate,
       analyticsEndDate,
@@ -30536,6 +31117,513 @@ select.pos-control {
     border: 1px solid #94a3b8 !important;
     box-shadow: none !important;
     padding: 8px !important;
+  }
+}
+
+/* ============ INVENTORY AUTO-MATCH & QUICK-LINK STYLES ============ */
+.btn-auto-match {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(99, 102, 241, 0.12)) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.shop-theme-shop2 .btn-auto-match {
+  color: #6366f1 !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+.btn-auto-match:hover:not(:disabled) {
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+  border-color: #4f46e5 !important;
+  transform: translateY(-1px);
+}
+
+.btn-linked-product-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #047857 !important;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  max-width: 100%;
+  text-decoration: none;
+}
+
+.btn-linked-product-badge:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+.btn-linked-product-badge .linked-pname {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.btn-linked-product-badge .badge-factor {
+  background: #ffffff;
+  color: #065f46;
+  font-size: 0.74rem;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-weight: 800;
+}
+
+.btn-quick-link-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #475569 !important;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-quick-link-trigger:hover {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: #6366f1;
+  color: #4f46e5 !important;
+}
+
+/* Modal Boxes Base */
+.automatch-modal-box,
+.quicklink-modal-box {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 16px;
+  max-height: 88vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.automatch-modal-box .modal-header,
+.quicklink-modal-box .modal-header {
+  flex-shrink: 0 !important;
+}
+
+.automatch-modal-box .modal-body,
+.quicklink-modal-box .modal-body {
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  max-height: calc(88vh - 130px) !important;
+}
+
+.automatch-modal-box .modal-footer,
+.quicklink-modal-box .modal-footer {
+  flex-shrink: 0 !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+.automatch-modal-box *,
+.quicklink-modal-box * {
+  box-sizing: border-box;
+}
+
+.automatch-modal-box h3,
+.quicklink-modal-box h3 {
+  color: #0f172a !important;
+  font-weight: 800;
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.automatch-modal-box .modal-subtitle,
+.quicklink-modal-box .modal-subtitle {
+  color: #64748b !important;
+  font-size: 0.85rem;
+}
+
+/* Stats Banner in Auto-Match Modal */
+.automatch-stats-banner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.automatch-stat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4px;
+}
+
+.automatch-stat-chip .chip-label {
+  font-size: 0.76rem;
+  color: #64748b !important;
+  margin-bottom: 2px;
+}
+
+.automatch-stat-chip .chip-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.automatch-stat-chip.exact .chip-val {
+  color: #059669 !important;
+}
+
+.automatch-stat-chip.partial .chip-val {
+  color: #4f46e5 !important;
+}
+
+.automatch-stat-chip.selected .chip-val {
+  color: #d97706 !important;
+}
+
+/* Controls */
+.automatch-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.filter-pills-row {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-pills-row .pill-btn {
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  color: #475569 !important;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-pills-row .pill-btn.active {
+  background: #4f46e5;
+  color: #ffffff !important;
+}
+
+.select-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.select-actions-row .sep {
+  color: #cbd5e1;
+}
+
+.select-actions-row .btn-link-action {
+  background: none;
+  border: none;
+  color: #4f46e5 !important;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+/* Match Items List */
+.automatch-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automatch-item-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  transition: all 0.18s ease;
+}
+
+.automatch-item-card:hover {
+  border-color: #cbd5e1;
+  background: #fbfcfe;
+}
+
+.automatch-item-card.is-selected {
+  border-color: rgba(79, 70, 229, 0.4);
+  background: rgba(79, 70, 229, 0.02);
+}
+
+.automatch-item-card.is-selected.is-exact {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.match-check-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.match-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+
+.match-flow {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 10px;
+}
+
+.match-box {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.match-source-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b !important;
+  margin-bottom: 2px;
+}
+
+.match-source-badge.prod {
+  color: #0284c7 !important;
+}
+
+.match-name {
+  font-size: 0.92rem;
+  color: #0f172a !important;
+  margin-bottom: 2px;
+}
+
+.match-meta {
+  color: #64748b !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.match-arrow-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.confidence-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.confidence-badge.exact {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.confidence-badge.partial {
+  background: rgba(79, 70, 229, 0.1);
+  color: #4f46e5 !important;
+  border: 1px solid rgba(79, 70, 229, 0.25);
+}
+
+.match-arrow-svg {
+  color: #94a3b8;
+}
+
+.match-factor-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 85px;
+}
+
+.match-factor-wrap .factor-label {
+  font-size: 0.72rem;
+  color: #64748b !important;
+}
+
+.match-factor-wrap .factor-input {
+  width: 80px;
+  padding: 4px 8px;
+  font-size: 0.88rem;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Quick-Link Target Card */
+.target-inv-item-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.target-inv-item-card h4 {
+  color: #0f172a !important;
+  font-size: 1.05rem;
+}
+
+.badge-source {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155 !important;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.current-link-alert {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  color: #065f46 !important;
+}
+
+.btn-unlink-action {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-unlink-action:hover {
+  background: #ef4444;
+  color: #ffffff !important;
+}
+
+.pill-info-chip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #475569 !important;
+}
+
+/* Quick-Link Products Picker */
+.quicklink-products-picker-list {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 4px;
+  direction: rtl;
+  text-align: right;
+}
+
+.quicklink-product-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #f8fafc;
+  color: #0f172a !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.quicklink-product-option:last-child {
+  border-bottom: none;
+}
+
+.quicklink-product-option:hover {
+  background: #f1f5f9;
+}
+
+.quicklink-product-option.is-selected {
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.25);
+}
+
+.quicklink-product-option .picker-radio {
+  accent-color: #4f46e5;
+  width: 16px;
+  height: 16px;
+}
+
+.badge-warning-soft {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309 !important;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .automatch-stats-banner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .match-flow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .match-arrow-col {
+    flex-direction: row;
+    justify-content: center;
+    padding: 4px 0;
+  }
+  .match-arrow-svg {
+    transform: rotate(90deg);
+  }
+  .automatch-item-card {
+    flex-wrap: wrap;
+  }
+  .match-factor-wrap {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 6px;
+    margin-top: 4px;
   }
 }
 </style>

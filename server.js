@@ -423,6 +423,21 @@ let mongoConnected = false;
 // ============ POCKETBASE INVENTORY INTEGRATION ============
 const POCKETBASE_URL = process.env.POCKETBASE_URL || 'https://crystal-crocodile.pikapod.net';
 
+// Arabic string normalizer for intelligent matching (removes tashkeel, tatweel, normalizes alifs/ta-marbuta/etc.)
+const normalizeArabicText = (text) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '') // remove tashkeel & tatweel
+    .replace(/[أإآٱ]/g, 'ا') // normalize alifs
+    .replace(/ة/g, 'ه')     // normalize ta marbuta
+    .replace(/ى/g, 'ي')     // normalize alif maqsura
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ') // remove symbols/emojis/punctuation
+    .replace(/\s+/g, ' ')   // collapse spaces
+    .trim();
+};
+
 // Lightweight fetch wrapper for PocketBase REST API (no SDK dependency)
 const pbFetch = async (path, options = {}) => {
   const url = `${POCKETBASE_URL}/api${path}`;
@@ -2699,6 +2714,272 @@ app.put("/api/admin/products/:id/inventory-link", checkMongoDB, checkAdmin, asyn
   } catch (err) {
     console.error("Update inventory link error:", err.message);
     res.status(500).json({ error: "Failed to update inventory link" });
+  }
+});
+
+// 3a. Auto-match PocketBase inventory items with e-Menu products using normalized Arabic text
+app.post("/api/admin/inventory/auto-match", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.body.shop || "shop2";
+  const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+
+  try {
+    // 1. Fetch PB items
+    const pbRes = await pbFetch("/collections/inventory/records?perPage=250&sort=name");
+    const pbItems = pbRes.items || [];
+
+    // 2. Fetch e-Menu products
+    const products = await targetColl.find({}).project({
+      name: 1,
+      category: 1,
+      subCategory: 1,
+      price_regular: 1,
+      inventoryLink: 1
+    }).toArray();
+
+    // 3. Track existing links
+    const alreadyLinkedPbIds = new Set();
+    const alreadyLinkedProdIds = new Set();
+    for (const p of products) {
+      if (p.inventoryLink?.recordId) {
+        alreadyLinkedPbIds.add(p.inventoryLink.recordId);
+        alreadyLinkedProdIds.add(p._id.toString());
+      }
+    }
+
+    const matches = [];
+    const matchedPbInThisRun = new Set();
+    const matchedProdInThisRun = new Set();
+
+    // Pass 1: Exact normalized match
+    for (const item of pbItems) {
+      if (alreadyLinkedPbIds.has(item.id)) continue;
+      const normItem = normalizeArabicText(item.name);
+      if (!normItem) continue;
+
+      for (const prod of products) {
+        const prodIdStr = prod._id.toString();
+        if (alreadyLinkedProdIds.has(prodIdStr) || matchedProdInThisRun.has(prodIdStr)) continue;
+
+        const normProd = normalizeArabicText(prod.name);
+        if (normItem === normProd) {
+          matchedPbInThisRun.add(item.id);
+          matchedProdInThisRun.add(prodIdStr);
+          matches.push({
+            pbRecordId: item.id,
+            pbItemName: item.name,
+            pbCategory: item.category || '',
+            pbQuantity: typeof item.quantity === 'number' ? item.quantity : 0,
+            pbLegacyId: item.legacy_id || '',
+            productId: prodIdStr,
+            productName: prod.name,
+            productCategory: prod.category || '',
+            confidence: 100,
+            exact: true,
+            conversionFactor: 1
+          });
+          break;
+        }
+      }
+    }
+
+    // Pass 2: High overlap partial match for remaining unlinked
+    for (const item of pbItems) {
+      if (alreadyLinkedPbIds.has(item.id) || matchedPbInThisRun.has(item.id)) continue;
+      const normItem = normalizeArabicText(item.name);
+      if (!normItem) continue;
+      const itemWords = normItem.split(' ').filter(w => w.length > 1);
+      if (itemWords.length === 0) continue;
+
+      let bestProd = null;
+      let bestScore = 0;
+
+      for (const prod of products) {
+        const prodIdStr = prod._id.toString();
+        if (alreadyLinkedProdIds.has(prodIdStr) || matchedProdInThisRun.has(prodIdStr)) continue;
+
+        const normProd = normalizeArabicText(prod.name);
+        if (!normProd) continue;
+        const prodWords = normProd.split(' ').filter(w => w.length > 1);
+
+        if (normItem.includes(normProd) || normProd.includes(normItem)) {
+          const score = 85;
+          if (score > bestScore) {
+            bestScore = score;
+            bestProd = prod;
+          }
+        } else if (itemWords.length > 0 && prodWords.length > 0) {
+          const common = itemWords.filter(w => prodWords.includes(w));
+          const overlap = common.length / Math.max(itemWords.length, prodWords.length);
+          const score = Math.round(overlap * 100);
+          if (score >= 70 && score > bestScore) {
+            bestScore = score;
+            bestProd = prod;
+          }
+        }
+      }
+
+      if (bestProd && bestScore >= 70) {
+        matchedPbInThisRun.add(item.id);
+        matchedProdInThisRun.add(bestProd._id.toString());
+        matches.push({
+          pbRecordId: item.id,
+          pbItemName: item.name,
+          pbCategory: item.category || '',
+          pbQuantity: typeof item.quantity === 'number' ? item.quantity : 0,
+          pbLegacyId: item.legacy_id || '',
+          productId: bestProd._id.toString(),
+          productName: bestProd.name,
+          productCategory: bestProd.category || '',
+          confidence: bestScore,
+          exact: false,
+          conversionFactor: 1
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      totalPbItems: pbItems.length,
+      totalProducts: products.length,
+      alreadyLinkedCount: alreadyLinkedPbIds.size,
+      matches: matches.sort((a, b) => b.confidence - a.confidence)
+    });
+  } catch (err) {
+    console.error("Auto match inventory error:", err.message);
+    res.status(500).json({ error: "Failed to auto-match inventory", details: err.message });
+  }
+});
+
+// 3b. Batch-link matched products to PocketBase inventory items
+app.post("/api/admin/inventory/batch-link", checkMongoDB, checkAdmin, async (req, res) => {
+  const { links, shop } = req.body;
+  const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+
+  if (!Array.isArray(links) || links.length === 0) {
+    return res.status(400).json({ error: "No links provided" });
+  }
+
+  try {
+    const validLinks = links.filter(l => l && ObjectId.isValid(l.productId) && l.pbRecordId);
+    if (validLinks.length === 0) {
+      return res.status(400).json({ error: "No valid product/inventory link pairs provided" });
+    }
+
+    const bulkOps = validLinks.map(l => ({
+      updateOne: {
+        filter: { _id: new ObjectId(l.productId) },
+        update: {
+          $set: {
+            inventoryLink: {
+              recordId: String(l.pbRecordId).trim(),
+              legacyId: String(l.pbLegacyId || l.legacyId || '').trim(),
+              itemName: String(l.pbItemName || l.itemName || '').trim(),
+              conversionFactor: Number(l.conversionFactor) > 0 ? Number(l.conversionFactor) : 1
+            }
+          }
+        }
+      }
+    }));
+
+    const result = await targetColl.bulkWrite(bulkOps);
+    res.json({
+      success: true,
+      count: (result.modifiedCount || 0) + (result.upsertedCount || 0),
+      totalSubmitted: validLinks.length
+    });
+  } catch (err) {
+    console.error("Batch inventory link error:", err.message);
+    res.status(500).json({ error: "Failed to batch link products", details: err.message });
+  }
+});
+
+// 3c. Link or unlink an inventory item directly from the inventory dashboard
+app.put("/api/admin/inventory/link-item", checkMongoDB, checkAdmin, async (req, res) => {
+  const { pbRecordId, productId, conversionFactor, shop } = req.body;
+  const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+
+  if (!pbRecordId) {
+    return res.status(400).json({ error: "pbRecordId is required" });
+  }
+
+  try {
+    // If productId is not supplied or empty, unlink any product currently referencing this PB item
+    if (!productId) {
+      const unlinkRes = await targetColl.updateMany(
+        { "inventoryLink.recordId": String(pbRecordId).trim() },
+        { $unset: { inventoryLink: "" } }
+      );
+      return res.json({ success: true, unlinked: true, modifiedCount: unlinkRes.modifiedCount });
+    }
+
+    if (!ObjectId.isValid(productId)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+
+    // Fetch PB item details from PocketBase to store accurate item name & legacy ID
+    let pbItem = null;
+    try {
+      pbItem = await getInventoryStock(pbRecordId);
+    } catch (e) {
+      console.warn("Could not fetch PB item for link-item:", e.message);
+    }
+
+    // Unlink any other product currently tied to this PB record (to maintain 1:1 mapping)
+    await targetColl.updateMany(
+      { "inventoryLink.recordId": String(pbRecordId).trim(), _id: { $ne: new ObjectId(productId) } },
+      { $unset: { inventoryLink: "" } }
+    );
+
+    const factor = Number(conversionFactor) > 0 ? Number(conversionFactor) : 1;
+    const updateResult = await targetColl.updateOne(
+      { _id: new ObjectId(productId) },
+      {
+        $set: {
+          inventoryLink: {
+            recordId: String(pbRecordId).trim(),
+            legacyId: String(pbItem?.legacy_id || '').trim(),
+            itemName: String(pbItem?.name || '').trim(),
+            conversionFactor: factor
+          }
+        }
+      }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({
+      success: true,
+      linked: true,
+      inventoryLink: {
+        recordId: String(pbRecordId).trim(),
+        legacyId: String(pbItem?.legacy_id || '').trim(),
+        itemName: String(pbItem?.name || '').trim(),
+        conversionFactor: factor
+      }
+    });
+  } catch (err) {
+    console.error("Link item error:", err.message);
+    res.status(500).json({ error: "Failed to link item", details: err.message });
+  }
+});
+
+// 3d. Lightweight list of products for shop (used in Quick Link modal autocomplete)
+app.get("/api/admin/inventory/products-list", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.query.shop || "shop2";
+  const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+
+  try {
+    const products = await targetColl.find({})
+      .project({ name: 1, category: 1, subCategory: 1, price_regular: 1, inventoryLink: 1 })
+      .sort({ category: 1, name: 1 })
+      .toArray();
+
+    res.json({ success: true, products });
+  } catch (err) {
+    console.error("Fetch products for linking error:", err.message);
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 });
 
