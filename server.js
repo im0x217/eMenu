@@ -417,7 +417,211 @@ let customersCollection, favoritesCollection, ordersCollection, ordersCollection
 let chefsCollection, chefsCollection2;
 let backupsCollection;
 let telemetryCollection;
+let stockReservationsCollection;
 let mongoConnected = false;
+
+// ============ POCKETBASE INVENTORY INTEGRATION ============
+const POCKETBASE_URL = process.env.POCKETBASE_URL || 'https://crystal-crocodile.pikapod.net';
+
+// Lightweight fetch wrapper for PocketBase REST API (no SDK dependency)
+const pbFetch = async (path, options = {}) => {
+  const url = `${POCKETBASE_URL}/api${path}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`PocketBase ${options.method || 'GET'} ${path} → ${res.status}: ${body}`);
+  }
+  return res.json();
+};
+
+// Read current inventory level for a PocketBase record
+const getInventoryStock = async (recordId) => {
+  return pbFetch(`/collections/inventory/records/${recordId}`);
+};
+
+// Adjust inventory quantity by delta (negative to deduct, positive to return)
+const adjustInventoryStock = async (recordId, delta) => {
+  const current = await getInventoryStock(recordId);
+  const currentQty = typeof current.quantity === 'number' ? current.quantity : 0;
+  const newQty = Math.max(0, currentQty + delta);
+  return pbFetch(`/collections/inventory/records/${recordId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      quantity: newQty,
+      last_updated_legacy: new Date().toISOString(),
+    }),
+  });
+};
+
+// Reserve inventory for a newly created Shop 2 order (non-blocking)
+const reserveInventoryForOrder = async (orderDoc) => {
+  if (!stockReservationsCollection || !productsCollection2) return [];
+  const reservationItems = [];
+
+  for (const item of orderDoc.items) {
+    if (!item.productId) continue;
+    try {
+      const product = await productsCollection2.findOne({
+        _id: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId
+      });
+      if (!product || !product.inventoryLink || !product.inventoryLink.recordId) continue;
+
+      const link = product.inventoryLink;
+      const factor = Number(link.conversionFactor) || 1;
+      const reserveQty = item.quantity * factor;
+
+      const before = await getInventoryStock(link.recordId);
+      const prevStock = typeof before.quantity === 'number' ? before.quantity : 0;
+      await adjustInventoryStock(link.recordId, -reserveQty);
+
+      reservationItems.push({
+        productId: item.productId,
+        productName: item.name,
+        inventoryRecordId: link.recordId,
+        inventoryItemName: link.itemName || '',
+        orderedQty: item.quantity,
+        conversionFactor: factor,
+        reservedQty: reserveQty,
+        previousStock: prevStock,
+        newStock: Math.max(0, prevStock - reserveQty),
+      });
+    } catch (err) {
+      console.error(`[Inventory] Reserve failed for "${item.name}":`, err.message);
+    }
+  }
+
+  if (reservationItems.length > 0) {
+    try {
+      await stockReservationsCollection.insertOne({
+        orderNumber: orderDoc.orderNumber,
+        orderId: orderDoc._id || null,
+        status: 'reserved',
+        items: reservationItems,
+        reservedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } catch (dbErr) {
+      console.error('[Inventory] Failed to save reservation record:', dbErr.message);
+    }
+  }
+  return reservationItems;
+};
+
+// Confirm inventory deduction when order status transitions to "received"
+const confirmInventoryDeduction = async (orderId) => {
+  if (!stockReservationsCollection) return;
+  try {
+    const reservation = await stockReservationsCollection.findOne({
+      orderId: new ObjectId(orderId),
+      status: 'reserved',
+    });
+    if (!reservation) return;
+
+    await stockReservationsCollection.updateOne(
+      { _id: reservation._id },
+      { $set: { status: 'deducted', deductedAt: new Date(), updatedAt: new Date() } }
+    );
+  } catch (err) {
+    console.error('[Inventory] Confirm deduction failed:', err.message);
+  }
+};
+
+// Return inventory when order is cancelled
+const returnInventoryForOrder = async (orderId) => {
+  if (!stockReservationsCollection) return;
+  try {
+    const reservation = await stockReservationsCollection.findOne({
+      orderId: new ObjectId(orderId),
+      status: 'reserved',
+    });
+    if (!reservation) return;
+
+    for (const item of reservation.items) {
+      try {
+        await adjustInventoryStock(item.inventoryRecordId, +item.reservedQty);
+      } catch (pbErr) {
+        console.error(`[Inventory] Return failed for "${item.productName}":`, pbErr.message);
+      }
+    }
+
+    await stockReservationsCollection.updateOne(
+      { _id: reservation._id },
+      { $set: { status: 'returned', returnedAt: new Date(), updatedAt: new Date() } }
+    );
+  } catch (err) {
+    console.error('[Inventory] Return inventory failed:', err.message);
+  }
+};
+
+// Handle order edit: return old reservation, re-reserve with new items
+const handleOrderEditInventory = async (orderId) => {
+  if (!stockReservationsCollection || !ordersCollection2) return;
+  try {
+    const existing = await stockReservationsCollection.findOne({
+      orderId: new ObjectId(orderId),
+      status: 'reserved',
+    });
+    if (!existing) return;
+
+    // Return previously reserved stock
+    for (const item of existing.items) {
+      try {
+        await adjustInventoryStock(item.inventoryRecordId, +item.reservedQty);
+      } catch (pbErr) {
+        console.error(`[Inventory] Edit-return failed for "${item.productName}":`, pbErr.message);
+      }
+    }
+
+    // Delete old reservation
+    await stockReservationsCollection.deleteOne({ _id: existing._id });
+
+    // Re-reserve with updated order items
+    const order = await ordersCollection2.findOne({ _id: new ObjectId(orderId) });
+    if (order && order.status !== 'cancelled' && order.status !== 'received') {
+      await reserveInventoryForOrder({ ...order, _id: order._id });
+    }
+  } catch (err) {
+    console.error('[Inventory] Order edit inventory handling failed:', err.message);
+  }
+};
+
+// Background reconciliation: catches orphaned reservations
+const reconcileInventoryStock = async () => {
+  if (!stockReservationsCollection || !ordersCollection2 || !mongoConnected) return;
+  try {
+    const staleReservations = await stockReservationsCollection.find({
+      status: 'reserved',
+      reservedAt: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+    }).toArray();
+
+    let fixed = 0;
+    for (const reservation of staleReservations) {
+      const order = await ordersCollection2.findOne({ _id: reservation.orderId });
+      if (!order) {
+        await returnInventoryForOrder(reservation.orderId);
+        fixed++;
+      } else if (order.status === 'received') {
+        await confirmInventoryDeduction(reservation.orderId);
+        fixed++;
+      } else if (order.status === 'cancelled') {
+        await returnInventoryForOrder(reservation.orderId);
+        fixed++;
+      }
+    }
+    if (fixed > 0) {
+      console.log(`✓ [Inventory Reconciliation] Fixed ${fixed} stale reservation(s)`);
+    }
+  } catch (err) {
+    console.error('[Inventory Reconciliation] Error:', err.message);
+  }
+};
 
 // Helper: Atomic Sequential Order Number Generator
 const getNextOrderNumber = async () => {
@@ -1337,6 +1541,19 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
     const parsedPrice = parsePrice(price, isFloat);
     const parsedMakingCost = Number(makingCost) || 0;
 
+    let parsedInventoryLink = undefined;
+    if (req.body.inventoryLink !== undefined) {
+      if (typeof req.body.inventoryLink === 'string') {
+        try {
+          parsedInventoryLink = JSON.parse(req.body.inventoryLink);
+        } catch {
+          parsedInventoryLink = null;
+        }
+      } else {
+        parsedInventoryLink = req.body.inventoryLink;
+      }
+    }
+
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
       {
@@ -1356,6 +1573,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
           tags: parsedTags,
           chefId: chefId || '',
           chefName: chefName || '',
+          ...(parsedInventoryLink !== undefined ? { inventoryLink: parsedInventoryLink } : {}),
         },
       }
     );
@@ -2190,6 +2408,20 @@ app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, re
     if (result.matchedCount === 0) {
       return res.status(404).json({ error: "Order not found" });
     }
+
+    // Inventory lifecycle hooks (Shop 2 only, non-blocking)
+    if (shop === 'shop2') {
+      try {
+        if (status === 'received') {
+          await confirmInventoryDeduction(id);
+        } else if (status === 'cancelled') {
+          await returnInventoryForOrder(id);
+        }
+      } catch (invErr) {
+        console.error('[Inventory] Status hook error (non-blocking):', invErr.message);
+      }
+    }
+
     res.json({ 
       success: true, 
       status, 
@@ -2318,10 +2550,242 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
       }
     }
 
+    // Inventory re-reservation on item edit (Shop 2 only, non-blocking)
+    if (shop === 'shop2' && updateDoc.items) {
+      try {
+        await handleOrderEditInventory(id);
+      } catch (invErr) {
+        console.error('[Inventory] Edit hook error (non-blocking):', invErr.message);
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("Full order edit error:", err);
     res.status(500).json({ error: "Failed to update order" });
+  }
+});
+
+// ============ INVENTORY INTEGRATION ADMIN ROUTES ============
+
+// 1. Fetch inventory items list from PocketBase with computed active reservations
+app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const pbData = await pbFetch("/collections/inventory/records?sort=name&perPage=500");
+    const records = Array.isArray(pbData.items) ? pbData.items : (Array.isArray(pbData) ? pbData : []);
+
+    // Get active reservations grouped by inventoryRecordId
+    let reservedMap = {};
+    if (stockReservationsCollection) {
+      const activeRes = await stockReservationsCollection.aggregate([
+        { $match: { status: "reserved" } },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.inventoryRecordId",
+            totalReserved: { $sum: "$items.reservedQty" }
+          }
+        }
+      ]).toArray();
+
+      for (const r of activeRes) {
+        if (r._id) reservedMap[r._id] = r.totalReserved;
+      }
+    }
+
+    // Also get list of linked e-Menu products
+    let linkedProductsMap = {};
+    if (productsCollection2) {
+      const linkedProds = await productsCollection2.find({
+        "inventoryLink.recordId": { $exists: true, $ne: null }
+      }).project({ name: 1, inventoryLink: 1 }).toArray();
+
+      for (const p of linkedProds) {
+        if (p.inventoryLink?.recordId) {
+          linkedProductsMap[p.inventoryLink.recordId] = {
+            productId: p._id,
+            productName: p.name,
+            conversionFactor: p.inventoryLink.conversionFactor || 1
+          };
+        }
+      }
+    }
+
+    const enriched = records.map(rec => ({
+      id: rec.id,
+      legacy_id: rec.legacy_id || '',
+      name: rec.name || '',
+      category: rec.category || '',
+      quantity: typeof rec.quantity === 'number' ? rec.quantity : 0,
+      min_stock: typeof rec.min_stock === 'number' ? rec.min_stock : 5,
+      reserved_qty: reservedMap[rec.id] || 0,
+      available_qty: Math.max(0, (typeof rec.quantity === 'number' ? rec.quantity : 0) - (reservedMap[rec.id] || 0)),
+      linkedProduct: linkedProductsMap[rec.id] || null,
+      updated: rec.updated || rec.last_updated_legacy || ''
+    }));
+
+    res.json({ success: true, items: enriched });
+  } catch (err) {
+    console.error("Fetch inventory items error:", err.message);
+    res.status(502).json({
+      error: "تعذر الاتصال بخادم المخزون PocketBase",
+      details: err.message,
+      unreachable: true
+    });
+  }
+});
+
+// 2. Fetch single inventory item stock
+app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const item = await getInventoryStock(req.params.recordId);
+    let reserved = 0;
+    if (stockReservationsCollection) {
+      const resDocs = await stockReservationsCollection.aggregate([
+        { $match: { status: "reserved" } },
+        { $unwind: "$items" },
+        { $match: { "items.inventoryRecordId": req.params.recordId } },
+        { $group: { _id: null, total: { $sum: "$items.reservedQty" } } }
+      ]).toArray();
+      if (resDocs.length > 0) reserved = resDocs[0].total;
+    }
+
+    res.json({
+      success: true,
+      item,
+      reservedQuantity: reserved,
+      availableQuantity: Math.max(0, (item.quantity || 0) - reserved)
+    });
+  } catch (err) {
+    console.error("Get inventory stock error:", err.message);
+    res.status(502).json({ error: "Failed to get stock from PocketBase", details: err.message });
+  }
+});
+
+// 3. Link or unlink an e-Menu product to a PocketBase inventory item
+app.put("/api/admin/products/:id/inventory-link", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { inventoryLink, shop } = req.body;
+  const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid product ID" });
+  }
+
+  try {
+    let updateOp = {};
+    if (!inventoryLink || !inventoryLink.recordId) {
+      // Unlink
+      updateOp = { $unset: { inventoryLink: "" } };
+    } else {
+      updateOp = {
+        $set: {
+          inventoryLink: {
+            recordId: String(inventoryLink.recordId).trim(),
+            legacyId: String(inventoryLink.legacyId || '').trim(),
+            itemName: String(inventoryLink.itemName || '').trim(),
+            conversionFactor: Number(inventoryLink.conversionFactor) > 0 ? Number(inventoryLink.conversionFactor) : 1
+          }
+        }
+      };
+    }
+
+    const result = await targetColl.updateOne({ _id: new ObjectId(id) }, updateOp);
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({ success: true, inventoryLink: updateOp.$set ? updateOp.$set.inventoryLink : null });
+  } catch (err) {
+    console.error("Update inventory link error:", err.message);
+    res.status(500).json({ error: "Failed to update inventory link" });
+  }
+});
+
+// 4. List stock reservations with filters
+app.get("/api/admin/inventory/reservations", checkMongoDB, checkAdmin, async (req, res) => {
+  if (!stockReservationsCollection) {
+    return res.status(503).json({ error: "Stock reservations collection not initialized" });
+  }
+
+  try {
+    const query = {};
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+    if (req.query.orderNumber) {
+      query.orderNumber = Number(req.query.orderNumber);
+    }
+
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const reservations = await stockReservationsCollection.find(query)
+      .sort({ reservedAt: -1, createdAt: -1 })
+      .limit(limit)
+      .toArray();
+
+    res.json({ success: true, reservations });
+  } catch (err) {
+    console.error("Fetch reservations error:", err.message);
+    res.status(500).json({ error: "Failed to fetch reservations" });
+  }
+});
+
+// 5. Trigger manual reconciliation sweep
+app.post("/api/admin/inventory/reconcile", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    await reconcileInventoryStock();
+    res.json({ success: true, message: "تمت مواءمة ومطابقة المخزون بنجاح" });
+  } catch (err) {
+    console.error("Manual reconciliation error:", err.message);
+    res.status(500).json({ error: "Failed to reconcile inventory", details: err.message });
+  }
+});
+
+// 6. Overall inventory sync status & health check
+app.get("/api/admin/inventory/status", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    let pbConnected = false;
+    let totalItems = 0;
+    let pbError = null;
+
+    try {
+      const pbRes = await pbFetch("/collections/inventory/records?perPage=1");
+      pbConnected = true;
+      totalItems = pbRes.totalItems || (Array.isArray(pbRes.items) ? pbRes.items.length : 0);
+    } catch (e) {
+      pbError = e.message;
+    }
+
+    let activeReservationsCount = 0;
+    if (stockReservationsCollection) {
+      activeReservationsCount = await stockReservationsCollection.countDocuments({ status: "reserved" });
+    }
+
+    let linkedProductsCount = 0;
+    if (productsCollection2) {
+      linkedProductsCount = await productsCollection2.countDocuments({
+        "inventoryLink.recordId": { $exists: true, $ne: null }
+      });
+    }
+
+    res.json({
+      success: true,
+      pocketbase: {
+        connected: pbConnected,
+        url: POCKETBASE_URL,
+        error: pbError,
+        totalItems
+      },
+      reservations: {
+        active: activeReservationsCount
+      },
+      linkedProducts: {
+        shop2: linkedProductsCount
+      }
+    });
+  } catch (err) {
+    console.error("Inventory status check error:", err.message);
+    res.status(500).json({ error: "Failed to check inventory status" });
   }
 });
 
@@ -4076,6 +4540,14 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     };
     
     const result = await ordersCollection2.insertOne(orderDoc);
+
+    // Inventory reservation hook (Shop 2, non-blocking)
+    try {
+      await reserveInventoryForOrder({ ...orderDoc, _id: result.insertedId });
+    } catch (invErr) {
+      console.error("[Inventory] Shop 2 order reservation error (non-blocking):", invErr.message);
+    }
+
     res.status(201).json({ 
       success: true, 
       orderId: result.insertedId, 
@@ -4844,6 +5316,7 @@ const connectWithRetry = async () => {
     chefsCollection2 = db2.collection("chefs");
     backupsCollection = db.collection("backups");
     telemetryCollection = db.collection("telemetry");
+    stockReservationsCollection = db2.collection("stock_reservations");
     mongoConnected = true;
     
     productsCollection.createIndex({ category: 1 });
@@ -4869,6 +5342,12 @@ const connectWithRetry = async () => {
     ordersCollection2.createIndex({ status: 1, paymentStatus: 1 });
     ordersCollection2.createIndex({ "customerInfo.phone": 1, createdAt: -1 });
     ordersCollection2.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
+
+    stockReservationsCollection.createIndex({ orderId: 1 });
+    stockReservationsCollection.createIndex({ orderNumber: 1 });
+    stockReservationsCollection.createIndex({ status: 1 });
+    stockReservationsCollection.createIndex({ reservedAt: -1 });
+    stockReservationsCollection.createIndex({ "items.inventoryRecordId": 1 });
 
     adminUsersCollection.createIndex({ username: 1 }, { unique: true });
     chefsCollection.createIndex({ name: 1 });
@@ -5077,6 +5556,9 @@ connectWithRetry();
 
 // Schedule periodic cleanup of cancelled orders every 30 minutes
 setInterval(cleanupExpiredCancelledOrders, 30 * 60 * 1000).unref();
+
+// Schedule periodic inventory reconciliation sweep every 6 hours
+setInterval(reconcileInventoryStock, 6 * 60 * 60 * 1000).unref();
 
 app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);

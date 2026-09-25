@@ -112,6 +112,10 @@
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             <span>إدارة الإنتاج</span>
           </button>
+          <button v-if="userRole === 'admin' && activeShop === 'shop2'" class="menu-item" :class="{ active: activeTab === 'inventory' }" @click="setTab('inventory')" role="tab" :aria-selected="activeTab === 'inventory'" :tabindex="activeTab === 'inventory' ? 0 : -1">
+            <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <span>المخزون والمستودع</span>
+          </button>
           <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'carousel' }" @click="setTab('carousel')" role="tab" :aria-selected="activeTab === 'carousel'" :tabindex="activeTab === 'carousel' ? 0 : -1">
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
@@ -1031,7 +1035,15 @@
                           </div>
                         </div>
                       </td>
-                      <td class="text-bold">{{ prod.name }}</td>
+                      <td>
+                        <div class="prod-name-wrap">
+                          <span class="text-bold block">{{ prod.name }}</span>
+                          <span v-if="activeShop === 'shop2' && prod.inventoryLink?.recordId" class="badge-link-pill" :title="'مرتبط بالمخزون: ' + prod.inventoryLink.itemName">
+                            <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                            <span>{{ prod.inventoryLink.itemName }}</span>
+                          </span>
+                        </div>
+                      </td>
                       <td>
                         {{ prod.category }}
                         <span v-if="prod.subCategory" class="badge-sub">{{ prod.subCategory }}</span>
@@ -1951,6 +1963,7 @@
                       <th>المجموع</th>
                       <th>حالة الدفع</th>
                       <th>نوع السعر</th>
+                      <th v-if="activeShop === 'shop2'">المخزون</th>
                       <th>الحالة</th>
                       <th>إجراءات</th>
 </tr>
@@ -1971,13 +1984,14 @@
                         <td><div class="skeleton-shimmer" style="width: 75px; height: 20px;"></div></td>
                         <td><div class="skeleton-shimmer" style="width: 70px; height: 24px; border-radius: 20px;"></div></td>
                         <td><div class="skeleton-shimmer" style="width: 50px; height: 22px; border-radius: 6px;"></div></td>
+                        <td v-if="activeShop === 'shop2'"><div class="skeleton-shimmer" style="width: 60px; height: 22px; border-radius: 6px;"></div></td>
                         <td><div class="skeleton-shimmer" style="width: 100px; height: 32px; border-radius: 8px;"></div></td>
                         <td><div class="skeleton-shimmer" style="width: 80px; height: 30px; border-radius: 8px;"></div></td>
                       </tr>
                     </template>
 
                     <tr v-else-if="filteredOrders.length === 0">
-                      <td colspan="9" class="text-center p-4">لا توجد طلبات متطابقة.</td>
+                      <td :colspan="activeShop === 'shop2' ? 10 : 9" class="text-center p-4">لا توجد طلبات متطابقة.</td>
                     </tr>
                     <tr v-else v-for="(order, idx) in paginatedOrders" :key="order._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
                       <td class="text-bold text-mono">
@@ -2039,6 +2053,18 @@
                       <td>
                         <span v-if="order.priceMode === 'bulk'" class="price-mode-badge bulk">جملة</span>
                         <span v-else class="text-muted text-small">-</span>
+                      </td>
+                      <td v-if="activeShop === 'shop2'">
+                        <span 
+                          v-if="getOrderStockStatus(order)" 
+                          class="order-stock-pill" 
+                          :class="getOrderStockStatus(order).class"
+                          :title="'حالة المخزون: ' + getOrderStockStatus(order).label"
+                        >
+                          <span class="stock-pill-dot">{{ getOrderStockStatus(order).icon }}</span>
+                          <span>{{ getOrderStockStatus(order).label }}</span>
+                        </span>
+                        <span v-else class="text-muted text-small">—</span>
                       </td>
                       <td>
                         <div class="d-flex flex-column gap-1 align-items-center">
@@ -2179,6 +2205,14 @@
                       </span>
                       <span v-if="order.notes" class="mob-meta-note">
                         <span>ملاحظة: {{ order.notes }}</span>
+                      </span>
+                    </div>
+
+                    <!-- Inventory Reservation Pill for Shop 2 -->
+                    <div v-if="activeShop === 'shop2' && getOrderStockStatus(order)" class="mob-card-stock-row mb-2">
+                      <span class="order-stock-pill" :class="getOrderStockStatus(order).class">
+                        <span class="stock-pill-dot">{{ getOrderStockStatus(order).icon }}</span>
+                        <span>مخزون: {{ getOrderStockStatus(order).label }}</span>
                       </span>
                     </div>
 
@@ -3335,6 +3369,201 @@
             </div>
           </div>
 
+          <!-- INVENTORY MANAGEMENT TAB (SHOP 2 ONLY) -->
+          <div v-else-if="activeTab === 'inventory' && userRole === 'admin' && activeShop === 'shop2'" class="inventory-tab-content">
+            <!-- Top KPI Cards -->
+            <div class="inventory-stats-grid mb-4">
+              <div class="stat-card glass-panel">
+                <div class="stat-icon-wrapper bg-blue-subtle text-primary">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-label">إجمالي الأصناف بالمخزون</span>
+                  <span class="stat-value text-mono">{{ inventorySummaryStats.total }}</span>
+                </div>
+              </div>
+
+              <div class="stat-card glass-panel" :class="{ 'has-alert': inventorySummaryStats.low > 0 }">
+                <div class="stat-icon-wrapper bg-amber-subtle text-amber">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-label">مخزون منخفض (تحت الحد)</span>
+                  <span class="stat-value text-mono text-warning">{{ inventorySummaryStats.low }}</span>
+                </div>
+              </div>
+
+              <div class="stat-card glass-panel">
+                <div class="stat-icon-wrapper bg-emerald-subtle text-success">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-label">إجمالي المحجوز للطلبات</span>
+                  <span class="stat-value text-mono text-success">{{ inventorySummaryStats.totalReserved }}</span>
+                </div>
+              </div>
+
+              <div class="stat-card glass-panel" :class="{ 'has-critical': inventorySummaryStats.out > 0 }">
+                <div class="stat-icon-wrapper bg-red-subtle text-danger">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-label">نافد من المخزن</span>
+                  <span class="stat-value text-mono text-danger">{{ inventorySummaryStats.out }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Toolbar & Controls -->
+            <div class="table-card glass-panel overflow-hidden">
+              <div class="card-toolbar card-toolbar-unified">
+                <div class="search-input-wrapper flex-grow-1" style="max-width: 320px;">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input v-model="inventorySearch" type="text" class="form-control search-input" placeholder="بحث بالاسم أو الفئة أو المنتج المرتبط…" />
+                  <button v-if="inventorySearch" type="button" @click="inventorySearch = ''" class="btn-clear-search">&times;</button>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <!-- Category Filter -->
+                  <select v-model="inventoryCategoryFilter" class="form-control form-control-sm" style="min-width: 140px;">
+                    <option value="all">جميع الفئات بالمخزن</option>
+                    <option v-for="cat in inventoryCategories" :key="cat" :value="cat">{{ cat }}</option>
+                  </select>
+
+                  <!-- Status Filter -->
+                  <select v-model="inventoryStatusFilter" class="form-control form-control-sm" style="min-width: 130px;">
+                    <option value="all">جميع الحالات</option>
+                    <option value="available">متوفر بكمية كافية</option>
+                    <option value="low">مخزون منخفض</option>
+                    <option value="out">نافد من المخزن</option>
+                  </select>
+
+                  <!-- Refresh / Reconcile -->
+                  <button @click="triggerInventoryReconcile" :disabled="reconcileLoading" class="btn btn-outline btn-sm d-flex align-items-center gap-1" title="تحديث ومطابقة مع PocketBase">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'spin-animation': reconcileLoading }"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span>مطابقة المخزون</span>
+                  </button>
+
+                  <!-- Print A4 -->
+                  <button @click="printInventoryReport" class="btn btn-outline btn-sm d-flex align-items-center gap-1" title="طباعة كشف المخزون A4">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <span>طباعة A4</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Desktop Table -->
+              <div class="table-container desktop-inventory-table-wrap">
+                <table class="admin-table desktop-inventory-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>الصنف في المستودع</th>
+                      <th>الفئة</th>
+                      <th>المنتج المرتبط بالمتجر</th>
+                      <th>الكمية بالمستودع</th>
+                      <th>حد التنبيه</th>
+                      <th>محجوز للطلبات</th>
+                      <th>المتاح الصافي</th>
+                      <th>الحالة</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="inventoryLoading">
+                      <td colspan="10" class="text-center p-4">جاري تحميل أصناف المخزون من المستودع…</td>
+                    </tr>
+                    <tr v-else-if="filteredInventoryItems.length === 0">
+                      <td colspan="10" class="text-center p-4">لا توجد أصناف مطابقة في المخزون.</td>
+                    </tr>
+                    <tr v-else v-for="item in filteredInventoryItems" :key="item.id" :class="{ 'row-low-stock': item.quantity <= item.min_stock && item.quantity > 0, 'row-out-stock': item.quantity <= 0 }">
+                      <td class="text-mono text-muted text-small">{{ item.legacy_id || item.id.slice(0, 6) }}</td>
+                      <td class="text-bold">{{ item.name }}</td>
+                      <td><span class="category-pill">{{ item.category || 'عام' }}</span></td>
+                      <td>
+                        <span v-if="item.linkedProduct" class="badge badge-link-success" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون'">
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                          <span>{{ item.linkedProduct.productName }}</span>
+                        </span>
+                        <span v-else class="text-muted text-small">غير مرتبط</span>
+                      </td>
+                      <td class="text-mono font-bold">{{ item.quantity }}</td>
+                      <td class="text-mono text-muted">{{ item.min_stock }}</td>
+                      <td class="text-mono">
+                        <span v-if="item.reserved_qty > 0" class="badge-reserved-count font-bold text-amber">
+                          {{ item.reserved_qty }}
+                        </span>
+                        <span v-else class="text-muted">0</span>
+                      </td>
+                      <td class="text-mono font-bold" :class="item.available_qty <= item.min_stock ? 'text-danger' : 'text-success'">
+                        {{ item.available_qty }}
+                      </td>
+                      <td>
+                        <span v-if="item.quantity <= 0" class="stock-state-pill out">نافد</span>
+                        <span v-else-if="item.quantity <= item.min_stock" class="stock-state-pill low">منخفض</span>
+                        <span v-else class="stock-state-pill ok">متوفر</span>
+                      </td>
+                      <td>
+                        <button type="button" class="btn btn-sm btn-outline" @click="openItemReservationsModal(item)" title="عرض الحركات والحجوزات">
+                          سجل الحجوزات
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile View (Cards) -->
+              <div class="mobile-inventory-cards">
+                <div v-if="inventoryLoading" class="text-center p-4 text-muted">جاري التحميل…</div>
+                <div v-else-if="filteredInventoryItems.length === 0" class="text-center p-4 text-muted">لا توجد أصناف مطابقة.</div>
+                <div v-else v-for="item in filteredInventoryItems" :key="'mob-inv-' + item.id" class="inventory-mob-card glass-panel" :class="{ 'is-low': item.quantity <= item.min_stock && item.quantity > 0, 'is-out': item.quantity <= 0 }">
+                  <div class="inv-mob-header">
+                    <div>
+                      <h4 class="inv-mob-name font-bold">{{ item.name }}</h4>
+                      <span class="category-pill">{{ item.category || 'عام' }}</span>
+                    </div>
+                    <span v-if="item.quantity <= 0" class="stock-state-pill out">نافد</span>
+                    <span v-else-if="item.quantity <= item.min_stock" class="stock-state-pill low">منخفض</span>
+                    <span v-else class="stock-state-pill ok">متوفر</span>
+                  </div>
+
+                  <div class="inv-mob-metrics">
+                    <div class="metric-item">
+                      <span class="m-label">بالمستودع</span>
+                      <span class="m-val text-mono font-bold">{{ item.quantity }}</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="m-label">حد التنبيه</span>
+                      <span class="m-val text-mono text-muted">{{ item.min_stock }}</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="m-label">المحجوز</span>
+                      <span class="m-val text-mono text-amber font-bold">{{ item.reserved_qty || 0 }}</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="m-label">الصافي المتاح</span>
+                      <span class="m-val text-mono font-bold" :class="item.available_qty <= item.min_stock ? 'text-danger' : 'text-success'">{{ item.available_qty }}</span>
+                    </div>
+                  </div>
+
+                  <div class="inv-mob-footer">
+                    <div class="inv-mob-link">
+                      <span v-if="item.linkedProduct" class="badge badge-link-success">
+                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        <span>{{ item.linkedProduct.productName }}</span>
+                      </span>
+                      <span v-else class="text-muted text-small">غير مرتبط بمنتج</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline" @click="openItemReservationsModal(item)">
+                      سجل الحجوزات
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- USERS MANAGEMENT TAB -->
           <div v-else-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
             <div class="table-card glass-panel overflow-hidden">
@@ -3631,6 +3860,85 @@
       </div>
     </div>
   </div>
+    </Transition>
+
+    <!-- Stock Reservations History Modal -->
+    <Transition name="modal-spring-fade">
+    <div 
+      v-if="showReservationsModal" 
+      class="modal-overlay" 
+      @click.self="showReservationsModal = false"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reservations-modal-title"
+    >
+      <div class="modal-box glass-panel max-w-lg" v-sheet-gesture="() => showReservationsModal = false" style="max-width: 640px;">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-title-icon" aria-hidden="true">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
+            <h3 id="reservations-modal-title">سجل حجوزات المخزون — {{ selectedInventoryItemForReservations?.name }}</h3>
+          </div>
+          <button @click="showReservationsModal = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="modal-body p-3">
+          <div class="inv-item-mini-summary mb-3 p-3 rounded bg-slate-50 border border-slate-200 d-flex justify-content-between">
+            <div>
+              <span class="text-muted block text-small">الرصيد الفعلي بالمستودع</span>
+              <strong class="text-mono font-bold">{{ selectedInventoryItemForReservations?.quantity || 0 }}</strong>
+            </div>
+            <div>
+              <span class="text-muted block text-small">إجمالي المحجوز</span>
+              <strong class="text-mono font-bold text-amber">{{ selectedInventoryItemForReservations?.reserved_qty || 0 }}</strong>
+            </div>
+            <div>
+              <span class="text-muted block text-small">المتاح الصافي للبيع</span>
+              <strong class="text-mono font-bold text-success">{{ selectedInventoryItemForReservations?.available_qty || 0 }}</strong>
+            </div>
+          </div>
+
+          <div class="table-container" style="max-height: 380px; overflow-y: auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>رقم الطلب</th>
+                  <th>الكمية المحجوزة</th>
+                  <th>الرصيد السابق ← الجديد</th>
+                  <th>الحالة</th>
+                  <th>التاريخ والوقت</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="itemReservationsList.length === 0">
+                  <td colspan="5" class="text-center p-3 text-muted">لا توجد حركات حجز سابقة لهذا الصنف.</td>
+                </tr>
+                <tr v-else v-for="res in itemReservationsList" :key="res._id">
+                  <td class="text-mono font-bold">#{{ res.orderNumber }}</td>
+                  <td class="text-mono font-bold text-amber">{{ res.itemReservedQty }}</td>
+                  <td class="text-mono text-small">{{ res.itemPrevStock }} ← {{ res.itemNewStock }}</td>
+                  <td>
+                    <span v-if="res.status === 'reserved'" class="stock-state-pill low">محجوز</span>
+                    <span v-else-if="res.status === 'deducted'" class="stock-state-pill ok">مخصوم نهائياً</span>
+                    <span v-else-if="res.status === 'returned'" class="stock-state-pill out">مسترجع للمخزن</span>
+                    <span v-else class="text-muted">{{ res.status }}</span>
+                  </td>
+                  <td class="text-mono text-small">{{ new Date(res.reservedAt || res.createdAt).toLocaleString('ar-LY') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" @click="showReservationsModal = false">إغلاق</button>
+        </div>
+      </div>
+    </div>
     </Transition>
 
     <!-- New Fast Order Modal (POS Mode) -->
@@ -5144,6 +5452,72 @@
           <div class="form-group checkbox-group mt-2">
             <input type="checkbox" id="modal-allow-float" v-model="editingProduct.allowFloat" />
             <label for="modal-allow-float">يسمح بالكميات الكسرية (مثل: 0.5 كجم)</label>
+          </div>
+
+          <!-- Shop 2 Inventory Linking Section -->
+          <div v-if="activeShop === 'shop2'" class="form-group inventory-link-section mt-3 p-3 rounded border border-slate-200 bg-slate-50">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <label class="form-label font-bold mb-0 d-flex align-items-center gap-2">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span>ربط بمستودع المخزون (InventoryApp)</span>
+              </label>
+              <button 
+                v-if="editingProduct.inventoryLink && editingProduct.inventoryLink.recordId" 
+                type="button" 
+                class="btn btn-sm btn-link text-danger p-0" 
+                @click="editingProduct.inventoryLink = null"
+              >
+                فك الارتباط
+              </button>
+            </div>
+
+            <!-- If Already Linked -->
+            <div v-if="editingProduct.inventoryLink && editingProduct.inventoryLink.recordId" class="linked-item-box p-2 bg-white rounded border border-slate-200">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-bold text-primary d-inline-flex align-items-center gap-1">
+                  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                  <span>{{ editingProduct.inventoryLink.itemName }}</span>
+                </span>
+                <span class="text-mono text-small text-muted">ID: {{ editingProduct.inventoryLink.legacyId || editingProduct.inventoryLink.recordId.slice(0, 6) }}</span>
+              </div>
+              <div class="row g-2 align-items-center">
+                <div class="col-8">
+                  <label class="text-small text-muted block mb-1">معامل الخصم (كم وحدة مخزون لكل طلب)</label>
+                  <input 
+                    v-model.number="editingProduct.inventoryLink.conversionFactor" 
+                    type="number" 
+                    step="0.01" 
+                    min="0.01" 
+                    class="form-control form-control-sm text-mono" 
+                    placeholder="1" 
+                  />
+                </div>
+                <div class="col-4 text-center">
+                  <span class="text-small text-muted block">المخزون الحالي</span>
+                  <span class="text-mono font-bold text-success">
+                    {{ inventoryItems.find(i => i.id === editingProduct.inventoryLink.recordId)?.quantity ?? '—' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- If Not Linked Yet -->
+            <div v-else class="unlinked-item-box">
+              <select 
+                class="form-control form-control-sm"
+                @change="onSelectInventoryLinkForProduct($event.target.value)"
+              >
+                <option value="">-- اختر صنف المخزون لربطه بهذا المنتج --</option>
+                <option 
+                  v-for="invItem in inventoryItems" 
+                  :key="invItem.id" 
+                  :value="invItem.id"
+                >
+                  {{ invItem.name }} ({{ invItem.category || 'عام' }}) — متوفر: {{ invItem.quantity }}
+                </option>
+              </select>
+              <span class="text-muted text-small mt-1 block">عند ربط المنتج، سيتم حجز الكمية تلقائياً من المستودع عند كل طلب جديد وخصمها عند الاستلام.</span>
+            </div>
           </div>
 
           <div class="modal-footer mt-4">
@@ -7465,7 +7839,7 @@ export default {
     };
 
     // Persistent Active Tab Management across page reloads
-    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'carousel', 'users', 'settings'];
+    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'inventory', 'carousel', 'users', 'settings'];
     const getInitialTab = () => {
       try {
         const queryTab = route.query && route.query.tab ? String(route.query.tab) : '';
@@ -7603,6 +7977,7 @@ export default {
       orders: 'سجل وإدارة طلبات العملاء',
       customers: 'قائمة العملاء والمنتجات المفضلة',
       production: 'إدارة الإنتاج وتقارير الشيفات',
+      inventory: 'إدارة ومزامنة المخزون (قسم النواشف)',
       carousel: 'إدارة بنرات العروض التسويقية',
       users: 'إدارة المستخدمين وصلاحيات النظام',
       settings: 'الإعدادات والنسخ الاحتياطي'
@@ -8267,7 +8642,8 @@ export default {
       img: '',
       tags: [],
       chefId: '',
-      chefName: ''
+      chefName: '',
+      inventoryLink: null
     });
 
     const toggleProductTag = (tagName) => {
@@ -8535,6 +8911,7 @@ export default {
         
         editingProduct.chefId = prod.chefId ? String(prod.chefId) : '';
         editingProduct.chefName = prod.chefName || '';
+        editingProduct.inventoryLink = prod.inventoryLink ? { ...prod.inventoryLink } : null;
         
         // Load subcategories for this category
         const cat = categories.value.find(c => c.name === prod.category);
@@ -8556,7 +8933,11 @@ export default {
         editingProduct.tags = [];
         editingProduct.chefId = '';
         editingProduct.chefName = '';
+        editingProduct.inventoryLink = null;
         subCategoriesForEditing.value = [];
+      }
+      if (activeShop.value === 'shop2' && inventoryItems.value.length === 0) {
+        fetchInventoryItems();
       }
       productModalOpen.value = true;
       if (modalFileInput.value) {
@@ -8606,6 +8987,10 @@ export default {
       } else if (editingProduct._id && editingProduct.img) {
         // Keep existing image info for edits without a file change
         formData.append('existingImg', editingProduct.img);
+      }
+
+      if (activeShop.value === 'shop2') {
+        formData.append('inventoryLink', editingProduct.inventoryLink ? JSON.stringify(editingProduct.inventoryLink) : '');
       }
 
       try {
@@ -9638,6 +10023,12 @@ export default {
 
       // Update activeTab immediately for instant, buttery-smooth navigation
       activeTab.value = tab;
+
+      if (tab === 'inventory') {
+        fetchInventoryItems();
+        fetchInventoryStatus();
+        fetchInventoryReservations();
+      }
     };
 
     // User Management Methods
@@ -9843,6 +10234,243 @@ export default {
       }
     };
 
+    // ============ INVENTORY INTEGRATION STATE & METHODS (SHOP 2) ============
+    const inventoryItems = ref([]);
+    const inventoryLoading = ref(false);
+    const inventorySearch = ref('');
+    const inventoryCategoryFilter = ref('all');
+    const inventoryStatusFilter = ref('all');
+    const inventoryReservations = ref([]);
+    const inventoryStatus = ref({
+      connected: false,
+      url: '',
+      totalItems: 0,
+      activeReservations: 0,
+      linkedProducts: 0
+    });
+    const reconcileLoading = ref(false);
+    const showReservationsModal = ref(false);
+    const selectedInventoryItemForReservations = ref(null);
+
+    // Fetch PocketBase inventory items
+    const fetchInventoryItems = async () => {
+      if (activeShop.value !== 'shop2') return;
+      inventoryLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/inventory/items');
+        if (res.ok) {
+          const data = await res.json();
+          inventoryItems.value = data.items || [];
+        } else {
+          const err = await res.json();
+          toast.show(err.error || 'تعذر جلب أصناف المخزون', 'warning');
+        }
+      } catch (e) {
+        console.error('Fetch inventory items error:', e);
+      } finally {
+        inventoryLoading.value = false;
+      }
+    };
+
+    // Fetch inventory status & health
+    const fetchInventoryStatus = async () => {
+      if (activeShop.value !== 'shop2') return;
+      try {
+        const res = await adminFetch('/api/admin/inventory/status');
+        if (res.ok) {
+          const data = await res.json();
+          inventoryStatus.value = {
+            connected: data.pocketbase?.connected || false,
+            url: data.pocketbase?.url || '',
+            totalItems: data.pocketbase?.totalItems || 0,
+            activeReservations: data.reservations?.active || 0,
+            linkedProducts: data.linkedProducts?.shop2 || 0
+          };
+        }
+      } catch (e) {
+        console.error('Fetch inventory status error:', e);
+      }
+    };
+
+    // Fetch stock reservations list
+    const fetchInventoryReservations = async () => {
+      if (activeShop.value !== 'shop2') return;
+      try {
+        const res = await adminFetch('/api/admin/inventory/reservations?limit=300');
+        if (res.ok) {
+          const data = await res.json();
+          inventoryReservations.value = data.reservations || [];
+        }
+      } catch (e) {
+        console.error('Fetch inventory reservations error:', e);
+      }
+    };
+
+    // Trigger manual reconciliation
+    const triggerInventoryReconcile = async () => {
+      reconcileLoading.value = true;
+      try {
+        const res = await adminFetch('/api/admin/inventory/reconcile', { method: 'POST' });
+        if (res.ok) {
+          toast.show('تمت مطابقة ومواءمة المخزون بنجاح', 'success');
+          await Promise.all([fetchInventoryItems(), fetchInventoryStatus(), fetchInventoryReservations()]);
+        } else {
+          toast.show('فشلت مطابقة المخزون', 'danger');
+        }
+      } catch (e) {
+        toast.show('حدث خطأ أثناء الاتصال', 'danger');
+      } finally {
+        reconcileLoading.value = false;
+      }
+    };
+
+    // Quick link / unlink product to an inventory item
+    const updateProductInventoryLink = async (productId, inventoryLink) => {
+      try {
+        const res = await adminFetch(`/api/admin/products/${productId}/inventory-link`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inventoryLink, shop: activeShop.value })
+        });
+        if (res.ok) {
+          toast.show(inventoryLink ? 'تم ربط المنتج بالمخزون' : 'تم فك ارتباط المنتج', 'success');
+          await Promise.all([fetchProducts(), fetchInventoryItems()]);
+        } else {
+          toast.show('فشل في تحديث ربط المخزون', 'danger');
+        }
+      } catch (e) {
+        toast.show('خطأ في الاتصال بالخادم', 'danger');
+      }
+    };
+
+    const onSelectInventoryLinkForProduct = (recordId) => {
+      if (!recordId) {
+        editingProduct.inventoryLink = null;
+        return;
+      }
+      const item = inventoryItems.value.find(i => i.id === recordId);
+      if (item) {
+        editingProduct.inventoryLink = {
+          recordId: item.id,
+          legacyId: item.legacy_id || '',
+          itemName: item.name,
+          conversionFactor: 1
+        };
+      }
+    };
+
+    // Print A4 inventory report
+    const printInventoryReport = () => {
+      if (typeof window !== 'undefined') {
+        window.print();
+      }
+    };
+
+    // Categories extracted from inventory items
+    const inventoryCategories = computed(() => {
+      const cats = new Set();
+      for (const item of inventoryItems.value) {
+        if (item.category && item.category.trim()) cats.add(item.category.trim());
+      }
+      return Array.from(cats).sort((a, b) => a.localeCompare(b, 'ar'));
+    });
+
+    // Filtered inventory items for the table
+    const filteredInventoryItems = computed(() => {
+      let list = inventoryItems.value;
+      if (inventoryCategoryFilter.value && inventoryCategoryFilter.value !== 'all') {
+        list = list.filter(i => (i.category || '').trim() === inventoryCategoryFilter.value);
+      }
+      if (inventoryStatusFilter.value === 'low') {
+        list = list.filter(i => i.quantity <= i.min_stock && i.quantity > 0);
+      } else if (inventoryStatusFilter.value === 'out') {
+        list = list.filter(i => i.quantity <= 0);
+      } else if (inventoryStatusFilter.value === 'available') {
+        list = list.filter(i => i.quantity > i.min_stock);
+      }
+      if (inventorySearch.value && inventorySearch.value.trim()) {
+        const q = inventorySearch.value.trim().toLowerCase();
+        list = list.filter(i => 
+          (i.name || '').toLowerCase().includes(q) || 
+          (i.category || '').toLowerCase().includes(q) ||
+          (i.linkedProduct?.productName || '').toLowerCase().includes(q)
+        );
+      }
+      return list;
+    });
+
+    // Summary Stats
+    const inventorySummaryStats = computed(() => {
+      const total = inventoryItems.value.length;
+      let low = 0;
+      let out = 0;
+      let totalReserved = 0;
+      for (const i of inventoryItems.value) {
+        if (i.quantity <= 0) out++;
+        else if (i.quantity <= i.min_stock) low++;
+        totalReserved += (i.reserved_qty || 0);
+      }
+      return { total, low, out, totalReserved };
+    });
+
+    // Reservations mapped by orderId & orderNumber
+    const orderReservationMap = computed(() => {
+      const map = {};
+      for (const r of inventoryReservations.value) {
+        if (r.orderId) map[String(r.orderId)] = r;
+        if (r.orderNumber) map[String(r.orderNumber)] = r;
+      }
+      return map;
+    });
+
+    // Helper: Get stock status badge for an order
+    const getOrderStockStatus = (order) => {
+      if (!order || activeShop.value !== 'shop2') return null;
+      const res = orderReservationMap.value[String(order._id)] || orderReservationMap.value[String(order.orderNumber)];
+      if (!res) return null;
+      if (res.status === 'reserved') return { status: 'reserved', label: 'محجوز', icon: '◉', class: 'stock-badge-reserved' };
+      if (res.status === 'deducted') return { status: 'deducted', label: 'مخصوم', icon: '✓', class: 'stock-badge-deducted' };
+      if (res.status === 'returned') return { status: 'returned', label: 'مُرجع', icon: '↩', class: 'stock-badge-returned' };
+      return { status: res.status, label: res.status, icon: '•', class: 'stock-badge-other' };
+    };
+
+    // Item-specific reservations list for modal
+    const itemReservationsList = computed(() => {
+      if (!selectedInventoryItemForReservations.value) return [];
+      const recId = selectedInventoryItemForReservations.value.id;
+      const list = [];
+      for (const r of inventoryReservations.value) {
+        if (!r.items) continue;
+        const match = r.items.find(it => it.inventoryRecordId === recId);
+        if (match) {
+          list.push({
+            _id: r._id,
+            orderNumber: r.orderNumber,
+            status: r.status,
+            reservedAt: r.reservedAt,
+            createdAt: r.createdAt,
+            itemReservedQty: match.reservedQty,
+            itemPrevStock: match.previousStock,
+            itemNewStock: match.newStock
+          });
+        }
+      }
+      return list;
+    });
+
+    const openItemReservationsModal = (item) => {
+      selectedInventoryItemForReservations.value = item;
+      showReservationsModal.value = true;
+    };
+
+    const getProductAvailableStock = (productId) => {
+      if (activeShop.value !== 'shop2' || !productId) return null;
+      const prod = products.value.find(p => String(p._id) === String(productId));
+      if (!prod || !prod.inventoryLink?.recordId) return null;
+      const inv = inventoryItems.value.find(i => i.id === prod.inventoryLink.recordId);
+      return inv ? inv.available_qty : null;
+    };
+
     // Load Data
     const loadAllData = async () => {
       loading.value = true;
@@ -9859,6 +10487,13 @@ export default {
           fetchUsers(),
           fetchBackups()
         ]);
+        if (activeShop.value === 'shop2') {
+          await Promise.all([
+            fetchInventoryItems(),
+            fetchInventoryStatus(),
+            fetchInventoryReservations()
+          ]);
+        }
       } catch (err) {
         toast.show('خطأ في تحميل بيانات لوحة الإدارة', 'danger');
       } finally {
@@ -13429,6 +14064,31 @@ const closeSuggestionsWithDelay = () => {
       publicAdminUsers,
       fetchPublicAdminUsers,
       tabTitles,
+      inventoryItems,
+      inventoryLoading,
+      inventorySearch,
+      inventoryCategoryFilter,
+      inventoryStatusFilter,
+      inventoryReservations,
+      inventoryStatus,
+      reconcileLoading,
+      showReservationsModal,
+      selectedInventoryItemForReservations,
+      fetchInventoryItems,
+      fetchInventoryStatus,
+      fetchInventoryReservations,
+      triggerInventoryReconcile,
+      updateProductInventoryLink,
+      onSelectInventoryLinkForProduct,
+      printInventoryReport,
+      inventoryCategories,
+      filteredInventoryItems,
+      inventorySummaryStats,
+      orderReservationMap,
+      getOrderStockStatus,
+      itemReservationsList,
+      openItemReservationsModal,
+      getProductAvailableStock,
       analyticsPeriod,
       analyticsStartDate,
       analyticsEndDate,
@@ -29346,6 +30006,421 @@ select.pos-control {
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
+  }
+}
+
+/* ============================================================
+   INVENTORY & WAREHOUSE MANAGEMENT (SHOP 2 / DRY GOODS)
+   ============================================================ */
+
+.inventory-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.inventory-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.inventory-stats-grid .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.inventory-stats-grid .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+}
+
+.inventory-stats-grid .stat-card.has-alert {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(135deg, #ffffff 60%, rgba(254, 243, 199, 0.25) 100%);
+}
+
+.inventory-stats-grid .stat-card.has-critical {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: linear-gradient(135deg, #ffffff 60%, rgba(254, 226, 226, 0.25) 100%);
+}
+
+.inventory-stats-grid .stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bg-blue-subtle {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.bg-amber-subtle {
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+}
+
+.bg-emerald-subtle {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.bg-red-subtle {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.inventory-stats-grid .stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.inventory-stats-grid .stat-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inventory-stats-grid .stat-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+/* Category Pill */
+.category-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+}
+
+/* Stock State Pill (ok, low, out) */
+.stock-state-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.stock-state-pill.ok {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.stock-state-pill.low {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.stock-state-pill.out {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+/* Link Badges */
+.badge-link-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  max-width: 100%;
+}
+
+.badge-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  width: fit-content;
+}
+
+.badge-reserved-count {
+  display: inline-block;
+  font-size: 0.88rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+/* Table Row Stock Warning States */
+.admin-table tbody tr.row-low-stock {
+  background: rgba(254, 243, 199, 0.25) !important;
+}
+
+.admin-table tbody tr.row-out-stock {
+  background: rgba(254, 226, 226, 0.3) !important;
+}
+
+/* Order Stock Indicators (Table & Mobile Cards) */
+.order-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.order-stock-pill .stock-pill-dot {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.stock-badge-reserved {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.stock-badge-deducted {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.stock-badge-returned {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.28);
+}
+
+.stock-badge-other {
+  background: rgba(148, 163, 184, 0.12);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.mob-card-stock-row {
+  display: flex;
+  align-items: center;
+}
+
+/* Product Modal Inventory Linking Section */
+.inventory-link-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.inventory-link-section .linked-item-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+/* Mini Item Summary inside Reservations Modal */
+.inv-item-mini-summary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+/* Mobile Inventory Cards */
+.mobile-inventory-cards {
+  display: none;
+}
+
+/* Responsive & Touch Optimization */
+@media (max-width: 1024px) {
+  .inventory-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-inventory-table-wrap {
+    display: none !important;
+  }
+  .mobile-inventory-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+  .inventory-mob-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .inventory-mob-card.is-low {
+    border-right: 4px solid #f59e0b;
+    background: linear-gradient(270deg, rgba(254, 243, 199, 0.2) 0%, #ffffff 20%);
+  }
+  .inventory-mob-card.is-out {
+    border-right: 4px solid #ef4444;
+    background: linear-gradient(270deg, rgba(254, 226, 226, 0.25) 0%, #ffffff 20%);
+  }
+  .inv-mob-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .inv-mob-name {
+    font-size: 0.95rem;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+  .inv-mob-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .inv-mob-metrics .metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .inv-mob-metrics .m-label {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+  .inv-mob-metrics .m-val {
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+  .inv-mob-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .inv-mob-link {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .inventory-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .inv-mob-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+/* Print Styles for A4 Inventory Count */
+@media print {
+  .admin-sidebar,
+  .admin-header,
+  .card-toolbar,
+  .btn,
+  .modal-overlay,
+  .mobile-inventory-cards,
+  .order-actions-btns,
+  .theme-toggle,
+  .notification-center,
+  .live-pill {
+    display: none !important;
+  }
+  .admin-main-content,
+  .table-card,
+  .table-container,
+  .desktop-inventory-table-wrap {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .desktop-inventory-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt !important;
+  }
+  .desktop-inventory-table th,
+  .desktop-inventory-table td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+    color: #000000 !important;
+  }
+  .desktop-inventory-table th {
+    background: #f1f5f9 !important;
+    font-weight: bold !important;
+  }
+  .desktop-inventory-table tr {
+    page-break-inside: avoid !important;
+  }
+  .inventory-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+  .inventory-stats-grid .stat-card {
+    border: 1px solid #94a3b8 !important;
+    box-shadow: none !important;
+    padding: 8px !important;
   }
 }
 </style>
