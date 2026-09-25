@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emenu-cache-v178';
+const CACHE_NAME = 'emenu-cache-v181';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

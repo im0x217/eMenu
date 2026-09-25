@@ -3416,28 +3416,32 @@
 
             <!-- Toolbar & Controls -->
             <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-unified">
-                <div class="search-input-wrapper flex-grow-1" style="max-width: 320px;">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <input v-model="inventorySearch" type="text" class="form-control search-input" placeholder="بحث بالاسم أو الفئة أو المنتج المرتبط…" />
-                  <button v-if="inventorySearch" type="button" @click="inventorySearch = ''" class="btn-clear-search">&times;</button>
+              <div class="card-toolbar card-toolbar-unified inventory-toolbar-unified">
+                <div class="toolbar-search-filter-group">
+                  <div class="search-input-wrapper flex-grow-1" style="max-width: 320px;">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input v-model="inventorySearch" type="text" class="form-control search-input" placeholder="بحث بالاسم أو الفئة أو المنتج المرتبط…" />
+                    <button v-if="inventorySearch" type="button" @click="inventorySearch = ''" class="btn-clear-search">&times;</button>
+                  </div>
+
+                  <div class="filters-inline">
+                    <!-- Category Filter -->
+                    <select v-model="inventoryCategoryFilter" aria-label="تصفية حسب فئة المستودع" class="form-control select-pill inventory-filter-select">
+                      <option value="all">جميع الفئات بالمخزن</option>
+                      <option v-for="cat in inventoryCategories" :key="cat" :value="cat">{{ cat }}</option>
+                    </select>
+
+                    <!-- Status Filter -->
+                    <select v-model="inventoryStatusFilter" aria-label="تصفية حسب حالة التوفر" class="form-control select-pill inventory-filter-select">
+                      <option value="all">جميع الحالات</option>
+                      <option value="available">متوفر بكمية كافية</option>
+                      <option value="low">مخزون منخفض</option>
+                      <option value="out">نافد من المخزن</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <!-- Category Filter -->
-                  <select v-model="inventoryCategoryFilter" class="form-control form-control-sm" style="min-width: 140px;">
-                    <option value="all">جميع الفئات بالمخزن</option>
-                    <option v-for="cat in inventoryCategories" :key="cat" :value="cat">{{ cat }}</option>
-                  </select>
-
-                  <!-- Status Filter -->
-                  <select v-model="inventoryStatusFilter" class="form-control form-control-sm" style="min-width: 130px;">
-                    <option value="all">جميع الحالات</option>
-                    <option value="available">متوفر بكمية كافية</option>
-                    <option value="low">مخزون منخفض</option>
-                    <option value="out">نافد من المخزن</option>
-                  </select>
-
+                <div class="toolbar-actions-group">
                   <!-- Refresh / Reconcile -->
                   <button @click="triggerInventoryReconcile" :disabled="reconcileLoading" class="btn btn-outline btn-sm d-flex align-items-center gap-1" title="تحديث ومطابقة مع PocketBase">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'spin-animation': reconcileLoading }"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -3457,16 +3461,16 @@
                 <table class="admin-table desktop-inventory-table">
                   <thead>
                     <tr>
-                      <th>#</th>
+                      <th class="col-center" style="width: 45px;">#</th>
                       <th>الصنف في المستودع</th>
-                      <th>الفئة</th>
-                      <th>المنتج المرتبط بالمتجر</th>
-                      <th>الكمية بالمستودع</th>
-                      <th>حد التنبيه</th>
-                      <th>محجوز للطلبات</th>
-                      <th>المتاح الصافي</th>
-                      <th>الحالة</th>
-                      <th>إجراءات</th>
+                      <th class="col-center" style="width: 75px;">الفئة</th>
+                      <th>المنتج المرتبط</th>
+                      <th class="col-center" style="width: 75px;">بالمستودع</th>
+                      <th class="col-center" style="width: 70px;">حد التنبيه</th>
+                      <th class="col-center" style="width: 70px;">المحجوز</th>
+                      <th class="col-center" style="width: 80px;">الصافي المتاح</th>
+                      <th class="col-center" style="width: 75px;">الحالة</th>
+                      <th class="col-center" style="width: 95px;">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3477,9 +3481,9 @@
                       <td colspan="10" class="text-center p-4">لا توجد أصناف مطابقة في المخزون.</td>
                     </tr>
                     <tr v-else v-for="item in filteredInventoryItems" :key="item.id" :class="{ 'row-low-stock': item.quantity <= item.min_stock && item.quantity > 0, 'row-out-stock': item.quantity <= 0 }">
-                      <td class="text-mono text-muted text-small">{{ item.legacy_id || item.id.slice(0, 6) }}</td>
+                      <td class="col-center text-mono text-muted text-small">{{ item.legacy_id || item.id.slice(0, 6) }}</td>
                       <td class="text-bold">{{ item.name }}</td>
-                      <td><span class="category-pill">{{ item.category || 'عام' }}</span></td>
+                      <td class="col-center"><span class="category-pill">{{ item.category || 'عام' }}</span></td>
                       <td>
                         <span v-if="item.linkedProduct" class="badge badge-link-success" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون'">
                           <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
@@ -3487,23 +3491,23 @@
                         </span>
                         <span v-else class="text-muted text-small">غير مرتبط</span>
                       </td>
-                      <td class="text-mono font-bold">{{ item.quantity }}</td>
-                      <td class="text-mono text-muted">{{ item.min_stock }}</td>
-                      <td class="text-mono">
+                      <td class="col-center text-mono font-bold">{{ item.quantity }}</td>
+                      <td class="col-center text-mono text-muted">{{ item.min_stock }}</td>
+                      <td class="col-center text-mono">
                         <span v-if="item.reserved_qty > 0" class="badge-reserved-count font-bold text-amber">
                           {{ item.reserved_qty }}
                         </span>
                         <span v-else class="text-muted">0</span>
                       </td>
-                      <td class="text-mono font-bold" :class="item.available_qty <= item.min_stock ? 'text-danger' : 'text-success'">
+                      <td class="col-center text-mono font-bold" :class="item.available_qty <= item.min_stock ? 'text-danger' : 'text-success'">
                         {{ item.available_qty }}
                       </td>
-                      <td>
+                      <td class="col-center">
                         <span v-if="item.quantity <= 0" class="stock-state-pill out">نافد</span>
                         <span v-else-if="item.quantity <= item.min_stock" class="stock-state-pill low">منخفض</span>
                         <span v-else class="stock-state-pill ok">متوفر</span>
                       </td>
-                      <td>
+                      <td class="col-center">
                         <button type="button" class="btn btn-sm btn-outline" @click="openItemReservationsModal(item)" title="عرض الحركات والحجوزات">
                           سجل الحجوزات
                         </button>
@@ -3887,18 +3891,18 @@
         </div>
 
         <div class="modal-body p-3">
-          <div class="inv-item-mini-summary mb-3 p-3 rounded bg-slate-50 border border-slate-200 d-flex justify-content-between">
-            <div>
-              <span class="text-muted block text-small">الرصيد الفعلي بالمستودع</span>
-              <strong class="text-mono font-bold">{{ selectedInventoryItemForReservations?.quantity || 0 }}</strong>
+          <div class="inv-item-mini-summary mb-3">
+            <div class="mini-summary-item">
+              <span class="mini-summary-label">الرصيد الفعلي بالمستودع</span>
+              <strong class="mini-summary-val text-mono">{{ selectedInventoryItemForReservations?.quantity || 0 }}</strong>
             </div>
-            <div>
-              <span class="text-muted block text-small">إجمالي المحجوز</span>
-              <strong class="text-mono font-bold text-amber">{{ selectedInventoryItemForReservations?.reserved_qty || 0 }}</strong>
+            <div class="mini-summary-item">
+              <span class="mini-summary-label">إجمالي المحجوز</span>
+              <strong class="mini-summary-val text-mono text-amber">{{ selectedInventoryItemForReservations?.reserved_qty || 0 }}</strong>
             </div>
-            <div>
-              <span class="text-muted block text-small">المتاح الصافي للبيع</span>
-              <strong class="text-mono font-bold text-success">{{ selectedInventoryItemForReservations?.available_qty || 0 }}</strong>
+            <div class="mini-summary-item">
+              <span class="mini-summary-label">المتاح الصافي للبيع</span>
+              <strong class="mini-summary-val text-mono text-success">{{ selectedInventoryItemForReservations?.available_qty || 0 }}</strong>
             </div>
           </div>
 
@@ -30021,20 +30025,21 @@ select.pos-control {
 
 .inventory-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
 
 .inventory-stats-grid .stat-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.15rem 1.25rem;
-  border-radius: 14px;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
   background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: 0;
 }
 
 .inventory-stats-grid .stat-card:hover {
@@ -30085,24 +30090,94 @@ select.pos-control {
 .inventory-stats-grid .stat-info {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
 .inventory-stats-grid .stat-label {
   font-size: 0.8rem;
   color: #64748b;
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .inventory-stats-grid .stat-value {
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   font-weight: 800;
   color: #0f172a;
-  line-height: 1.2;
+  line-height: 1.1;
+}
+
+/* Inventory Toolbar Unified Layout */
+.inventory-toolbar-unified {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+.inventory-toolbar-unified .toolbar-search-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.inventory-toolbar-unified .filters-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inventory-filter-select {
+  width: auto !important;
+  min-width: 140px !important;
+  flex: 0 0 auto !important;
+}
+
+.inventory-toolbar-unified .toolbar-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Desktop Inventory Table */
+.desktop-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.desktop-inventory-table th,
+.desktop-inventory-table td {
+  padding: 10px 8px !important;
+  vertical-align: middle;
+  white-space: nowrap;
+  font-size: 0.86rem;
+}
+
+.desktop-inventory-table th.col-center,
+.desktop-inventory-table td.col-center {
+  text-align: center !important;
+}
+
+.desktop-inventory-table th {
+  color: #475569 !important;
+  font-weight: 700 !important;
+  background: #f8fafc;
+}
+
+.desktop-inventory-table td {
+  color: #0f172a !important;
 }
 
 /* Category Pill */
@@ -30258,9 +30333,35 @@ select.pos-control {
 
 /* Mini Item Summary inside Reservations Modal */
 .inv-item-mini-summary {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  color: #0f172a !important;
+  gap: 12px !important;
+}
+
+.inv-item-mini-summary .mini-summary-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 4px !important;
+}
+
+.inv-item-mini-summary .mini-summary-label {
+  font-size: 0.8rem !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+.inv-item-mini-summary .mini-summary-val {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
 }
 
 /* Mobile Inventory Cards */
@@ -30286,24 +30387,25 @@ select.pos-control {
     padding: 12px;
   }
   .inventory-mob-card {
-    background: #ffffff;
-    border: 1px solid rgba(226, 232, 240, 0.85);
-    border-radius: 14px;
-    padding: 14px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.85) !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    color: #0f172a !important;
   }
   .inventory-mob-card.is-low {
-    border-right: 4px solid #f59e0b;
-    background: linear-gradient(270deg, rgba(254, 243, 199, 0.2) 0%, #ffffff 20%);
+    border-right: 4px solid #f59e0b !important;
+    background: linear-gradient(270deg, rgba(254, 243, 199, 0.2) 0%, #ffffff 20%) !important;
   }
   .inventory-mob-card.is-out {
-    border-right: 4px solid #ef4444;
-    background: linear-gradient(270deg, rgba(254, 226, 226, 0.25) 0%, #ffffff 20%);
+    border-right: 4px solid #ef4444 !important;
+    background: linear-gradient(270deg, rgba(254, 226, 226, 0.25) 0%, #ffffff 20%) !important;
   }
   .inv-mob-header {
     display: flex;
@@ -30312,33 +30414,45 @@ select.pos-control {
     gap: 10px;
   }
   .inv-mob-name {
-    font-size: 0.95rem;
-    color: #0f172a;
-    margin: 0 0 4px 0;
+    font-size: 0.95rem !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    margin: 0 0 4px 0 !important;
   }
   .inv-mob-metrics {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 8px 10px;
-    text-align: center;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    text-align: center !important;
+    color: #0f172a !important;
   }
   .inv-mob-metrics .metric-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
   }
   .inv-mob-metrics .m-label {
-    font-size: 0.68rem;
-    color: #64748b;
-    font-weight: 500;
+    font-size: 0.68rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
   }
   .inv-mob-metrics .m-val {
-    font-size: 0.88rem;
-    font-weight: 700;
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+  .inv-mob-metrics .m-val.text-amber {
+    color: #d97706 !important;
+  }
+  .inv-mob-metrics .m-val.text-danger {
+    color: #dc2626 !important;
+  }
+  .inv-mob-metrics .m-val.text-success {
+    color: #059669 !important;
   }
   .inv-mob-footer {
     display: flex;
@@ -30347,6 +30461,7 @@ select.pos-control {
     gap: 10px;
     padding-top: 8px;
     border-top: 1px solid #f1f5f9;
+    color: #0f172a !important;
   }
   .inv-mob-link {
     flex: 1;
