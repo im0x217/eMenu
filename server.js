@@ -478,26 +478,66 @@ const adjustInventoryStock = async (recordId, delta) => {
 const reserveInventoryForOrder = async (orderDoc) => {
   if (!stockReservationsCollection || !productsCollection2) return [];
   const reservationItems = [];
+  let cachedPbRecords = null;
 
   for (const item of orderDoc.items) {
-    if (!item.productId) continue;
     try {
-      const product = await productsCollection2.findOne({
-        _id: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId
-      });
-      if (!product || !product.inventoryLink || !product.inventoryLink.recordId) continue;
+      let product = null;
+      if (item.productId) {
+        product = await productsCollection2.findOne({
+          _id: ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId
+        });
+      }
+      if (!product && item.name) {
+        product = await productsCollection2.findOne({ name: item.name });
+      }
+      if (!product) continue;
 
-      const link = product.inventoryLink;
+      let link = product.inventoryLink;
+      if (!link || !link.recordId) {
+        // Auto-heal: Attempt dynamic lookup in PocketBase inventory
+        try {
+          if (!cachedPbRecords) {
+            const pbData = await pbFetch("/collections/inventory/records?perPage=500");
+            cachedPbRecords = Array.isArray(pbData.items) ? pbData.items : [];
+          }
+          const normProdName = normalizeArabicText(product.name || item.name);
+          const pbMatch = cachedPbRecords.find(p => normalizeArabicText(p.name) === normProdName)
+            || cachedPbRecords.find(p => {
+              const normPB = normalizeArabicText(p.name);
+              return normPB.includes(normProdName) || normProdName.includes(normPB);
+            });
+          if (pbMatch) {
+            link = {
+              recordId: pbMatch.id,
+              legacyId: pbMatch.legacy_id || '',
+              itemName: pbMatch.name,
+              conversionFactor: 1
+            };
+            await productsCollection2.updateOne(
+              { _id: product._id },
+              { $set: { inventoryLink: link } }
+            );
+            product.inventoryLink = link;
+            console.log(`[Inventory] Auto-linked product "${product.name}" to PB item "${pbMatch.name}" (${pbMatch.id})`);
+          }
+        } catch (matchErr) {
+          console.error(`[Inventory] Dynamic auto-link failed for "${product.name}":`, matchErr.message);
+        }
+      }
+
+      if (!link || !link.recordId) continue;
+
       const factor = Number(link.conversionFactor) || 1;
-      const reserveQty = item.quantity * factor;
+      const reserveQty = (Number(item.quantity) || 1) * factor;
 
       const before = await getInventoryStock(link.recordId);
       const prevStock = typeof before.quantity === 'number' ? before.quantity : 0;
       await adjustInventoryStock(link.recordId, -reserveQty);
 
       reservationItems.push({
-        productId: item.productId,
-        productName: item.name,
+        productId: product._id ? product._id.toString() : item.productId,
+        productName: item.name || product.name,
         inventoryRecordId: link.recordId,
         inventoryItemName: link.itemName || '',
         orderedQty: item.quantity,
