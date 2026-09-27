@@ -2677,6 +2677,116 @@ app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkAdmin, async 
   }
 });
 
+// 2a. Adjust or set quantity of an inventory item in PocketBase
+app.patch("/api/admin/inventory/items/:id/quantity", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { quantity, delta } = req.body;
+
+  try {
+    let newQty;
+    if (typeof quantity === 'number') {
+      newQty = Math.max(0, Math.round(quantity));
+    } else if (typeof delta === 'number') {
+      const current = await getInventoryStock(id);
+      const currentQty = typeof current.quantity === 'number' ? current.quantity : 0;
+      newQty = Math.max(0, currentQty + Math.round(delta));
+    } else {
+      return res.status(400).json({ error: "Missing quantity or delta parameter" });
+    }
+
+    const updated = await pbFetch(`/collections/inventory/records/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        quantity: newQty,
+        last_updated_legacy: new Date().toISOString()
+      })
+    });
+
+    res.json({ success: true, item: updated, quantity: newQty });
+  } catch (err) {
+    console.error("Update inventory quantity error:", err.message);
+    res.status(500).json({ error: "Failed to update quantity in PocketBase", details: err.message });
+  }
+});
+
+// 2b. Update item details (name, category, min_stock, quantity)
+app.put("/api/admin/inventory/items/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, category, min_stock, quantity } = req.body;
+
+  try {
+    const payload = {
+      last_updated_legacy: new Date().toISOString()
+    };
+    if (name !== undefined) payload.name = String(name).trim();
+    if (category !== undefined) payload.category = String(category).trim();
+    if (min_stock !== undefined) payload.min_stock = Math.max(0, Math.round(Number(min_stock)));
+    if (quantity !== undefined) payload.quantity = Math.max(0, Math.round(Number(quantity)));
+
+    const updated = await pbFetch(`/collections/inventory/records/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+
+    res.json({ success: true, item: updated });
+  } catch (err) {
+    console.error("Update inventory item error:", err.message);
+    res.status(500).json({ error: "Failed to update item in PocketBase", details: err.message });
+  }
+});
+
+// 2c. Create new inventory item
+app.post("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res) => {
+  const { name, category, quantity, min_stock } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: "Item name is required" });
+  }
+
+  try {
+    const pbList = await pbFetch("/collections/inventory/records?perPage=500");
+    const records = Array.isArray(pbList.items) ? pbList.items : [];
+    let maxId = 0;
+    for (const r of records) {
+      const lid = parseInt(r.legacy_id, 10);
+      if (!isNaN(lid) && lid > maxId) maxId = lid;
+    }
+    const nextId = (maxId + 1).toString();
+
+    const payload = {
+      name: name.trim(),
+      category: (category || '').trim(),
+      quantity: Math.max(0, Math.round(Number(quantity) || 0)),
+      min_stock: Math.max(0, Math.round(Number(min_stock) || 5)),
+      legacy_id: nextId,
+      last_updated_legacy: new Date().toISOString()
+    };
+
+    const created = await pbFetch("/collections/inventory/records", {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    res.json({ success: true, item: created });
+  } catch (err) {
+    console.error("Create inventory item error:", err.message);
+    res.status(500).json({ error: "Failed to create item in PocketBase", details: err.message });
+  }
+});
+
+// 2d. Delete inventory item
+app.delete("/api/admin/inventory/items/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pbFetch(`/collections/inventory/records/${id}`, {
+      method: 'DELETE'
+    });
+    res.json({ success: true, deleted: true });
+  } catch (err) {
+    console.error("Delete inventory item error:", err.message);
+    res.status(500).json({ error: "Failed to delete item from PocketBase", details: err.message });
+  }
+});
+
 // 3. Link or unlink an e-Menu product to a PocketBase inventory item
 app.put("/api/admin/products/:id/inventory-link", checkMongoDB, checkAdmin, async (req, res) => {
   const { id } = req.params;

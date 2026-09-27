@@ -3370,217 +3370,11 @@
           </div>
 
           <!-- INVENTORY MANAGEMENT TAB (SHOP 2 ONLY) -->
-          <div v-else-if="activeTab === 'inventory' && userRole === 'admin' && activeShop === 'shop2'" class="inventory-tab-content">
-            <!-- Top KPI Cards -->
-            <div class="inventory-stats-grid mb-4">
-              <div class="stat-card glass-panel">
-                <div class="stat-icon-wrapper bg-blue-subtle text-primary">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-label">إجمالي الأصناف بالمخزون</span>
-                  <span class="stat-value text-mono">{{ inventorySummaryStats.total }}</span>
-                </div>
-              </div>
-
-              <div class="stat-card glass-panel" :class="{ 'has-alert': inventorySummaryStats.low > 0 }">
-                <div class="stat-icon-wrapper bg-amber-subtle text-amber">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-label">مخزون منخفض (تحت الحد)</span>
-                  <span class="stat-value text-mono text-warning">{{ inventorySummaryStats.low }}</span>
-                </div>
-              </div>
-
-              <div class="stat-card glass-panel">
-                <div class="stat-icon-wrapper bg-emerald-subtle text-success">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-label">إجمالي المحجوز للطلبات</span>
-                  <span class="stat-value text-mono text-success">{{ inventorySummaryStats.totalReserved }}</span>
-                </div>
-              </div>
-
-              <div class="stat-card glass-panel" :class="{ 'has-critical': inventorySummaryStats.out > 0 }">
-                <div class="stat-icon-wrapper bg-red-subtle text-danger">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-label">نافد من المخزن</span>
-                  <span class="stat-value text-mono text-danger">{{ inventorySummaryStats.out }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Toolbar & Controls -->
-            <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-unified inventory-toolbar-unified">
-                <div class="toolbar-search-filter-group">
-                  <div class="search-input-wrapper flex-grow-1" style="max-width: 320px;">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input v-model="inventorySearch" type="text" class="form-control search-input" placeholder="بحث بالاسم أو الفئة أو المنتج المرتبط…" />
-                    <button v-if="inventorySearch" type="button" @click="inventorySearch = ''" class="btn-clear-search">&times;</button>
-                  </div>
-
-                  <div class="filters-inline">
-                    <!-- Category Filter -->
-                    <select v-model="inventoryCategoryFilter" aria-label="تصفية حسب فئة المستودع" class="form-control select-pill inventory-filter-select">
-                      <option value="all">جميع الفئات بالمخزن</option>
-                      <option v-for="cat in inventoryCategories" :key="cat" :value="cat">{{ cat }}</option>
-                    </select>
-
-                    <!-- Status Filter -->
-                    <select v-model="inventoryStatusFilter" aria-label="تصفية حسب حالة التوفر" class="form-control select-pill inventory-filter-select">
-                      <option value="all">جميع الحالات</option>
-                      <option value="available">متوفر بكمية كافية</option>
-                      <option value="low">مخزون منخفض</option>
-                      <option value="out">نافد من المخزن</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="toolbar-actions-group">
-                  <!-- Auto Match By Name -->
-                  <button type="button" @click="openAutoMatchModal" :disabled="autoMatchLoading" class="btn btn-outline btn-sm d-flex align-items-center gap-1 btn-auto-match" title="مطابقة وربط آلي للأصناف المتطابقة بالاسم">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'spin-animation': autoMatchLoading }"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
-                    <span>ربط آلي بالاسم</span>
-                  </button>
-
-                  <!-- Refresh / Reconcile -->
-                  <button @click="triggerInventoryReconcile" :disabled="reconcileLoading" class="btn btn-outline btn-sm d-flex align-items-center gap-1" title="تحديث ومطابقة مع PocketBase">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'spin-animation': reconcileLoading }"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    <span>مطابقة المخزون</span>
-                  </button>
-
-                  <!-- Print A4 -->
-                  <button @click="printInventoryReport" class="btn btn-outline btn-sm d-flex align-items-center gap-1" title="طباعة كشف المخزون A4">
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    <span>طباعة A4</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Desktop Table -->
-              <div class="table-container desktop-inventory-table-wrap">
-                <table class="admin-table desktop-inventory-table">
-                  <thead>
-                    <tr>
-                      <th class="col-center" style="width: 45px;">#</th>
-                      <th>الصنف في المستودع</th>
-                      <th class="col-center" style="width: 75px;">الفئة</th>
-                      <th>المنتج المرتبط</th>
-                      <th class="col-center" style="width: 75px;">بالمستودع</th>
-                      <th class="col-center" style="width: 70px;">حد التنبيه</th>
-                      <th class="col-center" style="width: 70px;">المحجوز</th>
-                      <th class="col-center" style="width: 80px;">الصافي المتاح</th>
-                      <th class="col-center" style="width: 75px;">الحالة</th>
-                      <th class="col-center" style="width: 95px;">إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-if="inventoryLoading">
-                      <td colspan="10" class="text-center p-4">جاري تحميل أصناف المخزون من المستودع…</td>
-                    </tr>
-                    <tr v-else-if="filteredInventoryItems.length === 0">
-                      <td colspan="10" class="text-center p-4">لا توجد أصناف مطابقة في المخزون.</td>
-                    </tr>
-                    <tr v-else v-for="item in filteredInventoryItems" :key="item.id" :class="{ 'row-low-stock': item.quantity <= item.min_stock && item.quantity > 0, 'row-out-stock': item.quantity <= 0 }">
-                      <td class="col-center text-mono text-muted text-small">{{ item.legacy_id || item.id.slice(0, 6) }}</td>
-                      <td class="text-bold">{{ item.name }}</td>
-                      <td class="col-center"><span class="category-pill">{{ item.category || 'عام' }}</span></td>
-                      <td>
-                        <button v-if="item.linkedProduct" type="button" class="btn-linked-product-badge" @click="openQuickLinkModal(item)" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون. اضغط للتعديل أو فك الربط'">
-                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                          <span class="linked-pname">{{ item.linkedProduct.productName }}</span>
-                          <span class="badge-factor text-mono">×{{ item.linkedProduct.conversionFactor || 1 }}</span>
-                        </button>
-                        <button v-else type="button" class="btn-quick-link-trigger" @click="openQuickLinkModal(item)" title="ربط هذا الصنف بمنتج في المتجر">
-                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                          <span>ربط بمنتج</span>
-                        </button>
-                      </td>
-                      <td class="col-center text-mono font-bold">{{ item.quantity }}</td>
-                      <td class="col-center text-mono text-muted">{{ item.min_stock }}</td>
-                      <td class="col-center text-mono">
-                        <span v-if="item.reserved_qty > 0" class="badge-reserved-count font-bold text-amber">
-                          {{ item.reserved_qty }}
-                        </span>
-                        <span v-else class="text-muted">0</span>
-                      </td>
-                      <td class="col-center text-mono font-bold" :class="item.available_qty <= item.min_stock ? 'text-danger' : 'text-success'">
-                        {{ item.available_qty }}
-                      </td>
-                      <td class="col-center">
-                        <span v-if="item.quantity <= 0" class="stock-state-pill out">نافد</span>
-                        <span v-else-if="item.quantity <= item.min_stock" class="stock-state-pill low">منخفض</span>
-                        <span v-else class="stock-state-pill ok">متوفر</span>
-                      </td>
-                      <td class="col-center">
-                        <button type="button" class="btn btn-sm btn-outline" @click="openItemReservationsModal(item)" title="عرض الحركات والحجوزات">
-                          سجل الحجوزات
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Mobile View (Cards) -->
-              <div class="mobile-inventory-cards">
-                <div v-if="inventoryLoading" class="text-center p-4 text-muted">جاري التحميل…</div>
-                <div v-else-if="filteredInventoryItems.length === 0" class="text-center p-4 text-muted">لا توجد أصناف مطابقة.</div>
-                <div v-else v-for="item in filteredInventoryItems" :key="'mob-inv-' + item.id" class="inventory-mob-card glass-panel" :class="{ 'is-low': item.quantity <= item.min_stock && item.quantity > 0, 'is-out': item.quantity <= 0 }">
-                  <div class="inv-mob-header">
-                    <div>
-                      <h4 class="inv-mob-name font-bold">{{ item.name }}</h4>
-                      <span class="category-pill">{{ item.category || 'عام' }}</span>
-                    </div>
-                    <span v-if="item.quantity <= 0" class="stock-state-pill out">نافد</span>
-                    <span v-else-if="item.quantity <= item.min_stock" class="stock-state-pill low">منخفض</span>
-                    <span v-else class="stock-state-pill ok">متوفر</span>
-                  </div>
-
-                  <div class="inv-mob-metrics">
-                    <div class="metric-item">
-                      <span class="m-label">بالمستودع</span>
-                      <span class="m-val text-mono font-bold">{{ item.quantity }}</span>
-                    </div>
-                    <div class="metric-item">
-                      <span class="m-label">حد التنبيه</span>
-                      <span class="m-val text-mono text-muted">{{ item.min_stock }}</span>
-                    </div>
-                    <div class="metric-item">
-                      <span class="m-label">المحجوز</span>
-                      <span class="m-val text-mono text-amber font-bold">{{ item.reserved_qty || 0 }}</span>
-                    </div>
-                    <div class="metric-item">
-                      <span class="m-label">الصافي المتاح</span>
-                      <span class="m-val text-mono font-bold" :class="item.available_qty <= item.min_stock ? 'text-danger' : 'text-success'">{{ item.available_qty }}</span>
-                    </div>
-                  </div>
-
-                  <div class="inv-mob-footer">
-                    <div class="inv-mob-link">
-                      <button v-if="item.linkedProduct" type="button" class="btn-linked-product-badge" @click="openQuickLinkModal(item)" :title="'معامل التحويل: 1 طلب = ' + (item.linkedProduct.conversionFactor || 1) + ' مخزون. اضغط للتعديل أو فك الربط'">
-                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        <span class="linked-pname">{{ item.linkedProduct.productName }}</span>
-                        <span class="badge-factor text-mono">×{{ item.linkedProduct.conversionFactor || 1 }}</span>
-                      </button>
-                      <button v-else type="button" class="btn-quick-link-trigger" @click="openQuickLinkModal(item)" title="ربط هذا الصنف بمنتج في المتجر">
-                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        <span>ربط بمنتج</span>
-                      </button>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline" @click="openItemReservationsModal(item)">
-                      سجل الحجوزات
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <InventoryTab
+            v-else-if="activeTab === 'inventory' && userRole === 'admin' && activeShop === 'shop2'"
+            :activeShop="activeShop"
+            :userRole="userRole"
+          />
 
           <!-- USERS MANAGEMENT TAB -->
           <div v-else-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
@@ -8105,6 +7899,7 @@ import { gsap } from 'gsap';
 import { useRoute, useRouter } from 'vue-router';
 import { useToastStore } from '../stores/toast';
 import CategoryIcon from '../components/CategoryIcon.vue';
+import InventoryTab from '../components/InventoryTab.vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import JsBarcode from 'jsbarcode';
@@ -8114,7 +7909,8 @@ import { vSheetGesture } from '../utils/sheetGesture';
 export default {
   name: 'AdminView',
   components: {
-    CategoryIcon
+    CategoryIcon,
+    InventoryTab
   },
   directives: {
     sheetGesture: vSheetGesture
