@@ -38,6 +38,22 @@
             <span class="d-none d-md-inline">تحديث</span>
           </button>
 
+          <!-- Sync All Products Button -->
+          <button
+            type="button"
+            class="inv-btn inv-btn-outline"
+            :disabled="loading || isSyncing"
+            @click="syncAllProducts"
+            title="مزامنة جميع منتجات المتجر مع المستودع بقيمة صفر للأصناف الجديدة"
+          >
+            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'inv-spin': isSyncing }">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            <span class="d-none d-md-inline">{{ isSyncing ? 'جارٍ المزامنة…' : 'مزامنة الأصناف' }}</span>
+          </button>
+
           <!-- Print A4 Button -->
           <button
             type="button"
@@ -1077,6 +1093,29 @@ export default {
       }
     };
 
+    // Sync all shop products to PocketBase with quantity 0 for new items
+    const isSyncing = ref(false);
+    const syncAllProducts = async () => {
+      isSyncing.value = true;
+      try {
+        const res = await adminFetch('/api/admin/inventory/sync-all-products', {
+          method: 'POST',
+          body: JSON.stringify({ shop: props.activeShop })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          toast.show(`تمت المزامنة بنجاح! تم فحص ${data.totalProducts} صنف (جديد: ${data.newlyCreated || 0})`, 'success');
+          await fetchInventory(true);
+        } else {
+          toast.show('فشلت المزامنة مع المستودع', 'danger');
+        }
+      } catch (err) {
+        toast.show('خطأ في الاتصال بالخادم', 'danger');
+      } finally {
+        isSyncing.value = false;
+      }
+    };
+
     // KPIs & Statistics
     const stats = computed(() => {
       const all = items.value;
@@ -1503,7 +1542,9 @@ export default {
       openEditModal,
       saveProduct,
       deleteProduct,
-      triggerPrint
+      triggerPrint,
+      isSyncing,
+      syncAllProducts
     };
   }
 };

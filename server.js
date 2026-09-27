@@ -3043,6 +3043,104 @@ app.post("/api/admin/inventory/batch-link", checkMongoDB, checkAdmin, async (req
   }
 });
 
+// 3b-2. Sync all Shop products to PocketBase, creating missing items with quantity 0
+app.post("/api/admin/inventory/sync-all-products", checkMongoDB, checkAdmin, async (req, res) => {
+  const shop = req.body.shop || "shop2";
+  const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+
+  try {
+    const pbRes = await pbFetch("/collections/inventory/records?perPage=500");
+    const pbItems = Array.isArray(pbRes.items) ? pbRes.items : [];
+
+    let maxLegacyId = 0;
+    for (const item of pbItems) {
+      const num = parseInt(item.legacy_id, 10);
+      if (!isNaN(num) && num > maxLegacyId) maxLegacyId = num;
+    }
+
+    const pbById = new Map();
+    const pbByExactName = new Map();
+    const pbByNormName = new Map();
+
+    for (const item of pbItems) {
+      pbById.set(item.id, item);
+      pbByExactName.set(item.name.trim(), item);
+      const norm = normalizeArabicText(item.name);
+      if (norm && !pbByNormName.has(norm)) pbByNormName.set(norm, item);
+    }
+
+    const products = await targetColl.find({}).toArray();
+    let alreadyLinkedCount = 0;
+    let newlyMatchedCount = 0;
+    let newlyCreatedCount = 0;
+
+    for (const product of products) {
+      const prodName = (product.name || '').trim();
+      if (!prodName) continue;
+
+      if (product.inventoryLink?.recordId && pbById.has(product.inventoryLink.recordId)) {
+        alreadyLinkedCount++;
+        continue;
+      }
+
+      let matchedPb = pbByExactName.get(prodName) || pbByNormName.get(normalizeArabicText(prodName));
+      if (matchedPb) {
+        const linkDoc = {
+          recordId: matchedPb.id,
+          legacyId: matchedPb.legacy_id || '',
+          itemName: matchedPb.name,
+          conversionFactor: 1
+        };
+        await targetColl.updateOne({ _id: product._id }, { $set: { inventoryLink: linkDoc } });
+        newlyMatchedCount++;
+        continue;
+      }
+
+      maxLegacyId++;
+      const nextLegacyIdStr = maxLegacyId.toString();
+      const pbPayload = {
+        name: prodName,
+        category: (product.category || 'عام').trim(),
+        quantity: 0,
+        min_stock: 0,
+        legacy_id: nextLegacyIdStr,
+        last_updated_legacy: new Date().toISOString()
+      };
+
+      const createdItem = await pbFetch('/collections/inventory/records', {
+        method: 'POST',
+        body: JSON.stringify(pbPayload)
+      });
+
+      pbById.set(createdItem.id, createdItem);
+      pbByExactName.set(createdItem.name.trim(), createdItem);
+      const norm = normalizeArabicText(createdItem.name);
+      if (norm) pbByNormName.set(norm, createdItem);
+
+      const linkDoc = {
+        recordId: createdItem.id,
+        legacyId: createdItem.legacy_id || nextLegacyIdStr,
+        itemName: createdItem.name,
+        conversionFactor: 1
+      };
+      await targetColl.updateOne({ _id: product._id }, { $set: { inventoryLink: linkDoc } });
+      newlyCreatedCount++;
+    }
+
+    res.json({
+      success: true,
+      totalProducts: products.length,
+      alreadyLinked: alreadyLinkedCount,
+      newlyMatched: newlyMatchedCount,
+      newlyCreated: newlyCreatedCount
+    });
+  } catch (err) {
+    console.error("Sync all products to PB error:", err.message);
+    res.status(500).json({ error: "Failed to sync products to PocketBase", details: err.message });
+  }
+});
+
+
 // 3c. Link or unlink an inventory item directly from the inventory dashboard
 app.put("/api/admin/inventory/link-item", checkMongoDB, checkAdmin, async (req, res) => {
   const { pbRecordId, productId, conversionFactor, shop } = req.body;
