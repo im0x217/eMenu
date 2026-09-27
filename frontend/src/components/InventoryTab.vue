@@ -68,48 +68,6 @@
             </svg>
             <span>طباعة</span>
           </button>
-
-          <!-- Mod Lock / Unlock -->
-          <button
-            type="button"
-            v-if="isModUnlocked"
-            class="inv-btn inv-btn-warning"
-            @click="handleLock"
-            title="قفل التعديلات لمنع التغييرات العرضية"
-          >
-            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-            </svg>
-            <span>قفل</span>
-          </button>
-          <button
-            type="button"
-            v-else
-            class="inv-btn inv-btn-outline"
-            @click="openUnlockModal"
-            title="إلغاء قفل التعديل بكلمة السر"
-          >
-            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            <span>فك القفل</span>
-          </button>
-
-          <!-- Add Product Button -->
-          <button
-            type="button"
-            class="inv-btn inv-btn-primary"
-            @click="openAddModal"
-            title="إضافة صنف جديد إلى المستودع"
-          >
-            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>صنف جديد</span>
-          </button>
         </div>
       </div>
 
@@ -396,7 +354,7 @@
                     <button
                       type="button"
                       class="inv-stepper-btn"
-                      :disabled="item.quantity <= 0 || !isModUnlocked"
+                      :disabled="item.quantity <= 0"
                       @click="adjustStock(item, -1)"
                       aria-label="إنقاص وحدة"
                       title="إنقاص وحدة واحدة"
@@ -418,7 +376,6 @@
                     <button
                       type="button"
                       class="inv-stepper-btn"
-                      :disabled="!isModUnlocked"
                       @click="adjustStock(item, 1)"
                       aria-label="زيادة وحدة"
                       title="زيادة وحدة واحدة"
@@ -456,19 +413,18 @@
                 <td class="col-center">
                   <div class="inv-row-actions">
                     <button
-                      v-if="isModUnlocked"
                       type="button"
-                      class="inv-icon-btn"
-                      @click="openEditModal(item)"
-                      :aria-label="`تعديل صنف ${item.name}`"
-                      title="تعديل بيانات الصنف"
+                      class="inv-btn inv-btn-outline inv-btn-sm"
+                      @click="openStockAdjustModal(item)"
+                      :aria-label="`ضبط كمية ${item.name}`"
+                      title="ضبط الكمية والحد الأدنى"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                       </svg>
+                      <span>ضبط</span>
                     </button>
-                    <span v-else class="inv-text-muted">—</span>
                   </div>
                 </td>
               </tr>
@@ -503,20 +459,6 @@
                 <span v-if="item.quantity === 0" class="inv-state-badge is-danger">نفد</span>
                 <span v-else-if="item.quantity <= item.min_stock" class="inv-state-badge is-warning">منخفض</span>
                 <span v-else class="inv-state-badge is-success">متوفر</span>
-
-                <button
-                  v-if="isModUnlocked"
-                  type="button"
-                  class="inv-icon-btn inv-mob-edit-btn"
-                  @click="openEditModal(item)"
-                  :aria-label="`تعديل ${item.name}`"
-                  title="تعديل الصنف"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
               </div>
             </div>
 
@@ -540,7 +482,7 @@
                 <button
                   type="button"
                   class="inv-stepper-btn"
-                  :disabled="item.quantity <= 0 || !isModUnlocked"
+                  :disabled="item.quantity <= 0"
                   @click="adjustStock(item, -1)"
                   aria-label="إنقاص وحدة"
                 >
@@ -561,7 +503,6 @@
                 <button
                   type="button"
                   class="inv-stepper-btn"
-                  :disabled="!isModUnlocked"
                   @click="adjustStock(item, 1)"
                   aria-label="زيادة وحدة"
                 >
@@ -585,63 +526,19 @@
 
     <!-- Modals -->
 
-    <!-- Modal 1: Passcode Unlock Modal -->
-    <Teleport to="body">
-      <div v-if="isUnlockModalOpen" class="inv-modal-overlay" @click.self="isUnlockModalOpen = false">
-        <div class="inv-modal-dialog animate-scale-in" dir="rtl">
-          <div class="inv-modal-header">
-            <div class="inv-modal-icon-wrap icon-warning">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 class="inv-modal-title">تأكيد صلاحية تعديل المستودع</h3>
-              <p class="inv-modal-desc">أدخل رمز الحماية السري لتمكين التعديل المباشر على المخزون:</p>
-            </div>
-          </div>
-
-          <form @submit.prevent="submitPasscode" class="inv-modal-body">
-            <div class="inv-form-group">
-              <label class="inv-form-label">رمز الحماية (PIN):</label>
-              <input
-                type="password"
-                v-model="enteredPasscode"
-                placeholder="أدخل رمز المرور…"
-                class="inv-form-input text-center text-mono"
-                style="letter-spacing: 4px; font-size: 1.25rem;"
-                autofocus
-              />
-              <p v-if="passcodeError" class="inv-form-error">{{ passcodeError }}</p>
-            </div>
-
-            <div class="inv-modal-footer">
-              <button type="submit" class="inv-btn inv-btn-primary flex-1">
-                تأكيد وإلغاء القفل
-              </button>
-              <button type="button" class="inv-btn inv-btn-outline" @click="isUnlockModalOpen = false">
-                إلغاء
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- Modal 2: Stock Adjust Modal -->
+    <!-- Modal: Stock & Alert Adjustment Modal -->
     <Teleport to="body">
       <div v-if="isAdjustModalOpen && adjustingItem" class="inv-modal-overlay" @click.self="isAdjustModalOpen = false">
         <div class="inv-modal-dialog animate-scale-in" dir="rtl">
           <div class="inv-modal-header">
             <div class="inv-modal-icon-wrap icon-info">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
             </div>
             <div>
-              <h3 class="inv-modal-title">تعديل كمية المخزون</h3>
+              <h3 class="inv-modal-title">ضبط كمية المخزون والحد الأدنى</h3>
               <p class="inv-modal-desc">{{ adjustingItem.name }} (الرصيد الحالي: <strong class="text-mono">{{ adjustingItem.quantity }}</strong>)</p>
             </div>
           </div>
@@ -658,135 +555,45 @@
               <button type="button" class="inv-delta-btn delta-pos" @click="adjustStock(adjustingItem, 10)">+10</button>
             </div>
 
-            <!-- Set Exact Quantity -->
+            <!-- Set Exact Quantity and Min Stock -->
             <div class="inv-form-group mt-3">
-              <label class="inv-form-label">أو اضبط الكمية المحددة مباشرة:</label>
-              <div class="d-flex gap-2">
-                <input
-                  type="number"
-                  v-model.number="adjustExactQty"
-                  min="0"
-                  class="inv-form-input text-mono flex-1 text-center font-bold"
-                  style="font-size: 1.15rem;"
-                />
-                <button
-                  type="button"
-                  class="inv-btn inv-btn-primary"
-                  @click="saveExactQuantity"
-                >
-                  حفظ الكمية
-                </button>
+              <div class="d-flex gap-3">
+                <div class="flex-1">
+                  <label class="inv-form-label">الكمية المتوفرة بالمستودع:</label>
+                  <input
+                    type="number"
+                    v-model.number="adjustExactQty"
+                    min="0"
+                    class="inv-form-input text-mono text-center font-bold"
+                    style="font-size: 1.15rem;"
+                  />
+                </div>
+                <div class="flex-1">
+                  <label class="inv-form-label">حد التنبيه (الحد الأدنى):</label>
+                  <input
+                    type="number"
+                    v-model.number="adjustMinStock"
+                    min="0"
+                    class="inv-form-input text-mono text-center font-bold"
+                    style="font-size: 1.15rem;"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           <div class="inv-modal-footer">
-            <button type="button" class="inv-btn inv-btn-outline w-100" @click="isAdjustModalOpen = false">
-              إغلاق
+            <button
+              type="button"
+              class="inv-btn inv-btn-primary flex-1"
+              @click="saveExactQuantity"
+            >
+              حفظ التعديلات
+            </button>
+            <button type="button" class="inv-btn inv-btn-outline" @click="isAdjustModalOpen = false">
+              إلغاء
             </button>
           </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- Modal 3: Add / Edit Product Modal -->
-    <Teleport to="body">
-      <div v-if="isAddEditOpen" class="inv-modal-overlay" @click.self="isAddEditOpen = false">
-        <div class="inv-modal-dialog animate-scale-in" dir="rtl">
-          <div class="inv-modal-header">
-            <div class="inv-modal-icon-wrap" :class="editingItem ? 'icon-info' : 'icon-neutral'">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path v-if="editingItem" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path v-if="editingItem" d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                <line v-if="!editingItem" x1="12" y1="5" x2="12" y2="19"></line>
-                <line v-if="!editingItem" x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </div>
-            <div>
-              <h3 class="inv-modal-title">
-                {{ editingItem ? `تعديل الصنف: ${editingItem.name}` : 'إضافة صنف جديد للمستودع' }}
-              </h3>
-              <p class="inv-modal-desc">
-                {{ editingItem ? 'قم بتحديث بيانات الصنف وحد التنبيه أدناه:' : 'أدخل بيانات الصنف الجديد وكميته الأولية بالمستودع:' }}
-              </p>
-            </div>
-          </div>
-
-          <form @submit.prevent="saveProduct" class="inv-modal-body">
-            <!-- Name -->
-            <div class="inv-form-group">
-              <label class="inv-form-label">اسم الصنف بالكامل: <span class="text-danger">*</span></label>
-              <input
-                type="text"
-                v-model="editForm.name"
-                placeholder="مثال: غريبة لوز، كعك مالح، بقلاوة فستق…"
-                class="inv-form-input"
-                required
-              />
-            </div>
-
-            <!-- Category -->
-            <div class="inv-form-group">
-              <label class="inv-form-label">الفئة / التصنيف بالمخزن:</label>
-              <input
-                type="text"
-                v-model="editForm.category"
-                list="category-suggestions"
-                placeholder="اختر أو اكتب فئة جديدة (مثال: كعك، سبلي، مقروض)…"
-                class="inv-form-input"
-              />
-              <datalist id="category-suggestions">
-                <option v-for="cat in categoryOptions" :key="cat.label" :value="cat.label"></option>
-              </datalist>
-            </div>
-
-            <!-- Quantities Row -->
-            <div class="d-flex gap-3">
-              <div class="inv-form-group flex-1">
-                <label class="inv-form-label">الكمية المتوفرة:</label>
-                <input
-                  type="number"
-                  v-model.number="editForm.quantity"
-                  min="0"
-                  class="inv-form-input text-mono font-bold"
-                  required
-                />
-              </div>
-
-              <div class="inv-form-group flex-1">
-                <label class="inv-form-label">حد التنبيه (الحد الأدنى):</label>
-                <input
-                  type="number"
-                  v-model.number="editForm.min_stock"
-                  min="0"
-                  class="inv-form-input text-mono font-bold"
-                  required
-                />
-              </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="inv-modal-footer mt-4">
-              <button type="submit" class="inv-btn inv-btn-primary flex-1" :disabled="savingProduct">
-                <span v-if="savingProduct">جاري الحفظ…</span>
-                <span v-else>{{ editingItem ? 'تحديث الصنف' : 'إضافة الصنف' }}</span>
-              </button>
-
-              <button
-                v-if="editingItem"
-                type="button"
-                class="inv-btn inv-btn-danger"
-                @click="deleteProduct(editingItem)"
-                title="حذف هذا الصنف من المستودع"
-              >
-                حذف الصنف
-              </button>
-
-              <button type="button" class="inv-btn inv-btn-outline" @click="isAddEditOpen = false">
-                إلغاء
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </Teleport>
@@ -942,8 +749,6 @@ import { useToastStore } from '../stores/toast';
 import PocketBase from 'pocketbase';
 
 const POCKETBASE_LIVE_URL = 'https://crystal-crocodile.pikapod.net';
-const MOD_UNLOCK_KEY = 'inventory_mod_unlocked';
-const DEFAULT_PASSCODE = '1234';
 
 // Resilient Arabic normalizer (removes alef variants, taa marbuta, diacritics, tatweel)
 function normalizeArabicText(text) {
@@ -970,7 +775,7 @@ export default {
       default: 'admin'
     }
   },
-  setup() {
+  setup(props) {
     const toast = useToastStore();
     const pb = new PocketBase(POCKETBASE_LIVE_URL);
 
@@ -984,27 +789,11 @@ export default {
     const sortField = ref('name');
     const sortAsc = ref(true);
 
-    // Security Unlock State
-    const isModUnlocked = ref(false);
-    const isUnlockModalOpen = ref(false);
-    const enteredPasscode = ref('');
-    const passcodeError = ref('');
-
-    // Stock Adjust Modal
+    // Stock & Alert Adjust Modal
     const isAdjustModalOpen = ref(false);
     const adjustingItem = ref(null);
     const adjustExactQty = ref(0);
-
-    // Add / Edit Modal
-    const isAddEditOpen = ref(false);
-    const editingItem = ref(null);
-    const savingProduct = ref(false);
-    const editForm = reactive({
-      name: '',
-      category: '',
-      quantity: 0,
-      min_stock: 5
-    });
+    const adjustMinStock = ref(0);
 
     // Print Dialog & View
     const isPrintDialogOpen = ref(false);
@@ -1030,7 +819,8 @@ export default {
     const fetchInventory = async (isManual = false) => {
       if (isManual) isRefreshing.value = true;
       try {
-        const res = await adminFetch('/api/admin/inventory/items');
+        const shopParam = encodeURIComponent(props.activeShop || 'shop2');
+        const res = await adminFetch(`/api/admin/inventory/items?shop=${shopParam}`);
         if (res.ok) {
           const data = await res.json();
           items.value = (data.items || []).map((r) => ({
@@ -1265,42 +1055,8 @@ export default {
       statusFilter.value = 'all';
     };
 
-    // Guard Mod Action
-    const guardMod = () => {
-      if (!isModUnlocked.value) {
-        isUnlockModalOpen.value = true;
-        return false;
-      }
-      return true;
-    };
-
-    const openUnlockModal = () => {
-      enteredPasscode.value = '';
-      passcodeError.value = '';
-      isUnlockModalOpen.value = true;
-    };
-
-    const submitPasscode = () => {
-      // Allow default '1234' or any valid unlock code
-      if (enteredPasscode.value === DEFAULT_PASSCODE || enteredPasscode.value === '2026' || enteredPasscode.value.length >= 4) {
-        isModUnlocked.value = true;
-        localStorage.setItem(MOD_UNLOCK_KEY, 'true');
-        isUnlockModalOpen.value = false;
-        toast.show('تم فك قفل التعديلات بنجاح', 'success');
-      } else {
-        passcodeError.value = 'رمز الحماية غير صحيح، يرجى المحاولة ثانية';
-      }
-    };
-
-    const handleLock = () => {
-      isModUnlocked.value = false;
-      localStorage.removeItem(MOD_UNLOCK_KEY);
-      toast.show('تم قفل التعديلات', 'info');
-    };
-
     // Stock Adjustment Handlers
     const adjustStock = async (item, delta) => {
-      if (!guardMod()) return;
       const oldQty = item.quantity;
       const newQty = Math.max(0, oldQty + delta);
       item.quantity = newQty;
@@ -1329,134 +1085,37 @@ export default {
     const openStockAdjustModal = (item) => {
       adjustingItem.value = item;
       adjustExactQty.value = item.quantity;
+      adjustMinStock.value = typeof item.min_stock === 'number' ? item.min_stock : 5;
       isAdjustModalOpen.value = true;
     };
 
     const saveExactQuantity = async () => {
-      if (!guardMod() || !adjustingItem.value) return;
+      if (!adjustingItem.value) return;
       const item = adjustingItem.value;
       const newQty = Math.max(0, Math.round(Number(adjustExactQty.value) || 0));
+      const newMinStock = Math.max(0, Math.round(Number(adjustMinStock.value) || 0));
       item.quantity = newQty;
+      item.min_stock = newMinStock;
       item.available_qty = Math.max(0, newQty - (item.reserved_qty || 0));
 
       try {
-        const res = await adminFetch(`/api/admin/inventory/items/${item.id}/quantity`, {
-          method: 'PATCH',
-          body: JSON.stringify({ quantity: newQty })
+        const res = await adminFetch(`/api/admin/inventory/items/${item.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ quantity: newQty, min_stock: newMinStock })
         });
         if (!res.ok) {
           await pb.collection('inventory').update(item.id, {
             quantity: newQty,
+            min_stock: newMinStock,
             last_updated_legacy: new Date().toISOString()
           });
         }
-        toast.show(`تم ضبط كمية "${item.name}" إلى ${newQty}`, 'success');
+        toast.show(`تم ضبط صنف "${item.name}" (الكمية: ${newQty}، الحد الأدنى: ${newMinStock})`, 'success');
         isAdjustModalOpen.value = false;
       } catch (err) {
         console.error('Save exact quantity error:', err);
-        toast.show('فشل حفظ الكمية', 'danger');
+        toast.show('فشل حفظ التعديلات', 'danger');
         fetchInventory(false);
-      }
-    };
-
-    // Product Modal Handlers
-    const openAddModal = () => {
-      if (!guardMod()) return;
-      editingItem.value = null;
-      editForm.name = '';
-      editForm.category = selectedCategory.value !== 'all' && selectedCategory.value !== 'uncategorized' ? selectedCategory.value : '';
-      editForm.quantity = 0;
-      editForm.min_stock = 5;
-      isAddEditOpen.value = true;
-    };
-
-    const openEditModal = (item) => {
-      if (!guardMod()) return;
-      editingItem.value = item;
-      editForm.name = item.name;
-      editForm.category = item.category || '';
-      editForm.quantity = item.quantity;
-      editForm.min_stock = item.min_stock;
-      isAddEditOpen.value = true;
-    };
-
-    const saveProduct = async () => {
-      if (!guardMod()) return;
-      if (!editForm.name || !editForm.name.trim()) {
-        toast.show('يرجى إدخال اسم الصنف', 'warning');
-        return;
-      }
-
-      savingProduct.value = true;
-      try {
-        if (editingItem.value) {
-          const res = await adminFetch(`/api/admin/inventory/items/${editingItem.value.id}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              name: editForm.name.trim(),
-              category: editForm.category.trim(),
-              quantity: editForm.quantity,
-              min_stock: editForm.min_stock
-            })
-          });
-          if (!res.ok) {
-            await pb.collection('inventory').update(editingItem.value.id, {
-              name: editForm.name.trim(),
-              category: editForm.category.trim(),
-              quantity: editForm.quantity,
-              min_stock: editForm.min_stock,
-              last_updated_legacy: new Date().toISOString()
-            });
-          }
-          toast.show(`تم تحديث الصنف "${editForm.name}" بنجاح`, 'success');
-        } else {
-          const res = await adminFetch('/api/admin/inventory/items', {
-            method: 'POST',
-            body: JSON.stringify({
-              name: editForm.name.trim(),
-              category: editForm.category.trim(),
-              quantity: editForm.quantity,
-              min_stock: editForm.min_stock
-            })
-          });
-          if (!res.ok) {
-            const maxId = items.value.reduce((acc, i) => (Number(i.legacy_id || 0) > acc ? Number(i.legacy_id) : acc), 0);
-            await pb.collection('inventory').create({
-              name: editForm.name.trim(),
-              category: editForm.category.trim(),
-              quantity: editForm.quantity,
-              min_stock: editForm.min_stock,
-              legacy_id: (maxId + 1).toString(),
-              last_updated_legacy: new Date().toISOString()
-            });
-          }
-          toast.show(`تمت إضافة الصنف الجديد "${editForm.name}" بنجاح`, 'success');
-        }
-        isAddEditOpen.value = false;
-        fetchInventory(true);
-      } catch (err) {
-        console.error('Save product error:', err);
-        toast.show('فشل حفظ الصنف في الخادم', 'danger');
-      } finally {
-        savingProduct.value = false;
-      }
-    };
-
-    const deleteProduct = async (item) => {
-      if (!guardMod()) return;
-      if (!confirm(`هل أنت متأكد من حذف الصنف "${item.name}" نهائياً من المستودع؟`)) return;
-
-      try {
-        const res = await adminFetch(`/api/admin/inventory/items/${item.id}`, { method: 'DELETE' });
-        if (!res.ok) {
-          await pb.collection('inventory').delete(item.id);
-        }
-        toast.show(`تم حذف الصنف "${item.name}" بنجاح`, 'success');
-        isAddEditOpen.value = false;
-        fetchInventory(true);
-      } catch (err) {
-        console.error('Delete product error:', err);
-        toast.show('فشل حذف الصنف', 'danger');
       }
     };
 
@@ -1470,7 +1129,6 @@ export default {
 
     // Lifecycle
     onMounted(() => {
-      isModUnlocked.value = localStorage.getItem(MOD_UNLOCK_KEY) === 'true';
       printDate.value = new Date().toLocaleDateString('ar-LY', {
         year: 'numeric',
         month: 'long',
@@ -1516,32 +1174,18 @@ export default {
       printOutOfStockCount,
       printTotalUnits,
       printDate,
-      isModUnlocked,
-      isUnlockModalOpen,
-      enteredPasscode,
-      passcodeError,
       isAdjustModalOpen,
       adjustingItem,
       adjustExactQty,
-      isAddEditOpen,
-      editingItem,
-      savingProduct,
-      editForm,
+      adjustMinStock,
       isPrintDialogOpen,
       fetchInventory,
       calcStockRatio,
       toggleSort,
       resetFilters,
-      openUnlockModal,
-      submitPasscode,
-      handleLock,
       adjustStock,
       openStockAdjustModal,
       saveExactQuantity,
-      openAddModal,
-      openEditModal,
-      saveProduct,
-      deleteProduct,
       triggerPrint,
       isSyncing,
       syncAllProducts

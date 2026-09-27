@@ -5582,70 +5582,25 @@
             <label for="modal-allow-float">يسمح بالكميات الكسرية (مثل: 0.5 كجم)</label>
           </div>
 
-          <!-- Shop 2 Inventory Linking Section -->
-          <div v-if="activeShop === 'shop2'" class="form-group inventory-link-section mt-3 p-3 rounded border border-slate-200 bg-slate-50">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <label class="form-label font-bold mb-0 d-flex align-items-center gap-2">
-                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                <span>ربط بمستودع المخزون (InventoryApp)</span>
-              </label>
-              <button 
-                v-if="editingProduct.inventoryLink && editingProduct.inventoryLink.recordId" 
-                type="button" 
-                class="btn btn-sm btn-link text-danger p-0" 
-                @click="editingProduct.inventoryLink = null"
-              >
-                فك الارتباط
-              </button>
-            </div>
-
-            <!-- If Already Linked -->
-            <div v-if="editingProduct.inventoryLink && editingProduct.inventoryLink.recordId" class="linked-item-box p-2 bg-white rounded border border-slate-200">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="text-bold text-primary d-inline-flex align-items-center gap-1">
-                  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                  <span>{{ editingProduct.inventoryLink.itemName }}</span>
-                </span>
-                <span class="text-mono text-small text-muted">ID: {{ editingProduct.inventoryLink.legacyId || editingProduct.inventoryLink.recordId.slice(0, 6) }}</span>
+          <!-- Shop 2 Storage Toggle -->
+          <div v-if="activeShop === 'shop2'" class="form-group checkbox-group mt-3 p-3 rounded border border-slate-200 bg-slate-50">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <input type="checkbox" id="modal-has-storage" v-model="editingProduct.hasStorage" />
+                <label for="modal-has-storage" class="font-bold mb-0" style="cursor: pointer;">
+                  تتبع في المستودع (إدارة المخزون والكميات)
+                </label>
               </div>
-              <div class="row g-2 align-items-center">
-                <div class="col-8">
-                  <label class="text-small text-muted block mb-1">معامل الخصم (كم وحدة مخزون لكل طلب)</label>
-                  <input 
-                    v-model.number="editingProduct.inventoryLink.conversionFactor" 
-                    type="number" 
-                    step="0.01" 
-                    min="0.01" 
-                    class="form-control form-control-sm text-mono" 
-                    placeholder="1" 
-                  />
-                </div>
-                <div class="col-4 text-center">
-                  <span class="text-small text-muted block">المخزون الحالي</span>
-                  <span class="text-mono font-bold text-success">
-                    {{ inventoryItems.find(i => i.id === editingProduct.inventoryLink.recordId)?.quantity ?? '—' }}
-                  </span>
-                </div>
-              </div>
+              <span v-if="editingProduct.hasStorage" class="badge bg-success-subtle text-success font-bold">
+                متوفر بالمستودع
+              </span>
+              <span v-else class="badge bg-slate-200 text-muted">
+                بدون مستودع
+              </span>
             </div>
-
-            <!-- If Not Linked Yet -->
-            <div v-else class="unlinked-item-box">
-              <select 
-                class="form-control form-control-sm"
-                @change="onSelectInventoryLinkForProduct($event.target.value)"
-              >
-                <option value="">-- اختر صنف المخزون لربطه بهذا المنتج --</option>
-                <option 
-                  v-for="invItem in inventoryItems" 
-                  :key="invItem.id" 
-                  :value="invItem.id"
-                >
-                  {{ invItem.name }} ({{ invItem.category || 'عام' }}) — متوفر: {{ invItem.quantity }}
-                </option>
-              </select>
-              <span class="text-muted text-small mt-1 block">عند ربط المنتج، سيتم حجز الكمية تلقائياً من المستودع عند كل طلب جديد وخصمها عند الاستلام.</span>
-            </div>
+            <p class="text-muted text-small mt-2 mb-0">
+              عند التفعيل، يدرج هذا الصنف تلقائياً في صفحة المستودع لمتابعة الكميات وحجزها مع كل طلب وارد.
+            </p>
           </div>
 
           <div class="modal-footer mt-4">
@@ -8773,6 +8728,7 @@ export default {
       tags: [],
       chefId: '',
       chefName: '',
+      hasStorage: true,
       inventoryLink: null
     });
 
@@ -9040,7 +8996,7 @@ export default {
         editingProduct.tags = Array.isArray(prod.tags) ? [...prod.tags] : [];
         
         editingProduct.chefId = prod.chefId ? String(prod.chefId) : '';
-        editingProduct.chefName = prod.chefName || '';
+        editingProduct.hasStorage = prod.hasStorage !== false;
         editingProduct.inventoryLink = prod.inventoryLink ? { ...prod.inventoryLink } : null;
         
         // Load subcategories for this category
@@ -9063,6 +9019,7 @@ export default {
         editingProduct.tags = [];
         editingProduct.chefId = '';
         editingProduct.chefName = '';
+        editingProduct.hasStorage = true;
         editingProduct.inventoryLink = null;
         subCategoriesForEditing.value = [];
       }
@@ -9120,7 +9077,7 @@ export default {
       }
 
       if (activeShop.value === 'shop2') {
-        formData.append('inventoryLink', editingProduct.inventoryLink ? JSON.stringify(editingProduct.inventoryLink) : '');
+        formData.append('hasStorage', editingProduct.hasStorage ? 'true' : 'false');
       }
 
       try {

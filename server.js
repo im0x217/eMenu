@@ -678,6 +678,101 @@ const reconcileInventoryStock = async () => {
   }
 };
 
+// Helper: Cascade sync a Shop 2 product to PocketBase inventory
+const cascadeProductToPocketBase = async (productDoc, hasStorage) => {
+  if (!productsCollection2 || !productDoc) return null;
+  try {
+    const shouldHaveStorage = hasStorage === true || hasStorage === 'true';
+
+    if (!shouldHaveStorage) {
+      // If product should not have storage, delete its PB record if one exists
+      if (productDoc.inventoryLink?.recordId) {
+        await pbFetch(`/collections/inventory/records/${productDoc.inventoryLink.recordId}`, {
+          method: 'DELETE'
+        }).catch(err => console.warn('[Inventory Cascade] Delete PB record error:', err.message));
+        await productsCollection2.updateOne(
+          { _id: productDoc._id },
+          { $set: { hasStorage: false, inventoryLink: null } }
+        );
+      } else {
+        await productsCollection2.updateOne(
+          { _id: productDoc._id },
+          { $set: { hasStorage: false } }
+        );
+      }
+      return null;
+    }
+
+    // Product should have storage
+    if (productDoc.inventoryLink?.recordId) {
+      // Update existing PB record name and category to match the product
+      await pbFetch(`/collections/inventory/records/${productDoc.inventoryLink.recordId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: productDoc.name.trim(),
+          category: (productDoc.category || 'عام').trim(),
+          last_updated_legacy: new Date().toISOString()
+        })
+      }).catch(err => console.warn('[Inventory Cascade] Update PB record error:', err.message));
+
+      await productsCollection2.updateOne(
+        { _id: productDoc._id },
+        {
+          $set: {
+            hasStorage: true,
+            'inventoryLink.itemName': productDoc.name.trim()
+          }
+        }
+      );
+      return productDoc.inventoryLink;
+    }
+
+    // Product hasStorage is true, but no inventoryLink exists: create or find one
+    const pbList = await pbFetch("/collections/inventory/records?perPage=500").catch(() => ({ items: [] }));
+    const records = Array.isArray(pbList.items) ? pbList.items : [];
+    let maxId = 0;
+    for (const r of records) {
+      const lid = parseInt(r.legacy_id, 10);
+      if (!isNaN(lid) && lid > maxId) maxId = lid;
+    }
+
+    const normName = normalizeArabicText(productDoc.name);
+    let matchedPb = records.find(r => r.name.trim() === productDoc.name.trim())
+      || records.find(r => normalizeArabicText(r.name) === normName);
+
+    if (!matchedPb) {
+      const nextId = (maxId + 1).toString();
+      matchedPb = await pbFetch("/collections/inventory/records", {
+        method: 'POST',
+        body: JSON.stringify({
+          name: productDoc.name.trim(),
+          category: (productDoc.category || 'عام').trim(),
+          quantity: 0,
+          min_stock: 0,
+          legacy_id: nextId,
+          last_updated_legacy: new Date().toISOString()
+        })
+      });
+    }
+
+    const link = {
+      recordId: matchedPb.id,
+      legacyId: matchedPb.legacy_id || '',
+      itemName: matchedPb.name,
+      conversionFactor: 1
+    };
+
+    await productsCollection2.updateOne(
+      { _id: productDoc._id },
+      { $set: { hasStorage: true, inventoryLink: link } }
+    );
+    return link;
+  } catch (err) {
+    console.error('[Inventory Cascade] Failed to cascade product to PocketBase:', err.message);
+    return null;
+  }
+};
+
 // Helper: Atomic Sequential Order Number Generator
 const getNextOrderNumber = async () => {
   const result = await countersCollection.findOneAndUpdate(
@@ -1526,7 +1621,11 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
     return res.status(400).json({ error: "Missing required fields (name, category, or price)." });
   }
   try {
-    await productsCollection2.insertOne({
+    const hasStorage = req.body.hasStorage !== undefined 
+      ? (req.body.hasStorage === 'true' || req.body.hasStorage === true)
+      : true;
+
+    const insertResult = await productsCollection2.insertOne({
       name,
       desc,
       price_regular: parsedPriceRegular,
@@ -1541,8 +1640,19 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
       purchaseType: purchaseType || "both",
       tags: parsedTags,
       chefId: chefId || '',
-      chefName: chefName || ''
+      chefName: chefName || '',
+      hasStorage: !!hasStorage,
+      inventoryLink: null
     });
+
+    if (hasStorage) {
+      await cascadeProductToPocketBase({
+        _id: insertResult.insertedId,
+        name,
+        category
+      }, true);
+    }
+
     console.log("[UPLOAD SUCCESS] Shop2 product saved with image:", img);
     const response = { success: true };
     if (uploadWarning) {
@@ -1596,18 +1706,9 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
     const parsedPrice = parsePrice(price, isFloat);
     const parsedMakingCost = Number(makingCost) || 0;
 
-    let parsedInventoryLink = undefined;
-    if (req.body.inventoryLink !== undefined) {
-      if (typeof req.body.inventoryLink === 'string') {
-        try {
-          parsedInventoryLink = JSON.parse(req.body.inventoryLink);
-        } catch {
-          parsedInventoryLink = null;
-        }
-      } else {
-        parsedInventoryLink = req.body.inventoryLink;
-      }
-    }
+    const hasStorage = req.body.hasStorage !== undefined 
+      ? (req.body.hasStorage === 'true' || req.body.hasStorage === true)
+      : (product.hasStorage !== false);
 
     await productsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -1628,10 +1729,19 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
           tags: parsedTags,
           chefId: chefId || '',
           chefName: chefName || '',
-          ...(parsedInventoryLink !== undefined ? { inventoryLink: parsedInventoryLink } : {}),
+          hasStorage: !!hasStorage,
         },
       }
     );
+
+    // Cascade changes to PocketBase
+    await cascadeProductToPocketBase({
+      _id: new ObjectId(req.params.id),
+      name,
+      category,
+      inventoryLink: product.inventoryLink
+    }, hasStorage);
+
     const response = { success: true };
     if (uploadWarning) {
       response.warning = uploadWarning;
@@ -1650,6 +1760,12 @@ app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res)
     const product = await productsCollection2.findOne({ _id: new ObjectId(req.params.id) });
     if (product) {
       await deleteProductImageFromS3(product);
+      // Cascade delete PocketBase inventory item
+      if (product.inventoryLink?.recordId) {
+        await pbFetch(`/collections/inventory/records/${product.inventoryLink.recordId}`, {
+          method: 'DELETE'
+        }).catch(err => console.warn('[Inventory Cascade] Delete PB item error:', err.message));
+      }
     }
     await productsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
@@ -2648,10 +2764,13 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
       }
     }
 
-    // Also get list of linked e-Menu products
+    // Also get list of linked e-Menu products that have storage enabled
     let linkedProductsMap = {};
-    if (productsCollection2) {
-      const linkedProds = await productsCollection2.find({
+    const shop = req.query.shop || "shop2";
+    const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+    if (targetColl) {
+      const linkedProds = await targetColl.find({
+        hasStorage: { $ne: false },
         "inventoryLink.recordId": { $exists: true, $ne: null }
       }).project({ name: 1, inventoryLink: 1 }).toArray();
 
@@ -2666,18 +2785,21 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
       }
     }
 
-    const enriched = records.map(rec => ({
-      id: rec.id,
-      legacy_id: rec.legacy_id || '',
-      name: rec.name || '',
-      category: rec.category || '',
-      quantity: typeof rec.quantity === 'number' ? rec.quantity : 0,
-      min_stock: typeof rec.min_stock === 'number' ? rec.min_stock : 5,
-      reserved_qty: reservedMap[rec.id] || 0,
-      available_qty: Math.max(0, (typeof rec.quantity === 'number' ? rec.quantity : 0) - (reservedMap[rec.id] || 0)),
-      linkedProduct: linkedProductsMap[rec.id] || null,
-      updated: rec.updated || rec.last_updated_legacy || ''
-    }));
+    // Storage items cascade directly from shop products (only products with storage enabled)
+    const enriched = records
+      .filter(rec => !!linkedProductsMap[rec.id])
+      .map(rec => ({
+        id: rec.id,
+        legacy_id: rec.legacy_id || '',
+        name: rec.name || '',
+        category: rec.category || '',
+        quantity: typeof rec.quantity === 'number' ? rec.quantity : 0,
+        min_stock: typeof rec.min_stock === 'number' ? rec.min_stock : 0,
+        reserved_qty: reservedMap[rec.id] || 0,
+        available_qty: Math.max(0, (typeof rec.quantity === 'number' ? rec.quantity : 0) - (reservedMap[rec.id] || 0)),
+        linkedProduct: linkedProductsMap[rec.id] || null,
+        updated: rec.updated || rec.last_updated_legacy || ''
+      }));
 
     res.json({ success: true, items: enriched });
   } catch (err) {
