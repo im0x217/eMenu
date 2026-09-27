@@ -127,20 +127,32 @@ const handleImageError = (e) => {
 // Check if we should show regular/bulk prices based on purchaseType & shop settings
 const showRegularPrice = computed(() => {
   if (props.product.purchaseType === 'bulk') return false;
+  const hasReg = props.product.price_regular !== null && 
+                 props.product.price_regular !== undefined && 
+                 props.product.price_regular !== '' &&
+                 !isNaN(Number(props.product.price_regular));
+  const hasPrice = props.product.price !== null && 
+                   props.product.price !== undefined && 
+                   props.product.price !== '' &&
+                   !isNaN(Number(props.product.price));
   return (
-    props.product.purchaseType === 'regular' ||
+    (props.product.purchaseType === 'regular' ||
     props.product.purchaseType === 'both' ||
-    !props.product.purchaseType
+    !props.product.purchaseType) && (hasReg || hasPrice)
   );
 });
 
 const showBulkPrice = computed(() => {
   const hasBulkValue = props.product.price_bulk !== null && 
                        props.product.price_bulk !== undefined && 
-                       props.product.price_bulk !== '';
+                       props.product.price_bulk !== '' &&
+                       !isNaN(Number(props.product.price_bulk));
   if (!hasBulkValue) return false;
   if (props.product.purchaseType === 'bulk') return true;
-  if (props.product.purchaseType === 'both') return isBulkMode.value;
+  if (props.product.purchaseType === 'both') {
+    if (!showRegularPrice.value) return true;
+    return isBulkMode.value;
+  }
   return false;
 });
 
@@ -189,7 +201,7 @@ const handleAddToCart = () => {
   let mode = 'regular';
   if (isBulkMode.value && showBulkPrice.value) {
     mode = 'bulk';
-  } else if (props.product.purchaseType === 'bulk') {
+  } else if (props.product.purchaseType === 'bulk' || !showRegularPrice.value) {
     mode = 'bulk';
   }
   
@@ -202,7 +214,7 @@ const handleAddToCart = () => {
       productId: props.product._id,
       productName: props.product.name,
       shop: activeShop.value,
-      price: mode === 'bulk' ? (props.product.price_bulk || props.product.price) : (props.product.price_regular || props.product.price),
+      price: mode === 'bulk' ? (props.product.price_bulk || props.product.price) : (props.product.price_regular || props.product.price || props.product.price_bulk),
       mode
     });
   } catch (err) {
@@ -344,7 +356,7 @@ const activeTagsList = computed(() => {
           </div>
 
           <!-- Bulk Price -->
-          <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode }">
+          <div v-if="showBulkPrice" class="price-pill bulk-price" :class="{ active: isBulkMode || !showRegularPrice }">
             <span v-if="showRegularPrice" class="price-label">جملة:</span>
             <span class="price-val">{{ product.price_bulk }}</span>
             <span class="price-unit">د.ل</span>

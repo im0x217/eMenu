@@ -131,7 +131,9 @@ watch(() => shopStore.activeShop, async () => {
 
 // Category properties
 const currentCategoryObj = computed(() => {
-  return shopStore.categories.find(c => c.name === activeCategory.value);
+  if (!activeCategory.value) return null;
+  const activeNorm = normalizeArabic(activeCategory.value);
+  return shopStore.categories.find(c => normalizeArabic(c.name) === activeNorm);
 });
 
 const subCategories = computed(() => {
@@ -214,23 +216,18 @@ const filteredProducts = computed(() => {
   } else {
     // 2. Main Category filter (applied only when NOT searching)
     if (activeCategory.value) {
-      list = list.filter(p => p.category === activeCategory.value);
+      const activeNorm = normalizeArabic(activeCategory.value);
+      list = list.filter(p => normalizeArabic(p.category) === activeNorm);
     }
 
     // 3. Sub Category filter (applied only when NOT searching)
     if (activeSubCategory.value) {
-      list = list.filter(p => p.subCategory === activeSubCategory.value);
+      const activeSubNorm = normalizeArabic(activeSubCategory.value);
+      list = list.filter(p => normalizeArabic(p.subCategory) === activeSubNorm);
     }
   }
 
-  // 4. In Shop2, respect bulk view configurations
-  if (shopStore.activeShop === 'shop2') {
-    if (!shopStore.isBulkVerified) {
-      list = list.filter(p => p.purchaseType !== 'bulk');
-    }
-  }
-
-  // 5. Sort: Available products first, tagged products next, unavailable products LAST
+  // 4. Sort: Available products first, tagged products next, unavailable products LAST
   return list.slice().sort(sortProducts);
 });
 
@@ -249,9 +246,6 @@ const subCategorySections = computed(() => {
   if (activeCategory.value) {
     const activeNorm = normalizeArabic(activeCategory.value);
     list = list.filter(p => normalizeArabic(p.category) === activeNorm);
-  }
-  if (shopStore.activeShop === 'shop2' && !shopStore.isBulkVerified) {
-    list = list.filter(p => p.purchaseType !== 'bulk');
   }
 
   // Sort available products first, unavailable products last

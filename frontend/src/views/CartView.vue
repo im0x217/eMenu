@@ -235,7 +235,7 @@ const handleCancelEditMode = () => {
 };
 
 const getItemPrice = (item) => {
-  return item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price);
+  return item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk);
 };
 
 const handleUpdateNote = (itemId, note) => {

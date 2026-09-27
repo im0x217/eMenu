@@ -4654,6 +4654,8 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
           unitPrice = Number(dbProd.price_bulk);
         } else if (dbProd.price_regular !== null && dbProd.price_regular !== undefined && dbProd.price_regular !== '') {
           unitPrice = Number(dbProd.price_regular);
+        } else if (dbProd.price_bulk !== null && dbProd.price_bulk !== undefined && dbProd.price_bulk !== '') {
+          unitPrice = Number(dbProd.price_bulk);
         } else {
           unitPrice = Number(dbProd.price || 0);
         }

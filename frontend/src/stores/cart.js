@@ -56,7 +56,7 @@ export const useCartStore = defineStore('cart', () => {
 
   const cartTotal = computed(() => {
     const total = items.value.reduce((sum, item) => {
-      const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price);
+      const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk);
       return sum + (price * item.quantity);
     }, 0);
     return Math.round(total);
@@ -73,8 +73,8 @@ export const useCartStore = defineStore('cart', () => {
       throw new Error('لا يمكن خلط منتجات من متجرين مختلفين في نفس السلة.');
     }
 
-    // 2. Check price mode consistency (bulk vs regular)
-    if (getPriceMode.value && getPriceMode.value !== priceMode && items.value.length > 0) {
+    // 2. Check price mode consistency (bulk vs regular) - only strictly enforced in shop1
+    if (shopId !== 'shop2' && getPriceMode.value && getPriceMode.value !== priceMode && items.value.length > 0) {
       throw new Error('لا يمكن خلط طلبات الجملة والمفرد في نفس السلة.');
     }
 
@@ -93,7 +93,7 @@ export const useCartStore = defineStore('cart', () => {
     persist();
 
     // Track GA4 Add to Cart Event
-    const price = priceMode === 'bulk' ? (product.price_bulk || product.price) : (product.price_regular || product.price);
+    const price = priceMode === 'bulk' ? (product.price_bulk || product.price) : (product.price_regular || product.price || product.price_bulk);
     trackEvent('add_to_cart', {
       currency: 'LYD',
       value: price * qty,
@@ -123,7 +123,7 @@ export const useCartStore = defineStore('cart', () => {
   const removeFromCart = (productId) => {
     const item = items.value.find(i => i._id === productId);
     if (item) {
-      const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price);
+      const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk);
       trackEvent('remove_from_cart', {
         currency: 'LYD',
         value: price * item.quantity,
@@ -209,7 +209,7 @@ export const useCartStore = defineStore('cart', () => {
     );
 
     sortedItems.forEach((item) => {
-      const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price);
+      const price = item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk);
       text += `• *${item.name}* (${item.quantity} × ${price} د.ل)\n`;
       if (item.itemNotes) {
         text += `  ملاحظة: ${item.itemNotes}\n`;
@@ -251,7 +251,7 @@ export const useCartStore = defineStore('cart', () => {
         items: items.value.map(item => ({
           productId: item._id && !item._id.startsWith('item_') ? item._id : null,
           name: item.name,
-          price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price),
+          price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk),
           quantity: item.quantity,
           allowFloat: item.allowFloat || false,
           notes: item.itemNotes || ''
@@ -297,7 +297,7 @@ export const useCartStore = defineStore('cart', () => {
       items: items.value.map(item => ({
         productId: item._id,
         name: item.name,
-        price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price),
+        price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk),
         quantity: item.quantity,
         allowFloat: item.allowFloat || false,
         notes: item.itemNotes || ''
@@ -334,7 +334,7 @@ export const useCartStore = defineStore('cart', () => {
       items: items.value.map(item => ({
         item_id: item._id,
         item_name: item.name,
-        price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price),
+        price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk),
         quantity: item.quantity,
         item_category: item.category || ''
       }))
