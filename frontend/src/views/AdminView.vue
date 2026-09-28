@@ -15465,7 +15465,7 @@ const closeSuggestionsWithDelay = () => {
   text-align: right;
   font-weight: 700;
   font-size: 0.95rem;
-  font-family: inherit;
+  font-family: 'Cairo', sans-serif !important;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;

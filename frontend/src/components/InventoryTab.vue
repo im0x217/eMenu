@@ -1373,11 +1373,38 @@ export default {
 ============================================================ */
 
 .inventory-module-root {
-  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  font-family: 'Cairo', sans-serif !important;
   color: #0f172a;
   direction: rtl;
   text-align: right;
   width: 100%;
+}
+
+/* Enforce Unified Cairo Across All Module Elements & Form Controls */
+.inventory-module-root,
+.inventory-module-root *,
+.inventory-module-root button,
+.inventory-module-root input,
+.inventory-module-root select,
+.inventory-module-root textarea,
+.inv-modal-overlay,
+.inv-modal-overlay *,
+.inv-modal-dialog,
+.inv-modal-dialog *,
+.inv-modal-dialog button,
+.inv-modal-dialog input,
+.inv-modal-dialog select,
+.inv-modal-dialog textarea,
+.inv-print-sheet,
+.inv-print-sheet * {
+  font-family: 'Cairo', sans-serif !important;
+}
+
+/* Tabular Numerics for Numbers, Quantities, Codes, and Balances */
+.text-mono {
+  font-family: 'Cairo', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.2px;
 }
 
 /* 1. Header Bar */
@@ -1482,8 +1509,9 @@ export default {
   height: 38px;
   padding: 0 14px;
   border-radius: 12px;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 800;
+  font-family: 'Cairo', sans-serif !important;
   cursor: pointer;
   transition: all 0.18s ease;
   border: 1px solid transparent;
@@ -1664,8 +1692,8 @@ export default {
   padding: 0 36px 0 32px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
-  font-size: 0.85rem;
-  font-family: inherit;
+  font-size: 0.9rem !important;
+  font-family: 'Cairo', sans-serif !important;
   font-weight: 600;
   color: #0f172a;
   background: #ffffff;
@@ -1708,8 +1736,9 @@ export default {
   border: none;
   background: transparent;
   color: #64748b;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 800;
+  font-family: 'Cairo', sans-serif !important;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
@@ -1758,8 +1787,9 @@ export default {
   border: none;
   background: #f1f5f9;
   color: #475569;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 800;
+  font-family: 'Cairo', sans-serif !important;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -1774,11 +1804,13 @@ export default {
 }
 
 .inv-cat-badge {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   padding: 1px 6px;
   border-radius: 6px;
   background: #e2e8f0;
   color: #334155;
+  font-family: 'Cairo', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
 }
 .inv-cat-pill.active .inv-cat-badge {
   background: #1e293b;
@@ -1792,7 +1824,7 @@ export default {
   justify-content: space-between;
   margin-bottom: 10px;
   padding: 0 4px;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #64748b;
   flex-wrap: wrap;
@@ -1808,8 +1840,8 @@ export default {
 .inv-sort-btn {
   background: transparent;
   border: none;
-  font-family: inherit;
-  font-size: 0.78rem;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.8rem;
   font-weight: 800;
   color: #64748b;
   padding: 3px 8px;
@@ -1840,14 +1872,16 @@ export default {
   width: 100%;
   border-collapse: collapse;
   text-align: right;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-family: 'Cairo', sans-serif !important;
 }
 
 .inv-table thead th {
   background: #f8fafc;
-  color: #475569;
-  font-weight: 800;
-  font-size: 0.78rem;
+  color: #334155;
+  font-weight: 850;
+  font-size: 0.85rem;
+  font-family: 'Cairo', sans-serif !important;
   padding: 12px 14px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -1856,6 +1890,8 @@ export default {
   padding: 12px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
+  font-size: 0.9rem;
+  font-family: 'Cairo', sans-serif !important;
 }
 
 .inv-table tbody tr:hover {
@@ -1967,6 +2003,7 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-family: 'Cairo', sans-serif !important;
   transition: all 0.15s ease;
 }
 .inv-stepper-btn:hover:not(:disabled) {
@@ -1987,6 +2024,8 @@ export default {
   border: none;
   font-weight: 900;
   font-size: 0.95rem;
+  font-family: 'Cairo', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
   color: #0f172a;
   cursor: pointer;
   border-radius: 6px;
@@ -2227,6 +2266,9 @@ export default {
   padding: 20px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
   border: 1px solid #e2e8f0;
+  font-family: 'Cairo', sans-serif !important;
+  direction: rtl;
+  text-align: right;
 }
 
 .animate-scale-in {
@@ -2286,8 +2328,8 @@ export default {
   padding: 0 12px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  font-family: inherit;
-  font-size: 0.85rem;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.9rem !important;
   font-weight: 600;
   color: #0f172a;
   outline: none;
@@ -2296,6 +2338,13 @@ export default {
 .inv-form-input:focus {
   border-color: #f59e0b;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+@media (max-width: 768px) {
+  .inv-search-input,
+  .inv-form-input {
+    font-size: 16px !important;
+  }
 }
 
 .inv-form-error {
@@ -2368,9 +2417,10 @@ export default {
   height: 36px;
   border-radius: 8px;
   border: 1px solid transparent;
-  font-family: monospace;
-  font-weight: 900;
-  font-size: 0.85rem;
+  font-family: 'Cairo', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 800;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }

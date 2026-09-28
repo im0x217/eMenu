@@ -15,8 +15,20 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
 
-  /* Theme color configuration. Modified dynamically per active shop */
+/* Global Unified Cairo Typography Enforcement */
+html, body, button, input, select, textarea {
+  font-family: 'Cairo', sans-serif;
+}
+
+.text-mono {
+  font-family: 'Cairo', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.2px;
+}
+
+:root {
   --primary-color: #fdb518; /* Shop1 Gold */
   --primary-color-rgb: 253, 181, 24;
   --primary-glow: rgba(253, 181, 24, 0.15);
