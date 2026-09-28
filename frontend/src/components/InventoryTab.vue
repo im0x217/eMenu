@@ -143,7 +143,6 @@
               </svg>
             </div>
           </div>
-          <div class="inv-stat-subtext">مجموع قطع المخزون</div>
         </div>
 
         <!-- KPI 5: Reserved Units for Waiting Orders -->
@@ -1586,6 +1585,10 @@ export default {
   padding: 14px 16px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 96px;
 }
 .inv-stat-card:hover {
   border-color: #cbd5e1;
