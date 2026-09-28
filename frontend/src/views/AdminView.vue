@@ -397,59 +397,82 @@
             <!-- REAL ANALYTICS DATA CONTENT -->
             <div v-else class="analytics-real-content animate-fade-in">
             <!-- KPI Cards Grid -->
-            <div class="kpi-grid">
-              <div class="kpi-card glass-panel">
+            <div class="kpi-grid" ref="kpiGridRef" :class="{ 'in-view': isKpiInView }">
+              <!-- KPI 1: Revenue -->
+              <div class="kpi-card glass-panel kpi-card-revenue" style="--kpi-delay: 0ms;">
+                <div class="kpi-accent-top"></div>
                 <div class="kpi-icon-wrapper sales-icon">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي المبيعات</span>
                   <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.totalRevenue) }}</span>
+                  <span class="kpi-subtext">صافي الدخل المحقق</span>
                 </div>
               </div>
-              <div class="kpi-card glass-panel kpi-card-paid">
+
+              <!-- KPI 2: Paid -->
+              <div class="kpi-card glass-panel kpi-card-paid" style="--kpi-delay: 60ms;">
+                <div class="kpi-accent-top"></div>
                 <div class="kpi-icon-wrapper paid-icon">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي المدفوع</span>
                   <span class="kpi-value text-mono text-success">{{ formatCurrency(analyticsData.kpi.totalPaid) }}</span>
+                  <span class="kpi-subtext">المقبوضات المستلمة</span>
                 </div>
               </div>
-              <div class="kpi-card glass-panel kpi-card-remaining">
+
+              <!-- KPI 3: Remaining (Debt) -->
+              <div class="kpi-card glass-panel kpi-card-remaining" style="--kpi-delay: 120ms;">
+                <div class="kpi-accent-top"></div>
                 <div class="kpi-icon-wrapper remaining-icon">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي المتبقي</span>
                   <span class="kpi-value text-mono text-danger">{{ formatCurrency(analyticsData.kpi.totalRemaining) }}</span>
+                  <span class="kpi-subtext">ديون ومستحقات آجلة</span>
                 </div>
               </div>
-              <div class="kpi-card glass-panel">
+
+              <!-- KPI 4: Orders -->
+              <div class="kpi-card glass-panel kpi-card-orders" style="--kpi-delay: 180ms;">
+                <div class="kpi-accent-top"></div>
                 <div class="kpi-icon-wrapper orders-icon">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">إجمالي الطلبات</span>
                   <span class="kpi-value text-mono">{{ formatArabicPlural(analyticsData.kpi.orderCount, 'order') }}</span>
+                  <span class="kpi-subtext">حجم المعاملات المكتملة</span>
                 </div>
               </div>
-              <div class="kpi-card glass-panel">
+
+              <!-- KPI 5: AOV -->
+              <div class="kpi-card glass-panel kpi-card-aov" style="--kpi-delay: 240ms;">
+                <div class="kpi-accent-top"></div>
                 <div class="kpi-icon-wrapper aov-icon">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">متوسط الطلب</span>
                   <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.avgOrderValue) }}</span>
+                  <span class="kpi-subtext">معدل قيمة السلة الواحدة</span>
                 </div>
               </div>
-              <div class="kpi-card glass-panel">
+
+              <!-- KPI 6: Customers -->
+              <div class="kpi-card glass-panel kpi-card-customers" style="--kpi-delay: 300ms;">
+                <div class="kpi-accent-top"></div>
                 <div class="kpi-icon-wrapper customers-icon">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v-2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </div>
                 <div class="kpi-info">
                   <span class="kpi-title">العملاء النشطون</span>
                   <span class="kpi-value text-mono">{{ formatArabicPlural(analyticsData.kpi.activeCustomers, 'customer') }}</span>
+                  <span class="kpi-subtext">قاعدة المشترين المتفاعلين</span>
                 </div>
               </div>
             </div>
@@ -457,8 +480,19 @@
             <!-- Charts & Metrics Grid -->
             <div class="charts-grid">
               <!-- Sales Trend Chart Card -->
-              <div class="chart-card glass-panel span-2">
-                <h3 class="chart-title">مؤشر مبيعات الإيرادات (د.ل)</h3>
+              <div class="chart-card glass-panel span-2 trend-chart-card" ref="trendChartCardRef" :class="{ 'in-view': isTrendChartInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap primary">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">مؤشر الإيرادات والمبيعات</h3>
+                      <span class="chart-subtitle">تطور حركة المبيعات وتدفق الإيرادات عبر الفترة المحددة</span>
+                    </div>
+                  </div>
+                  <span class="chart-rec-badge">دينار ليبي (د.ل)</span>
+                </div>
                 <div class="svg-chart-container">
                   <div v-if="analyticsData.revenueTrend.length === 0" class="empty-chart">
                     لا توجد بيانات كافية لرسم المخطط البياني في هذه الفترة.
@@ -466,25 +500,25 @@
                   <svg aria-hidden="true" v-else class="svg-line-chart" viewBox="0 0 600 240">
                     <defs>
                       <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="var(--chart-primary)" stop-opacity="0.4"/>
+                        <stop offset="0%" stop-color="var(--chart-primary)" stop-opacity="0.38"/>
                         <stop offset="100%" stop-color="var(--chart-primary)" stop-opacity="0.0"/>
                       </linearGradient>
                     </defs>
                     <!-- Grid Lines -->
-                    <line x1="40" y1="40" x2="560" y2="40" stroke="#f1f3f5" stroke-dasharray="4"/>
-                    <line x1="40" y1="100" x2="560" y2="100" stroke="#f1f3f5" stroke-dasharray="4"/>
-                    <line x1="40" y1="160" x2="560" y2="160" stroke="#f1f3f5" stroke-dasharray="4"/>
-                    <line x1="40" y1="210" x2="560" y2="210" stroke="#ced4da"/>
+                    <line x1="40" y1="40" x2="560" y2="40" stroke="#f1f5f9" stroke-dasharray="4"/>
+                    <line x1="40" y1="100" x2="560" y2="100" stroke="#f1f5f9" stroke-dasharray="4"/>
+                    <line x1="40" y1="160" x2="560" y2="160" stroke="#f1f5f9" stroke-dasharray="4"/>
+                    <line x1="40" y1="210" x2="560" y2="210" stroke="#e2e8f0"/>
                     
-                    <!-- Line & Area Paths -->
-                    <path :d="svgTrendAreaPath" fill="url(#chartGradient)"/>
-                    <path :d="svgTrendLinePath" fill="none" stroke="var(--chart-primary)" stroke-width="3"/>
+                    <!-- Line & Area Paths with Scroll Drawing Animation -->
+                    <path :d="svgTrendAreaPath" class="svg-trend-area" :class="{ 'show-area': isTrendChartInView }" fill="url(#chartGradient)"/>
+                    <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isTrendChartInView }" fill="none" stroke="var(--chart-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                     
                     <!-- Dots & Tooltips -->
-                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group">
-                      <circle :cx="dot.x" :cy="dot.y" r="5" fill="#fff" stroke="var(--chart-primary)" stroke-width="2" />
+                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group" :class="{ 'show-dot': isTrendChartInView }" :style="{ '--dot-delay': `${Math.min(idx * 30 + 350, 950)}ms` }">
+                      <circle :cx="dot.x" :cy="dot.y" r="5" fill="#fff" stroke="var(--chart-primary)" stroke-width="2.5" />
                       <!-- Hover interaction area -->
-                      <circle :cx="dot.x" :cy="dot.y" r="14" fill="transparent" class="dot-hover-trigger">
+                      <circle :cx="dot.x" :cy="dot.y" r="16" fill="transparent" class="dot-hover-trigger">
                         <title>{{ dot.date }}: {{ formatCurrency(dot.val) }}</title>
                       </circle>
                     </g>
@@ -497,97 +531,186 @@
               </div>
 
               <!-- Price Mode Split Chart Card -->
-              <div class="chart-card glass-panel">
-                <h3 class="chart-title">توزيع المبيعات (جملة / مفرد)</h3>
+              <div class="chart-card glass-panel price-mode-card" ref="priceModeCardRef" :class="{ 'in-view': isPriceModeInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap amber">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">توزيع المبيعات</h3>
+                      <span class="chart-subtitle">مقارنة مبيعات الجملة مقابل المفرد</span>
+                    </div>
+                  </div>
+                </div>
                 <div class="split-display">
                   <div class="donut-display">
                     <!-- Custom SVG Donut -->
-                    <svg aria-hidden="true" viewBox="0 0 120 120" width="120" height="120">
-                      <circle cx="60" cy="60" r="45" fill="none" stroke="#e9ecef" stroke-width="12"/>
+                    <svg aria-hidden="true" viewBox="0 0 120 120" width="124" height="124">
+                      <circle cx="60" cy="60" r="45" fill="none" stroke="#f1f5f9" stroke-width="12"/>
+                      <circle cx="60" cy="60" r="45" fill="none" stroke="#e2e8f0" stroke-width="12"
+                              :stroke-dasharray="donutDashArray" :stroke-dashoffset="0"
+                              transform="rotate(-90 60 60)"/>
                       <circle cx="60" cy="60" r="45" fill="none" stroke="var(--chart-primary)" stroke-width="12" 
-                              :stroke-dasharray="donutDashArray" :stroke-dashoffset="donutDashOffset"
+                              stroke-linecap="round"
+                              :stroke-dasharray="donutDashArray" 
+                              :stroke-dashoffset="isPriceModeInView ? donutDashOffset : '282.74'"
+                              class="donut-circle-animated"
                               transform="rotate(-90 60 60)"/>
                     </svg>
-                    <div class="donut-center">
-                      <span class="donut-percentage">{{ Math.round(priceModePercentages.regular) }}%</span>
+                    <div class="donut-center" :class="{ 'revealed': isPriceModeInView }">
+                      <span class="donut-percentage text-mono">{{ Math.round(priceModePercentages.regular) }}%</span>
                       <span class="donut-sub">مفرد</span>
                     </div>
                   </div>
                   <div class="split-legend">
-                    <div class="legend-row">
-                      <span class="dot dot-regular"></span>
-                      <span class="label">بيع بالمفرد:</span>
-                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.regular.revenue) }} ({{ formatArabicPlural(analyticsData.priceModeSplit.regular.count, 'order') }})</span>
+                    <!-- Regular Row -->
+                    <div class="legend-card-row regular">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="dot dot-regular"></span>
+                          <span class="label font-bold">بيع بالمفرد</span>
+                          <span class="count-pill text-mono">{{ formatArabicPlural(analyticsData.priceModeSplit.regular.count, 'order') }}</span>
+                        </div>
+                        <span class="val text-mono font-bold">{{ formatCurrency(analyticsData.priceModeSplit.regular.revenue) }}</span>
+                      </div>
+                      <div class="split-mini-track">
+                        <div class="split-mini-fill fill-regular" :class="{ 'animate-pm-bar': isPriceModeInView }" :style="{ '--split-target': Math.round(priceModePercentages.regular) + '%' }"></div>
+                      </div>
                     </div>
-                    <div class="legend-row mt-2">
-                      <span class="dot dot-bulk"></span>
-                      <span class="label">بيع بالجملة:</span>
-                      <span class="val">{{ formatCurrency(analyticsData.priceModeSplit.bulk.revenue) }} ({{ formatArabicPlural(analyticsData.priceModeSplit.bulk.count, 'order') }})</span>
+
+                    <!-- Bulk Row -->
+                    <div class="legend-card-row bulk mt-2">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="dot dot-bulk"></span>
+                          <span class="label font-bold">بيع بالجملة</span>
+                          <span class="count-pill text-mono">{{ formatArabicPlural(analyticsData.priceModeSplit.bulk.count, 'order') }}</span>
+                        </div>
+                        <span class="val text-mono font-bold">{{ formatCurrency(analyticsData.priceModeSplit.bulk.revenue) }}</span>
+                      </div>
+                      <div class="split-mini-track">
+                        <div class="split-mini-fill fill-bulk" :class="{ 'animate-pm-bar': isPriceModeInView }" :style="{ '--split-target': Math.round(priceModePercentages.bulk) + '%' }"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Payment Methods Distribution Card -->
-              <div class="chart-card glass-panel">
-                <div class="chart-title d-flex justify-content-between align-items-center">
-                  <span>توزيع طرق الدفع (نقدي / بطاقة / تحويل)</span>
-                  <span class="chart-rec-badge">حسب تاريخ الاستلام</span>
+              <div class="chart-card glass-panel payment-methods-card" ref="paymentMethodsCardRef" :class="{ 'in-view': isPaymentMethodsInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap emerald">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">توزيع قنوات الدفع</h3>
+                      <span class="chart-subtitle">نقدي، بطاقات مصرفية، وتحويلات</span>
+                    </div>
+                  </div>
+                  <span class="chart-rec-badge">حسب الاستلام</span>
                 </div>
                 <div class="payment-methods-breakdown">
                   <!-- Cash Row -->
-                  <div class="pm-breakdown-row pm-cash">
-                    <div class="pm-icon-title">
-                      <div class="pm-badge cash-badge">
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  <div class="pm-breakdown-row pm-cash" :class="{ 'in-view': isPaymentMethodsInView }" style="--pm-delay: 0ms;">
+                    <div class="pm-row-top">
+                      <div class="pm-icon-title">
+                        <div class="pm-badge cash-badge">
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <div class="pm-details">
+                          <span class="pm-name font-bold">نقدي (Cash)</span>
+                          <span class="pm-count text-mono">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.cash.count, 'order') }}</span>
+                        </div>
                       </div>
-                      <div class="pm-details">
-                        <span class="pm-name">نقدي (Cash)</span>
-                        <span class="pm-count">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.cash.count, 'order') }}</span>
+                      <div class="pm-val-wrap">
+                        <span class="pm-pct-tag text-mono font-bold">{{ getPaymentMethodPct('cash') }}%</span>
+                        <span class="pm-amount text-mono font-bold">{{ formatCurrency(analyticsData.paymentMethodsSplit.cash.revenue) }}</span>
                       </div>
                     </div>
-                    <div class="pm-amount">{{ formatCurrency(analyticsData.paymentMethodsSplit.cash.revenue) }}</div>
+                    <div class="pm-progress-track">
+                      <div class="pm-progress-fill fill-cash" :class="{ 'animate-pm-bar': isPaymentMethodsInView }" :style="{ '--pm-target-width': getPaymentMethodPct('cash') + '%' }"></div>
+                    </div>
                   </div>
 
                   <!-- Card Row -->
-                  <div class="pm-breakdown-row pm-card">
-                    <div class="pm-icon-title">
-                      <div class="pm-badge card-badge">
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                  <div class="pm-breakdown-row pm-card" :class="{ 'in-view': isPaymentMethodsInView }" style="--pm-delay: 80ms;">
+                    <div class="pm-row-top">
+                      <div class="pm-icon-title">
+                        <div class="pm-badge card-badge">
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        </div>
+                        <div class="pm-details">
+                          <span class="pm-name font-bold">بطاقة مصرفية (Card)</span>
+                          <span class="pm-count text-mono">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.card.count, 'order') }}</span>
+                        </div>
                       </div>
-                      <div class="pm-details">
-                        <span class="pm-name">بطاقة مصرفية (Card)</span>
-                        <span class="pm-count">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.card.count, 'order') }}</span>
+                      <div class="pm-val-wrap">
+                        <span class="pm-pct-tag text-mono font-bold">{{ getPaymentMethodPct('card') }}%</span>
+                        <span class="pm-amount text-mono font-bold">{{ formatCurrency(analyticsData.paymentMethodsSplit.card.revenue) }}</span>
                       </div>
                     </div>
-                    <div class="pm-amount">{{ formatCurrency(analyticsData.paymentMethodsSplit.card.revenue) }}</div>
+                    <div class="pm-progress-track">
+                      <div class="pm-progress-fill fill-card" :class="{ 'animate-pm-bar': isPaymentMethodsInView }" :style="{ '--pm-target-width': getPaymentMethodPct('card') + '%' }"></div>
+                    </div>
                   </div>
 
                   <!-- Bank Transfer Row -->
-                  <div class="pm-breakdown-row pm-bank">
-                    <div class="pm-icon-title">
-                      <div class="pm-badge bank-badge">
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path></svg>
+                  <div class="pm-breakdown-row pm-bank" :class="{ 'in-view': isPaymentMethodsInView }" style="--pm-delay: 160ms;">
+                    <div class="pm-row-top">
+                      <div class="pm-icon-title">
+                        <div class="pm-badge bank-badge">
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path></svg>
+                        </div>
+                        <div class="pm-details">
+                          <span class="pm-name font-bold">تحويل بنكي (Bank)</span>
+                          <span class="pm-count text-mono">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.bank_transfer.count, 'order') }}</span>
+                        </div>
                       </div>
-                      <div class="pm-details">
-                        <span class="pm-name">تحويل بنكي (Bank)</span>
-                        <span class="pm-count">{{ formatArabicPlural(analyticsData.paymentMethodsSplit.bank_transfer.count, 'order') }}</span>
+                      <div class="pm-val-wrap">
+                        <span class="pm-pct-tag text-mono font-bold">{{ getPaymentMethodPct('bank_transfer') }}%</span>
+                        <span class="pm-amount text-mono font-bold">{{ formatCurrency(analyticsData.paymentMethodsSplit.bank_transfer.revenue) }}</span>
                       </div>
                     </div>
-                    <div class="pm-amount">{{ formatCurrency(analyticsData.paymentMethodsSplit.bank_transfer.revenue) }}</div>
+                    <div class="pm-progress-track">
+                      <div class="pm-progress-fill fill-bank" :class="{ 'animate-pm-bar': isPaymentMethodsInView }" :style="{ '--pm-target-width': getPaymentMethodPct('bank_transfer') + '%' }"></div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Category Sales Share Card -->
-              <div class="chart-card glass-panel span-2" ref="categorySalesCardRef">
-                <h3 class="chart-title">أداء الفئات والأصناف</h3>
+              <div class="chart-card glass-panel span-2 category-sales-card" ref="categorySalesCardRef" :class="{ 'in-view': isCategorySalesInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap teal">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">أداء الفئات والأصناف</h3>
+                      <span class="chart-subtitle">حجم الإيرادات والطلبات موزعة حسب التصنيف</span>
+                    </div>
+                  </div>
+                </div>
                 <div class="bar-chart-list">
-                  <div v-if="analyticsData.categorySales.length === 0" class="empty-list">لا توجد أصناف مبيعات.</div>
-                  <div v-for="(cat, cIdx) in analyticsData.categorySales" :key="cat.category" class="category-bar-row">
+                  <div v-if="analyticsData.categorySales.length === 0" class="empty-list py-3 text-center text-muted">
+                    لا توجد أصناف مبيعات في هذه الفترة.
+                  </div>
+                  <div 
+                    v-for="(cat, cIdx) in analyticsData.categorySales" 
+                    :key="cat.category" 
+                    class="category-bar-row"
+                    :class="{ 'in-view': isCategorySalesInView }"
+                    :style="{ '--cat-delay': `${Math.min(cIdx * 50, 600)}ms` }"
+                  >
                     <div class="bar-info">
-                      <span class="cat-name">{{ cat.category }}</span>
-                      <span class="cat-val">{{ formatCurrency(cat.revenue) }} ({{ formatArabicPlural(cat.count, 'order') }})</span>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="cat-rank-pill text-mono">#{{ cIdx + 1 }}</span>
+                        <span class="cat-name font-bold">{{ cat.category }}</span>
+                        <span class="cat-count-badge text-mono">{{ formatArabicPlural(cat.count, 'order') }}</span>
+                      </div>
+                      <span class="cat-val text-mono font-bold text-primary">{{ formatCurrency(cat.revenue) }}</span>
                     </div>
                     <div class="bar-gauge">
                       <div 
@@ -597,22 +720,54 @@
                           '--cat-target-width': getCategoryBarWidth(cat.revenue) + '%',
                           '--cat-delay': `${Math.min(cIdx * 50, 600)}ms`
                         }"
-                      ></div>
+                      >
+                        <div class="sales-share-shimmer-wave"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Top Favorites Snapshot Card -->
-              <div class="chart-card glass-panel">
-                <h3 class="chart-title">أكثر المنتجات تفضيلاً</h3>
+              <div class="chart-card glass-panel top-favorites-card" ref="topFavoritesCardRef" :class="{ 'in-view': isTopFavoritesInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap rose">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">أكثر المنتجات تفضيلاً</h3>
+                      <span class="chart-subtitle">الأكثر إضافة لقائمة الرغبات</span>
+                    </div>
+                  </div>
+                </div>
                 <div class="list-cards">
-                  <div v-if="activeTopFavorites.length === 0" class="empty-list">لا توجد تفضيلات بعد.</div>
-                  <div v-for="(fav, idx) in activeTopFavorites" :key="idx" class="list-item-row">
-                    <div class="list-badge">{{ idx + 1 }}</div>
+                  <div v-if="activeTopFavorites.length === 0" class="empty-list py-3 text-center text-muted">
+                    لا توجد تفضيلات مسجلة بعد.
+                  </div>
+                  <div 
+                    v-for="(fav, idx) in activeTopFavorites" 
+                    :key="idx" 
+                    class="list-item-row"
+                    :class="{ 'in-view': isTopFavoritesInView }"
+                    :style="{ '--fav-delay': `${Math.min(idx * 50, 500)}ms` }"
+                  >
+                    <div 
+                      class="list-badge text-mono font-bold"
+                      :class="{ 
+                        'rank-gold': idx === 0, 
+                        'rank-silver': idx === 1, 
+                        'rank-bronze': idx === 2 
+                      }"
+                    >
+                      #{{ idx + 1 }}
+                    </div>
                     <div class="list-item-info">
-                      <span class="title">{{ fav.name }}</span>
+                      <span class="title font-bold">{{ fav.name }}</span>
                       <span class="subtitle">تم التفضيل بواسطة {{ formatArabicPlural(fav.count, 'customer') }}</span>
+                    </div>
+                    <div class="fav-heart-icon-wrap">
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                     </div>
                   </div>
                 </div>
@@ -798,25 +953,83 @@
               </div>
 
               <!-- Top Customers Card -->
-              <div class="chart-card glass-panel">
-                <h3 class="chart-title">كبار العملاء (إنفاقاً)</h3>
+              <div class="chart-card glass-panel top-customers-card" ref="topCustomersCardRef" :class="{ 'in-view': isTopCustomersInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap purple">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">كبار العملاء (الأعلى إنفاقاً)</h3>
+                      <span class="chart-subtitle">العملاء الأكثر شراءً ومساهمة بالإيراد</span>
+                    </div>
+                  </div>
+                </div>
                 <div class="table-container">
-                  <table class="admin-table desktop-analytics-table">
+                  <table class="admin-table desktop-analytics-table top-customers-interactive-table">
                     <thead>
                       <tr>
-                        <th>الاسم</th>
-                        <th>رقم الهاتف</th>
-                        <th>الإنفاق</th>
+                        <th class="col-center" style="width: 60px;">#</th>
+                        <th>اسم العميل</th>
+                        <th style="width: 150px;">رقم الهاتف</th>
+                        <th class="col-center" style="width: 140px;">الإنفاق</th>
+                        <th class="col-center" style="width: 160px;">مؤشر الإنفاق</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-if="analyticsData.topCustomers.length === 0">
-                        <td colspan="3" class="text-center">لا توجد بيانات عملاء.</td>
+                        <td colspan="5" class="text-center py-4 text-muted">لا توجد بيانات عملاء في هذه الفترة.</td>
                       </tr>
-                      <tr v-for="cust in analyticsData.topCustomers" :key="cust.phone">
-                        <td>{{ cust.name }}</td>
-                        <td class="text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</td>
-                        <td class="text-semibold text-mono text-primary">{{ formatCurrency(cust.totalSpent) }}</td>
+                      <tr 
+                        v-for="(cust, cIdx) in analyticsData.topCustomers" 
+                        :key="cust.phone"
+                        class="top-cust-row"
+                        :class="{ 'in-view': isTopCustomersInView }"
+                        :style="{ '--row-delay': `${Math.min(cIdx * 50, 500)}ms` }"
+                      >
+                        <td class="col-center">
+                          <span 
+                            class="top-prod-rank-pill text-mono font-bold" 
+                            :class="{ 
+                              'rank-gold': cIdx === 0, 
+                              'rank-silver': cIdx === 1, 
+                              'rank-bronze': cIdx === 2 
+                            }"
+                          >
+                            #{{ cIdx + 1 }}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="cust-name-cell">
+                            <span class="cust-avatar-icon">
+                              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </span>
+                            <span class="cust-name-text font-bold">{{ cust.name }}</span>
+                          </div>
+                        </td>
+                        <td class="text-mono" dir="ltr">
+                          <div class="cust-phone-cell">
+                            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>{{ formatLibyanPhone(cust.phone) }}</span>
+                          </div>
+                        </td>
+                        <td class="col-center text-mono text-bold text-primary font-bold">
+                          {{ formatCurrency(cust.totalSpent) }}
+                        </td>
+                        <td>
+                          <div class="sales-share-track-deluxe">
+                            <div 
+                              class="sales-share-fill-deluxe" 
+                              :class="{ 'animate-fill': isTopCustomersInView }"
+                              :style="{ 
+                                '--target-width': getCustomerSharePct(cust.totalSpent) + '%',
+                                '--fill-delay': `${Math.min(cIdx * 50, 500)}ms`
+                              }"
+                            >
+                              <div class="sales-share-shimmer-wave"></div>
+                            </div>
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -830,6 +1043,8 @@
                       v-for="(cust, idx) in analyticsData.topCustomers"
                       :key="'mob-top-cust-' + cust.phone"
                       class="mob-analytics-rank-card glass-panel"
+                      :class="{ 'in-view': isTopCustomersInView }"
+                      :style="{ '--row-delay': `${Math.min(idx * 50, 500)}ms` }"
                     >
                       <div class="mob-rank-badge" :class="{ 'top-1': idx === 0, 'top-2': idx === 1, 'top-3': idx === 2 }">
                         #{{ idx + 1 }}
@@ -840,6 +1055,20 @@
                           <span class="mob-metric-tag text-mono text-muted" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
                           <span class="mob-metric-tag text-mono text-primary font-bold">{{ formatCurrency(cust.totalSpent) }}</span>
                         </div>
+                        <div class="mob-share-bar-wrap mt-2 pt-2 border-top">
+                          <div class="sales-share-track-deluxe">
+                            <div 
+                              class="sales-share-fill-deluxe" 
+                              :class="{ 'animate-fill': isTopCustomersInView }"
+                              :style="{ 
+                                '--target-width': getCustomerSharePct(cust.totalSpent) + '%',
+                                '--fill-delay': `${Math.min(idx * 50, 500)}ms`
+                              }"
+                            >
+                              <div class="sales-share-shimmer-wave"></div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -847,11 +1076,19 @@
               </div>
 
             <!-- Actionable Insights Grid -->
-            <!-- Inactive Customers Card -->
-              <div class="chart-card glass-panel">
-                <div class="card-header-with-badge">
-                  <h3 class="chart-title">عملاء غائبون (بحاجة لتنشيط)</h3>
-                  <span class="badge badge-warning">آخر ظهور قديم</span>
+              <!-- Inactive Customers Card -->
+              <div class="chart-card glass-panel inactive-customers-card" ref="inactiveCustomersCardRef" :class="{ 'in-view': isInactiveCustomersInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap amber">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">عملاء بحاجة لتنشيط</h3>
+                      <span class="chart-subtitle">عملاء لم يجروا أي طلبات مؤخراً</span>
+                    </div>
+                  </div>
+                  <span class="badge badge-warning">تنبيه الغياب</span>
                 </div>
                 <div class="table-container">
                   <table class="admin-table desktop-analytics-table">
@@ -864,12 +1101,23 @@
                     </thead>
                     <tbody>
                       <tr v-if="analyticsData.inactiveCustomers.length === 0">
-                        <td colspan="3" class="text-center">جميع العملاء نشطون في هذه الفترة!</td>
+                        <td colspan="3" class="text-center py-4 text-muted">جميع العملاء نشطون في هذه الفترة!</td>
                       </tr>
-                      <tr v-for="cust in analyticsData.inactiveCustomers" :key="cust.phone">
-                        <td>{{ cust.name }}</td>
-                        <td class="text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</td>
-                        <td class="text-muted">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</td>
+                      <tr 
+                        v-for="(cust, inIdx) in analyticsData.inactiveCustomers" 
+                        :key="cust.phone"
+                        class="top-cust-row"
+                        :class="{ 'in-view': isInactiveCustomersInView }"
+                        :style="{ '--row-delay': `${Math.min(inIdx * 40, 400)}ms` }"
+                      >
+                        <td class="font-bold">{{ cust.name }}</td>
+                        <td class="text-mono" dir="ltr">
+                          <div class="cust-phone-cell">
+                            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>{{ formatLibyanPhone(cust.phone) }}</span>
+                          </div>
+                        </td>
+                        <td class="text-muted text-mono">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -880,9 +1128,11 @@
                       <p class="text-muted mb-0">جميع العملاء نشطون في هذه الفترة!</p>
                     </div>
                     <div
-                      v-for="cust in analyticsData.inactiveCustomers"
+                      v-for="(cust, inIdx) in analyticsData.inactiveCustomers"
                       :key="'mob-inact-cust-' + cust.phone"
                       class="mob-analytics-rank-card glass-panel"
+                      :class="{ 'in-view': isInactiveCustomersInView }"
+                      :style="{ '--row-delay': `${Math.min(inIdx * 40, 400)}ms` }"
                     >
                       <div class="mob-rank-icon-wrap warning">
                         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -891,7 +1141,7 @@
                         <span class="mob-rank-title font-bold">{{ cust.name }}</span>
                         <div class="mob-rank-metrics">
                           <span class="mob-metric-tag text-mono text-muted" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</span>
-                          <span class="mob-metric-tag text-muted text-small">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</span>
+                          <span class="mob-metric-tag text-muted text-small text-mono">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</span>
                         </div>
                       </div>
                     </div>
@@ -900,10 +1150,18 @@
               </div>
 
               <!-- Low Performing Products Card -->
-              <div class="chart-card glass-panel span-2">
-                <div class="card-header-with-badge">
-                  <h3 class="chart-title">منتجات خاملة (0 مبيعات في هذه الفترة)</h3>
-                  <span class="badge badge-danger">مبيعات منخفضة</span>
+              <div class="chart-card glass-panel span-2 low-products-card" ref="lowProductsCardRef" :class="{ 'in-view': isLowProductsInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="chart-header-icon-wrap rose">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">منتجات راكدة (0 مبيعات)</h3>
+                      <span class="chart-subtitle">أصناف لم تحقق أي حركة بيع في هذه الفترة</span>
+                    </div>
+                  </div>
+                  <span class="badge badge-danger">فرصة ترويج</span>
                 </div>
                 <div class="table-container">
                   <table class="admin-table desktop-analytics-table">
@@ -911,17 +1169,23 @@
                       <tr>
                         <th>اسم المنتج</th>
                         <th>الفئة</th>
-                        <th>السعر</th>
+                        <th>السعر الحالي</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-if="activeLowPerformingProducts.length === 0">
-                        <td colspan="3" class="text-center">لا توجد منتجات خاملة، كل المنتجات تحقق مبيعات!</td>
+                        <td colspan="3" class="text-center py-4 text-muted">لا توجد منتجات خاملة، كل المنتجات تحقق مبيعات!</td>
                       </tr>
-                      <tr v-for="prod in activeLowPerformingProducts" :key="prod.productId">
-                        <td>{{ prod.name }}</td>
-                        <td>{{ prod.category }}</td>
-                        <td class="text-semibold">{{ formatCurrency(prod.price) }}</td>
+                      <tr 
+                        v-for="(prod, lIdx) in activeLowPerformingProducts" 
+                        :key="prod.productId"
+                        class="top-cust-row"
+                        :class="{ 'in-view': isLowProductsInView }"
+                        :style="{ '--row-delay': `${Math.min(lIdx * 40, 400)}ms` }"
+                      >
+                        <td class="font-bold">{{ prod.name }}</td>
+                        <td><span class="category-pill">{{ prod.category }}</span></td>
+                        <td class="text-semibold text-mono">{{ formatCurrency(prod.price) }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -932,9 +1196,11 @@
                       <p class="text-muted mb-0">لا توجد منتجات خاملة، كل المنتجات تحقق مبيعات!</p>
                     </div>
                     <div
-                      v-for="prod in activeLowPerformingProducts"
+                      v-for="(prod, lIdx) in activeLowPerformingProducts"
                       :key="'mob-low-prod-' + prod.productId"
                       class="mob-analytics-rank-card glass-panel"
+                      :class="{ 'in-view': isLowProductsInView }"
+                      :style="{ '--row-delay': `${Math.min(lIdx * 40, 400)}ms` }"
                     >
                       <div class="mob-rank-icon-wrap danger">
                         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -951,20 +1217,25 @@
                 </div>
               </div>
 
-              <!-- UX Insights & Conversion Funnel Card (UX Datasets 03_interaction_telemetry) -->
-              <div class="chart-card glass-panel span-2 ux-insights-card">
-                <div class="card-header-with-badge">
+              <!-- UX Insights & Conversion Funnel Card -->
+              <div class="chart-card glass-panel span-2 ux-insights-card" ref="uxInsightsCardRef" :class="{ 'in-view': isUxInsightsInView }">
+                <div class="chart-card-header d-flex justify-content-between align-items-center mb-3">
                   <div class="d-flex align-items-center gap-2">
-                    <h3 class="chart-title">إحصائيات تجربة المستخدم والتحويل (UX Insights)</h3>
-                    <span class="badge badge-primary">سلوك التسوق والتفاعل</span>
+                    <div class="chart-header-icon-wrap indigo">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="chart-title mb-0">إحصائيات تجربة المستخدم والتحويل (UX Insights)</h3>
+                      <span class="chart-subtitle">تحليل مسار التسوق، السلات المتروكة، وتفاعل الأجهزة</span>
+                    </div>
                   </div>
-                  <span class="text-muted fs-xs">مبنية على معايير UX Datasets</span>
+                  <span class="badge badge-primary">سلوك التسوق</span>
                 </div>
 
                 <div class="ux-insights-content mt-3">
                   <!-- Conversion Funnel Row -->
                   <div class="ux-funnel-grid">
-                    <div class="funnel-step">
+                    <div class="funnel-step" :class="{ 'in-view': isUxInsightsInView }" style="--step-delay: 0ms;">
                       <div class="funnel-step-header">
                         <span class="step-num">1</span>
                         <span class="step-title">جلسات التصفح</span>
@@ -974,10 +1245,10 @@
                     </div>
 
                     <div class="funnel-connector" aria-hidden="true">
-                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </div>
 
-                    <div class="funnel-step">
+                    <div class="funnel-step" :class="{ 'in-view': isUxInsightsInView }" style="--step-delay: 80ms;">
                       <div class="funnel-step-header">
                         <span class="step-num">2</span>
                         <span class="step-title">إضافة للسلة</span>
@@ -987,10 +1258,10 @@
                     </div>
 
                     <div class="funnel-connector" aria-hidden="true">
-                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </div>
 
-                    <div class="funnel-step">
+                    <div class="funnel-step" :class="{ 'in-view': isUxInsightsInView }" style="--step-delay: 160ms;">
                       <div class="funnel-step-header">
                         <span class="step-num">3</span>
                         <span class="step-title">مراجعة الطلب</span>
@@ -1000,10 +1271,10 @@
                     </div>
 
                     <div class="funnel-connector" aria-hidden="true">
-                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </div>
 
-                    <div class="funnel-step highlight">
+                    <div class="funnel-step highlight" :class="{ 'in-view': isUxInsightsInView }" style="--step-delay: 240ms;">
                       <div class="funnel-step-header">
                         <span class="step-num">4</span>
                         <span class="step-title">إتمام الطلب</span>
@@ -1039,17 +1310,55 @@
                     <div class="ux-subpanel">
                       <h4 class="subpanel-title">توزيع الأجهزة (Device Breakdown)</h4>
                       <div class="device-bars">
+                        <!-- Mobile Device -->
                         <div class="device-row">
-                          <span class="device-name">📱 الهاتف المحمول</span>
-                          <span class="device-count text-mono">{{ telemetryInsights.devices?.mobile || 0 }}</span>
+                          <div class="device-info-left">
+                            <span class="device-icon-svg">
+                              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                            </span>
+                            <span class="device-name font-bold">الهاتف المحمول</span>
+                          </div>
+                          <div class="device-info-right">
+                            <span class="device-pct-tag text-mono">{{ getDevicePct('mobile') }}%</span>
+                            <span class="device-count text-mono font-bold">{{ telemetryInsights.devices?.mobile || 0 }}</span>
+                          </div>
                         </div>
-                        <div class="device-row">
-                          <span class="device-name">💻 الحاسوب المكتبي</span>
-                          <span class="device-count text-mono">{{ telemetryInsights.devices?.desktop || 0 }}</span>
+                        <div class="device-track">
+                          <div class="device-fill fill-mobile" :class="{ 'animate-pm-bar': isUxInsightsInView }" :style="{ '--pm-target-width': getDevicePct('mobile') + '%' }"></div>
                         </div>
-                        <div class="device-row">
-                          <span class="device-name">📟 الأجهزة اللوحية</span>
-                          <span class="device-count text-mono">{{ telemetryInsights.devices?.tablet || 0 }}</span>
+
+                        <!-- Desktop Device -->
+                        <div class="device-row mt-2">
+                          <div class="device-info-left">
+                            <span class="device-icon-svg">
+                              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            </span>
+                            <span class="device-name font-bold">الحاسوب المكتبي</span>
+                          </div>
+                          <div class="device-info-right">
+                            <span class="device-pct-tag text-mono">{{ getDevicePct('desktop') }}%</span>
+                            <span class="device-count text-mono font-bold">{{ telemetryInsights.devices?.desktop || 0 }}</span>
+                          </div>
+                        </div>
+                        <div class="device-track">
+                          <div class="device-fill fill-desktop" :class="{ 'animate-pm-bar': isUxInsightsInView }" :style="{ '--pm-target-width': getDevicePct('desktop') + '%' }"></div>
+                        </div>
+
+                        <!-- Tablet Device -->
+                        <div class="device-row mt-2">
+                          <div class="device-info-left">
+                            <span class="device-icon-svg">
+                              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                            </span>
+                            <span class="device-name font-bold">الأجهزة اللوحية</span>
+                          </div>
+                          <div class="device-info-right">
+                            <span class="device-pct-tag text-mono">{{ getDevicePct('tablet') }}%</span>
+                            <span class="device-count text-mono font-bold">{{ telemetryInsights.devices?.tablet || 0 }}</span>
+                          </div>
+                        </div>
+                        <div class="device-track">
+                          <div class="device-fill fill-tablet" :class="{ 'animate-pm-bar': isUxInsightsInView }" :style="{ '--pm-target-width': getDevicePct('tablet') + '%' }"></div>
                         </div>
                       </div>
                     </div>
@@ -1061,7 +1370,7 @@
                       </div>
                       <div v-else class="cat-engagement-list">
                         <div v-for="cat in telemetryInsights.topCategories" :key="cat.name" class="cat-engage-item">
-                          <span class="cat-name">{{ cat.name }}</span>
+                          <span class="cat-name font-bold">{{ cat.name }}</span>
                           <span class="cat-interactions text-mono">{{ cat.interactions }} تفاعل</span>
                         </div>
                       </div>
@@ -8082,11 +8391,53 @@ export default {
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
 
-    // Animation on Scroll for Top Products & Category Analytics
-    const topProductsCardRef = ref(null);
+    // Animation on Scroll for Analytics Dashboard Sections
+    const kpiGridRef = ref(null);
+    const isKpiInView = ref(false);
+
+    const trendChartCardRef = ref(null);
+    const isTrendChartInView = ref(false);
+
+    const priceModeCardRef = ref(null);
+    const isPriceModeInView = ref(false);
+
+    const paymentMethodsCardRef = ref(null);
+    const isPaymentMethodsInView = ref(false);
+
     const categorySalesCardRef = ref(null);
-    const isTopProductsInView = ref(false);
     const isCategorySalesInView = ref(false);
+
+    const topFavoritesCardRef = ref(null);
+    const isTopFavoritesInView = ref(false);
+
+    const topProductsCardRef = ref(null);
+    const isTopProductsInView = ref(false);
+
+    const topCustomersCardRef = ref(null);
+    const isTopCustomersInView = ref(false);
+
+    const inactiveCustomersCardRef = ref(null);
+    const isInactiveCustomersInView = ref(false);
+
+    const lowProductsCardRef = ref(null);
+    const isLowProductsInView = ref(false);
+
+    const uxInsightsCardRef = ref(null);
+    const isUxInsightsInView = ref(false);
+
+    const resetAnalyticsScrollStates = () => {
+      isKpiInView.value = false;
+      isTrendChartInView.value = false;
+      isPriceModeInView.value = false;
+      isPaymentMethodsInView.value = false;
+      isCategorySalesInView.value = false;
+      isTopFavoritesInView.value = false;
+      isTopProductsInView.value = false;
+      isTopCustomersInView.value = false;
+      isInactiveCustomersInView.value = false;
+      isLowProductsInView.value = false;
+      isUxInsightsInView.value = false;
+    };
 
     let scrollRafId = null;
     const handleScrollCheck = () => {
@@ -8096,22 +8447,28 @@ export default {
         if (typeof window === 'undefined') return;
         const vH = window.innerHeight || document.documentElement.clientHeight || 800;
 
-        if (topProductsCardRef.value) {
-          const r = topProductsCardRef.value.getBoundingClientRect();
-          // Element is visible when its top is within bottom 92% of screen and bottom has not scrolled past top
-          const inView = r.top <= vH * 0.92 && r.bottom >= 40;
-          if (isTopProductsInView.value !== inView) {
-            isTopProductsInView.value = inView;
+        const checkInView = (elRef, targetRef) => {
+          if (elRef.value) {
+            const r = elRef.value.getBoundingClientRect();
+            // Visible when element top is within 92% of screen height and bottom has not scrolled past top
+            const inView = r.top <= vH * 0.92 && r.bottom >= 40;
+            if (targetRef.value !== inView) {
+              targetRef.value = inView;
+            }
           }
-        }
+        };
 
-        if (categorySalesCardRef.value) {
-          const cr = categorySalesCardRef.value.getBoundingClientRect();
-          const cInView = cr.top <= vH * 0.92 && cr.bottom >= 40;
-          if (isCategorySalesInView.value !== cInView) {
-            isCategorySalesInView.value = cInView;
-          }
-        }
+        checkInView(kpiGridRef, isKpiInView);
+        checkInView(trendChartCardRef, isTrendChartInView);
+        checkInView(priceModeCardRef, isPriceModeInView);
+        checkInView(paymentMethodsCardRef, isPaymentMethodsInView);
+        checkInView(categorySalesCardRef, isCategorySalesInView);
+        checkInView(topFavoritesCardRef, isTopFavoritesInView);
+        checkInView(topProductsCardRef, isTopProductsInView);
+        checkInView(topCustomersCardRef, isTopCustomersInView);
+        checkInView(inactiveCustomersCardRef, isInactiveCustomersInView);
+        checkInView(lowProductsCardRef, isLowProductsInView);
+        checkInView(uxInsightsCardRef, isUxInsightsInView);
       });
     };
 
@@ -8194,8 +8551,7 @@ export default {
           adminMainRef.value.scrollTop = 0;
         }
         if (newTab === 'analytics') {
-          isTopProductsInView.value = false;
-          isCategorySalesInView.value = false;
+          resetAnalyticsScrollStates();
           nextTick(() => {
             attachScrollListeners();
             handleScrollCheck();
@@ -11070,8 +11426,7 @@ export default {
         toast.show('حدث خطأ أثناء تحميل بيانات التحليلات', 'danger');
       } finally {
         analyticsLoading.value = false;
-        isTopProductsInView.value = false;
-        isCategorySalesInView.value = false;
+        resetAnalyticsScrollStates();
         nextTick(() => {
           attachScrollListeners();
           handleScrollCheck();
@@ -14636,6 +14991,31 @@ const closeSuggestionsWithDelay = () => {
       return Math.max((revenue / maxRevenue) * 100, 4); // Minimal width of 4% for design aesthetics
     };
 
+    const getPaymentMethodPct = (methodKey) => {
+      const pms = analyticsData.paymentMethodsSplit;
+      if (!pms) return 0;
+      const total = (pms.cash?.revenue || 0) + (pms.card?.revenue || 0) + (pms.bank_transfer?.revenue || 0);
+      if (total <= 0) return 0;
+      const rev = pms[methodKey]?.revenue || 0;
+      return Math.round((rev / total) * 100);
+    };
+
+    const getCustomerSharePct = (spent) => {
+      const topList = analyticsData.topCustomers;
+      if (!topList || topList.length === 0) return 0;
+      const maxSpent = topList[0]?.totalSpent || 0;
+      if (maxSpent <= 0) return 0;
+      return Math.min(100, Math.max(4, Math.round((spent / maxSpent) * 100)));
+    };
+
+    const getDevicePct = (deviceKey) => {
+      const devs = telemetryInsights.value?.devices;
+      if (!devs) return 0;
+      const total = (devs.mobile || 0) + (devs.desktop || 0) + (devs.tablet || 0);
+      if (total <= 0) return 0;
+      return Math.round(((devs[deviceKey] || 0) / total) * 100);
+    };
+
     onMounted(() => {
       fetchPublicAdminUsers();
       checkAuthentication();
@@ -14909,10 +15289,31 @@ const closeSuggestionsWithDelay = () => {
       getSalesSharePct,
       sortedTopProducts,
       activeTopFavorites,
-      topProductsCardRef,
+      kpiGridRef,
+      isKpiInView,
+      trendChartCardRef,
+      isTrendChartInView,
+      priceModeCardRef,
+      isPriceModeInView,
+      paymentMethodsCardRef,
+      isPaymentMethodsInView,
       categorySalesCardRef,
-      isTopProductsInView,
       isCategorySalesInView,
+      topFavoritesCardRef,
+      isTopFavoritesInView,
+      topProductsCardRef,
+      isTopProductsInView,
+      topCustomersCardRef,
+      isTopCustomersInView,
+      inactiveCustomersCardRef,
+      isInactiveCustomersInView,
+      lowProductsCardRef,
+      isLowProductsInView,
+      uxInsightsCardRef,
+      isUxInsightsInView,
+      getPaymentMethodPct,
+      getCustomerSharePct,
+      getDevicePct,
       userRole,
       userDisplayName,
       adminUsers,
@@ -15961,38 +16362,85 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+/* ==========================================================================
+   UPGRADED EXECUTIVE ANALYTICS DASHBOARD — BOLD CLEAN SCROLL-ANIMATED DESIGN
+   ========================================================================== */
+
 /* KPI Cards Layout */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
-  margin-bottom: 30px;
+  margin-bottom: 26px;
 }
 
 .kpi-card {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 16px;
+  padding: 20px 18px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 6px 16px rgba(15, 23, 42, 0.03);
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  opacity: 0;
+  transform: translateY(16px);
+  will-change: opacity, transform;
 }
+
+.kpi-grid.in-view .kpi-card {
+  animation: kpiCardPopIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--kpi-delay, 0ms);
+}
+
+@keyframes kpiCardPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+.kpi-accent-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+}
+
+.kpi-card-revenue .kpi-accent-top { background: linear-gradient(90deg, #10b981, #059669); }
+.kpi-card-paid .kpi-accent-top { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+.kpi-card-remaining .kpi-accent-top { background: linear-gradient(90deg, #f43f5e, #be123c); }
+.kpi-card-orders .kpi-accent-top { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.kpi-card-aov .kpi-accent-top { background: linear-gradient(90deg, #8b5cf6, #6d28d9); }
+.kpi-card-customers .kpi-accent-top { background: linear-gradient(90deg, #0ea5e9, #0284c7); }
+
+.kpi-card:hover .kpi-icon-wrapper {
+  transform: scale(1.08);
 }
 
 .kpi-icon-wrapper {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .kpi-icon-wrapper svg {
@@ -16000,63 +16448,124 @@ const closeSuggestionsWithDelay = () => {
   height: 24px;
 }
 
-.sales-icon { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-.paid-icon { background: linear-gradient(135deg, #059669, #10b981); }
-.remaining-icon { background: linear-gradient(135deg, #e11d48, #f43f5e); }
-.orders-icon { background: linear-gradient(135deg, #f1c40f, #f39c12); }
-.aov-icon { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
-.customers-icon { background: linear-gradient(135deg, #3498db, #2980b9); }
+.sales-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+.paid-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3); }
+.remaining-icon { background: linear-gradient(135deg, #f43f5e, #be123c); box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3); }
+.orders-icon { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3); }
+.aov-icon { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3); }
+.customers-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3); }
 
 .kpi-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .kpi-title {
-  font-size: 0.85rem;
-  color: #6c757d;
-  font-weight: 500;
+  font-size: 0.84rem;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1.3;
 }
 
 .kpi-value {
   font-family: 'Cairo', sans-serif !important;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #1e3a5f;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #0f172a;
   font-variant-numeric: tabular-nums;
   white-space: nowrap !important;
   display: inline-flex;
   align-items: baseline;
   gap: 3px;
+  line-height: 1.35;
+  letter-spacing: -0.4px;
+}
+
+.kpi-subtext {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-top: 1px;
 }
 
 /* Charts Grid */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px 20px;
+  gap: 22px 20px;
   margin-bottom: 30px;
 }
 
 .chart-card {
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 16px;
+  position: relative;
+  background: #ffffff;
+  border-radius: 18px;
   padding: 22px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 6px 16px rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
 }
 
 .chart-card.span-2 {
   grid-column: span 2;
 }
 
+.chart-card-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.chart-header-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chart-header-icon-wrap.primary { background: rgba(var(--primary-color-rgb, 217, 119, 6), 0.12); color: var(--primary-color, #d97706); }
+.chart-header-icon-wrap.amber { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.chart-header-icon-wrap.emerald { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.chart-header-icon-wrap.teal { background: rgba(20, 184, 166, 0.12); color: #0d9488; }
+.chart-header-icon-wrap.purple { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+.chart-header-icon-wrap.rose { background: rgba(244, 63, 94, 0.12); color: #e11d48; }
+.chart-header-icon-wrap.indigo { background: rgba(99, 102, 241, 0.12); color: #4f46e5; }
+
 .chart-title {
   font-size: 1.05rem;
-  font-weight: 700;
-  color: #1e3a5f;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #f1f3f5;
-  padding-bottom: 10px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  margin-bottom: 0;
+}
+
+.chart-subtitle {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 600;
+  display: block;
+  margin-top: 1px;
+}
+
+.chart-rec-badge {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 750;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 /* SVG Line Chart Style */
@@ -16070,16 +16579,48 @@ const closeSuggestionsWithDelay = () => {
 .svg-line-chart {
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
 
-.chart-text {
-  font-size: 10px;
-  fill: #868e96;
+.svg-trend-area {
+  opacity: 0;
+  transition: opacity 0.8s ease 0.3s;
+}
+.svg-trend-area.show-area {
+  opacity: 1;
+}
+
+.svg-trend-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.svg-trend-line.draw-line {
+  stroke-dashoffset: 0;
+}
+
+.chart-dot-group {
+  opacity: 0;
+  transform: scale(0.6);
+  transform-origin: center;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chart-dot-group.show-dot {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: var(--dot-delay, 400ms);
 }
 
 .chart-dot-group:hover circle {
   r: 7px;
-  stroke-width: 3px;
+  stroke-width: 3.5px;
+}
+
+.chart-text {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #64748b;
+  font-family: 'Cairo', sans-serif;
 }
 
 .dot-hover-trigger {
@@ -16087,8 +16628,9 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .empty-chart {
-  color: #868e96;
+  color: #94a3b8;
   font-size: 0.9rem;
+  font-weight: 600;
 }
 
 /* Donut & Split Display */
@@ -16097,49 +16639,62 @@ const closeSuggestionsWithDelay = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  height: 240px;
+  gap: 18px;
+  min-height: 240px;
 }
 
 .donut-display {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 124px;
+  height: 124px;
+}
+
+.donut-circle-animated {
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .donut-center {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.85);
   display: flex;
   flex-direction: column;
   align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.4s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+}
+
+.donut-center.revealed {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .donut-percentage {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.45rem;
+  font-weight: 900;
   color: var(--chart-primary);
+  line-height: 1;
 }
 
 .donut-sub {
-  font-size: 0.75rem;
-  color: #868e96;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
 }
 
 .split-legend {
   width: 100%;
-  font-size: 0.8rem;
 }
 
-.legend-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.legend-card-row {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
-.dot {
+.legend-card-row .dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -16147,10 +16702,48 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .dot-regular { background-color: var(--chart-primary); }
-.dot-bulk { background-color: #ced4da; }
+.dot-bulk { background-color: #94a3b8; }
 
-.legend-row .label { color: #6c757d; }
-.legend-row .val { font-weight: 600; color: #1e3a5f; margin-right: auto; }
+.legend-card-row .label {
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.legend-card-row .count-pill {
+  font-size: 0.72rem;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.legend-card-row .val {
+  font-size: 0.84rem;
+  color: #0f172a;
+}
+
+.split-mini-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.split-mini-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0%;
+  will-change: width;
+}
+
+.split-mini-fill.animate-pm-bar {
+  animation: progressGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --target-width: var(--split-target, 50%);
+}
+
+.fill-regular { background: var(--chart-primary); }
+.fill-bulk { background: #94a3b8; }
 
 /* Category bar gauges */
 .bar-chart-list {
@@ -16163,58 +16756,118 @@ const closeSuggestionsWithDelay = () => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: opacity, transform;
+}
+
+.category-bar-row.in-view {
+  animation: rowFadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--cat-delay, 0ms);
+}
+
+.cat-rank-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.cat-count-badge {
+  font-size: 0.72rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .bar-info {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
+  align-items: center;
+  font-size: 0.86rem;
 }
 
-.bar-info .cat-name { font-weight: 600; color: #495057; }
-.bar-info .cat-val { color: #868e96; }
+.bar-info .cat-name { font-weight: 700; color: #1e293b; }
+.bar-info .cat-val { font-size: 0.88rem; }
 
 .bar-gauge {
   height: 8px;
-  background: #f1f3f5;
-  border-radius: 4px;
+  background: #f1f5f9;
+  border-radius: 999px;
   overflow: hidden;
+  position: relative;
 }
 
 .bar-fill {
   height: 100%;
-  background: var(--chart-primary);
-  border-radius: 4px;
-  transition: width 0.8s cubic-bezier(0.1, 1, 0.1, 1);
+  background: linear-gradient(90deg, #0d9488, #14b8a6);
+  border-radius: 999px;
+  width: 0%;
+  position: relative;
+  overflow: hidden;
+  will-change: width;
+}
+
+.shop-theme-shop2 .bar-fill {
+  background: linear-gradient(90deg, #1e3a5f, #3b82f6);
 }
 
 /* List details */
 .list-cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .list-item-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: opacity, transform;
+}
+
+.list-item-row.in-view {
+  animation: rowFadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--fav-delay, 0ms);
+}
+
+.list-item-row:hover {
+  transform: translateY(-2px);
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.fav-heart-icon-wrap {
+  margin-right: auto;
+  color: #f43f5e;
+  display: flex;
+  align-items: center;
 }
 
 .list-badge {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: var(--chart-primary);
-  color: var(--theme-text-color);
-  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
 
 .list-item-info {
@@ -16222,8 +16875,8 @@ const closeSuggestionsWithDelay = () => {
   flex-direction: column;
 }
 
-.list-item-info .title { font-weight: 600; font-size: 0.9rem; color: #495057; }
-.list-item-info .subtitle { font-size: 0.75rem; color: #868e96; }
+.list-item-info .title { font-weight: 700; font-size: 0.88rem; color: #1e293b; }
+.list-item-info .subtitle { font-size: 0.74rem; color: #64748b; font-weight: 600; }
 
 /* Tables Layout inside dashboard */
 .table-container {
@@ -21008,18 +21661,35 @@ select.form-control:focus {
 
 .pm-breakdown-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 12px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: opacity, transform;
+}
+
+.pm-breakdown-row.in-view {
+  animation: rowFadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--pm-delay, 0ms);
 }
 
 .pm-breakdown-row:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.pm-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .pm-icon-title {
@@ -21032,9 +21702,10 @@ select.form-control:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
+  flex-shrink: 0;
 }
 
 .pm-badge.cash-badge {
@@ -21068,6 +21739,22 @@ select.form-control:focus {
   font-family: 'Cairo', sans-serif;
   font-size: 0.74rem;
   color: #64748b;
+  font-weight: 600;
+}
+
+.pm-val-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-pct-tag {
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
 }
 
 .pm-amount {
@@ -21076,6 +21763,149 @@ select.form-control:focus {
   font-size: 0.95rem;
   font-weight: 800;
   color: #0f172a;
+}
+
+.pm-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.pm-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0%;
+  will-change: width;
+}
+
+.pm-progress-fill.animate-pm-bar {
+  animation: progressGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --target-width: var(--pm-target-width, 0%);
+}
+
+.fill-cash { background: linear-gradient(90deg, #10b981, #34d399); }
+.fill-card { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.fill-bank { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+
+/* Top Customers Interactive Table Deluxe Styles */
+.top-customers-interactive-table .top-cust-row {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.top-customers-interactive-table .top-cust-row.in-view {
+  animation: rowFadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--row-delay, 0ms);
+}
+
+.cust-name-cell, .cust-phone-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cust-avatar-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cust-phone-cell {
+  color: #475569;
+}
+
+.cust-phone-cell svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* Device Breakdown Progress Bars in UX Insights */
+.device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.device-info-left, .device-info-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-icon-svg {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.device-name {
+  font-size: 0.84rem;
+  color: #1e293b;
+}
+
+.device-pct-tag {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 800;
+  background: #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.device-count {
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.device-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.device-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0%;
+  will-change: width;
+}
+
+.device-fill.animate-pm-bar {
+  animation: progressGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --target-width: var(--pm-target-width, 0%);
+}
+
+.fill-mobile { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.fill-desktop { background: linear-gradient(90deg, #10b981, #34d399); }
+.fill-tablet { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+.funnel-step {
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: opacity, transform;
+}
+
+.funnel-step.in-view {
+  animation: rowFadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--step-delay, 0ms);
 }
 
 .payment-history-date {
@@ -29181,13 +30011,26 @@ select.pos-control {
   }
   .sales-share-fill-deluxe,
   .bar-fill,
+  .pm-progress-fill,
+  .split-mini-fill,
+  .device-fill,
   .top-products-interactive-table .clickable-product-row,
+  .top-customers-interactive-table .top-cust-row,
   .mobile-analytics-cards-grid .mob-analytics-rank-card,
+  .kpi-grid .kpi-card,
+  .list-item-row,
+  .funnel-step,
   .sales-share-pct-pill,
-  .mob-share-val {
+  .mob-share-val,
+  .donut-center,
+  .svg-trend-area,
+  .svg-trend-line,
+  .chart-dot-group {
     animation: none !important;
+    transition: none !important;
     opacity: 1 !important;
     transform: none !important;
+    stroke-dashoffset: 0 !important;
     width: var(--target-width, auto) !important;
   }
 }
