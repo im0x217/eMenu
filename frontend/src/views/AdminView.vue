@@ -613,111 +613,51 @@
 
               <!-- Top Products Card -->
               <div class="chart-card glass-panel span-2 top-products-card">
-                <div class="chart-card-header-flex">
-                  <div class="chart-card-title-group">
-                    <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
-                    <p class="chart-subtitle text-muted mb-0">انقر على أي منتج لعرض سجل تفاصيل الطلبات والعملاء</p>
-                  </div>
-
-                  <!-- Multi-Sort Toolbar & Search -->
-                  <div class="top-prods-toolbar">
-                    <!-- Quick Search Box -->
-                    <div class="top-prods-search-box">
-                      <svg class="search-icon" aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                      <input 
-                        v-model="topProductsSearch" 
-                        type="text" 
-                        class="top-prods-search-input" 
-                        placeholder="بحث في المنتجات…" 
-                        aria-label="بحث في المنتجات الأكثر مبيعاً"
-                      />
-                      <button 
-                        v-if="topProductsSearch" 
-                        type="button" 
-                        class="top-prods-clear-btn" 
-                        @click="topProductsSearch = ''" 
-                        aria-label="مسح البحث"
-                      >&times;</button>
-                    </div>
-
-                    <!-- Multi-Sort Pills Group -->
-                    <div class="top-prods-sort-group" role="group" aria-label="ترتيب المنتجات الأكثر مبيعاً">
-                      <span class="sort-group-label">الترتيب:</span>
-                      <button 
-                        type="button" 
-                        class="top-sort-pill" 
-                        :class="{ active: topProductsSortField === 'rank' }"
-                        @click="toggleTopProductsSort('rank')"
-                        title="ترتيب افتراضي حسب الأكثر مبيعاً"
-                      >
-                        <span>الأكثر مبيعاً</span>
-                        <span v-if="topProductsSortField === 'rank'" class="sort-arrow-tag">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="top-sort-pill" 
-                        :class="{ active: topProductsSortField === 'revenue' }"
-                        @click="toggleTopProductsSort('revenue')"
-                        title="ترتيب حسب إجمالي الإيرادات"
-                      >
-                        <span>الإيراد</span>
-                        <span v-if="topProductsSortField === 'revenue'" class="sort-arrow-tag">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="top-sort-pill" 
-                        :class="{ active: topProductsSortField === 'quantity' }"
-                        @click="toggleTopProductsSort('quantity')"
-                        title="ترتيب حسب الكمية المباعة"
-                      >
-                        <span>الكمية</span>
-                        <span v-if="topProductsSortField === 'quantity'" class="sort-arrow-tag">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="top-sort-pill" 
-                        :class="{ active: topProductsSortField === 'name' }"
-                        @click="toggleTopProductsSort('name')"
-                        title="ترتيب أبجدي حسب الاسم"
-                      >
-                        <span>الاسم</span>
-                        <span v-if="topProductsSortField === 'name'" class="sort-arrow-tag">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
-                      </button>
-                    </div>
-                  </div>
+                <div class="chart-card-header mb-3">
+                  <h3 class="chart-title mb-0">المنتجات الأكثر مبيعاً</h3>
                 </div>
 
-                <div class="table-container mt-3">
+                <div class="table-container">
                   <table class="admin-table desktop-analytics-table top-products-interactive-table">
                     <thead>
                       <tr>
-                        <th class="col-center" @click="toggleTopProductsSort('rank')" style="cursor: pointer; width: 65px;" title="ترتيب حسب الترتيب العام">
-                          <span>#</span>
-                          <span v-if="topProductsSortField === 'rank'" class="th-sort-arrow">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
+                        <th class="col-center th-sortable" @click="toggleTopProductsSort('rank')" style="width: 70px;" :class="{ active: topProductsSortField === 'rank' }" title="ترتيب حسب الأكثر مبيعاً">
+                          <div class="th-content-sort justify-content-center">
+                            <span>#</span>
+                            <span class="th-sort-arrow" :class="{ visible: topProductsSortField === 'rank' }">{{ topProductsSortField === 'rank' ? (topProductsSortAsc ? '↑' : '↓') : '↕' }}</span>
+                          </div>
                         </th>
-                        <th @click="toggleTopProductsSort('name')" style="cursor: pointer;" title="انقر للترتيب أبجدياً">
-                          <span>اسم المنتج</span>
-                          <span v-if="topProductsSortField === 'name'" class="th-sort-arrow">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
+                        <th class="th-sortable" @click="toggleTopProductsSort('name')" :class="{ active: topProductsSortField === 'name' }" title="انقر للترتيب أبجدياً">
+                          <div class="th-content-sort">
+                            <span>اسم المنتج</span>
+                            <span class="th-sort-arrow" :class="{ visible: topProductsSortField === 'name' }">{{ topProductsSortField === 'name' ? (topProductsSortAsc ? '↑' : '↓') : '↕' }}</span>
+                          </div>
                         </th>
-                        <th style="width: 130px;">الفئة</th>
-                        <th class="col-center" @click="toggleTopProductsSort('quantity')" style="cursor: pointer; width: 140px;" title="انقر للترتيب حسب الكمية المباعة">
-                          <span>الكمية المباعة</span>
-                          <span v-if="topProductsSortField === 'quantity'" class="th-sort-arrow">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
+                        <th style="width: 140px;">الفئة</th>
+                        <th class="col-center th-sortable" @click="toggleTopProductsSort('quantity')" style="width: 150px;" :class="{ active: topProductsSortField === 'quantity' }" title="انقر للترتيب حسب الكمية المباعة">
+                          <div class="th-content-sort justify-content-center">
+                            <span>الكمية المباعة</span>
+                            <span class="th-sort-arrow" :class="{ visible: topProductsSortField === 'quantity' }">{{ topProductsSortField === 'quantity' ? (topProductsSortAsc ? '↑' : '↓') : '↕' }}</span>
+                          </div>
                         </th>
-                        <th class="col-center" @click="toggleTopProductsSort('revenue')" style="cursor: pointer; width: 150px;" title="انقر للترتيب حسب إجمالي الإيراد">
-                          <span>إجمالي الإيراد</span>
-                          <span v-if="topProductsSortField === 'revenue'" class="th-sort-arrow">{{ topProductsSortAsc ? '↑' : '↓' }}</span>
+                        <th class="col-center th-sortable" @click="toggleTopProductsSort('revenue')" style="width: 160px;" :class="{ active: topProductsSortField === 'revenue' }" title="انقر للترتيب حسب إجمالي الإيراد">
+                          <div class="th-content-sort justify-content-center">
+                            <span>إجمالي الإيراد</span>
+                            <span class="th-sort-arrow" :class="{ visible: topProductsSortField === 'revenue' }">{{ topProductsSortField === 'revenue' ? (topProductsSortAsc ? '↑' : '↓') : '↕' }}</span>
+                          </div>
                         </th>
-                        <th class="col-center" style="width: 120px;" title="نسبة مبيعات هذا الصنف من إجمالي المبيعات">
-                          <span>نسبة المبيعات</span>
+                        <th class="col-center th-sortable" @click="toggleTopProductsSort('revenue')" style="width: 250px;" :class="{ active: topProductsSortField === 'revenue' }" title="نسبة مبيعات هذا الصنف من إجمالي المبيعات">
+                          <div class="th-content-sort justify-content-center">
+                            <span>نسبة المبيعات</span>
+                            <span class="th-sort-arrow" :class="{ visible: topProductsSortField === 'revenue' }">{{ topProductsSortField === 'revenue' ? (topProductsSortAsc ? '↑' : '↓') : '↕' }}</span>
+                          </div>
                         </th>
-                        <th class="col-center" style="width: 95px;">الإجراء</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-if="sortedTopProducts.length === 0">
-                        <td colspan="7" class="text-center py-4 text-muted">
-                          {{ topProductsSearch ? 'لا توجد منتجات مطابقة لكلمة البحث.' : 'لا توجد منتجات مباعة في هذه الفترة.' }}
+                        <td colspan="6" class="text-center py-4 text-muted">
+                          لا توجد منتجات مباعة في هذه الفترة.
                         </td>
                       </tr>
                       <tr 
@@ -725,7 +665,7 @@
                         :key="prod.productId"
                         class="clickable-product-row"
                         @click="openProductCustomersModal(prod)"
-                        title="انقر لعرض تفاصيل الطلبات والعملاء لهذا المنتج"
+                        title="انقر لعرض سجل تفاصيل الطلبات والعملاء"
                       >
                         <!-- Rank Badge -->
                         <td class="col-center">
@@ -744,7 +684,7 @@
                         <!-- Product Name & Interactive Arrow Icon -->
                         <td class="product-cell-interactive font-bold">
                           <span class="product-name-text">{{ prod.name }}</span>
-                          <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                          <svg class="row-hover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         </td>
 
                         <!-- Category Pill -->
@@ -763,28 +703,19 @@
                           {{ formatCurrency(prod.revenue) }}
                         </td>
 
-                        <!-- Sales Share Bar -->
-                        <td class="col-center">
-                          <div class="sales-share-wrap" :title="`${getSalesSharePct(prod.revenue)}% من إجمالي المبيعات`">
-                            <span class="sales-share-pct text-mono">{{ getSalesSharePct(prod.revenue) }}%</span>
-                            <div class="sales-share-bar">
-                              <div class="sales-share-fill" :style="{ width: Math.min(100, Math.max(4, getSalesSharePct(prod.revenue))) + '%' }"></div>
+                        <!-- Upgraded Animated % Sales Share Bar -->
+                        <td>
+                          <div class="sales-share-deluxe-container" :title="`${getSalesSharePct(prod.revenue)}% من إجمالي مبيعات المتجر`">
+                            <span class="sales-share-pct-pill text-mono font-bold">{{ getSalesSharePct(prod.revenue) }}%</span>
+                            <div class="sales-share-track-deluxe">
+                              <div 
+                                class="sales-share-fill-deluxe" 
+                                :style="{ width: Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' }"
+                              >
+                                <div class="sales-share-shimmer-wave"></div>
+                              </div>
                             </div>
                           </div>
-                        </td>
-
-                        <!-- Action Button to Open Customers Modal -->
-                        <td class="col-center">
-                          <button 
-                            type="button" 
-                            class="top-prod-action-btn"
-                            @click.stop="openProductCustomersModal(prod)"
-                            title="عرض تفاصيل العملاء والطلبات لهذا الصنف"
-                            aria-label="عرض تفاصيل العملاء والطلبات"
-                          >
-                            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            <span>التفاصيل</span>
-                          </button>
                         </td>
                       </tr>
                     </tbody>
@@ -793,16 +724,14 @@
                   <!-- Mobile Top Products Cards Grid (Active on screens <= 768px) -->
                   <div class="mobile-analytics-cards-grid">
                     <div v-if="sortedTopProducts.length === 0" class="empty-state-card p-3 text-center">
-                      <p class="text-muted mb-0">
-                        {{ topProductsSearch ? 'لا توجد منتجات مطابقة لكلمة البحث.' : 'لا توجد منتجات مباعة في هذه الفترة.' }}
-                      </p>
+                      <p class="text-muted mb-0">لا توجد منتجات مباعة في هذه الفترة.</p>
                     </div>
                     <div
                       v-for="prod in sortedTopProducts"
                       :key="'mob-top-prod-' + prod.productId"
                       class="mob-analytics-rank-card glass-panel"
                       @click="openProductCustomersModal(prod)"
-                      title="انقر لعرض تفاصيل الطلبات والعملاء"
+                      title="انقر لعرض سجل تفاصيل الطلبات والعملاء"
                     >
                       <div class="mob-rank-badge" :class="{ 'top-1': prod.originalRank === 1, 'top-2': prod.originalRank === 2, 'top-3': prod.originalRank === 3 }">
                         #{{ prod.originalRank }}
@@ -815,13 +744,21 @@
                         <div class="mob-rank-metrics">
                           <span class="mob-metric-tag text-mono">{{ formatArabicPlural(prod.quantity, 'unit') }}</span>
                           <span class="mob-metric-tag text-mono text-primary font-bold">{{ formatCurrency(prod.revenue) }}</span>
-                          <span class="mob-metric-tag text-mono text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
                         </div>
-                        <div class="mob-rank-footer mt-2 pt-2 border-top">
-                          <span class="mob-open-hint text-xs text-muted d-flex align-items-center gap-1">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-                            <span>عرض سجل الطلبات والعملاء</span>
-                          </span>
+                        <!-- Upgraded Animated Progress Bar on Mobile -->
+                        <div class="mob-share-bar-wrap mt-2 pt-2 border-top">
+                          <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="mob-share-lbl font-bold">الحصة من المبيعات:</span>
+                            <span class="mob-share-val text-mono font-bold">{{ getSalesSharePct(prod.revenue) }}%</span>
+                          </div>
+                          <div class="sales-share-track-deluxe">
+                            <div 
+                              class="sales-share-fill-deluxe" 
+                              :style="{ width: Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' }"
+                            >
+                              <div class="sales-share-shimmer-wave"></div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -14452,10 +14389,9 @@ const closeSuggestionsWithDelay = () => {
       });
     });
 
-    // Top Products Multi-Sort & Interactive Table State
+    // Top Products Multi-Sort (Direct Table Header Driven)
     const topProductsSortField = ref('rank'); // 'rank' | 'revenue' | 'quantity' | 'name'
     const topProductsSortAsc = ref(false); // false = descending
-    const topProductsSearch = ref('');
 
     const toggleTopProductsSort = (field) => {
       if (topProductsSortField.value === field) {
@@ -14474,14 +14410,7 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const sortedTopProducts = computed(() => {
-      let list = [...activeTopProducts.value];
-
-      if (topProductsSearch.value && topProductsSearch.value.trim()) {
-        const q = topProductsSearch.value.trim().toLowerCase();
-        list = list.filter(p => (p.name || '').toLowerCase().includes(q));
-      }
-
-      const withRank = list.map((item, idx) => {
+      const withRank = activeTopProducts.value.map((item, idx) => {
         const found = products.value.find(p => (item.productId && p._id.toString() === item.productId.toString()) || p.name === item.name);
         return {
           ...item,
@@ -14866,7 +14795,6 @@ const closeSuggestionsWithDelay = () => {
       activeTopProducts,
       topProductsSortField,
       topProductsSortAsc,
-      topProductsSearch,
       toggleTopProductsSort,
       getSalesSharePct,
       sortedTopProducts,
@@ -28862,137 +28790,56 @@ select.pos-control {
    ANALYTICS: TOP PRODUCTS MULTI-SORT & INTERACTIVE TABLE STYLING
    ========================================================================== */
 
-.chart-card-header-flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.chart-card-title-group .chart-title {
-  margin-bottom: 2px;
-}
-
-.chart-card-title-group .chart-subtitle {
-  font-size: 0.78rem;
-  color: #64748b;
-}
-
-.top-prods-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.top-prods-search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.top-prods-search-box .search-icon {
-  position: absolute;
-  right: 10px;
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.top-prods-search-input {
-  padding: 6px 30px 6px 26px;
-  font-size: 0.8rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
-  outline: none;
-  width: 140px;
-  transition: all 0.2s ease;
-  font-family: 'Cairo', sans-serif;
-}
-
-.top-prods-search-input:focus {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
-  width: 175px;
-}
-
-.top-prods-clear-btn {
-  position: absolute;
-  left: 8px;
-  background: none;
-  border: none;
-  color: #94a3b8;
+/* Table Header Sorting */
+.top-products-interactive-table th.th-sortable {
   cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  padding: 2px;
+  user-select: none;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-.top-prods-clear-btn:hover {
+.top-products-interactive-table th.th-sortable:hover {
+  background-color: rgba(245, 158, 11, 0.08);
   color: #0f172a;
 }
 
-.top-prods-sort-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #f1f5f9;
-  padding: 3px 6px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
+.top-products-interactive-table th.th-sortable.active {
+  color: #d97706;
 }
 
-.sort-group-label {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #64748b;
-  margin-left: 2px;
-  margin-right: 4px;
+.shop-theme-shop2 .top-products-interactive-table th.th-sortable:hover {
+  background-color: rgba(30, 58, 95, 0.08);
 }
 
-.top-sort-pill {
+.shop-theme-shop2 .top-products-interactive-table th.th-sortable.active {
+  color: #1e3a5f;
+}
+
+.th-content-sort {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  border-radius: 14px;
-  border: none;
-  background: transparent;
-  color: #475569;
-  font-size: 0.74rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Cairo', sans-serif;
-}
-
-.top-sort-pill:hover {
-  background: rgba(255, 255, 255, 0.7);
-  color: #0f172a;
-}
-
-.top-sort-pill.active {
-  background: #f59e0b;
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
-}
-
-.sort-arrow-tag {
-  font-size: 0.78rem;
-  font-weight: 900;
+  gap: 6px;
 }
 
 .th-sort-arrow {
   display: inline-block;
-  margin-right: 4px;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
+  line-height: 1;
+  color: #94a3b8;
+  opacity: 0.45;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.th-sort-arrow.visible {
+  opacity: 1;
   color: #d97706;
   font-weight: 900;
 }
 
+.shop-theme-shop2 .th-sort-arrow.visible {
+  color: #1e3a5f;
+}
+
+/* Rank Badges */
 .top-prod-rank-pill {
   display: inline-flex;
   align-items: center;
@@ -29026,55 +28873,111 @@ select.pos-control {
   border-color: #fdba74;
 }
 
-.sales-share-wrap {
+/* Deluxe Animated Sales Share Bar */
+.sales-share-deluxe-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 10px;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
 }
 
-.sales-share-pct {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #475569;
-}
-
-.sales-share-bar {
-  width: 54px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e2e8f0;
-  overflow: hidden;
-}
-
-.sales-share-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: #f59e0b;
-  transition: width 0.3s ease;
-}
-
-.top-prod-action-btn {
+.sales-share-pct-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: rgba(245, 158, 11, 0.1);
+  justify-content: center;
+  min-width: 44px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.12);
   color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  font-size: 0.76rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  font-family: 'Cairo', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
-.top-prod-action-btn:hover {
-  background: #f59e0b;
-  color: #ffffff;
-  border-color: #f59e0b;
-  transform: translateY(-1px);
+.shop-theme-shop2 .sales-share-pct-pill {
+  background: rgba(30, 58, 95, 0.12);
+  color: #1e3a5f;
+}
+
+.sales-share-track-deluxe {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.sales-share-fill-deluxe {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  position: relative;
+  overflow: hidden;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shop-theme-shop2 .sales-share-fill-deluxe {
+  background: linear-gradient(90deg, #1e3a5f, #3b82f6);
+}
+
+.sales-share-shimmer-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: salesWaveShimmer 2.2s infinite ease-in-out;
+  will-change: transform;
+}
+
+@keyframes salesWaveShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sales-share-shimmer-wave {
+    animation: none;
+    display: none;
+  }
+  .sales-share-fill-deluxe {
+    transition: none;
+  }
+}
+
+/* Mobile Top Products Card Share Bar */
+.mob-share-bar-wrap {
+  width: 100%;
+}
+
+.mob-share-lbl {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.mob-share-val {
+  font-size: 0.78rem;
+  color: #d97706;
+}
+
+.shop-theme-shop2 .mob-share-val {
+  color: #1e3a5f;
 }
 
 /* ==========================================================================
