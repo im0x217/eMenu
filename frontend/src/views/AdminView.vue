@@ -580,17 +580,23 @@
               </div>
 
               <!-- Category Sales Share Card -->
-              <div class="chart-card glass-panel span-2">
+              <div class="chart-card glass-panel span-2" ref="categorySalesCardRef">
                 <h3 class="chart-title">أداء الفئات والأصناف</h3>
                 <div class="bar-chart-list">
                   <div v-if="analyticsData.categorySales.length === 0" class="empty-list">لا توجد أصناف مبيعات.</div>
-                  <div v-for="cat in analyticsData.categorySales" :key="cat.category" class="category-bar-row">
+                  <div v-for="(cat, cIdx) in analyticsData.categorySales" :key="cat.category" class="category-bar-row">
                     <div class="bar-info">
                       <span class="cat-name">{{ cat.category }}</span>
                       <span class="cat-val">{{ formatCurrency(cat.revenue) }} ({{ formatArabicPlural(cat.count, 'order') }})</span>
                     </div>
                     <div class="bar-gauge">
-                      <div class="bar-fill" :style="{ width: getCategoryBarWidth(cat.revenue) + '%' }"></div>
+                      <div 
+                        class="bar-fill" 
+                        :style="{ 
+                          width: isCategorySalesInView ? getCategoryBarWidth(cat.revenue) + '%' : '0%',
+                          transitionDelay: isCategorySalesInView ? `${Math.min(cIdx * 65, 650)}ms` : '0ms'
+                        }"
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -612,7 +618,7 @@
               </div>
 
               <!-- Top Products Card -->
-              <div class="chart-card glass-panel span-2 top-products-card">
+              <div class="chart-card glass-panel span-2 top-products-card" ref="topProductsCardRef">
                 <div class="chart-card-header mb-3">
                   <h3 class="chart-title mb-0">المنتجات الأكثر مبيعاً</h3>
                 </div>
@@ -661,9 +667,11 @@
                         </td>
                       </tr>
                       <tr 
-                        v-for="prod in sortedTopProducts" 
+                        v-for="(prod, pIdx) in sortedTopProducts" 
                         :key="prod.productId"
                         class="clickable-product-row"
+                        :class="{ 'in-view': isTopProductsInView }"
+                        :style="{ '--row-idx': pIdx }"
                         @click="openProductCustomersModal(prod)"
                         title="انقر لعرض سجل تفاصيل الطلبات والعملاء"
                       >
@@ -706,11 +714,21 @@
                         <!-- Upgraded Animated % Sales Share Bar -->
                         <td>
                           <div class="sales-share-deluxe-container" :title="`${getSalesSharePct(prod.revenue)}% من إجمالي مبيعات المتجر`">
-                            <span class="sales-share-pct-pill text-mono font-bold">{{ getSalesSharePct(prod.revenue) }}%</span>
+                            <span 
+                              class="sales-share-pct-pill text-mono font-bold"
+                              :class="{ 'pill-revealed': isTopProductsInView }"
+                              :style="{ transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65 + 120, 800)}ms` : '0ms' }"
+                            >
+                              {{ getSalesSharePct(prod.revenue) }}%
+                            </span>
                             <div class="sales-share-track-deluxe">
                               <div 
                                 class="sales-share-fill-deluxe" 
-                                :style="{ width: Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' }"
+                                :class="{ 'animate-fill': isTopProductsInView }"
+                                :style="{ 
+                                  width: isTopProductsInView ? Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' : '0%',
+                                  transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65, 750)}ms` : '0ms'
+                                }"
                               >
                                 <div class="sales-share-shimmer-wave"></div>
                               </div>
@@ -727,9 +745,11 @@
                       <p class="text-muted mb-0">لا توجد منتجات مباعة في هذه الفترة.</p>
                     </div>
                     <div
-                      v-for="prod in sortedTopProducts"
+                      v-for="(prod, pIdx) in sortedTopProducts"
                       :key="'mob-top-prod-' + prod.productId"
                       class="mob-analytics-rank-card glass-panel"
+                      :class="{ 'in-view': isTopProductsInView }"
+                      :style="{ '--row-idx': pIdx }"
                       @click="openProductCustomersModal(prod)"
                       title="انقر لعرض سجل تفاصيل الطلبات والعملاء"
                     >
@@ -749,12 +769,22 @@
                         <div class="mob-share-bar-wrap mt-2 pt-2 border-top">
                           <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="mob-share-lbl font-bold">الحصة من المبيعات:</span>
-                            <span class="mob-share-val text-mono font-bold">{{ getSalesSharePct(prod.revenue) }}%</span>
+                            <span 
+                              class="mob-share-val text-mono font-bold"
+                              :class="{ 'pill-revealed': isTopProductsInView }"
+                              :style="{ transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65 + 120, 800)}ms` : '0ms' }"
+                            >
+                              {{ getSalesSharePct(prod.revenue) }}%
+                            </span>
                           </div>
                           <div class="sales-share-track-deluxe">
                             <div 
                               class="sales-share-fill-deluxe" 
-                              :style="{ width: Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' }"
+                              :class="{ 'animate-fill': isTopProductsInView }"
+                              :style="{ 
+                                width: isTopProductsInView ? Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' : '0%',
+                                transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65, 750)}ms` : '0ms'
+                              }"
                             >
                               <div class="sales-share-shimmer-wave"></div>
                             </div>
@@ -8051,6 +8081,64 @@ export default {
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
 
+    // Animation on Scroll for Top Products & Category Analytics
+    const topProductsCardRef = ref(null);
+    const categorySalesCardRef = ref(null);
+    const isTopProductsInView = ref(false);
+    const isCategorySalesInView = ref(false);
+    let analyticsScrollObserver = null;
+
+    const setupAnalyticsScrollObserver = () => {
+      if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
+        isTopProductsInView.value = true;
+        isCategorySalesInView.value = true;
+        return;
+      }
+
+      if (analyticsScrollObserver) {
+        analyticsScrollObserver.disconnect();
+        analyticsScrollObserver = null;
+      }
+
+      // Check reduced motion accessibility
+      const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) {
+        isTopProductsInView.value = true;
+        isCategorySalesInView.value = true;
+        return;
+      }
+
+      analyticsScrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (entry.target === topProductsCardRef.value) {
+              isTopProductsInView.value = true;
+            }
+            if (entry.target === categorySalesCardRef.value) {
+              isCategorySalesInView.value = true;
+            }
+          }
+        });
+      }, {
+        root: null,
+        rootMargin: '0px 0px -20px 0px',
+        threshold: 0.08
+      });
+
+      if (topProductsCardRef.value) {
+        analyticsScrollObserver.observe(topProductsCardRef.value);
+      }
+      if (categorySalesCardRef.value) {
+        analyticsScrollObserver.observe(categorySalesCardRef.value);
+      }
+
+      // Defensive fallback: auto-reveal if observer doesn't trigger within 2.5s
+      setTimeout(() => {
+        if (!isTopProductsInView.value) isTopProductsInView.value = true;
+        if (!isCategorySalesInView.value) isCategorySalesInView.value = true;
+      }, 2500);
+    };
+
     const handleSidebarKeydown = (e) => {
       // Up/Down arrows are strictly reserved for traversing table rows (Section 22 of design guide)
       if (!['Home', 'End'].includes(e.key)) return;
@@ -8101,6 +8189,13 @@ export default {
         scrollActiveTabIntoView();
         if (adminMainRef.value) {
           adminMainRef.value.scrollTop = 0;
+        }
+        if (newTab === 'analytics') {
+          isTopProductsInView.value = false;
+          isCategorySalesInView.value = false;
+          nextTick(() => {
+            setupAnalyticsScrollObserver();
+          });
         }
       }
     }, { flush: 'post' });
@@ -10971,6 +11066,11 @@ export default {
         toast.show('حدث خطأ أثناء تحميل بيانات التحليلات', 'danger');
       } finally {
         analyticsLoading.value = false;
+        isTopProductsInView.value = false;
+        isCategorySalesInView.value = false;
+        nextTick(() => {
+          setupAnalyticsScrollObserver();
+        });
       }
     };
 
@@ -14266,12 +14366,19 @@ const closeSuggestionsWithDelay = () => {
       document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
       updateHeadIcon();
+      nextTick(() => {
+        setupAnalyticsScrollObserver();
+      });
     });
 
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
       document.removeEventListener('click', closeAllDatePickers);
+      if (analyticsScrollObserver) {
+        analyticsScrollObserver.disconnect();
+        analyticsScrollObserver = null;
+      }
     });
 
     // =========================================================================
@@ -14799,6 +14906,10 @@ const closeSuggestionsWithDelay = () => {
       getSalesSharePct,
       sortedTopProducts,
       activeTopFavorites,
+      topProductsCardRef,
+      categorySalesCardRef,
+      isTopProductsInView,
+      isCategorySalesInView,
       userRole,
       userDisplayName,
       adminUsers,
@@ -28896,6 +29007,15 @@ select.pos-control {
   font-weight: 800;
   line-height: 1.2;
   flex-shrink: 0;
+  opacity: 0.3;
+  transform: scale(0.92);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.sales-share-pct-pill.pill-revealed {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .shop-theme-shop2 .sales-share-pct-pill {
@@ -28919,7 +29039,9 @@ select.pos-control {
   background: linear-gradient(90deg, #f59e0b, #fbbf24);
   position: relative;
   overflow: hidden;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 0%;
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
 }
 
 .shop-theme-shop2 .sales-share-fill-deluxe {
@@ -28951,17 +29073,34 @@ select.pos-control {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .sales-share-shimmer-wave {
-    animation: none;
-    display: none;
-  }
-  .sales-share-fill-deluxe {
-    transition: none;
-  }
+/* Top Products Table Row Entrance on Scroll */
+.top-products-interactive-table .clickable-product-row {
+  opacity: 0.2;
+  transform: translateY(10px);
+  transition: background-color 0.18s ease, opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--row-idx, 0) * 45ms);
+  will-change: opacity, transform;
 }
 
-/* Mobile Top Products Card Share Bar */
+.top-products-interactive-table .clickable-product-row.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Mobile Top Products Card Entrance on Scroll */
+.mobile-analytics-cards-grid .mob-analytics-rank-card {
+  opacity: 0.2;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--row-idx, 0) * 45ms);
+  will-change: opacity, transform;
+}
+
+.mobile-analytics-cards-grid .mob-analytics-rank-card.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .mob-share-bar-wrap {
   width: 100%;
 }
@@ -28974,10 +29113,39 @@ select.pos-control {
 .mob-share-val {
   font-size: 0.78rem;
   color: #d97706;
+  opacity: 0.3;
+  transform: scale(0.92);
+  display: inline-block;
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.mob-share-val.pill-revealed {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .shop-theme-shop2 .mob-share-val {
   color: #1e3a5f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sales-share-shimmer-wave {
+    animation: none !important;
+    display: none !important;
+  }
+  .sales-share-fill-deluxe,
+  .bar-fill {
+    transition: none !important;
+  }
+  .top-products-interactive-table .clickable-product-row,
+  .mobile-analytics-cards-grid .mob-analytics-rank-card,
+  .sales-share-pct-pill,
+  .mob-share-val {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* ==========================================================================
