@@ -145,6 +145,23 @@
           </div>
           <div class="inv-stat-subtext">مجموع قطع المخزون</div>
         </div>
+
+        <!-- KPI 5: Reserved Units for Waiting Orders -->
+        <div class="inv-stat-card is-reserved">
+          <div class="inv-stat-header">
+            <div class="inv-stat-info">
+              <div class="inv-stat-label text-reserved-deep">محجوز بالطلبات</div>
+              <div class="inv-stat-number text-mono text-reserved-deep">{{ stats.totalReserved.toLocaleString('ar-LY') }}</div>
+            </div>
+            <div class="inv-stat-icon-wrap icon-reserved">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="inv-stat-subtext text-reserved-deep">{{ stats.itemsWithReserved }} صنف بطلبات معلقة</div>
+        </div>
       </div>
 
       <!-- 3. Search, Status & Categories Filter Panel -->
@@ -183,6 +200,16 @@
               @click="statusFilter = 'all'"
             >
               الكل ({{ items.length }})
+            </button>
+            <button
+              v-if="stats.totalReserved > 0"
+              type="button"
+              class="inv-segment-btn is-reserved"
+              :class="{ active: statusFilter === 'reserved' }"
+              @click="statusFilter = 'reserved'"
+              title="تصفية الأصناف التي تحتوي على كميات محجوزة بالطلبات المعلقة"
+            >
+              محجوز ({{ stats.itemsWithReserved }})
             </button>
             <button
               type="button"
@@ -302,13 +329,27 @@
             <thead>
               <tr>
                 <th class="col-center" style="width: 50px;">#</th>
-                <th>اسم الصنف بالمستودع</th>
-                <th style="width: 140px;">الفئة</th>
-                <th v-if="hasAnyLinkedProducts" style="width: 170px;">المنتج المرتبط</th>
-                <th class="col-center" style="width: 170px;">الكمية بالمخزن</th>
-                <th class="col-center" style="width: 90px;">الحد الأدنى</th>
-                <th class="col-center" style="width: 110px;">الحالة</th>
-                <th class="col-center" style="width: 90px;">الإجراءات</th>
+                <th @click="toggleSort('name')" style="cursor: pointer;" title="انقر للترتيب أبجدياً">
+                  <span>اسم الصنف بالمستودع</span>
+                  <span class="inv-sort-indicator" v-if="sortField === 'name'">{{ sortAsc ? '↑' : '↓' }}</span>
+                </th>
+                <th style="width: 130px;">الفئة</th>
+                <th v-if="hasAnyLinkedProducts" style="width: 150px;">المنتج المرتبط</th>
+                <th class="col-center" style="width: 160px; cursor: pointer;" @click="toggleSort('quantity')" title="انقر للترتيب حسب الرصيد الكلي بالمستودع">
+                  <span>الرصيد الكلي</span>
+                  <span class="inv-sort-indicator" v-if="sortField === 'quantity'">{{ sortAsc ? '↑' : '↓' }}</span>
+                </th>
+                <th class="col-center" style="width: 130px; cursor: pointer;" @click="toggleSort('reserved')" title="انقر للترتيب حسب المحجوز للطلبات المعلقة">
+                  <span>محجوز (طلبات)</span>
+                  <span class="inv-sort-indicator" v-if="sortField === 'reserved'">{{ sortAsc ? '↑' : '↓' }}</span>
+                </th>
+                <th class="col-center" style="width: 105px; cursor: pointer;" @click="toggleSort('available')" title="انقر للترتيب حسب المتاح الصافي">
+                  <span>المتاح الصافي</span>
+                  <span class="inv-sort-indicator" v-if="sortField === 'available'">{{ sortAsc ? '↑' : '↓' }}</span>
+                </th>
+                <th class="col-center" style="width: 85px;">الحد الأدنى</th>
+                <th class="col-center" style="width: 95px;">الحالة</th>
+                <th class="col-center" style="width: 85px;">الإجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -316,8 +357,9 @@
                 v-for="item in filteredItems"
                 :key="item.id"
                 :class="{
-                  'is-row-out': item.quantity === 0,
-                  'is-row-low': item.quantity > 0 && item.quantity <= item.min_stock
+                  'is-row-out': item.available_qty === 0,
+                  'is-row-low': item.available_qty > 0 && item.available_qty <= item.min_stock,
+                  'is-row-has-reserved': item.reserved_qty > 0
                 }"
               >
                 <!-- Legacy/Numeric ID -->
@@ -348,7 +390,7 @@
                   <span v-else class="inv-text-muted">—</span>
                 </td>
 
-                <!-- Quantity Stepper [- 1 +] -->
+                <!-- Total Physical Quantity Stepper [- 1 +] -->
                 <td class="col-center">
                   <div class="inv-stepper" dir="ltr">
                     <button
@@ -357,7 +399,7 @@
                       :disabled="item.quantity <= 0"
                       @click="adjustStock(item, -1)"
                       aria-label="إنقاص وحدة"
-                      title="إنقاص وحدة واحدة"
+                      title="إنقاص وحدة واحدة من المستودع"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -378,7 +420,7 @@
                       class="inv-stepper-btn"
                       @click="adjustStock(item, 1)"
                       aria-label="زيادة وحدة"
-                      title="زيادة وحدة واحدة"
+                      title="زيادة وحدة واحدة إلى المستودع"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -388,6 +430,38 @@
                   </div>
                 </td>
 
+                <!-- Reserved Quantity for Waiting Orders -->
+                <td class="col-center">
+                  <div
+                    v-if="item.reserved_qty > 0"
+                    class="inv-reserved-chip"
+                    :title="`محجوز ${item.reserved_qty} وحدة بواسطة ${item.waiting_orders_count || 1} طلب معلق`"
+                  >
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="text-mono font-bold">{{ item.reserved_qty }}</span>
+                    <span class="inv-res-sub" v-if="(item.waiting_orders_count || 0) > 1">({{ item.waiting_orders_count }} طلب)</span>
+                  </div>
+                  <span v-else class="inv-text-muted text-mono">—</span>
+                </td>
+
+                <!-- Net Available Quantity -->
+                <td class="col-center">
+                  <span
+                    class="text-mono font-bold inv-avail-val"
+                    :class="{
+                      'text-danger-deep': item.available_qty === 0,
+                      'text-warning-deep': item.available_qty > 0 && item.available_qty <= item.min_stock,
+                      'text-success-deep': item.available_qty > item.min_stock
+                    }"
+                    :title="`المتاح الصافي للبيع: ${item.available_qty} وحدة (من إجمالي ${item.quantity} - ${item.reserved_qty} محجوز)`"
+                  >
+                    {{ item.available_qty }}
+                  </span>
+                </td>
+
                 <!-- Min Stock -->
                 <td class="col-center text-mono inv-min-stock">
                   {{ item.min_stock }}
@@ -395,11 +469,11 @@
 
                 <!-- Status Badge -->
                 <td class="col-center">
-                  <span v-if="item.quantity === 0" class="inv-state-badge is-danger">
+                  <span v-if="item.available_qty === 0" class="inv-state-badge is-danger">
                     <span class="badge-dot"></span>
                     نفد
                   </span>
-                  <span v-else-if="item.quantity <= item.min_stock" class="inv-state-badge is-warning">
+                  <span v-else-if="item.available_qty <= item.min_stock" class="inv-state-badge is-warning">
                     <span class="badge-dot"></span>
                     منخفض
                   </span>
@@ -439,8 +513,9 @@
             :key="'mob-' + item.id"
             class="inv-mob-card"
             :class="{
-              'is-card-out': item.quantity === 0,
-              'is-card-low': item.quantity > 0 && item.quantity <= item.min_stock
+              'is-card-out': item.available_qty === 0,
+              'is-card-low': item.available_qty > 0 && item.available_qty <= item.min_stock,
+              'is-card-has-reserved': item.reserved_qty > 0
             }"
           >
             <!-- Card Top Header -->
@@ -456,9 +531,26 @@
 
               <!-- Status Badge -->
               <div class="inv-mob-header-actions">
-                <span v-if="item.quantity === 0" class="inv-state-badge is-danger">نفد</span>
-                <span v-else-if="item.quantity <= item.min_stock" class="inv-state-badge is-warning">منخفض</span>
+                <span v-if="item.available_qty === 0" class="inv-state-badge is-danger">نفد</span>
+                <span v-else-if="item.available_qty <= item.min_stock" class="inv-state-badge is-warning">منخفض</span>
                 <span v-else class="inv-state-badge is-success">متوفر</span>
+              </div>
+            </div>
+
+            <!-- Reserved by Waiting Orders Alert Strip (when reserved_qty > 0) -->
+            <div v-if="item.reserved_qty > 0" class="inv-mob-reserved-strip">
+              <div class="inv-mob-res-pill">
+                <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>محجوز بطلبات معلقة:</span>
+                <strong class="text-mono font-bold">{{ item.reserved_qty }}</strong>
+                <span class="inv-res-sub" v-if="(item.waiting_orders_count || 0) > 1">({{ item.waiting_orders_count }} طلب)</span>
+              </div>
+              <div class="inv-mob-avail-pill">
+                <span>المتاح الصافي:</span>
+                <strong class="text-mono" :class="item.available_qty === 0 ? 'text-danger-deep' : 'text-success-deep'">{{ item.available_qty }}</strong>
               </div>
             </div>
 
@@ -467,9 +559,9 @@
               <div
                 class="inv-mob-progress-fill"
                 :class="{
-                  'is-fill-out': item.quantity === 0,
-                  'is-fill-low': item.quantity > 0 && item.quantity <= item.min_stock,
-                  'is-fill-ok': item.quantity > item.min_stock
+                  'is-fill-out': item.available_qty === 0,
+                  'is-fill-low': item.available_qty > 0 && item.available_qty <= item.min_stock,
+                  'is-fill-ok': item.available_qty > item.min_stock
                 }"
                 :style="{ width: calcStockRatio(item) + '%' }"
               ></div>
@@ -477,46 +569,64 @@
 
             <!-- Card Bottom Bar: Stepper & Limits -->
             <div class="inv-mob-card-footer">
-              <!-- Stepper -->
-              <div class="inv-stepper" dir="ltr">
-                <button
-                  type="button"
-                  class="inv-stepper-btn"
-                  :disabled="item.quantity <= 0"
-                  @click="adjustStock(item, -1)"
-                  aria-label="إنقاص وحدة"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
+              <!-- Stepper (Total physical quantity in warehouse) -->
+              <div class="inv-mob-stepper-wrap">
+                <span class="inv-mob-foot-label">الرصيد الكلي:</span>
+                <div class="inv-stepper" dir="ltr">
+                  <button
+                    type="button"
+                    class="inv-stepper-btn"
+                    :disabled="item.quantity <= 0"
+                    @click="adjustStock(item, -1)"
+                    aria-label="إنقاص وحدة"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
 
-                <button
-                  type="button"
-                  class="inv-stepper-value text-mono"
-                  @click="openStockAdjustModal(item)"
-                  title="تعديل الكمية"
-                >
-                  {{ item.quantity }}
-                </button>
+                  <button
+                    type="button"
+                    class="inv-stepper-value text-mono"
+                    @click="openStockAdjustModal(item)"
+                    title="تعديل الكمية"
+                  >
+                    {{ item.quantity }}
+                  </button>
 
-                <button
-                  type="button"
-                  class="inv-stepper-btn"
-                  @click="adjustStock(item, 1)"
-                  aria-label="زيادة وحدة"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
+                  <button
+                    type="button"
+                    class="inv-stepper-btn"
+                    @click="adjustStock(item, 1)"
+                    aria-label="زيادة وحدة"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              <!-- Min Stock Reference -->
-              <div class="inv-mob-threshold">
-                <span class="inv-thresh-label">الحد الأدنى:</span>
-                <span class="inv-thresh-val text-mono">{{ item.min_stock }}</span>
+              <!-- Min Stock & Adjust Action -->
+              <div class="inv-mob-threshold-actions">
+                <div class="inv-mob-threshold">
+                  <span class="inv-thresh-label">الحد الأدنى:</span>
+                  <span class="inv-thresh-val text-mono">{{ item.min_stock }}</span>
+                  <span v-if="item.reserved_qty === 0" class="inv-mob-plain-avail">| المتاح: <strong class="text-mono">{{ item.available_qty }}</strong></span>
+                </div>
+                <button
+                  type="button"
+                  class="inv-btn inv-btn-outline inv-btn-sm"
+                  @click="openStockAdjustModal(item)"
+                  title="ضبط الكمية والحد الأدنى"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  <span>ضبط</span>
+                </button>
               </div>
             </div>
           </div>
@@ -539,11 +649,29 @@
             </div>
             <div>
               <h3 class="inv-modal-title">ضبط كمية المخزون والحد الأدنى</h3>
-              <p class="inv-modal-desc">{{ adjustingItem.name }} (الرصيد الحالي: <strong class="text-mono">{{ adjustingItem.quantity }}</strong>)</p>
+              <p class="inv-modal-desc mb-1 font-bold">{{ adjustingItem.name }}</p>
             </div>
           </div>
 
           <div class="inv-modal-body">
+            <!-- Stock Breakdown Strip -->
+            <div class="inv-adjust-stock-strip mb-3">
+              <div class="inv-adj-box">
+                <span class="adj-label">الرصيد الكلي</span>
+                <span class="adj-val text-mono font-bold">{{ adjustingItem.quantity }}</span>
+              </div>
+              <div class="inv-adj-box is-res">
+                <span class="adj-label">محجوز بطلبات</span>
+                <span class="adj-val text-mono font-bold text-warning-deep">
+                  {{ adjustingItem.reserved_qty }}
+                  <small v-if="(adjustingItem.waiting_orders_count || 0) > 0">({{ adjustingItem.waiting_orders_count }} طلب)</small>
+                </span>
+              </div>
+              <div class="inv-adj-box is-avail">
+                <span class="adj-label">المتاح الصافي</span>
+                <span class="adj-val text-mono font-bold" :class="adjustingItem.available_qty === 0 ? 'text-danger-deep' : 'text-success-deep'">{{ adjustingItem.available_qty }}</span>
+              </div>
+            </div>
             <!-- Quick Delta Buttons -->
             <label class="inv-form-label">تعديل سريع بإضافة / إنقاص وحدات:</label>
             <div class="inv-delta-grid" dir="ltr">
@@ -694,8 +822,12 @@
           <div class="pkpi-val text-mono text-danger-deep">{{ printOutOfStockCount }}</div>
         </div>
         <div class="inv-print-kpi-box">
-          <div class="pkpi-label">إجمالي الوحدات الدفترية</div>
+          <div class="pkpi-label">إجمالي الدفتري</div>
           <div class="pkpi-val text-mono">{{ printTotalUnits.toLocaleString('ar-LY') }}</div>
+        </div>
+        <div class="inv-print-kpi-box" v-if="printTotalReserved > 0">
+          <div class="pkpi-label">محجوز بالطلبات</div>
+          <div class="pkpi-val text-mono text-warning-deep">{{ printTotalReserved.toLocaleString('ar-LY') }}</div>
         </div>
       </div>
 
@@ -705,11 +837,13 @@
           <tr>
             <th style="width: 35px;" class="col-center">#</th>
             <th>اسم الصنف في المستودع</th>
-            <th style="width: 90px;" class="col-center">الفئة</th>
-            <th style="width: 80px;" class="col-center">الرصيد الدفتري</th>
-            <th style="width: 80px;" class="col-center">حد التنبيه</th>
-            <th style="width: 85px;" class="col-center">الجرد الفعلي</th>
-            <th style="width: 75px;" class="col-center">المطابقة</th>
+            <th style="width: 85px;" class="col-center">الفئة</th>
+            <th style="width: 70px;" class="col-center">الرصيد الدفتري</th>
+            <th style="width: 70px;" class="col-center">محجوز (طلبات)</th>
+            <th style="width: 70px;" class="col-center">المتاح الصافي</th>
+            <th style="width: 65px;" class="col-center">حد التنبيه</th>
+            <th style="width: 75px;" class="col-center">الجرد الفعلي</th>
+            <th style="width: 65px;" class="col-center">المطابقة</th>
             <th>ملاحظات أمين المستودع</th>
           </tr>
         </thead>
@@ -719,6 +853,8 @@
             <td class="font-bold">{{ item.name }}</td>
             <td class="col-center">{{ item.category || 'عام' }}</td>
             <td class="col-center text-mono font-bold">{{ item.quantity }}</td>
+            <td class="col-center text-mono text-warning-deep">{{ item.reserved_qty || 0 }}</td>
+            <td class="col-center text-mono font-bold">{{ item.available_qty }}</td>
             <td class="col-center text-mono">{{ item.min_stock }}</td>
             <td class="col-center inv-audit-box"></td>
             <td class="col-center inv-audit-box"></td>
@@ -823,19 +959,25 @@ export default {
         const res = await adminFetch(`/api/admin/inventory/items?shop=${shopParam}`);
         if (res.ok) {
           const data = await res.json();
-          items.value = (data.items || []).map((r) => ({
-            id: r.id,
-            recordId: r.id,
-            legacy_id: r.legacy_id || '',
-            name: r.name || '',
-            category: r.category || '',
-            quantity: typeof r.quantity === 'number' ? r.quantity : 0,
-            min_stock: typeof r.min_stock === 'number' ? r.min_stock : 5,
-            reserved_qty: r.reserved_qty || 0,
-            available_qty: typeof r.available_qty === 'number' ? r.available_qty : r.quantity,
-            linkedProduct: r.linkedProduct || null,
-            updated: r.updated || ''
-          }));
+          items.value = (data.items || []).map((r) => {
+            const qty = typeof r.quantity === 'number' ? r.quantity : 0;
+            const resQty = typeof r.reserved_qty === 'number' ? r.reserved_qty : 0;
+            const availQty = typeof r.available_qty === 'number' ? r.available_qty : Math.max(0, qty - resQty);
+            return {
+              id: r.id,
+              recordId: r.id,
+              legacy_id: r.legacy_id || '',
+              name: r.name || '',
+              category: r.category || '',
+              quantity: qty,
+              min_stock: typeof r.min_stock === 'number' ? r.min_stock : 5,
+              reserved_qty: resQty,
+              waiting_orders_count: typeof r.waiting_orders_count === 'number' ? r.waiting_orders_count : (resQty > 0 ? 1 : 0),
+              available_qty: availQty,
+              linkedProduct: r.linkedProduct || null,
+              updated: r.updated || ''
+            };
+          });
         } else {
           // Direct PocketBase fallback
           const pbRecords = await pb.collection('inventory').getFullList({ sort: 'name' });
@@ -848,6 +990,7 @@ export default {
             quantity: typeof r.quantity === 'number' ? r.quantity : 0,
             min_stock: typeof r.min_stock === 'number' ? r.min_stock : 5,
             reserved_qty: 0,
+            waiting_orders_count: 0,
             available_qty: typeof r.quantity === 'number' ? r.quantity : 0,
             linkedProduct: null,
             updated: r.updated || ''
@@ -866,6 +1009,7 @@ export default {
             quantity: typeof r.quantity === 'number' ? r.quantity : 0,
             min_stock: typeof r.min_stock === 'number' ? r.min_stock : 5,
             reserved_qty: 0,
+            waiting_orders_count: 0,
             available_qty: typeof r.quantity === 'number' ? r.quantity : 0,
             linkedProduct: null,
             updated: r.updated || ''
@@ -912,18 +1056,28 @@ export default {
       let low = 0;
       let out = 0;
       let totalUnits = 0;
+      let totalReserved = 0;
+      let itemsWithReserved = 0;
       for (const item of all) {
         const qty = item.quantity || 0;
+        const res = item.reserved_qty || 0;
+        const avail = typeof item.available_qty === 'number' ? item.available_qty : Math.max(0, qty - res);
         totalUnits += qty;
-        if (qty === 0) out++;
-        else if (qty <= item.min_stock) low++;
+        if (res > 0) {
+          totalReserved += res;
+          itemsWithReserved++;
+        }
+        if (avail === 0) out++;
+        else if (avail <= item.min_stock) low++;
       }
       return {
         totalItems: all.length,
         lowStock: low,
         outOfStock: out,
         inStock: all.length - low - out,
-        totalUnits
+        totalUnits,
+        totalReserved,
+        itemsWithReserved
       };
     });
 
@@ -955,11 +1109,13 @@ export default {
 
       // Status filter
       if (statusFilter.value === 'low') {
-        list = list.filter((i) => i.quantity > 0 && i.quantity <= i.min_stock);
+        list = list.filter((i) => i.available_qty > 0 && i.available_qty <= i.min_stock);
       } else if (statusFilter.value === 'out') {
-        list = list.filter((i) => i.quantity === 0);
+        list = list.filter((i) => i.available_qty === 0);
       } else if (statusFilter.value === 'in_stock') {
-        list = list.filter((i) => i.quantity > i.min_stock);
+        list = list.filter((i) => i.available_qty > i.min_stock);
+      } else if (statusFilter.value === 'reserved') {
+        list = list.filter((i) => (i.reserved_qty || 0) > 0);
       }
 
       // Category filter
@@ -993,6 +1149,16 @@ export default {
         if (sortField.value === 'quantity') {
           return sortAsc.value ? a.quantity - b.quantity : b.quantity - a.quantity;
         }
+        if (sortField.value === 'reserved') {
+          const aRes = a.reserved_qty || 0;
+          const bRes = b.reserved_qty || 0;
+          return sortAsc.value ? aRes - bRes : bRes - aRes;
+        }
+        if (sortField.value === 'available') {
+          const aAvail = typeof a.available_qty === 'number' ? a.available_qty : (a.quantity || 0);
+          const bAvail = typeof b.available_qty === 'number' ? b.available_qty : (b.quantity || 0);
+          return sortAsc.value ? aAvail - bAvail : bAvail - aAvail;
+        }
         if (sortField.value === 'id') {
           const aId = Number(a.legacy_id) || 0;
           const bId = Number(b.legacy_id) || 0;
@@ -1022,21 +1188,26 @@ export default {
     });
 
     const printLowStockCount = computed(() => {
-      return printItems.value.filter((i) => i.quantity > 0 && i.quantity <= i.min_stock).length;
+      return printItems.value.filter((i) => i.available_qty > 0 && i.available_qty <= i.min_stock).length;
     });
 
     const printOutOfStockCount = computed(() => {
-      return printItems.value.filter((i) => i.quantity === 0).length;
+      return printItems.value.filter((i) => i.available_qty === 0).length;
     });
 
     const printTotalUnits = computed(() => {
       return printItems.value.reduce((sum, i) => sum + (i.quantity || 0), 0);
     });
 
+    const printTotalReserved = computed(() => {
+      return printItems.value.reduce((sum, i) => sum + (i.reserved_qty || 0), 0);
+    });
+
     // Stock ratio calculation for progress bar
     const calcStockRatio = (item) => {
       const target = Math.max((item.min_stock || 5) * 2, 10);
-      return Math.min(100, Math.round(((item.quantity || 0) / target) * 100));
+      const val = typeof item.available_qty === 'number' ? item.available_qty : (item.quantity || 0);
+      return Math.min(100, Math.round((val / target) * 100));
     };
 
     // Sort toggle
@@ -1173,6 +1344,7 @@ export default {
       printLowStockCount,
       printOutOfStockCount,
       printTotalUnits,
+      printTotalReserved,
       printDate,
       isAdjustModalOpen,
       adjustingItem,
@@ -1368,9 +1540,15 @@ export default {
 /* 2. KPI Cards Grid */
 .inv-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 16px;
+}
+
+@media (max-width: 1024px) {
+  .inv-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
 }
 
 .inv-stat-card {
@@ -1392,6 +1570,10 @@ export default {
 .inv-stat-card.is-danger {
   background: rgba(254, 226, 226, 0.35);
   border-color: rgba(239, 68, 68, 0.4);
+}
+.inv-stat-card.is-reserved {
+  background: rgba(254, 243, 199, 0.45);
+  border-color: rgba(217, 119, 6, 0.45);
 }
 
 .inv-stat-header {
@@ -1425,10 +1607,11 @@ export default {
   flex-shrink: 0;
 }
 
-.icon-neutral { background: #f1f5f9; color: #475569; }
-.icon-warning { background: #fef3c7; color: #d97706; }
-.icon-danger  { background: #fee2e2; color: #dc2626; }
-.icon-info    { background: #e0e7ff; color: #4338ca; }
+.icon-neutral  { background: #f1f5f9; color: #475569; }
+.icon-warning  { background: #fef3c7; color: #d97706; }
+.icon-danger   { background: #fee2e2; color: #dc2626; }
+.icon-info     { background: #e0e7ff; color: #4338ca; }
+.icon-reserved { background: #fef3c7; color: #b45309; }
 
 .inv-stat-subtext {
   font-size: 0.7rem;
@@ -1437,8 +1620,10 @@ export default {
   margin-top: 6px;
 }
 
-.text-warning-deep { color: #b45309 !important; }
-.text-danger-deep  { color: #b91c1c !important; }
+.text-warning-deep  { color: #b45309 !important; }
+.text-danger-deep   { color: #b91c1c !important; }
+.text-reserved-deep { color: #b45309 !important; }
+.text-success-deep  { color: #047857 !important; }
 
 /* 3. Filter Panel */
 .inv-filter-panel {
@@ -1544,6 +1729,10 @@ export default {
 }
 .inv-segment-btn.is-ok.active {
   background: #10b981;
+  color: #ffffff;
+}
+.inv-segment-btn.is-reserved.active {
+  background: #d97706;
   color: #ffffff;
 }
 
@@ -1677,6 +1866,38 @@ export default {
 }
 .inv-table tbody tr.is-row-low {
   background: rgba(254, 243, 199, 0.18);
+}
+.inv-table tbody tr.is-row-has-reserved {
+  background: rgba(254, 243, 199, 0.08);
+}
+
+.inv-sort-indicator {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 0.78rem;
+  color: #d97706;
+  font-weight: 900;
+}
+
+.inv-reserved-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.inv-res-sub {
+  font-size: 0.65rem;
+  color: #b45309;
+  font-weight: 700;
+}
+.inv-avail-val {
+  font-size: 0.95rem;
 }
 
 .col-center { text-align: center !important; }
@@ -1865,6 +2086,9 @@ export default {
   border-color: rgba(245, 158, 11, 0.35);
   background: rgba(254, 243, 199, 0.15);
 }
+.inv-mob-card.is-card-has-reserved {
+  border-color: rgba(245, 158, 11, 0.4);
+}
 
 .inv-mob-card-header {
   display: flex;
@@ -1906,6 +2130,36 @@ export default {
   gap: 6px;
 }
 
+.inv-mob-reserved-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 10px;
+  padding: 7px 10px;
+  margin: 8px 0 10px;
+  font-size: 0.74rem;
+  flex-wrap: wrap;
+}
+
+.inv-mob-res-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.inv-mob-avail-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: #334155;
+}
+
 .inv-mob-progress-track {
   width: 100%;
   height: 5px;
@@ -1929,6 +2183,18 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.inv-mob-stepper-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inv-mob-foot-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
 }
 
 .inv-mob-threshold {
@@ -2044,6 +2310,50 @@ export default {
   align-items: center;
   gap: 8px;
   margin-top: 18px;
+}
+
+/* Stock Adjustment Modal Breakdown Strip */
+.inv-adjust-stock-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.inv-adj-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 4px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+.inv-adj-box.is-res {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.inv-adj-box.is-avail {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.inv-adj-label {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.inv-adj-val {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0f172a;
 }
 
 /* Quick Delta Buttons */
@@ -2195,7 +2505,7 @@ export default {
 
   .inv-print-kpis {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
     gap: 8px;
     margin-bottom: 12px;
     text-align: center;

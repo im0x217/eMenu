@@ -2745,29 +2745,15 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
     const pbData = await pbFetch("/collections/inventory/records?sort=name&perPage=500");
     const records = Array.isArray(pbData.items) ? pbData.items : (Array.isArray(pbData) ? pbData : []);
 
-    // Get active reservations grouped by inventoryRecordId
-    let reservedMap = {};
-    if (stockReservationsCollection) {
-      const activeRes = await stockReservationsCollection.aggregate([
-        { $match: { status: "reserved" } },
-        { $unwind: "$items" },
-        {
-          $group: {
-            _id: "$items.inventoryRecordId",
-            totalReserved: { $sum: "$items.reservedQty" }
-          }
-        }
-      ]).toArray();
-
-      for (const r of activeRes) {
-        if (r._id) reservedMap[r._id] = r.totalReserved;
-      }
-    }
-
-    // Also get list of linked e-Menu products that have storage enabled
-    let linkedProductsMap = {};
     const shop = req.query.shop || "shop2";
     const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
+    const targetOrdersColl = (shop === "shop1") ? ordersCollection : ordersCollection2;
+
+    // Get list of linked e-Menu products that have storage enabled
+    let linkedProductsMap = {};
+    const prodById = new Map();
+    const prodByName = new Map();
+
     if (targetColl) {
       const linkedProds = await targetColl.find({
         hasStorage: { $ne: false },
@@ -2781,6 +2767,57 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
             productName: p.name,
             conversionFactor: p.inventoryLink.conversionFactor || 1
           };
+          prodById.set(p._id.toString(), p);
+          prodByName.set(p.name.trim(), p);
+          prodByName.set(normalizeArabicText(p.name), p);
+        }
+      }
+    }
+
+    // Get active reservations computed directly from waiting orders (status: pending, ready)
+    let reservedMap = {};
+    let waitingOrderCountMap = {};
+
+    if (targetOrdersColl) {
+      const waitingOrders = await targetOrdersColl.find({
+        status: { $in: ["pending", "ready"] }
+      }).project({ items: 1, orderNumber: 1, status: 1 }).toArray();
+
+      for (const order of waitingOrders) {
+        if (!Array.isArray(order.items)) continue;
+        for (const it of order.items) {
+          const prodIdStr = it.productId ? it.productId.toString() : '';
+          const p = (prodIdStr && prodById.get(prodIdStr))
+            || (it.name && prodByName.get(it.name.trim()))
+            || (it.name && prodByName.get(normalizeArabicText(it.name)));
+
+          if (p && p.inventoryLink?.recordId) {
+            const recId = p.inventoryLink.recordId;
+            const factor = Number(p.inventoryLink.conversionFactor) || 1;
+            const qty = (Number(it.quantity) || 1) * factor;
+            reservedMap[recId] = (reservedMap[recId] || 0) + qty;
+            waitingOrderCountMap[recId] = (waitingOrderCountMap[recId] || 0) + 1;
+          }
+        }
+      }
+    }
+
+    // Also check stockReservationsCollection for any additional active reservations
+    if (stockReservationsCollection) {
+      const activeRes = await stockReservationsCollection.aggregate([
+        { $match: { status: "reserved" } },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.inventoryRecordId",
+            totalReserved: { $sum: "$items.reservedQty" }
+          }
+        }
+      ]).toArray();
+
+      for (const r of activeRes) {
+        if (r._id && (!reservedMap[r._id] || r.totalReserved > reservedMap[r._id])) {
+          reservedMap[r._id] = r.totalReserved;
         }
       }
     }
@@ -2788,18 +2825,24 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
     // Storage items cascade directly from shop products (only products with storage enabled)
     const enriched = records
       .filter(rec => !!linkedProductsMap[rec.id])
-      .map(rec => ({
-        id: rec.id,
-        legacy_id: rec.legacy_id || '',
-        name: rec.name || '',
-        category: rec.category || '',
-        quantity: typeof rec.quantity === 'number' ? rec.quantity : 0,
-        min_stock: typeof rec.min_stock === 'number' ? rec.min_stock : 0,
-        reserved_qty: reservedMap[rec.id] || 0,
-        available_qty: Math.max(0, (typeof rec.quantity === 'number' ? rec.quantity : 0) - (reservedMap[rec.id] || 0)),
-        linkedProduct: linkedProductsMap[rec.id] || null,
-        updated: rec.updated || rec.last_updated_legacy || ''
-      }));
+      .map(rec => {
+        const reserved = reservedMap[rec.id] || 0;
+        const totalQty = typeof rec.quantity === 'number' ? rec.quantity : 0;
+        const available = Math.max(0, totalQty - reserved);
+        return {
+          id: rec.id,
+          legacy_id: rec.legacy_id || '',
+          name: rec.name || '',
+          category: rec.category || '',
+          quantity: totalQty,
+          min_stock: typeof rec.min_stock === 'number' ? rec.min_stock : 0,
+          reserved_qty: reserved,
+          waiting_orders_count: waitingOrderCountMap[rec.id] || (reserved > 0 ? 1 : 0),
+          available_qty: available,
+          linkedProduct: linkedProductsMap[rec.id] || null,
+          updated: rec.updated || rec.last_updated_legacy || ''
+        };
+      });
 
     res.json({ success: true, items: enriched });
   } catch (err) {
