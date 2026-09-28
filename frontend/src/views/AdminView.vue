@@ -592,9 +592,10 @@
                     <div class="bar-gauge">
                       <div 
                         class="bar-fill" 
+                        :class="{ 'animate-cat-bar': isCategorySalesInView }"
                         :style="{ 
-                          width: isCategorySalesInView ? getCategoryBarWidth(cat.revenue) + '%' : '0%',
-                          transitionDelay: isCategorySalesInView ? `${Math.min(cIdx * 65, 650)}ms` : '0ms'
+                          '--cat-target-width': getCategoryBarWidth(cat.revenue) + '%',
+                          '--cat-delay': `${Math.min(cIdx * 50, 600)}ms`
                         }"
                       ></div>
                     </div>
@@ -671,7 +672,7 @@
                         :key="prod.productId"
                         class="clickable-product-row"
                         :class="{ 'in-view': isTopProductsInView }"
-                        :style="{ '--row-idx': pIdx }"
+                        :style="{ '--row-delay': `${Math.min(pIdx * 50, 600)}ms` }"
                         @click="openProductCustomersModal(prod)"
                         title="انقر لعرض سجل تفاصيل الطلبات والعملاء"
                       >
@@ -717,7 +718,7 @@
                             <span 
                               class="sales-share-pct-pill text-mono font-bold"
                               :class="{ 'pill-revealed': isTopProductsInView }"
-                              :style="{ transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65 + 120, 800)}ms` : '0ms' }"
+                              :style="{ '--pill-delay': `${Math.min(pIdx * 50 + 100, 700)}ms` }"
                             >
                               {{ getSalesSharePct(prod.revenue) }}%
                             </span>
@@ -726,8 +727,8 @@
                                 class="sales-share-fill-deluxe" 
                                 :class="{ 'animate-fill': isTopProductsInView }"
                                 :style="{ 
-                                  width: isTopProductsInView ? Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' : '0%',
-                                  transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65, 750)}ms` : '0ms'
+                                  '--target-width': Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%',
+                                  '--fill-delay': `${Math.min(pIdx * 50, 650)}ms`
                                 }"
                               >
                                 <div class="sales-share-shimmer-wave"></div>
@@ -749,7 +750,7 @@
                       :key="'mob-top-prod-' + prod.productId"
                       class="mob-analytics-rank-card glass-panel"
                       :class="{ 'in-view': isTopProductsInView }"
-                      :style="{ '--row-idx': pIdx }"
+                      :style="{ '--row-delay': `${Math.min(pIdx * 50, 600)}ms` }"
                       @click="openProductCustomersModal(prod)"
                       title="انقر لعرض سجل تفاصيل الطلبات والعملاء"
                     >
@@ -772,7 +773,7 @@
                             <span 
                               class="mob-share-val text-mono font-bold"
                               :class="{ 'pill-revealed': isTopProductsInView }"
-                              :style="{ transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65 + 120, 800)}ms` : '0ms' }"
+                              :style="{ '--pill-delay': `${Math.min(pIdx * 50 + 100, 700)}ms` }"
                             >
                               {{ getSalesSharePct(prod.revenue) }}%
                             </span>
@@ -782,8 +783,8 @@
                               class="sales-share-fill-deluxe" 
                               :class="{ 'animate-fill': isTopProductsInView }"
                               :style="{ 
-                                width: isTopProductsInView ? Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%' : '0%',
-                                transitionDelay: isTopProductsInView ? `${Math.min(pIdx * 65, 750)}ms` : '0ms'
+                                '--target-width': Math.min(100, Math.max(3, getSalesSharePct(prod.revenue))) + '%',
+                                '--fill-delay': `${Math.min(pIdx * 50, 650)}ms`
                               }"
                             >
                               <div class="sales-share-shimmer-wave"></div>
@@ -8086,57 +8087,59 @@ export default {
     const categorySalesCardRef = ref(null);
     const isTopProductsInView = ref(false);
     const isCategorySalesInView = ref(false);
-    let analyticsScrollObserver = null;
 
-    const setupAnalyticsScrollObserver = () => {
-      if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
-        isTopProductsInView.value = true;
-        isCategorySalesInView.value = true;
-        return;
-      }
+    let scrollRafId = null;
+    const handleScrollCheck = () => {
+      if (scrollRafId) return;
+      scrollRafId = requestAnimationFrame(() => {
+        scrollRafId = null;
+        if (typeof window === 'undefined') return;
+        const vH = window.innerHeight || document.documentElement.clientHeight || 800;
 
-      if (analyticsScrollObserver) {
-        analyticsScrollObserver.disconnect();
-        analyticsScrollObserver = null;
-      }
-
-      // Check reduced motion accessibility
-      const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReducedMotion) {
-        isTopProductsInView.value = true;
-        isCategorySalesInView.value = true;
-        return;
-      }
-
-      analyticsScrollObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            if (entry.target === topProductsCardRef.value) {
-              isTopProductsInView.value = true;
-            }
-            if (entry.target === categorySalesCardRef.value) {
-              isCategorySalesInView.value = true;
-            }
+        if (topProductsCardRef.value) {
+          const r = topProductsCardRef.value.getBoundingClientRect();
+          // Element is visible when its top is within bottom 92% of screen and bottom has not scrolled past top
+          const inView = r.top <= vH * 0.92 && r.bottom >= 40;
+          if (isTopProductsInView.value !== inView) {
+            isTopProductsInView.value = inView;
           }
-        });
-      }, {
-        root: null,
-        rootMargin: '0px 0px -20px 0px',
-        threshold: 0.08
+        }
+
+        if (categorySalesCardRef.value) {
+          const cr = categorySalesCardRef.value.getBoundingClientRect();
+          const cInView = cr.top <= vH * 0.92 && cr.bottom >= 40;
+          if (isCategorySalesInView.value !== cInView) {
+            isCategorySalesInView.value = cInView;
+          }
+        }
       });
+    };
 
-      if (topProductsCardRef.value) {
-        analyticsScrollObserver.observe(topProductsCardRef.value);
+    const attachScrollListeners = () => {
+      if (typeof window === 'undefined') return;
+      if (adminMainRef.value) {
+        adminMainRef.value.removeEventListener('scroll', handleScrollCheck);
+        adminMainRef.value.addEventListener('scroll', handleScrollCheck, { passive: true });
       }
-      if (categorySalesCardRef.value) {
-        analyticsScrollObserver.observe(categorySalesCardRef.value);
-      }
+      window.removeEventListener('scroll', handleScrollCheck);
+      window.addEventListener('scroll', handleScrollCheck, { passive: true });
+      window.removeEventListener('resize', handleScrollCheck);
+      window.addEventListener('resize', handleScrollCheck, { passive: true });
 
-      // Defensive fallback: auto-reveal if observer doesn't trigger within 2.5s
-      setTimeout(() => {
-        if (!isTopProductsInView.value) isTopProductsInView.value = true;
-        if (!isCategorySalesInView.value) isCategorySalesInView.value = true;
-      }, 2500);
+      handleScrollCheck();
+    };
+
+    const detachScrollListeners = () => {
+      if (typeof window === 'undefined') return;
+      if (adminMainRef.value) {
+        adminMainRef.value.removeEventListener('scroll', handleScrollCheck);
+      }
+      window.removeEventListener('scroll', handleScrollCheck);
+      window.removeEventListener('resize', handleScrollCheck);
+      if (scrollRafId) {
+        cancelAnimationFrame(scrollRafId);
+        scrollRafId = null;
+      }
     };
 
     const handleSidebarKeydown = (e) => {
@@ -8194,7 +8197,8 @@ export default {
           isTopProductsInView.value = false;
           isCategorySalesInView.value = false;
           nextTick(() => {
-            setupAnalyticsScrollObserver();
+            attachScrollListeners();
+            handleScrollCheck();
           });
         }
       }
@@ -11069,7 +11073,8 @@ export default {
         isTopProductsInView.value = false;
         isCategorySalesInView.value = false;
         nextTick(() => {
-          setupAnalyticsScrollObserver();
+          attachScrollListeners();
+          handleScrollCheck();
         });
       }
     };
@@ -14367,7 +14372,8 @@ const closeSuggestionsWithDelay = () => {
       scrollActiveTabIntoView();
       updateHeadIcon();
       nextTick(() => {
-        setupAnalyticsScrollObserver();
+        attachScrollListeners();
+        handleScrollCheck();
       });
     });
 
@@ -14375,10 +14381,7 @@ const closeSuggestionsWithDelay = () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
       document.removeEventListener('click', closeAllDatePickers);
-      if (analyticsScrollObserver) {
-        analyticsScrollObserver.disconnect();
-        analyticsScrollObserver = null;
-      }
+      detachScrollListeners();
     });
 
     // =========================================================================
@@ -28984,6 +28987,49 @@ select.pos-control {
   border-color: #fdba74;
 }
 
+/* ==========================================================================
+   ANIMATION ON SCROLL: KEYFRAMES & FLUID EASINGS
+   ========================================================================== */
+@keyframes progressGrow {
+  0% {
+    width: 0% !important;
+  }
+  100% {
+    width: var(--target-width) !important;
+  }
+}
+
+@keyframes catBarGrow {
+  0% {
+    width: 0% !important;
+  }
+  100% {
+    width: var(--cat-target-width) !important;
+  }
+}
+
+@keyframes rowFadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pillPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Deluxe Animated Sales Share Bar */
 .sales-share-deluxe-container {
   display: flex;
@@ -29007,15 +29053,12 @@ select.pos-control {
   font-weight: 800;
   line-height: 1.2;
   flex-shrink: 0;
-  opacity: 0.3;
-  transform: scale(0.92);
-  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  opacity: 0;
 }
 
 .sales-share-pct-pill.pill-revealed {
-  opacity: 1;
-  transform: scale(1);
+  animation: pillPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--pill-delay, 0ms);
 }
 
 .shop-theme-shop2 .sales-share-pct-pill {
@@ -29040,8 +29083,12 @@ select.pos-control {
   position: relative;
   overflow: hidden;
   width: 0%;
-  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: width;
+}
+
+.sales-share-fill-deluxe.animate-fill {
+  animation: progressGrow 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--fill-delay, 0ms);
 }
 
 .shop-theme-shop2 .sales-share-fill-deluxe {
@@ -29075,30 +29122,24 @@ select.pos-control {
 
 /* Top Products Table Row Entrance on Scroll */
 .top-products-interactive-table .clickable-product-row {
-  opacity: 0.2;
-  transform: translateY(10px);
-  transition: background-color 0.18s ease, opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: calc(var(--row-idx, 0) * 45ms);
+  opacity: 0;
   will-change: opacity, transform;
 }
 
 .top-products-interactive-table .clickable-product-row.in-view {
-  opacity: 1;
-  transform: translateY(0);
+  animation: rowFadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--row-delay, 0ms);
 }
 
 /* Mobile Top Products Card Entrance on Scroll */
 .mobile-analytics-cards-grid .mob-analytics-rank-card {
-  opacity: 0.2;
-  transform: translateY(12px);
-  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: calc(var(--row-idx, 0) * 45ms);
+  opacity: 0;
   will-change: opacity, transform;
 }
 
 .mobile-analytics-cards-grid .mob-analytics-rank-card.in-view {
-  opacity: 1;
-  transform: translateY(0);
+  animation: rowFadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--row-delay, 0ms);
 }
 
 .mob-share-bar-wrap {
@@ -29113,20 +29154,24 @@ select.pos-control {
 .mob-share-val {
   font-size: 0.78rem;
   color: #d97706;
-  opacity: 0.3;
-  transform: scale(0.92);
+  opacity: 0;
   display: inline-block;
-  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
 .mob-share-val.pill-revealed {
-  opacity: 1;
-  transform: scale(1);
+  animation: pillPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--pill-delay, 0ms);
 }
 
 .shop-theme-shop2 .mob-share-val {
   color: #1e3a5f;
+}
+
+/* Category Sales Bar Growth on Scroll */
+.bar-fill.animate-cat-bar {
+  animation: catBarGrow 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--cat-delay, 0ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -29135,16 +29180,15 @@ select.pos-control {
     display: none !important;
   }
   .sales-share-fill-deluxe,
-  .bar-fill {
-    transition: none !important;
-  }
+  .bar-fill,
   .top-products-interactive-table .clickable-product-row,
   .mobile-analytics-cards-grid .mob-analytics-rank-card,
   .sales-share-pct-pill,
   .mob-share-val {
+    animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-    transition: none !important;
+    width: var(--target-width, auto) !important;
   }
 }
 
