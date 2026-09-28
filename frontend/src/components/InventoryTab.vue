@@ -89,7 +89,6 @@
               </svg>
             </div>
           </div>
-          <div class="inv-stat-subtext">بكتالوج المستودع</div>
         </div>
 
         <!-- KPI 2: Low Stock -->
@@ -107,7 +106,6 @@
               </svg>
             </div>
           </div>
-          <div class="inv-stat-subtext text-warning-deep">أقل من حد الطلب</div>
         </div>
 
         <!-- KPI 3: Out of Stock -->
@@ -125,7 +123,6 @@
               </svg>
             </div>
           </div>
-          <div class="inv-stat-subtext text-danger-deep">الكمية صفر (إنتاج)</div>
         </div>
 
         <!-- KPI 4: Total Units -->
@@ -159,7 +156,6 @@
               </svg>
             </div>
           </div>
-          <div class="inv-stat-subtext text-reserved-deep">{{ stats.itemsWithReserved }} صنف بطلبات معلقة</div>
         </div>
       </div>
 
@@ -1582,13 +1578,9 @@ export default {
   background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 16px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 96px;
 }
 .inv-stat-card:hover {
   border-color: #cbd5e1;
