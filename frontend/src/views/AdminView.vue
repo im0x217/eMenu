@@ -332,64 +332,144 @@
           <!-- ANALYTICS TAB -->
           <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
             
-            <!-- SKELETON LOADER (Displayed during date filter and period loading) -->
+            <!-- SKELETON LOADER (Displayed during date filter, period loading, and initial fetch) -->
             <div v-if="analyticsLoading" class="analytics-skeleton-view animate-fade-in">
-              <!-- KPI Cards Skeleton -->
+              <!-- KPI Cards Skeleton (Single row on desktop, 2-col on mobile) -->
               <div class="kpi-grid">
-                <div v-for="i in 6" :key="'kpi-skel-' + i" class="kpi-card glass-panel skeleton-card">
-                  <div class="skeleton-shimmer skeleton-icon"></div>
-                  <div class="kpi-info" style="width: 100%;">
-                    <div class="skeleton-shimmer skeleton-line skeleton-title-line"></div>
-                    <div class="skeleton-shimmer skeleton-line skeleton-val-line"></div>
+                <div v-for="i in 6" :key="'kpi-skel-' + i" class="kpi-card skeleton-card">
+                  <div class="kpi-info" style="flex: 1 1 auto; min-width: 0;">
+                    <div class="skeleton-shimmer skeleton-title-line"></div>
+                    <div class="skeleton-shimmer skeleton-val-line"></div>
                   </div>
+                  <div class="skeleton-shimmer skeleton-icon-wrap"></div>
                 </div>
               </div>
 
               <!-- Charts & Metrics Grid Skeleton -->
-              <div class="charts-grid mt-4">
-                <!-- Sales Trend Skeleton -->
-                <div class="chart-card glass-panel span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 180px; height: 18px; margin-bottom: 20px;"></div>
+              <div class="charts-grid">
+                <!-- 1. Daily Revenue Line Chart Skeleton -->
+                <div class="chart-card span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 20px;"></div>
                   <div class="skeleton-shimmer skeleton-chart-box"></div>
                 </div>
 
-                <!-- Price Mode Split Skeleton -->
-                <div class="chart-card glass-panel skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 180px; gap: 16px;">
-                    <div class="skeleton-shimmer skeleton-circle"></div>
-                    <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 14px;"></div>
+                <!-- 2. Sales Split Skeleton (Dual-Segment Bar) -->
+                <div class="chart-card skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="split-display-clean">
+                    <div class="skeleton-shimmer skeleton-line" style="width: 100%; height: 8px; border-radius: 999px; margin-bottom: 16px;"></div>
+                    <div class="d-flex flex-column gap-3">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div class="skeleton-shimmer skeleton-line" style="width: 90px; height: 14px;"></div>
+                        <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div class="skeleton-shimmer skeleton-line" style="width: 85px; height: 14px;"></div>
+                        <div class="skeleton-shimmer skeleton-line" style="width: 75px; height: 14px;"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Payment Methods Skeleton -->
-                <div class="chart-card glass-panel skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 180px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="skeleton-shimmer skeleton-row-bar" v-for="i in 3" :key="'pm-skel-' + i"></div>
+                <!-- 3. Payment Methods Skeleton -->
+                <div class="chart-card skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 100px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="pm-clean-list">
+                    <div v-for="i in 3" :key="'pm-skel-' + i" class="pm-clean-item">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="skeleton-shimmer skeleton-line" style="width: 60px; height: 14px;"></div>
+                        <div class="skeleton-shimmer skeleton-line" style="width: 90px; height: 14px;"></div>
+                      </div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 100%; height: 4px; border-radius: 999px;"></div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Category Sales Skeleton -->
-                <div class="chart-card glass-panel span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="skeleton-shimmer skeleton-row-bar" v-for="i in 4" :key="'cat-skel-' + i"></div>
+                <!-- 4. Category Sales Skeleton -->
+                <div class="chart-card span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 130px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="bar-chart-list">
+                    <div v-for="i in 5" :key="'cat-skel-' + i" class="category-bar-row">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="skeleton-shimmer skeleton-line" style="width: 100px; height: 14px;"></div>
+                        <div class="skeleton-shimmer skeleton-line" style="width: 70px; height: 14px;"></div>
+                      </div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 100%; height: 4px; border-radius: 999px;"></div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Top Favorites Skeleton -->
-                <div class="chart-card glass-panel skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="skeleton-shimmer skeleton-row-bar" v-for="i in 4" :key="'fav-skel-' + i"></div>
+                <!-- 5. Top Favorites Skeleton -->
+                <div class="chart-card skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="list-cards">
+                    <div v-for="i in 5" :key="'fav-skel-' + i" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 14px;"></div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 45px; height: 14px;"></div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Top Products Skeleton -->
-                <div class="chart-card glass-panel span-2 skeleton-card">
+                <!-- 6. Top Products Skeleton -->
+                <div class="chart-card span-2 skeleton-card">
                   <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'prod-skel-' + i"></div>
+                  <div class="desktop-analytics-table">
+                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'prod-skel-' + i"></div>
+                  </div>
+                  <div class="mobile-analytics-cards-grid">
+                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-prod-skel-' + i"></div>
+                  </div>
                 </div>
 
-                <!-- Top Customers Skeleton -->
-                <div class="chart-card glass-panel skeleton-card">
+                <!-- 7. Top Customers Skeleton -->
+                <div class="chart-card skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 130px; height: 18px; margin-bottom: 16px;"></div>
+                  <div class="desktop-analytics-table">
+                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'cust-skel-' + i"></div>
+                  </div>
+                  <div class="mobile-analytics-cards-grid">
+                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-cust-skel-' + i"></div>
+                  </div>
+                </div>
+
+                <!-- 8. Inactive Customers Skeleton -->
+                <div class="chart-card skeleton-card">
                   <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'cust-skel-' + i"></div>
+                  <div class="desktop-analytics-table">
+                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 4" :key="'inact-skel-' + i"></div>
+                  </div>
+                  <div class="mobile-analytics-cards-grid">
+                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 3" :key="'mob-inact-skel-' + i"></div>
+                  </div>
+                </div>
+
+                <!-- 9. Stagnant Products Skeleton -->
+                <div class="chart-card span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 18px; margin-bottom: 16px;"></div>
+                  <div class="desktop-analytics-table">
+                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 4" :key="'stag-skel-' + i"></div>
+                  </div>
+                  <div class="mobile-analytics-cards-grid">
+                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 3" :key="'mob-stag-skel-' + i"></div>
+                  </div>
+                </div>
+
+                <!-- 10. UX Funnel & Telemetry Skeleton -->
+                <div class="chart-card span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
+                  <div class="ux-clean-wrapper">
+                    <div class="skeleton-shimmer" style="height: 70px; border-radius: 12px; margin-bottom: 8px;"></div>
+                    <div class="d-flex gap-4 pb-2 border-bottom">
+                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 16px;"></div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 16px;"></div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 16px;"></div>
+                    </div>
+                    <div class="d-flex gap-4">
+                      <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -8192,7 +8272,7 @@ export default {
     const analyticsPeriod = ref('30d');
     const analyticsStartDate = ref('');
     const analyticsEndDate = ref('');
-    const analyticsLoading = ref(false);
+    const analyticsLoading = ref(activeTab.value === 'analytics');
     const ordersLoading = ref(false);
     const productsLoading = ref(false);
     const customersLoading = ref(false);
@@ -10142,6 +10222,11 @@ export default {
         const res = await adminFetch(checkUrl);
         if (res.ok) {
           isAuthenticated.value = true;
+          // Unblock the main layout so that the admin shell & active tab skeleton loader mount immediately!
+          loading.value = false;
+          if (activeTab.value === 'analytics') {
+            analyticsLoading.value = true;
+          }
           await loadAllData();
         } else {
           isAuthenticated.value = false;
@@ -10178,6 +10263,10 @@ export default {
           }
 
           isAuthenticated.value = true;
+          loading.value = false;
+          if (activeTab.value === 'analytics') {
+            analyticsLoading.value = true;
+          }
           toast.show('تم تسجيل الدخول بنجاح', 'success');
           await loadAllData();
         } else {
@@ -10231,7 +10320,9 @@ export default {
       // Update activeTab immediately for instant, buttery-smooth navigation
       activeTab.value = tab;
 
-      if (tab === 'inventory') {
+      if (tab === 'analytics') {
+        fetchAnalytics();
+      } else if (tab === 'inventory') {
         fetchInventoryItems();
         fetchInventoryStatus();
         fetchInventoryReservations();
@@ -10907,7 +10998,9 @@ export default {
 
     // Load Data
     const loadAllData = async () => {
-      loading.value = true;
+      if (!isAuthenticated.value) {
+        loading.value = true;
+      }
       try {
         await Promise.all([
           fetchAnalytics(),
@@ -27856,33 +27949,34 @@ select.pos-control {
 /* ================= SKELETON LOADER STYLES ================= */
 @keyframes skeletonPulse {
   0% {
-    opacity: 0.5;
-    transform: translateZ(0);
+    background-position: 200% 0;
   }
   100% {
-    opacity: 0.95;
-    transform: translateZ(0);
+    background-position: -200% 0;
   }
 }
 
 .skeleton-shimmer {
-  background-color: #e2e8f0;
-  animation: skeletonPulse 1.1s ease-in-out infinite alternate;
-  border-radius: 8px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+  border-radius: 6px;
 }
 
 .shop-theme-shop2 .skeleton-shimmer {
-  background-color: #dbeafe;
+  background: linear-gradient(90deg, #eff6ff 25%, #dbeafe 50%, #eff6ff 75%);
+  background-size: 200% 100%;
 }
 
 .skeleton-card {
   pointer-events: none;
+  user-select: none;
 }
 
-.skeleton-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+.skeleton-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   flex-shrink: 0;
 }
 
@@ -27892,38 +27986,32 @@ select.pos-control {
 
 .skeleton-title-line {
   width: 45%;
-  height: 14px;
+  height: 12px;
   margin-bottom: 8px;
 }
 
 .skeleton-val-line {
   width: 70%;
-  height: 22px;
+  height: 20px;
 }
 
 .skeleton-chart-box {
   width: 100%;
-  height: 220px;
+  height: 180px;
   border-radius: 12px;
-}
-
-.skeleton-circle {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
 }
 
 .skeleton-row-bar {
   width: 100%;
-  height: 46px;
-  border-radius: 10px;
-  margin-bottom: 12px;
+  height: 38px;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 .skeleton-table-row {
   width: 100%;
-  height: 40px;
-  border-radius: 8px;
+  height: 36px;
+  border-radius: 6px;
   margin-bottom: 8px;
 }
 
