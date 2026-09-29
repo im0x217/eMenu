@@ -574,13 +574,13 @@
                     <text x="855" y="164" class="chart-text label-y" text-anchor="end">0 د.ل</text>
 
                     <!-- Gradient Area -->
-                    <path :d="svgTrendAreaPath" class="svg-trend-area" :class="{ 'show-area': isAnalyticsAnimated }" fill="url(#chartGradient)"/>
+                    <path :d="svgTrendAreaPath" class="svg-trend-area" :class="{ 'show-area': isTrendChartInView }" fill="url(#chartGradient)"/>
 
                     <!-- Animated Line -->
-                    <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isAnalyticsAnimated }" fill="none" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isTrendChartInView }" fill="none" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     
                     <!-- Animated Dots -->
-                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group" :class="{ 'show-dot': isAnalyticsAnimated }" :style="{ '--dot-delay': `${Math.min(idx * 30 + 150, 950)}ms` }">
+                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group" :class="{ 'show-dot': isTrendChartInView }" :style="{ '--dot-delay': `${Math.min(idx * 30 + 150, 950)}ms` }">
                       <circle :cx="dot.x" :cy="dot.y" r="4.5" fill="#fff" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" />
                       <circle :cx="dot.x" :cy="dot.y" r="16" fill="transparent" class="dot-hover-trigger">
                         <title>{{ dot.date }}: {{ formatCurrency(dot.val) }}</title>
@@ -601,8 +601,8 @@
                 </div>
                 <div class="split-display-clean">
                   <div class="split-dual-bar">
-                    <div class="split-dual-segment segment-bulk" :style="{ width: (isAnalyticsAnimated ? priceModePercentages.bulk : 0) + '%' }"></div>
-                    <div class="split-dual-segment segment-regular" :style="{ width: (isAnalyticsAnimated ? priceModePercentages.regular : 0) + '%' }"></div>
+                    <div class="split-dual-segment segment-bulk" :style="{ width: (isPriceModeInView ? priceModePercentages.bulk : 0) + '%' }"></div>
+                    <div class="split-dual-segment segment-regular" :style="{ width: (isPriceModeInView ? priceModePercentages.regular : 0) + '%' }"></div>
                   </div>
                   <div class="split-clean-list">
                     <div class="split-clean-row">
@@ -645,7 +645,7 @@
                       </div>
                     </div>
                     <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-cash" :style="{ width: (isAnalyticsAnimated ? getPaymentMethodPct('cash') : 0) + '%', transitionDelay: '50ms' }"></div>
+                      <div class="pm-clean-fill fill-cash" :style="{ width: (isPaymentMethodsInView ? getPaymentMethodPct('cash') : 0) + '%', transitionDelay: '50ms' }"></div>
                     </div>
                   </div>
 
@@ -659,7 +659,7 @@
                       </div>
                     </div>
                     <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-card" :style="{ width: (isAnalyticsAnimated ? getPaymentMethodPct('card') : 0) + '%', transitionDelay: '150ms' }"></div>
+                      <div class="pm-clean-fill fill-card" :style="{ width: (isPaymentMethodsInView ? getPaymentMethodPct('card') : 0) + '%', transitionDelay: '150ms' }"></div>
                     </div>
                   </div>
 
@@ -673,7 +673,7 @@
                       </div>
                     </div>
                     <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-bank" :style="{ width: (isAnalyticsAnimated ? getPaymentMethodPct('bank_transfer') : 0) + '%', transitionDelay: '250ms' }"></div>
+                      <div class="pm-clean-fill fill-bank" :style="{ width: (isPaymentMethodsInView ? getPaymentMethodPct('bank_transfer') : 0) + '%', transitionDelay: '250ms' }"></div>
                     </div>
                   </div>
                 </div>
@@ -724,7 +724,7 @@
                     <div class="bar-gauge">
                       <div 
                         class="bar-fill" 
-                        :style="{ width: (isAnalyticsAnimated ? getCategoryBarWidth(cat.revenue) : 0) + '%', transitionDelay: `${Math.min(cIdx * 50 + 100, 600)}ms` }"
+                        :style="{ width: (isCategorySalesInView ? getCategoryBarWidth(cat.revenue) : 0) + '%', transitionDelay: `${Math.min(cIdx * 50 + 60, 600)}ms` }"
                       ></div>
                     </div>
                   </div>
@@ -788,7 +788,7 @@
               </div>
 
               <!-- 7. Top Products Card -->
-              <div class="chart-card span-2 top-products-card" ref="topProductsCardRef">
+              <div class="chart-card span-2 top-products-card" ref="topProductsCardRef" :class="{ 'in-view': isTopProductsInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
                 </div>
@@ -826,7 +826,7 @@
                           <div class="share-mini-cell">
                             <span class="text-mono font-bold text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
                             <div class="share-mini-bar">
-                              <div class="share-mini-fill" :style="{ width: (isAnalyticsAnimated ? Math.min(100, Math.max(4, getSalesSharePct(prod.revenue))) : 0) + '%', transitionDelay: `${Math.min(prod.originalRank * 35 + 100, 500)}ms` }"></div>
+                              <div class="share-mini-fill" :style="{ width: (isTopProductsInView ? Math.min(100, Math.max(4, getSalesSharePct(prod.revenue))) : 0) + '%', transitionDelay: `${Math.min(prod.originalRank * 35 + 60, 500)}ms` }"></div>
                             </div>
                           </div>
                         </td>
@@ -8089,33 +8089,91 @@ export default {
       isUxInsightsInView.value = false;
     };
 
+    let analyticsObserver = null;
+    const setupAnalyticsObserver = () => {
+      if (typeof window === 'undefined') return;
+
+      if (typeof IntersectionObserver !== 'undefined') {
+        if (analyticsObserver) {
+          analyticsObserver.disconnect();
+          analyticsObserver = null;
+        }
+
+        analyticsObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const el = entry.target;
+              if (el === kpiGridRef.value) isKpiInView.value = true;
+              else if (el === trendChartCardRef.value) isTrendChartInView.value = true;
+              else if (el === priceModeCardRef.value) isPriceModeInView.value = true;
+              else if (el === paymentMethodsCardRef.value) isPaymentMethodsInView.value = true;
+              else if (el === topFavoritesCardRef.value) isTopFavoritesInView.value = true;
+              else if (el === categorySalesCardRef.value) isCategorySalesInView.value = true;
+              else if (el === topProductsCardRef.value) isTopProductsInView.value = true;
+              else if (el === topCustomersCardRef.value) isTopCustomersInView.value = true;
+              else if (el === inactiveCustomersCardRef.value) isInactiveCustomersInView.value = true;
+              else if (el === lowProductsCardRef.value) isLowProductsInView.value = true;
+              else if (el === uxInsightsCardRef.value) isUxInsightsInView.value = true;
+            }
+          });
+        }, {
+          root: null,
+          rootMargin: '0px 0px -30px 0px',
+          threshold: [0, 0.1]
+        });
+
+        const cards = [
+          kpiGridRef.value,
+          trendChartCardRef.value,
+          priceModeCardRef.value,
+          paymentMethodsCardRef.value,
+          topFavoritesCardRef.value,
+          categorySalesCardRef.value,
+          topProductsCardRef.value,
+          topCustomersCardRef.value,
+          inactiveCustomersCardRef.value,
+          lowProductsCardRef.value,
+          uxInsightsCardRef.value
+        ];
+
+        cards.forEach(card => {
+          if (card) analyticsObserver.observe(card);
+        });
+      }
+
+      attachScrollListeners();
+      handleScrollCheck();
+    };
+
     const triggerAnalyticsAnimations = () => {
-      isAnalyticsAnimated.value = false;
+      resetAnalyticsScrollStates();
       nextTick(() => {
         requestAnimationFrame(() => {
-          setTimeout(() => {
+          requestAnimationFrame(() => {
             isAnalyticsAnimated.value = true;
-          }, 40);
+            setupAnalyticsObserver();
+            handleScrollCheck();
+          });
         });
       });
     };
 
     let scrollRafId = null;
     const handleScrollCheck = () => {
+      if (typeof window === 'undefined') return;
       if (scrollRafId) return;
       scrollRafId = requestAnimationFrame(() => {
         scrollRafId = null;
-        if (typeof window === 'undefined') return;
         const vH = window.innerHeight || document.documentElement.clientHeight || 800;
 
         const checkInView = (elRef, targetRef) => {
-          if (elRef.value) {
-            const r = elRef.value.getBoundingClientRect();
-            // Visible when element top is within 92% of screen height and bottom has not scrolled past top
-            const inView = r.top <= vH * 0.92 && r.bottom >= 40;
-            if (targetRef.value !== inView) {
-              targetRef.value = inView;
-            }
+          if (!elRef || !elRef.value) return;
+          if (targetRef.value) return; // Latch once in view to maintain smooth display
+          const r = elRef.value.getBoundingClientRect();
+          // Visible when element top is within 94% of screen height and bottom has not scrolled past top
+          const inView = r.top <= vH * 0.94 && r.bottom >= 20;
+          if (inView) {
+            targetRef.value = true;
           }
         };
 
@@ -8149,6 +8207,10 @@ export default {
 
     const detachScrollListeners = () => {
       if (typeof window === 'undefined') return;
+      if (analyticsObserver) {
+        analyticsObserver.disconnect();
+        analyticsObserver = null;
+      }
       if (adminMainRef.value) {
         adminMainRef.value.removeEventListener('scroll', handleScrollCheck);
       }
@@ -8212,11 +8274,7 @@ export default {
           adminMainRef.value.scrollTop = 0;
         }
         if (newTab === 'analytics') {
-          resetAnalyticsScrollStates();
-          nextTick(() => {
-            attachScrollListeners();
-            handleScrollCheck();
-          });
+          triggerAnalyticsAnimations();
         }
       }
     }, { flush: 'post' });
@@ -11100,12 +11158,7 @@ export default {
         toast.show('حدث خطأ أثناء تحميل بيانات التحليلات', 'danger');
       } finally {
         analyticsLoading.value = false;
-        resetAnalyticsScrollStates();
         triggerAnalyticsAnimations();
-        nextTick(() => {
-          attachScrollListeners();
-          handleScrollCheck();
-        });
       }
     };
 
@@ -14401,10 +14454,14 @@ const closeSuggestionsWithDelay = () => {
       document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
       updateHeadIcon();
-      nextTick(() => {
-        attachScrollListeners();
-        handleScrollCheck();
-      });
+      if (activeTab.value === 'analytics') {
+        triggerAnalyticsAnimations();
+      } else {
+        nextTick(() => {
+          attachScrollListeners();
+          handleScrollCheck();
+        });
+      }
     });
 
     onUnmounted(() => {
@@ -16227,6 +16284,7 @@ const closeSuggestionsWithDelay = () => {
 .chart-dot-group {
   opacity: 0;
   transform: scale(0);
+  transform-box: fill-box;
   transform-origin: center;
   transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform, opacity;
