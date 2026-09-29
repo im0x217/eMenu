@@ -1,6 +1,7 @@
 <script setup>
 import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput } from '../utils/phone';
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
+import JsBarcode from 'jsbarcode';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useFavoritesStore } from '../stores/favorites';
@@ -78,6 +79,9 @@ const loadCustomerData = async () => {
   } finally {
     isLoadingOrders.value = false;
     isLoadingBalance.value = false;
+    nextTick(() => {
+      renderOrderBarcodes();
+    });
   }
 };
 
@@ -92,6 +96,7 @@ const handleKeydown = (e) => {
 
 onMounted(() => {
   loadCustomerData();
+  renderOrderBarcodes();
   if (authStore.customerPhone) {
     authStore.checkProfileStatus();
   }
@@ -250,6 +255,59 @@ const handleEditOrderInCart = (order) => {
   toastStore.show(`تم استيراد الطلب #${order.orderNumber || ''} إلى السلة للتعديل`, 'info');
   router.push('/cart');
 };
+
+// Collapsible items breakdown
+const expandedOrders = ref({});
+const toggleOrderItems = (orderId) => {
+  expandedOrders.value[orderId] = !expandedOrders.value[orderId];
+};
+
+const getItemsPreview = (items) => {
+  if (!items || !items.length) return '';
+  const names = items.map(i => i.name).filter(Boolean);
+  if (names.length <= 2) return names.join('، ');
+  return names.slice(0, 2).join('، ') + `، و${names.length - 2} آخر…`;
+};
+
+// Render high-contrast wide barcodes on SVG elements using JsBarcode
+const renderOrderBarcodes = () => {
+  nextTick(() => {
+    displayedOrders.value.forEach(order => {
+      const el = document.getElementById('order-barcode-' + order._id);
+      if (!el) return;
+
+      const codeVal = order.orderNumber ? String(order.orderNumber) : String(order._id).slice(-8);
+
+      try {
+        JsBarcode(el, codeVal, {
+          format: 'CODE128',
+          width: 2.2,
+          height: 48,
+          displayValue: false,
+          flat: true,
+          margin: 4,
+          background: '#ffffff',
+          lineColor: '#0f172a'
+        });
+        el.setAttribute('preserveAspectRatio', 'none');
+      } catch (err) {
+        console.error('Barcode render error for order:', order._id, err);
+      }
+    });
+  });
+};
+
+watch(displayedOrders, () => {
+  renderOrderBarcodes();
+}, { immediate: true, deep: true });
+
+watch(isLoadingOrders, (loading) => {
+  if (!loading) {
+    nextTick(() => {
+      renderOrderBarcodes();
+    });
+  }
+});
 
 // Resend Modal State
 const isModalOpen = ref(false);
@@ -551,19 +609,28 @@ const handleResendWhatsApp = () => {
         <span v-if="orders.length" class="orders-count-badge">آخر {{ displayedOrders.length }} طلبات</span>
       </div>
 
-      <!-- SKELETON LOADER (Orders Loading) -->
+      <!-- SKELETON LOADER (Orders Loading - 1:1 Layout Parity) -->
       <div v-if="isLoadingOrders" class="orders-list animate-fade-in">
-        <div v-for="i in 3" :key="'acc-ord-skel-' + i" class="order-card glass-panel skeleton-card p-3 mb-3">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="skeleton-shimmer" style="width: 90px; height: 22px; border-radius: 12px;"></div>
-            <div class="skeleton-shimmer" style="width: 80px; height: 14px; border-radius: 4px;"></div>
+        <div v-for="i in 3" :key="'acc-ord-skel-' + i" class="order-card modern-order-card skeleton-card">
+          <!-- Top Bar skeleton -->
+          <div class="order-top-bar">
+            <div class="d-flex align-items-center gap-2">
+              <div class="skeleton-shimmer" style="width: 70px; height: 26px; border-radius: 8px;"></div>
+              <div class="skeleton-shimmer" style="width: 85px; height: 24px; border-radius: 8px;"></div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <div class="skeleton-shimmer" style="width: 75px; height: 24px; border-radius: 8px;"></div>
+              <div class="skeleton-shimmer" style="width: 85px; height: 26px; border-radius: 8px;"></div>
+            </div>
           </div>
-          <div class="skeleton-shimmer mb-2" style="width: 85%; height: 16px; border-radius: 4px;"></div>
-          <div class="skeleton-shimmer mb-3" style="width: 60%; height: 14px; border-radius: 4px;"></div>
-          <div class="d-flex justify-content-between align-items-center pt-2" style="border-top: 1px dashed rgba(255,255,255,0.08);">
-            <div class="skeleton-shimmer" style="width: 70px; height: 20px; border-radius: 4px;"></div>
-            <div class="skeleton-shimmer" style="width: 100px; height: 32px; border-radius: 8px;"></div>
-          </div>
+          <!-- Date skeleton -->
+          <div class="skeleton-shimmer" style="width: 100%; height: 38px; border-radius: 12px;"></div>
+          <!-- Wide Barcode box skeleton -->
+          <div class="skeleton-shimmer" style="width: 100%; height: 82px; border-radius: 14px;"></div>
+          <!-- Summary row skeleton -->
+          <div class="skeleton-shimmer" style="width: 100%; height: 42px; border-radius: 12px;"></div>
+          <!-- WhatsApp button skeleton -->
+          <div class="skeleton-shimmer" style="width: 100%; height: 44px; border-radius: 12px;"></div>
         </div>
       </div>
 
@@ -577,93 +644,155 @@ const handleResendWhatsApp = () => {
         <p>لا توجد طلبات مسجلة برقم هاتفك حتى الآن.</p>
       </div>
 
-      <!-- Restored Original Orders Cards List (Last 5) -->
+      <!-- Modern Minimal Orders Cards List (Last 5) -->
       <div v-else class="orders-list">
-        <div v-for="order in displayedOrders" :key="order._id" class="order-card glass-panel">
-          <!-- Order Header -->
-          <div class="order-header">
-            <div class="order-header-left">
-              <span class="order-num-badge">#{{ order.orderNumber || order._id.slice(-6) }}</span>
-              <span class="order-shop-badge" :class="order.shop || 'shop1'">
+        <div v-for="order in displayedOrders" :key="order._id" class="order-card modern-order-card">
+          <!-- 1. Card Top Bar: Order ID, Shop Badge, Print State, Order State -->
+          <div class="order-top-bar">
+            <div class="order-top-left">
+              <span class="order-num-pill">#{{ order.orderNumber || order._id.slice(-6) }}</span>
+              <span class="order-shop-pill" :class="order.shop || 'shop1'">
                 {{ order.shop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}
               </span>
-              <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+              <span v-if="order.priceMode === 'bulk'" class="order-mode-pill">جملة</span>
             </div>
-            <div class="order-header-right">
-              <span v-if="order.printed" class="order-printed-tag" title="تمت طباعة الطلب في المحل">
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            
+            <div class="order-top-right">
+              <!-- Print State -->
+              <span v-if="order.printed" class="order-print-pill is-printed" title="تمت طباعة الطلب بالمحل">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span>تمت الطباعة</span>
               </span>
-              <span class="order-status" :class="order.status || 'pending'">
-                {{ getStatusLabel(order.status) }}
+              <span v-else class="order-print-pill not-printed" title="قيد التجهيز - لم يُطبع بعد">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>غير مطبوع</span>
+              </span>
+
+              <!-- Order State -->
+              <span class="order-state-pill" :class="order.status || 'pending'">
+                <span v-if="!order.status || order.status === 'pending'" class="state-dot-pulse" aria-hidden="true"></span>
+                <svg v-else-if="order.status === 'ready'" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h24s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <svg v-else-if="order.status === 'received' || order.status === 'completed'" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg v-else-if="order.status === 'cancelled'" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>{{ getStatusLabel(order.status) }}</span>
               </span>
             </div>
           </div>
 
-          <!-- Order Summary Details -->
-          <div v-if="order.deliveryDate || order.priceMode === 'bulk'" class="order-summary-details">
-            <span v-if="order.deliveryDate" class="delivery-badge">استلام: {{ order.deliveryDate }}</span>
-            <span v-if="order.priceMode === 'bulk'" class="price-mode-badge">سعر جملة</span>
+          <!-- 2. Order Dates (Reception / Delivery Date & Order Timestamp) -->
+          <div class="order-dates-banner">
+            <div class="order-rec-date-wrap" :class="{ 'has-delivery-date': !!order.deliveryDate }">
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="calendar-icon">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span class="date-title">موعد الاستلام:</span>
+              <span class="date-highlight text-mono">{{ order.deliveryDate || formatDate(order.createdAt) }}</span>
+            </div>
+            <div v-if="order.deliveryDate" class="order-created-timestamp">
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>تاريخ الطلب: {{ formatDate(order.createdAt) }}</span>
+            </div>
           </div>
 
-          <!-- Order Items List -->
-          <div class="order-items-list">
-            <div v-for="(item, idx) in order.items" :key="idx" class="order-item-row">
-              <div class="item-main-info">
-                <span class="item-name">{{ item.name }}</span>
-                <span v-if="item.notes" class="item-note-pill">{{ item.notes }}</span>
+          <!-- 3. Wide Order Barcode -->
+          <div class="order-wide-barcode-card">
+            <div class="barcode-svg-wrapper">
+              <svg 
+                :id="'order-barcode-' + order._id" 
+                class="wide-order-barcode-svg" 
+                role="img" 
+                :aria-label="'باركود الطلب رقم ' + (order.orderNumber || order._id.slice(-6))"
+              ></svg>
+            </div>
+            <div class="barcode-footer-info">
+              <span class="barcode-id-text text-mono">#{{ order.orderNumber || order._id.slice(-6) }}</span>
+              <span class="barcode-scan-hint">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+                <span>امسح الباركود عند الاستلام في المحل</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 4. Items Summary & Order Total -->
+          <div class="order-compact-summary">
+            <!-- Items count / toggle -->
+            <button 
+              type="button" 
+              class="items-toggle-btn" 
+              @click="toggleOrderItems(order._id)" 
+              :aria-expanded="!!expandedOrders[order._id]"
+              aria-label="عرض أو إخفاء أصناف الطلب"
+            >
+              <span class="items-count-chip">{{ order.items?.length || 0 }} أصناف</span>
+              <span class="items-names-preview">{{ getItemsPreview(order.items) }}</span>
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-chevron" :class="{ 'is-open': !!expandedOrders[order._id] }"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+
+            <!-- Order Total -->
+            <div class="order-total-display">
+              <span class="total-label-text">الإجمالي:</span>
+              <span class="total-price-val text-mono">{{ Math.round(Number(order.totalPrice) || 0) }} <span class="curr-symbol">د.ل</span></span>
+            </div>
+          </div>
+
+          <!-- 5. Collapsible Items Breakdown -->
+          <Transition name="expand-items">
+            <div v-if="expandedOrders[order._id]" class="order-expanded-breakdown">
+              <div v-for="(item, idx) in order.items" :key="idx" class="expanded-item-row">
+                <div class="item-name-group">
+                  <span class="item-title font-bold">{{ item.name }}</span>
+                  <span v-if="item.notes" class="item-note-tag">{{ item.notes }}</span>
+                </div>
+                <div class="item-calc-group text-mono">
+                  <span class="item-calc-qty">{{ item.quantity }}×</span>
+                  <span class="item-calc-price">{{ Math.round((Number(item.price) || 0) * (Number(item.quantity) || 0)) }} د.ل</span>
+                </div>
               </div>
-              <div class="item-pricing">
-                <span class="item-qty">× {{ item.quantity }}</span>
-                <span class="item-total-price">{{ Math.round((Number(item.price) || 0) * (Number(item.quantity) || 0)) }} د.ل</span>
-              </div>
             </div>
-          </div>
+          </Transition>
 
-          <!-- Order Total Row -->
-          <div class="order-total-row">
-            <span class="total-label">الإجمالي الكلي:</span>
-            <span class="total-value">{{ Math.round(Number(order.totalPrice) || 0) }} د.ل</span>
-          </div>
+          <!-- 6. Actions: WhatsApp Details Button & Secondary Actions -->
+          <div class="order-card-actions-group">
+            <!-- Primary WhatsApp Details Button -->
+            <button type="button" class="btn-order-whatsapp-details" @click="openResendModal(order)">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.772.82 2.79.82 3.18 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.806-5.767-5.806zm0 10.371c-.88 0-1.637-.24-2.311-.64l-.165-.1-1.722.451.46-1.677-.11-.177c-.45-.72-.689-1.55-.689-2.463 0-2.43 1.979-4.409 4.41-4.409 2.43 0 4.409 1.979 4.409 4.409 0 2.43-1.979 4.41-4.41 4.41zm3.178-3.308c-.174-.087-1.03-.509-1.19-.567-.16-.058-.277-.087-.393.087-.116.174-.45.567-.552.684-.102.116-.203.13-.377.043-.174-.087-.735-.271-1.4-.864-.518-.462-.868-1.033-.97-1.207-.101-.174-.011-.268.076-.355.078-.078.174-.203.261-.305.087-.102.116-.174.174-.29.058-.116.029-.218-.015-.305-.043-.087-.393-.946-.538-1.296-.142-.34-.286-.294-.393-.299l-.335-.005c-.116 0-.305.043-.465.218-.16.174-.61.596-.61 1.454 0 .858.625 1.687.712 1.803.087.116 1.23 1.878 2.98 2.634.416.18.741.287.994.368.418.133.798.114 1.099.069.335-.05 1.03-.421 1.175-.828.145-.407.145-.756.102-.828-.043-.073-.16-.116-.334-.203z"/>
+              </svg>
+              <span>تفاصيل ورسالة الواتساب</span>
+            </button>
 
-          <!-- Order Actions Grid (Edit / Confirm Received / WhatsApp) -->
-          <div class="order-action-buttons-stack">
-            <!-- Edit Order Button (Imports to Cart) -->
-            <div v-if="!order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled'" class="order-edit-action-row">
-              <button class="btn-customer-edit-order" @click="handleEditOrderInCart(order)" title="استيراد وتعديل الطلب في السلة">
-                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                <span>تعديل الطلب في السلة</span>
+            <!-- Secondary Actions Row -->
+            <div v-if="order.status === 'ready' || (!order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled')" class="order-secondary-actions-row">
+              <!-- Confirm Received Button -->
+              <button 
+                v-if="order.status === 'ready'" 
+                type="button" 
+                class="btn-confirm-received-subtle" 
+                @click="confirmReceived(order)" 
+                :disabled="confirmingOrderId === order._id"
+              >
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>{{ confirmingOrderId === order._id ? 'جاري التأكيد…' : 'تأكيد الاستلام' }}</span>
               </button>
-            </div>
-            <div v-else-if="order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled'" class="order-locked-notice">
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <span>تمت طباعة الطلب في المحل ولا يمكن تعديله</span>
-            </div>
 
-            <!-- Confirm Received Button -->
-            <div v-if="order.status === 'ready'" class="confirm-received-row">
-              <button class="btn-confirm-received" @click="confirmReceived(order)" :disabled="confirmingOrderId === order._id">
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                {{ confirmingOrderId === order._id ? 'جاري التأكيد…' : 'تأكيد الاستلام' }}
-              </button>
-            </div>
-
-            <!-- Modern WhatsApp Action Button -->
-            <div class="order-actions-row">
-              <button class="btn-resend-whatsapp" @click="openResendModal(order)">
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                </svg>
-                تفاصيل ورسالة الواتساب
+              <!-- Edit in Cart Button -->
+              <button 
+                v-if="!order.printed && order.status !== 'received' && order.status !== 'completed' && order.status !== 'cancelled'" 
+                type="button" 
+                class="btn-edit-order-subtle" 
+                @click="handleEditOrderInCart(order)" 
+                title="استيراد وتعديل الطلب في السلة"
+              >
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span>تعديل في السلة</span>
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -1242,293 +1371,518 @@ const handleResendWhatsApp = () => {
   gap: 14px;
 }
 
-.order-card {
+/* Modern Minimal Order Card */
+.modern-order-card {
   padding: 16px;
-  border-radius: 16px;
+  border-radius: 18px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  transition: all 0.2s ease;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02), 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.order-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+.modern-order-card:hover {
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
 }
 
-.order-header {
+.order-card.skeleton-card .skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+}
+
+/* 1. Top Bar: Order ID, Shop Badge, Print State, Order State */
+.order-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.order-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
-.order-header-right {
+.order-top-left,
+.order-top-right {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
-.order-printed-tag {
-  font-size: 0.7rem;
+.order-num-pill {
+  font-family: 'Cairo', 'Fira Code', monospace;
+  font-size: 0.82rem;
   font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 6px;
+  color: #0f172a;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
-  color: #475569;
+  padding: 3px 8px;
+  border-radius: 8px;
+  letter-spacing: -0.2px;
 }
 
-.order-num-badge {
-  font-family: 'Cairo', 'Fira Code', monospace;
-  font-size: 0.78rem;
-  font-weight: 850;
-  padding: 2px 8px;
+.order-shop-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #f1f5f9;
+}
+
+.order-shop-pill.shop2 {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.order-mode-pill {
+  font-size: 0.7rem;
+  font-weight: 750;
+  padding: 2px 7px;
   border-radius: 6px;
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(147, 51, 234, 0.08);
+  color: #7e22ce;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+/* Print State Pill */
+.order-print-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 3px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.order-print-pill.is-printed {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+.order-print-pill.not-printed {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+/* Order State Pill */
+.order-state-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 8px;
+  letter-spacing: -0.1px;
+}
+
+.order-state-pill.pending {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.order-state-pill.ready {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.order-state-pill.received,
+.order-state-pill.completed {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.order-state-pill.cancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.state-dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.6);
+  animation: statePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes statePulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+
+/* 2. Order Dates */
+.order-dates-banner {
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.order-rec-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.order-rec-date-wrap.has-delivery-date .calendar-icon {
   color: #d97706;
 }
 
-.order-shop-badge {
+.order-rec-date-wrap.has-delivery-date .date-title {
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.order-rec-date-wrap.has-delivery-date .date-highlight {
+  font-weight: 800;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.order-created-timestamp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+/* 3. Wide Order Barcode */
+.order-wide-barcode-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+  position: relative;
+}
+
+.barcode-svg-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 2px 0;
+}
+
+.wide-order-barcode-svg {
+  width: 100%;
+  max-width: 340px;
+  height: 52px;
+  display: block;
+}
+
+.barcode-footer-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 6px;
+  border-top: 1px dashed #f1f5f9;
+  margin-top: 4px;
+}
+
+.barcode-id-text {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.barcode-scan-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* 4. Compact Summary & Order Total */
+.order-compact-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  gap: 12px;
+}
+
+.items-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  text-align: right;
+  min-width: 0;
+  flex: 1;
+}
+
+.items-count-chip {
   font-size: 0.72rem;
   font-weight: 750;
   padding: 2px 7px;
   border-radius: 6px;
-  background: #f1f5f9;
-  color: #475569;
+  background: #e2e8f0;
+  color: #334155;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.order-date {
-  font-size: 0.75rem;
+.items-names-preview {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toggle-chevron {
   color: #94a3b8;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
 }
 
-.order-status {
-  font-size: 0.74rem;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 8px;
+.toggle-chevron.is-open {
+  transform: rotate(180deg);
 }
 
-.order-status.pending {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-}
-
-.order-status.ready {
-  background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
-}
-
-.order-status.received,
-.order-status.completed {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-}
-
-.order-status.cancelled {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
-}
-
-.order-summary-details {
+.order-total-display {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.items-count,
-.delivery-badge,
-.price-mode-badge {
-  font-size: 0.74rem;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+.total-label-text {
+  font-size: 0.78rem;
+  color: #64748b;
   font-weight: 700;
 }
 
-.delivery-badge {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+.total-price-val {
+  font-family: 'Cairo', 'Fira Code', sans-serif !important;
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: #0f172a;
 }
 
-.price-mode-badge {
-  background: #faf5ff;
-  border-color: #e9d5ff;
-  color: #7e22ce;
+.curr-symbol {
+  font-size: 0.8rem;
+  font-weight: 750;
+  color: #64748b;
 }
 
-.order-items-list {
+/* 5. Collapsible Items Breakdown */
+.order-expanded-breakdown {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 0;
-  border-top: 1px dashed #e2e8f0;
-  border-bottom: 1px dashed #e2e8f0;
-  margin-bottom: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
-.order-item-row {
+.expanded-item-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   gap: 8px;
+  padding: 4px 0;
 }
 
-.item-main-info {
+.expanded-item-row:not(:last-child) {
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+.item-name-group {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.item-name {
+.item-title {
   color: #1e293b;
-  font-weight: 700;
 }
 
-.item-note-pill {
-  font-size: 0.72rem;
+.item-note-tag {
+  font-size: 0.7rem;
   color: #d97706;
   background: rgba(245, 158, 11, 0.1);
   padding: 1px 6px;
   border-radius: 4px;
 }
 
-.item-pricing {
+.item-calc-group {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  white-space: nowrap;
 }
 
-.item-qty {
+.item-calc-qty {
   color: #64748b;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.78rem;
 }
 
-.item-total-price {
-  font-weight: 850;
+.item-calc-price {
   color: #0f172a;
+  font-weight: 800;
 }
 
-.order-total-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 850;
-  font-size: 0.95rem;
-  color: #0f172a;
-  margin-bottom: 10px;
+/* Transitions */
+.expand-items-enter-active,
+.expand-items-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-.order-action-buttons-stack {
+.expand-items-enter-from,
+.expand-items-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-4px);
+}
+
+.expand-items-enter-to,
+.expand-items-leave-from {
+  opacity: 1;
+  max-height: 500px;
+  transform: translateY(0);
+}
+
+/* 6. Card Actions */
+.order-card-actions-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.btn-customer-edit-order {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 9px 14px;
-  border: 1.5px solid #f59e0b;
-  border-radius: 10px;
-  background: rgba(245, 158, 11, 0.08);
-  color: #d97706;
-  font-family: inherit;
-  font-size: 0.86rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-customer-edit-order:hover {
-  background: #f59e0b;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-.order-locked-notice {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 0.76rem;
-  color: #64748b;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 6px 10px;
-}
-
-.confirm-received-row {
   margin-top: 2px;
 }
 
-.btn-confirm-received {
+.btn-order-whatsapp-details {
   width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #25d366;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-order-whatsapp-details:hover {
+  background: #20bd5a;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-order-whatsapp-details:active {
+  transform: translateY(0);
+}
+
+.order-secondary-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-confirm-received-subtle {
+  flex: 1;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 14px;
-  border: none;
+  padding: 8px 12px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
   border-radius: 10px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #ffffff;
   font-family: inherit;
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 750;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.btn-confirm-received:hover {
-  background: linear-gradient(135deg, #059669, #047857);
+.btn-confirm-received-subtle:hover {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
 }
 
-.btn-resend-whatsapp {
-  width: 100%;
+.btn-edit-order-subtle {
+  flex: 1;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 14px;
-  border: 1px solid #cbd5e1;
+  padding: 8px 12px;
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
   border-radius: 10px;
-  background: #ffffff;
-  color: #334155;
   font-family: inherit;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 750;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.btn-resend-whatsapp:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
+.btn-edit-order-subtle:hover {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
 }
 
 /* WhatsApp Details Modal */
