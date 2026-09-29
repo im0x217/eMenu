@@ -347,8 +347,8 @@
 
               <!-- Charts & Metrics Grid Skeleton -->
               <div class="charts-grid">
-                <!-- 1. Daily Revenue Line Chart Skeleton -->
-                <div class="chart-card span-2 skeleton-card">
+                <!-- 1. Daily Revenue Line Chart Skeleton (Hero Span-3) -->
+                <div class="chart-card span-3 skeleton-card">
                   <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 20px;"></div>
                   <div class="skeleton-shimmer skeleton-chart-box"></div>
                 </div>
@@ -385,7 +385,18 @@
                   </div>
                 </div>
 
-                <!-- 4. Category Sales Skeleton -->
+                <!-- 4. Top Favorites Skeleton -->
+                <div class="chart-card skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 18px; margin-bottom: 20px;"></div>
+                  <div class="list-cards">
+                    <div v-for="i in 5" :key="'fav-skel-' + i" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 14px;"></div>
+                      <div class="skeleton-shimmer skeleton-line" style="width: 45px; height: 14px;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 5. Category Sales Skeleton -->
                 <div class="chart-card span-2 skeleton-card">
                   <div class="skeleton-shimmer skeleton-line" style="width: 130px; height: 18px; margin-bottom: 20px;"></div>
                   <div class="bar-chart-list">
@@ -399,29 +410,7 @@
                   </div>
                 </div>
 
-                <!-- 5. Top Favorites Skeleton -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="list-cards">
-                    <div v-for="i in 5" :key="'fav-skel-' + i" class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 14px;"></div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 45px; height: 14px;"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 6. Top Products Skeleton -->
-                <div class="chart-card span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="desktop-analytics-table">
-                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'prod-skel-' + i"></div>
-                  </div>
-                  <div class="mobile-analytics-cards-grid">
-                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-prod-skel-' + i"></div>
-                  </div>
-                </div>
-
-                <!-- 7. Top Customers Skeleton -->
+                <!-- 6. Top Customers Skeleton -->
                 <div class="chart-card skeleton-card">
                   <div class="skeleton-shimmer skeleton-line" style="width: 130px; height: 18px; margin-bottom: 16px;"></div>
                   <div class="desktop-analytics-table">
@@ -429,6 +418,17 @@
                   </div>
                   <div class="mobile-analytics-cards-grid">
                     <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-cust-skel-' + i"></div>
+                  </div>
+                </div>
+
+                <!-- 7. Top Products Skeleton -->
+                <div class="chart-card span-2 skeleton-card">
+                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
+                  <div class="desktop-analytics-table">
+                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'prod-skel-' + i"></div>
+                  </div>
+                  <div class="mobile-analytics-cards-grid">
+                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-prod-skel-' + i"></div>
                   </div>
                 </div>
 
@@ -444,7 +444,7 @@
                 </div>
 
                 <!-- 9. Stagnant Products Skeleton -->
-                <div class="chart-card span-2 skeleton-card">
+                <div class="chart-card skeleton-card">
                   <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 18px; margin-bottom: 16px;"></div>
                   <div class="desktop-analytics-table">
                     <div class="skeleton-shimmer skeleton-table-row" v-for="i in 4" :key="'stag-skel-' + i"></div>
@@ -547,8 +547,8 @@
 
             <!-- Charts & Metrics Grid -->
             <div class="charts-grid">
-              <!-- Sales Trend Chart Card -->
-              <div class="chart-card span-2 trend-chart-card" ref="trendChartCardRef" :class="{ 'in-view': isTrendChartInView }">
+              <!-- 1. Sales Trend Hero Chart Card (Span-3 / Full Width) -->
+              <div class="chart-card span-3 trend-chart-card" ref="trendChartCardRef" :class="{ 'in-view': isTrendChartInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">الإيرادات اليومية</h3>
                 </div>
@@ -556,43 +556,53 @@
                   <div v-if="analyticsData.revenueTrend.length === 0" class="empty-chart">
                     لا توجد بيانات كافية لرسم المخطط البياني في هذه الفترة.
                   </div>
-                  <svg aria-hidden="true" v-else class="svg-line-chart" viewBox="0 0 600 220">
+                  <svg aria-hidden="true" v-else class="svg-line-chart" viewBox="0 0 900 220">
                     <defs>
                       <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="var(--chart-primary, #d97706)" stop-opacity="0.18"/>
+                        <stop offset="0%" stop-color="var(--chart-primary, #d97706)" stop-opacity="0.22"/>
                         <stop offset="100%" stop-color="var(--chart-primary, #d97706)" stop-opacity="0.0"/>
                       </linearGradient>
                     </defs>
-                    <line x1="40" y1="40" x2="560" y2="40" stroke="#f1f5f9" stroke-dasharray="3"/>
-                    <line x1="40" y1="95" x2="560" y2="95" stroke="#f1f5f9" stroke-dasharray="3"/>
-                    <line x1="40" y1="150" x2="560" y2="150" stroke="#f1f5f9" stroke-dasharray="3"/>
-                    <line x1="40" y1="195" x2="560" y2="195" stroke="#e2e8f0"/>
+                    <!-- Horizontal Grid Lines -->
+                    <line x1="45" y1="35" x2="855" y2="35" stroke="#f1f5f9" stroke-dasharray="4"/>
+                    <line x1="45" y1="80" x2="855" y2="80" stroke="#f1f5f9" stroke-dasharray="4"/>
+                    <line x1="45" y1="125" x2="855" y2="125" stroke="#f1f5f9" stroke-dasharray="4"/>
+                    <line x1="45" y1="170" x2="855" y2="170" stroke="#e2e8f0" stroke-width="1.2"/>
                     
-                    <path :d="svgTrendAreaPath" class="svg-trend-area" :class="{ 'show-area': isTrendChartInView }" fill="url(#chartGradient)"/>
-                    <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isTrendChartInView }" fill="none" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Y-Axis Value Labels -->
+                    <text v-if="trendMaxVal > 0" x="855" y="27" class="chart-text label-y" text-anchor="end">{{ formatCurrency(trendMaxVal) }}</text>
+                    <text x="855" y="164" class="chart-text label-y" text-anchor="end">0 د.ل</text>
+
+                    <!-- Gradient Area -->
+                    <path :d="svgTrendAreaPath" class="svg-trend-area" :class="{ 'show-area': isAnalyticsAnimated }" fill="url(#chartGradient)"/>
+
+                    <!-- Animated Line -->
+                    <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isAnalyticsAnimated }" fill="none" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     
-                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group" :class="{ 'show-dot': isTrendChartInView }" :style="{ '--dot-delay': `${Math.min(idx * 25 + 300, 800)}ms` }">
-                      <circle :cx="dot.x" :cy="dot.y" r="4" fill="#fff" stroke="var(--chart-primary, #d97706)" stroke-width="2" />
-                      <circle :cx="dot.x" :cy="dot.y" r="14" fill="transparent" class="dot-hover-trigger">
+                    <!-- Animated Dots -->
+                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group" :class="{ 'show-dot': isAnalyticsAnimated }" :style="{ '--dot-delay': `${Math.min(idx * 30 + 150, 950)}ms` }">
+                      <circle :cx="dot.x" :cy="dot.y" r="4.5" fill="#fff" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" />
+                      <circle :cx="dot.x" :cy="dot.y" r="16" fill="transparent" class="dot-hover-trigger">
                         <title>{{ dot.date }}: {{ formatCurrency(dot.val) }}</title>
                       </circle>
                     </g>
-                    <text v-for="(label, idx) in trendXLabels" :key="'lbl-'+idx" :x="label.x" y="214" class="chart-text label-x" text-anchor="middle">
+                    <!-- X-Axis Date Labels with generous clearance preventing dot overlap -->
+                    <text v-for="(label, idx) in trendXLabels" :key="'lbl-'+idx" :x="label.x" y="202" class="chart-text label-x" text-anchor="middle">
                       {{ label.text }}
                     </text>
                   </svg>
                 </div>
               </div>
 
-              <!-- Price Mode Split Chart Card -->
+              <!-- 2. Price Mode Split Chart Card -->
               <div class="chart-card price-mode-card" ref="priceModeCardRef" :class="{ 'in-view': isPriceModeInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">توزيع المبيعات</h3>
                 </div>
                 <div class="split-display-clean">
                   <div class="split-dual-bar">
-                    <div class="split-dual-segment segment-bulk" :style="{ width: priceModePercentages.bulk + '%' }"></div>
-                    <div class="split-dual-segment segment-regular" :style="{ width: priceModePercentages.regular + '%' }"></div>
+                    <div class="split-dual-segment segment-bulk" :style="{ width: (isAnalyticsAnimated ? priceModePercentages.bulk : 0) + '%' }"></div>
+                    <div class="split-dual-segment segment-regular" :style="{ width: (isAnalyticsAnimated ? priceModePercentages.regular : 0) + '%' }"></div>
                   </div>
                   <div class="split-clean-list">
                     <div class="split-clean-row">
@@ -619,7 +629,7 @@
                 </div>
               </div>
 
-              <!-- Payment Methods Distribution Card -->
+              <!-- 3. Payment Methods Distribution Card -->
               <div class="chart-card payment-methods-card" ref="paymentMethodsCardRef" :class="{ 'in-view': isPaymentMethodsInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">طرق الدفع</h3>
@@ -635,7 +645,7 @@
                       </div>
                     </div>
                     <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-cash" :style="{ width: getPaymentMethodPct('cash') + '%' }"></div>
+                      <div class="pm-clean-fill fill-cash" :style="{ width: (isAnalyticsAnimated ? getPaymentMethodPct('cash') : 0) + '%', transitionDelay: '50ms' }"></div>
                     </div>
                   </div>
 
@@ -649,7 +659,7 @@
                       </div>
                     </div>
                     <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-card" :style="{ width: getPaymentMethodPct('card') + '%' }"></div>
+                      <div class="pm-clean-fill fill-card" :style="{ width: (isAnalyticsAnimated ? getPaymentMethodPct('card') : 0) + '%', transitionDelay: '150ms' }"></div>
                     </div>
                   </div>
 
@@ -663,13 +673,34 @@
                       </div>
                     </div>
                     <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-bank" :style="{ width: getPaymentMethodPct('bank_transfer') + '%' }"></div>
+                      <div class="pm-clean-fill fill-bank" :style="{ width: (isAnalyticsAnimated ? getPaymentMethodPct('bank_transfer') : 0) + '%', transitionDelay: '250ms' }"></div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Category Sales Share Card -->
+              <!-- 4. Top Favorites Card -->
+              <div class="chart-card top-favorites-card" ref="topFavoritesCardRef" :class="{ 'in-view': isTopFavoritesInView }">
+                <div class="chart-card-header">
+                  <h3 class="chart-title">الأكثر تفضيلاً</h3>
+                </div>
+                <div class="list-cards">
+                  <div v-if="activeTopFavorites.length === 0" class="empty-list py-3 text-center text-muted">
+                    لا توجد تفضيلات مسجلة بعد.
+                  </div>
+                  <div 
+                    v-for="(fav, idx) in activeTopFavorites" 
+                    :key="idx" 
+                    class="fav-clean-row"
+                  >
+                    <span class="fav-clean-rank text-mono text-muted">{{ idx + 1 }}.</span>
+                    <span class="fav-clean-name font-bold">{{ fav.name }}</span>
+                    <span class="fav-clean-count text-mono text-muted">{{ formatArabicPlural(fav.count, 'customer') }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Category Sales Share Card -->
               <div class="chart-card span-2 category-sales-card" ref="categorySalesCardRef" :class="{ 'in-view': isCategorySalesInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">مبيعات الفئات</h3>
@@ -693,109 +724,14 @@
                     <div class="bar-gauge">
                       <div 
                         class="bar-fill" 
-                        :style="{ width: getCategoryBarWidth(cat.revenue) + '%' }"
+                        :style="{ width: (isAnalyticsAnimated ? getCategoryBarWidth(cat.revenue) : 0) + '%', transitionDelay: `${Math.min(cIdx * 50 + 100, 600)}ms` }"
                       ></div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Top Favorites Card -->
-              <div class="chart-card top-favorites-card" ref="topFavoritesCardRef" :class="{ 'in-view': isTopFavoritesInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">الأكثر تفضيلاً</h3>
-                </div>
-                <div class="list-cards">
-                  <div v-if="activeTopFavorites.length === 0" class="empty-list py-3 text-center text-muted">
-                    لا توجد تفضيلات مسجلة بعد.
-                  </div>
-                  <div 
-                    v-for="(fav, idx) in activeTopFavorites" 
-                    :key="idx" 
-                    class="fav-clean-row"
-                  >
-                    <span class="fav-clean-rank text-mono text-muted">{{ idx + 1 }}.</span>
-                    <span class="fav-clean-name font-bold">{{ fav.name }}</span>
-                    <span class="fav-clean-count text-mono text-muted">{{ formatArabicPlural(fav.count, 'customer') }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Top Products Card -->
-              <div class="chart-card span-2 top-products-card" ref="topProductsCardRef">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
-                </div>
-
-                <div class="table-container">
-                  <table class="admin-table desktop-analytics-table top-products-interactive-table">
-                    <thead>
-                      <tr>
-                        <th class="col-center" style="width: 50px;">#</th>
-                        <th class="th-sortable" @click="toggleTopProductsSort('name')">اسم المنتج</th>
-                        <th style="width: 140px;">الفئة</th>
-                        <th class="col-center th-sortable" @click="toggleTopProductsSort('quantity')" style="width: 130px;">الكمية</th>
-                        <th class="col-center th-sortable" @click="toggleTopProductsSort('revenue')" style="width: 150px;">الإيراد</th>
-                        <th style="width: 120px;">الحصة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="sortedTopProducts.length === 0">
-                        <td colspan="6" class="text-center py-4 text-muted">
-                          لا توجد منتجات مباعة في هذه الفترة.
-                        </td>
-                      </tr>
-                      <tr 
-                        v-for="prod in sortedTopProducts" 
-                        :key="prod.productId"
-                        class="clickable-product-row"
-                        @click="openProductCustomersModal(prod)"
-                      >
-                        <td class="col-center text-mono text-muted">{{ prod.originalRank }}</td>
-                        <td class="font-bold">{{ prod.name }}</td>
-                        <td class="text-muted">{{ prod.category || '—' }}</td>
-                        <td class="col-center text-mono font-bold">{{ formatArabicPlural(prod.quantity, 'unit') }}</td>
-                        <td class="col-center text-mono font-bold">{{ formatCurrency(prod.revenue) }}</td>
-                        <td>
-                          <div class="share-mini-cell">
-                            <span class="text-mono font-bold text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
-                            <div class="share-mini-bar">
-                              <div class="share-mini-fill" :style="{ width: Math.min(100, Math.max(4, getSalesSharePct(prod.revenue))) + '%' }"></div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- Mobile Top Products Cards -->
-                  <div class="mobile-analytics-cards-grid">
-                    <div v-if="sortedTopProducts.length === 0" class="empty-state-card p-3 text-center">
-                      <p class="text-muted mb-0">لا توجد منتجات مباعة في هذه الفترة.</p>
-                    </div>
-                    <div
-                      v-for="prod in sortedTopProducts"
-                      :key="'mob-top-prod-' + prod.productId"
-                      class="mob-clean-item"
-                      @click="openProductCustomersModal(prod)"
-                    >
-                      <div class="mob-clean-line">
-                        <span class="mob-clean-title font-bold">{{ prod.originalRank }}. {{ prod.name }}</span>
-                        <span class="mob-clean-rev text-mono font-bold">{{ formatCurrency(prod.revenue) }}</span>
-                      </div>
-                      <div class="mob-clean-sub">
-                        <span>{{ prod.category || '—' }}</span>
-                        <span>•</span>
-                        <span class="text-mono">{{ formatArabicPlural(prod.quantity, 'unit') }}</span>
-                        <span>•</span>
-                        <span class="text-mono text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Top Customers Card -->
+              <!-- 6. Top Customers Card -->
               <div class="chart-card top-customers-card" ref="topCustomersCardRef" :class="{ 'in-view': isTopCustomersInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">كبار العملاء</h3>
@@ -851,9 +787,81 @@
                 </div>
               </div>
 
+              <!-- 7. Top Products Card -->
+              <div class="chart-card span-2 top-products-card" ref="topProductsCardRef">
+                <div class="chart-card-header">
+                  <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
+                </div>
 
+                <div class="table-container">
+                  <table class="admin-table desktop-analytics-table top-products-interactive-table">
+                    <thead>
+                      <tr>
+                        <th class="col-center" style="width: 50px;">#</th>
+                        <th class="th-sortable" @click="toggleTopProductsSort('name')">اسم المنتج</th>
+                        <th style="width: 140px;">الفئة</th>
+                        <th class="col-center th-sortable" @click="toggleTopProductsSort('quantity')" style="width: 130px;">الكمية</th>
+                        <th class="col-center th-sortable" @click="toggleTopProductsSort('revenue')" style="width: 150px;">الإيراد</th>
+                        <th style="width: 120px;">الحصة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="sortedTopProducts.length === 0">
+                        <td colspan="6" class="text-center py-4 text-muted">
+                          لا توجد منتجات مباعة في هذه الفترة.
+                        </td>
+                      </tr>
+                      <tr 
+                        v-for="prod in sortedTopProducts" 
+                        :key="prod.productId"
+                        class="clickable-product-row"
+                        @click="openProductCustomersModal(prod)"
+                      >
+                        <td class="col-center text-mono text-muted">{{ prod.originalRank }}</td>
+                        <td class="font-bold">{{ prod.name }}</td>
+                        <td class="text-muted">{{ prod.category || '—' }}</td>
+                        <td class="col-center text-mono font-bold">{{ formatArabicPlural(prod.quantity, 'unit') }}</td>
+                        <td class="col-center text-mono font-bold">{{ formatCurrency(prod.revenue) }}</td>
+                        <td>
+                          <div class="share-mini-cell">
+                            <span class="text-mono font-bold text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
+                            <div class="share-mini-bar">
+                              <div class="share-mini-fill" :style="{ width: (isAnalyticsAnimated ? Math.min(100, Math.max(4, getSalesSharePct(prod.revenue))) : 0) + '%', transitionDelay: `${Math.min(prod.originalRank * 35 + 100, 500)}ms` }"></div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
 
-              <!-- Inactive Customers Card -->
+                  <!-- Mobile Top Products Cards -->
+                  <div class="mobile-analytics-cards-grid">
+                    <div v-if="sortedTopProducts.length === 0" class="empty-state-card p-3 text-center">
+                      <p class="text-muted mb-0">لا توجد منتجات مباعة في هذه الفترة.</p>
+                    </div>
+                    <div
+                      v-for="prod in sortedTopProducts"
+                      :key="'mob-top-prod-' + prod.productId"
+                      class="mob-clean-item"
+                      @click="openProductCustomersModal(prod)"
+                    >
+                      <div class="mob-clean-line">
+                        <span class="mob-clean-title font-bold">{{ prod.originalRank }}. {{ prod.name }}</span>
+                        <span class="mob-clean-rev text-mono font-bold">{{ formatCurrency(prod.revenue) }}</span>
+                      </div>
+                      <div class="mob-clean-sub">
+                        <span>{{ prod.category || '—' }}</span>
+                        <span>•</span>
+                        <span class="text-mono">{{ formatArabicPlural(prod.quantity, 'unit') }}</span>
+                        <span>•</span>
+                        <span class="text-mono text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 8. Inactive Customers Card -->
               <div class="chart-card inactive-customers-card" ref="inactiveCustomersCardRef" :class="{ 'in-view': isInactiveCustomersInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">عملاء غير نشطين</h3>
@@ -906,8 +914,8 @@
                 </div>
               </div>
 
-              <!-- Low Performing Products Card -->
-              <div class="chart-card span-2 low-products-card" ref="lowProductsCardRef" :class="{ 'in-view': isLowProductsInView }">
+              <!-- 9. Low Performing Products Card -->
+              <div class="chart-card low-products-card" ref="lowProductsCardRef" :class="{ 'in-view': isLowProductsInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">منتجات بدون مبيعات</h3>
                 </div>
@@ -957,7 +965,7 @@
                 </div>
               </div>
 
-              <!-- UX Insights & Conversion Funnel Card -->
+              <!-- 10. UX Insights & Conversion Funnel Card -->
               <div class="chart-card span-2 ux-insights-card" ref="uxInsightsCardRef" :class="{ 'in-view': isUxInsightsInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">الزيارات ومسار التحويل</h3>
@@ -8030,7 +8038,9 @@ export default {
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
 
-    // Animation on Scroll for Analytics Dashboard Sections
+    // Animation on Scroll & Load for Analytics Dashboard Sections
+    const isAnalyticsAnimated = ref(false);
+
     const kpiGridRef = ref(null);
     const isKpiInView = ref(false);
 
@@ -8065,6 +8075,7 @@ export default {
     const isUxInsightsInView = ref(false);
 
     const resetAnalyticsScrollStates = () => {
+      isAnalyticsAnimated.value = false;
       isKpiInView.value = false;
       isTrendChartInView.value = false;
       isPriceModeInView.value = false;
@@ -8076,6 +8087,17 @@ export default {
       isInactiveCustomersInView.value = false;
       isLowProductsInView.value = false;
       isUxInsightsInView.value = false;
+    };
+
+    const triggerAnalyticsAnimations = () => {
+      isAnalyticsAnimated.value = false;
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            isAnalyticsAnimated.value = true;
+          }, 40);
+        });
+      });
     };
 
     let scrollRafId = null;
@@ -11079,6 +11101,7 @@ export default {
       } finally {
         analyticsLoading.value = false;
         resetAnalyticsScrollStates();
+        triggerAnalyticsAnimations();
         nextTick(() => {
           attachScrollListeners();
           handleScrollCheck();
@@ -14564,19 +14587,28 @@ const closeSuggestionsWithDelay = () => {
 
 
     // SVG Line Chart coordinates math calculations
+    const trendMaxVal = computed(() => {
+      if (!analyticsData.revenueTrend.length) return 0;
+      return Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 0);
+    });
+
     const trendCoordinates = computed(() => {
       if (!analyticsData.revenueTrend.length) return [];
       
-      const maxVal = Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 100);
+      const maxVal = Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 10);
       const pointsCount = analyticsData.revenueTrend.length;
       
-      // Map points onto 600x240 view box:
-      // X from 40 to 560
-      // Y from 210 to 40
+      const startX = 45;
+      const endX = 855;
+      const width = endX - startX; // 810
+      const baseY = 170;
+      const topY = 35;
+      const height = baseY - topY; // 135
+      
       return analyticsData.revenueTrend.map((t, idx) => {
-        const x = 40 + (idx / (pointsCount - 1 || 1)) * 520;
-        const y = 210 - (t.revenue / maxVal) * 170;
-        return { x, y, date: t.date, val: t.revenue };
+        const x = startX + (idx / (pointsCount - 1 || 1)) * width;
+        const y = baseY - (t.revenue / maxVal) * height;
+        return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, date: t.date, val: t.revenue };
       });
     });
 
@@ -14592,25 +14624,26 @@ const closeSuggestionsWithDelay = () => {
       const lineStr = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
       const startX = coords[0].x;
       const endX = coords[coords.length - 1].x;
-      return `${lineStr} L ${endX} 210 L ${startX} 210 Z`;
+      return `${lineStr} L ${endX} 170 L ${startX} 170 Z`;
     });
 
     const trendXLabels = computed(() => {
       const trend = analyticsData.revenueTrend;
       if (trend.length === 0) return [];
       
-      // Determine how many labels to display
-      const maxLabels = Math.min(trend.length, 5);
+      const maxLabels = Math.min(trend.length, 6);
       const labels = [];
       const step = Math.floor(trend.length / maxLabels) || 1;
+      const startX = 45;
+      const endX = 855;
+      const width = endX - startX;
       
       for (let i = 0; i < trend.length; i += step) {
-        const x = 40 + (i / (trend.length - 1 || 1)) * 520;
-        // Format YYYY-MM-DD to DD/MM
+        const x = startX + (i / (trend.length - 1 || 1)) * width;
         const rawDate = trend[i].date;
         const dateParts = rawDate.split('-');
         const text = dateParts.length > 2 ? `${dateParts[2]}/${dateParts[1]}` : rawDate;
-        labels.push({ x, text });
+        labels.push({ x: Math.round(x * 10) / 10, text });
       }
       return labels;
     });
@@ -14941,6 +14974,8 @@ const closeSuggestionsWithDelay = () => {
       getSalesSharePct,
       sortedTopProducts,
       activeTopFavorites,
+      isAnalyticsAnimated,
+      trendMaxVal,
       kpiGridRef,
       isKpiInView,
       trendChartCardRef,
@@ -16135,6 +16170,11 @@ const closeSuggestionsWithDelay = () => {
   grid-column: span 2;
 }
 
+.chart-card.span-3,
+.chart-card.span-full {
+  grid-column: 1 / -1;
+}
+
 .chart-card-header {
   margin-bottom: 16px;
   display: flex;
@@ -16151,10 +16191,12 @@ const closeSuggestionsWithDelay = () => {
 
 /* SVG Line Chart Style */
 .svg-chart-container {
-  height: 220px;
+  height: 230px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  width: 100%;
 }
 
 .svg-line-chart {
@@ -16165,7 +16207,8 @@ const closeSuggestionsWithDelay = () => {
 
 .svg-trend-area {
   opacity: 0;
-  transition: opacity 0.8s ease 0.2s;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+  will-change: opacity;
 }
 .svg-trend-area.show-area {
   opacity: 1;
@@ -16174,7 +16217,8 @@ const closeSuggestionsWithDelay = () => {
 .svg-trend-line {
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
-  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: stroke-dashoffset;
 }
 .svg-trend-line.draw-line {
   stroke-dashoffset: 0;
@@ -16182,9 +16226,10 @@ const closeSuggestionsWithDelay = () => {
 
 .chart-dot-group {
   opacity: 0;
-  transform: scale(0.6);
+  transform: scale(0);
   transform-origin: center;
-  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity;
 }
 .chart-dot-group.show-dot {
   opacity: 1;
@@ -16193,7 +16238,7 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .chart-dot-group:hover circle {
-  r: 6px;
+  r: 6.5px;
   stroke-width: 3px;
 }
 
@@ -16202,6 +16247,13 @@ const closeSuggestionsWithDelay = () => {
   font-weight: 600;
   fill: #64748b;
   font-family: 'Cairo', sans-serif;
+}
+
+.chart-text.label-y {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #94a3b8;
+  font-family: 'Cairo', monospace;
 }
 
 .dot-hover-trigger {
@@ -16233,7 +16285,8 @@ const closeSuggestionsWithDelay = () => {
 
 .split-dual-segment {
   height: 100%;
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
 }
 
 .segment-bulk { background: var(--chart-primary, #d97706); }
@@ -16315,7 +16368,8 @@ const closeSuggestionsWithDelay = () => {
 .pm-clean-fill {
   height: 100%;
   border-radius: 999px;
-  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
 }
 
 .fill-cash { background: #10b981; }
@@ -16357,7 +16411,8 @@ const closeSuggestionsWithDelay = () => {
   height: 100%;
   background: var(--chart-primary, #d97706);
   border-radius: 999px;
-  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
 }
 
 /* Favorites Clean Rows */
@@ -16409,6 +16464,8 @@ const closeSuggestionsWithDelay = () => {
   height: 100%;
   background: var(--chart-primary, #d97706);
   border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
 }
 
 .phone-clean-link {
@@ -18148,8 +18205,10 @@ select.form-control:focus {
   .charts-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .chart-card.span-2 {
-    grid-column: span 2;
+  .chart-card.span-2,
+  .chart-card.span-3,
+  .chart-card.span-full {
+    grid-column: 1 / -1;
   }
   .main-header {
     flex-direction: column;
@@ -18314,7 +18373,9 @@ select.form-control:focus {
     box-sizing: border-box !important;
   }
 
-  .chart-card.span-2 {
+  .chart-card.span-2,
+  .chart-card.span-3,
+  .chart-card.span-full {
     grid-column: span 1 !important;
   }
 
@@ -27997,7 +28058,7 @@ select.pos-control {
 
 .skeleton-chart-box {
   width: 100%;
-  height: 180px;
+  height: 230px;
   border-radius: 12px;
 }
 
@@ -31283,7 +31344,9 @@ select.pos-control {
     width: 100% !important;
   }
 
-  .chart-card.span-2 {
+  .chart-card.span-2,
+  .chart-card.span-3,
+  .chart-card.span-full {
     grid-column: span 1 !important;
   }
 
