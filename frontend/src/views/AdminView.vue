@@ -158,6 +158,11 @@
           </div>
           <!-- Period & Actions for Analytics -->
           <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
+            <!-- Subtle SWR Refresh Pill -->
+            <span v-if="isAnalyticsRefreshing && !analyticsLoading" class="analytics-refresh-pill animate-fade-in" title="جاري تحديث البيانات في الخلفية…">
+              <span class="refresh-spinner-dot"></span>
+              <span>تحديث البيانات…</span>
+            </span>
             <!-- Period Selector -->
             <div class="segmented-control">
               <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
@@ -1021,6 +1026,25 @@
                     <div class="device-clean-item">
                       <span>لوحي:</span>
                       <span class="text-mono font-bold">{{ getDevicePct('tablet') }}%</span>
+                    </div>
+                  </div>
+
+                  <!-- Top Engaged Categories by Visitor Interactions -->
+                  <div v-if="telemetryInsights.topCategories && telemetryInsights.topCategories.length" class="ux-categories-section mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="font-bold text-slate-800" style="font-size: 0.88rem;">الفئات الأكثر تفاعلاً وزيارة</span>
+                      <span class="text-muted text-mono" style="font-size: 0.78rem;">مرات التفاعل</span>
+                    </div>
+                    <div class="ux-cat-list d-flex flex-column gap-3">
+                      <div v-for="cat in telemetryInsights.topCategories" :key="cat.name" class="ux-cat-row">
+                        <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.82rem;">
+                          <span class="font-semibold text-slate-700">{{ cat.name }}</span>
+                          <span class="text-mono font-bold text-slate-600">{{ cat.interactions }}</span>
+                        </div>
+                        <div class="ux-cat-bar-bg" style="height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; position: relative; width: 100%;">
+                          <div class="ux-cat-bar-fill" :style="{ width: Math.min(100, Math.round((cat.interactions / (telemetryInsights.topCategories[0]?.interactions || 1)) * 100)) + '%', background: '#3b82f6', height: '100%', borderRadius: '999px', float: 'right' }"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -8352,6 +8376,7 @@ export default {
     const analyticsPeriod = ref('30d');
     const analyticsStartDate = ref('');
     const analyticsEndDate = ref('');
+    const isAnalyticsRefreshing = ref(false);
     const analyticsLoading = ref(activeTab.value === 'analytics');
     const ordersLoading = ref(false);
     const productsLoading = ref(false);
@@ -8526,6 +8551,64 @@ export default {
       topCategories: [],
       avgDwellSeconds: 0
     });
+
+    // SWR Session Cache Helpers for Analytics
+    const getAnalyticsCacheKey = () => {
+      const shop = activeShop.value || 'shop1';
+      const period = analyticsPeriod.value || '30d';
+      const start = analyticsStartDate.value || '';
+      const end = analyticsEndDate.value || '';
+      return `emenu_analytics_${shop}_${period}_${start}_${end}`;
+    };
+
+    const loadAnalyticsFromCache = () => {
+      try {
+        const raw = sessionStorage.getItem(getAnalyticsCacheKey());
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.kpi) return false;
+
+        // Invalidate stale cache older than 15 minutes
+        if (parsed._timestamp && (Date.now() - parsed._timestamp > 15 * 60 * 1000)) {
+          return false;
+        }
+
+        analyticsData.kpi = parsed.kpi || { totalRevenue: 0, totalPaid: 0, totalRemaining: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 };
+        analyticsData.revenueTrend = parsed.revenueTrend || [];
+        analyticsData.priceModeSplit = parsed.priceModeSplit || { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } };
+        analyticsData.paymentMethodsSplit = parsed.paymentMethodsSplit || { cash: { revenue: 0, count: 0 }, card: { revenue: 0, count: 0 }, bank_transfer: { revenue: 0, count: 0 } };
+        analyticsData.topProducts = parsed.topProducts || [];
+        analyticsData.topCustomers = parsed.topCustomers || [];
+        analyticsData.categorySales = parsed.categorySales || [];
+        analyticsData.topFavorites = parsed.topFavorites || [];
+        analyticsData.inactiveCustomers = parsed.inactiveCustomers || [];
+        analyticsData.lowPerformingProducts = parsed.lowPerformingProducts || [];
+
+        if (parsed.telemetryInsights && parsed.telemetryInsights.success) {
+          telemetryInsights.value = parsed.telemetryInsights;
+        }
+        return true;
+      } catch (err) {
+        return false;
+      }
+    };
+
+    const saveAnalyticsToCache = (data) => {
+      try {
+        const payload = {
+          ...data,
+          _timestamp: Date.now()
+        };
+        sessionStorage.setItem(getAnalyticsCacheKey(), JSON.stringify(payload));
+      } catch (e) {}
+    };
+
+    // Synchronously hydrate initial cache if user opened analytics directly
+    if (activeTab.value === 'analytics') {
+      if (loadAnalyticsFromCache()) {
+        analyticsLoading.value = false;
+      }
+    }
 
     // Product & Categories datasets
     const products = ref([]);
@@ -10304,7 +10387,7 @@ export default {
           isAuthenticated.value = true;
           // Unblock the main layout so that the admin shell & active tab skeleton loader mount immediately!
           loading.value = false;
-          if (activeTab.value === 'analytics') {
+          if (activeTab.value === 'analytics' && !loadAnalyticsFromCache()) {
             analyticsLoading.value = true;
           }
           await loadAllData();
@@ -10344,7 +10427,7 @@ export default {
 
           isAuthenticated.value = true;
           loading.value = false;
-          if (activeTab.value === 'analytics') {
+          if (activeTab.value === 'analytics' && !loadAnalyticsFromCache()) {
             analyticsLoading.value = true;
           }
           toast.show('تم تسجيل الدخول بنجاح', 'success');
@@ -11109,7 +11192,17 @@ export default {
     };
 
     const fetchAnalytics = async () => {
-      analyticsLoading.value = true;
+      const hasCache = loadAnalyticsFromCache();
+      const hasExistingData = analyticsData.kpi && (analyticsData.kpi.orderCount > 0 || analyticsData.kpi.totalRevenue > 0);
+
+      // SWR: If data is already in session cache or memory, DO NOT tear down DOM or show skeleton loader!
+      if (hasCache || hasExistingData) {
+        analyticsLoading.value = false;
+        isAnalyticsRefreshing.value = true;
+      } else {
+        analyticsLoading.value = true;
+      }
+
       try {
         let url = `/api/admin/analytics?shop=${activeShop.value}`;
         if (analyticsPeriod.value === 'custom') {
@@ -11135,19 +11228,26 @@ export default {
           analyticsData.inactiveCustomers = data.inactiveCustomers || [];
           analyticsData.lowPerformingProducts = data.lowPerformingProducts || [];
 
-          // Fetch UX Telemetry Insights (UX Datasets 03_interaction_telemetry)
-          try {
-            const telDays = analyticsPeriod.value === '7d' ? 7 : (analyticsPeriod.value === 'today' || analyticsPeriod.value === '1d') ? 1 : 30;
-            const telRes = await adminFetch(`/api/admin/telemetry/insights?shop=${activeShop.value}&days=${telDays}`);
-            if (telRes.ok) {
-              const telData = await telRes.json();
-              if (telData.success) {
-                telemetryInsights.value = telData;
+          // Directly adopt embedded Telemetry Insights if returned by backend (UX Datasets 03_interaction_telemetry)
+          if (data.telemetryInsights && data.telemetryInsights.success) {
+            telemetryInsights.value = data.telemetryInsights;
+          } else {
+            try {
+              const telDays = analyticsPeriod.value === '7d' ? 7 : (analyticsPeriod.value === 'today' || analyticsPeriod.value === '1d') ? 1 : 30;
+              const telRes = await adminFetch(`/api/admin/telemetry/insights?shop=${activeShop.value}&days=${telDays}`);
+              if (telRes.ok) {
+                const telData = await telRes.json();
+                if (telData.success) {
+                  telemetryInsights.value = telData;
+                }
               }
+            } catch (telErr) {
+              console.debug('Telemetry insights fetch muted:', telErr);
             }
-          } catch (telErr) {
-            console.debug('Telemetry insights fetch muted:', telErr);
           }
+
+          // Persist snapshot to session cache
+          saveAnalyticsToCache(data);
         } else {
           const errData = await res.json().catch(() => ({}));
           console.error('Failed to fetch analytics:', errData);
@@ -11158,6 +11258,7 @@ export default {
         toast.show('حدث خطأ أثناء تحميل بيانات التحليلات', 'danger');
       } finally {
         analyticsLoading.value = false;
+        isAnalyticsRefreshing.value = false;
         triggerAnalyticsAnimations();
       }
     };
@@ -11167,6 +11268,8 @@ export default {
       if (p !== 'custom') {
         analyticsStartDate.value = '';
         analyticsEndDate.value = '';
+        // SWR: Synchronously paint cached data immediately if available
+        loadAnalyticsFromCache();
         await fetchAnalytics();
       }
     };
@@ -14838,6 +14941,7 @@ const closeSuggestionsWithDelay = () => {
       analyticsStartDate,
       analyticsEndDate,
       analyticsLoading,
+      isAnalyticsRefreshing,
       telemetryInsights,
       analyticsFromOpen,
       analyticsToOpen,
@@ -19108,6 +19212,36 @@ select.form-control:focus {
   flex-wrap: wrap;
   gap: 1rem;
   flex: 1;
+}
+
+.analytics-refresh-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #818cf8;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+  user-select: none;
+}
+
+.refresh-spinner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #818cf8;
+  box-shadow: 0 0 6px #818cf8;
+  animation: pulseDot 1.4s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
 }
 
 .report-actions {

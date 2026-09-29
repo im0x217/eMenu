@@ -420,6 +420,22 @@ let telemetryCollection;
 let stockReservationsCollection;
 let mongoConnected = false;
 
+// ============ IN-MEMORY ANALYTICS CACHE ============
+const analyticsServerCache = new Map();
+const ANALYTICS_CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
+
+const invalidateAnalyticsCache = (targetShop = null) => {
+  if (!targetShop) {
+    analyticsServerCache.clear();
+    return;
+  }
+  for (const key of analyticsServerCache.keys()) {
+    if (key.startsWith(`${targetShop}:`)) {
+      analyticsServerCache.delete(key);
+    }
+  }
+};
+
 // ============ POCKETBASE INVENTORY INTEGRATION ============
 const POCKETBASE_URL = process.env.POCKETBASE_URL || 'https://crystal-crocodile.pikapod.net';
 
@@ -1929,6 +1945,129 @@ app.get("/api/shop2/admin-check", checkAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// ============ REUSABLE TELEMETRY INSIGHTS COMPUTATION ============
+async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
+  const defaultInsights = {
+    success: true,
+    funnel: { totalSessions: 0, cartSessions: 0, checkoutSessions: 0, orderSessions: 0, conversionRate: 0, cartConversionRate: 0, cartAbandonmentRate: 0 },
+    devices: { mobile: 0, tablet: 0, desktop: 0 },
+    topCategories: [],
+    avgDwellSeconds: 0
+  };
+  if (!mongoConnected || !telemetryCollection) return defaultInsights;
+
+  try {
+    const matchFilter = {};
+    if (startDateObj && endDateObj) {
+      matchFilter.timestamp = { $gte: startDateObj, $lte: endDateObj };
+    } else if (startDateObj) {
+      matchFilter.timestamp = { $gte: startDateObj };
+    }
+    if (shop === "shop1" || shop === "shop2") {
+      matchFilter.shop = shop;
+    }
+
+    const [sessionData, topCategoriesRaw, dwellResult] = await Promise.all([
+      telemetryCollection.aggregate([
+        { $match: matchFilter },
+        {
+          $group: {
+            _id: "$sessionId",
+            events: { $addToSet: "$event" },
+            device: { $first: "$device" }
+          }
+        },
+        {
+          $project: {
+            hasPageView: { $in: ["page_view", "$events"] },
+            hasCartAdd: { $in: ["cart_add", "$events"] },
+            hasCheckout: { $in: ["checkout_step", "$events"] },
+            hasOrder: { $in: ["order_complete", "$events"] },
+            device: 1
+          }
+        }
+      ]).toArray(),
+      telemetryCollection.aggregate([
+        {
+          $match: {
+            ...matchFilter,
+            event: "category_select",
+            "metadata.categoryName": { $exists: true, $ne: "" }
+          }
+        },
+        {
+          $group: {
+            _id: "$metadata.categoryName",
+            interactions: { $sum: 1 }
+          }
+        },
+        { $sort: { interactions: -1 } },
+        { $limit: 6 }
+      ]).toArray(),
+      telemetryCollection.aggregate([
+        {
+          $match: {
+            ...matchFilter,
+            event: "product_dwell",
+            "metadata.dwellMs": { $exists: true, $gt: 0 }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            avgDwellMs: { $avg: "$metadata.dwellMs" },
+            sampleCount: { $sum: 1 }
+          }
+        }
+      ]).toArray()
+    ]);
+
+    let totalSessions = 0;
+    let cartSessions = 0;
+    let checkoutSessions = 0;
+    let orderSessions = 0;
+    const deviceCounts = { mobile: 0, tablet: 0, desktop: 0 };
+
+    for (const s of sessionData) {
+      totalSessions++;
+      if (s.hasCartAdd) cartSessions++;
+      if (s.hasCheckout) checkoutSessions++;
+      if (s.hasOrder) orderSessions++;
+      if (s.device && deviceCounts[s.device] !== undefined) {
+        deviceCounts[s.device]++;
+      } else {
+        deviceCounts.mobile++;
+      }
+    }
+
+    const conversionRate = totalSessions > 0 ? Math.round((orderSessions / totalSessions) * 1000) / 10 : 0;
+    const cartConversionRate = cartSessions > 0 ? Math.round((orderSessions / cartSessions) * 1000) / 10 : 0;
+    const cartAbandonmentRate = cartSessions > 0 ? Math.round(((cartSessions - orderSessions) / cartSessions) * 1000) / 10 : 0;
+    const avgDwellSeconds = dwellResult.length > 0 && dwellResult[0].avgDwellMs
+      ? Math.round(dwellResult[0].avgDwellMs / 100) / 10
+      : 0;
+
+    return {
+      success: true,
+      funnel: {
+        totalSessions,
+        cartSessions,
+        checkoutSessions,
+        orderSessions,
+        conversionRate,
+        cartConversionRate,
+        cartAbandonmentRate
+      },
+      devices: deviceCounts,
+      topCategories: topCategoriesRaw.map(c => ({ name: c._id, interactions: c.interactions })),
+      avgDwellSeconds
+    };
+  } catch (telErr) {
+    console.warn("[Telemetry Insights] Warning:", telErr.message);
+    return defaultInsights;
+  }
+}
+
 // ============ ADMIN ANALYTICS API ============
 app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
@@ -1967,127 +2106,151 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       startDateObj = new Date(0);
     }
   }
+
+  // Check in-memory server cache for instant response (< 2ms)
+  const cacheKey = `${shop}:${startDateStr}:${endDateStr}`;
+  const cached = analyticsServerCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < ANALYTICS_CACHE_TTL_MS)) {
+    return res.json(cached.data);
+  }
   
   try {
-    // Fetch all successful/received orders
-    const allSuccessfulOrders = await ordColl.find({ status: { $in: ["received", "completed"] } }).toArray();
+    const inactiveFilterDate = (startDateObj && startDateObj.getTime() > 0) 
+      ? startDateObj 
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    // Filter orders by effective receiving date (rec_date)
-    const filteredOrdersList = allSuccessfulOrders.filter(order => {
-      const effDate = getOrderEffectiveDateStr(order);
-      if (!effDate) return false;
-      if (startDateStr && endDateStr) {
-        return effDate >= startDateStr && effDate <= endDateStr;
-      } else if (startDateStr) {
-        return effDate >= startDateStr;
-      } else if (endDateStr) {
-        return effDate <= endDateStr;
+    // Parallel Batch Fetch: Run all core collection reads & telemetry concurrently
+    const [
+      allSuccessfulOrders,
+      allShopPayments,
+      allShopProducts,
+      favCounts,
+      inactiveCustsRaw,
+      telemetryInsights
+    ] = await Promise.all([
+      ordColl.find({ status: { $in: ["received", "completed"] } }).toArray(),
+      paymentsCollection.find({ shop, isCancelled: { $ne: true }, status: { $ne: 'cancelled' } }).toArray(),
+      prodColl.find({}).toArray(),
+      favoritesCollection.aggregate([
+        { $match: { shop } },
+        { $group: { _id: "$productId", count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]).toArray(),
+      customersCollection.find({
+        $or: [
+          { lastActive: { $lt: inactiveFilterDate } },
+          { lastActive: { $exists: false } },
+          { lastActive: null }
+        ]
+      }).sort({ lastActive: -1 }).limit(10).toArray(),
+      computeTelemetryInsights(shop, startDateObj, endDateObj)
+    ]);
+
+    // 1. Build product maps and active product filters in-memory
+    const isProductAvailable = (p) => {
+      if (!p) return false;
+      if (p.available === false || p.available === "false" || p.available === 0 || p.available === "0") {
+        return false;
       }
       return true;
-    });
-
-    const matchingOrderIds = filteredOrdersList.map(o => o._id);
-    const matchStage = { _id: { $in: matchingOrderIds } };
-    
-    // KPI Cards: Total Sales, Total Orders, Average Order Value (AOV), Active Customers
-    const kpiSummary = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: null,
-          totalRevenue: { $sum: "$totalPrice" },
-          orderCount: { $sum: 1 },
-          uniquePhones: { $addToSet: "$customerInfo.phone" }
-      } }
-    ]).toArray();
-    
-    const kpi = {
-      totalRevenue: kpiSummary[0] ? kpiSummary[0].totalRevenue : 0,
-      orderCount: kpiSummary[0] ? kpiSummary[0].orderCount : 0,
-      avgOrderValue: kpiSummary[0] && kpiSummary[0].orderCount > 0 ? (kpiSummary[0].totalRevenue / kpiSummary[0].orderCount) : 0,
-      activeCustomers: kpiSummary[0] ? kpiSummary[0].uniquePhones.length : 0
     };
-    
-    // Revenue trend by effective receiving date (rec_date)
-    const trendMap = {};
-    for (const ord of filteredOrdersList) {
-      const effDate = getOrderEffectiveDateStr(ord);
-      if (!effDate) continue;
-      if (!trendMap[effDate]) {
-        trendMap[effDate] = { date: effDate, revenue: 0, orders: 0 };
+
+    const availableProductIdsSet = new Set();
+    const prodCatMap = new Map();
+    const favProdMap = {};
+    const availableProducts = [];
+
+    for (const p of allShopProducts) {
+      const idStr = p._id.toString();
+      prodCatMap.set(idStr, p.category || "غير مصنف");
+      if (isProductAvailable(p)) {
+        availableProductIdsSet.add(idStr);
+        availableProducts.push(p);
+        favProdMap[idStr] = p.name;
       }
-      trendMap[effDate].revenue += Number(ord.totalPrice) || 0;
-      trendMap[effDate].orders += 1;
     }
-    const revenueTrend = Object.values(trendMap).sort((a, b) => a.date.localeCompare(b.date));
-    
-    // Price Mode split (bulk vs regular)
-    const modes = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: "$priceMode",
-          revenue: { $sum: "$totalPrice" },
-          count: { $sum: 1 }
-      } }
-    ]).toArray();
-    
-    const priceModeSplit = {
-      regular: { revenue: 0, count: 0 },
-      bulk: { revenue: 0, count: 0 }
-    };
-    modes.forEach(m => {
-      const key = m._id === "bulk" ? "bulk" : "regular";
-      priceModeSplit[key] = { revenue: m.revenue, count: m.count };
-    });
-    // Payment Methods breakdown (Attributed by order effective receiving date - rec_date)
-    const allShopPayments = await paymentsCollection.find({
-      shop,
-      isCancelled: { $ne: true },
-      status: { $ne: 'cancelled' }
-    }).toArray();
 
+    // 2. Filter orders by effective receiving date (rec_date)
+    const filteredOrdersList = [];
+    for (const order of allSuccessfulOrders) {
+      const effDate = getOrderEffectiveDateStr(order);
+      if (!effDate) continue;
+      if (startDateStr && endDateStr) {
+        if (effDate >= startDateStr && effDate <= endDateStr) filteredOrdersList.push(order);
+      } else if (startDateStr) {
+        if (effDate >= startDateStr) filteredOrdersList.push(order);
+      } else if (endDateStr) {
+        if (effDate <= endDateStr) filteredOrdersList.push(order);
+      } else {
+        filteredOrdersList.push(order);
+      }
+    }
+
+    // 3. Payments mapping for payment methods split
     const orderPaymentsMap = new Map();
     for (const p of allShopPayments) {
       if (Array.isArray(p.distributedTo)) {
-        for (const d of p.distributedTo) {
-          if (d.orderId) {
-            const idStr = d.orderId.toString();
-            if (!orderPaymentsMap.has(idStr)) {
-              orderPaymentsMap.set(idStr, []);
-            }
+        for (const dist of p.distributedTo) {
+          if (dist.orderId) {
+            const idStr = dist.orderId.toString();
+            if (!orderPaymentsMap.has(idStr)) orderPaymentsMap.set(idStr, []);
             orderPaymentsMap.get(idStr).push({
               method: p.method || 'cash',
-              applied: Number(d.applied) || 0
+              applied: Number(dist.applied) || 0
             });
           }
         }
       }
     }
 
-    const paymentMethodsSplit = {
-      cash: { revenue: 0, count: 0 },
-      card: { revenue: 0, count: 0 },
-      bank_transfer: { revenue: 0, count: 0 }
-    };
+    // 4. Single-pass in-memory metrics aggregation
+    let totalRevenue = 0;
+    const uniquePhones = new Set();
+    const trendMap = {};
+    const priceModeSplit = { regular: { revenue: 0, count: 0 }, bulk: { revenue: 0, count: 0 } };
+    const paymentMethodsSplit = { cash: { revenue: 0, count: 0 }, card: { revenue: 0, count: 0 }, bank_transfer: { revenue: 0, count: 0 } };
+    const topProductsMap = new Map();
+    const topCustomersMap = new Map();
+    const categorySalesMap = {};
+    const soldProductIds = new Set();
 
     for (const ord of filteredOrdersList) {
+      const ordRev = Number(ord.totalPrice) || 0;
+      totalRevenue += ordRev;
+      if (ord.customerInfo && ord.customerInfo.phone) {
+        uniquePhones.add(ord.customerInfo.phone);
+      }
+
+      // Revenue trend
+      const effDate = getOrderEffectiveDateStr(ord);
+      if (effDate) {
+        if (!trendMap[effDate]) {
+          trendMap[effDate] = { date: effDate, revenue: 0, orders: 0 };
+        }
+        trendMap[effDate].revenue += ordRev;
+        trendMap[effDate].orders += 1;
+      }
+
+      // Price mode split
+      const modeKey = ord.priceMode === "bulk" ? "bulk" : "regular";
+      priceModeSplit[modeKey].revenue += ordRev;
+      priceModeSplit[modeKey].count += 1;
+
+      // Payments split
       const idStr = ord._id.toString();
       const paymentsForOrder = orderPaymentsMap.get(idStr);
-
       if (paymentsForOrder && paymentsForOrder.length > 0) {
         const seenMethodsInOrder = new Set();
         let totalAppliedFromPayments = 0;
-
         for (const p of paymentsForOrder) {
           const key = p.method === 'card' ? 'card' : (p.method === 'bank_transfer' ? 'bank_transfer' : 'cash');
           paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + p.applied) * 100) / 100;
           seenMethodsInOrder.add(key);
           totalAppliedFromPayments += p.applied;
         }
-
         for (const m of seenMethodsInOrder) {
           paymentMethodsSplit[m].count += 1;
         }
-
         const directPaidRemainder = Math.round(((Number(ord.paidAmount) || 0) - totalAppliedFromPayments) * 100) / 100;
         if (directPaidRemainder > 0.01) {
           const key = ord.paymentMethod === 'card' ? 'card' : (ord.paymentMethod === 'bank_transfer' ? 'bank_transfer' : 'cash');
@@ -2102,110 +2265,85 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
         paymentMethodsSplit[key].revenue = Math.round((paymentMethodsSplit[key].revenue + paid) * 100) / 100;
         paymentMethodsSplit[key].count += 1;
       }
+
+      // Top Customers
+      if (ord.customerInfo && ord.customerInfo.phone) {
+        const ph = ord.customerInfo.phone;
+        if (!topCustomersMap.has(ph)) {
+          topCustomersMap.set(ph, {
+            phone: ph,
+            name: ord.customerInfo.name || "عميل مجهول",
+            totalSpent: 0,
+            orderCount: 0
+          });
+        }
+        const c = topCustomersMap.get(ph);
+        c.totalSpent += ordRev;
+        c.orderCount += 1;
+      }
+
+      // Items: Top Products & Category Sales
+      if (Array.isArray(ord.items)) {
+        for (const it of ord.items) {
+          if (!it) continue;
+          const pid = it.productId ? it.productId.toString() : '';
+          const qty = Number(it.quantity) || 0;
+          const price = Number(it.price) || 0;
+          const itemRev = price * qty;
+
+          if (pid) {
+            soldProductIds.add(pid);
+            if (!topProductsMap.has(pid)) {
+              topProductsMap.set(pid, {
+                productId: it.productId,
+                name: it.name || "منتج مجهول",
+                quantity: 0,
+                revenue: 0
+              });
+            }
+            const prodObj = topProductsMap.get(pid);
+            prodObj.quantity += qty;
+            prodObj.revenue += itemRev;
+
+            const cat = prodCatMap.get(pid) || "غير مصنف";
+            if (!categorySalesMap[cat]) {
+              categorySalesMap[cat] = { category: cat, revenue: 0, count: 0 };
+            }
+            categorySalesMap[cat].revenue += itemRev;
+            categorySalesMap[cat].count += 1;
+          }
+        }
+      }
     }
 
-    // KPI total paid and total remaining (debt)
+    // 5. Final metrics assembly
+    const orderCount = filteredOrdersList.length;
     const totalPaid = Math.round((paymentMethodsSplit.cash.revenue + paymentMethodsSplit.card.revenue + paymentMethodsSplit.bank_transfer.revenue) * 100) / 100;
-    const totalRemaining = Math.max(0, Math.round(((kpi.totalRevenue || 0) - totalPaid) * 100) / 100);
-    kpi.totalPaid = totalPaid;
-    kpi.totalRemaining = totalRemaining;
-    
-    // Fetch all products for this shop to evaluate real-time availability in-memory
-    const allShopProducts = await prodColl.find({}).toArray();
-    const isProductAvailable = (p) => {
-      if (!p) return false;
-      if (p.available === false || p.available === "false" || p.available === 0 || p.available === "0") {
-        return false;
-      }
-      return true;
+    const totalRemaining = Math.max(0, Math.round((totalRevenue - totalPaid) * 100) / 100);
+
+    const kpi = {
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      orderCount,
+      avgOrderValue: orderCount > 0 ? Math.round((totalRevenue / orderCount) * 100) / 100 : 0,
+      activeCustomers: uniquePhones.size,
+      totalPaid,
+      totalRemaining
     };
 
-    const availableProducts = allShopProducts.filter(p => isProductAvailable(p));
-    const availableProductIdsStr = availableProducts.map(p => p._id.toString());
+    const revenueTrend = Object.values(trendMap).sort((a, b) => a.date.localeCompare(b.date));
 
-    // Top products by quantity sold (excluding currently unavailable products at call time)
-    const topProductsRaw = await ordColl.aggregate([
-      { $match: matchStage },
-      { $unwind: "$items" },
-      { $group: {
-          _id: "$items.productId",
-          name: { $first: "$items.name" },
-          quantity: { $sum: { $toDouble: "$items.quantity" } },
-          revenue: { $sum: { $multiply: [{ $toDouble: "$items.price" }, { $toDouble: "$items.quantity" }] } }
-      } },
-      { $sort: { quantity: -1 } }
-    ]).toArray();
-    
-    const topProductsFormatted = topProductsRaw
-      .filter(p => p._id && availableProductIdsStr.includes(p._id.toString()))
-      .slice(0, 10)
-      .map(p => ({
-        productId: p._id,
-        name: p.name || "منتج مجهول",
-        quantity: p.quantity,
-        revenue: p.revenue
-      }));
-    
-    // Top customers by spend
-    const topCustomersRaw = await ordColl.aggregate([
-      { $match: matchStage },
-      { $group: {
-          _id: "$customerInfo.phone",
-          name: { $first: "$customerInfo.name" },
-          totalSpent: { $sum: "$totalPrice" },
-          orderCount: { $sum: 1 }
-      } },
-      { $sort: { totalSpent: -1 } },
-      { $limit: 10 }
-    ]).toArray();
-    
-    const topCustomers = topCustomersRaw.map(c => ({
-      phone: c._id,
-      name: c.name || "عميل مجهول",
-      totalSpent: c.totalSpent,
-      orderCount: c.orderCount
-    }));
-    
-    // Category Sales breakdown
-    const categoriesRaw = await ordColl.aggregate([
-      { $match: matchStage },
-      { $unwind: "$items" },
-      { $lookup: {
-          from: "products",
-          localField: "items.productId",
-          foreignField: "_id",
-          as: "prod"
-      } },
-      { $unwind: { path: "$prod", preserveNullAndEmptyArrays: true } },
-      { $group: {
-          _id: { $ifNull: ["$prod.category", "غير مصنف"] },
-          revenue: { $sum: { $multiply: [{ $toDouble: "$items.price" }, { $toDouble: "$items.quantity" }] } },
-          count: { $sum: 1 }
-      } },
-      { $sort: { revenue: -1 } }
-    ]).toArray();
-    
-    const categorySales = categoriesRaw.map(c => ({
-      category: c._id,
-      revenue: c.revenue,
-      count: c.count
-    }));
-    
-    // Top favorites count (excluding currently unavailable products at call time)
-    const favCounts = await favoritesCollection.aggregate([
-      { $match: { shop } },
-      { $group: {
-          _id: "$productId",
-          count: { $sum: 1 }
-      } },
-      { $sort: { count: -1 } }
-    ]).toArray();
-    
-    const favProdMap = {};
-    availableProducts.forEach(p => {
-      favProdMap[p._id.toString()] = p.name;
-    });
-    
+    const topProductsFormatted = Array.from(topProductsMap.values())
+      .filter(p => p.productId && availableProductIdsSet.has(p.productId.toString()))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
+
+    const topCustomers = Array.from(topCustomersMap.values())
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 10);
+
+    const categorySales = Object.values(categorySalesMap)
+      .sort((a, b) => b.revenue - a.revenue);
+
     const topFavorites = favCounts
       .filter(f => favProdMap[f._id.toString()])
       .slice(0, 10)
@@ -2214,28 +2352,14 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
         count: f.count
       }));
 
-    // Actionable Insights: Inactive Customers (not active in selected period)
-    const inactiveFilterDate = (startDateObj && startDateObj.getTime() > 0) 
-      ? startDateObj 
-      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const inactiveCustsRaw = await customersCollection.find({
-      $or: [
-        { lastActive: { $lt: inactiveFilterDate } },
-        { lastActive: { $exists: false } },
-        { lastActive: null }
-      ]
-    }).sort({ lastActive: -1 }).limit(10).toArray();
     const inactiveCustomers = inactiveCustsRaw.map(c => ({
       phone: c.phone,
       name: c.name || "عميل مجهول",
       lastActive: c.lastActive
     }));
 
-    // Actionable Insights: Low Performing Products (currently AVAILABLE products with 0 sales in selected period)
-    const soldProductIds = await ordColl.distinct("items.productId", matchStage);
-    const soldProductIdsStr = soldProductIds.filter(id => id).map(id => id.toString());
     const lowPerformingProducts = availableProducts
-      .filter(p => !soldProductIdsStr.includes(p._id.toString()))
+      .filter(p => !soldProductIds.has(p._id.toString()))
       .slice(0, 10)
       .map(p => ({
         productId: p._id,
@@ -2243,8 +2367,8 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
         category: p.category || "غير مصنف",
         price: p.price
       }));
-    
-    res.json({
+
+    const responsePayload = {
       kpi,
       revenueTrend,
       priceModeSplit,
@@ -2254,8 +2378,14 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
       categorySales,
       topFavorites,
       inactiveCustomers,
-      lowPerformingProducts
-    });
+      lowPerformingProducts,
+      telemetryInsights
+    };
+
+    // Store in memory cache
+    analyticsServerCache.set(cacheKey, { timestamp: Date.now(), data: responsePayload });
+    
+    res.json(responsePayload);
     
   } catch (err) {
     console.error("Aggregation analytics error:", err);
@@ -2315,118 +2445,9 @@ app.get("/api/admin/telemetry/insights", checkMongoDB, checkAdmin, async (req, r
     const shop = req.query.shop;
     const days = parseInt(req.query.days, 10) || 7;
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-
-    const matchFilter = { timestamp: { $gte: cutoff } };
-    if (shop === "shop1" || shop === "shop2") {
-      matchFilter.shop = shop;
-    }
-
-    // 1. Funnel & Session Conversion Aggregation
-    const funnelPipeline = [
-      { $match: matchFilter },
-      {
-        $group: {
-          _id: "$sessionId",
-          events: { $addToSet: "$event" },
-          device: { $first: "$device" }
-        }
-      },
-      {
-        $project: {
-          hasPageView: { $in: ["page_view", "$events"] },
-          hasCartAdd: { $in: ["cart_add", "$events"] },
-          hasCheckout: { $in: ["checkout_step", "$events"] },
-          hasOrder: { $in: ["order_complete", "$events"] },
-          device: 1
-        }
-      }
-    ];
-
-    const sessionData = await telemetryCollection.aggregate(funnelPipeline).toArray();
-
-    let totalSessions = 0;
-    let cartSessions = 0;
-    let checkoutSessions = 0;
-    let orderSessions = 0;
-    const deviceCounts = { mobile: 0, tablet: 0, desktop: 0 };
-
-    for (const s of sessionData) {
-      totalSessions++;
-      if (s.hasCartAdd) cartSessions++;
-      if (s.hasCheckout) checkoutSessions++;
-      if (s.hasOrder) orderSessions++;
-      if (s.device && deviceCounts[s.device] !== undefined) {
-        deviceCounts[s.device]++;
-      } else {
-        deviceCounts.mobile++;
-      }
-    }
-
-    // Rates calculation
-    const conversionRate = totalSessions > 0 ? Math.round((orderSessions / totalSessions) * 1000) / 10 : 0;
-    const cartConversionRate = cartSessions > 0 ? Math.round((orderSessions / cartSessions) * 1000) / 10 : 0;
-    const cartAbandonmentRate = cartSessions > 0 ? Math.round(((cartSessions - orderSessions) / cartSessions) * 1000) / 10 : 0;
-
-    // 2. Top Engaged Categories by Selection
-    const categoryPipeline = [
-      {
-        $match: {
-          ...matchFilter,
-          event: "category_select",
-          "metadata.categoryName": { $exists: true, $ne: "" }
-        }
-      },
-      {
-        $group: {
-          _id: "$metadata.categoryName",
-          interactions: { $sum: 1 }
-        }
-      },
-      { $sort: { interactions: -1 } },
-      { $limit: 6 }
-    ];
-
-    const topCategories = await telemetryCollection.aggregate(categoryPipeline).toArray();
-
-    // 3. Average Product Dwell Time
-    const dwellPipeline = [
-      {
-        $match: {
-          ...matchFilter,
-          event: "product_dwell",
-          "metadata.dwellMs": { $exists: true, $gt: 0 }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          avgDwellMs: { $avg: "$metadata.dwellMs" },
-          sampleCount: { $sum: 1 }
-        }
-      }
-    ];
-
-    const dwellResult = await telemetryCollection.aggregate(dwellPipeline).toArray();
-    const avgDwellSeconds = dwellResult.length > 0 && dwellResult[0].avgDwellMs
-      ? Math.round(dwellResult[0].avgDwellMs / 100) / 10
-      : 0;
-
-    res.json({
-      success: true,
-      periodDays: days,
-      funnel: {
-        totalSessions,
-        cartSessions,
-        checkoutSessions,
-        orderSessions,
-        conversionRate,
-        cartConversionRate,
-        cartAbandonmentRate
-      },
-      devices: deviceCounts,
-      topCategories: topCategories.map(c => ({ name: c._id, interactions: c.interactions })),
-      avgDwellSeconds
-    });
+    const insights = await computeTelemetryInsights(shop, cutoff, new Date());
+    insights.periodDays = days;
+    res.json(insights);
   } catch (err) {
     console.error("Telemetry insights aggregation error:", err);
     res.status(500).json({ success: false, error: "Failed to generate UX insights" });
@@ -2593,6 +2614,8 @@ app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, re
       }
     }
 
+    invalidateAnalyticsCache(shop);
+
     res.json({ 
       success: true, 
       status, 
@@ -2729,6 +2752,8 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
         console.error('[Inventory] Edit hook error (non-blocking):', invErr.message);
       }
     }
+
+    invalidateAnalyticsCache(shop);
 
     res.json({ success: true });
   } catch (err) {
@@ -3947,6 +3972,8 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
 
     const result = await paymentsCollection.insertOne(paymentDoc);
 
+    invalidateAnalyticsCache(shop);
+
     res.status(201).json({
       success: true,
       paymentId: result.insertedId,
@@ -4066,6 +4093,8 @@ app.post("/api/admin/payments/:id/cancel", checkMongoDB, checkAdmin, async (req,
       }
     );
 
+    invalidateAnalyticsCache(shop);
+
     res.json({
       success: true,
       message: "تم إلغاء واسترجاع الدفعة بنجاح",
@@ -4137,6 +4166,8 @@ app.delete("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res)
         } 
       }
     );
+
+    invalidateAnalyticsCache(shop);
 
     res.json({
       success: true,
@@ -4892,6 +4923,8 @@ app.put("/api/customer/orders/:id/received", checkMongoDB, customerLimiter, chec
       { $set: { status: 'received', receivedAt: new Date() } }
     );
 
+    invalidateAnalyticsCache(shop === 'shop2' ? 'shop2' : 'shop1');
+
     res.json({ success: true, status: 'received' });
   } catch (err) {
     console.error("Confirm order received error:", err);
@@ -5121,6 +5154,7 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
     };
     
     const result = await ordersCollection.insertOne(orderDoc);
+    invalidateAnalyticsCache("shop1");
     res.status(201).json({ 
       success: true, 
       orderId: result.insertedId, 
@@ -5243,6 +5277,8 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     } catch (invErr) {
       console.error("[Inventory] Shop 2 order reservation error (non-blocking):", invErr.message);
     }
+
+    invalidateAnalyticsCache("shop2");
 
     res.status(201).json({ 
       success: true, 
@@ -5971,6 +6007,8 @@ app.post("/api/admin/reset/orders", checkMongoDB, checkAdmin, async (req, res) =
 
     console.log(`[RESET] Deleted: ${ordersResult.deletedCount} shop1 orders, ${orders2Result.deletedCount} shop2 orders, ${paymentsResult.deletedCount} payments`);
 
+    invalidateAnalyticsCache();
+
     res.json({
       success: true,
       message: "تم مسح جميع بيانات الطلبات والمبيعات بنجاح",
@@ -6236,6 +6274,9 @@ const cleanupExpiredCancelledOrders = async () => {
 // Admin endpoint to manually trigger cancelled orders cleanup
 app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, checkAdmin, async (req, res) => {
   const result = await cleanupExpiredCancelledOrders();
+  if (result.totalDeleted > 0) {
+    invalidateAnalyticsCache();
+  }
   res.json(result);
 });
 
