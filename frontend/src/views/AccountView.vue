@@ -606,7 +606,6 @@ const handleResendWhatsApp = () => {
     <div class="orders-history-section glass-panel">
       <div class="orders-header-row">
         <h2 class="section-title">الطلبات السابقة</h2>
-        <span v-if="orders.length" class="orders-count-badge">آخر {{ displayedOrders.length }} طلبات</span>
       </div>
 
       <!-- SKELETON LOADER (Orders Loading - 1:1 Layout Parity) -->
@@ -614,19 +613,16 @@ const handleResendWhatsApp = () => {
         <div v-for="i in 3" :key="'acc-ord-skel-' + i" class="order-card modern-order-card skeleton-card">
           <!-- Top Bar skeleton -->
           <div class="order-top-bar">
-            <div class="d-flex align-items-center gap-2">
-              <div class="skeleton-shimmer" style="width: 70px; height: 26px; border-radius: 8px;"></div>
-              <div class="skeleton-shimmer" style="width: 85px; height: 24px; border-radius: 8px;"></div>
-            </div>
+            <div class="skeleton-shimmer" style="width: 70px; height: 26px; border-radius: 8px;"></div>
             <div class="d-flex align-items-center gap-2">
               <div class="skeleton-shimmer" style="width: 75px; height: 24px; border-radius: 8px;"></div>
               <div class="skeleton-shimmer" style="width: 85px; height: 26px; border-radius: 8px;"></div>
             </div>
           </div>
           <!-- Date skeleton -->
-          <div class="skeleton-shimmer" style="width: 100%; height: 38px; border-radius: 12px;"></div>
+          <div class="skeleton-shimmer" style="width: 100%; height: 36px; border-radius: 12px;"></div>
           <!-- Wide Barcode box skeleton -->
-          <div class="skeleton-shimmer" style="width: 100%; height: 82px; border-radius: 14px;"></div>
+          <div class="skeleton-shimmer" style="width: 100%; height: 60px; border-radius: 14px;"></div>
           <!-- Summary row skeleton -->
           <div class="skeleton-shimmer" style="width: 100%; height: 42px; border-radius: 12px;"></div>
           <!-- WhatsApp button skeleton -->
@@ -647,14 +643,10 @@ const handleResendWhatsApp = () => {
       <!-- Modern Minimal Orders Cards List (Last 5) -->
       <div v-else class="orders-list">
         <div v-for="order in displayedOrders" :key="order._id" class="order-card modern-order-card">
-          <!-- 1. Card Top Bar: Order ID, Shop Badge, Print State, Order State -->
+          <!-- 1. Card Top Bar: Order ID, Print State, Order State -->
           <div class="order-top-bar">
             <div class="order-top-left">
               <span class="order-num-pill">#{{ order.orderNumber || order._id.slice(-6) }}</span>
-              <span class="order-shop-pill" :class="order.shop || 'shop1'">
-                {{ order.shop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي' }}
-              </span>
-              <span v-if="order.priceMode === 'bulk'" class="order-mode-pill">جملة</span>
             </div>
             
             <div class="order-top-right">
@@ -679,7 +671,7 @@ const handleResendWhatsApp = () => {
             </div>
           </div>
 
-          <!-- 2. Order Dates (Reception / Delivery Date & Order Timestamp) -->
+          <!-- 2. Order Date (Reception / Delivery Date) -->
           <div class="order-dates-banner">
             <div class="order-rec-date-wrap" :class="{ 'has-delivery-date': !!order.deliveryDate }">
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="calendar-icon">
@@ -690,12 +682,6 @@ const handleResendWhatsApp = () => {
               </svg>
               <span class="date-title">موعد الاستلام:</span>
               <span class="date-highlight text-mono">{{ order.deliveryDate || formatDate(order.createdAt) }}</span>
-            </div>
-            <div v-if="order.deliveryDate" class="order-created-timestamp">
-              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <span>تاريخ الطلب: {{ formatDate(order.createdAt) }}</span>
             </div>
           </div>
 
@@ -708,13 +694,6 @@ const handleResendWhatsApp = () => {
                 role="img" 
                 :aria-label="'باركود الطلب رقم ' + (order.orderNumber || order._id.slice(-6))"
               ></svg>
-            </div>
-            <div class="barcode-footer-info">
-              <span class="barcode-id-text text-mono">#{{ order.orderNumber || order._id.slice(-6) }}</span>
-              <span class="barcode-scan-hint">
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
-                <span>امسح الباركود عند الاستلام في المحل</span>
-              </span>
             </div>
           </div>
 
@@ -729,7 +708,6 @@ const handleResendWhatsApp = () => {
               aria-label="عرض أو إخفاء أصناف الطلب"
             >
               <span class="items-count-chip">{{ order.items?.length || 0 }} أصناف</span>
-              <span class="items-names-preview">{{ getItemsPreview(order.items) }}</span>
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toggle-chevron" :class="{ 'is-open': !!expandedOrders[order._id] }"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
 
@@ -1563,20 +1541,12 @@ const handleResendWhatsApp = () => {
   border-radius: 6px;
 }
 
-.order-created-timestamp {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.74rem;
-  color: #94a3b8;
-}
-
 /* 3. Wide Order Barcode */
 .order-wide-barcode-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 10px 14px 8px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1600,32 +1570,6 @@ const handleResendWhatsApp = () => {
   display: block;
 }
 
-.barcode-footer-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding-top: 6px;
-  border-top: 1px dashed #f1f5f9;
-  margin-top: 4px;
-}
-
-.barcode-id-text {
-  font-size: 0.84rem;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: 0.5px;
-}
-
-.barcode-scan-hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
 /* 4. Compact Summary & Order Total */
 .order-compact-summary {
   display: flex;
@@ -1639,7 +1583,7 @@ const handleResendWhatsApp = () => {
 }
 
 .items-toggle-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   background: none;
@@ -1648,9 +1592,6 @@ const handleResendWhatsApp = () => {
   cursor: pointer;
   color: inherit;
   font-family: inherit;
-  text-align: right;
-  min-width: 0;
-  flex: 1;
 }
 
 .items-count-chip {
@@ -1662,15 +1603,6 @@ const handleResendWhatsApp = () => {
   color: #334155;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.items-names-preview {
-  font-size: 0.78rem;
-  color: #64748b;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .toggle-chevron {
