@@ -473,12 +473,25 @@ const pbFetch = async (path, options = {}) => {
 
 // Read current inventory level for a PocketBase record
 const getInventoryStock = async (recordId) => {
-  return pbFetch(`/collections/inventory/records/${recordId}`);
+  if (!recordId) return null;
+  try {
+    return await pbFetch(`/collections/inventory/records/${recordId}`);
+  } catch (err) {
+    if (err.message && (err.message.includes('404') || err.message.includes("wasn't found"))) {
+      return null;
+    }
+    throw err;
+  }
 };
 
 // Adjust inventory quantity by delta (negative to deduct, positive to return)
 const adjustInventoryStock = async (recordId, delta) => {
+  if (!recordId || delta === 0) return null;
   const current = await getInventoryStock(recordId);
+  if (!current) {
+    console.warn(`[Inventory] adjustInventoryStock: Record ${recordId} not found in PocketBase`);
+    return null;
+  }
   const currentQty = typeof current.quantity === 'number' ? current.quantity : 0;
   const newQty = Math.max(0, currentQty + delta);
   return pbFetch(`/collections/inventory/records/${recordId}`, {
@@ -492,11 +505,14 @@ const adjustInventoryStock = async (recordId, delta) => {
 
 // Reserve inventory for a newly created Shop 2 order (non-blocking)
 const reserveInventoryForOrder = async (orderDoc) => {
-  if (!stockReservationsCollection || !productsCollection2) return [];
+  if (!stockReservationsCollection || !productsCollection2 || !orderDoc) return [];
+  // Never reserve inventory if order is already cancelled
+  if (orderDoc.status === 'cancelled') return [];
+
   const reservationItems = [];
   let cachedPbRecords = null;
 
-  for (const item of orderDoc.items) {
+  for (const item of (orderDoc.items || [])) {
     try {
       let product = null;
       if (item.productId) {
@@ -509,20 +525,19 @@ const reserveInventoryForOrder = async (orderDoc) => {
       }
       if (!product) continue;
 
+      // Never track or reserve stock for products with storage explicitly disabled
+      if (product.hasStorage === false) continue;
+
       let link = product.inventoryLink;
       if (!link || !link.recordId) {
-        // Auto-heal: Attempt dynamic lookup in PocketBase inventory
+        // Auto-heal: Attempt exact dynamic lookup in PocketBase inventory
         try {
           if (!cachedPbRecords) {
             const pbData = await pbFetch("/collections/inventory/records?perPage=500");
             cachedPbRecords = Array.isArray(pbData.items) ? pbData.items : [];
           }
           const normProdName = normalizeArabicText(product.name || item.name);
-          const pbMatch = cachedPbRecords.find(p => normalizeArabicText(p.name) === normProdName)
-            || cachedPbRecords.find(p => {
-              const normPB = normalizeArabicText(p.name);
-              return normPB.includes(normProdName) || normProdName.includes(normPB);
-            });
+          const pbMatch = cachedPbRecords.find(p => normalizeArabicText(p.name) === normProdName);
           if (pbMatch) {
             link = {
               recordId: pbMatch.id,
@@ -544,21 +559,32 @@ const reserveInventoryForOrder = async (orderDoc) => {
 
       if (!link || !link.recordId) continue;
 
+      const before = await getInventoryStock(link.recordId);
+      if (!before) {
+        console.warn(`[Inventory] Skipping reservation for "${item.name}": PB item ${link.recordId} not found`);
+        continue;
+      }
+
       const factor = Number(link.conversionFactor) || 1;
       const reserveQty = (Number(item.quantity) || 1) * factor;
-
-      const before = await getInventoryStock(link.recordId);
       const prevStock = typeof before.quantity === 'number' ? before.quantity : 0;
-      await adjustInventoryStock(link.recordId, -reserveQty);
+
+      // Only deduct up to available physical stock; never create negative inventory
+      const actualDeducted = Math.min(prevStock, reserveQty);
+
+      if (actualDeducted > 0) {
+        await adjustInventoryStock(link.recordId, -actualDeducted);
+      }
 
       reservationItems.push({
         productId: product._id ? product._id.toString() : item.productId,
         productName: item.name || product.name,
         inventoryRecordId: link.recordId,
-        inventoryItemName: link.itemName || '',
+        inventoryItemName: link.itemName || before.name || '',
         orderedQty: item.quantity,
         conversionFactor: factor,
         reservedQty: reserveQty,
+        actuallyDeducted: actualDeducted, // Explicitly tracked to prevent returning unexisted values
         previousStock: prevStock,
         newStock: Math.max(0, prevStock - reserveQty),
       });
@@ -569,12 +595,14 @@ const reserveInventoryForOrder = async (orderDoc) => {
 
   if (reservationItems.length > 0) {
     try {
+      const initialStatus = orderDoc.status === 'received' ? 'deducted' : 'reserved';
       await stockReservationsCollection.insertOne({
         orderNumber: orderDoc.orderNumber,
         orderId: orderDoc._id || null,
-        status: 'reserved',
+        status: initialStatus,
         items: reservationItems,
         reservedAt: new Date(),
+        ...(initialStatus === 'deducted' ? { deductedAt: new Date() } : {}),
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -587,16 +615,18 @@ const reserveInventoryForOrder = async (orderDoc) => {
 
 // Confirm inventory deduction when order status transitions to "received"
 const confirmInventoryDeduction = async (orderId) => {
-  if (!stockReservationsCollection) return;
+  if (!stockReservationsCollection || !orderId) return;
   try {
-    const reservation = await stockReservationsCollection.findOne({
-      orderId: new ObjectId(orderId),
-      status: 'reserved',
-    });
-    if (!reservation) return;
+    const idFilters = [{ orderId: String(orderId) }];
+    if (ObjectId.isValid(orderId)) {
+      idFilters.push({ orderId: new ObjectId(orderId) });
+    }
 
-    await stockReservationsCollection.updateOne(
-      { _id: reservation._id },
+    await stockReservationsCollection.updateMany(
+      {
+        $or: idFilters,
+        status: 'reserved',
+      },
       { $set: { status: 'deducted', deductedAt: new Date(), updatedAt: new Date() } }
     );
   } catch (err) {
@@ -604,28 +634,64 @@ const confirmInventoryDeduction = async (orderId) => {
   }
 };
 
-// Return inventory when order is cancelled
+// Return inventory when order is cancelled (Safe: only returns genuinely deducted stock)
 const returnInventoryForOrder = async (orderId) => {
-  if (!stockReservationsCollection) return;
+  if (!stockReservationsCollection || !orderId) return;
   try {
-    const reservation = await stockReservationsCollection.findOne({
-      orderId: new ObjectId(orderId),
-      status: 'reserved',
-    });
-    if (!reservation) return;
-
-    for (const item of reservation.items) {
-      try {
-        await adjustInventoryStock(item.inventoryRecordId, +item.reservedQty);
-      } catch (pbErr) {
-        console.error(`[Inventory] Return failed for "${item.productName}":`, pbErr.message);
-      }
+    const idFilters = [{ orderId: String(orderId) }];
+    if (ObjectId.isValid(orderId)) {
+      idFilters.push({ orderId: new ObjectId(orderId) });
     }
 
-    await stockReservationsCollection.updateOne(
-      { _id: reservation._id },
-      { $set: { status: 'returned', returnedAt: new Date(), updatedAt: new Date() } }
-    );
+    // Match any active reservations (either 'reserved' or 'deducted' that need to be reversed)
+    const reservations = await stockReservationsCollection.find({
+      $or: idFilters,
+      status: { $in: ['reserved', 'deducted'] }
+    }).toArray();
+
+    if (!reservations || reservations.length === 0) return;
+
+    for (const reservation of reservations) {
+      if (!Array.isArray(reservation.items)) continue;
+
+      for (const item of reservation.items) {
+        try {
+          if (!item.inventoryRecordId) continue;
+
+          // Accurately determine how many units were genuinely deducted from physical inventory
+          let qtyToReturn = 0;
+          if (typeof item.actuallyDeducted === 'number') {
+            qtyToReturn = item.actuallyDeducted;
+          } else if (typeof item.previousStock === 'number' && typeof item.newStock === 'number') {
+            // Backward compatibility for legacy reservations: clamp(0, previousStock - newStock)
+            qtyToReturn = Math.max(0, item.previousStock - item.newStock);
+          } else {
+            // If neither is present, do not return unverified values that could invent phantom stock
+            qtyToReturn = 0;
+          }
+
+          if (qtyToReturn > 0) {
+            await adjustInventoryStock(item.inventoryRecordId, +qtyToReturn);
+            console.log(`[Inventory] Safely returned ${qtyToReturn} units for "${item.productName}" (Order #${reservation.orderNumber || ''})`);
+          } else {
+            console.log(`[Inventory] Zero units were deducted for "${item.productName}" (prevStock: ${item.previousStock}, newStock: ${item.newStock}). No stock added on cancellation.`);
+          }
+        } catch (pbErr) {
+          console.error(`[Inventory] Return failed for "${item.productName}":`, pbErr.message);
+        }
+      }
+
+      await stockReservationsCollection.updateOne(
+        { _id: reservation._id },
+        { 
+          $set: { 
+            status: 'returned', 
+            returnedAt: new Date(), 
+            updatedAt: new Date() 
+          } 
+        }
+      );
+    }
   } catch (err) {
     console.error('[Inventory] Return inventory failed:', err.message);
   }
@@ -633,28 +699,45 @@ const returnInventoryForOrder = async (orderId) => {
 
 // Handle order edit: return old reservation, re-reserve with new items
 const handleOrderEditInventory = async (orderId) => {
-  if (!stockReservationsCollection || !ordersCollection2) return;
+  if (!stockReservationsCollection || !ordersCollection2 || !orderId) return;
   try {
-    const existing = await stockReservationsCollection.findOne({
-      orderId: new ObjectId(orderId),
-      status: 'reserved',
-    });
-    if (!existing) return;
-
-    // Return previously reserved stock
-    for (const item of existing.items) {
-      try {
-        await adjustInventoryStock(item.inventoryRecordId, +item.reservedQty);
-      } catch (pbErr) {
-        console.error(`[Inventory] Edit-return failed for "${item.productName}":`, pbErr.message);
-      }
+    const idFilters = [{ orderId: String(orderId) }];
+    if (ObjectId.isValid(orderId)) {
+      idFilters.push({ orderId: new ObjectId(orderId) });
     }
 
-    // Delete old reservation
-    await stockReservationsCollection.deleteOne({ _id: existing._id });
+    const existingReservations = await stockReservationsCollection.find({
+      $or: idFilters,
+      status: { $in: ['reserved', 'deducted'] }
+    }).toArray();
 
-    // Re-reserve with updated order items
-    const order = await ordersCollection2.findOne({ _id: new ObjectId(orderId) });
+    // Safely return genuinely deducted stock for previous reservation
+    for (const existing of existingReservations) {
+      if (Array.isArray(existing.items)) {
+        for (const item of existing.items) {
+          try {
+            if (!item.inventoryRecordId) continue;
+            let qtyToReturn = 0;
+            if (typeof item.actuallyDeducted === 'number') {
+              qtyToReturn = item.actuallyDeducted;
+            } else if (typeof item.previousStock === 'number' && typeof item.newStock === 'number') {
+              qtyToReturn = Math.max(0, item.previousStock - item.newStock);
+            }
+            if (qtyToReturn > 0) {
+              await adjustInventoryStock(item.inventoryRecordId, +qtyToReturn);
+            }
+          } catch (pbErr) {
+            console.error(`[Inventory] Edit-return failed for "${item.productName}":`, pbErr.message);
+          }
+        }
+      }
+      await stockReservationsCollection.deleteOne({ _id: existing._id });
+    }
+
+    // Re-reserve with updated order items (only if order is active: pending or ready)
+    const order = await ordersCollection2.findOne({
+      _id: ObjectId.isValid(orderId) ? new ObjectId(orderId) : orderId
+    });
     if (order && order.status !== 'cancelled' && order.status !== 'received') {
       await reserveInventoryForOrder({ ...order, _id: order._id });
     }
@@ -669,20 +752,19 @@ const reconcileInventoryStock = async () => {
   try {
     const staleReservations = await stockReservationsCollection.find({
       status: 'reserved',
-      reservedAt: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      reservedAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Check reservations older than 24h
     }).toArray();
 
     let fixed = 0;
     for (const reservation of staleReservations) {
-      const order = await ordersCollection2.findOne({ _id: reservation.orderId });
-      if (!order) {
+      const order = await ordersCollection2.findOne({
+        _id: ObjectId.isValid(reservation.orderId) ? new ObjectId(reservation.orderId) : reservation.orderId
+      });
+      if (!order || order.status === 'cancelled') {
         await returnInventoryForOrder(reservation.orderId);
         fixed++;
       } else if (order.status === 'received') {
         await confirmInventoryDeduction(reservation.orderId);
-        fixed++;
-      } else if (order.status === 'cancelled') {
-        await returnInventoryForOrder(reservation.orderId);
         fixed++;
       }
     }
@@ -2608,6 +2690,16 @@ app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, re
           await confirmInventoryDeduction(id);
         } else if (status === 'cancelled') {
           await returnInventoryForOrder(id);
+        } else if (status === 'pending' || status === 'ready') {
+          // If order is transitioned back from cancelled, re-reserve inventory
+          const ord = await ordColl.findOne({ _id: new ObjectId(id) });
+          const hasActiveRes = await stockReservationsCollection.findOne({
+            $or: [{ orderId: new ObjectId(id) }, { orderId: String(id) }],
+            status: { $in: ['reserved', 'deducted'] }
+          });
+          if (!hasActiveRes && ord && Array.isArray(ord.items)) {
+            await reserveInventoryForOrder({ ...ord, _id: ord._id });
+          }
         }
       } catch (invErr) {
         console.error('[Inventory] Status hook error (non-blocking):', invErr.message);
@@ -2744,10 +2836,16 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
       }
     }
 
-    // Inventory re-reservation on item edit (Shop 2 only, non-blocking)
-    if (shop === 'shop2' && updateDoc.items) {
+    // Inventory lifecycle hooks on order edit (Shop 2 only, non-blocking)
+    if (shop === 'shop2') {
       try {
-        await handleOrderEditInventory(id);
+        if (updateDoc.status === 'cancelled') {
+          await returnInventoryForOrder(id);
+        } else if (updateDoc.status === 'received') {
+          await confirmInventoryDeduction(id);
+        } else if (updateDoc.items) {
+          await handleOrderEditInventory(id);
+        }
       } catch (invErr) {
         console.error('[Inventory] Edit hook error (non-blocking):', invErr.message);
       }
@@ -2827,10 +2925,26 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
       }
     }
 
-    // Also check stockReservationsCollection for any additional active reservations
+    // Also check stockReservationsCollection for any additional active reservations (excluding cancelled/received orders)
     if (stockReservationsCollection) {
       const activeRes = await stockReservationsCollection.aggregate([
         { $match: { status: "reserved" } },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "orderId",
+            foreignField: "_id",
+            as: "orderDoc"
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { orderDoc: { $size: 0 } },
+              { "orderDoc.0.status": { $in: ["pending", "ready"] } }
+            ]
+          }
+        },
         { $unwind: "$items" },
         {
           $group: {
@@ -3259,7 +3373,7 @@ app.post("/api/admin/inventory/sync-all-products", checkMongoDB, checkAdmin, asy
       if (norm && !pbByNormName.has(norm)) pbByNormName.set(norm, item);
     }
 
-    const products = await targetColl.find({}).toArray();
+    const products = await targetColl.find({ hasStorage: { $ne: false } }).toArray();
     let alreadyLinkedCount = 0;
     let newlyMatchedCount = 0;
     let newlyCreatedCount = 0;
@@ -5272,10 +5386,12 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
     const result = await ordersCollection2.insertOne(orderDoc);
 
     // Inventory reservation hook (Shop 2, non-blocking)
-    try {
-      await reserveInventoryForOrder({ ...orderDoc, _id: result.insertedId });
-    } catch (invErr) {
-      console.error("[Inventory] Shop 2 order reservation error (non-blocking):", invErr.message);
+    if (orderDoc.status !== 'cancelled') {
+      try {
+        await reserveInventoryForOrder({ ...orderDoc, _id: result.insertedId });
+      } catch (invErr) {
+        console.error("[Inventory] Shop 2 order reservation error (non-blocking):", invErr.message);
+      }
     }
 
     invalidateAnalyticsCache("shop2");
@@ -6209,6 +6325,44 @@ const cleanupExpiredCancelledOrders = async () => {
   }
   try {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Close any lingering stock reservations for Shop 2 cancelled orders before deletion
+    if (stockReservationsCollection) {
+      try {
+        const expiredShop2Orders = await ordersCollection2.find({
+          status: "cancelled",
+          $or: [
+            { cancelledAt: { $lte: cutoff } },
+            { $and: [{ $or: [{ cancelledAt: { $exists: false } }, { cancelledAt: null }] }, { updatedAt: { $lte: cutoff } }] },
+            { $and: [{ $or: [{ cancelledAt: { $exists: false } }, { cancelledAt: null }] }, { createdAt: { $lte: cutoff } }] }
+          ]
+        }).project({ _id: 1 }).toArray();
+
+        if (expiredShop2Orders.length > 0) {
+          const expiredIds = expiredShop2Orders.map(o => o._id);
+          const expiredStrIds = expiredIds.map(id => id.toString());
+          await stockReservationsCollection.updateMany(
+            {
+              $or: [
+                { orderId: { $in: expiredIds } },
+                { orderId: { $in: expiredStrIds } }
+              ],
+              status: { $in: ['reserved', 'deducted'] }
+            },
+            {
+              $set: {
+                status: 'returned',
+                returnedAt: new Date(),
+                updatedAt: new Date(),
+                cleanupNote: 'closed_on_expired_order_deletion'
+              }
+            }
+          );
+        }
+      } catch (cleanErr) {
+        console.warn("[Auto-Cleanup] Warning closing expired reservations:", cleanErr.message);
+      }
+    }
 
     // 1. Delete cancelled orders where cancelledAt <= 24 hours ago
     const delRes1 = await ordersCollection.deleteMany({
