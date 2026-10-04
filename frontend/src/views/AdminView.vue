@@ -770,6 +770,8 @@
                         v-for="(cust, cIdx) in analyticsData.topCustomers" 
                         :key="cust.phone"
                         class="top-cust-row"
+                        :class="{ 'in-view': isTopCustomersInView }"
+                        :style="{ '--row-delay': `${Math.min(cIdx * 35 + 50, 450)}ms` }"
                       >
                         <td class="col-center text-mono text-muted">{{ cIdx + 1 }}</td>
                         <td class="font-bold">{{ cust.name }}</td>
@@ -831,6 +833,8 @@
                         v-for="prod in sortedTopProducts" 
                         :key="prod.productId"
                         class="clickable-product-row"
+                        :class="{ 'in-view': isTopProductsInView }"
+                        :style="{ '--row-delay': `${Math.min(prod.originalRank * 35 + 50, 450)}ms` }"
                         @click="openProductCustomersModal(prod)"
                       >
                         <td class="col-center text-mono text-muted">{{ prod.originalRank }}</td>
@@ -8152,9 +8156,9 @@ export default {
             }
           });
         }, {
-          root: null,
-          rootMargin: '0px 0px -30px 0px',
-          threshold: [0, 0.1]
+          root: adminMainRef.value || null,
+          rootMargin: '120px 0px 50px 0px',
+          threshold: [0, 0.05]
         });
 
         const cards = [
@@ -8180,8 +8184,10 @@ export default {
       handleScrollCheck();
     };
 
+    let analyticsLatchTimer = null;
     const triggerAnalyticsAnimations = () => {
       resetAnalyticsScrollStates();
+      if (analyticsLatchTimer) clearTimeout(analyticsLatchTimer);
       nextTick(() => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -8191,6 +8197,20 @@ export default {
           });
         });
       });
+      // Resilient fallback latch: guarantee all charts, bars, and metrics are fully visible
+      analyticsLatchTimer = setTimeout(() => {
+        isKpiInView.value = true;
+        isTrendChartInView.value = true;
+        isPriceModeInView.value = true;
+        isPaymentMethodsInView.value = true;
+        isCategorySalesInView.value = true;
+        isTopFavoritesInView.value = true;
+        isTopProductsInView.value = true;
+        isTopCustomersInView.value = true;
+        isInactiveCustomersInView.value = true;
+        isLowProductsInView.value = true;
+        isUxInsightsInView.value = true;
+      }, 500);
     };
 
     let scrollRafId = null;
@@ -10410,6 +10430,9 @@ export default {
       activeShop.value = shop;
       sidebarOpen.value = false;
       await checkAuthentication();
+      if (activeTab.value === 'analytics') {
+        triggerAnalyticsAnimations();
+      }
     };
 
     // Tab switcher with locked routing for secondary order_manager role (Orders, Customers, Production)
@@ -16323,6 +16346,49 @@ const closeSuggestionsWithDelay = () => {
   margin: 0;
 }
 
+/* Defensive High-Contrast Typography for Chart Cards */
+.chart-card {
+  color: #0f172a;
+}
+
+.chart-card .text-muted,
+.chart-card .cat-rank-num,
+.chart-card .split-clean-pct,
+.chart-card .fav-clean-rank,
+.chart-card .fav-clean-count {
+  color: #64748b !important;
+}
+
+.chart-card .split-clean-name,
+.chart-card .split-clean-val,
+.chart-card .pm-clean-name,
+.chart-card .pm-clean-meta,
+.chart-card .cat-name,
+.chart-card .cat-val,
+.chart-card .fav-clean-name {
+  color: #0f172a;
+}
+
+:global(.dark-mode) .chart-card {
+  color: #f8fafc;
+}
+:global(.dark-mode) .chart-card .text-muted,
+:global(.dark-mode) .chart-card .cat-rank-num,
+:global(.dark-mode) .chart-card .split-clean-pct,
+:global(.dark-mode) .chart-card .fav-clean-rank,
+:global(.dark-mode) .chart-card .fav-clean-count {
+  color: #94a3b8 !important;
+}
+:global(.dark-mode) .chart-card .split-clean-name,
+:global(.dark-mode) .chart-card .split-clean-val,
+:global(.dark-mode) .chart-card .pm-clean-name,
+:global(.dark-mode) .chart-card .pm-clean-meta,
+:global(.dark-mode) .chart-card .cat-name,
+:global(.dark-mode) .chart-card .cat-val,
+:global(.dark-mode) .chart-card .fav-clean-name {
+  color: #f1f5f9;
+}
+
 /* SVG Line Chart Style */
 .svg-chart-container {
   height: 230px;
@@ -21654,7 +21720,7 @@ select.form-control:focus {
 
 /* Top Customers Interactive Table Deluxe Styles */
 .top-customers-interactive-table .top-cust-row {
-  opacity: 0;
+  opacity: 1;
   will-change: opacity, transform;
 }
 
@@ -29810,7 +29876,7 @@ select.pos-control {
 
 /* Top Products Table Row Entrance on Scroll */
 .top-products-interactive-table .clickable-product-row {
-  opacity: 0;
+  opacity: 1;
   will-change: opacity, transform;
 }
 

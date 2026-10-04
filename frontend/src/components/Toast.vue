@@ -356,8 +356,8 @@ const onTouchEnd = (e) => {
 }
 
 /* --- Dark Theme Support --- */
-:global(.dark-mode) .toast-notification,
-:global(.shop-theme-shop2) .toast-notification {
+:global(.dark-mode .toast-notification),
+:global(.shop-theme-shop2 .toast-notification) {
   background: rgba(30, 41, 59, 0.92);
   border-color: rgba(71, 85, 105, 0.6);
   box-shadow:
@@ -366,19 +366,19 @@ const onTouchEnd = (e) => {
     0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }
 
-:global(.dark-mode) .toast-text,
-:global(.shop-theme-shop2) .toast-text {
+:global(.dark-mode .toast-text),
+:global(.shop-theme-shop2 .toast-text) {
   color: #f8fafc;
 }
 
-:global(.dark-mode) .toast-close-btn,
-:global(.shop-theme-shop2) .toast-close-btn {
+:global(.dark-mode .toast-close-btn),
+:global(.shop-theme-shop2 .toast-close-btn) {
   background: rgba(255, 255, 255, 0.1);
   color: #94a3b8;
 }
 
-:global(.dark-mode) .toast-close-btn:hover,
-:global(.shop-theme-shop2) .toast-close-btn:hover {
+:global(.dark-mode .toast-close-btn:hover),
+:global(.shop-theme-shop2 .toast-close-btn:hover) {
   background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
 }
