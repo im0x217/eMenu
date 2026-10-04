@@ -28,24 +28,30 @@
           // Priority: explicit URL query > hash hint > sessionStorage > default
           var isAdmin = false;
           var isShop2 = false;
+          var isShop1 = false;
 
-          // 1. Explicit query string (?shop=shop2, ?view=admin) — highest priority
+          // 1. Explicit query string (?shop=shop1, ?shop=shop2, ?view=admin) — highest priority
           if (search.indexOf('view=admin') !== -1 || search.indexOf('mode=admin') !== -1 || path.indexOf('/admin') !== -1) {
             isAdmin = true;
           } else if (search.indexOf('shop=shop2') !== -1) {
             isShop2 = true;
+          } else if (search.indexOf('shop=shop1') !== -1) {
+            isShop1 = true;
           }
           // 2. Hash hint (from in-app navigation or old bookmarks)
           else if (hash.indexOf('admin') !== -1) {
             isAdmin = true;
           } else if (hash.indexOf('shop2') !== -1) {
             isShop2 = true;
+          } else if (hash.indexOf('shop1') !== -1) {
+            isShop1 = true;
           }
           // 3. sessionStorage (persisted from a previous page load in this PWA instance)
           else if (ss) {
             var saved = ss.getItem('emenu_view');
             if (saved === 'admin') isAdmin = true;
             else if (saved === 'shop2') isShop2 = true;
+            else if (saved === 'shop1') isShop1 = true;
           }
 
           // Persist to sessionStorage so Vue router and store can read it
@@ -83,7 +89,7 @@
         } catch (e) {}
       })();
     </script>
-    <script type="module" crossorigin src="/app/assets/index-l8YHmB7z.js"></script>
+    <script type="module" crossorigin src="/app/assets/index-BQeJIpkm.js"></script>
     <link rel="modulepreload" crossorigin href="/app/assets/vendor-vue-H_sH1Taa.js">
     <link rel="stylesheet" crossorigin href="/app/assets/index-DVJqtYjp.css">
   </head>

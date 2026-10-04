@@ -7,8 +7,10 @@ export const useShopStore = defineStore('shop', () => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('shop') === 'shop2') return 'shop2';
+      if (urlParams.get('shop') === 'shop1') return 'shop1';
       const hash = window.location.hash || '';
       if (hash.indexOf('shop2') !== -1) return 'shop2';
+      if (hash.indexOf('shop1') !== -1) return 'shop1';
       const saved = window.sessionStorage?.getItem('emenu_view');
       if (saved === 'shop2') return 'shop2';
       if (saved === 'shop1') return 'shop1';
@@ -49,7 +51,7 @@ export const useShopStore = defineStore('shop', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash || '';
       const saved = window.sessionStorage?.getItem('emenu_view');
-      const shopFromUrl = urlParams.get('shop') || (hash.indexOf('shop2') !== -1 ? 'shop2' : (saved === 'shop2' ? 'shop2' : 'shop1'));
+      const shopFromUrl = urlParams.get('shop') || (hash.indexOf('shop2') !== -1 ? 'shop2' : (hash.indexOf('shop1') !== -1 ? 'shop1' : (saved === 'shop2' ? 'shop2' : 'shop1')));
       setShop(shopFromUrl);
     }
     const targetShop = activeShop.value || 'shop1';

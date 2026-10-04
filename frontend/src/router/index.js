@@ -23,13 +23,13 @@ const routes = [
         return '/admin';
       }
       const shopParam = urlParams.get('shop');
-      if (shopParam === 'shop2') {
-        return '/shop/shop2';
-      }
+      if (shopParam === 'shop2') return '/shop/shop2';
+      if (shopParam === 'shop1') return '/shop/shop1';
       try {
         const saved = window.sessionStorage?.getItem('emenu_view');
         if (saved === 'admin') return '/admin';
         if (saved === 'shop2') return '/shop/shop2';
+        if (saved === 'shop1') return '/shop/shop1';
       } catch (e) {}
       return '/shop/shop1'; // Default
     }
@@ -40,19 +40,31 @@ const routes = [
     component: ShopView,
     beforeEnter: (to, from, next) => {
       const shopStore = useShopStore();
-      const id = to.params.id;
-      if (id === 'shop1' || id === 'shop2') {
-        shopStore.setShop(id);
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopParam = urlParams.get('shop');
+
+      // Explicit URL query param (?shop=shop1 or ?shop=shop2) strictly overrides route param if mismatched
+      let targetId = to.params.id;
+      if (shopParam === 'shop1' || shopParam === 'shop2') {
+        if (targetId !== shopParam) {
+          shopStore.setShop(shopParam);
+          return next(`/shop/${shopParam}`);
+        }
+      }
+
+      if (targetId === 'shop1' || targetId === 'shop2') {
+        shopStore.setShop(targetId);
         next();
       } else {
-        const urlParams = new URLSearchParams(window.location.search);
-        let target = urlParams.get('shop');
+        let target = shopParam;
         if (!target) {
           try {
             target = window.sessionStorage?.getItem('emenu_view');
           } catch (e) {}
         }
-        next(target === 'shop2' ? '/shop/shop2' : '/shop/shop1');
+        const resolved = target === 'shop2' ? 'shop2' : 'shop1';
+        shopStore.setShop(resolved);
+        next(`/shop/${resolved}`);
       }
     }
   },
@@ -85,10 +97,12 @@ const routes = [
       }
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') return '/shop/shop2';
+      if (shopParam === 'shop1') return '/shop/shop1';
       try {
         const saved = window.sessionStorage?.getItem('emenu_view');
         if (saved === 'admin') return '/admin';
         if (saved === 'shop2') return '/shop/shop2';
+        if (saved === 'shop1') return '/shop/shop1';
       } catch (e) {}
       return '/shop/shop1';
     }
@@ -102,40 +116,48 @@ const router = createRouter({
 
 import { trackPageView } from '../utils/analytics';
 
-// Handle initial launch navigation without intercepting subsequent customer route changes
-let isInitialNavigation = true;
-
 router.beforeEach((to, from, next) => {
   const shopStore = useShopStore();
   const urlParams = new URLSearchParams(window.location.search);
+  const shopParam = urlParams.get('shop');
 
-  // Handle cold-start landing from PWA start_url or external links
-  if (isInitialNavigation) {
-    isInitialNavigation = false;
+  // Handle query-param-driven routing override (?shop=shop1, ?shop=shop2, ?view=admin)
+  const isAdminIntent = urlParams.get('view') === 'admin' || 
+                        urlParams.get('mode') === 'admin' || 
+                        urlParams.has('admin') || 
+                        window.location.pathname.startsWith('/admin');
+  if (isAdminIntent && to.path !== '/admin') {
+    return next('/admin');
+  }
 
-    // Admin PWA launch (?view=admin or /admin pathname)
-    const isAdminIntent = urlParams.get('view') === 'admin' || 
-                          urlParams.get('mode') === 'admin' || 
-                          urlParams.has('admin') || 
-                          window.location.pathname.startsWith('/admin');
-    if (isAdminIntent && to.path !== '/admin') {
-      return next('/admin');
-    }
+  // If user entered via ?shop=shop1 or ?shop=shop2, enforce match even if hash resolved to another shop
+  if (shopParam === 'shop1' && to.path === '/shop/shop2') {
+    shopStore.setShop('shop1');
+    return next('/shop/shop1');
+  }
+  if (shopParam === 'shop2' && to.path === '/shop/shop1') {
+    shopStore.setShop('shop2');
+    return next('/shop/shop2');
+  }
 
-    // Shop 2 PWA launch (?shop=shop2) - if hash resolved to shop1 on cold start, redirect to shop2
-    const isShop2Intent = urlParams.get('shop') === 'shop2';
-    if (isShop2Intent && to.path === '/shop/shop1') {
-      return next('/shop/shop2');
+  // Sync store activeShop whenever entering or switching shop route
+  if (to.name === 'shop' && (to.params.id === 'shop1' || to.params.id === 'shop2')) {
+    if (shopStore.activeShop !== to.params.id) {
+      shopStore.setShop(to.params.id);
     }
   }
 
   // Ensure activeShop is initialized if null on customer routes
   if (!shopStore.activeShop && !to.path.startsWith('/admin')) {
     let fallback = 'shop1';
-    try {
-      const saved = window.sessionStorage?.getItem('emenu_view');
-      if (saved === 'shop2') fallback = 'shop2';
-    } catch (e) {}
+    if (shopParam === 'shop1' || shopParam === 'shop2') {
+      fallback = shopParam;
+    } else {
+      try {
+        const saved = window.sessionStorage?.getItem('emenu_view');
+        if (saved === 'shop2' || saved === 'shop1') fallback = saved;
+      } catch (e) {}
+    }
     shopStore.setShop(fallback);
   }
 
@@ -178,7 +200,7 @@ router.afterEach((to) => {
 
     const shopStore = useShopStore();
     const isAdmin = to.name === 'admin' || to.path.includes('/admin');
-    const isShop2 = !isAdmin && (to.path.includes('shop2') || shopStore.activeShop === 'shop2');
+    const isShop2 = !isAdmin && (to.path.includes('shop2') || (!to.path.includes('shop1') && shopStore.activeShop === 'shop2'));
 
     if (isAdmin) {
       document.title = 'لوحة إدارة عبمبر الزروق | POS & Dashboard';
