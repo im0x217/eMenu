@@ -5920,189 +5920,191 @@
         </div>
 
         <form @submit.prevent="saveTag" class="modal-form tag-edit-form">
-          <div class="tag-edit-layout">
-            <!-- Left / Main Column: Settings -->
-            <div class="tag-edit-fields-col">
-              <!-- Tag Name -->
-              <div class="form-group mb-3">
-                <label class="form-label text-bold mb-1 block">اسم العلامة *</label>
-                <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر طلباً، عرض خاص، جديد…" required class="form-input" />
-              </div>
+          <div class="tag-edit-body-scroll">
+            <div class="tag-edit-layout">
+              <!-- Left / Main Column: Settings -->
+              <div class="tag-edit-fields-col">
+                <!-- Tag Name -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-bold mb-1 block">اسم العلامة *</label>
+                  <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر طلباً، عرض خاص، جديد…" required class="tag-input-styled" />
+                </div>
 
-              <!-- Tag Description (Optional) -->
-              <div class="form-group mb-3">
-                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">وصف موجز أو ملاحظة (اختياري)</label>
-                <input v-model="editingTag.description" type="text" placeholder="ملاحظة داخلية أو سبب الاستخدام…" class="form-input" />
-              </div>
+                <!-- Tag Description (Optional) -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">وصف موجز أو ملاحظة (اختياري)</label>
+                  <input v-model="editingTag.description" type="text" placeholder="ملاحظة داخلية أو سبب الاستخدام…" class="tag-input-styled" />
+                </div>
 
-              <!-- Tag Color Swatches -->
-              <div class="form-group mb-3">
-                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">النمط اللوني للشارة (11 لون فخم) *</label>
-                <div class="tag-color-swatch-grid">
-                  <button 
-                    type="button" 
-                    v-for="c in tagColors" 
-                    :key="c.key" 
-                    class="color-swatch-btn" 
-                    :class="['tag-' + c.key, { active: editingTag.color === c.key }]"
-                    @click="editingTag.color = c.key"
-                    :title="c.label"
-                  >
-                    <span class="swatch-circle"></span>
-                    <span class="swatch-name">{{ c.label.split(' ')[0] }}</span>
-                  </button>
+                <!-- Tag Color Swatches -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">النمط اللوني للشارة (11 لون فخم) *</label>
+                  <div class="tag-color-swatch-grid">
+                    <button 
+                      type="button" 
+                      v-for="c in tagColors" 
+                      :key="c.key" 
+                      class="color-swatch-btn" 
+                      :class="['tag-' + c.key, { active: editingTag.color === c.key }]"
+                      @click="editingTag.color = c.key"
+                      :title="c.label"
+                    >
+                      <span class="swatch-circle"></span>
+                      <span class="swatch-name">{{ c.label.split(' ')[0] }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Badge Style Selector -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">نمط وتأثير الشارة *</label>
+                  <div class="tag-radio-cards-group">
+                    <button 
+                      type="button" 
+                      v-for="s in tagBadgeStyles" 
+                      :key="s.key" 
+                      class="tag-radio-card"
+                      :class="{ active: (editingTag.badgeStyle || 'gradient') === s.key }"
+                      @click="editingTag.badgeStyle = s.key"
+                    >
+                      <span class="tag-radio-card-title">{{ s.label }}</span>
+                      <span class="tag-radio-card-desc">{{ s.desc }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Placement Selector -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">موضع ظهور الشارة على الكارت *</label>
+                  <div class="tag-radio-cards-group">
+                    <button 
+                      type="button" 
+                      v-for="p in tagPlacements" 
+                      :key="p.key" 
+                      class="tag-radio-card"
+                      :class="{ active: (editingTag.placement || 'both') === p.key }"
+                      @click="editingTag.placement = p.key"
+                    >
+                      <span class="tag-radio-card-title">{{ p.label }}</span>
+                      <span class="tag-radio-card-desc">{{ p.desc }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- SVG Icon Pool (24 Categorized Icons) -->
+                <div class="form-group mb-3">
+                  <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">أيقونة الشارة الترويجية (24 أيقونة فاخرة):</label>
+                  <div class="svg-icon-pool-grid tag-icon-pool-grid">
+                    <button 
+                      type="button" 
+                      v-for="item in tagIcons" 
+                      :key="item.key" 
+                      class="svg-pool-item" 
+                      :class="{ active: editingTag.icon === item.key }"
+                      @click="editingTag.icon = item.key"
+                      :title="item.label"
+                    >
+                      <CategoryIcon :icon="item.key" size="18" />
+                      <span class="pool-item-label">{{ item.label }}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Badge Style Selector -->
-              <div class="form-group mb-3">
-                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">نمط وتأثير الشارة *</label>
-                <div class="tag-radio-cards-group">
-                  <button 
-                    type="button" 
-                    v-for="s in tagBadgeStyles" 
-                    :key="s.key" 
-                    class="tag-radio-card"
-                    :class="{ active: (editingTag.badgeStyle || 'gradient') === s.key }"
-                    @click="editingTag.badgeStyle = s.key"
-                  >
-                    <span class="tag-radio-card-title">{{ s.label }}</span>
-                    <span class="tag-radio-card-desc">{{ s.desc }}</span>
-                  </button>
-                </div>
-              </div>
+              <!-- Right Column: Realistic Live Product Card Mockup Preview -->
+              <div class="tag-edit-mockup-col">
+                <div class="tag-mockup-sticky-panel">
+                  <div class="tag-mockup-header-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>معاينة حية للشارة على الكارت</span>
+                  </div>
 
-              <!-- Placement Selector -->
-              <div class="form-group mb-3">
-                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">موضع ظهور الشارة على الكارت *</label>
-                <div class="tag-radio-cards-group">
-                  <button 
-                    type="button" 
-                    v-for="p in tagPlacements" 
-                    :key="p.key" 
-                    class="tag-radio-card"
-                    :class="{ active: (editingTag.placement || 'both') === p.key }"
-                    @click="editingTag.placement = p.key"
-                  >
-                    <span class="tag-radio-card-title">{{ p.label }}</span>
-                    <span class="tag-radio-card-desc">{{ p.desc }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- SVG Icon Pool (24 Categorized Icons) -->
-              <div class="form-group mb-3">
-                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">أيقونة الشارة الترويجية (24 أيقونة فاخرة):</label>
-                <div class="svg-icon-pool-grid tag-icon-pool-grid">
-                  <button 
-                    type="button" 
-                    v-for="item in tagIcons" 
-                    :key="item.key" 
-                    class="svg-pool-item" 
-                    :class="{ active: editingTag.icon === item.key }"
-                    @click="editingTag.icon = item.key"
-                    :title="item.label"
-                  >
-                    <CategoryIcon :icon="item.key" size="18" />
-                    <span class="pool-item-label">{{ item.label }}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right Column: Realistic Live Product Card Mockup Preview -->
-            <div class="tag-edit-mockup-col">
-              <div class="tag-mockup-sticky-panel">
-                <div class="tag-mockup-header-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <span>معاينة حية على كارت المنتج (Live Mockup)</span>
-                </div>
-
-                <!-- Realistic Mockup Product Card -->
-                <div class="tag-card-mockup-container">
-                  <div class="tag-mockup-card">
-                    <!-- Image Wrapper with Floating Badge -->
-                    <div class="tag-mockup-image-wrap">
-                      <!-- Mock Food Photo SVG/Gradient -->
-                      <div class="tag-mockup-img-inner">
-                        <svg class="mockup-burger-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor">
-                          <circle cx="32" cy="32" r="30" fill="url(#mockBurgerGrad)" stroke="none"/>
-                          <path d="M16 28C16 19.163 23.163 12 32 12C40.837 12 48 19.163 48 28H16Z" fill="#F59E0B"/>
-                          <rect x="14" y="32" width="36" height="4" rx="2" fill="#10B981"/>
-                          <rect x="14" y="38" width="36" height="5" rx="2.5" fill="#EF4444"/>
-                          <rect x="16" y="45" width="32" height="7" rx="3.5" fill="#F59E0B"/>
-                          <defs>
-                            <linearGradient id="mockBurgerGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                              <stop stop-color="#334155"/>
-                              <stop offset="1" stop-color="#1e293b"/>
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                      </div>
-
-                      <!-- Floating Tag Badge in RTL Top Right Corner -->
-                      <div 
-                        v-if="(editingTag.placement || 'both') === 'both' || (editingTag.placement || 'both') === 'floating'"
-                        class="tag-mockup-floating-badge"
-                      >
-                        <span 
-                          class="product-floating-tag-pill" 
-                          :class="['tag-' + (editingTag.color || 'gold'), 'tag-style-' + (editingTag.badgeStyle || 'gradient')]"
-                        >
-                          <CategoryIcon :icon="editingTag.icon || 'trophy'" :name="editingTag.name" size="13" />
-                          <span>{{ editingTag.name || 'اسم الوسم' }}</span>
-                        </span>
-                      </div>
-
-                      <!-- Mock Heart Favorite Button in RTL Top Left Corner -->
-                      <button type="button" class="tag-mockup-heart-btn" disabled aria-hidden="true">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                      </button>
-                    </div>
-
-                    <!-- Mock Card Content -->
-                    <div class="tag-mockup-content">
-                      <div class="tag-mockup-subcat">ساندوتشات وبرجر</div>
-                      <div class="tag-mockup-title">برجر أنجوس كلاسيك فاخر</div>
-                      <div class="tag-mockup-desc">شريحة لحم أنجوس مشوية مع جبن الشيدر الذائب والصوص الخاص.</div>
-
-                      <!-- Inline Tag Pill inside Details -->
-                      <div 
-                        v-if="(editingTag.placement || 'both') === 'both' || (editingTag.placement || 'both') === 'inline'"
-                        class="tag-mockup-inline-tags"
-                      >
-                        <span 
-                          class="product-tag-inline-pill" 
-                          :class="['tag-' + (editingTag.color || 'gold'), 'tag-style-' + (editingTag.badgeStyle || 'gradient')]"
-                        >
-                          <CategoryIcon :icon="editingTag.icon || 'trophy'" :name="editingTag.name" size="13" />
-                          <span>{{ editingTag.name || 'اسم الوسم' }}</span>
-                        </span>
-                      </div>
-
-                      <!-- Mock Price & Stepper Row -->
-                      <div class="tag-mockup-footer-row">
-                        <div class="tag-mockup-price">
-                          <span class="price-val">24.50</span>
-                          <span class="price-curr">د.ل</span>
+                  <!-- Realistic Mockup Product Card -->
+                  <div class="tag-card-mockup-container">
+                    <div class="tag-mockup-card">
+                      <!-- Image Wrapper with Floating Badge -->
+                      <div class="tag-mockup-image-wrap">
+                        <div class="tag-mockup-img-inner">
+                          <svg class="mockup-burger-icon" viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="32" r="28" fill="#fbbf24" fill-opacity="0.35"/>
+                            <path d="M16 27C16 18.5 23 12 32 12C41 12 48 18.5 48 27H16Z" fill="#d97706"/>
+                            <circle cx="24" cy="18" r="1.5" fill="#fef3c7"/>
+                            <circle cx="32" cy="16" r="1.5" fill="#fef3c7"/>
+                            <circle cx="40" cy="19" r="1.5" fill="#fef3c7"/>
+                            <rect x="13" y="30" width="38" height="4" rx="2" fill="#10B981"/>
+                            <rect x="14" y="36" width="36" height="5" rx="2.5" fill="#EF4444"/>
+                            <rect x="15" y="43" width="34" height="7" rx="3.5" fill="#d97706"/>
+                          </svg>
                         </div>
-                        <div class="tag-mockup-add-btn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                          <span>إضافة</span>
+
+                        <!-- Floating Tag Badge in RTL Top Right Corner -->
+                        <div 
+                          v-if="(editingTag.placement || 'both') === 'both' || (editingTag.placement || 'both') === 'floating'"
+                          class="tag-mockup-floating-badge"
+                        >
+                          <span 
+                            class="product-floating-tag-pill" 
+                            :class="['tag-' + (editingTag.color || 'gold'), 'tag-style-' + (editingTag.badgeStyle || 'gradient')]"
+                          >
+                            <span class="floating-tag-icon-wrap">
+                              <CategoryIcon :icon="editingTag.icon || 'trophy'" :name="editingTag.name" size="11" />
+                            </span>
+                            <span class="floating-tag-label">{{ editingTag.name || 'اسم الوسم' }}</span>
+                          </span>
+                        </div>
+
+                        <!-- Mock Heart Favorite Button in RTL Top Left Corner -->
+                        <button type="button" class="tag-mockup-heart-btn" disabled aria-hidden="true">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </button>
+                      </div>
+
+                      <!-- Mock Card Content -->
+                      <div class="tag-mockup-content">
+                        <div class="tag-mockup-subcat">ساندوتشات وبرجر</div>
+                        <div class="tag-mockup-title">برجر أنجوس كلاسيك فاخر</div>
+                        <div class="tag-mockup-desc">شريحة لحم أنجوس مشوية مع جبن الشيدر الذائب والصوص الخاص.</div>
+
+                        <!-- Inline Tag Pill inside Details -->
+                        <div 
+                          v-if="(editingTag.placement || 'both') === 'both' || (editingTag.placement || 'both') === 'inline'"
+                          class="tag-mockup-inline-tags"
+                        >
+                          <span 
+                            class="product-tag-inline-pill" 
+                            :class="['tag-' + (editingTag.color || 'gold'), 'tag-style-' + (editingTag.badgeStyle || 'gradient')]"
+                          >
+                            <span class="tag-icon-badge">
+                              <CategoryIcon :icon="editingTag.icon || 'trophy'" :name="editingTag.name" size="11" />
+                            </span>
+                            <span class="tag-text">{{ editingTag.name || 'اسم الوسم' }}</span>
+                          </span>
+                        </div>
+
+                        <!-- Mock Price & Stepper Row -->
+                        <div class="tag-mockup-footer-row">
+                          <div class="tag-mockup-price">
+                            <span class="price-val">24.50</span>
+                            <span class="price-curr">د.ل</span>
+                          </div>
+                          <div class="tag-mockup-add-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>إضافة</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="tag-mockup-footnote">
-                  <span>* المعاينة مطابقة تماماً للمظهر الفعلي في كروت المنتجات للعملاء.</span>
+                  <div class="tag-mockup-footnote">
+                    <span>* المعاينة مطابقة تماماً لمظهر الشارة في المتجر.</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="modal-footer mt-4">
+          <div class="modal-footer">
             <button type="button" class="btn btn-outline" @click="tagModalOpen = false">إلغاء</button>
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -15905,38 +15907,134 @@ const closeSuggestionsWithDelay = () => {
    TAGS MANAGEMENT: UPGRADED MODALS & MOCKUP STYLING
    ========================================================================== */
 .tag-edit-modal-box {
-  max-width: 860px !important;
+  max-width: 880px !important;
   width: 95vw !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+}
+
+.tag-edit-modal-box .modal-header {
+  padding: 18px 24px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 .tag-edit-form {
-  max-height: 80vh;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.tag-edit-body-scroll {
+  flex: 1 1 auto;
   overflow-y: auto;
-  padding: 4px;
+  min-height: 0;
+  padding: 22px 24px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tag-edit-modal-box .modal-footer {
+  margin-top: 0 !important;
+  padding: 14px 24px !important;
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  flex-shrink: 0 !important;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.tag-edit-modal-box .modal-footer .btn {
+  width: auto !important;
+  flex: 0 0 auto !important;
+  min-width: 120px !important;
 }
 
 .tag-edit-layout {
   display: grid;
-  grid-template-columns: 1fr 310px;
-  gap: 22px;
-  align-items: start;
+  grid-template-columns: 1fr 325px;
+  gap: 24px;
+  align-items: stretch;
 }
 
 .tag-edit-fields-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
 }
 
 .tag-edit-mockup-col {
   width: 100%;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 840px) {
   .tag-edit-layout {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 20px;
   }
+  .tag-edit-body-scroll {
+    padding: 16px;
+  }
+  .tag-edit-modal-box .modal-header,
+  .tag-edit-modal-box .modal-footer {
+    padding: 14px 16px !important;
+  }
+  .tag-edit-modal-box .modal-footer .btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Styled Inputs for Tag Form */
+.tag-input-styled {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: 'Cairo', -apple-system, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.tag-input-styled:hover {
+  border-color: #94a3b8;
+}
+
+.tag-input-styled:focus {
+  border-color: #d97706;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+}
+
+.tag-input-styled::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
 }
 
 /* Color Swatches Grid (11 Luxury Themes) */
@@ -15949,51 +16047,56 @@ const closeSuggestionsWithDelay = () => {
 .color-swatch-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
+  gap: 7px;
+  padding: 8px 10px;
   border-radius: 10px;
-  background: rgba(30, 41, 59, 0.7);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #334155 !important;
   font-family: 'Cairo', sans-serif;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .color-swatch-btn:hover {
-  background: rgba(51, 65, 85, 0.9);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
   transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
 }
 
 .color-swatch-btn .swatch-circle {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
 }
 
-.color-swatch-btn.tag-gold .swatch-circle   { background: linear-gradient(135deg, #fbbf24, #d97706); }
-.color-swatch-btn.tag-fire .swatch-circle   { background: linear-gradient(135deg, #fb923c, #ea580c); }
-.color-swatch-btn.tag-rose .swatch-circle   { background: linear-gradient(135deg, #fb7185, #e11d48); }
-.color-swatch-btn.tag-leaf .swatch-circle   { background: linear-gradient(135deg, #34d399, #059669); }
-.color-swatch-btn.tag-sky .swatch-circle    { background: linear-gradient(135deg, #38bdf8, #0284c7); }
-.color-swatch-btn.tag-royal .swatch-circle  { background: linear-gradient(135deg, #c084fc, #7c3aed); }
-.color-swatch-btn.tag-teal .swatch-circle   { background: linear-gradient(135deg, #2dd4bf, #0d9488); }
-.color-swatch-btn.tag-amber .swatch-circle  { background: linear-gradient(135deg, #f59e0b, #b45309); }
-.color-swatch-btn.tag-berry .swatch-circle  { background: linear-gradient(135deg, #f472b6, #db2777); }
-.color-swatch-btn.tag-dark .swatch-circle   { background: linear-gradient(135deg, #64748b, #0f172a); }
-.color-swatch-btn.tag-default .swatch-circle{ background: #64748b; }
+.color-swatch-btn.tag-gold .swatch-circle    { background: linear-gradient(135deg, #fbbf24, #d97706); }
+.color-swatch-btn.tag-fire .swatch-circle    { background: linear-gradient(135deg, #fb923c, #ea580c); }
+.color-swatch-btn.tag-rose .swatch-circle    { background: linear-gradient(135deg, #fb7185, #e11d48); }
+.color-swatch-btn.tag-leaf .swatch-circle    { background: linear-gradient(135deg, #34d399, #059669); }
+.color-swatch-btn.tag-sky .swatch-circle     { background: linear-gradient(135deg, #38bdf8, #0284c7); }
+.color-swatch-btn.tag-royal .swatch-circle   { background: linear-gradient(135deg, #c084fc, #7c3aed); }
+.color-swatch-btn.tag-teal .swatch-circle    { background: linear-gradient(135deg, #2dd4bf, #0d9488); }
+.color-swatch-btn.tag-amber .swatch-circle   { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.color-swatch-btn.tag-berry .swatch-circle   { background: linear-gradient(135deg, #f472b6, #db2777); }
+.color-swatch-btn.tag-dark .swatch-circle    { background: linear-gradient(135deg, #475569, #0f172a); }
+.color-swatch-btn.tag-default .swatch-circle { background: #64748b; }
 
 .color-swatch-btn.active {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.16);
-  color: #fef3c7;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+  border-color: #d97706 !important;
+  background: #fffbeb !important;
+  color: #92400e !important;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.22), 0 2px 6px rgba(217, 119, 6, 0.12);
   transform: translateY(-1px);
 }
 
@@ -16009,94 +16112,131 @@ const closeSuggestionsWithDelay = () => {
   flex-direction: column;
   align-items: flex-start;
   text-align: right;
-  gap: 3px;
-  padding: 9px 12px;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  gap: 4px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
-  color: #cbd5e1;
+  color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .tag-radio-card:hover {
-  background: rgba(51, 65, 85, 0.8);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .tag-radio-card.active {
-  background: rgba(217, 119, 6, 0.18);
+  background: #fffbeb;
   border-color: #d97706;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(217, 119, 6, 0.25);
+  color: #92400e;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2), 0 2px 8px rgba(217, 119, 6, 0.08);
 }
 
 .tag-radio-card-title {
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 800;
-  color: #f8fafc;
+  color: #1e293b;
 }
 
 .tag-radio-card.active .tag-radio-card-title {
-  color: #fbbf24;
+  color: #b45309;
 }
 
 .tag-radio-card-desc {
   font-size: 0.72rem;
-  color: #94a3b8;
-  line-height: 1.3;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.tag-radio-card.active .tag-radio-card-desc {
+  color: #78350f;
 }
 
 /* SVG Icon Pool Grid for Tags */
 .tag-icon-pool-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 6px;
   max-height: 175px;
   overflow-y: auto;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
   padding: 8px;
+}
+
+.tag-icon-pool-grid .svg-pool-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 10px;
+  padding: 8px 4px;
+  transition: all 0.12s ease;
+}
+
+.tag-icon-pool-grid .svg-pool-item:hover {
+  border-color: #d97706;
+  color: #b45309;
+  background: #fffbeb;
+  transform: translateY(-1px);
+}
+
+.tag-icon-pool-grid .svg-pool-item.active {
+  border-color: #d97706;
+  background: #d97706;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+}
+
+.tag-icon-pool-grid .svg-pool-item.active .cat-svg-icon-wrapper,
+.tag-icon-pool-grid .svg-pool-item.active svg {
+  color: #ffffff;
 }
 
 /* Live Realistic Card Mockup Preview Panel */
 .tag-mockup-sticky-panel {
   position: sticky;
-  top: 10px;
+  top: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
   border-radius: 18px;
-  padding: 14px;
-  backdrop-filter: blur(12px);
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .tag-mockup-header-label {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.84rem;
+  gap: 8px;
+  font-size: 0.82rem;
   font-weight: 800;
-  color: #38bdf8;
+  color: #b45309;
+  white-space: nowrap;
 }
 
 .tag-card-mockup-container {
   display: flex;
   justify-content: center;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .tag-mockup-card {
   width: 100%;
-  max-width: 270px;
+  max-width: 260px;
   background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease;
@@ -16106,9 +16246,12 @@ const closeSuggestionsWithDelay = () => {
 .tag-mockup-image-wrap {
   position: relative;
   width: 100%;
-  height: 130px;
-  background: #0f172a;
+  height: 135px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tag-mockup-img-inner {
@@ -16117,43 +16260,43 @@ const closeSuggestionsWithDelay = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, #334155 0%, #0f172a 100%);
 }
 
 .mockup-burger-icon {
-  width: 72px;
-  height: 72px;
-  opacity: 0.88;
+  width: 68px;
+  height: 68px;
+  filter: drop-shadow(0 4px 8px rgba(180, 83, 9, 0.2));
 }
 
 /* Floating Tag Badge inside Mockup (Top Right in RTL) */
 .tag-mockup-floating-badge {
   position: absolute;
-  top: 9px;
-  right: 9px;
+  top: 10px;
+  right: 10px;
   z-index: 4;
 }
 
 /* Mock Favorite Heart Button (Top Left in RTL) */
 .tag-mockup-heart-btn {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 30px;
-  height: 30px;
+  top: 10px;
+  left: 10px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.88);
-  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ef4444;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   z-index: 4;
 }
 
 .tag-mockup-content {
-  padding: 12px;
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -16171,13 +16314,13 @@ const closeSuggestionsWithDelay = () => {
   font-size: 0.92rem;
   font-weight: 800;
   color: #0f172a;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .tag-mockup-desc {
   font-size: 0.72rem;
   color: #64748b;
-  line-height: 1.35;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -16188,15 +16331,15 @@ const closeSuggestionsWithDelay = () => {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin: 4px 0 2px 0;
+  margin: 6px 0 2px 0;
 }
 
 .tag-mockup-footer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 6px;
-  padding-top: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -16209,12 +16352,13 @@ const closeSuggestionsWithDelay = () => {
 }
 
 .tag-mockup-price .price-val {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-family: monospace;
+  color: #0f172a;
 }
 
 .tag-mockup-price .price-curr {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   color: #64748b;
 }
 
@@ -16222,18 +16366,162 @@ const closeSuggestionsWithDelay = () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #d97706;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 8px;
   font-size: 0.76rem;
   font-weight: 800;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
 }
 
 .tag-mockup-footnote {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: #64748b;
   text-align: center;
+  line-height: 1.3;
+}
+
+/* Badge Pills inside Tag Mockup Card */
+.tag-mockup-card .product-floating-tag-pill {
+  direction: rtl;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 5px;
+  border-radius: 999px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.tag-mockup-card .floating-tag-icon-wrap {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  line-height: 0;
+  color: inherit;
+}
+
+.tag-mockup-card .floating-tag-label {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.tag-mockup-card .product-tag-inline-pill {
+  direction: rtl;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 3.5px 11px 3.5px 5px;
+  border-radius: 999px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 750;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  vertical-align: middle;
+}
+
+.tag-mockup-card .tag-icon-badge {
+  order: 1;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  line-height: 0;
+  color: inherit;
+}
+
+.tag-mockup-card .tag-text {
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  line-height: 1;
+  text-align: right;
+  padding: 0 2px 0 0;
+  margin: 0;
+  color: inherit;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+/* Palette Overrides for Mockup Card */
+.tag-mockup-card .tag-gold    { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; color: #ffffff !important; border-color: rgba(253, 230, 138, 0.5) !important; }
+.tag-mockup-card .tag-fire    { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important; color: #ffffff !important; border-color: rgba(254, 215, 170, 0.5) !important; }
+.tag-mockup-card .tag-rose    { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important; color: #ffffff !important; border-color: rgba(254, 205, 211, 0.5) !important; }
+.tag-mockup-card .tag-leaf    { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; border-color: rgba(167, 243, 208, 0.5) !important; }
+.tag-mockup-card .tag-sky     { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: #ffffff !important; border-color: rgba(186, 230, 253, 0.5) !important; }
+.tag-mockup-card .tag-royal   { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; color: #ffffff !important; border-color: rgba(221, 214, 254, 0.5) !important; }
+.tag-mockup-card .tag-teal    { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%) !important; color: #ffffff !important; border-color: rgba(153, 246, 228, 0.5) !important; }
+.tag-mockup-card .tag-amber   { background: linear-gradient(135deg, #d97706 0%, #92400e 100%) !important; color: #ffffff !important; border-color: rgba(254, 243, 199, 0.45) !important; }
+.tag-mockup-card .tag-berry   { background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%) !important; color: #ffffff !important; border-color: rgba(245, 208, 254, 0.5) !important; }
+.tag-mockup-card .tag-dark    { background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important; color: #ffffff !important; border-color: rgba(148, 163, 184, 0.4) !important; }
+.tag-mockup-card .tag-default { background: linear-gradient(135deg, #475569 0%, #334155 100%) !important; color: #ffffff !important; border-color: rgba(203, 213, 225, 0.4) !important; }
+
+/* Style Variants Overrides for Mockup Card */
+.tag-mockup-card .tag-style-glass {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.25) inset !important;
+}
+.tag-mockup-card .tag-style-glass.tag-gold  { border-color: rgba(245, 158, 11, 0.7) !important; color: #fef08a !important; }
+.tag-mockup-card .tag-style-glass.tag-fire  { border-color: rgba(249, 115, 22, 0.7) !important; color: #fed7aa !important; }
+.tag-mockup-card .tag-style-glass.tag-rose  { border-color: rgba(244, 63, 94, 0.7) !important; color: #fecdd3 !important; }
+.tag-mockup-card .tag-style-glass.tag-leaf  { border-color: rgba(16, 185, 129, 0.7) !important; color: #a7f3d0 !important; }
+.tag-mockup-card .tag-style-glass.tag-sky   { border-color: rgba(14, 165, 233, 0.7) !important; color: #bae6fd !important; }
+.tag-mockup-card .tag-style-glass.tag-royal { border-color: rgba(139, 92, 246, 0.7) !important; color: #ddd6fe !important; }
+.tag-mockup-card .tag-style-glass.tag-teal  { border-color: rgba(20, 184, 166, 0.7) !important; color: #99f6e4 !important; }
+.tag-mockup-card .tag-style-glass.tag-amber { border-color: rgba(217, 119, 6, 0.7) !important; color: #fde68a !important; }
+.tag-mockup-card .tag-style-glass.tag-berry { border-color: rgba(217, 70, 239, 0.7) !important; color: #f5d0fe !important; }
+.tag-mockup-card .tag-style-glass.tag-dark  { border-color: rgba(148, 163, 184, 0.5) !important; color: #f1f5f9 !important; }
+
+.tag-mockup-card .tag-style-minimal {
+  background: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 0 0 1.5px currentColor inset !important;
+}
+.tag-mockup-card .tag-style-minimal.tag-gold  { color: #b45309 !important; }
+.tag-mockup-card .tag-style-minimal.tag-fire  { color: #c2410c !important; }
+.tag-mockup-card .tag-style-minimal.tag-rose  { color: #be123c !important; }
+.tag-mockup-card .tag-style-minimal.tag-leaf  { color: #047857 !important; }
+.tag-mockup-card .tag-style-minimal.tag-sky   { color: #0369a1 !important; }
+.tag-mockup-card .tag-style-minimal.tag-royal { color: #6d28d9 !important; }
+.tag-mockup-card .tag-style-minimal.tag-teal  { color: #0f766e !important; }
+.tag-mockup-card .tag-style-minimal.tag-amber { color: #92400e !important; }
+.tag-mockup-card .tag-style-minimal.tag-berry { color: #a21caf !important; }
+.tag-mockup-card .tag-style-minimal.tag-dark  { color: #0f172a !important; }
+.tag-mockup-card .tag-style-minimal.tag-default { color: #475569 !important; }
+.tag-mockup-card .tag-style-minimal .floating-tag-icon-wrap,
+.tag-mockup-card .tag-style-minimal .tag-icon-badge {
+  background: currentColor !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
 }
 
 /* ==========================================================================
