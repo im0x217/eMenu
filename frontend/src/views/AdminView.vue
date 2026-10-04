@@ -1656,21 +1656,37 @@
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
                 <div class="tag-kpi-info">
-                  <span class="tag-kpi-label">المنتجات المميزة بالوسوم</span>
+                  <span class="tag-kpi-label">المنتجات الموسومة</span>
                   <div class="tag-kpi-value text-mono">{{ taggedProductsCount }}</div>
                   <span class="tag-kpi-desc">منتج يحمل شارة في المنيو</span>
                 </div>
               </div>
 
-              <!-- Active Color Themes -->
+              <!-- Available Styles -->
               <div class="tag-kpi-card glass-panel">
                 <div class="tag-kpi-icon tag-kpi-rose" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
                 </div>
                 <div class="tag-kpi-info">
-                  <span class="tag-kpi-label">أنماط الألوان المتاحة</span>
-                  <div class="tag-kpi-value text-mono">{{ tagColors.length }}</div>
-                  <span class="tag-kpi-desc">ألوان بصرية لتصنيف العروض</span>
+                  <span class="tag-kpi-label">أنماط وأشكال الشارات</span>
+                  <div class="tag-kpi-value text-mono">3 أنماط</div>
+                  <span class="tag-kpi-desc">تدرج فاخر • زجاجي • إطار ناعم</span>
+                </div>
+              </div>
+
+              <!-- Most Used Tag -->
+              <div class="tag-kpi-card glass-panel">
+                <div class="tag-kpi-icon tag-kpi-sky" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                </div>
+                <div class="tag-kpi-info">
+                  <span class="tag-kpi-label">الوسم الأكثر استخداماً</span>
+                  <div class="tag-kpi-value text-mono" style="font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ mostUsedTag ? mostUsedTag.name : '—' }}
+                  </div>
+                  <span class="tag-kpi-desc">
+                    {{ mostUsedTag ? mostUsedTag.count + ' منتج مرتبط' : 'لا توجد منتجات بعد' }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1762,9 +1778,12 @@
                 >
                   <!-- Top: Live Badge Preview + Actions -->
                   <div class="tag-card-header">
-                    <!-- Live Storefront Tag Pill Preview -->
-                    <span class="tag-pill tag-showcase-pill" :class="'tag-' + (t.color || 'default')">
-                      <CategoryIcon :icon="t.icon" :name="t.name" size="18" />
+                    <!-- Live Storefront Tag Pill Preview with dynamic style & color -->
+                    <span 
+                      class="tag-pill tag-showcase-pill" 
+                      :class="['tag-' + (t.color || 'gold'), 'tag-style-' + (t.badgeStyle || 'gradient')]"
+                    >
+                      <CategoryIcon :icon="t.icon || 'trophy'" :name="t.name" size="18" />
                       <span class="tag-pill-text">{{ t.name }}</span>
                     </span>
 
@@ -1792,39 +1811,82 @@
                     </div>
                   </div>
 
-                  <!-- Tag Details & Color Info -->
+                  <!-- Tag Details & Meta Attributes -->
                   <div class="tag-card-body">
-                    <div class="tag-meta-item">
-                      <span class="tag-meta-label">النمط اللوني:</span>
+                    <p v-if="t.description" class="tag-desc-text">{{ t.description }}</p>
+
+                    <div class="tag-meta-chips-row">
+                      <!-- Badge Style Pill -->
+                      <span class="tag-meta-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        <span>{{ t.badgeStyle === 'glass' ? 'تأثير زجاجي' : (t.badgeStyle === 'minimal' ? 'إطار ناعم' : 'تدرج فاخر') }}</span>
+                      </span>
+
+                      <!-- Placement Pill -->
+                      <span class="tag-meta-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        <span>{{ t.placement === 'floating' ? 'أعلى الصورة' : (t.placement === 'inline' ? 'تفاصيل الكارت' : 'صورة وتفاصيل') }}</span>
+                      </span>
+
+                      <!-- Color Badge -->
                       <span class="tag-color-badge" :class="'color-' + (t.color || 'default')">
                         <span class="color-dot" aria-hidden="true"></span>
                         <span>{{ getTagColorLabel(t.color) }}</span>
                       </span>
                     </div>
 
-                    <div class="tag-meta-item">
-                      <span class="tag-meta-label">المنتجات المرتبطة:</span>
-                      <button 
-                        type="button" 
-                        class="tag-product-count-link" 
-                        @click="filterProductsByTag(t.name)"
-                        :title="'عرض منتجات ' + t.name"
-                      >
-                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                        <span>{{ getTagProductCount(t.name) }} منتج</span>
-                      </button>
+                    <!-- Linked Products Avatar Stack -->
+                    <div class="tag-products-preview-box">
+                      <div class="tag-products-preview-header">
+                        <span class="tag-meta-label">المنتجات المرتبطة ({{ getTagProductCount(t.name) }}):</span>
+                        <button 
+                          type="button" 
+                          class="btn-quick-manage-prod" 
+                          @click="openTagAssignModal(t)"
+                          title="تخصيص منتجات الوسم"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                          <span>تخصيص</span>
+                        </button>
+                      </div>
+
+                      <div class="tag-product-avatar-stack">
+                        <div 
+                          v-for="(p, pIdx) in getTagProducts(t.name).slice(0, 4)" 
+                          :key="p._id || pIdx" 
+                          class="tag-avatar-item" 
+                          :title="p.name"
+                        >
+                          <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" />
+                          <span v-else class="tag-avatar-placeholder">{{ p.name ? p.name.charAt(0) : 'م' }}</span>
+                        </div>
+                        <span v-if="getTagProducts(t.name).length > 4" class="tag-avatar-overflow">
+                          +{{ getTagProducts(t.name).length - 4 }}
+                        </span>
+                        <span v-if="getTagProducts(t.name).length === 0" class="tag-no-products-hint">
+                          لا توجد منتجات معينة حتى الآن
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- Card Footer -->
+                  <!-- Card Action Footer -->
                   <div class="tag-card-footer">
                     <button 
                       type="button" 
-                      class="btn-cat-view-products" 
-                      @click="filterProductsByTag(t.name)"
+                      class="btn-tag-action-primary" 
+                      @click="openTagAssignModal(t)"
                     >
-                      <span>عرض المنتجات المرتبطة بهذا الوسم ({{ getTagProductCount(t.name) }})</span>
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+                      <span>إدارة منتجات الوسم ({{ getTagProductCount(t.name) }})</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn-tag-action-secondary" 
+                      @click="filterProductsByTag(t.name)"
+                      title="عرض المنتجات في جدول الأصناف"
+                    >
+                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
                     </button>
                   </div>
                 </div>
@@ -1837,33 +1899,69 @@
                     <tr>
                       <th>اسم العلامة</th>
                       <th>معاينة المظهر في المنيو (Live Preview)</th>
-                      <th>النمط اللوني</th>
-                      <th style="width: 140px;">المنتجات المرتبطة</th>
-                      <th style="width: 160px; text-align: center;">إجراءات</th>
+                      <th>النمط والموضع</th>
+                      <th style="width: 170px;">المنتجات المرتبطة</th>
+                      <th style="width: 140px; text-align: center;">إدارة المنتجات</th>
+                      <th style="width: 140px; text-align: center;">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(t, idx) in filteredTags" :key="t._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
-                      <td class="text-bold text-dark">{{ t.name }}</td>
                       <td>
-                        <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg" :class="'tag-' + (t.color || 'default')">
-                          <CategoryIcon :icon="t.icon" :name="t.name" size="16" />
-                          <span class="font-bold">{{ t.name }}</span>
+                        <div class="text-bold text-dark">{{ t.name }}</div>
+                        <div v-if="t.description" class="text-muted text-small">{{ t.description }}</div>
+                      </td>
+                      <td>
+                        <span 
+                          class="tag-pill tag-showcase-pill" 
+                          :class="['tag-' + (t.color || 'gold'), 'tag-style-' + (t.badgeStyle || 'gradient')]"
+                        >
+                          <CategoryIcon :icon="t.icon || 'trophy'" :name="t.name" size="16" />
+                          <span class="tag-pill-text">{{ t.name }}</span>
                         </span>
                       </td>
                       <td>
-                        <span class="tag-color-badge" :class="'color-' + (t.color || 'default')">
-                          <span class="color-dot" aria-hidden="true"></span>
-                          <span>{{ getTagColorLabel(t.color) }}</span>
-                        </span>
+                        <div class="d-flex flex-column gap-1">
+                          <span class="tag-color-badge" :class="'color-' + (t.color || 'default')">
+                            <span class="color-dot" aria-hidden="true"></span>
+                            <span>{{ getTagColorLabel(t.color) }}</span>
+                          </span>
+                          <span class="tag-meta-chip-sm">
+                            {{ t.badgeStyle === 'glass' ? 'زجاجي' : (t.badgeStyle === 'minimal' ? 'إطار ناعم' : 'تدرج فاخر') }}
+                            • {{ t.placement === 'floating' ? 'أعلى الصورة' : (t.placement === 'inline' ? 'تفاصيل' : 'صورة وتفاصيل') }}
+                          </span>
+                        </div>
                       </td>
                       <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="tag-product-avatar-stack mini">
+                            <div 
+                              v-for="(p, pIdx) in getTagProducts(t.name).slice(0, 3)" 
+                              :key="p._id || pIdx" 
+                              class="tag-avatar-item" 
+                              :title="p.name"
+                            >
+                              <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" />
+                              <span v-else class="tag-avatar-placeholder">{{ p.name ? p.name.charAt(0) : 'م' }}</span>
+                            </div>
+                            <span v-if="getTagProducts(t.name).length > 3" class="tag-avatar-overflow">
+                              +{{ getTagProducts(t.name).length - 3 }}
+                            </span>
+                          </div>
+                          <span class="text-mono font-bold" style="font-size: 0.85rem; color: #0284c7;">
+                            ({{ getTagProductCount(t.name) }})
+                          </span>
+                        </div>
+                      </td>
+                      <td class="text-center">
                         <button 
                           type="button" 
-                          class="tag-product-count-link" 
-                          @click="filterProductsByTag(t.name)"
+                          class="btn-table-action btn-action-assign" 
+                          @click="openTagAssignModal(t)"
+                          title="تعيين المنتجات لهذا الوسم"
                         >
-                          <span>{{ getTagProductCount(t.name) }} منتج</span>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+                          <span>تعيين المنتجات</span>
                         </button>
                       </td>
                       <td>
@@ -5807,7 +5905,7 @@
     <!-- Tag Modal Form -->
     <Transition name="modal-spring-fade">
     <div v-if="tagModalOpen" class="modal-overlay" @click.self="tagModalOpen = false">
-      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="tag-modal-title" v-sheet-gesture="() => tagModalOpen = false">
+      <div class="modal-box glass-panel modal-lg tag-edit-modal-box" role="dialog" aria-modal="true" aria-labelledby="tag-modal-title" v-sheet-gesture="() => tagModalOpen = false">
         <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
@@ -5821,68 +5919,317 @@
           </button>
         </div>
 
-        <form @submit.prevent="saveTag" class="modal-form">
-          <div class="form-group mb-3">
-            <label class="form-label text-bold mb-1 block">اسم العلامة *</label>
-            <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر مبيعاً، جديد…" required class="form-input" />
-          </div>
+        <form @submit.prevent="saveTag" class="modal-form tag-edit-form">
+          <div class="tag-edit-layout">
+            <!-- Left / Main Column: Settings -->
+            <div class="tag-edit-fields-col">
+              <!-- Tag Name -->
+              <div class="form-group mb-3">
+                <label class="form-label text-bold mb-1 block">اسم العلامة *</label>
+                <input v-model="editingTag.name" type="text" placeholder="مثال: الأكثر طلباً، عرض خاص، جديد…" required class="form-input" />
+              </div>
 
-          <!-- Tag Color Selector -->
-          <div class="form-group mb-3">
-            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">اختر لون العلامة *</label>
-            <div class="tag-color-swatch-grid">
-              <button 
-                type="button" 
-                v-for="c in tagColors" 
-                :key="c.key" 
-                class="color-swatch-btn" 
-                :class="['tag-' + c.key, { active: editingTag.color === c.key }]"
-                @click="editingTag.color = c.key"
-                :title="c.label"
-              >
-                <span class="swatch-circle"></span>
-                <span class="swatch-name">{{ c.label.split(' ')[0] }}</span>
-              </button>
+              <!-- Tag Description (Optional) -->
+              <div class="form-group mb-3">
+                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">وصف موجز أو ملاحظة (اختياري)</label>
+                <input v-model="editingTag.description" type="text" placeholder="ملاحظة داخلية أو سبب الاستخدام…" class="form-input" />
+              </div>
+
+              <!-- Tag Color Swatches -->
+              <div class="form-group mb-3">
+                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">النمط اللوني للشارة (11 لون فخم) *</label>
+                <div class="tag-color-swatch-grid">
+                  <button 
+                    type="button" 
+                    v-for="c in tagColors" 
+                    :key="c.key" 
+                    class="color-swatch-btn" 
+                    :class="['tag-' + c.key, { active: editingTag.color === c.key }]"
+                    @click="editingTag.color = c.key"
+                    :title="c.label"
+                  >
+                    <span class="swatch-circle"></span>
+                    <span class="swatch-name">{{ c.label.split(' ')[0] }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Badge Style Selector -->
+              <div class="form-group mb-3">
+                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">نمط وتأثير الشارة *</label>
+                <div class="tag-radio-cards-group">
+                  <button 
+                    type="button" 
+                    v-for="s in tagBadgeStyles" 
+                    :key="s.key" 
+                    class="tag-radio-card"
+                    :class="{ active: (editingTag.badgeStyle || 'gradient') === s.key }"
+                    @click="editingTag.badgeStyle = s.key"
+                  >
+                    <span class="tag-radio-card-title">{{ s.label }}</span>
+                    <span class="tag-radio-card-desc">{{ s.desc }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Placement Selector -->
+              <div class="form-group mb-3">
+                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">موضع ظهور الشارة على الكارت *</label>
+                <div class="tag-radio-cards-group">
+                  <button 
+                    type="button" 
+                    v-for="p in tagPlacements" 
+                    :key="p.key" 
+                    class="tag-radio-card"
+                    :class="{ active: (editingTag.placement || 'both') === p.key }"
+                    @click="editingTag.placement = p.key"
+                  >
+                    <span class="tag-radio-card-title">{{ p.label }}</span>
+                    <span class="tag-radio-card-desc">{{ p.desc }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SVG Icon Pool (24 Categorized Icons) -->
+              <div class="form-group mb-3">
+                <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">أيقونة الشارة الترويجية (24 أيقونة فاخرة):</label>
+                <div class="svg-icon-pool-grid tag-icon-pool-grid">
+                  <button 
+                    type="button" 
+                    v-for="item in tagIcons" 
+                    :key="item.key" 
+                    class="svg-pool-item" 
+                    :class="{ active: editingTag.icon === item.key }"
+                    @click="editingTag.icon = item.key"
+                    :title="item.label"
+                  >
+                    <CategoryIcon :icon="item.key" size="18" />
+                    <span class="pool-item-label">{{ item.label }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Tag SVG Icon Pool Grid -->
-          <div class="form-group mb-3">
-            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">اختر أيقونة من مكتبة الـ SVG (Hugeicons):</label>
-            <div class="svg-icon-pool-grid">
-              <button 
-                type="button" 
-                v-for="item in tagIcons" 
-                :key="item.key" 
-                class="svg-pool-item" 
-                :class="{ active: editingTag.icon === item.key }"
-                @click="editingTag.icon = item.key"
-                :title="item.label"
-              >
-                <CategoryIcon :icon="item.key" size="20" />
-                <span class="pool-item-label">{{ item.label }}</span>
-              </button>
-            </div>
-          </div>
+            <!-- Right Column: Realistic Live Product Card Mockup Preview -->
+            <div class="tag-edit-mockup-col">
+              <div class="tag-mockup-sticky-panel">
+                <div class="tag-mockup-header-label">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <span>معاينة حية على كارت المنتج (Live Mockup)</span>
+                </div>
 
-          <!-- Live Tag Preview Banner -->
-          <div class="form-group mb-3">
-            <label class="form-label text-bold mb-1 block" style="font-size: 0.85rem;">معاينة شكل العلامة على كارت المنتج:</label>
-            <div class="tag-live-preview-container p-3 flex items-center justify-center">
-              <span class="tag-pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-bold" :class="'tag-' + (editingTag.color || 'default')">
-                <CategoryIcon :icon="editingTag.icon" :name="editingTag.name" size="16" />
-                <span>{{ editingTag.name || 'اسم العلامة' }}</span>
-              </span>
+                <!-- Realistic Mockup Product Card -->
+                <div class="tag-card-mockup-container">
+                  <div class="tag-mockup-card">
+                    <!-- Image Wrapper with Floating Badge -->
+                    <div class="tag-mockup-image-wrap">
+                      <!-- Mock Food Photo SVG/Gradient -->
+                      <div class="tag-mockup-img-inner">
+                        <svg class="mockup-burger-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+                          <circle cx="32" cy="32" r="30" fill="url(#mockBurgerGrad)" stroke="none"/>
+                          <path d="M16 28C16 19.163 23.163 12 32 12C40.837 12 48 19.163 48 28H16Z" fill="#F59E0B"/>
+                          <rect x="14" y="32" width="36" height="4" rx="2" fill="#10B981"/>
+                          <rect x="14" y="38" width="36" height="5" rx="2.5" fill="#EF4444"/>
+                          <rect x="16" y="45" width="32" height="7" rx="3.5" fill="#F59E0B"/>
+                          <defs>
+                            <linearGradient id="mockBurgerGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                              <stop stop-color="#334155"/>
+                              <stop offset="1" stop-color="#1e293b"/>
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                      </div>
+
+                      <!-- Floating Tag Badge in RTL Top Right Corner -->
+                      <div 
+                        v-if="(editingTag.placement || 'both') === 'both' || (editingTag.placement || 'both') === 'floating'"
+                        class="tag-mockup-floating-badge"
+                      >
+                        <span 
+                          class="product-floating-tag-pill" 
+                          :class="['tag-' + (editingTag.color || 'gold'), 'tag-style-' + (editingTag.badgeStyle || 'gradient')]"
+                        >
+                          <CategoryIcon :icon="editingTag.icon || 'trophy'" :name="editingTag.name" size="13" />
+                          <span>{{ editingTag.name || 'اسم الوسم' }}</span>
+                        </span>
+                      </div>
+
+                      <!-- Mock Heart Favorite Button in RTL Top Left Corner -->
+                      <button type="button" class="tag-mockup-heart-btn" disabled aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                      </button>
+                    </div>
+
+                    <!-- Mock Card Content -->
+                    <div class="tag-mockup-content">
+                      <div class="tag-mockup-subcat">ساندوتشات وبرجر</div>
+                      <div class="tag-mockup-title">برجر أنجوس كلاسيك فاخر</div>
+                      <div class="tag-mockup-desc">شريحة لحم أنجوس مشوية مع جبن الشيدر الذائب والصوص الخاص.</div>
+
+                      <!-- Inline Tag Pill inside Details -->
+                      <div 
+                        v-if="(editingTag.placement || 'both') === 'both' || (editingTag.placement || 'both') === 'inline'"
+                        class="tag-mockup-inline-tags"
+                      >
+                        <span 
+                          class="product-tag-inline-pill" 
+                          :class="['tag-' + (editingTag.color || 'gold'), 'tag-style-' + (editingTag.badgeStyle || 'gradient')]"
+                        >
+                          <CategoryIcon :icon="editingTag.icon || 'trophy'" :name="editingTag.name" size="13" />
+                          <span>{{ editingTag.name || 'اسم الوسم' }}</span>
+                        </span>
+                      </div>
+
+                      <!-- Mock Price & Stepper Row -->
+                      <div class="tag-mockup-footer-row">
+                        <div class="tag-mockup-price">
+                          <span class="price-val">24.50</span>
+                          <span class="price-curr">د.ل</span>
+                        </div>
+                        <div class="tag-mockup-add-btn">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                          <span>إضافة</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tag-mockup-footnote">
+                  <span>* المعاينة مطابقة تماماً للمظهر الفعلي في كروت المنتجات للعملاء.</span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="modal-footer mt-4">
+            <button type="button" class="btn btn-outline" @click="tagModalOpen = false">إلغاء</button>
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              {{ loading ? 'جاري الحفظ…' : 'حفظ العلامة' }}
+              <span>{{ loading ? 'جاري الحفظ…' : 'حفظ الشارة المميزة' }}</span>
             </button>
           </div>
         </form>
+      </div>
+    </div>
+    </Transition>
+
+    <!-- Direct Tag Product Bulk Assignment Modal -->
+    <Transition name="modal-spring-fade">
+    <div v-if="tagAssignModalOpen && assigningTag" class="modal-overlay" @click.self="tagAssignModalOpen = false">
+      <div class="modal-box modal-lg glass-panel tag-assign-modal" role="dialog" aria-modal="true" aria-labelledby="tag-assign-modal-title" v-sheet-gesture="() => tagAssignModalOpen = false">
+        <div class="sheet-grab-handle" aria-hidden="true"></div>
+        
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-title-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+            </div>
+            <div>
+              <h3 id="tag-assign-modal-title">إدارة وتعيين المنتجات للوسم</h3>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <span class="text-muted text-small">الوسم المستهدف:</span>
+                <span 
+                  class="tag-pill tag-showcase-pill" 
+                  :class="['tag-' + (assigningTag.color || 'gold'), 'tag-style-' + (assigningTag.badgeStyle || 'gradient')]" 
+                  style="padding: 2px 10px; font-size: 0.8rem;"
+                >
+                  <CategoryIcon :icon="assigningTag.icon || 'trophy'" :name="assigningTag.name" size="14" />
+                  <span>{{ assigningTag.name }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <button @click="tagAssignModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="tag-assign-modal-body">
+          <!-- Search & Fast Filter Toolbar -->
+          <div class="tag-assign-toolbar">
+            <div class="search-input-wrapper flex-grow-1">
+              <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input 
+                v-model="tagAssignSearch" 
+                type="text" 
+                placeholder="ابحث بالاسم أو الصنف…" 
+                class="form-control search-input"
+              />
+              <button 
+                v-if="tagAssignSearch" 
+                type="button" 
+                class="btn-clear-search" 
+                @click="tagAssignSearch = ''"
+                aria-label="مسح البحث"
+              >&times;</button>
+            </div>
+
+            <div class="tag-assign-quick-actions">
+              <button type="button" class="btn btn-outline btn-sm" @click="selectAllProductsForTag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>تحديد الكل ({{ filteredAssignProducts.length }})</span>
+              </button>
+              <button type="button" class="btn btn-outline btn-sm text-danger" @click="clearAllProductsForTag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>إلغاء التحديد</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Status bar: selected count -->
+          <div class="tag-assign-status-bar">
+            <span>تم اختيار <strong class="text-primary font-bold">{{ tagSelectedProductIds.size }}</strong> منتج من أصل <strong>{{ products.length }}</strong></span>
+            <span v-if="tagAssignSearch" class="text-muted text-small">(عرض {{ filteredAssignProducts.length }} نتيجة بحث)</span>
+          </div>
+
+          <!-- Product Checklist Grid -->
+          <div class="tag-assign-product-grid">
+            <div 
+              v-for="p in filteredAssignProducts" 
+              :key="p._id" 
+              class="tag-assign-item"
+              :class="{ 'is-selected': tagSelectedProductIds.has(p._id) }"
+              @click="toggleProductInTagAssign(p._id)"
+            >
+              <div class="tag-assign-checkbox">
+                <svg v-if="tagSelectedProductIds.has(p._id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="tag-assign-thumb">
+                <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" />
+                <div v-else class="tag-assign-placeholder">
+                  <CategoryIcon :name="p.category" size="18" />
+                </div>
+              </div>
+              <div class="tag-assign-details">
+                <div class="tag-assign-pname">{{ p.name }}</div>
+                <div class="tag-assign-pmeta">
+                  <span class="tag-assign-pcat">{{ p.category || 'عام' }}</span>
+                  <span class="tag-assign-pprice">{{ formatPrice(p.price_regular || p.price || 0) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="filteredAssignProducts.length === 0" class="tag-assign-empty">
+              <p>لا توجد منتجات تطابق البحث</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" @click="tagAssignModalOpen = false">إلغاء</button>
+          <button 
+            type="button" 
+            class="btn btn-primary btn-modal-save" 
+            :disabled="isSavingTagAssignments"
+            @click="saveTagAssignments"
+          >
+            <svg v-if="!isSavingTagAssignments" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>{{ isSavingTagAssignments ? 'جاري الحفظ…' : 'حفظ التعيينات (' + tagSelectedProductIds.size + ')' }}</span>
+          </button>
+        </div>
       </div>
     </div>
     </Transition>
@@ -9114,37 +9461,65 @@ export default {
     const editingTag = reactive({
       _id: '',
       name: '',
-      color: 'default',
-      icon: 'trophy'
+      color: 'gold',
+      icon: 'trophy',
+      badgeStyle: 'gradient',
+      placement: 'both',
+      description: '',
+      active: true
     });
 
     const tagColors = [
-      { key: 'default', label: 'اللون الافتراضي (رئيسي)' },
-      { key: 'rose', label: 'وردي (Rose)' },
-      { key: 'gold', label: 'ذهبي (Gold)' },
-      { key: 'fire', label: 'برتقالي/ناري (Fire)' },
-      { key: 'leaf', label: 'أخضر (Green)' },
-      { key: 'sky', label: 'أزرق (Blue)' },
-      { key: 'royal', label: 'بنفسجي (Purple)' }
+      { key: 'gold', label: 'ذهبي ملكي (Royal Gold)', hex: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+      { key: 'fire', label: 'برتقالي ناري (Flame Orange)', hex: '#f97316', gradient: 'linear-gradient(135deg, #f97316, #ea580c)' },
+      { key: 'rose', label: 'وردي مخملي (Ruby Rose)', hex: '#f43f5e', gradient: 'linear-gradient(135deg, #f43f5e, #e11d48)' },
+      { key: 'leaf', label: 'أخضر زمردي (Emerald Leaf)', hex: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #059669)' },
+      { key: 'sky', label: 'أزرق سماوي (Electric Sapphire)', hex: '#0ea5e9', gradient: 'linear-gradient(135deg, #0ea5e9, #0284c7)' },
+      { key: 'royal', label: 'بنفسجي ملكي (Imperial Violet)', hex: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+      { key: 'teal', label: 'تركوازي عصري (Persian Teal)', hex: '#14b8a6', gradient: 'linear-gradient(135deg, #14b8a6, #0d9488)' },
+      { key: 'amber', label: 'عسلي كراميل (Warm Caramel)', hex: '#d97706', gradient: 'linear-gradient(135deg, #d97706, #92400e)' },
+      { key: 'berry', label: 'توتي فاقع (Berry Magenta)', hex: '#d946ef', gradient: 'linear-gradient(135deg, #d946ef, #c026d3)' },
+      { key: 'dark', label: 'داكن كلاسيكي (Midnight Slate)', hex: '#334155', gradient: 'linear-gradient(135deg, #334155, #0f172a)' },
+      { key: 'default', label: 'رمادي محايد (Minimal Slate)', hex: '#475569', gradient: 'linear-gradient(135deg, #475569, #334155)' }
+    ];
+
+    const tagBadgeStyles = [
+      { key: 'gradient', label: 'تدرج فاخر (Gradient)', desc: 'مظهر براق غني بالألوان والتدرج اللوني' },
+      { key: 'glass', label: 'زجاجي شفاف (Glassmorphism)', desc: 'تأثير بلوري أنيق مع خلفية شبه شفافة' },
+      { key: 'minimal', label: 'إطار نقي (Minimal)', desc: 'خلفية هادئة مع حد وأيقونة ملونة' }
+    ];
+
+    const tagPlacements = [
+      { key: 'both', label: 'كلاهما (الصورة + التفاصيل)', desc: 'شارة عائمة على الصورة وحبة في التفاصيل (موصى به)' },
+      { key: 'floating', label: 'شارة على الصورة فقط', desc: 'تظهر فوق زاوية صورة المنتج' },
+      { key: 'inline', label: 'داخل التفاصيل فقط', desc: 'تظهر تحت وصف المنتج وسعره' }
     ];
 
     const tagIcons = [
-      { key: 'new', label: 'جديد (NEW)' },
-      { key: 'new_badge', label: 'إضافة جديدة' },
-      { key: 'trophy', label: 'كأس' },
-      { key: 'badge_check', label: 'جودة' },
-      { key: 'star_award', label: 'جائزة' },
-      { key: 'gift', label: 'هدية' },
-      { key: 'sprout', label: 'طازج' },
-      { key: 'tag_pct', label: 'خصم' },
-      { key: 'fire', label: 'عروض' },
-      { key: 'flash', label: 'فلاش' },
-      { key: 'bag_pct', label: 'حقيبة' },
-      { key: 'crown', label: 'تاج' },
-      { key: 'diamond', label: 'ألماسة' },
-      { key: 'sparkles', label: 'بريق' },
-      { key: 'heart', label: 'مميز' },
-      { key: 'star', label: 'نجمة' }
+      { key: 'new', label: 'جديد (NEW)', cat: 'promo' },
+      { key: 'new_badge', label: 'إضافة جديدة', cat: 'promo' },
+      { key: 'trophy', label: 'الأكثر طلباً', cat: 'award' },
+      { key: 'fire', label: 'عروض حارة', cat: 'promo' },
+      { key: 'tag_pct', label: 'تخفيض / خصم', cat: 'promo' },
+      { key: 'badge_check', label: 'جودة فائقة', cat: 'award' },
+      { key: 'star_award', label: 'جائزة التميز', cat: 'award' },
+      { key: 'crown', label: 'ملكي فاخر', cat: 'award' },
+      { key: 'diamond', label: 'VIP ألماسي', cat: 'award' },
+      { key: 'sparkles', label: 'بريق حصري', cat: 'award' },
+      { key: 'heart', label: 'مفضل للزبائن', cat: 'award' },
+      { key: 'star', label: 'نجمة مميزة', cat: 'award' },
+      { key: 'gift', label: 'هدية / بوكس', cat: 'food' },
+      { key: 'sprout', label: 'طازج يومياً', cat: 'food' },
+      { key: 'flash', label: 'عرض فلاش', cat: 'promo' },
+      { key: 'bag_pct', label: 'باقة توفير', cat: 'promo' },
+      { key: 'cheesecake02', label: 'كيك وتورت', cat: 'food' },
+      { key: 'biscuit', label: 'بسكويت وكعك', cat: 'food' },
+      { key: 'bread04', label: 'مخبوزات ونواشف', cat: 'food' },
+      { key: 'oriental', label: 'حلويات شرقية', cat: 'food' },
+      { key: 'coffee', label: 'مشروب ساخن', cat: 'drinks' },
+      { key: 'juice', label: 'عصائر وروزاطة', cat: 'drinks' },
+      { key: 'ice-cream', label: 'جيلاطي وبارد', cat: 'drinks' },
+      { key: 'service', label: 'ضيافة ومناسبات', cat: 'special' }
     ];
 
 
@@ -9848,14 +10223,22 @@ export default {
     const openTagModal = (tag = null) => {
       if (tag) {
         editingTag._id = tag._id;
-        editingTag.name = tag.name;
-        editingTag.color = tag.color || 'default';
+        editingTag.name = tag.name || '';
+        editingTag.color = tag.color || 'gold';
         editingTag.icon = tag.icon || 'trophy';
+        editingTag.badgeStyle = tag.badgeStyle || 'gradient';
+        editingTag.placement = tag.placement || 'both';
+        editingTag.description = tag.description || '';
+        editingTag.active = tag.active !== false;
       } else {
         editingTag._id = '';
         editingTag.name = '';
-        editingTag.color = 'default';
+        editingTag.color = 'gold';
         editingTag.icon = 'trophy';
+        editingTag.badgeStyle = 'gradient';
+        editingTag.placement = 'both';
+        editingTag.description = '';
+        editingTag.active = true;
       }
       tagModalOpen.value = true;
       nextTick(() => {
@@ -9865,11 +10248,19 @@ export default {
     };
 
     const saveTag = async () => {
+      if (!editingTag.name || !editingTag.name.trim()) {
+        toast.show('يرجى إدخال اسم العلامة المميزة', 'warning');
+        return;
+      }
       loading.value = true;
       const body = { 
-        name: editingTag.name,
-        color: editingTag.color,
-        icon: editingTag.icon
+        name: editingTag.name.trim(),
+        color: editingTag.color || 'gold',
+        icon: editingTag.icon || 'trophy',
+        badgeStyle: editingTag.badgeStyle || 'gradient',
+        placement: editingTag.placement || 'both',
+        description: editingTag.description || '',
+        active: editingTag.active !== false
       };
       const url = editingTag._id
         ? (activeShop.value === 'shop2' ? `/api/shop2/tags/${editingTag._id}` : `/api/tags/${editingTag._id}`)
@@ -9883,7 +10274,18 @@ export default {
         });
         
         if (res.ok) {
-          toast.show('تم حفظ العلامة بنجاح', 'success');
+          toast.show('تم حفظ العلامة المميزة بنجاح', 'success');
+          // If renamed, synchronize local products
+          const oldTag = tags.value.find(t => t._id === editingTag._id);
+          const oldName = oldTag ? oldTag.name : '';
+          if (oldName && oldName !== body.name) {
+            (products.value || []).forEach(p => {
+              if (p.tags && Array.isArray(p.tags)) {
+                const idx = p.tags.indexOf(oldName);
+                if (idx !== -1) p.tags[idx] = body.name;
+              }
+            });
+          }
           tagModalOpen.value = false;
           await fetchTags();
         } else {
@@ -9897,10 +10299,142 @@ export default {
       }
     };
 
-    const getTagDetails = (tagName) => {
-      const found = tags.value.find(t => t.name === tagName);
-      return found || { name: tagName, color: 'default', icon: 'trophy' };
+    const deleteTag = async (id) => {
+      const tagToDelete = tags.value.find(t => t._id === id);
+      const tagName = tagToDelete ? tagToDelete.name : '';
+      if (!confirm(`هل أنت متأكد من حذف العلامة "${tagName || ''}"؟`)) return;
+      const url = activeShop.value === 'shop2'
+        ? `/api/shop2/tags/${id}`
+        : `/api/tags/${id}`;
+
+      try {
+        const res = await adminFetch(url, { method: 'DELETE' });
+        if (res.ok) {
+          tags.value = tags.value.filter(t => t._id !== id);
+          if (tagName) {
+            (products.value || []).forEach(p => {
+              if (p.tags && Array.isArray(p.tags)) {
+                p.tags = p.tags.filter(t => t !== tagName);
+              }
+            });
+          }
+          toast.show('تم حذف العلامة المميزة بنجاح', 'success');
+        } else {
+          toast.show('فشل في حذف العلامة', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
+      }
     };
+
+    // --- DIRECT TAG PRODUCT BULK ASSIGNMENT ---
+    const tagAssignModalOpen = ref(false);
+    const assigningTag = ref(null);
+    const tagAssignSearch = ref('');
+    const tagSelectedProductIds = ref(new Set());
+    const isSavingTagAssignments = ref(false);
+
+    const openTagAssignModal = (tag) => {
+      assigningTag.value = tag;
+      tagAssignSearch.value = '';
+      const currentIds = (products.value || [])
+        .filter(p => p.tags && Array.isArray(p.tags) && p.tags.includes(tag.name))
+        .map(p => p._id);
+      tagSelectedProductIds.value = new Set(currentIds);
+      tagAssignModalOpen.value = true;
+    };
+
+    const toggleProductInTagAssign = (prodId) => {
+      if (tagSelectedProductIds.value.has(prodId)) {
+        tagSelectedProductIds.value.delete(prodId);
+      } else {
+        tagSelectedProductIds.value.add(prodId);
+      }
+    };
+
+    const selectAllProductsForTag = () => {
+      filteredAssignProducts.value.forEach(p => tagSelectedProductIds.value.add(p._id));
+    };
+
+    const clearAllProductsForTag = () => {
+      tagSelectedProductIds.value.clear();
+    };
+
+    const filteredAssignProducts = computed(() => {
+      const q = (tagAssignSearch.value || '').trim().toLowerCase();
+      if (!q) return products.value || [];
+      return (products.value || []).filter(p => 
+        (p.name && p.name.toLowerCase().includes(q)) || 
+        (p.category && p.category.toLowerCase().includes(q))
+      );
+    });
+
+    const saveTagAssignments = async () => {
+      if (!assigningTag.value) return;
+      isSavingTagAssignments.value = true;
+      try {
+        const prodIds = Array.from(tagSelectedProductIds.value);
+        const url = activeShop.value === 'shop2' 
+          ? `/api/shop2/tags/${assigningTag.value._id}/products` 
+          : `/api/tags/${assigningTag.value._id}/products`;
+        const res = await adminFetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productIds: prodIds })
+        });
+        if (res.ok) {
+          toast.show(`تم تحديث منتجات وسم "${assigningTag.value.name}" بنجاح`, 'success');
+          // Update local products state
+          (products.value || []).forEach(p => {
+            if (!p.tags) p.tags = [];
+            const hasTag = p.tags.includes(assigningTag.value.name);
+            const shouldHave = tagSelectedProductIds.value.has(p._id);
+            if (shouldHave && !hasTag) {
+              p.tags.push(assigningTag.value.name);
+            } else if (!shouldHave && hasTag) {
+              p.tags = p.tags.filter(t => t !== assigningTag.value.name);
+            }
+          });
+          tagAssignModalOpen.value = false;
+        } else {
+          toast.show('فشل تحديث منتجات الوسم', 'danger');
+        }
+      } catch (err) {
+        toast.show('حدث خطأ أثناء حفظ التعيينات', 'danger');
+      } finally {
+        isSavingTagAssignments.value = false;
+      }
+    };
+
+    const getTagDetails = (tagName) => {
+      const found = (tags.value || []).find(t => t.name === tagName);
+      return found || { 
+        name: tagName, 
+        color: 'gold', 
+        icon: 'trophy', 
+        badgeStyle: 'gradient',
+        placement: 'both' 
+      };
+    };
+
+    const getTagProducts = (tagName) => {
+      if (!tagName) return [];
+      return (products.value || []).filter(p => p.tags && Array.isArray(p.tags) && p.tags.includes(tagName));
+    };
+
+    const mostUsedTag = computed(() => {
+      if (!tags.value || tags.value.length === 0) return null;
+      let maxCount = -1;
+      let bestTag = null;
+      for (const t of tags.value) {
+        const count = getTagProductCount(t.name);
+        if (count > maxCount) {
+          maxCount = count;
+          bestTag = { ...t, count };
+        }
+      }
+      return bestTag;
+    });
 
     const getIconUrl = (iconKey) => {
       const map = {
@@ -9913,25 +10447,6 @@ export default {
       };
       const key = map[iconKey] || iconKey || 'trophy';
       return `/res/tags/${key}.png`;
-    };
-
-    const deleteTag = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف العلامة؟')) return;
-      const url = activeShop.value === 'shop2'
-        ? `/api/shop2/tags/${id}`
-        : `/api/tags/${id}`;
-
-      try {
-        const res = await adminFetch(url, { method: 'DELETE' });
-        if (res.ok) {
-          tags.value = tags.value.filter(t => t._id !== id);
-          toast.show('تم حذف العلامة', 'success');
-        } else {
-          toast.show('فشل في حذف العلامة', 'danger');
-        }
-      } catch (err) {
-        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
-      }
     };
 
     // --- CATEGORIES & TAGS REDESIGNED SHOWCASE LOGIC ---
@@ -9980,7 +10495,7 @@ export default {
 
     const getTagColorLabel = (colorKey) => {
       const match = tagColors.find(c => c.key === colorKey);
-      return match ? match.label.split(' ')[0] : 'افتراضي';
+      return match ? match.label.split(' ')[0] : 'ذهبي';
     };
 
     const filterProductsByCategory = (catName) => {
@@ -14968,6 +15483,8 @@ const closeSuggestionsWithDelay = () => {
       categorySubcategoriesString,
       editingTag,
       tagColors,
+      tagBadgeStyles,
+      tagPlacements,
       tagIcons,
       getTagDetails,
       getIconUrl,
@@ -14975,6 +15492,19 @@ const closeSuggestionsWithDelay = () => {
       saveTag,
       deleteTag,
       toggleProductTag,
+      tagAssignModalOpen,
+      assigningTag,
+      tagAssignSearch,
+      tagSelectedProductIds,
+      isSavingTagAssignments,
+      openTagAssignModal,
+      toggleProductInTagAssign,
+      selectAllProductsForTag,
+      clearAllProductsForTag,
+      filteredAssignProducts,
+      saveTagAssignments,
+      getTagProducts,
+      mostUsedTag,
 
       formatCurrency,
       formatTotal,
@@ -15371,10 +15901,48 @@ const closeSuggestionsWithDelay = () => {
 </script>
 
 <style scoped>
-/* SVG Tag Swatches & Live Preview */
-.tag-color-swatch-grid {
+/* ==========================================================================
+   TAGS MANAGEMENT: UPGRADED MODALS & MOCKUP STYLING
+   ========================================================================== */
+.tag-edit-modal-box {
+  max-width: 860px !important;
+  width: 95vw !important;
+}
+
+.tag-edit-form {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.tag-edit-layout {
+  display: grid;
+  grid-template-columns: 1fr 310px;
+  gap: 22px;
+  align-items: start;
+}
+
+.tag-edit-fields-col {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tag-edit-mockup-col {
+  width: 100%;
+}
+
+@media (max-width: 820px) {
+  .tag-edit-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Color Swatches Grid (11 Luxury Themes) */
+.tag-color-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
   gap: 8px;
 }
 
@@ -15382,43 +15950,454 @@ const closeSuggestionsWithDelay = () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 7px 10px;
   border-radius: 10px;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(30, 41, 59, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
   color: #cbd5e1;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.color-swatch-btn:hover {
+  background: rgba(51, 65, 85, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 .color-swatch-btn .swatch-circle {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #64748b;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
 }
 
-.color-swatch-btn.tag-rose .swatch-circle { background: #f43f5e; }
-.color-swatch-btn.tag-gold .swatch-circle { background: #eab308; }
-.color-swatch-btn.tag-fire .swatch-circle { background: #f97316; }
-.color-swatch-btn.tag-leaf .swatch-circle { background: #10b981; }
-.color-swatch-btn.tag-sky .swatch-circle { background: #06b6d4; }
-.color-swatch-btn.tag-royal .swatch-circle { background: #8b5cf6; }
+.color-swatch-btn.tag-gold .swatch-circle   { background: linear-gradient(135deg, #fbbf24, #d97706); }
+.color-swatch-btn.tag-fire .swatch-circle   { background: linear-gradient(135deg, #fb923c, #ea580c); }
+.color-swatch-btn.tag-rose .swatch-circle   { background: linear-gradient(135deg, #fb7185, #e11d48); }
+.color-swatch-btn.tag-leaf .swatch-circle   { background: linear-gradient(135deg, #34d399, #059669); }
+.color-swatch-btn.tag-sky .swatch-circle    { background: linear-gradient(135deg, #38bdf8, #0284c7); }
+.color-swatch-btn.tag-royal .swatch-circle  { background: linear-gradient(135deg, #c084fc, #7c3aed); }
+.color-swatch-btn.tag-teal .swatch-circle   { background: linear-gradient(135deg, #2dd4bf, #0d9488); }
+.color-swatch-btn.tag-amber .swatch-circle  { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.color-swatch-btn.tag-berry .swatch-circle  { background: linear-gradient(135deg, #f472b6, #db2777); }
+.color-swatch-btn.tag-dark .swatch-circle   { background: linear-gradient(135deg, #64748b, #0f172a); }
+.color-swatch-btn.tag-default .swatch-circle{ background: #64748b; }
 
 .color-swatch-btn.active {
-  border-color: #d97706;
-  background: rgba(217, 119, 6, 0.15);
-  color: #fbbf24;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fef3c7;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
   transform: translateY(-1px);
 }
 
-.tag-live-preview-container {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
+/* Radio Cards (Style & Placement Selectors) */
+.tag-radio-cards-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.tag-radio-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: right;
+  gap: 3px;
+  padding: 9px 12px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  color: #cbd5e1;
+}
+
+.tag-radio-card:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tag-radio-card.active {
+  background: rgba(217, 119, 6, 0.18);
+  border-color: #d97706;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.25);
+}
+
+.tag-radio-card-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.tag-radio-card.active .tag-radio-card-title {
+  color: #fbbf24;
+}
+
+.tag-radio-card-desc {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+/* SVG Icon Pool Grid for Tags */
+.tag-icon-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px;
+  max-height: 175px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+/* Live Realistic Card Mockup Preview Panel */
+.tag-mockup-sticky-panel {
+  position: sticky;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 14px;
+  backdrop-filter: blur(12px);
+}
+
+.tag-mockup-header-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.tag-card-mockup-container {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.tag-mockup-card {
+  width: 100%;
+  max-width: 270px;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+.tag-mockup-image-wrap {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.tag-mockup-img-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #334155 0%, #0f172a 100%);
+}
+
+.mockup-burger-icon {
+  width: 72px;
+  height: 72px;
+  opacity: 0.88;
+}
+
+/* Floating Tag Badge inside Mockup (Top Right in RTL) */
+.tag-mockup-floating-badge {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 4;
+}
+
+/* Mock Favorite Heart Button (Top Left in RTL) */
+.tag-mockup-heart-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 4;
+}
+
+.tag-mockup-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: right;
+  background: #ffffff;
+}
+
+.tag-mockup-subcat {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.tag-mockup-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.tag-mockup-desc {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tag-mockup-inline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 4px 0 2px 0;
+}
+
+.tag-mockup-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.tag-mockup-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.tag-mockup-price .price-val {
+  font-size: 1.1rem;
+  font-family: monospace;
+}
+
+.tag-mockup-price .price-curr {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.tag-mockup-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #d97706;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.tag-mockup-footnote {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* ==========================================================================
+   TAG BULK PRODUCT ASSIGNMENT MODAL
+   ========================================================================== */
+.tag-assign-modal {
+  max-width: 780px !important;
+  width: 95vw !important;
+}
+
+.tag-assign-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  max-height: 65vh;
+}
+
+.tag-assign-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tag-assign-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-assign-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: #64748b;
+  padding: 6px 10px;
+  background: rgba(241, 245, 249, 0.7);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.tag-assign-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 45vh;
+  padding: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tag-assign-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.tag-assign-item:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.tag-assign-item.is-selected {
+  background: #f0fdf4;
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+}
+
+.tag-assign-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.tag-assign-item.is-selected .tag-assign-checkbox {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.tag-assign-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-assign-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tag-assign-placeholder {
+  color: #94a3b8;
+}
+
+.tag-assign-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex-grow: 1;
+  text-align: right;
+}
+
+.tag-assign-pname {
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-assign-pmeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.tag-assign-pcat {
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-assign-pprice {
+  font-weight: 800;
+  color: #0284c7;
+  font-family: monospace;
+}
+
+.tag-assign-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 30px;
+  color: #94a3b8;
+  font-size: 0.9rem;
 }
 
 /* User Modal Popup Select Box Styling ONLY */
@@ -20522,35 +21501,96 @@ select.form-control:focus {
   font-weight: 700;
 }
 
-/* Tag Color Presets */
-.tag-default {
-  background: rgba(var(--primary-color-rgb), 0.12) !important;
-  color: var(--primary-color) !important;
-}
-.tag-rose {
-  background: #F7A3AD !important;
-  color: #8C172E !important;
-}
+/* Tag Theme Palettes (11 Luxury Themes) */
 .tag-gold {
-  background: #FCE6B1 !important;
-  color: #9E742C !important;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(253, 230, 138, 0.5) !important;
 }
 .tag-fire {
-  background: #F66601 !important;
-  color: #FFF !important;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(254, 215, 170, 0.5) !important;
+}
+.tag-rose {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(254, 205, 211, 0.5) !important;
 }
 .tag-leaf {
-  background: #9CB795 !important;
-  color: #1D3D1F !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(167, 243, 208, 0.5) !important;
 }
 .tag-sky {
-  background: #BEE3F8 !important;
-  color: #2B6CB0 !important;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(186, 230, 253, 0.5) !important;
 }
 .tag-royal {
-  background: #E9D8FD !important;
-  color: #553C9A !important;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(221, 214, 254, 0.5) !important;
 }
+.tag-teal {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(153, 246, 228, 0.5) !important;
+}
+.tag-amber {
+  background: linear-gradient(135deg, #d97706 0%, #92400e 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(254, 243, 199, 0.45) !important;
+}
+.tag-berry {
+  background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(245, 208, 254, 0.5) !important;
+}
+.tag-dark {
+  background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+.tag-default {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(203, 213, 225, 0.4) !important;
+}
+
+/* Tag Style Variants */
+.tag-style-glass {
+  background: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.25) inset !important;
+}
+.tag-style-glass.tag-gold   { border-color: rgba(245, 158, 11, 0.7) !important; color: #fef08a !important; }
+.tag-style-glass.tag-fire   { border-color: rgba(249, 115, 22, 0.7) !important; color: #fed7aa !important; }
+.tag-style-glass.tag-rose   { border-color: rgba(244, 63, 94, 0.7) !important; color: #fecdd3 !important; }
+.tag-style-glass.tag-leaf   { border-color: rgba(16, 185, 129, 0.7) !important; color: #a7f3d0 !important; }
+.tag-style-glass.tag-sky    { border-color: rgba(14, 165, 233, 0.7) !important; color: #bae6fd !important; }
+.tag-style-glass.tag-royal  { border-color: rgba(139, 92, 246, 0.7) !important; color: #ddd6fe !important; }
+.tag-style-glass.tag-teal   { border-color: rgba(20, 184, 166, 0.7) !important; color: #99f6e4 !important; }
+.tag-style-glass.tag-amber  { border-color: rgba(217, 119, 6, 0.7) !important; color: #fde68a !important; }
+.tag-style-glass.tag-berry  { border-color: rgba(217, 70, 239, 0.7) !important; color: #f5d0fe !important; }
+.tag-style-glass.tag-dark   { border-color: rgba(148, 163, 184, 0.5) !important; color: #f1f5f9 !important; }
+
+.tag-style-minimal {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+.tag-style-minimal.tag-gold   { border-color: #d97706 !important; color: #b45309 !important; }
+.tag-style-minimal.tag-fire   { border-color: #ea580c !important; color: #c2410c !important; }
+.tag-style-minimal.tag-rose   { border-color: #e11d48 !important; color: #be123c !important; }
+.tag-style-minimal.tag-leaf   { border-color: #059669 !important; color: #047857 !important; }
+.tag-style-minimal.tag-sky    { border-color: #0284c7 !important; color: #0369a1 !important; }
+.tag-style-minimal.tag-royal  { border-color: #7c3aed !important; color: #6d28d9 !important; }
+.tag-style-minimal.tag-teal   { border-color: #0d9488 !important; color: #115e59 !important; }
+.tag-style-minimal.tag-amber  { border-color: #b45309 !important; color: #78350f !important; }
+.tag-style-minimal.tag-berry  { border-color: #c026d3 !important; color: #86198f !important; }
+.tag-style-minimal.tag-dark   { border-color: #334155 !important; color: #0f172a !important; }
 
 .tag-custom-icon-admin {
   width: 14px;
@@ -30703,7 +31743,7 @@ select.pos-control {
 /* 6. Tags Showcase Grid & Cards */
 .tags-showcase-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 18px;
   padding: 20px;
 }
@@ -30717,12 +31757,13 @@ select.pos-control {
   flex-direction: column;
   gap: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .tag-showcase-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
 }
 
 .tag-card-header {
@@ -30746,23 +31787,44 @@ select.pos-control {
 .tag-card-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background: #f8fafc;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 14px;
   border: 1px solid #f1f5f9;
 }
 
-.tag-meta-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.tag-desc-text {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+  font-style: italic;
 }
 
-.tag-meta-label {
-  font-size: 0.78rem;
+.tag-meta-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-weight: 700;
+  color: #475569;
+}
+
+.tag-meta-chip-sm {
+  font-size: 0.74rem;
+  font-weight: 600;
   color: #64748b;
 }
 
@@ -30772,7 +31834,7 @@ select.pos-control {
   gap: 6px;
   padding: 3px 9px;
   border-radius: 8px;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -30783,41 +31845,193 @@ select.pos-control {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.color-gold .color-dot { background: #eab308; }
-.color-fire .color-dot { background: #f97316; }
-.color-leaf .color-dot { background: #22c55e; }
-.color-sky .color-dot { background: #0ea5e9; }
-.color-royal .color-dot { background: #a855f7; }
-.color-rose .color-dot { background: #f43f5e; }
-.color-default .color-dot { background: #64748b; }
+.color-gold .color-dot   { background: #eab308; }
+.color-fire .color-dot   { background: #f97316; }
+.color-rose .color-dot   { background: #f43f5e; }
+.color-leaf .color-dot   { background: #22c55e; }
+.color-sky .color-dot    { background: #0ea5e9; }
+.color-royal .color-dot  { background: #a855f7; }
+.color-teal .color-dot   { background: #14b8a6; }
+.color-amber .color-dot  { background: #d97706; }
+.color-berry .color-dot  { background: #ec4899; }
+.color-dark .color-dot   { background: #334155; }
+.color-default .color-dot{ background: #64748b; }
 
-.tag-product-count-link {
+/* Products Preview Box & Avatar Stack */
+.tag-products-preview-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.tag-products-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-quick-manage-prod {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: #ffffff;
+  border: 1px solid #cbd5e1;
   color: #0284c7;
-  border: 1px solid #bae6fd;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 750;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   font-family: inherit;
 }
 
-.tag-product-count-link:hover {
-  background: #f0f9ff;
-  color: #0369a1;
+.btn-quick-manage-prod:hover {
+  background: #e0f2fe;
   border-color: #7dd3fc;
+  color: #0369a1;
 }
 
+.tag-product-avatar-stack {
+  display: flex;
+  align-items: center;
+  direction: ltr;
+}
+
+.tag-avatar-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  overflow: hidden;
+  background: #f1f5f9;
+  margin-right: -8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.tag-avatar-item:hover {
+  transform: translateY(-2px) scale(1.1);
+  z-index: 5;
+}
+
+.tag-avatar-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tag-avatar-placeholder {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #475569;
+}
+
+.tag-avatar-overflow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: -8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.tag-product-avatar-stack.mini .tag-avatar-item,
+.tag-product-avatar-stack.mini .tag-avatar-overflow {
+  width: 26px;
+  height: 26px;
+  font-size: 0.68rem;
+  margin-right: -6px;
+}
+
+.tag-no-products-hint {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Card Action Buttons */
 .tag-card-footer {
   margin-top: auto;
-  padding-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tag-action-primary {
+  flex-grow: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  min-height: 40px;
+}
+
+.btn-tag-action-primary:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.btn-tag-action-secondary {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-tag-action-secondary:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-action-assign {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.btn-action-assign:hover {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+  box-shadow: 0 2px 8px rgba(22, 101, 52, 0.15);
 }
 
 /* 7. Table View Enhancements */
@@ -30895,10 +32109,6 @@ select.pos-control {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
     margin-bottom: 14px !important;
-  }
-
-  .tag-kpi-grid .tag-kpi-card:last-child {
-    grid-column: span 2 !important;
   }
 
   .cat-kpi-card,

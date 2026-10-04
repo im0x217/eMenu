@@ -1476,14 +1476,20 @@ app.get("/api/tags", checkMongoDB, async (req, res) => {
 
 app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name, color, icon } = req.body;
-    if (!name) return res.status(400).json({ error: "Name is required" });
-    const result = await tagsCollection.insertOne({ 
-      name, 
+    const { name, color, icon, badgeStyle, placement, description, active } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
+    const tagDoc = { 
+      name: name.trim(), 
       color: color || 'default', 
-      icon: icon || 'heart' 
-    });
-    res.status(201).json(result);
+      icon: icon || 'trophy',
+      badgeStyle: badgeStyle || 'gradient',
+      placement: placement || 'both',
+      description: description || '',
+      active: active !== false,
+      createdAt: new Date()
+    };
+    const result = await tagsCollection.insertOne(tagDoc);
+    res.status(201).json({ ...tagDoc, _id: result.insertedId });
   } catch (err) {
     res.status(500).json({ error: "Failed to create tag" });
   }
@@ -1491,14 +1497,38 @@ app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
 
 app.put("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name, color, icon } = req.body;
-    if (!name) return res.status(400).json({ error: "Name is required" });
+    const { name, color, icon, badgeStyle, placement, description, active } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    
+    const currentTag = await tagsCollection.findOne({ _id: new ObjectId(req.params.id) });
+    const newName = name.trim();
+    
     await tagsCollection.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, color: color || 'default', icon: icon || 'heart' } }
+      { 
+        $set: { 
+          name: newName, 
+          color: color || 'default', 
+          icon: icon || 'trophy',
+          badgeStyle: badgeStyle || 'gradient',
+          placement: placement || 'both',
+          description: description || '',
+          active: active !== false,
+          updatedAt: new Date()
+        } 
+      }
     );
-    res.json({ success: true });
+
+    // If tag name changed, synchronize all products referencing old name
+    if (currentTag && currentTag.name && currentTag.name !== newName) {
+      await productsCollection.updateMany(
+        { tags: currentTag.name },
+        { $set: { "tags.$": newName } }
+      );
+    }
+
+    res.json({ success: true, name: newName });
   } catch (err) {
     res.status(500).json({ error: "Failed to update tag" });
   }
@@ -1507,10 +1537,50 @@ app.put("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
 app.delete("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    const currentTag = await tagsCollection.findOne({ _id: new ObjectId(req.params.id) });
+    if (currentTag && currentTag.name) {
+      // Clean up tag references from products
+      await productsCollection.updateMany(
+        { tags: currentTag.name },
+        { $pull: { tags: currentTag.name } }
+      );
+    }
     await tagsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete tag" });
+  }
+});
+
+// Bulk assign / unassign tag products
+app.put("/api/tags/:id/products", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    const { productIds } = req.body;
+    if (!Array.isArray(productIds)) return res.status(400).json({ error: "productIds array required" });
+    
+    const tag = await tagsCollection.findOne({ _id: new ObjectId(req.params.id) });
+    if (!tag) return res.status(404).json({ error: "Tag not found" });
+
+    const targetObjectIds = productIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+
+    // Add tag to selected products
+    if (targetObjectIds.length > 0) {
+      await productsCollection.updateMany(
+        { _id: { $in: targetObjectIds } },
+        { $addToSet: { tags: tag.name } }
+      );
+    }
+
+    // Remove tag from products not in list
+    await productsCollection.updateMany(
+      { _id: { $nin: targetObjectIds }, tags: tag.name },
+      { $pull: { tags: tag.name } }
+    );
+
+    res.json({ success: true, count: targetObjectIds.length });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tag products" });
   }
 });
 
@@ -1583,14 +1653,20 @@ app.get("/api/shop2/tags", checkMongoDB, async (req, res) => {
 
 app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name, color, icon } = req.body;
-    if (!name) return res.status(400).json({ error: "Name is required" });
-    const result = await tagsCollection2.insertOne({ 
-      name, 
+    const { name, color, icon, badgeStyle, placement, description, active } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
+    const tagDoc = { 
+      name: name.trim(), 
       color: color || 'default', 
-      icon: icon || 'heart' 
-    });
-    res.status(201).json(result);
+      icon: icon || 'trophy',
+      badgeStyle: badgeStyle || 'gradient',
+      placement: placement || 'both',
+      description: description || '',
+      active: active !== false,
+      createdAt: new Date()
+    };
+    const result = await tagsCollection2.insertOne(tagDoc);
+    res.status(201).json({ ...tagDoc, _id: result.insertedId });
   } catch (err) {
     res.status(500).json({ error: "Failed to create tag" });
   }
@@ -1598,14 +1674,38 @@ app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
 
 app.put("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name, color, icon } = req.body;
-    if (!name) return res.status(400).json({ error: "Name is required" });
+    const { name, color, icon, badgeStyle, placement, description, active } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    
+    const currentTag = await tagsCollection2.findOne({ _id: new ObjectId(req.params.id) });
+    const newName = name.trim();
+    
     await tagsCollection2.updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { name, color: color || 'default', icon: icon || 'heart' } }
+      { 
+        $set: { 
+          name: newName, 
+          color: color || 'default', 
+          icon: icon || 'trophy',
+          badgeStyle: badgeStyle || 'gradient',
+          placement: placement || 'both',
+          description: description || '',
+          active: active !== false,
+          updatedAt: new Date()
+        } 
+      }
     );
-    res.json({ success: true });
+
+    // If tag name changed, synchronize all shop2 products referencing old name
+    if (currentTag && currentTag.name && currentTag.name !== newName) {
+      await productsCollection2.updateMany(
+        { tags: currentTag.name },
+        { $set: { "tags.$": newName } }
+      );
+    }
+
+    res.json({ success: true, name: newName });
   } catch (err) {
     res.status(500).json({ error: "Failed to update tag" });
   }
@@ -1614,10 +1714,50 @@ app.put("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
 app.delete("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    const currentTag = await tagsCollection2.findOne({ _id: new ObjectId(req.params.id) });
+    if (currentTag && currentTag.name) {
+      // Clean up tag references from shop2 products
+      await productsCollection2.updateMany(
+        { tags: currentTag.name },
+        { $pull: { tags: currentTag.name } }
+      );
+    }
     await tagsCollection2.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete tag" });
+  }
+});
+
+// Bulk assign / unassign shop2 tag products
+app.put("/api/shop2/tags/:id/products", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
+    const { productIds } = req.body;
+    if (!Array.isArray(productIds)) return res.status(400).json({ error: "productIds array required" });
+    
+    const tag = await tagsCollection2.findOne({ _id: new ObjectId(req.params.id) });
+    if (!tag) return res.status(404).json({ error: "Tag not found" });
+
+    const targetObjectIds = productIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+
+    // Add tag to selected products
+    if (targetObjectIds.length > 0) {
+      await productsCollection2.updateMany(
+        { _id: { $in: targetObjectIds } },
+        { $addToSet: { tags: tag.name } }
+      );
+    }
+
+    // Remove tag from products not in list
+    await productsCollection2.updateMany(
+      { _id: { $nin: targetObjectIds }, tags: tag.name },
+      { $pull: { tags: tag.name } }
+    );
+
+    res.json({ success: true, count: targetObjectIds.length });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tag products" });
   }
 });
 
