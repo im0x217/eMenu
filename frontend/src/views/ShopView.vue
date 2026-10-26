@@ -843,16 +843,26 @@ watch(carouselItems, (newItems) => {
         <div class="subcat-plain-header">
           <h2 class="subcat-plain-title">{{ group.name }}</h2>
           <span class="subcat-plain-badge">{{ group.products.length }}</span>
+          <button
+            v-if="searchQuery.trim()"
+            type="button"
+            class="active-search-clear-pill animate-fade-in"
+            @click="searchQuery = ''"
+            title="إلغاء البحث والعودة للأقسام"
+          >
+            <span>إلغاء البحث: "{{ searchQuery.trim() }}"</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
-        <!-- 1 Horizontal Scrollable Product Row Per Sub-Category -->
+        <!-- Multi-Column Responsive Grid when Searching, or 1 Horizontal Row when Browsing -->
         <div 
-          class="subcat-products-grid-1row" 
-          @wheel.prevent="handleHorizontalScroll"
-          @mousedown="startDrag"
-          @mousemove="drag"
-          @mouseup="endDrag"
-          @mouseleave="endDrag"
+          :class="searchQuery.trim() ? 'search-results-grid' : 'subcat-products-grid-1row'" 
+          @wheel="searchQuery.trim() ? null : handleHorizontalScroll($event)"
+          @mousedown="searchQuery.trim() ? null : startDrag($event)"
+          @mousemove="searchQuery.trim() ? null : drag($event)"
+          @mouseup="searchQuery.trim() ? null : endDrag($event)"
+          @mouseleave="searchQuery.trim() ? null : endDrag($event)"
         >
           <ProductCard 
             v-for="(product, pIdx) in group.products" 
@@ -860,6 +870,7 @@ watch(carouselItems, (newItems) => {
             :product="product" 
             :priority="pIdx < 6 ? 'high' : 'auto'"
             @zoom="openZoomModal"
+            @select-tag="handleFilterTagFromQuickView"
           />
         </div>
       </div>
@@ -1348,6 +1359,47 @@ watch(carouselItems, (newItems) => {
 
 .subcat-products-grid-1row::-webkit-scrollbar {
   display: none;
+}
+
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  padding: 6px 8px 18px 8px;
+}
+
+.active-search-clear-pill {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(217, 119, 6, 0.32);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.active-search-clear-pill:hover {
+  background: rgba(245, 158, 11, 0.24);
+  transform: translateY(-1px);
+}
+
+.active-search-clear-pill:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 640px) {
+  .search-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 4px 4px 16px 4px;
+  }
 }
 
 .loading-state {

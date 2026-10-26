@@ -28,7 +28,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['zoom']);
+const emit = defineEmits(['zoom', 'select-tag']);
 
 const shopStore = useShopStore();
 const cartStore = useCartStore();
@@ -332,12 +332,17 @@ const productTags = computed(() => {
         <h3 class="product-title" :title="product.name">{{ product.name }}</h3>
         <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
 
-        <!-- Singular Unified Design Theme Tags (Details Only) -->
+        <!-- Singular Unified Design Theme Tags (Details Only - Tap to Filter) -->
         <div v-if="productTags.length > 0" class="product-tags-wrapper">
           <div 
             v-for="(tagItem, tIdx) in productTags" 
             :key="'tag-' + tIdx" 
             class="product-tag-chip animate-fade-in"
+            role="button"
+            tabindex="0"
+            :title="'تصفية حسب: ' + tagItem.name"
+            @click.stop="emit('select-tag', tagItem.name)"
+            @keydown.enter.stop="emit('select-tag', tagItem.name)"
           >
             <span class="tag-chip-icon" aria-hidden="true" v-if="tagItem.icon">
               <CategoryIcon :icon="tagItem.icon" :name="tagItem.name" size="11" stroke-width="2.3" />
@@ -604,8 +609,19 @@ const productTags = computed(() => {
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(217, 119, 6, 0.22);
   color: #b45309;
+  cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
   user-select: none;
+}
+
+.product-tag-chip:hover {
+  transform: translateY(-1px) scale(1.03);
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(217, 119, 6, 0.45);
+}
+
+.product-tag-chip:active {
+  transform: scale(0.95);
 }
 
 .product-card:hover .product-tag-chip {

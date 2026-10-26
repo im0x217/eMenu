@@ -142,7 +142,12 @@
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
         <h2>لوحة إدارة e-Menu</h2>
-        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
+        <div class="mobile-header-right-actions">
+          <button type="button" class="mobile-omni-btn" @click="openCommandPalette" aria-label="بحث شامل أو أمر سريع" title="بحث شامل أو أمر (Ctrl+K)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.3" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
+        </div>
       </header>
 
       <!-- Main Content -->
@@ -156,12 +161,28 @@
               </span>
             </Transition>
           </div>
-          <!-- Period & Actions for Analytics -->
-          <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
-            <!-- Period Selector -->
-            <div class="segmented-control">
-              <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
-                {{ p.label }}
+          <div class="header-global-toolbar">
+            <!-- Period & Actions for Analytics -->
+            <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
+              <!-- Period Selector -->
+              <div class="segmented-control">
+                <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
+                  {{ p.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Global Spotlight Omni-Search Trigger & Fast POS Action -->
+            <div class="header-quick-Utilities">
+              <button type="button" class="omni-search-trigger-btn" @click="openCommandPalette" title="بحث شامل في الطلبات والعملاء والمنتجات والأوامر (Ctrl+K)">
+                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.4" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span class="omni-trigger-text">بحث شامل أو أمر…</span>
+                <kbd class="omni-trigger-kbd">Ctrl+K</kbd>
+              </button>
+              <button type="button" class="header-pos-fast-btn" @click="openNewOrderModal" title="إنشاء طلب كاشير سريع (F2)">
+                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>طلب سريع</span>
+                <kbd class="omni-trigger-kbd is-pos">F2</kbd>
               </button>
             </div>
           </div>
@@ -4358,7 +4379,17 @@
                   </div>
                   <div v-if="matchedEditingCustomer" class="edit-cust-box-bottom">
                     <span class="badge-orders">{{ formatArabicPlural(matchedEditingCustomer.orderCount || 0, 'order') }}</span>
-                    <span v-if="matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">{{ formatCurrency(matchedEditingCustomer.outstandingBalance) }} دين</span>
+                    <span v-if="matchedEditingCustomer.outstandingBalance > 0" class="badge-balance-debt">دين: {{ formatCurrency(matchedEditingCustomer.outstandingBalance) }}</span>
+                    <span v-else-if="matchedEditingCustomer.outstandingBalance < 0" class="pos-intel-pill is-clear">رصيد دائن: {{ formatCurrency(Math.abs(matchedEditingCustomer.outstandingBalance)) }}</span>
+                    <span v-else class="pos-intel-pill is-clear">خالص</span>
+                    <button
+                      type="button"
+                      class="btn-edit-cust-statement"
+                      @click="orderEditModalOpen = false; openCustomerDetails(matchedEditingCustomer)"
+                      title="فتح كشف حساب العميل وسجل دفعاته"
+                    >
+                      كشف الحساب ›
+                    </button>
                   </div>
                 </div>
 
@@ -4604,7 +4635,20 @@
                               في الطلب ×{{ getEditOrderItemQty(prod._id) }}
                             </span>
                           </div>
-                          <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
+                          <div class="suggestion-submeta-row">
+                            <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
+                            <span
+                              v-if="activeShop === 'shop2' && getProductAvailableStock(prod._id) !== null"
+                              class="pos-stock-pill"
+                              :class="{
+                                'is-out': getProductAvailableStock(prod._id) <= 0,
+                                'is-low': getProductAvailableStock(prod._id) > 0 && getProductAvailableStock(prod._id) <= 5,
+                                'is-ok': getProductAvailableStock(prod._id) > 5
+                              }"
+                            >
+                              {{ getProductAvailableStock(prod._id) <= 0 ? 'نفد المخزون' : 'متاح: ' + getProductAvailableStock(prod._id) }}
+                            </span>
+                          </div>
                         </div>
                         <div class="suggestion-pricing">
                           <span class="suggestion-price text-mono font-bold">
@@ -4664,8 +4708,8 @@
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
-                              step="1" 
-                              min="0.1" 
+                              :step="item.allowFloat ? '0.25' : '1'" 
+                              :min="item.allowFloat ? '0.25' : '1'" 
                               class="form-control stepper-input text-mono text-center" 
                               placeholder="1" 
                               required 
@@ -7178,7 +7222,7 @@
           v-model="commandPaletteQuery" 
           type="text" 
           class="palette-input" 
-          placeholder="بحث أو أمر… (Ctrl+K)" 
+          placeholder="ابحث عن طلب (#رقم أو هاتف)، عميل، منتج، أو أمر سريع… (Ctrl+K)" 
           autocomplete="off"
         />
         <kbd class="kbd-badge kbd-esc-badge" @click="commandPaletteOpen = false">Esc</kbd>
@@ -7194,13 +7238,19 @@
           @mouseenter="commandPaletteIndex = idx"
         >
           <div class="palette-item-main">
-            <span class="palette-category-badge">{{ cmd.category }}</span>
-            <span class="palette-item-title">{{ cmd.title }}</span>
+            <span class="palette-category-badge" :class="cmd.categoryClass || ''">{{ cmd.category }}</span>
+            <div class="palette-item-text-col">
+              <span class="palette-item-title">{{ cmd.title }}</span>
+              <span v-if="cmd.meta" class="palette-item-meta">{{ cmd.meta }}</span>
+            </div>
           </div>
-          <kbd v-if="cmd.shortcut" class="kbd-badge">{{ cmd.shortcut }}</kbd>
+          <div class="palette-item-trailing">
+            <span v-if="cmd.badge" class="palette-entity-badge" :class="cmd.badgeClass || ''">{{ cmd.badge }}</span>
+            <kbd v-if="cmd.shortcut" class="kbd-badge">{{ cmd.shortcut }}</kbd>
+          </div>
         </div>
         <div v-if="availableCommands.length === 0" class="palette-no-results">
-          لا توجد أوامر مطابقة لـ "{{ commandPaletteQuery }}"
+          لا توجد نتائج أو أوامر مطابقة لـ "{{ commandPaletteQuery }}"
         </div>
       </div>
 
@@ -11300,13 +11350,25 @@ export default {
     const showSuggestions = ref(false);
 
     const filteredSuggestions = computed(() => {
-      const q = productSearchQuery.value.trim().toLowerCase();
+      const rawQ = productSearchQuery.value.trim();
       const list = products.value || [];
-      if (!q) return list.slice(0, 8);
+      if (!rawQ) return list.slice(0, 8);
+      const qNorm = normalizePosArabic(rawQ);
       return list
-        .filter(p => (p.name || '').toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q)))
-        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
-        .slice(0, 10);
+        .filter(p => {
+          const nameNorm = normalizePosArabic(p.name || '');
+          const catNorm = normalizePosArabic(p.category || '');
+          const subNorm = normalizePosArabic(p.subCategory || '');
+          const tagsMatch = Array.isArray(p.tags) && p.tags.some(t => normalizePosArabic(t).includes(qNorm));
+          return nameNorm.includes(qNorm) || catNorm.includes(qNorm) || subNorm.includes(qNorm) || tagsMatch;
+        })
+        .sort((a, b) => {
+          const aStarts = normalizePosArabic(a.name || '').startsWith(qNorm) ? 0 : 1;
+          const bStarts = normalizePosArabic(b.name || '').startsWith(qNorm) ? 0 : 1;
+          if (aStarts !== bStarts) return aStarts - bStarts;
+          return (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' });
+        })
+        .slice(0, 12);
     });
 
     const editOrderQtyMap = computed(() => {
@@ -11328,9 +11390,10 @@ export default {
     };
 
     const adjustEditOrderItemQty = (item, delta) => {
-      const step = 1;
+      const step = item.allowFloat ? 0.25 : 1;
+      const minQty = item.allowFloat ? 0.25 : 1;
       const current = Number(item.quantity) || 0;
-      const next = Math.max(1, Math.round((current + delta * step) * 100) / 100);
+      const next = Math.max(minQty, Math.round((current + delta * step) * 100) / 100);
       item.quantity = next;
       recalcOrderTotal();
     };
@@ -11449,7 +11512,14 @@ const closeSuggestionsWithDelay = () => {
       editOrderCustomerSearch.value = '';
       showEditOrderCustomerSuggestions.value = false;
       highlightedEditCustomerIndex.value = 0;
-      editingOrder.items = (order.items || []).map(item => ({ ...item, notes: item.notes || '' }));
+      editingOrder.items = (order.items || []).map(item => {
+        const matchedProd = (products.value || []).find(p => (item.productId && String(p._id) === String(item.productId)) || p.name === item.name);
+        return {
+          ...item,
+          notes: item.notes || '',
+          allowFloat: item.allowFloat !== undefined ? !!item.allowFloat : !!(matchedProd && matchedProd.allowFloat)
+        };
+      });
       editingOrder.totalPrice = order.totalPrice || 0;
       editingOrder.priceMode = order.priceMode || 'regular';
       editingOrder.status = order.status || 'pending';
@@ -12338,34 +12408,131 @@ const closeSuggestionsWithDelay = () => {
     let scanBuffer = '';
     let scanTimeout = null;
 
-    // Available Commands in Command Palette (Placed here so all modal functions and printReport are fully defined)
+    // Reset command palette highlight when query changes
+    watch(commandPaletteQuery, () => {
+      commandPaletteIndex.value = 0;
+    });
+
+    // Spotlight / Raycast Multi-Entity Omni-Search Engine (Commands + Live Orders + Live Customers + Live Products)
     const availableCommands = computed(() => {
-      const q = commandPaletteQuery.value.trim().toLowerCase();
+      const rawQ = commandPaletteQuery.value.trim();
+      const qNorm = normalizePosArabic(rawQ);
+      const qDigits = cleanPhoneDigits(rawQ);
+
       const allCmds = [
-        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'طلبات', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
-        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => setTab('orders') },
-        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => setTab('products') },
-        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => setTab('customers') },
-        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => setTab('production') },
-        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => setTab('analytics') },
-        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => setTab('categories') },
-        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => setTab('tags') },
-        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => setTab('carousel') },
-        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => setTab('users') },
-        { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
-        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
-        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
-        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
-        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'صلاحيات', shortcut: '', icon: 'user-check', action: () => openUserModal() },
-        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printReport() },
-        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
+        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'أمر سريع', categoryClass: 'is-cmd', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
+        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+5', icon: 'file-text', action: () => setTab('orders') },
+        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+2', icon: 'package', action: () => setTab('products') },
+        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+6', icon: 'users', action: () => setTab('customers') },
+        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+7', icon: 'chef-hat', action: () => setTab('production') },
+        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+1', icon: 'trending-up', action: () => setTab('analytics') },
+        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+3', icon: 'folder', action: () => setTab('categories') },
+        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+4', icon: 'tag', action: () => setTab('tags') },
+        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+8', icon: 'image', action: () => setTab('carousel') },
+        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+9', icon: 'shield', action: () => setTab('users') },
+        { id: 'nav-settings', title: 'الانتقال إلى الإعدادات والنسخ الاحتياطي', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+0', icon: 'settings', action: () => setTab('settings') },
+        { id: 'switch-shop', title: activeShop.value === 'shop1' ? 'التبديل إلى قسم النواشف والمخزن (Shop 2)' : 'التبديل إلى المتجر الرئيسي للحلويات (Shop 1)', category: 'تنقل', categoryClass: 'is-nav', shortcut: '', icon: 'repeat', action: () => switchShop(activeShop.value === 'shop1' ? 'shop2' : 'shop1') },
+        { id: 'new-product', title: 'إضافة منتج جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
+        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
+        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
+        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'tag', action: () => openTagModal() },
+        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'user-check', action: () => openUserModal() },
+        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', categoryClass: 'is-cmd', shortcut: '', icon: 'printer', action: () => printReport() },
+        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', categoryClass: 'is-nav', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
       ];
       const filteredByRole = userRole.value === 'order_manager'
-        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'new-chef', 'help-shortcuts'].includes(c.id))
+        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'new-chef', 'switch-shop', 'help-shortcuts'].includes(c.id))
         : allCmds;
 
-      if (!q) return filteredByRole;
-      return filteredByRole.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+      if (!rawQ) return filteredByRole;
+
+      const matchedCmds = filteredByRole.filter(c =>
+        normalizePosArabic(c.title).includes(qNorm) ||
+        normalizePosArabic(c.category).includes(qNorm)
+      );
+
+      // 1. Live Orders Search (#orderNumber, customer name, phone)
+      const qOrderClean = rawQ.replace(/^#/, '').trim().toLowerCase();
+      const statusLabels = { pending: 'قيد الانتظار', in_progress: 'قيد التجهيز', completed: 'مكتمل', cancelled: 'ملغي' };
+      const matchedOrders = (orders.value || [])
+        .filter(o => {
+          const ordNum = String(o.orderNumber || (o._id ? o._id.toString().slice(-6) : '')).toLowerCase();
+          const cName = normalizePosArabic(o.customerInfo?.name || '');
+          const cPhone = cleanPhoneDigits(o.customerInfo?.phone || '');
+          return ordNum.includes(qOrderClean) ||
+            (qNorm && cName.includes(qNorm)) ||
+            (qDigits.length >= 2 && cPhone.includes(qDigits));
+        })
+        .slice(0, 5)
+        .map(o => {
+          const ordNum = o.orderNumber || (o._id ? o._id.toString().slice(-6) : '');
+          const cName = o.customerInfo?.name || 'عميل نقدي';
+          const cPhone = o.customerInfo?.phone ? formatLibyanPhone(o.customerInfo.phone) : '';
+          return {
+            id: 'omni-order-' + o._id,
+            category: 'طلب #' + ordNum,
+            categoryClass: 'is-order',
+            title: cName + (cPhone ? ' (' + cPhone + ')' : ''),
+            meta: (o.items ? o.items.length + ' أصناف' : '') + (o.deliveryDate ? ' • التسليم: ' + String(o.deliveryDate).slice(0, 10) : ''),
+            badge: formatCurrency(o.totalPrice || 0) + ' • ' + (statusLabels[o.status] || o.status),
+            badgeClass: o.status === 'completed' ? 'is-ok' : (o.status === 'cancelled' ? 'is-danger' : 'is-warn'),
+            shortcut: 'تعديل ↵',
+            action: () => openOrderEditModal(o)
+          };
+        });
+
+      // 2. Live Customers Search (name, phone)
+      const matchedCustomers = (customers.value || [])
+        .filter(c => {
+          const cName = normalizePosArabic(c.name || '');
+          const cPhone = cleanPhoneDigits(c.phone || '');
+          return (qNorm && cName.includes(qNorm)) || (qDigits.length >= 2 && cPhone.includes(qDigits));
+        })
+        .slice(0, 5)
+        .map(c => {
+          const debt = Number(c.outstandingBalance) || 0;
+          return {
+            id: 'omni-cust-' + (c._id || c.phone),
+            category: 'عميل',
+            categoryClass: 'is-customer',
+            title: (c.name || ' بدون اسم') + (c.phone ? ' — ' + formatLibyanPhone(c.phone) : ''),
+            meta: formatArabicPlural(c.orderCount || 0, 'order') + ' • إجمالي المشتريات: ' + formatCurrency(c.totalSpent || 0),
+            badge: debt > 0 ? ('دين: ' + formatCurrency(debt)) : (debt < 0 ? ('دائن: ' + formatCurrency(Math.abs(debt))) : 'خالص'),
+            badgeClass: debt > 0 ? 'is-danger' : 'is-ok',
+            shortcut: 'كشف الحساب ↵',
+            action: () => openCustomerDetails(c)
+          };
+        });
+
+      // 3. Live Products Search (name, category, subCategory, tags) — for admin role
+      const matchedProducts = userRole.value === 'order_manager'
+        ? []
+        : (products.value || [])
+            .filter(p => {
+              const pName = normalizePosArabic(p.name || '');
+              const pCat = normalizePosArabic(p.category || '');
+              const pSub = normalizePosArabic(p.subCategory || '');
+              const pTags = Array.isArray(p.tags) && p.tags.some(t => normalizePosArabic(t).includes(qNorm));
+              return (qNorm && (pName.includes(qNorm) || pCat.includes(qNorm) || pSub.includes(qNorm) || pTags));
+            })
+            .slice(0, 6)
+            .map(p => {
+              const stock = activeShop.value === 'shop2' ? getProductAvailableStock(p._id) : null;
+              const regPrice = p.price_regular !== undefined && p.price_regular !== null ? p.price_regular : p.price;
+              return {
+                id: 'omni-prod-' + p._id,
+                category: 'منتج',
+                categoryClass: 'is-product',
+                title: p.name,
+                meta: (p.category || 'بدون تصنيف') + (p.subCategory ? ' › ' + p.subCategory : '') + (Array.isArray(p.tags) && p.tags.length ? ' • ' + p.tags.join('، ') : ''),
+                badge: formatCurrency(regPrice || 0) + (stock !== null ? (' • مخزون: ' + stock) : ''),
+                badgeClass: stock !== null && stock <= 0 ? 'is-danger' : 'is-neutral',
+                shortcut: 'تعديل ↵',
+                action: () => openProductModal(p)
+              };
+            });
+
+      return [...matchedOrders, ...matchedCustomers, ...matchedProducts, ...matchedCmds];
     });
 
     const openCommandPalette = () => {
@@ -30487,6 +30654,208 @@ select.pos-control {
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
+}
+
+/* ============================================================
+   SPOTLIGHT OMNI-SEARCH TRIGGER & MULTI-ENTITY PALETTE BADGES
+   ============================================================ */
+.header-global-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-quick-Utilities {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.omni-search-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.omni-search-trigger-btn:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.omni-trigger-kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  direction: ltr;
+}
+
+.omni-trigger-kbd.is-pos {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.header-pos-fast-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e3a5f, #0f172a);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.header-pos-fast-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+}
+
+.mobile-header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-omni-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.palette-item-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.palette-item-meta {
+  font-size: 0.73rem;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.palette-item-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.palette-category-badge.is-order {
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+}
+
+.palette-category-badge.is-customer {
+  background: rgba(139, 92, 246, 0.14);
+  color: #6d28d9;
+}
+
+.palette-category-badge.is-product {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.palette-category-badge.is-cmd {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+
+.palette-entity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.palette-entity-badge.is-ok {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+}
+
+.palette-entity-badge.is-warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.palette-entity-badge.is-danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+}
+
+.palette-entity-badge.is-neutral {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.btn-edit-cust-statement {
+  margin-right: auto;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  background: rgba(30, 58, 95, 0.08);
+  color: #1e3a5f;
+  border: 1px solid rgba(30, 58, 95, 0.18);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-edit-cust-statement:hover {
+  background: #1e3a5f;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .omni-trigger-text,
+  .omni-trigger-kbd {
+    display: none;
+  }
 }
 
 </style>
