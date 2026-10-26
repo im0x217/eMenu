@@ -2192,9 +2192,14 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
       matchFilter.shop = shop;
     }
 
-    const [sessionData, topCategoriesRaw, dwellResult] = await Promise.all([
+    const [funnelSummaryArr, topCategoriesRaw, dwellResult] = await Promise.all([
       telemetryCollection.aggregate([
-        { $match: matchFilter },
+        {
+          $match: {
+            ...matchFilter,
+            event: { $in: ["page_view", "cart_add", "checkout_step", "order_complete"] }
+          }
+        },
         {
           $group: {
             _id: "$sessionId",
@@ -2203,12 +2208,19 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
           }
         },
         {
-          $project: {
-            hasPageView: { $in: ["page_view", "$events"] },
-            hasCartAdd: { $in: ["cart_add", "$events"] },
-            hasCheckout: { $in: ["checkout_step", "$events"] },
-            hasOrder: { $in: ["order_complete", "$events"] },
-            device: 1
+          $group: {
+            _id: null,
+            totalSessions: { $sum: 1 },
+            cartSessions: { $sum: { $cond: [{ $in: ["cart_add", "$events"] }, 1, 0] } },
+            checkoutSessions: { $sum: { $cond: [{ $in: ["checkout_step", "$events"] }, 1, 0] } },
+            orderSessions: { $sum: { $cond: [{ $in: ["order_complete", "$events"] }, 1, 0] } },
+            mobile: {
+              $sum: {
+                $cond: [{ $not: [{ $in: ["$device", ["tablet", "desktop"]] }] }, 1, 0]
+              }
+            },
+            tablet: { $sum: { $cond: [{ $eq: ["$device", "tablet"] }, 1, 0] } },
+            desktop: { $sum: { $cond: [{ $eq: ["$device", "desktop"] }, 1, 0] } }
           }
         }
       ]).toArray(),
@@ -2247,23 +2259,16 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
       ]).toArray()
     ]);
 
-    let totalSessions = 0;
-    let cartSessions = 0;
-    let checkoutSessions = 0;
-    let orderSessions = 0;
-    const deviceCounts = { mobile: 0, tablet: 0, desktop: 0 };
-
-    for (const s of sessionData) {
-      totalSessions++;
-      if (s.hasCartAdd) cartSessions++;
-      if (s.hasCheckout) checkoutSessions++;
-      if (s.hasOrder) orderSessions++;
-      if (s.device && deviceCounts[s.device] !== undefined) {
-        deviceCounts[s.device]++;
-      } else {
-        deviceCounts.mobile++;
-      }
-    }
+    const funnelSummary = funnelSummaryArr[0] || {};
+    const totalSessions = funnelSummary.totalSessions || 0;
+    const cartSessions = funnelSummary.cartSessions || 0;
+    const checkoutSessions = funnelSummary.checkoutSessions || 0;
+    const orderSessions = funnelSummary.orderSessions || 0;
+    const deviceCounts = {
+      mobile: funnelSummary.mobile || 0,
+      tablet: funnelSummary.tablet || 0,
+      desktop: funnelSummary.desktop || 0
+    };
 
     const conversionRate = totalSessions > 0 ? Math.round((orderSessions / totalSessions) * 1000) / 10 : 0;
     const cartConversionRate = cartSessions > 0 ? Math.round((orderSessions / cartSessions) * 1000) / 10 : 0;
@@ -6039,7 +6044,7 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
     const [
       products, categories, tags, orders, customers, favorites,
       payments, counters, chefs, carousel, adminUsers,
-      products2, categories2, tags2, orders2, chefs2
+      products2, categories2, tags2, orders2, chefs2, stockReservations2
     ] = await Promise.all([
       productsCollection.find({}).toArray(),
       categoriesCollection.find({}).toArray(),
@@ -6056,7 +6061,8 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
       categoriesCollection2.find({}).toArray(),
       tagsCollection2.find({}).toArray(),
       ordersCollection2.find({}).toArray(),
-      chefsCollection2.find({}).toArray()
+      chefsCollection2.find({}).toArray(),
+      stockReservationsCollection.find({}).toArray()
     ]);
 
     const backupId = new ObjectId();
@@ -6086,7 +6092,8 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
         "emenu2.categories": categories2,
         "emenu2.tags": tags2,
         "emenu2.orders": orders2,
-        "emenu2.chefs": chefs2
+        "emenu2.chefs": chefs2,
+        "emenu2.stock_reservations": stockReservations2
       },
       stats: {
         "emenu.products": products.length,
@@ -6104,7 +6111,8 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
         "emenu2.categories": categories2.length,
         "emenu2.tags": tags2.length,
         "emenu2.orders": orders2.length,
-        "emenu2.chefs": chefs2.length
+        "emenu2.chefs": chefs2.length,
+        "emenu2.stock_reservations": stockReservations2.length
       }
     };
 
@@ -6120,13 +6128,17 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
       }
     }
 
-    // 2. Also store in MongoDB backupsCollection (with automatic fallback to metadata-only if BSON > 16MB)
-    try {
-      await backupsCollection.insertOne(backupDoc);
-    } catch (dbErr) {
-      console.warn("[BACKUP] Full document insert failed, storing metadata-only in MongoDB:", dbErr.message);
-      const { collections, ...metaOnlyDoc } = backupDoc;
+    // 2. Store lightweight metadata + stats in MongoDB when full JSON is saved on disk (keeps Atlas lean)
+    const { collections, ...metaOnlyDoc } = backupDoc;
+    if (savedToDisk) {
       await backupsCollection.insertOne(metaOnlyDoc);
+    } else {
+      try {
+        await backupsCollection.insertOne(backupDoc);
+      } catch (dbErr) {
+        console.warn("[BACKUP] Full document insert failed, storing metadata-only in MongoDB:", dbErr.message);
+        await backupsCollection.insertOne(metaOnlyDoc);
+      }
     }
 
     console.log(`[BACKUP] Backup created successfully: ${backupId}`);
@@ -6329,19 +6341,22 @@ const connectWithRetry = async () => {
     
     const safeIndex = (coll, spec, opts) => coll.createIndex(spec, opts).catch(() => {});
 
-    safeIndex(productsCollection, { category: 1 });
+    // Product, category & tag indexes (compound category+subCategory covers single-field category queries)
     safeIndex(productsCollection, { category: 1, subCategory: 1 });
     safeIndex(productsCollection, { tags: 1 });
     safeIndex(categoriesCollection, { name: 1 }, { unique: true });
     safeIndex(tagsCollection, { name: 1 }, { unique: true });
-    safeIndex(productsCollection2, { category: 1 });
     safeIndex(productsCollection2, { category: 1, subCategory: 1 });
     safeIndex(productsCollection2, { tags: 1 });
     safeIndex(categoriesCollection2, { name: 1 }, { unique: true });
     safeIndex(tagsCollection2, { name: 1 }, { unique: true });
+
+    // Customer & favorites indexes
     safeIndex(customersCollection, { phone: 1 }, { unique: true });
+    safeIndex(customersCollection, { outstandingBalance: -1 });
     safeIndex(favoritesCollection, { phone: 1, productId: 1, shop: 1 }, { unique: true });
-    safeIndex(ordersCollection, { "customerInfo.phone": 1 });
+
+    // Order indexes (compound customerInfo.phone+createdAt covers single-field phone lookups)
     safeIndex(ordersCollection, { orderNumber: 1 });
     safeIndex(ordersCollection, { createdAt: -1 });
     safeIndex(ordersCollection, { deliveryDate: 1 });
@@ -6350,7 +6365,6 @@ const connectWithRetry = async () => {
     safeIndex(ordersCollection, { "customerInfo.phone": 1, createdAt: -1 });
     safeIndex(ordersCollection, { cancelledAt: 1 }, { expireAfterSeconds: 86400 });
 
-    safeIndex(ordersCollection2, { "customerInfo.phone": 1 });
     safeIndex(ordersCollection2, { orderNumber: 1 });
     safeIndex(ordersCollection2, { createdAt: -1 });
     safeIndex(ordersCollection2, { deliveryDate: 1 });
@@ -6359,20 +6373,22 @@ const connectWithRetry = async () => {
     safeIndex(ordersCollection2, { "customerInfo.phone": 1, createdAt: -1 });
     safeIndex(ordersCollection2, { cancelledAt: 1 }, { expireAfterSeconds: 86400 });
 
+    // Stock reservation indexes (compound status+reservedAt covers expiry sweep & status filtering)
     safeIndex(stockReservationsCollection, { orderId: 1 });
     safeIndex(stockReservationsCollection, { orderNumber: 1 });
-    safeIndex(stockReservationsCollection, { status: 1 });
+    safeIndex(stockReservationsCollection, { status: 1, reservedAt: 1 });
     safeIndex(stockReservationsCollection, { reservedAt: -1 });
     safeIndex(stockReservationsCollection, { "items.inventoryRecordId": 1 });
 
+    // Admin, chef & backup metadata indexes
     safeIndex(adminUsersCollection, { username: 1 }, { unique: true });
     safeIndex(chefsCollection, { name: 1 });
     safeIndex(chefsCollection2, { name: 1 });
+    safeIndex(backupsCollection, { createdAt: -1 });
 
-    // Telemetry indexes with 30-day automatic pruning TTL
+    // Telemetry indexes with 30-day automatic pruning TTL + compound event/shop/timestamp index
     safeIndex(telemetryCollection, { timestamp: 1 }, { expireAfterSeconds: 30 * 86400 });
-    safeIndex(telemetryCollection, { sessionId: 1 });
-    safeIndex(telemetryCollection, { event: 1 });
+    safeIndex(telemetryCollection, { event: 1, shop: 1, timestamp: -1 });
     safeIndex(telemetryCollection, { shop: 1, timestamp: -1 });
 
     // Payment collection indexes
