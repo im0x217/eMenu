@@ -5,6 +5,7 @@ import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 import { useShopStore } from '../stores/shop';
+import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
 import { telemetry } from '../utils/telemetry';
@@ -226,6 +227,36 @@ const totalItemsCount = computed(() => {
   return cartStore.items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
 });
 
+// Argon 4 Real-Time Tweened Cart Grand Total Odometer
+const animatedCartTotal = ref(Number(cartStore.cartTotal) || 0);
+const isTotalPulsing = ref(false);
+let totalPulseTimer = null;
+
+watch(() => cartStore.cartTotal, (newVal, oldVal) => {
+  const target = Number(newVal) || 0;
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    animatedCartTotal.value = target;
+    return;
+  }
+  if (newVal !== oldVal && oldVal !== undefined) {
+    isTotalPulsing.value = true;
+    if (totalPulseTimer) clearTimeout(totalPulseTimer);
+    totalPulseTimer = setTimeout(() => { isTotalPulsing.value = false; }, 420);
+  }
+  gsap.to(animatedCartTotal, {
+    value: target,
+    duration: 0.38,
+    ease: 'power3.out',
+    overwrite: 'auto'
+  });
+}, { immediate: true });
+
+const formattedAnimatedTotal = computed(() => {
+  const val = animatedCartTotal.value;
+  const rounded = Math.round(val * 100) / 100;
+  return Number.isInteger(rounded) ? Math.round(rounded) : rounded.toFixed(2);
+});
+
 const handleCancelEditMode = () => {
   if (confirm('هل أنت متأكد من إلغاء وضع تعديل الطلب؟ سيتم تفريغ التغييرات غير المحفوظة.')) {
     cartStore.cancelOrderEditing();
@@ -352,7 +383,7 @@ const handleClearCart = () => {
           </button>
         </div>
         
-        <div class="cart-list">
+        <TransitionGroup name="cart-item-flip" tag="div" class="cart-list">
           <div v-for="item in cartStore.items" :key="item._id" class="cart-item">
             <!-- Details -->
             <div class="item-main">
@@ -395,7 +426,7 @@ const handleClearCart = () => {
               />
             </div>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
 
       <!-- Identity Section (Guest Form) -->
@@ -493,8 +524,8 @@ const handleClearCart = () => {
       <div class="checkout-footer glass-panel">
         <div class="total-row">
           <span class="label">إجمالي الحساب:</span>
-          <div class="price-wrapper">
-            <span class="value">{{ cartStore.cartTotal }}</span>
+          <div class="price-wrapper" :class="{ 'total-price-bump': isTotalPulsing }">
+            <span class="value text-mono">{{ formattedAnimatedTotal }}</span>
             <span class="unit">د.ل</span>
           </div>
         </div>
@@ -979,9 +1010,37 @@ const handleClearCart = () => {
 }
 
 .cart-list {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* Argon 4 FLIP Layout Choreography for Cart Items */
+.cart-item-flip-move,
+.cart-item-flip-enter-active,
+.cart-item-flip-leave-active {
+  transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.26s ease;
+}
+
+.cart-item-flip-enter-from,
+.cart-item-flip-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -10px, 0) scale(0.97);
+}
+
+.cart-item-flip-leave-active {
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+}
+
+.price-wrapper {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease;
+}
+
+.price-wrapper.total-price-bump {
+  transform: scale(1.06);
 }
 
 .cart-item {

@@ -16,6 +16,14 @@ const shopStore = useShopStore();
 const searchQuery = ref('');
 const activeCategory = ref('');
 const activeSubCategory = ref('');
+const isScrolledDown = ref(false);
+let scrollTargetEl = null;
+
+const handleWindowScroll = () => {
+  const appEl = scrollTargetEl || document.querySelector('.app-container');
+  const scrollY = (appEl ? appEl.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
+  isScrolledDown.value = scrollY > 64;
+};
 
 const carouselItems = ref([]);
 const carouselTrack = ref(null);
@@ -451,6 +459,12 @@ watch([showBulkModal, showDisableConfirm, zoomedImgUrl], ([bulk, disable, zoom])
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('scroll', handleWindowScroll, { passive: true });
+  scrollTargetEl = document.querySelector('.app-container');
+  if (scrollTargetEl) {
+    scrollTargetEl.addEventListener('scroll', handleWindowScroll, { passive: true });
+  }
+  handleWindowScroll();
 });
 
 // Header information
@@ -590,6 +604,11 @@ onUnmounted(() => {
   if (cleanupBulkGesture) cleanupBulkGesture();
   if (cleanupDisableGesture) cleanupDisableGesture();
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('scroll', handleWindowScroll);
+  if (scrollTargetEl) {
+    scrollTargetEl.removeEventListener('scroll', handleWindowScroll);
+    scrollTargetEl = null;
+  }
   window.removeEventListener('mousemove', drag);
   window.removeEventListener('mouseup', endDrag);
   stopAutoplay();
@@ -740,7 +759,7 @@ watch(carouselItems, (newItems) => {
     </div>
 
     <!-- Search Input -->
-    <div class="search-box-wrapper glass-panel">
+    <div class="search-box-wrapper glass-panel" :class="{ 'is-scrolled-sticky': isScrolledDown }">
       <div class="search-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8"></circle>
@@ -1194,12 +1213,26 @@ watch(carouselItems, (newItems) => {
 
 
 .search-box-wrapper {
-  position: relative;
+  position: sticky;
+  top: 8px;
+  z-index: 45;
   display: flex;
   align-items: center;
   padding: 4px;
   background: rgba(255, 253, 249, 0.85);
   border-color: rgba(44, 37, 32, 0.05);
+  transition: background-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.28s ease,
+              transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.search-box-wrapper.is-scrolled-sticky {
+  background: rgba(255, 253, 249, 0.94);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border-color: rgba(217, 119, 6, 0.22);
+  box-shadow: 0 10px 26px -6px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.65) inset;
 }
 
 .search-icon {

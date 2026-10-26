@@ -567,12 +567,22 @@
               <div class="chart-card span-3 trend-chart-card" ref="trendChartCardRef" :class="{ 'in-view': isTrendChartInView }">
                 <div class="chart-card-header">
                   <h3 class="chart-title">الإيرادات اليومية</h3>
+                  <Transition name="badge-pop" mode="out-in">
+                    <span v-if="hoveredTrendIndex !== null && trendCoordinates[hoveredTrendIndex]" :key="'hov-' + hoveredTrendIndex" class="chart-live-hover-pill text-mono">
+                      <span class="hover-pill-date">{{ trendCoordinates[hoveredTrendIndex].date }}</span>
+                      <span class="hover-pill-sep">•</span>
+                      <strong class="hover-pill-val">{{ formatCurrency(trendCoordinates[hoveredTrendIndex].val) }}</strong>
+                    </span>
+                    <span v-else-if="trendMaxVal > 0" key="peak" class="chart-peak-pill text-mono">
+                      أعلى إيراد يومي: <strong>{{ formatCurrency(trendMaxVal) }}</strong>
+                    </span>
+                  </Transition>
                 </div>
                 <div class="svg-chart-container">
                   <div v-if="analyticsData.revenueTrend.length === 0" class="empty-chart">
                     لا توجد بيانات كافية لرسم المخطط البياني في هذه الفترة.
                   </div>
-                  <svg aria-hidden="true" v-else class="svg-line-chart" viewBox="0 0 900 220">
+                  <svg aria-hidden="true" v-else class="svg-line-chart" viewBox="0 0 900 220" @mouseleave="hoveredTrendIndex = null">
                     <defs>
                       <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stop-color="var(--chart-primary, #d97706)" stop-opacity="0.22"/>
@@ -595,10 +605,33 @@
                     <!-- Animated Line -->
                     <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isTrendChartInView }" fill="none" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     
+                    <!-- Interactive Hover Crosshair Line -->
+                    <line
+                      v-if="hoveredTrendIndex !== null && trendCoordinates[hoveredTrendIndex]"
+                      :x1="trendCoordinates[hoveredTrendIndex].x"
+                      y1="30"
+                      :x2="trendCoordinates[hoveredTrendIndex].x"
+                      y2="170"
+                      stroke="var(--chart-primary, #d97706)"
+                      stroke-width="1.5"
+                      stroke-dasharray="4 3"
+                      opacity="0.6"
+                      class="chart-crosshair-line"
+                    />
+
                     <!-- Animated Dots -->
-                    <g v-for="(dot, idx) in trendCoordinates" :key="idx" class="chart-dot-group" :class="{ 'show-dot': isTrendChartInView }" :style="{ '--dot-delay': `${Math.min(idx * 30 + 150, 950)}ms` }">
-                      <circle :cx="dot.x" :cy="dot.y" r="4.5" fill="#fff" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" />
-                      <circle :cx="dot.x" :cy="dot.y" r="16" fill="transparent" class="dot-hover-trigger">
+                    <g
+                      v-for="(dot, idx) in trendCoordinates"
+                      :key="idx"
+                      class="chart-dot-group"
+                      :class="{ 'show-dot': isTrendChartInView, 'is-hovered': hoveredTrendIndex === idx }"
+                      :style="{ '--dot-delay': `${Math.min(idx * 30 + 150, 950)}ms` }"
+                      @mouseenter="hoveredTrendIndex = idx"
+                      @touchstart.passive="hoveredTrendIndex = idx"
+                    >
+                      <circle v-if="hoveredTrendIndex === idx" :cx="dot.x" :cy="dot.y" r="10" fill="var(--chart-primary, #d97706)" opacity="0.18" class="dot-halo-pulse" />
+                      <circle :cx="dot.x" :cy="dot.y" :r="hoveredTrendIndex === idx ? 6 : 4.5" fill="#fff" stroke="var(--chart-primary, #d97706)" :stroke-width="hoveredTrendIndex === idx ? 3 : 2.5" />
+                      <circle :cx="dot.x" :cy="dot.y" r="18" fill="transparent" class="dot-hover-trigger">
                         <title>{{ dot.date }}: {{ formatCurrency(dot.val) }}</title>
                       </circle>
                     </g>
@@ -4095,7 +4128,8 @@
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
-                              :step="item.allowFloat ? '0.25' : '1'" 
+                              inputmode="decimal"
+                              :step="item.allowFloat ? 'any' : '1'" 
                               :min="item.allowFloat ? '0.1' : '1'" 
                               class="form-control stepper-input text-mono text-center" 
                               @input="recalcNewOrderTotal" 
@@ -4173,7 +4207,8 @@
                           <input 
                             v-model.number="item.quantity" 
                             type="number" 
-                            :step="item.allowFloat ? '0.25' : '1'" 
+                            inputmode="decimal"
+                            :step="item.allowFloat ? 'any' : '1'" 
                             :min="item.allowFloat ? '0.1' : '1'" 
                             class="pos-mob-stepper-input text-mono text-center" 
                             @input="recalcNewOrderTotal" 
@@ -4687,8 +4722,9 @@
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
-                              :step="item.allowFloat ? '0.25' : '1'" 
-                              :min="item.allowFloat ? '0.25' : '1'" 
+                              inputmode="decimal"
+                              :step="item.allowFloat ? 'any' : '1'" 
+                              :min="item.allowFloat ? '0.1' : '1'" 
                               class="form-control stepper-input text-mono text-center" 
                               placeholder="1" 
                               required 
@@ -11407,10 +11443,9 @@ export default {
     };
 
     const adjustEditOrderItemQty = (item, delta) => {
-      const step = item.allowFloat ? 0.25 : 1;
-      const minQty = item.allowFloat ? 0.25 : 1;
+      const minQty = item.allowFloat ? 0.1 : 1;
       const current = Number(item.quantity) || 0;
-      const next = Math.max(minQty, Math.round((current + delta * step) * 100) / 100);
+      const next = Math.max(minQty, Math.round((current + delta * 1) * 100) / 100);
       item.quantity = next;
       recalcOrderTotal();
     };
@@ -12108,9 +12143,9 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const adjustNewOrderItemQty = (item, delta) => {
-      const step = item.allowFloat ? 0.5 : 1;
-      const minQty = item.allowFloat ? 0.25 : 1;
-      const newQty = Math.max(minQty, Math.round((item.quantity + delta * step) * 100) / 100);
+      const minQty = item.allowFloat ? 0.1 : 1;
+      const current = Number(item.quantity) || 0;
+      const newQty = Math.max(minQty, Math.round((current + delta * 1) * 100) / 100);
       item.quantity = newQty;
       recalcNewOrderTotal();
     };
@@ -13282,6 +13317,7 @@ const closeSuggestionsWithDelay = () => {
 
 
     // SVG Line Chart coordinates math calculations
+    const hoveredTrendIndex = ref(null);
     const trendMaxVal = computed(() => {
       if (!analyticsData.revenueTrend.length) return 0;
       return Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 0);
@@ -13588,6 +13624,7 @@ const closeSuggestionsWithDelay = () => {
       getTagColorLabel,
       filterProductsByCategory,
       filterProductsByTag,
+      hoveredTrendIndex,
       trendCoordinates,
       svgTrendLinePath,
       svgTrendAreaPath,
@@ -30597,6 +30634,31 @@ select.pos-control {
 }
 
 /* Argon 4 Fluid Spring Admin Tab Transition & Tactile Row Elevation */
+/* Argon 4 Interactive Chart Header Pills */
+.chart-live-hover-pill,
+.chart-peak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(217, 119, 6, 0.28);
+  color: #92400e;
+  font-weight: 700;
+}
+
+.chart-peak-pill {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.hover-pill-sep {
+  opacity: 0.5;
+}
+
 .admin-tab-fade-enter-active {
   transition:
     opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),

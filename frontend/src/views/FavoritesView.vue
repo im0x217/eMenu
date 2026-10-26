@@ -64,7 +64,9 @@ const closeZoomModal = () => {
           </svg>
         </router-link>
         <h1 class="header-title">المنتجات المفضلة</h1>
-        <span class="favorites-count-badge">{{ favoriteProducts.length }}</span>
+        <Transition name="badge-pop" mode="out-in">
+          <span :key="favoriteProducts.length" class="favorites-count-badge text-mono">{{ favoriteProducts.length }}</span>
+        </Transition>
       </div>
     </header>
 
@@ -87,8 +89,13 @@ const closeZoomModal = () => {
       <p>جاري تحميل المفضلة…</p>
     </div>
 
-    <!-- Favorites Product Grid -->
-    <div v-else-if="favoriteProducts.length > 0" class="favorites-product-grid">
+    <!-- Favorites Product Grid with Argon 4 FLIP Choreography -->
+    <TransitionGroup
+      v-else-if="favoriteProducts.length > 0"
+      name="fav-grid-flip"
+      tag="div"
+      class="favorites-product-grid"
+    >
       <ProductCard 
         v-for="(product, idx) in favoriteProducts" 
         :key="product._id" 
@@ -96,7 +103,7 @@ const closeZoomModal = () => {
         :priority="idx < 6 ? 'high' : 'auto'"
         @zoom="openZoomModal"
       />
-    </div>
+    </TransitionGroup>
 
     <!-- Empty State -->
     <div v-else class="empty-state glass-panel">
@@ -124,6 +131,23 @@ const closeZoomModal = () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.fav-grid-flip-move,
+.fav-grid-flip-enter-active,
+.fav-grid-flip-leave-active {
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.26s ease;
+}
+
+.fav-grid-flip-enter-from,
+.fav-grid-flip-leave-to {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.fav-grid-flip-leave-active {
+  position: absolute;
+  pointer-events: none;
 }
 
 .favorites-header {

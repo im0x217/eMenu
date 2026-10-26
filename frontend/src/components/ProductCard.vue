@@ -271,6 +271,20 @@ const productTags = computed(() => {
     return found || { name: tagName, icon: 'trophy' };
   });
 });
+
+// Argon 4 Desktop Pointer-Reactive Specular Spotlight (Zero Mobile Overhead)
+const handleCardPointerMove = (e) => {
+  if (!cardRef.value || e.pointerType === 'touch') return;
+  const rect = cardRef.value.getBoundingClientRect();
+  cardRef.value.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+  cardRef.value.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  cardRef.value.style.setProperty('--spotlight-opacity', '1');
+};
+
+const handleCardPointerLeave = () => {
+  if (!cardRef.value) return;
+  cardRef.value.style.setProperty('--spotlight-opacity', '0');
+};
 </script>
 
 <template>
@@ -278,6 +292,8 @@ const productTags = computed(() => {
     ref="cardRef"
     class="product-card glass-panel card-hover-effect" 
     :class="['shop-theme-' + activeShop, { 'not-available': product.available === false }]"
+    @pointermove.passive="handleCardPointerMove"
+    @pointerleave.passive="handleCardPointerLeave"
   >
     <!-- Favorite Heart Toggle -->
     <button 
@@ -460,6 +476,32 @@ const productTags = computed(() => {
 
 .product-card.not-available {
   opacity: 0.6;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .product-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      220px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(253, 181, 24, 0.12),
+      transparent 72%
+    );
+    opacity: var(--spotlight-opacity, 0);
+    transition: opacity 0.28s ease;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .product-card.shop-theme-shop2::after {
+    background: radial-gradient(
+      220px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(59, 130, 246, 0.12),
+      transparent 72%
+    );
+  }
 }
 
 .favorite-btn {
