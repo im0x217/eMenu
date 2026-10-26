@@ -16,6 +16,15 @@
         </div>
 
         <div class="p-3">
+          <!-- Local Backup Directory Info Banner -->
+          <div class="backup-folder-banner mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-primary"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span class="font-bold text-small">مجلد حفظ ملفات JSON المحلي:</span>
+            </div>
+            <code class="backup-folder-path text-mono" dir="ltr">{{ backupDir || 'C:\\Users\\user\\Documents\\EmenuBackup' }}</code>
+          </div>
+
           <!-- Create Backup Bar -->
           <div class="backup-action-bar mb-3 d-flex gap-2 align-items-center">
             <input
@@ -40,7 +49,7 @@
               <thead>
                 <tr>
                   <th>تاريخ ووقت النسخة</th>
-                  <th>وصف / عنوان النسخة</th>
+                  <th>وصف / ملف النسخة</th>
                   <th>إحصائيات البيانات المشمولة</th>
                   <th>إجراءات</th>
                 </tr>
@@ -51,7 +60,14 @@
                 </tr>
                 <tr v-for="b in backups" :key="b._id">
                   <td class="text-mono font-bold">{{ new Date(b.createdAt).toLocaleString('ar-LY') }}</td>
-                  <td><span class="backup-label-pill">{{ b.label }}</span></td>
+                  <td>
+                    <div class="d-flex flex-column gap-1">
+                      <span class="backup-label-pill">{{ b.label }}</span>
+                      <span v-if="b.fileName" class="backup-file-sub text-mono" dir="ltr" :title="b.filePath || b.fileName">
+                        {{ b.fileName }}
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <div class="d-flex flex-wrap gap-1 align-items-center">
                       <span class="badge-stat-pill" v-if="b.stats">الطلبات: {{ (b.stats['emenu.orders'] || 0) + (b.stats['emenu2.orders'] || 0) }}</span>
@@ -62,7 +78,7 @@
                   </td>
                   <td>
                     <div class="order-actions-btns">
-                      <button @click="downloadBackup(b._id)" class="btn-table-action btn-action-edit" title="تحميل ملف JSON">
+                      <button @click="downloadBackup(b._id, b.fileName)" class="btn-table-action btn-action-edit" title="تحميل ملف JSON">
                         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         <span>تنزيل JSON</span>
                       </button>
@@ -196,6 +212,7 @@ export default {
   setup(props, { emit }) {
     const toast = useToastStore();
     const backups = ref([]);
+    const backupDir = ref('');
     const backupLoading = ref(false);
     const newBackupLabel = ref('');
     const resetConfirmText = ref('');
@@ -208,6 +225,9 @@ export default {
         if (res.ok) {
           const data = await res.json();
           backups.value = data.backups || [];
+          if (data.backupDir) {
+            backupDir.value = data.backupDir;
+          }
         }
       } catch (e) {
         console.error('Fetch backups error', e);
@@ -223,7 +243,15 @@ export default {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          toast.show('تم إنشاء النسخة الاحتياطية بنجاح', 'success');
+          if (data.backupDir) {
+            backupDir.value = data.backupDir;
+          }
+          toast.show(
+            data.filePath
+              ? `تم حفظ النسخة الاحتياطية في: ${data.filePath}`
+              : 'تم إنشاء النسخة الاحتياطية بنجاح',
+            'success'
+          );
           newBackupLabel.value = '';
           await fetchBackups();
         } else {
@@ -237,7 +265,7 @@ export default {
       }
     };
 
-    const downloadBackup = (id) => {
+    const downloadBackup = (id, fileName) => {
       const url = `/api/admin/backup/${id}/download`;
       props.adminFetch(url)
         .then((res) => res.blob())
@@ -245,7 +273,7 @@ export default {
           const dlUrl = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = dlUrl;
-          a.download = `emenu-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          a.download = fileName || `emenu-backup-${new Date().toISOString().slice(0, 10)}.json`;
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -316,6 +344,7 @@ export default {
 
     return {
       backups,
+      backupDir,
       backupLoading,
       newBackupLabel,
       resetConfirmText,
@@ -340,6 +369,29 @@ export default {
   gap: 20px;
 }
 
+.backup-folder-banner {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #334155;
+}
+
+.backup-folder-path {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.backup-file-sub {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
 .backup-action-bar {
   background: rgba(255, 255, 255, 0.6);
   padding: 12px;
@@ -356,6 +408,7 @@ export default {
   font-size: 0.85rem;
   font-weight: 600;
   color: #334155;
+  width: fit-content;
 }
 
 .badge-stat-pill {

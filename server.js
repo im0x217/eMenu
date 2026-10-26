@@ -9,7 +9,10 @@ const multerS3 = require("multer-s3");
 const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 const crypto = require("crypto");
+
+const LOCAL_BACKUP_DIR = process.env.BACKUP_DIR || path.join(os.homedir(), "Documents", "EmenuBackup");
 
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'emenu-admin-secret-key-2026';
 
@@ -6006,7 +6009,27 @@ app.get("/api/admin/production/product-orders", checkMongoDB, checkAdmin, async 
 
 // ============ BACKUP & DATA MANAGEMENT ============
 
-// Create a full backup of all collections
+const formatBackupFileName = (dateObj, idStr = '') => {
+  const d = dateObj instanceof Date && !isNaN(dateObj) ? dateObj : new Date(dateObj || Date.now());
+  const pad = (n) => String(n).padStart(2, '0');
+  const ts = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+  const suffix = idStr ? `_${String(idStr).slice(-6)}` : '';
+  return `emenu-backup-${ts}${suffix}.json`;
+};
+
+const ensureLocalBackupDir = () => {
+  try {
+    if (!fs.existsSync(LOCAL_BACKUP_DIR)) {
+      fs.mkdirSync(LOCAL_BACKUP_DIR, { recursive: true });
+    }
+    return true;
+  } catch (err) {
+    console.warn("[BACKUP] Could not create LOCAL_BACKUP_DIR:", err.message);
+    return false;
+  }
+};
+
+// Create a full backup of all collections and save JSON to C:\Users\<user>\Documents\EmenuBackup
 app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const { label } = req.body;
@@ -6036,9 +6059,17 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
       chefsCollection2.find({}).toArray()
     ]);
 
+    const backupId = new ObjectId();
+    const now = new Date();
+    const fileName = formatBackupFileName(now, backupId.toString());
+    const filePath = path.join(LOCAL_BACKUP_DIR, fileName);
+
     const backupDoc = {
-      createdAt: new Date(),
-      label: label || `نسخة احتياطية - ${new Date().toLocaleString('ar-LY')}`,
+      _id: backupId,
+      createdAt: now,
+      label: label || `نسخة احتياطية - ${now.toLocaleString('ar-LY')}`,
+      fileName,
+      filePath,
       collections: {
         "emenu.products": products,
         "emenu.categories": categories,
@@ -6077,13 +6108,36 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
       }
     };
 
-    const result = await backupsCollection.insertOne(backupDoc);
-    console.log(`[BACKUP] Backup created successfully: ${result.insertedId}`);
+    // 1. Save JSON directly to C:\Users\<user>\Documents\EmenuBackup
+    let savedToDisk = false;
+    if (ensureLocalBackupDir()) {
+      try {
+        await fs.promises.writeFile(filePath, JSON.stringify(backupDoc, null, 2), "utf8");
+        savedToDisk = true;
+        console.log(`[BACKUP] Saved JSON backup to disk: ${filePath}`);
+      } catch (diskErr) {
+        console.error("[BACKUP] Failed writing JSON to disk:", diskErr.message);
+      }
+    }
+
+    // 2. Also store in MongoDB backupsCollection (with automatic fallback to metadata-only if BSON > 16MB)
+    try {
+      await backupsCollection.insertOne(backupDoc);
+    } catch (dbErr) {
+      console.warn("[BACKUP] Full document insert failed, storing metadata-only in MongoDB:", dbErr.message);
+      const { collections, ...metaOnlyDoc } = backupDoc;
+      await backupsCollection.insertOne(metaOnlyDoc);
+    }
+
+    console.log(`[BACKUP] Backup created successfully: ${backupId}`);
 
     res.json({
       success: true,
-      message: "تم إنشاء النسخة الاحتياطية بنجاح",
-      backupId: result.insertedId,
+      message: "تم إنشاء وحفظ النسخة الاحتياطية بنجاح",
+      backupId,
+      fileName,
+      filePath: savedToDisk ? filePath : null,
+      backupDir: LOCAL_BACKUP_DIR,
       stats: backupDoc.stats
     });
   } catch (err) {
@@ -6092,21 +6146,48 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-// List all backups (metadata only)
+// List all backups (metadata + sync existing MongoDB backups to C:\Users\<user>\Documents\EmenuBackup)
 app.get("/api/admin/backups", checkMongoDB, checkAdmin, async (req, res) => {
   try {
+    ensureLocalBackupDir();
     const backups = await backupsCollection.find({}, {
       projection: { collections: 0 } // Exclude full data, return only metadata + stats
     }).sort({ createdAt: -1 }).toArray();
 
-    res.json({ success: true, backups });
+    // Ensure every MongoDB backup also has its JSON file written to LOCAL_BACKUP_DIR
+    for (const b of backups) {
+      const expectedFileName = b.fileName || formatBackupFileName(b.createdAt, b._id.toString());
+      const expectedFilePath = path.join(LOCAL_BACKUP_DIR, expectedFileName);
+      b.fileName = expectedFileName;
+      b.filePath = expectedFilePath;
+
+      if (!fs.existsSync(expectedFilePath)) {
+        try {
+          const fullDoc = await backupsCollection.findOne({ _id: b._id });
+          if (fullDoc && fullDoc.collections) {
+            fullDoc.fileName = expectedFileName;
+            fullDoc.filePath = expectedFilePath;
+            await fs.promises.writeFile(expectedFilePath, JSON.stringify(fullDoc, null, 2), "utf8");
+            await backupsCollection.updateOne(
+              { _id: b._id },
+              { $set: { fileName: expectedFileName, filePath: expectedFilePath } }
+            );
+            console.log(`[BACKUP] Synced existing MongoDB backup to disk: ${expectedFilePath}`);
+          }
+        } catch (syncErr) {
+          console.warn("[BACKUP] Could not sync backup to disk:", syncErr.message);
+        }
+      }
+    }
+
+    res.json({ success: true, backups, backupDir: LOCAL_BACKUP_DIR });
   } catch (err) {
     console.error("List backups error:", err);
     res.status(500).json({ success: false, error: "فشل في جلب قائمة النسخ الاحتياطية" });
   }
 });
 
-// Download a backup as JSON
+// Download a backup as JSON (reads from local disk first, falls back to MongoDB)
 app.get("/api/admin/backup/:id/download", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const backup = await backupsCollection.findOne({ _id: new ObjectId(req.params.id) });
@@ -6114,9 +6195,16 @@ app.get("/api/admin/backup/:id/download", checkMongoDB, checkAdmin, async (req, 
       return res.status(404).json({ success: false, error: "النسخة الاحتياطية غير موجودة" });
     }
 
-    const filename = `emenu-backup-${backup.createdAt.toISOString().slice(0, 10)}.json`;
+    const fileName = backup.fileName || `emenu-backup-${backup.createdAt.toISOString().slice(0, 10)}.json`;
+    const localCandidate = path.join(LOCAL_BACKUP_DIR, fileName);
+
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    if (fs.existsSync(localCandidate)) {
+      return res.sendFile(localCandidate);
+    }
+
     res.json(backup);
   } catch (err) {
     console.error("Backup download error:", err);
@@ -6124,13 +6212,31 @@ app.get("/api/admin/backup/:id/download", checkMongoDB, checkAdmin, async (req, 
   }
 });
 
-// Delete a backup
+// Delete a backup (removes from both MongoDB and local disk)
 app.delete("/api/admin/backup/:id", checkMongoDB, checkAdmin, async (req, res) => {
   try {
+    const existing = await backupsCollection.findOne(
+      { _id: new ObjectId(req.params.id) },
+      { projection: { collections: 0 } }
+    );
     const result = await backupsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     if (result.deletedCount === 0) {
       return res.status(404).json({ success: false, error: "النسخة الاحتياطية غير موجودة" });
     }
+
+    if (existing) {
+      const candidateName = existing.fileName || formatBackupFileName(existing.createdAt, existing._id.toString());
+      const candidatePath = path.join(LOCAL_BACKUP_DIR, candidateName);
+      if (fs.existsSync(candidatePath)) {
+        try {
+          await fs.promises.unlink(candidatePath);
+          console.log(`[BACKUP] Deleted local backup file: ${candidatePath}`);
+        } catch (unlinkErr) {
+          console.warn("[BACKUP] Could not delete local backup file:", unlinkErr.message);
+        }
+      }
+    }
+
     res.json({ success: true, message: "تم حذف النسخة الاحتياطية" });
   } catch (err) {
     console.error("Backup delete error:", err);

@@ -28,6 +28,7 @@
 .me-1 { margin-left: 6px !important; }
 
 .d-flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
 .flex-wrap { flex-wrap: wrap !important; }
 .flex-grow-1 { flex-grow: 1 !important; }
 .align-items-center { align-items: center !important; }
