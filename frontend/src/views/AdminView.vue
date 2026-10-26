@@ -142,12 +142,7 @@
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
         <h2>لوحة إدارة e-Menu</h2>
-        <div class="mobile-header-right-actions">
-          <button type="button" class="mobile-omni-btn" @click="openCommandPalette" aria-label="بحث شامل أو أمر سريع" title="بحث شامل أو أمر (Ctrl+K)">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.3" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </button>
-          <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
-        </div>
+        <img :src="activeShop === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="mobile-logo" />
       </header>
 
       <!-- Main Content -->
@@ -161,28 +156,12 @@
               </span>
             </Transition>
           </div>
-          <div class="header-global-toolbar">
-            <!-- Period & Actions for Analytics -->
-            <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
-              <!-- Period Selector -->
-              <div class="segmented-control">
-                <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
-                  {{ p.label }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Global Spotlight Omni-Search Trigger & Fast POS Action -->
-            <div class="header-quick-Utilities">
-              <button type="button" class="omni-search-trigger-btn" @click="openCommandPalette" title="بحث شامل في الطلبات والعملاء والمنتجات والأوامر (Ctrl+K)">
-                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.4" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <span class="omni-trigger-text">بحث شامل أو أمر…</span>
-                <kbd class="omni-trigger-kbd">Ctrl+K</kbd>
-              </button>
-              <button type="button" class="header-pos-fast-btn" @click="openNewOrderModal" title="إنشاء طلب كاشير سريع (F2)">
-                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <span>طلب سريع</span>
-                <kbd class="omni-trigger-kbd is-pos">F2</kbd>
+          <!-- Period & Actions for Analytics -->
+          <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
+            <!-- Period Selector -->
+            <div class="segmented-control">
+              <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
+                {{ p.label }}
               </button>
             </div>
           </div>
@@ -519,7 +498,7 @@
               <div class="kpi-card" style="--kpi-delay: 0ms;">
                 <div class="kpi-info">
                   <span class="kpi-title">المبيعات</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.totalRevenue) }}</span>
+                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.totalRevenue) }}</span>
                 </div>
                 <div class="kpi-icon-wrap">
                   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -530,7 +509,7 @@
               <div class="kpi-card" style="--kpi-delay: 40ms;">
                 <div class="kpi-info">
                   <span class="kpi-title">المدفوع</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.totalPaid) }}</span>
+                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.totalPaid) }}</span>
                 </div>
                 <div class="kpi-icon-wrap">
                   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -541,7 +520,7 @@
               <div class="kpi-card" style="--kpi-delay: 80ms;">
                 <div class="kpi-info">
                   <span class="kpi-title">المتبقي</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.totalRemaining) }}</span>
+                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.totalRemaining) }}</span>
                 </div>
                 <div class="kpi-icon-wrap">
                   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -552,7 +531,7 @@
               <div class="kpi-card" style="--kpi-delay: 120ms;">
                 <div class="kpi-info">
                   <span class="kpi-title">الطلبات</span>
-                  <span class="kpi-value text-mono">{{ formatArabicPlural(analyticsData.kpi.orderCount, 'order') }}</span>
+                  <span class="kpi-value text-mono">{{ formatArabicPlural(animatedKpi.orderCount, 'order') }}</span>
                 </div>
                 <div class="kpi-icon-wrap">
                   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -563,7 +542,7 @@
               <div class="kpi-card" style="--kpi-delay: 160ms;">
                 <div class="kpi-info">
                   <span class="kpi-title">متوسط الطلب</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(analyticsData.kpi.avgOrderValue) }}</span>
+                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.avgOrderValue) }}</span>
                 </div>
                 <div class="kpi-icon-wrap">
                   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -574,7 +553,7 @@
               <div class="kpi-card" style="--kpi-delay: 200ms;">
                 <div class="kpi-info">
                   <span class="kpi-title">العملاء النشطون</span>
-                  <span class="kpi-value text-mono">{{ formatArabicPlural(analyticsData.kpi.activeCustomers, 'customer') }}</span>
+                  <span class="kpi-value text-mono">{{ formatArabicPlural(animatedKpi.activeCustomers, 'customer') }}</span>
                 </div>
                 <div class="kpi-icon-wrap">
                   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -7222,7 +7201,7 @@
           v-model="commandPaletteQuery" 
           type="text" 
           class="palette-input" 
-          placeholder="ابحث عن طلب (#رقم أو هاتف)، عميل، منتج، أو أمر سريع… (Ctrl+K)" 
+          placeholder="بحث أو أمر… (Ctrl+K)" 
           autocomplete="off"
         />
         <kbd class="kbd-badge kbd-esc-badge" @click="commandPaletteOpen = false">Esc</kbd>
@@ -7238,19 +7217,13 @@
           @mouseenter="commandPaletteIndex = idx"
         >
           <div class="palette-item-main">
-            <span class="palette-category-badge" :class="cmd.categoryClass || ''">{{ cmd.category }}</span>
-            <div class="palette-item-text-col">
-              <span class="palette-item-title">{{ cmd.title }}</span>
-              <span v-if="cmd.meta" class="palette-item-meta">{{ cmd.meta }}</span>
-            </div>
+            <span class="palette-category-badge">{{ cmd.category }}</span>
+            <span class="palette-item-title">{{ cmd.title }}</span>
           </div>
-          <div class="palette-item-trailing">
-            <span v-if="cmd.badge" class="palette-entity-badge" :class="cmd.badgeClass || ''">{{ cmd.badge }}</span>
-            <kbd v-if="cmd.shortcut" class="kbd-badge">{{ cmd.shortcut }}</kbd>
-          </div>
+          <kbd v-if="cmd.shortcut" class="kbd-badge">{{ cmd.shortcut }}</kbd>
         </div>
         <div v-if="availableCommands.length === 0" class="palette-no-results">
-          لا توجد نتائج أو أوامر مطابقة لـ "{{ commandPaletteQuery }}"
+          لا توجد أوامر مطابقة لـ "{{ commandPaletteQuery }}"
         </div>
       </div>
 
@@ -7478,8 +7451,52 @@ export default {
       handleScrollCheck();
     };
 
+    // Argon 4 Smooth GSAP KPI Odometer Counters
+    const animatedKpi = reactive({
+      totalRevenue: 0,
+      totalPaid: 0,
+      totalRemaining: 0,
+      orderCount: 0,
+      avgOrderValue: 0,
+      activeCustomers: 0
+    });
+
+    const animateKpiCounters = () => {
+      const kpi = analyticsData.kpi || {};
+      const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) {
+        animatedKpi.totalRevenue = Number(kpi.totalRevenue) || 0;
+        animatedKpi.totalPaid = Number(kpi.totalPaid) || 0;
+        animatedKpi.totalRemaining = Number(kpi.totalRemaining) || 0;
+        animatedKpi.orderCount = Number(kpi.orderCount) || 0;
+        animatedKpi.avgOrderValue = Number(kpi.avgOrderValue) || 0;
+        animatedKpi.activeCustomers = Number(kpi.activeCustomers) || 0;
+        return;
+      }
+      gsap.to(animatedKpi, {
+        totalRevenue: Number(kpi.totalRevenue) || 0,
+        totalPaid: Number(kpi.totalPaid) || 0,
+        totalRemaining: Number(kpi.totalRemaining) || 0,
+        orderCount: Number(kpi.orderCount) || 0,
+        avgOrderValue: Number(kpi.avgOrderValue) || 0,
+        activeCustomers: Number(kpi.activeCustomers) || 0,
+        duration: 0.72,
+        ease: 'expo.out',
+        overwrite: true,
+        onUpdate: () => {
+          animatedKpi.totalRevenue = Math.round(animatedKpi.totalRevenue);
+          animatedKpi.totalPaid = Math.round(animatedKpi.totalPaid);
+          animatedKpi.totalRemaining = Math.round(animatedKpi.totalRemaining);
+          animatedKpi.orderCount = Math.round(animatedKpi.orderCount);
+          animatedKpi.avgOrderValue = Math.round(animatedKpi.avgOrderValue);
+          animatedKpi.activeCustomers = Math.round(animatedKpi.activeCustomers);
+        }
+      });
+    };
+
     let analyticsLatchTimer = null;
     const triggerAnalyticsAnimations = () => {
+      animateKpiCounters();
       resetAnalyticsScrollStates();
       if (analyticsLatchTimer) clearTimeout(analyticsLatchTimer);
       nextTick(() => {
@@ -12408,131 +12425,34 @@ const closeSuggestionsWithDelay = () => {
     let scanBuffer = '';
     let scanTimeout = null;
 
-    // Reset command palette highlight when query changes
-    watch(commandPaletteQuery, () => {
-      commandPaletteIndex.value = 0;
-    });
-
-    // Spotlight / Raycast Multi-Entity Omni-Search Engine (Commands + Live Orders + Live Customers + Live Products)
+    // Available Commands in Command Palette (Placed here so all modal functions and printReport are fully defined)
     const availableCommands = computed(() => {
-      const rawQ = commandPaletteQuery.value.trim();
-      const qNorm = normalizePosArabic(rawQ);
-      const qDigits = cleanPhoneDigits(rawQ);
-
+      const q = commandPaletteQuery.value.trim().toLowerCase();
       const allCmds = [
-        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'أمر سريع', categoryClass: 'is-cmd', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
-        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+5', icon: 'file-text', action: () => setTab('orders') },
-        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+2', icon: 'package', action: () => setTab('products') },
-        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+6', icon: 'users', action: () => setTab('customers') },
-        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+7', icon: 'chef-hat', action: () => setTab('production') },
-        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+1', icon: 'trending-up', action: () => setTab('analytics') },
-        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+3', icon: 'folder', action: () => setTab('categories') },
-        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+4', icon: 'tag', action: () => setTab('tags') },
-        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+8', icon: 'image', action: () => setTab('carousel') },
-        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+9', icon: 'shield', action: () => setTab('users') },
-        { id: 'nav-settings', title: 'الانتقال إلى الإعدادات والنسخ الاحتياطي', category: 'تنقل', categoryClass: 'is-nav', shortcut: 'Alt+0', icon: 'settings', action: () => setTab('settings') },
-        { id: 'switch-shop', title: activeShop.value === 'shop1' ? 'التبديل إلى قسم النواشف والمخزن (Shop 2)' : 'التبديل إلى المتجر الرئيسي للحلويات (Shop 1)', category: 'تنقل', categoryClass: 'is-nav', shortcut: '', icon: 'repeat', action: () => switchShop(activeShop.value === 'shop1' ? 'shop2' : 'shop1') },
-        { id: 'new-product', title: 'إضافة منتج جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
-        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
-        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
-        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'tag', action: () => openTagModal() },
-        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'إجراء', categoryClass: 'is-cmd', shortcut: '', icon: 'user-check', action: () => openUserModal() },
-        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', categoryClass: 'is-cmd', shortcut: '', icon: 'printer', action: () => printReport() },
-        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', categoryClass: 'is-nav', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
+        { id: 'new-order', title: 'إنشاء طلب كاشير سريع', category: 'طلبات', shortcut: 'F2', icon: 'shopping-cart', action: () => openNewOrderModal() },
+        { id: 'nav-orders', title: 'الانتقال إلى سجل الطلبات', category: 'تنقل', shortcut: 'Alt+5', icon: 'file-text', action: () => setTab('orders') },
+        { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => setTab('products') },
+        { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => setTab('customers') },
+        { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => setTab('production') },
+        { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => setTab('analytics') },
+        { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => setTab('categories') },
+        { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => setTab('tags') },
+        { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => setTab('carousel') },
+        { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => setTab('users') },
+        { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
+        { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
+        { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
+        { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
+        { id: 'new-user', title: 'إضافة مستخدم إداري جديد', category: 'صلاحيات', shortcut: '', icon: 'user-check', action: () => openUserModal() },
+        { id: 'print-analytics', title: 'طباعة تقرير التحليلات والمبيعات الحالي', category: 'طباعة', shortcut: '', icon: 'printer', action: () => printReport() },
+        { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
       ];
       const filteredByRole = userRole.value === 'order_manager'
-        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'new-chef', 'switch-shop', 'help-shortcuts'].includes(c.id))
+        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'new-chef', 'help-shortcuts'].includes(c.id))
         : allCmds;
 
-      if (!rawQ) return filteredByRole;
-
-      const matchedCmds = filteredByRole.filter(c =>
-        normalizePosArabic(c.title).includes(qNorm) ||
-        normalizePosArabic(c.category).includes(qNorm)
-      );
-
-      // 1. Live Orders Search (#orderNumber, customer name, phone)
-      const qOrderClean = rawQ.replace(/^#/, '').trim().toLowerCase();
-      const statusLabels = { pending: 'قيد الانتظار', in_progress: 'قيد التجهيز', completed: 'مكتمل', cancelled: 'ملغي' };
-      const matchedOrders = (orders.value || [])
-        .filter(o => {
-          const ordNum = String(o.orderNumber || (o._id ? o._id.toString().slice(-6) : '')).toLowerCase();
-          const cName = normalizePosArabic(o.customerInfo?.name || '');
-          const cPhone = cleanPhoneDigits(o.customerInfo?.phone || '');
-          return ordNum.includes(qOrderClean) ||
-            (qNorm && cName.includes(qNorm)) ||
-            (qDigits.length >= 2 && cPhone.includes(qDigits));
-        })
-        .slice(0, 5)
-        .map(o => {
-          const ordNum = o.orderNumber || (o._id ? o._id.toString().slice(-6) : '');
-          const cName = o.customerInfo?.name || 'عميل نقدي';
-          const cPhone = o.customerInfo?.phone ? formatLibyanPhone(o.customerInfo.phone) : '';
-          return {
-            id: 'omni-order-' + o._id,
-            category: 'طلب #' + ordNum,
-            categoryClass: 'is-order',
-            title: cName + (cPhone ? ' (' + cPhone + ')' : ''),
-            meta: (o.items ? o.items.length + ' أصناف' : '') + (o.deliveryDate ? ' • التسليم: ' + String(o.deliveryDate).slice(0, 10) : ''),
-            badge: formatCurrency(o.totalPrice || 0) + ' • ' + (statusLabels[o.status] || o.status),
-            badgeClass: o.status === 'completed' ? 'is-ok' : (o.status === 'cancelled' ? 'is-danger' : 'is-warn'),
-            shortcut: 'تعديل ↵',
-            action: () => openOrderEditModal(o)
-          };
-        });
-
-      // 2. Live Customers Search (name, phone)
-      const matchedCustomers = (customers.value || [])
-        .filter(c => {
-          const cName = normalizePosArabic(c.name || '');
-          const cPhone = cleanPhoneDigits(c.phone || '');
-          return (qNorm && cName.includes(qNorm)) || (qDigits.length >= 2 && cPhone.includes(qDigits));
-        })
-        .slice(0, 5)
-        .map(c => {
-          const debt = Number(c.outstandingBalance) || 0;
-          return {
-            id: 'omni-cust-' + (c._id || c.phone),
-            category: 'عميل',
-            categoryClass: 'is-customer',
-            title: (c.name || ' بدون اسم') + (c.phone ? ' — ' + formatLibyanPhone(c.phone) : ''),
-            meta: formatArabicPlural(c.orderCount || 0, 'order') + ' • إجمالي المشتريات: ' + formatCurrency(c.totalSpent || 0),
-            badge: debt > 0 ? ('دين: ' + formatCurrency(debt)) : (debt < 0 ? ('دائن: ' + formatCurrency(Math.abs(debt))) : 'خالص'),
-            badgeClass: debt > 0 ? 'is-danger' : 'is-ok',
-            shortcut: 'كشف الحساب ↵',
-            action: () => openCustomerDetails(c)
-          };
-        });
-
-      // 3. Live Products Search (name, category, subCategory, tags) — for admin role
-      const matchedProducts = userRole.value === 'order_manager'
-        ? []
-        : (products.value || [])
-            .filter(p => {
-              const pName = normalizePosArabic(p.name || '');
-              const pCat = normalizePosArabic(p.category || '');
-              const pSub = normalizePosArabic(p.subCategory || '');
-              const pTags = Array.isArray(p.tags) && p.tags.some(t => normalizePosArabic(t).includes(qNorm));
-              return (qNorm && (pName.includes(qNorm) || pCat.includes(qNorm) || pSub.includes(qNorm) || pTags));
-            })
-            .slice(0, 6)
-            .map(p => {
-              const stock = activeShop.value === 'shop2' ? getProductAvailableStock(p._id) : null;
-              const regPrice = p.price_regular !== undefined && p.price_regular !== null ? p.price_regular : p.price;
-              return {
-                id: 'omni-prod-' + p._id,
-                category: 'منتج',
-                categoryClass: 'is-product',
-                title: p.name,
-                meta: (p.category || 'بدون تصنيف') + (p.subCategory ? ' › ' + p.subCategory : '') + (Array.isArray(p.tags) && p.tags.length ? ' • ' + p.tags.join('، ') : ''),
-                badge: formatCurrency(regPrice || 0) + (stock !== null ? (' • مخزون: ' + stock) : ''),
-                badgeClass: stock !== null && stock <= 0 ? 'is-danger' : 'is-neutral',
-                shortcut: 'تعديل ↵',
-                action: () => openProductModal(p)
-              };
-            });
-
-      return [...matchedOrders, ...matchedCustomers, ...matchedProducts, ...matchedCmds];
+      if (!q) return filteredByRole;
+      return filteredByRole.filter(c => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
     });
 
     const openCommandPalette = () => {
@@ -13559,6 +13479,7 @@ const closeSuggestionsWithDelay = () => {
       isPosDateRelative,
       periods,
       analyticsData,
+      animatedKpi,
       products,
       categories,
       tags,
@@ -30656,182 +30577,6 @@ select.pos-control {
   border-radius: 8px;
 }
 
-/* ============================================================
-   SPOTLIGHT OMNI-SEARCH TRIGGER & MULTI-ENTITY PALETTE BADGES
-   ============================================================ */
-.header-global-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.header-quick-Utilities {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.omni-search-trigger-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 12px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-}
-
-.omni-search-trigger-btn:hover {
-  border-color: #94a3b8;
-  color: #0f172a;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  transform: translateY(-1px);
-}
-
-.omni-trigger-kbd {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
-  direction: ltr;
-}
-
-.omni-trigger-kbd.is-pos {
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.header-pos-fast-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 6px 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1e3a5f, #0f172a);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
-}
-
-.header-pos-fast-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
-}
-
-.mobile-header-right-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mobile-omni-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.palette-item-text-col {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.palette-item-meta {
-  font-size: 0.73rem;
-  color: #64748b;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.palette-item-trailing {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.palette-category-badge.is-order {
-  background: rgba(59, 130, 246, 0.14);
-  color: #1d4ed8;
-}
-
-.palette-category-badge.is-customer {
-  background: rgba(139, 92, 246, 0.14);
-  color: #6d28d9;
-}
-
-.palette-category-badge.is-product {
-  background: rgba(245, 158, 11, 0.16);
-  color: #b45309;
-}
-
-.palette-category-badge.is-cmd {
-  background: rgba(16, 185, 129, 0.14);
-  color: #047857;
-}
-
-.palette-entity-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.palette-entity-badge.is-ok {
-  background: rgba(16, 185, 129, 0.14);
-  color: #059669;
-}
-
-.palette-entity-badge.is-warn {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
-}
-
-.palette-entity-badge.is-danger {
-  background: rgba(239, 68, 68, 0.14);
-  color: #dc2626;
-}
-
-.palette-entity-badge.is-neutral {
-  background: #f1f5f9;
-  color: #334155;
-}
-
 .btn-edit-cust-statement {
   margin-right: auto;
   padding: 2px 8px;
@@ -30851,11 +30596,41 @@ select.pos-control {
   color: #ffffff;
 }
 
-@media (max-width: 768px) {
-  .omni-trigger-text,
-  .omni-trigger-kbd {
-    display: none;
-  }
+/* Argon 4 Fluid Spring Admin Tab Transition & Tactile Row Elevation */
+.admin-tab-fade-enter-active {
+  transition:
+    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: opacity, transform;
+}
+
+.admin-tab-fade-leave-active {
+  transition:
+    opacity 0.14s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.16s cubic-bezier(0.4, 0, 1, 1) !important;
+  will-change: opacity, transform;
+}
+
+.admin-tab-fade-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0) scale(0.996);
+}
+
+.admin-tab-fade-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -4px, 0) scale(0.998);
+}
+
+.kpi-card {
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.25s ease !important;
+}
+
+.kpi-card:hover {
+  transform: translate3d(0, -3px, 0) scale(1.01) !important;
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.06) !important;
 }
 
 </style>

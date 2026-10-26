@@ -152,23 +152,32 @@ const selectCategory = (catName) => {
   telemetry.track('category_select', { categoryName: catName, shop: shopStore.activeShop });
 };
 
-// Subtle GSAP Product Grid Stagger (Design Guide Section 3)
+// Argon 4 Interruptible Staggered Product Grid Choreography (Apple Design §3 & §4)
 const animateProductCards = () => {
   if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return;
   }
   nextTick(() => {
-    gsap.from('.product-card', {
-      opacity: 0,
-      y: 8,
-      duration: 0.3,
-      stagger: 0.03,
-      ease: 'power1.out'
-    });
+    const cards = document.querySelectorAll('.product-card');
+    if (!cards.length) return;
+    gsap.fromTo(
+      cards,
+      { opacity: 0, y: 12, scale: 0.975 },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.34,
+        stagger: { amount: 0.18, from: 'start' },
+        ease: 'expo.out',
+        overwrite: 'auto',
+        clearProps: 'transform,opacity'
+      }
+    );
   });
 };
 
-watch(activeCategory, () => {
+watch([activeCategory, activeSubCategory, searchQuery], () => {
   animateProductCards();
 });
 

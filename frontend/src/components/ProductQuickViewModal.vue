@@ -171,8 +171,11 @@ const handleAddToCart = () => {
   }
 };
 
+const qtyDirection = ref('qty-up');
+
 const incrementQuantity = () => {
   if (!props.product) return;
+  qtyDirection.value = 'qty-up';
   triggerHaptic('light');
   const newQty = Math.round((cartItemQuantity.value + 1) * 100) / 100;
   cartStore.updateQty(props.product._id, newQty);
@@ -181,6 +184,7 @@ const incrementQuantity = () => {
 
 const decrementQuantity = () => {
   if (!props.product) return;
+  qtyDirection.value = 'qty-down';
   const newQty = Math.max(0, Math.round((cartItemQuantity.value - 1) * 100) / 100);
   if (newQty === 0) {
     triggerHaptic('warning');
@@ -381,7 +385,8 @@ const handleTagClick = (tagName) => {
 
           <!-- Thumb-Zone Action Footer -->
           <div class="qv-footer">
-            <div v-if="cartItemQuantity > 0" class="qv-stepper-row">
+            <Transition name="stepper-morph" mode="out-in">
+            <div v-if="cartItemQuantity > 0" key="qv-stepper" class="qv-stepper-row">
               <div class="qv-stepper-control">
                 <button
                   type="button"
@@ -393,7 +398,9 @@ const handleTagClick = (tagName) => {
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                   </svg>
                 </button>
-                <span class="qv-step-val text-mono">{{ cartItemQuantity }}</span>
+                <Transition :name="qtyDirection" mode="out-in">
+                  <span :key="cartItemQuantity" class="qv-step-val text-mono">{{ cartItemQuantity }}</span>
+                </Transition>
                 <button
                   type="button"
                   class="qv-step-btn plus"
@@ -413,6 +420,7 @@ const handleTagClick = (tagName) => {
 
             <button
               v-else
+              key="qv-add"
               type="button"
               class="qv-add-btn"
               :disabled="product.available === false"
@@ -425,6 +433,7 @@ const handleTagClick = (tagName) => {
               </svg>
               <span>{{ product.available === false ? 'غير متوفر حالياً' : 'أضف للسلة' }}</span>
             </button>
+            </Transition>
           </div>
         </div>
       </div>

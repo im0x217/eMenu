@@ -157,17 +157,28 @@ const showBulkPrice = computed(() => {
 });
 
 const isSaved = computed(() => favoritesStore.isFavorite(activeShop.value, props.product._id));
+const heartBursting = ref(false);
+const qtyDirection = ref('qty-up');
+let heartBurstTimer = null;
 
 const toggleSave = () => {
   triggerHaptic('light');
   if (heartBtnRef.value) {
     gsap.fromTo(heartBtnRef.value, 
-      { scale: 0.75 }, 
-      { scale: 1, duration: 0.35, ease: 'back.out(1.4)' }
+      { scale: 0.72 }, 
+      { scale: 1, duration: 0.38, ease: 'back.out(1.7)' }
     );
   }
   favoritesStore.toggleFavorite(activeShop.value, props.product._id);
   const isNowFav = favoritesStore.isFavorite(activeShop.value, props.product._id);
+  if (isNowFav) {
+    heartBursting.value = false;
+    nextTick(() => {
+      heartBursting.value = true;
+      if (heartBurstTimer) clearTimeout(heartBurstTimer);
+      heartBurstTimer = setTimeout(() => { heartBursting.value = false; }, 520);
+    });
+  }
   
   if (!authStore.isIdentified()) {
     if (isNowFav) {
@@ -223,6 +234,7 @@ const handleAddToCart = () => {
 };
 
 const incrementQuantity = () => {
+  qtyDirection.value = 'qty-up';
   triggerHaptic('light');
   const newQty = Math.round((cartItemQuantity.value + 1) * 100) / 100;
   cartStore.updateQty(props.product._id, newQty);
@@ -236,6 +248,7 @@ const incrementQuantity = () => {
 };
 
 const decrementQuantity = () => {
+  qtyDirection.value = 'qty-down';
   const newQty = Math.max(0, Math.round((cartItemQuantity.value - 1) * 100) / 100);
   if (newQty === 0) {
     triggerHaptic('warning');
@@ -292,6 +305,7 @@ const productTags = computed(() => {
       >
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
       </svg>
+      <span v-if="heartBursting" class="heart-burst-ring" aria-hidden="true"></span>
     </button>
 
     <!-- Product Image (Bigger Image: 75% aspect ratio) -->
@@ -376,52 +390,57 @@ const productTags = computed(() => {
         </div>
       </div>
 
-      <!-- In-Card Direct Stepper or Full-Width Add To Cart Button -->
+      <!-- In-Card Direct Stepper or Full-Width Add To Cart Button (Argon 4 Spring Morph) -->
       <div class="actions-row" @mousedown.stop @touchstart.stop @pointerdown.stop>
-        <!-- If already in cart: Show Direct Manipulation Stepper [- qty +] -->
-        <div v-if="cartItemQuantity > 0" class="card-stepper-control animate-fade-in" @click.stop>
-          <button 
-            type="button" 
-            class="card-stepper-btn minus" 
-            @click.stop="decrementQuantity" 
-            aria-label="إنقاص الكمية"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-          <div class="card-stepper-qty">
-            <span class="card-stepper-val text-mono">{{ cartItemQuantity }}</span>
+        <Transition name="stepper-morph" mode="out-in">
+          <!-- If already in cart: Show Direct Manipulation Stepper [- qty +] -->
+          <div v-if="cartItemQuantity > 0" key="stepper" class="card-stepper-control" @click.stop>
+            <button 
+              type="button" 
+              class="card-stepper-btn minus" 
+              @click.stop="decrementQuantity" 
+              aria-label="إنقاص الكمية"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+            <div class="card-stepper-qty">
+              <Transition :name="qtyDirection" mode="out-in">
+                <span :key="cartItemQuantity" class="card-stepper-val text-mono">{{ cartItemQuantity }}</span>
+              </Transition>
+            </div>
+            <button 
+              type="button" 
+              class="card-stepper-btn plus" 
+              @click.stop="incrementQuantity" 
+              aria-label="زيادة الكمية"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
           </div>
-          <button 
-            type="button" 
-            class="card-stepper-btn plus" 
-            @click.stop="incrementQuantity" 
-            aria-label="زيادة الكمية"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-        </div>
 
-        <!-- If not in cart: Show Add To Cart Button -->
-        <button 
-          v-else
-          ref="addBtnRef"
-          type="button"
-          class="add-btn-wide" 
-          @click.stop="handleAddToCart"
-          :disabled="product.available === false"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="9" cy="21" r="1"/>
-            <circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          <span>أضف للسلة</span>
-        </button>
+          <!-- If not in cart: Show Add To Cart Button -->
+          <button 
+            v-else
+            key="add-btn"
+            ref="addBtnRef"
+            type="button"
+            class="add-btn-wide" 
+            @click.stop="handleAddToCart"
+            :disabled="product.available === false"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="9" cy="21" r="1"/>
+              <circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            <span>أضف للسلة</span>
+          </button>
+        </Transition>
       </div>
     </div>
   </div>
@@ -491,6 +510,26 @@ const productTags = computed(() => {
 
 .favorite-btn:active .heart-icon {
   transform: scale(0.85);
+}
+
+.heart-burst-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color, #fdb518);
+  pointer-events: none;
+  animation: heartRingBurst 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heartRingBurst {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
 }
 
 .img-wrapper {

@@ -28,7 +28,7 @@ onMounted(() => {
     <!-- For customer routes, wrap in app-container -->
     <main v-if="showCustomerNav" class="app-container">
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <transition name="view-spring" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -75,7 +75,32 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* Page transitions */
+/* Argon 4 Spatial View Spring Transitions (Apple Design §4 & §7) */
+.view-spring-enter-active {
+  transition:
+    opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.view-spring-leave-active {
+  transition:
+    opacity 0.16s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.18s cubic-bezier(0.4, 0, 1, 1);
+  will-change: opacity, transform;
+}
+
+.view-spring-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(0.992);
+}
+
+.view-spring-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -6px, 0) scale(0.994);
+}
+
+/* Fallback fade for admin wrapper */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease;

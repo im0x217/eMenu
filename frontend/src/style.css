@@ -228,6 +228,75 @@ body {
            max(1rem, env(safe-area-inset-left, 0px)) 
            calc(100px + env(safe-area-inset-bottom, 0px)) 
            max(1rem, env(safe-area-inset-right, 0px));
+  transform-origin: center top;
+  transition:
+    transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.36s ease;
+}
+
+/* Argon 4 iOS Sheet Background Depth Recession (Apple Design §12) */
+body.modal-open .app-container {
+  transform: scale(0.975) translate3d(0, 4px, 0);
+  filter: brightness(0.95) saturate(0.92);
+  border-radius: 20px;
+}
+
+/* Argon 4 Mechanical Directional Odometer Transitions (qty-up / qty-down) */
+.qty-up-enter-active,
+.qty-up-leave-active,
+.qty-down-enter-active,
+.qty-down-leave-active {
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.16s ease;
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.qty-up-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 65%, 0) scale(0.88);
+}
+
+.qty-up-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -65%, 0) scale(0.88);
+}
+
+.qty-down-enter-from {
+  opacity: 0;
+  transform: translate3d(0, -65%, 0) scale(0.88);
+}
+
+.qty-down-leave-to {
+  opacity: 0;
+  transform: translate3d(0, 65%, 0) scale(0.88);
+}
+
+/* Argon 4 Button <-> Stepper Spring Morph Transition */
+.stepper-morph-enter-active {
+  transition:
+    transform 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+    opacity 0.18s ease-out;
+  will-change: transform, opacity;
+}
+
+.stepper-morph-leave-active {
+  transition:
+    transform 0.14s cubic-bezier(0.4, 0, 1, 1),
+    opacity 0.12s ease-in;
+  will-change: transform, opacity;
+}
+
+.stepper-morph-enter-from {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.stepper-morph-leave-to {
+  opacity: 0;
+  transform: scale(0.94);
 }
 
 /* Horizontal scroll for categories */
