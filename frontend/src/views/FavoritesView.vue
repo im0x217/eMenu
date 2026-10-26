@@ -4,6 +4,7 @@ import { useShopStore } from '../stores/shop';
 import { useFavoritesStore } from '../stores/favorites';
 import { useAuthStore } from '../stores/auth';
 import ProductCard from '../components/ProductCard.vue';
+import ProductQuickViewModal from '../components/ProductQuickViewModal.vue';
 import { isImageCached, warmImageUrls } from '../utils/imageCache';
 
 const shopStore = useShopStore();
@@ -33,17 +34,20 @@ watch(favoriteProducts, (prods) => {
   }
 }, { immediate: true });
 
-// Image zoom state
+// Product Quick-View & Image Zoom state
 const zoomedImgUrl = ref('');
+const quickViewProduct = ref(null);
 const isZoomImgLoaded = ref(false);
 
-const openZoomModal = (url) => {
+const openZoomModal = (url, product = null) => {
   isZoomImgLoaded.value = isImageCached(url);
   zoomedImgUrl.value = url;
+  quickViewProduct.value = product || null;
 };
 
 const closeZoomModal = () => {
   zoomedImgUrl.value = '';
+  quickViewProduct.value = null;
   isZoomImgLoaded.value = false;
 };
 </script>
@@ -106,39 +110,12 @@ const closeZoomModal = () => {
       <p class="empty-desc">احفظ منتجاتك المفضلة للوصول إليها بسرعة في أي وقت.</p>
     </div>
 
-    <!-- Image Zoom Modal -->
-    <Teleport to="body">
-      <Transition name="zoom-fade">
-        <div v-if="zoomedImgUrl" class="zoom-backdrop" role="dialog" aria-modal="true" aria-label="عرض صورة المنتج المكبرة" @click="closeZoomModal">
-          <button class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-
-          <div class="zoom-content" @click.stop>
-            <!-- Shimmer & Spinner Loader while full-size image downloads -->
-            <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
-              <div class="spinner"></div>
-              <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
-            </div>
-
-            <img 
-              :src="zoomedImgUrl" 
-              alt="صورة المنتج الكاملة" 
-              class="zoom-image"
-              :class="{ 'loaded': isZoomImgLoaded }"
-              fetchpriority="high"
-              loading="eager"
-              decoding="async"
-              @load="isZoomImgLoaded = true"
-              @error="isZoomImgLoaded = true"
-            />
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- Product Quick-View & Image Zoom Modal -->
+    <ProductQuickViewModal
+      :product="quickViewProduct"
+      :image-url="zoomedImgUrl"
+      @close="closeZoomModal"
+    />
   </div>
 </template>
 

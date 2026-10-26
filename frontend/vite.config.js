@@ -15,6 +15,7 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('cropperjs')) return 'cropper';
             if (id.includes('jsbarcode')) return 'jsbarcode';
+            if (id.includes('gsap')) return 'vendor-gsap';
             if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) return 'vendor-vue';
           }
         }

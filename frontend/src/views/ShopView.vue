@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, watch, onUnmounted, nextTick } from 'vue';
 import { useShopStore } from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
+import ProductQuickViewModal from '../components/ProductQuickViewModal.vue';
 import CategoryIcon from '../components/CategoryIcon.vue';
 import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
@@ -205,13 +206,16 @@ const normalizeArabic = (text) => {
 const filteredProducts = computed(() => {
   let list = shopStore.products;
 
-  // 1. Search Query filter (global across all categories)
+  // 1. Search Query filter (global across all categories, descriptions, subcategories, and tags)
   if (searchQuery.value.trim()) {
     const q = normalizeArabic(searchQuery.value);
     list = list.filter(p => {
       const nameNorm = normalizeArabic(p.name);
       const descNorm = normalizeArabic(p.desc);
-      return nameNorm.includes(q) || descNorm.includes(q);
+      const catNorm = normalizeArabic(p.category);
+      const subCatNorm = normalizeArabic(p.subCategory);
+      const tagsMatch = Array.isArray(p.tags) && p.tags.some(t => normalizeArabic(t).includes(q));
+      return nameNorm.includes(q) || descNorm.includes(q) || catNorm.includes(q) || subCatNorm.includes(q) || tagsMatch;
     });
   } else {
     // 2. Main Category filter (applied only when NOT searching)
@@ -322,20 +326,38 @@ const handleVerifyBulk = async () => {
   }
 };
 
-// Image zoom state
+// Product Quick-View & Image Zoom state
 const zoomedImgUrl = ref('');
+const quickViewProduct = ref(null);
 const isZoomImgLoaded = ref(false);
 
-const openZoomModal = (url) => {
+const openZoomModal = (url, product = null) => {
+  if (dragMoved.value) {
+    dragMoved.value = false;
+    return;
+  }
   triggerHaptic('light');
   isZoomImgLoaded.value = isImageCached(url);
   zoomedImgUrl.value = url;
+  quickViewProduct.value = product || null;
+  if (product) {
+    telemetry.track('product_quick_view', {
+      productId: product._id,
+      productName: product.name,
+      shop: shopStore.activeShop
+    });
+  }
 };
 
 const closeZoomModal = () => {
   triggerHaptic('light');
   zoomedImgUrl.value = '';
+  quickViewProduct.value = null;
   isZoomImgLoaded.value = false;
+};
+
+const handleFilterTagFromQuickView = (tagName) => {
+  searchQuery.value = tagName;
 };
 
 // Keyboard Escape dismiss & Tab focus trapping support for modals
@@ -912,45 +934,13 @@ watch(carouselItems, (newItems) => {
         </div>
       </Transition>
 
-      <!-- Image Zoom Modal -->
-      <Transition name="zoom-fade">
-        <div 
-          v-if="zoomedImgUrl" 
-          class="zoom-backdrop" 
-          role="dialog"
-          aria-modal="true"
-          aria-label="عرض الصورة بالدقة الكاملة"
-          @click.self="closeZoomModal"
-        >
-          <!-- Fixed Top-Left Close Button -->
-          <button type="button" class="zoom-close-btn" @click.stop="closeZoomModal" aria-label="إغلاق">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-
-          <div class="zoom-content" @click.stop>
-            <!-- Shimmer & Spinner Loader while full-size image downloads -->
-            <div v-if="!isZoomImgLoaded" class="zoom-skeleton-loader">
-              <div class="spinner"></div>
-              <p class="zoom-loading-text">جاري عرض الصورة بالدقة الكاملة…</p>
-            </div>
-
-            <img 
-              :src="zoomedImgUrl" 
-              alt="صورة المنتج الكاملة" 
-              class="zoom-image"
-              :class="{ 'loaded': isZoomImgLoaded }"
-              fetchpriority="high"
-              loading="eager"
-              decoding="async"
-              @load="isZoomImgLoaded = true"
-              @error="isZoomImgLoaded = true"
-            />
-          </div>
-        </div>
-      </Transition>
+      <!-- Product Quick-View & Image Zoom Modal -->
+      <ProductQuickViewModal
+        :product="quickViewProduct"
+        :image-url="zoomedImgUrl"
+        @close="closeZoomModal"
+        @filter-tag="handleFilterTagFromQuickView"
+      />
     </Teleport>
   </div>
 </template>

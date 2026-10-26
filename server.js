@@ -2676,101 +2676,6 @@ app.get("/api/admin/telemetry/insights", checkMongoDB, checkAdmin, async (req, r
   }
 });
 
-// ============ ADMIN REPORTS EXPORT API ============
-app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) => {
-  const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const type = req.query.type || "orders"; // "orders" | "products" | "customers"
-  
-  let ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
-  
-  let startDate, endDate;
-  if (req.query.startDate && req.query.endDate) {
-    startDate = new Date(req.query.startDate);
-    endDate = new Date(req.query.endDate);
-    endDate.setHours(23, 59, 59, 999);
-  } else {
-    endDate = new Date();
-    const period = req.query.period || "30d";
-    if (period === "7d") {
-      startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    } else if (period === "30d") {
-      startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    } else {
-      startDate = new Date(0);
-    }
-  }
-  
-  const matchStage = { createdAt: { $gte: startDate, $lte: endDate }, status: { $in: ["received", "completed"] } };
-  
-  function escapeCSV(val) {
-    if (val === null || val === undefined) return "";
-    let str = String(val);
-    if (str.includes(",") || str.includes("\"") || str.includes("\n") || str.includes("\r")) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  }
-  
-  try {
-    if (type === "orders") {
-      const orders = await ordColl.find(matchStage).sort({ createdAt: -1 }).toArray();
-      let csv = "\uFEFF"; // UTF-8 BOM for Excel support
-      csv += "رقم الطلب,التاريخ,اسم العميل,رقم الهاتف,طريقة التسعير,تاريخ التوصيل,الإجمالي,الحالة,المنتجات\n";
-      orders.forEach(o => {
-        const itemsSummary = o.items.map(item => `${item.name} (x${item.quantity})`).join(" | ");
-        csv += `${escapeCSV(o._id)},${escapeCSV(o.createdAt.toISOString())},${escapeCSV(o.customerInfo.name)},${escapeCSV(o.customerInfo.phone)},${escapeCSV(o.priceMode)},${escapeCSV(o.deliveryDate)},${escapeCSV(o.totalPrice)},${escapeCSV(o.status)},${escapeCSV(itemsSummary)}\n`;
-      });
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="orders-report-${shop}.csv"`);
-      return res.status(200).send(csv);
-    } else if (type === "products") {
-      const topProducts = await ordColl.aggregate([
-        { $match: matchStage },
-        { $unwind: "$items" },
-        { $group: {
-            _id: "$items.productId",
-            name: { $first: "$items.name" },
-            quantity: { $sum: { $toDouble: "$items.quantity" } },
-            revenue: { $sum: { $multiply: [{ $toDouble: "$items.price" }, { $toDouble: "$items.quantity" }] } }
-        } },
-        { $sort: { quantity: -1 } }
-      ]).toArray();
-      
-      let csv = "\uFEFF";
-      csv += "معرف المنتج,اسم المنتج,الكمية المباعة,إجمالي الإيرادات\n";
-      topProducts.forEach(p => {
-        csv += `${escapeCSV(p._id)},${escapeCSV(p.name)},${escapeCSV(p.quantity)},${escapeCSV(p.revenue)}\n`;
-      });
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="products-report-${shop}.csv"`);
-      return res.status(200).send(csv);
-    } else if (type === "customers") {
-      const topCustomersRaw = await ordColl.aggregate([
-        { $match: matchStage },
-        { $group: {
-            _id: "$customerInfo.phone",
-            name: { $first: "$customerInfo.name" },
-            totalSpent: { $sum: "$totalPrice" },
-            orderCount: { $sum: 1 }
-        } },
-        { $sort: { totalSpent: -1 } }
-      ]).toArray();
-      
-      let csv = "\uFEFF";
-      csv += "رقم الهاتف,اسم العميل,إجمالي الإنفاق,عدد الطلبات\n";
-      topCustomersRaw.forEach(c => {
-        csv += `${escapeCSV(c._id)},${escapeCSV(c.name)},${escapeCSV(c.totalSpent)},${escapeCSV(c.orderCount)}\n`;
-      });
-      res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="customers-report-${shop}.csv"`);
-      return res.status(200).send(csv);
-    }
-  } catch (err) {
-    console.error("Export report error:", err);
-    res.status(500).json({ error: "Failed to export report" });
-  }
-});
-
 // ============ ADMIN ORDERS & CUSTOMERS APIs ============
 
 // Get all orders for the admin panel
@@ -4458,8 +4363,8 @@ app.get("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res) =>
 // Export report as CSV
 app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const type = req.query.type;
-  const period = req.query.period;
+  const type = req.query.type || "orders";
+  const period = req.query.period || "30d";
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
 
@@ -4467,49 +4372,56 @@ app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) 
 
   try {
     let dateFilter = {};
-    if (period === 'custom') {
-      if (startDate && endDate) {
+    const periodLabel = (startDate && endDate) ? `${startDate}_to_${endDate}` : period;
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
         dateFilter = {
           createdAt: {
-            $gte: new Date(startDate),
-            $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+            $gte: start,
+            $lte: end
           }
         };
       }
+    } else if (period === 'all') {
+      dateFilter = {};
     } else {
-      const now = new Date();
       let days = 30;
       if (period === '1d') days = 1;
       else if (period === '7d') days = 7;
-      
-      const cutoff = new Date(now.setDate(now.getDate() - days));
+
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
       dateFilter = { createdAt: { $gte: cutoff } };
     }
 
     let csvContent = "";
-    let fileName = `report_${type}_${period}.csv`;
+    let fileName = `report_${type}_${periodLabel}.csv`;
 
     if (type === "orders") {
       const list = await ordColl.find(dateFilter).sort({ createdAt: -1 }).toArray();
-      const headers = ['رقم الطلب', 'التاريخ', 'اسم العميل', 'رقم الهاتف', 'الإجمالي (د.ل)', 'طريقة التسعير', 'الحالة', 'المنتجات المطلوبة'];
+      const headers = ['رقم الطلب', 'التاريخ', 'اسم العميل', 'رقم الهاتف', 'تاريخ التسليم', 'الإجمالي (د.ل)', 'طريقة التسعير', 'الحالة', 'المنتجات المطلوبة'];
       const rows = list.map(o => [
-        o._id.toString(),
+        o.orderNumber ? `#${o.orderNumber}` : (o._id ? o._id.toString() : ''),
         o.createdAt ? new Date(o.createdAt).toLocaleString('ar-LY') : '',
-        o.customerInfo ? o.customerInfo.name : '',
-        o.customerInfo ? o.customerInfo.phone : '',
+        o.customerInfo ? (o.customerInfo.name || '') : '',
+        o.customerInfo ? (o.customerInfo.phone || '') : '',
+        o.deliveryDate || '',
         o.totalPrice || 0,
         o.priceMode === 'bulk' ? 'جملة' : 'مفرد',
         o.status === 'received' ? 'تم الاستلام' : o.status === 'completed' ? 'مكتمل' : o.status === 'ready' ? 'جاهز للاستلام' : o.status === 'cancelled' ? 'ملغي' : 'قيد الانتظار',
-        o.items ? o.items.map(i => `${i.name} (x${i.quantity})`).join(' | ') : ''
+        Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(' | ') : ''
       ]);
       csvContent = arrayToCSV(headers, rows);
-      fileName = `تقرير_الطلبات_${shop}_${period}.csv`;
+      fileName = `تقرير_الطلبات_${shop}_${periodLabel}.csv`;
 
     } else if (type === "products") {
       const completedOrders = await ordColl.find({ ...dateFilter, status: { $in: ['received', 'completed'] } }).toArray();
       const salesMap = {};
       for (const order of completedOrders) {
-        if (!order.items) continue;
+        if (!Array.isArray(order.items)) continue;
         for (const item of order.items) {
           const key = item.productId ? item.productId.toString() : item.name;
           if (!salesMap[key]) {
@@ -4533,17 +4445,17 @@ app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) 
         const prodInfo = allProducts.find(p => p._id.toString() === key || p.name === sale.name);
         rows.push([
           sale.name,
-          prodInfo ? prodInfo.category : 'غير معروف',
-          prodInfo ? (prodInfo.subcategory || '') : '',
-          prodInfo ? (prodInfo.price_regular || '') : '',
-          prodInfo ? (prodInfo.price_bulk || '') : '',
-          sale.quantity,
+          prodInfo ? (prodInfo.category || 'غير معروف') : 'غير معروف',
+          prodInfo ? (prodInfo.subCategory || prodInfo.subcategory || '') : '',
+          prodInfo ? (prodInfo.price_regular ?? prodInfo.price ?? '') : '',
+          prodInfo ? (prodInfo.price_bulk ?? '') : '',
+          Math.round(sale.quantity * 100) / 100,
           sale.revenue.toFixed(2)
         ]);
       }
-      rows.sort((a, b) => b[6] - a[6]);
+      rows.sort((a, b) => Number(b[6]) - Number(a[6]));
       csvContent = arrayToCSV(headers, rows);
-      fileName = `أداء_المنتجات_${shop}_${period}.csv`;
+      fileName = `أداء_المنتجات_${shop}_${periodLabel}.csv`;
 
     } else if (type === "customers") {
       const customers = await customersCollection.find().toArray();
@@ -4586,13 +4498,13 @@ app.get("/api/admin/reports/export", checkMongoDB, checkAdmin, async (req, res) 
           cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-LY') : '',
           cust.lastActive ? new Date(cust.lastActive).toLocaleString('ar-LY') : '',
           stats.orderCount,
-          stats.totalSpent.toFixed(2),
+          Number(stats.totalSpent || 0).toFixed(2),
           favCount
         ];
       });
-      rows.sort((a, b) => b[5] - a[5]);
+      rows.sort((a, b) => Number(b[5]) - Number(a[5]));
       csvContent = arrayToCSV(headers, rows);
-      fileName = `تقرير_العملاء_${shop}_${period}.csv`;
+      fileName = `تقرير_العملاء_${shop}_${periodLabel}.csv`;
     }
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
@@ -6309,50 +6221,58 @@ const connectWithRetry = async () => {
     stockReservationsCollection = db2.collection("stock_reservations");
     mongoConnected = true;
     
-    productsCollection.createIndex({ category: 1 });
-    categoriesCollection.createIndex({ name: 1 }, { unique: true });
-    tagsCollection.createIndex({ name: 1 }, { unique: true });
-    productsCollection2.createIndex({ category: 1 });
-    categoriesCollection2.createIndex({ name: 1 }, { unique: true });
-    tagsCollection2.createIndex({ name: 1 }, { unique: true });
-    customersCollection.createIndex({ phone: 1 }, { unique: true });
-    favoritesCollection.createIndex({ phone: 1, productId: 1, shop: 1 }, { unique: true });
-    ordersCollection.createIndex({ "customerInfo.phone": 1 });
-    ordersCollection.createIndex({ orderNumber: 1 });
-    ordersCollection.createIndex({ createdAt: -1 });
-    ordersCollection.createIndex({ deliveryDate: 1 });
-    ordersCollection.createIndex({ status: 1, paymentStatus: 1 });
-    ordersCollection.createIndex({ "customerInfo.phone": 1, createdAt: -1 });
-    ordersCollection.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
+    const safeIndex = (coll, spec, opts) => coll.createIndex(spec, opts).catch(() => {});
 
-    ordersCollection2.createIndex({ "customerInfo.phone": 1 });
-    ordersCollection2.createIndex({ orderNumber: 1 });
-    ordersCollection2.createIndex({ createdAt: -1 });
-    ordersCollection2.createIndex({ deliveryDate: 1 });
-    ordersCollection2.createIndex({ status: 1, paymentStatus: 1 });
-    ordersCollection2.createIndex({ "customerInfo.phone": 1, createdAt: -1 });
-    ordersCollection2.createIndex({ cancelledAt: 1 }, { expireAfterSeconds: 86400 });
+    safeIndex(productsCollection, { category: 1 });
+    safeIndex(productsCollection, { category: 1, subCategory: 1 });
+    safeIndex(productsCollection, { tags: 1 });
+    safeIndex(categoriesCollection, { name: 1 }, { unique: true });
+    safeIndex(tagsCollection, { name: 1 }, { unique: true });
+    safeIndex(productsCollection2, { category: 1 });
+    safeIndex(productsCollection2, { category: 1, subCategory: 1 });
+    safeIndex(productsCollection2, { tags: 1 });
+    safeIndex(categoriesCollection2, { name: 1 }, { unique: true });
+    safeIndex(tagsCollection2, { name: 1 }, { unique: true });
+    safeIndex(customersCollection, { phone: 1 }, { unique: true });
+    safeIndex(favoritesCollection, { phone: 1, productId: 1, shop: 1 }, { unique: true });
+    safeIndex(ordersCollection, { "customerInfo.phone": 1 });
+    safeIndex(ordersCollection, { orderNumber: 1 });
+    safeIndex(ordersCollection, { createdAt: -1 });
+    safeIndex(ordersCollection, { deliveryDate: 1 });
+    safeIndex(ordersCollection, { status: 1, paymentStatus: 1 });
+    safeIndex(ordersCollection, { status: 1, createdAt: -1 });
+    safeIndex(ordersCollection, { "customerInfo.phone": 1, createdAt: -1 });
+    safeIndex(ordersCollection, { cancelledAt: 1 }, { expireAfterSeconds: 86400 });
 
-    stockReservationsCollection.createIndex({ orderId: 1 });
-    stockReservationsCollection.createIndex({ orderNumber: 1 });
-    stockReservationsCollection.createIndex({ status: 1 });
-    stockReservationsCollection.createIndex({ reservedAt: -1 });
-    stockReservationsCollection.createIndex({ "items.inventoryRecordId": 1 });
+    safeIndex(ordersCollection2, { "customerInfo.phone": 1 });
+    safeIndex(ordersCollection2, { orderNumber: 1 });
+    safeIndex(ordersCollection2, { createdAt: -1 });
+    safeIndex(ordersCollection2, { deliveryDate: 1 });
+    safeIndex(ordersCollection2, { status: 1, paymentStatus: 1 });
+    safeIndex(ordersCollection2, { status: 1, createdAt: -1 });
+    safeIndex(ordersCollection2, { "customerInfo.phone": 1, createdAt: -1 });
+    safeIndex(ordersCollection2, { cancelledAt: 1 }, { expireAfterSeconds: 86400 });
 
-    adminUsersCollection.createIndex({ username: 1 }, { unique: true });
-    chefsCollection.createIndex({ name: 1 });
-    chefsCollection2.createIndex({ name: 1 });
+    safeIndex(stockReservationsCollection, { orderId: 1 });
+    safeIndex(stockReservationsCollection, { orderNumber: 1 });
+    safeIndex(stockReservationsCollection, { status: 1 });
+    safeIndex(stockReservationsCollection, { reservedAt: -1 });
+    safeIndex(stockReservationsCollection, { "items.inventoryRecordId": 1 });
+
+    safeIndex(adminUsersCollection, { username: 1 }, { unique: true });
+    safeIndex(chefsCollection, { name: 1 });
+    safeIndex(chefsCollection2, { name: 1 });
 
     // Telemetry indexes with 30-day automatic pruning TTL
-    telemetryCollection.createIndex({ timestamp: 1 }, { expireAfterSeconds: 30 * 86400 });
-    telemetryCollection.createIndex({ sessionId: 1 });
-    telemetryCollection.createIndex({ event: 1 });
-    telemetryCollection.createIndex({ shop: 1, timestamp: -1 });
+    safeIndex(telemetryCollection, { timestamp: 1 }, { expireAfterSeconds: 30 * 86400 });
+    safeIndex(telemetryCollection, { sessionId: 1 });
+    safeIndex(telemetryCollection, { event: 1 });
+    safeIndex(telemetryCollection, { shop: 1, timestamp: -1 });
 
     // Payment collection indexes
-    paymentsCollection.createIndex({ customerPhone: 1, createdAt: -1 });
-    paymentsCollection.createIndex({ createdAt: -1 });
-    paymentsCollection.createIndex({ "distributedTo.orderId": 1 });
+    safeIndex(paymentsCollection, { customerPhone: 1, createdAt: -1 });
+    safeIndex(paymentsCollection, { createdAt: -1 });
+    safeIndex(paymentsCollection, { "distributedTo.orderId": 1 });
 
     // Initialize order counter and backfill legacy orders without orderNumber
     try {

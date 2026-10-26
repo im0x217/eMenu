@@ -299,10 +299,10 @@ const productTags = computed(() => {
       class="img-wrapper" 
       role="button"
       tabindex="0"
-      :aria-label="'تكبير صورة ' + product.name"
-      @click="emit('zoom', getImageUrl())"
-      @keydown.enter="emit('zoom', getImageUrl())"
-      @keydown.space.prevent="emit('zoom', getImageUrl())"
+      :aria-label="'عرض تفاصيل وصورة ' + product.name"
+      @click="emit('zoom', getImageUrl(), product)"
+      @keydown.enter="emit('zoom', getImageUrl(), product)"
+      @keydown.space.prevent="emit('zoom', getImageUrl(), product)"
     >
       <!-- Pulsing Glass Shimmer Placeholder (Fades out smoothly when image loads) -->
       <div class="img-skeleton-shimmer" :class="{ 'hidden-skeleton': isLoaded }">
@@ -328,7 +328,7 @@ const productTags = computed(() => {
 
     <!-- Product Details Content -->
     <div class="product-info">
-      <div class="info-body">
+      <div class="info-body" @click="emit('zoom', getImageUrl(), product)" style="cursor: pointer;">
         <h3 class="product-title" :title="product.name">{{ product.name }}</h3>
         <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
 
