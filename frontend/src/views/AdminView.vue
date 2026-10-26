@@ -1940,57 +1940,17 @@
 
 
           <!-- MARKETING CAROUSEL TAB -->
-          <div v-else-if="activeTab === 'carousel' && userRole === 'admin'" class="carousel-tab-content">
-            <div class="table-card glass-panel overflow-hidden p-0">
-              <div class="card-toolbar card-toolbar-unified justify-content-end">
-                <button @click="openCarouselModal()" class="btn btn-primary">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span>إضافة بنر جديد</span>
-                </button>
-              </div>
-
-              <div class="p-3">
-                <!-- SKELETON CAROUSEL GRID -->
-                <div v-if="carouselLoading" class="carousel-grid">
-                  <div v-for="i in 3" :key="'car-skel-' + i" class="carousel-admin-card glass-panel skeleton-card">
-                    <div class="skeleton-shimmer" style="height: 180px; width: 100%; border-radius: 12px 12px 0 0;"></div>
-                    <div class="p-3 d-flex justify-content-between align-items-center">
-                      <div class="skeleton-shimmer" style="width: 100px; height: 14px;"></div>
-                      <div class="d-flex gap-2">
-                        <div class="skeleton-shimmer" style="width: 50px; height: 28px; border-radius: 6px;"></div>
-                        <div class="skeleton-shimmer" style="width: 50px; height: 28px; border-radius: 6px;"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-else-if="carouselItems.length > 0" class="carousel-grid">
-                  <div v-for="item in carouselItems" :key="item._id" class="carousel-admin-card glass-panel animate-scale-in">
-                    <div class="card-image-wrapper">
-                      <div class="admin-banner-shimmer"></div>
-                      <img :src="item.image" alt="Banner Preview" class="card-image" loading="lazy" decoding="async" @click="zoomImage(item.image)" title="تكبير المعاينة" />
-                    </div>
-                    <div class="card-info-bar">
-                      <span class="card-date">تاريخ الإضافة: {{ new Date(item.createdAt).toLocaleDateString('ar-LY') }}</span>
-                      <div style="display: flex; gap: 8px;">
-                        <button @click="openCarouselModal(item)" class="btn-table-action btn-action-edit" title="تعديل البنر" aria-label="تعديل البنر">
-                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                          <span>تعديل</span>
-                        </button>
-                        <button @click="deleteCarouselItem(item._id)" class="btn-table-action btn-action-delete" title="حذف البنر" aria-label="حذف البنر">
-                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                          <span>حذف</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div v-else class="text-center p-5 text-muted">
-                  لا توجد بنرات عروض تسويقية مضافة حالياً.
-                </div>
-              </div>
-            </div>
-          </div>
+          <AdminCarouselTab
+            v-else-if="activeTab === 'carousel' && userRole === 'admin'"
+            :activeShop="activeShop"
+            :carouselItems="carouselItems"
+            :carouselLoading="carouselLoading"
+            v-model:modalOpen="carouselModalOpen"
+            v-model:cropperOpen="cropperModalOpen"
+            :adminFetch="adminFetch"
+            @refresh="fetchCarousel"
+            @zoom="zoomImage"
+          />
 
           <!-- ORDERS MANAGEMENT TAB -->
           <div v-else-if="activeTab === 'orders'" class="orders-tab-content">
@@ -3561,697 +3521,31 @@
           />
 
           <!-- USERS MANAGEMENT TAB -->
-          <div v-else-if="activeTab === 'users' && userRole === 'admin'" class="users-tab-content">
-            <div class="table-card glass-panel overflow-hidden">
-              <div class="card-toolbar card-toolbar-unified justify-content-end">
-                <button @click="openUserModal()" class="btn btn-primary">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span>إضافة مستخدم جديد</span>
-                </button>
-              </div>
-
-              <div class="table-container">
-                <table class="admin-table desktop-users-table">
-                  <thead>
-                    <tr>
-                      <th>الاسم / حساب الدخول</th>
-                      <th>الدور / الصلاحية</th>
-                      <th>نطاق المتجر</th>
-                      <th>تاريخ الإضافة</th>
-                      <th>إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-if="adminUsers.length === 0">
-                      <td colspan="5" class="text-center p-4">لا يوجد مستخدمون مدخلون بعد.</td>
-                    </tr>
-                    <tr v-for="(u, idx) in adminUsers" :key="u._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
-                      <td class="text-bold">{{ u.name }}</td>
-                      <td>
-                        <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
-                          {{ u.role === 'admin' ? 'مدير النظام' : 'إدارة الطلبات والإنتاج' }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="text-small text-muted">
-                          {{ u.shopAccess === 'shop1' ? 'المتجر الرئيسي' : u.shopAccess === 'shop2' ? 'قسم النواشف' : 'جميع المتاجر' }}
-                        </span>
-                      </td>
-                      <td class="text-mono text-small">{{ u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-LY') : '-' }}</td>
-                      <td>
-                        <div class="order-actions-btns">
-                          <button @click="openUserModal(u)" class="btn-table-action btn-action-edit" title="تعديل المستخدم">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            <span>تعديل</span>
-                          </button>
-                          <button @click="deleteUser(u._id)" class="btn-table-action btn-action-delete" title="حذف حساب المستخدم" :aria-label="`حذف حساب المستخدم ${u.name}`">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            <span>حذف</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <!-- Mobile Users Cards Grid (Active on screens <= 768px) -->
-                <div class="mobile-users-cards-grid">
-                  <div v-if="adminUsers.length === 0" class="empty-state-card p-4 text-center">
-                    <p class="text-muted mb-0">لا يوجد مستخدمون مدخلون بعد.</p>
-                  </div>
-                  <div
-                    v-for="u in adminUsers"
-                    :key="'mob-user-' + u._id"
-                    class="mobile-user-card glass-panel"
-                  >
-                    <div class="mob-user-header">
-                      <div class="mob-user-avatar-wrap">
-                        <div class="mob-user-avatar" :class="u.role === 'admin' ? 'admin' : 'staff'">
-                          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        </div>
-                        <div class="mob-user-meta">
-                          <span class="mob-user-name font-bold">{{ u.name }}</span>
-                          <span class="mob-user-date text-mono text-muted text-small">{{ u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-LY') : '-' }}</span>
-                        </div>
-                      </div>
-                      <span class="price-mode-badge" :class="u.role === 'admin' ? 'regular' : 'bulk'">
-                        {{ u.role === 'admin' ? 'مدير النظام' : 'إدارة الطلبات والإنتاج' }}
-                      </span>
-                    </div>
-                    <div class="mob-user-body">
-                      <div class="mob-user-scope">
-                        <span class="lbl text-muted">نطاق المتجر:</span>
-                        <span class="val font-semibold">
-                          {{ u.shopAccess === 'shop1' ? 'المتجر الرئيسي' : u.shopAccess === 'shop2' ? 'قسم النواشف' : 'جميع المتاجر' }}
-                        </span>
-                      </div>
-                      <div class="mob-user-actions">
-                        <button @click="openUserModal(u)" class="btn-card-action btn-action-edit" :aria-label="`تعديل المستخدم ${u.name}`">
-                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                          <span>تعديل</span>
-                        </button>
-                        <button @click="deleteUser(u._id)" class="btn-card-action btn-action-delete" :aria-label="`حذف المستخدم ${u.name}`">
-                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                          <span>حذف</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AdminUsersTab
+            v-else-if="activeTab === 'users' && userRole === 'admin'"
+            :adminUsers="adminUsers"
+            :isMobileScreen="isMobileScreen"
+            :selectedTableRowIndex="selectedTableRowIndex"
+            v-model:modalOpen="userModalOpen"
+            :initialUser="pendingEditUser"
+            :adminFetch="adminFetch"
+            @refresh="fetchUsers"
+          />
 
           <!-- Settings & Backup Tab -->
-          <div v-else-if="activeTab === 'settings' && userRole === 'admin'" class="settings-tab-content">
-            <div class="settings-grid">
-              
-              <!-- Backup Management Card -->
-              <div class="table-card glass-panel mb-4">
-                <div class="card-toolbar card-toolbar-split">
-                  <div class="card-toolbar-top">
-                    <div class="toolbar-title-group">
-                      <div class="d-flex align-items-center gap-2">
-                        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-primary"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        <h3 class="toolbar-title">نظام النسخ الاحتياطي الشامل (Full Database Backup)</h3>
-                      </div>
-                      <span class="toolbar-badge">{{ backups.length }} نسخ محفوظة</span>
-                    </div>
-                  </div>
-                </div>
+          <AdminSettingsTab
+            v-else-if="activeTab === 'settings' && userRole === 'admin'"
+            v-model:resetModalOpen="resetModalOpen"
+            :adminFetch="adminFetch"
+            @orders-reset="onOrdersReset"
+          />
 
-                <div class="p-3">
-                  <!-- Create Backup Bar -->
-                  <div class="backup-action-bar mb-3 d-flex gap-2 align-items-center">
-                    <input 
-                      v-model="newBackupLabel" 
-                      type="text" 
-                      placeholder="وصف اختياري للنسخة الاحتياطية…" 
-                      class="form-control flex-grow-1" 
-                    />
-                    <button 
-                      @click="createBackup" 
-                      class="btn btn-primary d-flex align-items-center gap-2" 
-                      :disabled="backupLoading"
-                    >
-                      <svg aria-hidden="true" v-if="!backupLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      <span v-if="backupLoading" class="spinner-border spinner-border-sm"></span>
-                      <span>{{ backupLoading ? 'جاري الإنشاء…' : 'إنشاء نسخة احتياطية الآن' }}</span>
-                    </button>
-                  </div>
-
-                  <!-- Backups Table -->
-                  <div class="table-container">
-                    <table class="admin-table">
-                      <thead>
-                        <tr>
-                          <th>تاريخ ووقت النسخة</th>
-                          <th>وصف / عنوان النسخة</th>
-                          <th>إحصائيات البيانات المشمولة</th>
-                          <th>إجراءات</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-if="backups.length === 0">
-                          <td colspan="4" class="text-center p-4 text-muted">لا توجد نسخ احتياطية محفوظة بعد.</td>
-                        </tr>
-                        <tr v-for="b in backups" :key="b._id">
-                          <td class="text-mono font-bold">{{ new Date(b.createdAt).toLocaleString('ar-LY') }}</td>
-                          <td><span class="backup-label-pill">{{ b.label }}</span></td>
-                          <td>
-                            <div class="d-flex flex-wrap gap-1 align-items-center">
-                              <span class="badge-stat-pill" v-if="b.stats">الطلبات: {{ (b.stats['emenu.orders'] || 0) + (b.stats['emenu2.orders'] || 0) }}</span>
-                              <span class="badge-stat-pill" v-if="b.stats">الأصناف: {{ (b.stats['emenu.products'] || 0) + (b.stats['emenu2.products'] || 0) }}</span>
-                              <span class="badge-stat-pill" v-if="b.stats">العملاء: {{ b.stats['emenu.customers'] || 0 }}</span>
-                              <span class="badge-stat-pill" v-if="b.stats">الدفعات: {{ b.stats['emenu.payments'] || 0 }}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <div class="order-actions-btns">
-                              <button @click="downloadBackup(b._id)" class="btn-table-action btn-action-edit" title="تحميل ملف JSON">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                <span>تنزيل JSON</span>
-                              </button>
-                              <button @click="deleteBackup(b._id)" class="btn-table-action btn-action-delete" title="حذف النسخة الاحتياطية" aria-label="حذف النسخة الاحتياطية">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                <span>حذف</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Danger Zone Card: Reset Orders & Analytics -->
-              <div class="danger-zone-card mb-4">
-                <div class="danger-zone-header">
-                  <div class="d-flex align-items-center gap-2">
-                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <h3 class="danger-zone-title">منطقة العمليات الحساسة وإعادة ضبط البيانات (Data Reset)</h3>
-                  </div>
-                </div>
-
-                <div class="danger-zone-body">
-                  <p class="danger-zone-desc">
-                    تصفير سجل الطلبات والمبيعات والتحليلات لبدء موسم عمل جديد. تأكد من أخذ نسخة احتياطية أولاً.
-                  </p>
-                  <div class="danger-points-list">
-                    <div class="danger-point-item">
-                      <span class="danger-bullet">•</span>
-                      <span>سيتم مسح جميع سجلات الطلبات من المتجر الرئيسي وقسم النواشف.</span>
-                    </div>
-                    <div class="danger-point-item">
-                      <span class="danger-bullet">•</span>
-                      <span>سيتم مسح سجل الدفعات والتحصيلات بالكامل وتصفير مديونيات ومشتريات العملاء.</span>
-                    </div>
-                    <div class="danger-point-item">
-                      <span class="danger-bullet">•</span>
-                      <span>سيتم إعادة ترقيم الطلبات التلقائي ليبدأ من الرقم <strong>#1001</strong> مجدداً.</span>
-                    </div>
-                    <div class="danger-point-item safe-point">
-                      <span class="safe-bullet"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                      <span><strong>محفوظات آمنة:</strong> لن يتم حذف الأصناف، المنتجات، التصنيفات، حسابات العملاء، أو حسابات المدراء.</span>
-                    </div>
-                  </div>
-
-                  <div class="mt-3">
-                    <button @click="openResetModal" class="btn btn-danger btn-reset-trigger d-flex align-items-center gap-2">
-                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                      <span>مسح وتصفير سجل الطلبات والمبيعات…</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-        
-          
             </div>
           </Transition>
 
         </div>
       </main>
     </div>
-
-  <!-- RESET ORDERS CONFIRMATION MODAL -->
-    <Transition name="modal-spring-fade">
-  <div v-if="resetModalOpen" class="modal-overlay" @click.self="resetModalOpen = false">
-    <div class="modal-content reset-confirm-modal-box" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title" v-sheet-gesture="() => resetModalOpen = false">
-      <div class="sheet-grab-handle" aria-hidden="true"></div>
-      <div class="modal-header reset-modal-header">
-        <div class="d-flex align-items-center gap-3">
-          <div class="reset-header-icon" aria-hidden="true">
-            <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div>
-            <h3 id="reset-modal-title" class="m-0 font-bold text-danger">تأكيد مسح وتصفير سجل الطلبات</h3>
-            <p class="text-muted m-0 text-small">هذا الإجراء سيقوم بمسح بيانات الطلبات والمبيعات نهائياً</p>
-          </div>
-        </div>
-        <button @click="resetModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <div class="modal-body py-3">
-        <div class="alert-reset-warning mb-3">
-          <strong>تنبيه هام جداً:</strong> سيتم حذف جميع الطلبات وإعادة ضبط ترقيم الطلبات إلى <strong>#1001</strong>. تأكد من أنك قمت بأخذ نسخة احتياطية قبل المتابعة.
-        </div>
-
-        <div class="form-check mb-3">
-          <input class="form-check-input" type="checkbox" id="resetCustBalanceCheck" v-model="resetCustomerBalances">
-          <label class="form-check-label font-bold" for="resetCustBalanceCheck" style="cursor: pointer;">
-            تصفير مديونيات ومشتريات العملاء أيضاً (تصفير مالي شامل)
-          </label>
-        </div>
-
-        <div class="form-group mb-2">
-          <label class="form-label font-bold">اكتب العبارة التالية للتأكيد: <span class="text-danger font-bold">مسح البيانات</span></label>
-          <input 
-            v-model="resetConfirmText" 
-            type="text" 
-            class="form-control text-center font-bold" 
-            placeholder="مسح البيانات…"
-            autocomplete="off"
-            spellcheck="false"
-          />
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button 
-          type="button" 
-          @click="confirmResetOrders" 
-          class="btn btn-danger d-flex align-items-center gap-2"
-          :disabled="resetConfirmText.trim() !== 'مسح البيانات' || resetLoading"
-        >
-          <span v-if="resetLoading" class="spinner-border spinner-border-sm"></span>
-          <span>{{ resetLoading ? 'جاري المسح…' : 'نعم، قم بالمسح النهائي' }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-    </Transition>
-
-    <!-- Stock Reservations History Modal -->
-    <Transition name="modal-spring-fade">
-    <div 
-      v-if="showReservationsModal" 
-      class="modal-overlay" 
-      @click.self="showReservationsModal = false"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reservations-modal-title"
-    >
-      <div class="modal-box glass-panel max-w-lg" v-sheet-gesture="() => showReservationsModal = false" style="max-width: 640px;">
-        <div class="sheet-grab-handle" aria-hidden="true"></div>
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-title-icon" aria-hidden="true">
-              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            </div>
-            <h3 id="reservations-modal-title">سجل حجوزات المخزون — {{ selectedInventoryItemForReservations?.name }}</h3>
-          </div>
-          <button @click="showReservationsModal = false" class="modal-close-btn" aria-label="إغلاق">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-
-        <div class="modal-body p-3">
-          <div class="inv-item-mini-summary mb-3">
-            <div class="mini-summary-item">
-              <span class="mini-summary-label">الرصيد الفعلي بالمستودع</span>
-              <strong class="mini-summary-val text-mono">{{ selectedInventoryItemForReservations?.quantity || 0 }}</strong>
-            </div>
-            <div class="mini-summary-item">
-              <span class="mini-summary-label">إجمالي المحجوز</span>
-              <strong class="mini-summary-val text-mono text-amber">{{ selectedInventoryItemForReservations?.reserved_qty || 0 }}</strong>
-            </div>
-            <div class="mini-summary-item">
-              <span class="mini-summary-label">المتاح الصافي للبيع</span>
-              <strong class="mini-summary-val text-mono text-success">{{ selectedInventoryItemForReservations?.available_qty || 0 }}</strong>
-            </div>
-          </div>
-
-          <div class="table-container" style="max-height: 380px; overflow-y: auto;">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>رقم الطلب</th>
-                  <th>الكمية المحجوزة</th>
-                  <th>الرصيد السابق ← الجديد</th>
-                  <th>الحالة</th>
-                  <th>التاريخ والوقت</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="itemReservationsList.length === 0">
-                  <td colspan="5" class="text-center p-3 text-muted">لا توجد حركات حجز سابقة لهذا الصنف.</td>
-                </tr>
-                <tr v-else v-for="res in itemReservationsList" :key="res._id">
-                  <td class="text-mono font-bold">#{{ res.orderNumber }}</td>
-                  <td class="text-mono font-bold text-amber">{{ res.itemReservedQty }}</td>
-                  <td class="text-mono text-small">{{ res.itemPrevStock }} ← {{ res.itemNewStock }}</td>
-                  <td>
-                    <span v-if="res.status === 'reserved'" class="stock-state-pill low">محجوز</span>
-                    <span v-else-if="res.status === 'deducted'" class="stock-state-pill ok">مخصوم نهائياً</span>
-                    <span v-else-if="res.status === 'returned'" class="stock-state-pill out">مسترجع للمخزن</span>
-                    <span v-else class="text-muted">{{ res.status }}</span>
-                  </td>
-                  <td class="text-mono text-small">{{ new Date(res.reservedAt || res.createdAt).toLocaleString('ar-LY') }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" @click="showReservationsModal = false">إغلاق</button>
-        </div>
-      </div>
-    </div>
-    </Transition>
-
-    <!-- Auto Match Review Modal -->
-    <Transition name="modal-spring-fade">
-    <div 
-      v-if="showAutoMatchModal" 
-      class="modal-overlay auto-match-modal-overlay" 
-      @click.self="showAutoMatchModal = false"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="automatch-modal-title"
-    >
-      <div class="modal-box glass-panel automatch-modal-box" v-sheet-gesture="() => showAutoMatchModal = false" style="max-width: 820px;">
-        <div class="sheet-grab-handle" aria-hidden="true"></div>
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-title-icon bg-blue-subtle text-primary" aria-hidden="true">
-              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
-            </div>
-            <div>
-              <h3 id="automatch-modal-title">مطابقة وربط الأصناف آلياً بالاسم</h3>
-              <p class="modal-subtitle mb-0">مطابقة أصناف مستودع PocketBase مع منتجات المتجر اعتماداً على الاسم العربي</p>
-            </div>
-          </div>
-          <button @click="showAutoMatchModal = false" class="modal-close-btn" aria-label="إغلاق">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-
-        <div class="modal-body p-3">
-          <!-- Stats Banner -->
-          <div class="automatch-stats-banner mb-3">
-            <div class="automatch-stat-chip">
-              <span class="chip-label">إجمالي التطابقات:</span>
-              <strong class="chip-val text-mono">{{ autoMatches.length }}</strong>
-            </div>
-            <div class="automatch-stat-chip exact">
-              <span class="chip-label">تطابق تام (100%):</span>
-              <strong class="chip-val text-mono text-success">{{ autoMatchesExactCount }}</strong>
-            </div>
-            <div class="automatch-stat-chip partial">
-              <span class="chip-label">تطابق تقريبي:</span>
-              <strong class="chip-val text-mono text-primary">{{ autoMatchesPartialCount }}</strong>
-            </div>
-            <div class="automatch-stat-chip selected">
-              <span class="chip-label">المحدد للربط:</span>
-              <strong class="chip-val text-mono text-amber">{{ selectedMatchIndices.size }}</strong>
-            </div>
-          </div>
-
-          <!-- Filter Tabs & Batch Select -->
-          <div class="automatch-controls mb-3">
-            <div class="filter-pills-row">
-              <button 
-                type="button" 
-                class="pill-btn" 
-                :class="{ active: autoMatchFilter === 'all' }" 
-                @click="autoMatchFilter = 'all'"
-              >
-                الكل ({{ autoMatches.length }})
-              </button>
-              <button 
-                type="button" 
-                class="pill-btn" 
-                :class="{ active: autoMatchFilter === 'exact' }" 
-                @click="autoMatchFilter = 'exact'"
-              >
-                تطابق تام ({{ autoMatchesExactCount }})
-              </button>
-              <button 
-                type="button" 
-                class="pill-btn" 
-                :class="{ active: autoMatchFilter === 'partial' }" 
-                @click="autoMatchFilter = 'partial'"
-              >
-                تطابق تقريبي ({{ autoMatchesPartialCount }})
-              </button>
-            </div>
-
-            <div class="select-actions-row">
-              <button type="button" class="btn-link-action" @click="selectAllFilteredMatches">تحديد المعروض</button>
-              <span class="sep">|</span>
-              <button type="button" class="btn-link-action" @click="deselectAllMatches">إلغاء التحديد</button>
-            </div>
-          </div>
-
-          <!-- Matches List -->
-          <div class="automatch-list-container" style="max-height: 380px; overflow-y: auto;">
-            <div v-if="filteredAutoMatches.length === 0" class="text-center p-4 text-muted">
-              لا توجد عناصر مطابقة في هذا التصنيف.
-            </div>
-            <div 
-              v-else 
-              v-for="match in filteredAutoMatches" 
-              :key="'match-' + match.pbRecordId + '-' + match.productId"
-              class="automatch-item-card"
-              :class="{ 'is-selected': selectedMatchIndices.has(match.matchKey), 'is-exact': match.exact }"
-            >
-              <div class="match-check-wrap">
-                <input 
-                  type="checkbox" 
-                  :id="'chk-' + match.matchKey" 
-                  :checked="selectedMatchIndices.has(match.matchKey)" 
-                  @change="toggleMatchSelection(match.matchKey)"
-                  class="match-checkbox"
-                />
-              </div>
-
-              <div class="match-flow">
-                <!-- PB Side -->
-                <div class="match-box pb-side">
-                  <span class="match-source-badge">المستودع (PocketBase)</span>
-                  <div class="match-name font-bold">{{ match.pbItemName }}</div>
-                  <div class="match-meta text-small text-muted">
-                    <span>{{ match.pbCategory || 'عام' }}</span>
-                    <span class="bullet">•</span>
-                    <span>الرصيد: <strong class="text-mono">{{ match.pbQuantity }}</strong></span>
-                  </div>
-                </div>
-
-                <!-- Link Arrow & Badge -->
-                <div class="match-arrow-col">
-                  <span class="confidence-badge" :class="match.exact ? 'exact' : 'partial'">
-                    {{ match.exact ? 'تطابق تام' : match.confidence + '%' }}
-                  </span>
-                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="match-arrow-svg"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                </div>
-
-                <!-- Product Side -->
-                <div class="match-box prod-side">
-                  <span class="match-source-badge prod">المتجر (e-Menu)</span>
-                  <div class="match-name font-bold">{{ match.productName }}</div>
-                  <div class="match-meta text-small text-muted">
-                    <span>{{ match.productCategory }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Conversion Factor -->
-              <div class="match-factor-wrap">
-                <label :for="'factor-' + match.matchKey" class="factor-label">معامل الخصم:</label>
-                <input 
-                  type="number" 
-                  :id="'factor-' + match.matchKey" 
-                  v-model.number="match.conversionFactor" 
-                  min="0.01" 
-                  step="0.1" 
-                  class="form-control factor-input text-mono" 
-                  placeholder="1"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer d-flex justify-content-between align-items-center">
-          <button type="button" class="btn btn-outline" @click="showAutoMatchModal = false">إلغاء</button>
-          <button 
-            type="button" 
-            class="btn btn-primary d-flex align-items-center gap-2" 
-            :disabled="selectedMatchIndices.size === 0 || batchLinkingLoading" 
-            @click="executeBatchLink"
-          >
-            <svg v-if="batchLinkingLoading" class="spin-animation" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>تأكيد وربط ({{ selectedMatchIndices.size }}) صنفاً الآن</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    </Transition>
-
-    <!-- Quick Link Single Item Modal -->
-    <Transition name="modal-spring-fade">
-    <div 
-      v-if="showQuickLinkModal" 
-      class="modal-overlay quick-link-modal-overlay" 
-      @click.self="showQuickLinkModal = false"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="quicklink-modal-title"
-    >
-      <div class="modal-box glass-panel quicklink-modal-box" v-sheet-gesture="() => showQuickLinkModal = false" style="max-width: 600px;">
-        <div class="sheet-grab-handle" aria-hidden="true"></div>
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-title-icon bg-blue-subtle text-primary" aria-hidden="true">
-              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            </div>
-            <div>
-              <h3 id="quicklink-modal-title">ربط صنف المستودع بمنتج المتجر</h3>
-              <p class="modal-subtitle mb-0">تحديد المنتج المقابل في قائمة المتجر لمعاملة الخصم والحجز التلقائي</p>
-            </div>
-          </div>
-          <button @click="showQuickLinkModal = false" class="modal-close-btn" aria-label="إغلاق">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-
-        <div class="modal-body p-3">
-          <!-- Target Warehouse Item Info -->
-          <div class="target-inv-item-card mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge-source">صنف المستودع المحدد</span>
-              <span class="category-pill">{{ selectedItemForQuickLink?.category || 'عام' }}</span>
-            </div>
-            <h4 class="font-bold mb-2">{{ selectedItemForQuickLink?.name }}</h4>
-            <div class="d-flex gap-2 text-small text-muted flex-wrap align-items-center">
-              <span class="pill-info-chip">الرصيد الفعلي بالمخزن: <strong class="text-mono text-dark">{{ selectedItemForQuickLink?.quantity }}</strong></span>
-              <span class="pill-info-chip">المتاح الصافي: <strong class="text-mono text-success">{{ selectedItemForQuickLink?.available_qty }}</strong></span>
-              <span v-if="selectedItemForQuickLink?.legacy_id" class="pill-info-chip">الرمز: <strong class="text-mono">{{ selectedItemForQuickLink.legacy_id }}</strong></span>
-            </div>
-
-            <!-- Current Link Status if already linked -->
-            <div v-if="selectedItemForQuickLink?.linkedProduct" class="current-link-alert mt-2 p-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="text-small">مرتبط حالياً بمنتج: <strong>{{ selectedItemForQuickLink.linkedProduct.productName }}</strong> (معامل: ×{{ selectedItemForQuickLink.linkedProduct.conversionFactor || 1 }})</span>
-                <button type="button" class="btn-unlink-action" @click="executeUnlinkItem(selectedItemForQuickLink.id)" :disabled="quickLinkLoading">
-                  فك الربط
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Product Picker Form -->
-          <div class="form-group mb-3">
-            <label class="form-label font-bold">اختر منتج المتجر (e-Menu Shop 2):</label>
-            <div class="search-input-wrapper mb-2">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input 
-                v-model="quickLinkProductSearch" 
-                type="text" 
-                class="form-control search-input" 
-                placeholder="ابحث بالاسم أو الفئة لتصفية المنتجات…" 
-              />
-              <button v-if="quickLinkProductSearch" type="button" @click="quickLinkProductSearch = ''" class="btn-clear-search">&times;</button>
-            </div>
-
-            <div class="quicklink-products-picker-list" style="max-height: 220px; overflow-y: auto;">
-              <div v-if="filteredQuickLinkProducts.length === 0" class="p-3 text-center text-muted">
-                لا توجد منتجات مطابقة للبحث.
-              </div>
-              <div 
-                v-else 
-                v-for="p in filteredQuickLinkProducts" 
-                :key="p._id" 
-                class="quicklink-product-option"
-                :class="{ 'is-selected': String(quickLinkProductId) === String(p._id), 'is-linked-elsewhere': p.inventoryLink && p.inventoryLink.recordId !== selectedItemForQuickLink?.id }"
-                @click="quickLinkProductId = String(p._id)"
-              >
-                <div class="d-flex align-items-center gap-2">
-                  <input 
-                    type="radio" 
-                    name="quickLinkProd" 
-                    :value="String(p._id)" 
-                    v-model="quickLinkProductId"
-                    class="picker-radio"
-                  />
-                  <div>
-                    <div class="font-bold">{{ p.name }}</div>
-                    <div class="text-small text-muted">
-                      <span>{{ p.category }}</span>
-                      <span v-if="p.subCategory" class="ms-1">/ {{ p.subCategory }}</span>
-                      <span v-if="p.price_regular" class="ms-2 text-mono text-primary">{{ p.price_regular }} د.ل</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="text-end">
-                  <span v-if="p.inventoryLink?.recordId === selectedItemForQuickLink?.id" class="badge badge-link-success text-small">
-                    مرتبط بهذا الصنف
-                  </span>
-                  <span v-else-if="p.inventoryLink?.recordId" class="badge-warning-soft text-small" :title="'مرتبط بصنف آخر: ' + p.inventoryLink.itemName">
-                    مرتبط بـ: {{ p.inventoryLink.itemName }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Conversion Factor Field -->
-          <div class="form-group mb-2">
-            <label class="form-label font-bold">معامل الخصم (Conversion Factor):</label>
-            <div class="d-flex align-items-center gap-2">
-              <input 
-                type="number" 
-                v-model.number="quickLinkConversionFactor" 
-                min="0.01" 
-                step="0.1" 
-                class="form-control text-mono" 
-                style="max-width: 140px;" 
-                placeholder="1" 
-              />
-              <span class="text-small text-muted">وحدة مخزون تُخصم لكل طلب زبون واحد (الافتراضي: 1)</span>
-            </div>
-            <p class="text-small text-muted mt-1 mb-0">
-              * مثال: إذا كان الصنف يُباع في المتجر بالنصف كيلو ورصيد المستودع بالكيلو، ضع المعامل 0.5.
-            </p>
-          </div>
-        </div>
-
-        <div class="modal-footer d-flex justify-content-between align-items-center">
-          <button type="button" class="btn btn-outline" @click="showQuickLinkModal = false">إلغاء</button>
-          <button 
-            type="button" 
-            class="btn btn-primary d-flex align-items-center gap-2" 
-            :disabled="!quickLinkProductId || quickLinkLoading" 
-            @click="executeSaveQuickLink"
-          >
-            <svg v-if="quickLinkLoading" class="spin-animation" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>حفظ الربط</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    </Transition>
 
     <!-- New Fast Order Modal (POS Mode) -->
     <Transition name="modal-spring-fade">
@@ -4347,8 +3641,8 @@
                     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span>بيانات العميل</span>
                   </div>
-                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="customers.find(c => c.phone && cleanPhoneDigits(c.phone) === cleanPhoneDigits(newOrder.customerPhone)) ? 'is-registered' : 'is-new'">
-                    {{ customers.find(c => c.phone && cleanPhoneDigits(c.phone) === cleanPhoneDigits(newOrder.customerPhone)) ? 'عميل مسجل' : 'عميل جديد' }}
+                  <span v-if="newOrder.customerPhone" class="pos-cust-status-badge" :class="matchedPosCustomer ? 'is-registered' : 'is-new'">
+                    {{ matchedPosCustomer ? 'عميل مسجل' : 'عميل جديد' }}
                   </span>
                 </div>
 
@@ -4403,6 +3697,29 @@
                     <label class="pos-label">رقم الهاتف *</label>
                     <input v-model="newOrder.customerPhone" @input="newOrder.customerPhone = formatPhoneInput($event.target.value)" type="tel" dir="ltr" class="form-control pos-control text-mono text-center" placeholder="09x-xxxxxxx" required />
                   </div>
+                </div>
+
+                <!-- Live Customer Intelligence & Repeat Last Order Strip -->
+                <div v-if="matchedPosCustomer || lastPosCustomerOrder" class="pos-customer-intel-strip animate-fade-in">
+                  <div class="pos-intel-badges">
+                    <span v-if="matchedPosCustomer" class="pos-intel-pill is-orders" title="إجمالي طلبات العميل">
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                      {{ formatArabicPlural(matchedPosCustomer.orderCount || 1, 'order') }}
+                    </span>
+                    <span v-if="matchedPosCustomer" class="pos-intel-pill" :class="matchedPosCustomer.outstandingBalance > 0 ? 'is-debt' : 'is-clear'">
+                      {{ matchedPosCustomer.outstandingBalance > 0 ? ('الرصيد: ' + formatCurrency(matchedPosCustomer.outstandingBalance)) : 'الرصيد: خالص' }}
+                    </span>
+                  </div>
+                  <button
+                    v-if="lastPosCustomerOrder"
+                    type="button"
+                    class="btn-pos-repeat-order"
+                    @click="repeatLastCustomerOrder"
+                    :title="'تكرار أصناف آخر طلب (#' + (lastPosCustomerOrder.orderNumber || '') + ')'"
+                  >
+                    <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    <span>تكرار آخر طلب ({{ lastPosCustomerOrder.items.length }})</span>
+                  </button>
                 </div>
               </div>
 
@@ -4570,7 +3887,7 @@
                         v-model="newOrderProductSearch" 
                         type="text" 
                         class="form-control search-input" 
-                        placeholder="بحث باسم المنتج أو الصنف…" 
+                        placeholder="بحث باسم المنتج أو الصنف أو الوسم…" 
                         @focus="showNewOrderProductSuggestions = true" @click="showNewOrderProductSuggestions = true"
                         @blur="closeNewOrderProductSuggestionsWithDelay" @input="showNewOrderProductSuggestions = true; highlightedProductIndex = 0" @keydown="handleProductSearchKeydown"
                       />
@@ -4599,7 +3916,16 @@
                               في السلة ×{{ getItemQtyInCart(prod._id) }}
                             </span>
                           </div>
-                          <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
+                          <div class="suggestion-submeta-row">
+                            <span class="suggestion-category">{{ prod.category }} {{ prod.subCategory ? '› ' + prod.subCategory : '' }}</span>
+                            <span
+                              v-if="activeShop === 'shop2' && getProductAvailableStock(prod._id) !== null"
+                              class="pos-stock-pill"
+                              :class="getProductAvailableStock(prod._id) <= 0 ? 'is-out' : (getProductAvailableStock(prod._id) <= 5 ? 'is-low' : 'is-ok')"
+                            >
+                              {{ getProductAvailableStock(prod._id) <= 0 ? 'نفد المخزون' : ('متوفر: ' + getProductAvailableStock(prod._id)) }}
+                            </span>
+                          </div>
                         </div>
                         <div class="suggestion-pricing">
                           <span class="suggestion-price text-mono font-bold">
@@ -4679,9 +4005,18 @@
                         <span class="quick-prod-name">{{ prod.name }}</span>
                         <span v-if="getItemQtyInCart(prod._id) > 0" class="sugg-in-cart-badge">×{{ getItemQtyInCart(prod._id) }}</span>
                       </div>
-                      <span class="quick-prod-price text-mono">
-                        {{ formatPrice(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
-                      </span>
+                      <div class="quick-prod-price-stock-row">
+                        <span class="quick-prod-price text-mono">
+                          {{ formatPrice(newOrder.priceMode === 'bulk' ? (prod.price_bulk || prod.price) : (prod.price_regular || prod.price)) }}
+                        </span>
+                        <span
+                          v-if="activeShop === 'shop2' && getProductAvailableStock(prod._id) !== null"
+                          class="pos-stock-pill"
+                          :class="getProductAvailableStock(prod._id) <= 0 ? 'is-out' : (getProductAvailableStock(prod._id) <= 5 ? 'is-low' : 'is-ok')"
+                        >
+                          {{ getProductAvailableStock(prod._id) <= 0 ? 'نفد' : ('متوفر: ' + getProductAvailableStock(prod._id)) }}
+                        </span>
+                      </div>
                     </div>
                     <button 
                       type="button" 
@@ -4711,7 +4046,19 @@
                     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                     <span>أصناف الطلب</span>
                   </div>
-                  <span class="toolbar-badge">{{ formatArabicPlural(newOrder.items.length, 'product') }}</span>
+                  <div class="pos-cart-header-actions">
+                    <button
+                      v-if="newOrder.items.length > 0"
+                      type="button"
+                      class="btn-pos-clear-cart"
+                      @click="clearNewOrderCart"
+                      title="إفراغ جميع الأصناف من السلة"
+                    >
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                      <span>إفراغ السلة</span>
+                    </button>
+                    <span class="toolbar-badge">{{ formatArabicPlural(newOrder.items.length, 'product') }}</span>
+                  </div>
                 </div>
 
                 <div class="edit-order-table-container">
@@ -4748,8 +4095,8 @@
                             <input 
                               v-model.number="item.quantity" 
                               type="number" 
-                              step="1" 
-                              min="0.1" 
+                              :step="item.allowFloat ? '0.25' : '1'" 
+                              :min="item.allowFloat ? '0.1' : '1'" 
                               class="form-control stepper-input text-mono text-center" 
                               @input="recalcNewOrderTotal" 
                               @change="recalcNewOrderTotal" 
@@ -4826,8 +4173,8 @@
                           <input 
                             v-model.number="item.quantity" 
                             type="number" 
-                            step="1" 
-                            min="0.1" 
+                            :step="item.allowFloat ? '0.25' : '1'" 
+                            :min="item.allowFloat ? '0.1' : '1'" 
                             class="pos-mob-stepper-input text-mono text-center" 
                             @input="recalcNewOrderTotal" 
                             @change="recalcNewOrderTotal" 
@@ -6443,68 +5790,6 @@
     </div>
     </Transition>
 
-    <!-- Marketing Carousel Modal Form -->
-    <Transition name="modal-spring-fade">
-    <div v-if="carouselModalOpen" class="modal-overlay" @click.self="carouselModalOpen = false">
-      <div class="modal-box glass-panel max-w-md" role="dialog" aria-modal="true" aria-labelledby="carousel-modal-title" v-sheet-gesture="() => carouselModalOpen = false">
-        <div class="sheet-grab-handle" aria-hidden="true"></div>
-        <div class="modal-header">
-          <h3 id="carousel-modal-title">{{ editingCarouselId ? 'تعديل البنر الإعلاني' : 'إضافة بنر إعلاني جديد' }}</h3>
-          <button @click="carouselModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-        <form @submit.prevent="saveCarouselItem" class="modal-form">
-          <p class="modal-subtitle text-muted text-small mb-3">اختر صورة البنر الإعلاني ورابط التوجيه ليتم تحديثها وعرضها مباشرة للزبائن.</p>
-          
-          <!-- S3 Image Upload Dropzone -->
-          <div class="form-group animate-fade-in">
-            <input type="file" ref="carouselFileInput" class="hidden-file-input" style="display: none;" accept="image/*" @click.stop @change="handleCarouselImageFileSelect" />
-            <div class="image-dropzone" 
-                 :class="{ active: carouselDragActive }" 
-                 @dragover.prevent="carouselDragActive = true"
-                 @dragleave.prevent="carouselDragActive = false"
-                 @drop.prevent="handleCarouselDrop($event)"
-                 @click="triggerCarouselImageSelect"
-                 role="button"
-                 tabindex="0"
-                 @keydown.enter.prevent="triggerCarouselImageSelect"
-                 @keydown.space.prevent="triggerCarouselImageSelect">
-              
-              <div v-if="!newCarouselItem.filePreview" class="dropzone-prompt">
-                <svg aria-hidden="true" class="cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>اسحب صورة البنر إلى هنا أو تصفح الملفات</span>
-              </div>
-              <div v-else class="dropzone-preview" @click.stop>
-                <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px; margin-bottom: 8px;" />
-                <span class="file-name">{{ newCarouselItem.file ? newCarouselItem.file.name : 'البنر الحالي (تغيير الصورة)' }}</span>
-                <span v-if="newCarouselItem.dimensions" class="file-dimensions block text-muted text-small mt-1" style="font-size: 0.75rem; color: #868e96; font-weight: 500;">
-                  المقاسات: {{ newCarouselItem.dimensions }}
-                </span>
-                <button type="button" @click="clearCarouselFile" class="btn btn-outline btn-xs mt-2" style="color: #fa5252; border-color: #ffc9c9;">إزالة الصورة</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Link input field -->
-          <div class="form-group mt-3">
-            <label class="form-label text-bold" style="font-size: 0.9rem;">رابط التوجيه عند الضغط على البنر (اختياري)</label>
-            <input v-model="newCarouselItem.link" type="text" placeholder="مثال: /category/وجبات أو رابط…" class="form-control" />
-            <p class="text-muted" style="font-size: 0.72rem; margin-top: 4px; line-height: 1.3;">عندما ينقر الزبون على هذا البنر، سيتم نقله تلقائياً إلى هذا الرابط.</p>
-          </div>
-
-          <div class="modal-footer mt-4">
-            <button type="submit" class="btn btn-primary" :disabled="loading">
-              {{ loading ? 'جاري الحفظ…' : (editingCarouselId ? 'حفظ التعديلات' : 'رفع ونشر البنر الإعلاني') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-    </Transition>
-
-
-
     <!-- Modern Admin Image Zoom View -->
     <Transition name="zoom-fade">
     <div v-if="zoomedImageSrc" class="zoom-backdrop" @click="closeAdminZoom" role="dialog" aria-modal="true" aria-label="معاينة الصورة">
@@ -6538,120 +5823,7 @@
       </div>
     </div>
     </Transition>
-    <!-- Premium Image Cropper Modal -->
-    <Transition name="modal-spring-fade">
-    <div v-if="cropperModalOpen" class="premium-cropper-overlay" role="dialog" aria-modal="true" aria-labelledby="cropper-modal-title">
-      <div class="premium-cropper-content">
-        <div class="premium-cropper-header">
-          <div>
-            <h2 id="cropper-modal-title" class="text-xl text-bold" style="margin: 0; color: #1f2937;">تخصيص أبعاد البنر</h2>
-            <p class="text-muted text-small" style="margin: 0; margin-top: 4px;">قم بتعديل الصورة لتتناسب مع واجهة المتجر</p>
-          </div>
-          <button @click="cropperModalOpen = false" class="premium-close-btn" aria-label="إغلاق">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-        
-        <div class="premium-cropper-body">
-          <div class="cropper-canvas-container">
-            <img ref="cropperImageElement" :src="cropperImageSrc" style="display: block; max-width: 100%;" />
-          </div>
-          
-          <div class="cropper-toolbar">
-            <div class="toolbar-section">
-              <span class="toolbar-label">نسبة العرض: ثابتة (3:1)</span>
-            </div>
-            
-            <div class="toolbar-actions">
-              <button @click="rotateCropperImage(90)" class="tool-btn" title="تدوير يمين">
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M21 13a9 9 0 1 1-3-7.7L21 8"></path></svg>
-              </button>
-              <button @click="rotateCropperImage(-90)" class="tool-btn" title="تدوير يسار">
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path></svg>
-              </button>
-              <div class="tool-divider"></div>
-              <button @click="zoomCropperImage(0.1)" class="tool-btn" title="تكبير">
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-              </button>
-              <button @click="zoomCropperImage(-0.1)" class="tool-btn" title="تصغير">
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-              </button>
-              <div class="tool-divider"></div>
-              <button @click="resetCropperImage" class="tool-btn" title="إعادة ضبط">
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="premium-cropper-footer">
-          <button @click="cropAndSaveImage" class="btn premium-btn-primary">
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            تأكيد القص
-          </button>
-        </div>
-      </div>
-    </div>
-    </Transition>
   </div>
-
-  <!-- User Modal Form -->
-  <Transition name="modal-spring-fade">
-  <div v-if="userModalOpen" class="modal-overlay" @click.self="userModalOpen = false">
-    <div class="modal-box glass-panel max-w-lg user-form-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title" v-sheet-gesture="() => userModalOpen = false">
-      <div class="sheet-grab-handle" aria-hidden="true"></div>
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <div class="modal-title-icon" aria-hidden="true">
-            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-          </div>
-          <h3 id="user-modal-title">{{ editingUser._id ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم جديد' }}</h3>
-        </div>
-        <button @click="userModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <form @submit.prevent="saveUser" class="modal-form">
-        <div class="form-group mb-3">
-          <label class="form-label">الاسم / اسم الحساب للدخول</label>
-          <input type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد…" required />
-        </div>
-
-        <div class="form-group mb-3">
-          <label class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
-          <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'بدون تغيير إذا تُرك فارغاً…' : 'كلمة المرور…'" :required="!editingUser._id" />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">الدور وصلاحيات الوصول</label>
-            <select v-model="editingUser.role" class="form-select user-form-select">
-              <option value="order_manager">موظف إدارة الطلبات والإنتاج (Order & Production Manager - طلبات، عملاء، إنتاج)</option>
-              <option value="admin">مدير النظام (Admin - وصول كامل)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">نطاق المتجر</label>
-            <select v-model="editingUser.shopAccess" class="form-select user-form-select">
-              <option value="all">جميع المتاجر</option>
-              <option value="shop1">المتجر الرئيسي فقط</option>
-              <option value="shop2">قسم النواشف فقط</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="modal-footer mt-4">
-          <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            {{ loading ? 'جاري الحفظ…' : 'حفظ البيانات' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-  </Transition>
 
   <!-- Hidden Print Production & Chef Report (A4 Portrait) -->
   <div class="print-production-report-wrapper" v-if="printingProductionReport">
@@ -8051,21 +7223,25 @@ import { gsap } from 'gsap';
 import { useRoute, useRouter } from 'vue-router';
 import { useToastStore } from '../stores/toast';
 import CategoryIcon from '../components/CategoryIcon.vue';
-import Cropper from 'cropperjs';
-import 'cropperjs/dist/cropper.css';
 import JsBarcode from 'jsbarcode';
 import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput, cleanPhoneDigits } from '../utils/phone';
 import { vSheetGesture } from '../utils/sheetGesture';
 
 const InventoryTab = defineAsyncComponent(() => import('../components/InventoryTab.vue'));
 const AdminShortcutsModal = defineAsyncComponent(() => import('../components/AdminShortcutsModal.vue'));
+const AdminCarouselTab = defineAsyncComponent(() => import('../components/AdminCarouselTab.vue'));
+const AdminUsersTab = defineAsyncComponent(() => import('../components/AdminUsersTab.vue'));
+const AdminSettingsTab = defineAsyncComponent(() => import('../components/AdminSettingsTab.vue'));
 
 export default {
   name: 'AdminView',
   components: {
     CategoryIcon,
     InventoryTab,
-    AdminShortcutsModal
+    AdminShortcutsModal,
+    AdminCarouselTab,
+    AdminUsersTab,
+    AdminSettingsTab
   },
   directives: {
     sheetGesture: vSheetGesture
@@ -8436,25 +7612,14 @@ export default {
       }
     };
 
-    // Cropper Data (Missing Refs)
     const cropperModalOpen = ref(false);
-    const cropperImageElement = ref(null);
-    const cropperImageSrc = ref('');
-    const activeAspectRatio = ref(3/1);
-    let cropperInstance = null;
 
     // User Roles & Authentication State
     const userRole = ref(localStorage.getItem('admin_role') || 'admin');
     const userDisplayName = ref(localStorage.getItem('admin_name') || 'المدير العام');
     const adminUsers = ref([]);
     const userModalOpen = ref(false);
-    const editingUser = reactive({
-      _id: null,
-      name: '',
-      password: '',
-      role: 'order_manager',
-      shopAccess: 'all'
-    });
+    const pendingEditUser = ref(null);
 
     // Tabs Titles
     const tabTitles = {
@@ -9152,22 +8317,7 @@ export default {
 
     // Marketing Carousel Ref State
     const carouselItems = ref([]);
-    const editingCarouselId = ref(null);
     const carouselModalOpen = ref(false);
-    const carouselDragActive = ref(false);
-    const carouselFileInput = ref(null);
-    const recompressingBanners = ref(false);
-    const recompressProgress = ref(0);
-    const recompressingProducts = ref(false);
-    const recompressProductsProgress = ref(0);
-    const newCarouselItem = reactive({
-      title: '',
-      subtitle: '',
-      link: '',
-      file: null,
-      filePreview: '',
-      dimensions: ''
-    });
 
     // Category form bindings
     const editingCategory = reactive({
@@ -9646,153 +8796,6 @@ export default {
       toast.show(`تم ضغط وتسريع صورة المنتج بنجاح (${sizeKb} KB)`, 'success');
     };
 
-    // Helper: compress any product image URL to high-efficiency WebP
-    const compressProductUrlToWebp = async (imageUrl) => {
-      return new Promise(async (resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Image fetch timeout'));
-        }, 12000); // 12 second timeout protection per image
-
-        try {
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            clearTimeout(timeout);
-            throw new Error(`HTTP error ${response.status}`);
-          }
-          const blob = await response.blob();
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = URL.createObjectURL(blob);
-          
-          img.onload = () => {
-            clearTimeout(timeout);
-            const maxW = 800;
-            const maxH = 800;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > maxW) {
-              height = Math.round((height * maxW) / width);
-              width = maxW;
-            }
-            if (height > maxH) {
-              width = Math.round((width * maxH) / height);
-              height = maxH;
-            }
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            canvas.toBlob((webpBlob) => {
-              URL.revokeObjectURL(img.src);
-              if (webpBlob) {
-                const compressedFile = new File([webpBlob], 'product_recompressed.webp', {
-                  type: 'image/webp',
-                  lastModified: Date.now()
-                });
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Canvas WebP compression failed'));
-              }
-            }, 'image/webp', 0.82);
-          };
-          
-          img.onerror = (err) => {
-            clearTimeout(timeout);
-            URL.revokeObjectURL(img.src);
-            reject(err);
-          };
-        } catch (e) {
-          clearTimeout(timeout);
-          reject(e);
-        }
-      });
-    };
-
-    // Batch re-compress and re-upload all current product images across ALL shops
-    const recompressAllProductImages = async () => {
-      recompressingProducts.value = true;
-      recompressProductsProgress.value = 0;
-      let updatedCount = 0;
-
-      try {
-        // Fetch products from BOTH shops to process all 250+ products
-        const [resShop1, resShop2] = await Promise.all([
-          adminFetch('/api/products').catch(() => null),
-          adminFetch('/api/shop2/products').catch(() => null)
-        ]);
-
-        let allProducts = [];
-        if (resShop1 && resShop1.ok) {
-          const prods1 = await resShop1.json();
-          allProducts.push(...prods1.map(p => ({ ...p, _shop: 'shop1' })));
-        }
-        if (resShop2 && resShop2.ok) {
-          const prods2 = await resShop2.json();
-          allProducts.push(...prods2.map(p => ({ ...p, _shop: 'shop2' })));
-        }
-
-        // Filter products with valid image URLs
-        const items = allProducts.filter(p => p.img && typeof p.img === 'string' && !p.img.includes('/res/logo.jpg'));
-        
-        if (items.length === 0) {
-          toast.show('لا توجد صور منتجات لإعادة ضغطها حالياً', 'warning');
-          return;
-        }
-
-        toast.show(`بدء ضغط وتسريع ${items.length} صورة منتج…`, 'info');
-
-        for (let i = 0; i < items.length; i++) {
-          const prod = items[i];
-          recompressProductsProgress.value = i + 1;
-          
-          try {
-            const compressedFile = await compressProductUrlToWebp(prod.img);
-            const formData = new FormData();
-            formData.append('name', prod.name);
-            formData.append('desc', prod.desc || '');
-            formData.append('category', prod.category || '');
-            formData.append('subCategory', prod.subCategory || '');
-            formData.append('purchaseType', prod.purchaseType || 'regular');
-            formData.append('allowFloat', prod.allowFloat ? 'true' : 'false');
-            formData.append('tags', JSON.stringify(prod.tags || []));
-            if (prod.price_regular) formData.append('price_regular', prod.price_regular);
-            if (prod.price_bulk) formData.append('price_bulk', prod.price_bulk);
-            formData.append('img', compressedFile);
-
-            const url = prod._shop === 'shop2' 
-              ? `/api/shop2/products/${prod._id}` 
-              : `/api/products/${prod._id}`;
-
-            const res = await adminFetch(url, {
-              method: 'PUT',
-              body: formData
-            });
-
-            if (res.ok) {
-              updatedCount++;
-            }
-          } catch (prodErr) {
-            console.error(`Failed to recompress product image ${prod._id} (${prod.name}):`, prodErr);
-          }
-        }
-
-        toast.show(`تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${items.length} صورة منتج بنجاح عبر جميع المتاجر!`, 'success');
-        await fetchProducts();
-      } catch (err) {
-        console.error('Batch product image recompression error:', err);
-        toast.show('حدث خطأ أثناء الضغط المجمع لصور المنتجات', 'danger');
-      } finally {
-        recompressingProducts.value = false;
-        recompressProductsProgress.value = 0;
-      }
-    };
-
     const removeModalImage = () => {
       modalFile.value = null;
       modalFilePreview.value = '';
@@ -10244,308 +9247,9 @@ export default {
       }
     };
 
-    const deleteCarouselItem = async (itemId) => {
-      if (!confirm('هل أنت متأكد من رغبتك في حذف هذا البنر الإعلاني؟')) return;
-      try {
-        const res = await adminFetch(`/api/admin/marketing-carousel/${itemId}`, { method: 'DELETE' });
-        if (res.ok) {
-          toast.show('تم حذف البنر الإعلاني بنجاح', 'success');
-          await fetchCarousel();
-        } else {
-          toast.show('فشل حذف البنر الإعلاني', 'danger');
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    const openCarouselModal = (item = null) => {
-      if (item) {
-        editingCarouselId.value = item._id;
-        newCarouselItem.title = item.title || '';
-        newCarouselItem.subtitle = item.subtitle || '';
-        newCarouselItem.link = item.link || '';
-        newCarouselItem.file = null;
-        newCarouselItem.filePreview = item.image || '';
-        newCarouselItem.dimensions = '';
-      } else {
-        editingCarouselId.value = null;
-        newCarouselItem.title = '';
-        newCarouselItem.subtitle = '';
-        newCarouselItem.link = '';
-        newCarouselItem.file = null;
-        newCarouselItem.filePreview = '';
-        newCarouselItem.dimensions = '';
-      }
+    const openCarouselModal = () => {
+      if (activeTab.value !== 'carousel') setTab('carousel');
       carouselModalOpen.value = true;
-    };
-
-    const saveCarouselItem = async () => {
-      if (!editingCarouselId.value && !newCarouselItem.file) {
-        toast.show('حدد صورة للبنر الإعلاني', 'danger');
-        return;
-      }
-      
-      loading.value = true;
-      try {
-        const formData = new FormData();
-        formData.append('shop', activeShop.value);
-        formData.append('title', newCarouselItem.title);
-        formData.append('subtitle', newCarouselItem.subtitle);
-        formData.append('link', newCarouselItem.link);
-        if (newCarouselItem.file) {
-          formData.append('img', newCarouselItem.file);
-        }
-        
-        const url = editingCarouselId.value 
-          ? `/api/admin/marketing-carousel/${editingCarouselId.value}`
-          : `/api/admin/marketing-carousel`;
-          
-        const res = await adminFetch(url, {
-          method: editingCarouselId.value ? 'PUT' : 'POST',
-          body: formData
-        });
-        
-        if (res.ok) {
-          toast.show(editingCarouselId.value ? 'تم تعديل البنر الإعلاني بنجاح' : 'تمت إضافة البنر الإعلاني بنجاح', 'success');
-          carouselModalOpen.value = false;
-          await fetchCarousel();
-        } else {
-          const errData = await res.json();
-          toast.show(errData.error || (editingCarouselId.value ? 'فشل تعديل البنر الإعلاني' : 'فشل إضافة البنر الإعلاني'), 'danger');
-        }
-      } catch (err) {
-        console.error(err);
-        toast.show('حدث خطأ أثناء حفظ البنر', 'danger');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const triggerCarouselImageSelect = () => {
-      if (carouselFileInput.value) {
-        carouselFileInput.value.click();
-      }
-    };
-
-    const handleCarouselImageFileSelect = (e) => {
-      const file = (e.target.files && e.target.files[0]) ? e.target.files[0] : null;
-      if (file && isImageFile(file)) {
-        setCarouselFile(file);
-      }
-      e.target.value = '';
-    };
-
-    const handleCarouselDrop = (e) => {
-      carouselDragActive.value = false;
-      const file = (e.dataTransfer && e.dataTransfer.files) ? e.dataTransfer.files[0] : null;
-      if (file && isImageFile(file)) {
-        setCarouselFile(file);
-      } else if (file) {
-        toast.show('يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP...)', 'warning');
-      }
-    };
-
-    const setCarouselFile = (file) => {
-      // Limit to 100MB
-      if (file.size > 100 * 1024 * 1024) {
-        toast.show('حجم الصورة كبير جداً. يجب أن تكون أقل من 100 ميجابايت.', 'danger');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        cropperImageSrc.value = e.target.result;
-        cropperModalOpen.value = true;
-        
-        nextTick(() => {
-          if (cropperInstance) {
-            cropperInstance.destroy();
-          }
-          if (cropperImageElement.value) {
-            cropperInstance = new Cropper(cropperImageElement.value, {
-              aspectRatio: activeAspectRatio.value,
-              viewMode: 1,
-              autoCropArea: 1,
-              background: false,
-            });
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-    };
-
-    const setAspectRatio = (ratio) => {
-      activeAspectRatio.value = ratio;
-      if (cropperInstance) {
-        cropperInstance.setAspectRatio(ratio);
-      }
-    };
-
-    const cropAndSaveImage = () => {
-      if (!cropperInstance) return;
-      
-      const canvas = cropperInstance.getCroppedCanvas({
-        maxWidth: 1600,
-        maxHeight: 900,
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high',
-      });
-      
-      // Heavy high-efficiency WebP compression preserving quality (0.78)
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          toast.show('حدث خطأ أثناء معالجة وقص الصورة', 'danger');
-          return;
-        }
-        
-        const sizeKb = (blob.size / 1024).toFixed(1);
-        const croppedFile = new File([blob], 'banner_compressed.webp', {
-          type: blob.type || 'image/webp',
-          lastModified: Date.now()
-        });
-        
-        newCarouselItem.file = croppedFile;
-        newCarouselItem.filePreview = canvas.toDataURL('image/webp', 0.78);
-        newCarouselItem.dimensions = `${canvas.width} × ${canvas.height} بكسل (حجم مضغوط: ${sizeKb} KB)`;
-        
-        cropperModalOpen.value = false;
-        cropperInstance.destroy();
-        cropperInstance = null;
-        toast.show(`تم ضغط البنر وقصه بنجاح (${sizeKb} KB)`, 'success');
-      }, 'image/webp', 0.78);
-    };
-
-    // Helper: compress any image URL to high-efficiency WebP
-    const compressImageUrlToWebp = async (imageUrl) => {
-      return new Promise(async (resolve, reject) => {
-        try {
-          const response = await fetch(imageUrl);
-          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-          const blob = await response.blob();
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = URL.createObjectURL(blob);
-          
-          img.onload = () => {
-            const maxW = 1600;
-            const maxH = 900;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > maxW) {
-              height = Math.round((height * maxW) / width);
-              width = maxW;
-            }
-            if (height > maxH) {
-              width = Math.round((width * maxH) / height);
-              height = maxH;
-            }
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            canvas.toBlob((webpBlob) => {
-              URL.revokeObjectURL(img.src);
-              if (webpBlob) {
-                const compressedFile = new File([webpBlob], 'banner_recompressed.webp', {
-                  type: 'image/webp',
-                  lastModified: Date.now()
-                });
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Canvas WebP compression failed'));
-              }
-            }, 'image/webp', 0.78);
-          };
-          
-          img.onerror = (err) => {
-            URL.revokeObjectURL(img.src);
-            reject(err);
-          };
-        } catch (e) {
-          reject(e);
-        }
-      });
-    };
-
-    // Batch re-compress and re-upload all current banners
-    const recompressAllBanners = async () => {
-      if (carouselItems.value.length === 0) {
-        toast.show('لا توجد بنرات لإعادة ضغطها حالياً', 'warning');
-        return;
-      }
-
-      recompressingBanners.value = true;
-      recompressProgress.value = 0;
-      let updatedCount = 0;
-
-      try {
-        for (let i = 0; i < carouselItems.value.length; i++) {
-          const item = carouselItems.value[i];
-          recompressProgress.value = i + 1;
-          
-          try {
-            const compressedFile = await compressImageUrlToWebp(item.image);
-            const formData = new FormData();
-            formData.append('shop', activeShop.value);
-            formData.append('title', item.title || '');
-            formData.append('subtitle', item.subtitle || '');
-            formData.append('link', item.link || '');
-            formData.append('img', compressedFile);
-
-            const res = await adminFetch(`/api/admin/marketing-carousel/${item._id}`, {
-              method: 'PUT',
-              body: formData
-            });
-
-            if (res.ok) {
-              updatedCount++;
-            }
-          } catch (itemErr) {
-            console.error(`Failed to recompress banner ${item._id}:`, itemErr);
-          }
-        }
-
-        toast.show(`تمت إعادة ضغط وتحديث ${updatedCount} من أصل ${carouselItems.value.length} بنر بنجاح!`, 'success');
-        await fetchCarousel();
-      } catch (err) {
-        console.error('Batch recompression error:', err);
-        toast.show('حدث خطأ أثناء الضغط المجمع للبنرات', 'danger');
-      } finally {
-        recompressingBanners.value = false;
-        recompressProgress.value = 0;
-      }
-    };
-
-    const rotateCropperImage = (degree) => {
-      if (cropperInstance) {
-        cropperInstance.rotate(degree);
-      }
-    };
-
-    const zoomCropperImage = (ratio) => {
-      if (cropperInstance) {
-        cropperInstance.zoom(ratio);
-      }
-    };
-
-    const resetCropperImage = () => {
-      if (cropperInstance) {
-        cropperInstance.reset();
-      }
-    };
-
-    const clearCarouselFile = () => {
-      newCarouselItem.file = null;
-      newCarouselItem.filePreview = '';
-      newCarouselItem.dimensions = '';
-      if (carouselFileInput.value) carouselFileInput.value.value = '';
     };
 
     const formatTotal = (val) => {
@@ -10719,191 +9423,18 @@ export default {
     };
 
     const openUserModal = (user = null) => {
-      if (user) {
-        editingUser._id = user._id;
-        editingUser.name = user.name || '';
-        editingUser.password = '';
-        editingUser.role = user.role || 'order_manager';
-        editingUser.shopAccess = user.shopAccess || 'all';
-      } else {
-        editingUser._id = null;
-        editingUser.name = '';
-        editingUser.password = '';
-        editingUser.role = 'order_manager';
-        editingUser.shopAccess = 'all';
-      }
+      pendingEditUser.value = user;
+      if (activeTab.value !== 'users') setTab('users');
       userModalOpen.value = true;
-      nextTick(() => {
-        const el = document.querySelector('.modal-overlay input[type="text"]');
-        if (!isMobileScreen.value && el) el.focus();
-      });
     };
 
-    const saveUser = async () => {
-      if (!editingUser.name || (!editingUser._id && !editingUser.password)) {
-        toast.show('جميع الحقول المطلوبة إلزامية', 'danger');
-        return;
-      }
-      loading.value = true;
-      try {
-        const isEdit = !!editingUser._id;
-        const url = isEdit ? `/api/admin/users/${editingUser._id}` : '/api/admin/users';
-        const method = isEdit ? 'PUT' : 'POST';
-        const res = await adminFetch(url, {
-          method,
-          body: JSON.stringify(editingUser)
-        });
-        if (res.ok) {
-          toast.show(isEdit ? 'تم تحديث بيانات المستخدم بنجاح' : 'تم إضافة المستخدم بنجاح', 'success');
-          userModalOpen.value = false;
-          await fetchUsers();
-        } else {
-          const data = await res.json();
-          toast.show(data.error || 'فشل حفظ بيانات المستخدم', 'danger');
-        }
-      } catch (e) {
-        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const deleteUser = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف هذا المستخدم نهائياً؟')) return;
-      try {
-        const res = await adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          toast.show('تم حذف المستخدم بنجاح', 'success');
-          await fetchUsers();
-        } else {
-          toast.show('فشل حذف المستخدم', 'danger');
-        }
-      } catch (e) {
-        toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
-      }
-    };
-
-
-    // ============ BACKUP & DATA MANAGEMENT ============
-    const backups = ref([]);
-    const backupLoading = ref(false);
-    const newBackupLabel = ref('');
     const resetModalOpen = ref(false);
-    const resetConfirmText = ref('');
-    const resetCustomerBalances = ref(true);
-    const resetLoading = ref(false);
-
-    const fetchBackups = async () => {
-      if (userRole.value !== 'admin') return;
-      try {
-        const res = await adminFetch('/api/admin/backups');
-        if (res.ok) {
-          const data = await res.json();
-          backups.value = data.backups || [];
-        }
-      } catch (e) {
-        console.error('Fetch backups error', e);
-      }
-    };
-
-    const createBackup = async () => {
-      backupLoading.value = true;
-      try {
-        const res = await adminFetch('/api/admin/backup', {
-          method: 'POST',
-          body: JSON.stringify({ label: newBackupLabel.value.trim() })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          toast.show('تم إنشاء النسخة الاحتياطية بنجاح', 'success');
-          newBackupLabel.value = '';
-          await fetchBackups();
-        } else {
-          toast.show(data.error || 'فشل إنشاء النسخة الاحتياطية', 'danger');
-        }
-      } catch (e) {
-        console.error('Create backup error', e);
-        toast.show('حدث خطأ في إنشاء النسخة الاحتياطية', 'danger');
-      } finally {
-        backupLoading.value = false;
-      }
-    };
-
-    const downloadBackup = (id) => {
-      const url = `/api/admin/backup/${id}/download`;
-      adminFetch(url)
-        .then(res => res.blob())
-        .then(blob => {
-          const dlUrl = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = dlUrl;
-          a.download = `emenu-backup-${new Date().toISOString().slice(0, 10)}.json`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(dlUrl);
-          toast.show('تم بدء تنزيل النسخة الاحتياطية', 'success');
-        })
-        .catch(err => {
-          console.error('Download backup error', err);
-          toast.show('فشل تنزيل النسخة الاحتياطية', 'danger');
-        });
-    };
-
-    const deleteBackup = async (id) => {
-      if (!window.confirm('هل أنت متأكد من رغبتك في حذف هذه النسخة الاحتياطية؟')) return;
-      try {
-        const res = await adminFetch(`/api/admin/backup/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          toast.show('تم حذف النسخة الاحتياطية بنجاح', 'success');
-          await fetchBackups();
-        } else {
-          const data = await res.json();
-          toast.show(data.error || 'فشل حذف النسخة الاحتياطية', 'danger');
-        }
-      } catch (e) {
-        console.error('Delete backup error', e);
-        toast.show('حدث خطأ في حذف النسخة الاحتياطية', 'danger');
-      }
-    };
-
-    const openResetModal = () => {
-      resetModalOpen.value = true;
-      resetConfirmText.value = '';
-      resetCustomerBalances.value = true;
-    };
-
-    const confirmResetOrders = async () => {
-      if (resetConfirmText.value.trim() !== 'مسح البيانات') return;
-      resetLoading.value = true;
-      try {
-        const res = await adminFetch('/api/admin/reset/orders', {
-          method: 'POST',
-          body: JSON.stringify({
-            confirm: 'RESET_ALL_ORDERS',
-            resetCustomerBalances: resetCustomerBalances.value
-          })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          toast.show('تم مسح وإعادة ضبط سجل الطلبات والمبيعات بنجاح', 'success');
-          resetModalOpen.value = false;
-          resetConfirmText.value = '';
-          await Promise.all([
-            fetchOrders(),
-            fetchCustomers(),
-            fetchAnalytics(),
-            fetchBackups()
-          ]);
-        } else {
-          toast.show(data.error || 'فشل مسح البيانات', 'danger');
-        }
-      } catch (e) {
-        console.error('Reset orders error', e);
-        toast.show('حدث خطأ في مسح البيانات', 'danger');
-      } finally {
-        resetLoading.value = false;
-      }
+    const onOrdersReset = async () => {
+      await Promise.all([
+        fetchOrders(),
+        fetchCustomers(),
+        fetchAnalytics()
+      ]);
     };
 
     // ============ INVENTORY INTEGRATION STATE & METHODS (SHOP 2) ============
@@ -10978,113 +9509,6 @@ export default {
       }
     };
 
-    // Trigger manual reconciliation
-    const triggerInventoryReconcile = async () => {
-      reconcileLoading.value = true;
-      try {
-        const res = await adminFetch('/api/admin/inventory/reconcile', { method: 'POST' });
-        if (res.ok) {
-          toast.show('تمت مطابقة ومواءمة المخزون بنجاح', 'success');
-          await Promise.all([fetchInventoryItems(), fetchInventoryStatus(), fetchInventoryReservations()]);
-        } else {
-          toast.show('فشلت مطابقة المخزون', 'danger');
-        }
-      } catch (e) {
-        toast.show('حدث خطأ أثناء الاتصال', 'danger');
-      } finally {
-        reconcileLoading.value = false;
-      }
-    };
-
-    // Quick link / unlink product to an inventory item
-    const updateProductInventoryLink = async (productId, inventoryLink) => {
-      try {
-        const res = await adminFetch(`/api/admin/products/${productId}/inventory-link`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inventoryLink, shop: activeShop.value })
-        });
-        if (res.ok) {
-          toast.show(inventoryLink ? 'تم ربط المنتج بالمخزون' : 'تم فك ارتباط المنتج', 'success');
-          await Promise.all([fetchProducts(), fetchInventoryItems()]);
-        } else {
-          toast.show('فشل في تحديث ربط المخزون', 'danger');
-        }
-      } catch (e) {
-        toast.show('خطأ في الاتصال بالخادم', 'danger');
-      }
-    };
-
-    const onSelectInventoryLinkForProduct = (recordId) => {
-      if (!recordId) {
-        editingProduct.inventoryLink = null;
-        return;
-      }
-      const item = inventoryItems.value.find(i => i.id === recordId);
-      if (item) {
-        editingProduct.inventoryLink = {
-          recordId: item.id,
-          legacyId: item.legacy_id || '',
-          itemName: item.name,
-          conversionFactor: 1
-        };
-      }
-    };
-
-    // Print A4 inventory report
-    const printInventoryReport = () => {
-      if (typeof window !== 'undefined') {
-        window.print();
-      }
-    };
-
-    // Categories extracted from inventory items
-    const inventoryCategories = computed(() => {
-      const cats = new Set();
-      for (const item of inventoryItems.value) {
-        if (item.category && item.category.trim()) cats.add(item.category.trim());
-      }
-      return Array.from(cats).sort((a, b) => a.localeCompare(b, 'ar'));
-    });
-
-    // Filtered inventory items for the table
-    const filteredInventoryItems = computed(() => {
-      let list = inventoryItems.value;
-      if (inventoryCategoryFilter.value && inventoryCategoryFilter.value !== 'all') {
-        list = list.filter(i => (i.category || '').trim() === inventoryCategoryFilter.value);
-      }
-      if (inventoryStatusFilter.value === 'low') {
-        list = list.filter(i => i.quantity <= i.min_stock && i.quantity > 0);
-      } else if (inventoryStatusFilter.value === 'out') {
-        list = list.filter(i => i.quantity <= 0);
-      } else if (inventoryStatusFilter.value === 'available') {
-        list = list.filter(i => i.quantity > i.min_stock);
-      }
-      if (inventorySearch.value && inventorySearch.value.trim()) {
-        const q = inventorySearch.value.trim().toLowerCase();
-        list = list.filter(i => 
-          (i.name || '').toLowerCase().includes(q) || 
-          (i.category || '').toLowerCase().includes(q) ||
-          (i.linkedProduct?.productName || '').toLowerCase().includes(q)
-        );
-      }
-      return list;
-    });
-
-    // Summary Stats
-    const inventorySummaryStats = computed(() => {
-      const total = inventoryItems.value.length;
-      let low = 0;
-      let out = 0;
-      let totalReserved = 0;
-      for (const i of inventoryItems.value) {
-        if (i.quantity <= 0) out++;
-        else if (i.quantity <= i.min_stock) low++;
-        totalReserved += (i.reserved_qty || 0);
-      }
-      return { total, low, out, totalReserved };
-    });
-
     // Reservations mapped by orderId & orderNumber
     const orderReservationMap = computed(() => {
       const map = {};
@@ -11106,268 +9530,12 @@ export default {
       return { status: res.status, label: res.status, icon: '•', class: 'stock-badge-other' };
     };
 
-    // Item-specific reservations list for modal
-    const itemReservationsList = computed(() => {
-      if (!selectedInventoryItemForReservations.value) return [];
-      const recId = selectedInventoryItemForReservations.value.id;
-      const list = [];
-      for (const r of inventoryReservations.value) {
-        if (!r.items) continue;
-        const match = r.items.find(it => it.inventoryRecordId === recId);
-        if (match) {
-          list.push({
-            _id: r._id,
-            orderNumber: r.orderNumber,
-            status: r.status,
-            reservedAt: r.reservedAt,
-            createdAt: r.createdAt,
-            itemReservedQty: match.reservedQty,
-            itemPrevStock: match.previousStock,
-            itemNewStock: match.newStock
-          });
-        }
-      }
-      return list;
-    });
-
-    const openItemReservationsModal = (item) => {
-      selectedInventoryItemForReservations.value = item;
-      showReservationsModal.value = true;
-    };
-
     const getProductAvailableStock = (productId) => {
       if (activeShop.value !== 'shop2' || !productId) return null;
       const prod = products.value.find(p => String(p._id) === String(productId));
       if (!prod || !prod.inventoryLink?.recordId) return null;
       const inv = inventoryItems.value.find(i => i.id === prod.inventoryLink.recordId);
       return inv ? inv.available_qty : null;
-    };
-
-    // ============ SMART AUTO-MATCHER STATE & METHODS ============
-    const autoMatchLoading = ref(false);
-    const showAutoMatchModal = ref(false);
-    const autoMatches = ref([]);
-    const selectedMatchIndices = ref(new Set());
-    const autoMatchFilter = ref('all');
-    const batchLinkingLoading = ref(false);
-
-    const autoMatchesExactCount = computed(() => {
-      return autoMatches.value.filter(m => m.exact).length;
-    });
-
-    const autoMatchesPartialCount = computed(() => {
-      return autoMatches.value.filter(m => !m.exact).length;
-    });
-
-    const filteredAutoMatches = computed(() => {
-      if (autoMatchFilter.value === 'exact') {
-        return autoMatches.value.filter(m => m.exact);
-      }
-      if (autoMatchFilter.value === 'partial') {
-        return autoMatches.value.filter(m => !m.exact);
-      }
-      return autoMatches.value;
-    });
-
-    const openAutoMatchModal = async () => {
-      autoMatchLoading.value = true;
-      try {
-        const res = await adminFetch('/api/admin/inventory/auto-match', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shop: activeShop.value })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          autoMatches.value = (data.matches || []).map(m => ({
-            ...m,
-            matchKey: m.pbRecordId + '_' + m.productId,
-            conversionFactor: m.conversionFactor || 1
-          }));
-
-          const initialSelected = new Set();
-          for (const m of autoMatches.value) {
-            if (m.exact || m.confidence >= 80) {
-              initialSelected.add(m.matchKey);
-            }
-          }
-          selectedMatchIndices.value = initialSelected;
-          showAutoMatchModal.value = true;
-
-          if (autoMatches.value.length === 0) {
-            toast.show('لم يتم العثور على تطابقات جديدة بالمخزن', 'info');
-          }
-        } else {
-          const err = await res.json();
-          toast.show(err.error || 'تعذر إجراء المطابقة الآلية', 'danger');
-        }
-      } catch (e) {
-        console.error('Auto match error:', e);
-        toast.show('خطأ في الاتصال أثناء المطابقة', 'danger');
-      } finally {
-        autoMatchLoading.value = false;
-      }
-    };
-
-    const toggleMatchSelection = (key) => {
-      const next = new Set(selectedMatchIndices.value);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      selectedMatchIndices.value = next;
-    };
-
-    const selectAllFilteredMatches = () => {
-      const next = new Set(selectedMatchIndices.value);
-      for (const m of filteredAutoMatches.value) {
-        next.add(m.matchKey);
-      }
-      selectedMatchIndices.value = next;
-    };
-
-    const deselectAllMatches = () => {
-      selectedMatchIndices.value = new Set();
-    };
-
-    const executeBatchLink = async () => {
-      if (selectedMatchIndices.value.size === 0) return;
-      batchLinkingLoading.value = true;
-      try {
-        const selectedLinks = autoMatches.value
-          .filter(m => selectedMatchIndices.value.has(m.matchKey))
-          .map(m => ({
-            productId: m.productId,
-            pbRecordId: m.pbRecordId,
-            pbLegacyId: m.pbLegacyId,
-            pbItemName: m.pbItemName,
-            conversionFactor: Number(m.conversionFactor) > 0 ? Number(m.conversionFactor) : 1
-          }));
-
-        const res = await adminFetch('/api/admin/inventory/batch-link', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ links: selectedLinks, shop: activeShop.value })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          toast.show(`تم ربط ${data.count || selectedLinks.length} صنفاً بنجاح بالمستودع`, 'success');
-          showAutoMatchModal.value = false;
-          await Promise.all([fetchProducts(), fetchInventoryItems(), fetchInventoryStatus()]);
-        } else {
-          const err = await res.json();
-          toast.show(err.error || 'فشلت عملية الربط المتعدد', 'danger');
-        }
-      } catch (e) {
-        console.error('Batch link execute error:', e);
-        toast.show('خطأ أثناء حفظ الروابط', 'danger');
-      } finally {
-        batchLinkingLoading.value = false;
-      }
-    };
-
-    // ============ INLINE QUICK-LINK SINGLE ITEM STATE & METHODS ============
-    const showQuickLinkModal = ref(false);
-    const selectedItemForQuickLink = ref(null);
-    const quickLinkProductId = ref('');
-    const quickLinkConversionFactor = ref(1);
-    const quickLinkProductSearch = ref('');
-    const quickLinkLoading = ref(false);
-    const quickLinkProductsList = ref([]);
-
-    const fetchQuickLinkProducts = async () => {
-      try {
-        const res = await adminFetch(`/api/admin/inventory/products-list?shop=${activeShop.value}`);
-        if (res.ok) {
-          const data = await res.json();
-          quickLinkProductsList.value = data.products || [];
-        }
-      } catch (e) {
-        console.error('Fetch quicklink products error:', e);
-      }
-    };
-
-    const openQuickLinkModal = async (item) => {
-      selectedItemForQuickLink.value = item;
-      quickLinkProductSearch.value = '';
-      quickLinkConversionFactor.value = item.linkedProduct?.conversionFactor || 1;
-      quickLinkProductId.value = item.linkedProduct?.productId ? String(item.linkedProduct.productId) : '';
-      showQuickLinkModal.value = true;
-      if (quickLinkProductsList.value.length === 0) {
-        await fetchQuickLinkProducts();
-      }
-    };
-
-    const filteredQuickLinkProducts = computed(() => {
-      let list = quickLinkProductsList.value;
-      if (quickLinkProductSearch.value && quickLinkProductSearch.value.trim()) {
-        const q = quickLinkProductSearch.value.trim().toLowerCase();
-        list = list.filter(p => 
-          (p.name || '').toLowerCase().includes(q) ||
-          (p.category || '').toLowerCase().includes(q) ||
-          (p.subCategory || '').toLowerCase().includes(q)
-        );
-      }
-      return list;
-    });
-
-    const executeSaveQuickLink = async () => {
-      if (!selectedItemForQuickLink.value || !quickLinkProductId.value) return;
-      quickLinkLoading.value = true;
-      try {
-        const res = await adminFetch('/api/admin/inventory/link-item', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pbRecordId: selectedItemForQuickLink.value.id,
-            productId: quickLinkProductId.value,
-            conversionFactor: Number(quickLinkConversionFactor.value) > 0 ? Number(quickLinkConversionFactor.value) : 1,
-            shop: activeShop.value
-          })
-        });
-
-        if (res.ok) {
-          toast.show('تم ربط صنف المستودع بالمنتج بنجاح', 'success');
-          showQuickLinkModal.value = false;
-          await Promise.all([fetchProducts(), fetchInventoryItems(), fetchInventoryStatus()]);
-        } else {
-          const err = await res.json();
-          toast.show(err.error || 'فشل في ربط الصنف', 'danger');
-        }
-      } catch (e) {
-        console.error('Save quick link error:', e);
-        toast.show('خطأ أثناء حفظ الربط', 'danger');
-      } finally {
-        quickLinkLoading.value = false;
-      }
-    };
-
-    const executeUnlinkItem = async (pbRecordId) => {
-      quickLinkLoading.value = true;
-      try {
-        const res = await adminFetch('/api/admin/inventory/link-item', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pbRecordId,
-            productId: null,
-            shop: activeShop.value
-          })
-        });
-
-        if (res.ok) {
-          toast.show('تم فك ارتباط الصنف بنجاح', 'success');
-          showQuickLinkModal.value = false;
-          await Promise.all([fetchProducts(), fetchInventoryItems(), fetchInventoryStatus()]);
-        } else {
-          const err = await res.json();
-          toast.show(err.error || 'فشل في فك الارتباط', 'danger');
-        }
-      } catch (e) {
-        console.error('Unlink item error:', e);
-        toast.show('خطأ أثناء فك الارتباط', 'danger');
-      } finally {
-        quickLinkLoading.value = false;
-      }
     };
 
     // Load Data
@@ -11385,8 +9553,7 @@ export default {
           fetchOrders(),
           fetchCustomers(),
           fetchCarousel(),
-          fetchUsers(),
-          fetchBackups()
+          fetchUsers()
         ]);
         if (activeShop.value === 'shop2') {
           await Promise.all([
@@ -13428,8 +11595,80 @@ const closeSuggestionsWithDelay = () => {
       totalPrice: 0
     });
 
+    const normalizePosArabic = (str) => String(str || '').toLowerCase()
+      .replace(/[\u064B-\u065F\u0670]/g, '')
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .trim();
+
+    const matchedPosCustomer = computed(() => {
+      if (!newOrder.customerPhone) return null;
+      const cleanTarget = cleanPhoneDigits(newOrder.customerPhone);
+      if (!cleanTarget || cleanTarget.length < 7) return null;
+      return (customers.value || []).find(c => c.phone && cleanPhoneDigits(c.phone) === cleanTarget) || null;
+    });
+
+    const lastPosCustomerOrder = computed(() => {
+      if (!newOrder.customerPhone) return null;
+      const cleanTarget = cleanPhoneDigits(newOrder.customerPhone);
+      if (!cleanTarget || cleanTarget.length < 7) return null;
+      const matching = (orders.value || []).filter(o =>
+        o.status !== 'cancelled' &&
+        o.customerInfo &&
+        o.customerInfo.phone &&
+        cleanPhoneDigits(o.customerInfo.phone) === cleanTarget &&
+        Array.isArray(o.items) &&
+        o.items.length > 0
+      );
+      return matching.length > 0 ? matching[0] : null;
+    });
+
+    const repeatLastCustomerOrder = () => {
+      const lastOrd = lastPosCustomerOrder.value;
+      if (!lastOrd || !Array.isArray(lastOrd.items)) return;
+      let addedCount = 0;
+      for (const oldItem of lastOrd.items) {
+        const prodId = oldItem.productId ? String(oldItem.productId) : '';
+        const liveProd = (products.value || []).find(p => String(p._id) === prodId) ||
+                         (products.value || []).find(p => p.name === oldItem.name);
+        const price = liveProd
+          ? (newOrder.priceMode === 'bulk'
+              ? (liveProd.price_bulk !== undefined && liveProd.price_bulk !== null ? liveProd.price_bulk : (liveProd.price_regular || liveProd.price || oldItem.price || 0))
+              : (liveProd.price_regular !== undefined && liveProd.price_regular !== null ? liveProd.price_regular : (liveProd.price || oldItem.price || 0)))
+          : (Number(oldItem.price) || 0);
+        const targetId = liveProd ? liveProd._id : (oldItem.productId || oldItem.name);
+        const existing = newOrder.items.find(i => String(i.productId || i.name) === String(targetId));
+        const qtyToAdd = Number(oldItem.quantity) || 1;
+        if (existing) {
+          existing.quantity = Math.round((existing.quantity + qtyToAdd) * 100) / 100;
+        } else {
+          newOrder.items.push({
+            productId: liveProd ? liveProd._id : (oldItem.productId || ''),
+            name: liveProd ? liveProd.name : oldItem.name,
+            img: (liveProd && liveProd.img) || oldItem.img || '',
+            price: Number(price) || 0,
+            quantity: qtyToAdd,
+            allowFloat: liveProd ? !!liveProd.allowFloat : !!oldItem.allowFloat,
+            notes: oldItem.notes || ''
+          });
+        }
+        addedCount++;
+      }
+      recalcNewOrderTotal();
+      if (addedCount > 0) {
+        toast.show(`تمت استعادة ${addedCount} أصناف من آخر طلب للعميل`, 'success');
+      }
+    };
+
+    const clearNewOrderCart = () => {
+      newOrder.items = [];
+      recalcNewOrderTotal();
+    };
+
     const filteredNewOrderCustomers = computed(() => {
-      const q = newOrderCustomerSearch.value.trim().toLowerCase();
+      const q = normalizePosArabic(newOrderCustomerSearch.value);
+      const qDigits = cleanPhoneDigits(newOrderCustomerSearch.value);
       const list = customers.value || [];
       if (!q) {
         if (list.length > 0) {
@@ -13453,8 +11692,8 @@ const closeSuggestionsWithDelay = () => {
         return fromOrders.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
       }
       return list.filter(c => 
-        (c.name && c.name.toLowerCase().includes(q)) || 
-        (c.phone && c.phone.includes(q))
+        (c.name && normalizePosArabic(c.name).includes(q)) || 
+        (c.phone && (c.phone.includes(q) || (qDigits && cleanPhoneDigits(c.phone).includes(qDigits))))
       ).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' })).slice(0, 8);
     });
 
@@ -13472,18 +11711,26 @@ const closeSuggestionsWithDelay = () => {
     });
 
     const filteredNewOrderProducts = computed(() => {
-      const q = debouncedNewOrderProductSearch.value.trim().toLowerCase();
+      const q = normalizePosArabic(debouncedNewOrderProductSearch.value);
       const cat = newOrderCategoryFilter.value;
       let list = products.value || [];
       if (cat) {
         list = list.filter(p => p.category === cat);
       }
       if (q) {
-        list = list.filter(p => 
-          (p.name && p.name.toLowerCase().includes(q)) || 
-          (p.category && p.category.toLowerCase().includes(q)) ||
-          (p.subCategory && p.subCategory.toLowerCase().includes(q))
-        );
+        const tagMap = new Map((tags.value || []).map(t => [String(t._id), normalizePosArabic(t.name)]));
+        list = list.filter(p => {
+          if (p.name && normalizePosArabic(p.name).includes(q)) return true;
+          if (p.category && normalizePosArabic(p.category).includes(q)) return true;
+          if (p.subCategory && normalizePosArabic(p.subCategory).includes(q)) return true;
+          if (Array.isArray(p.tags)) {
+            return p.tags.some(t => {
+              const tName = typeof t === 'object' && t !== null ? normalizePosArabic(t.name) : (tagMap.get(String(t)) || '');
+              return tName && tName.includes(q);
+            });
+          }
+          return false;
+        });
       }
       return [...list].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }));
     });
@@ -13774,8 +12021,9 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const adjustNewOrderItemQty = (item, delta) => {
-      const step = 1;
-      const newQty = Math.max(1, Math.round((item.quantity + delta * step) * 100) / 100);
+      const step = item.allowFloat ? 0.5 : 1;
+      const minQty = item.allowFloat ? 0.25 : 1;
+      const newQty = Math.max(minQty, Math.round((item.quantity + delta * step) * 100) / 100);
       item.quantity = newQty;
       recalcNewOrderTotal();
     };
@@ -15090,53 +13338,14 @@ const closeSuggestionsWithDelay = () => {
       tabTitles,
       inventoryItems,
       inventoryLoading,
-      inventorySearch,
-      inventoryCategoryFilter,
-      inventoryStatusFilter,
       inventoryReservations,
       inventoryStatus,
-      reconcileLoading,
-      showReservationsModal,
-      selectedInventoryItemForReservations,
       fetchInventoryItems,
       fetchInventoryStatus,
       fetchInventoryReservations,
-      triggerInventoryReconcile,
-      updateProductInventoryLink,
-      onSelectInventoryLinkForProduct,
-      printInventoryReport,
-      inventoryCategories,
-      filteredInventoryItems,
-      inventorySummaryStats,
       orderReservationMap,
       getOrderStockStatus,
-      itemReservationsList,
-      openItemReservationsModal,
       getProductAvailableStock,
-      autoMatchLoading,
-      showAutoMatchModal,
-      autoMatches,
-      selectedMatchIndices,
-      autoMatchFilter,
-      batchLinkingLoading,
-      autoMatchesExactCount,
-      autoMatchesPartialCount,
-      filteredAutoMatches,
-      openAutoMatchModal,
-      toggleMatchSelection,
-      selectAllFilteredMatches,
-      deselectAllMatches,
-      executeBatchLink,
-      showQuickLinkModal,
-      selectedItemForQuickLink,
-      quickLinkProductId,
-      quickLinkConversionFactor,
-      quickLinkProductSearch,
-      quickLinkLoading,
-      filteredQuickLinkProducts,
-      openQuickLinkModal,
-      executeSaveQuickLink,
-      executeUnlinkItem,
       analyticsPeriod,
       analyticsStartDate,
       analyticsEndDate,
@@ -15380,23 +13589,10 @@ const closeSuggestionsWithDelay = () => {
       userDisplayName,
       adminUsers,
       userModalOpen,
-      editingUser,
+      pendingEditUser,
       openUserModal,
-      saveUser,
-      deleteUser,
-      backups,
-      backupLoading,
-      newBackupLabel,
       resetModalOpen,
-      resetConfirmText,
-      resetCustomerBalances,
-      resetLoading,
-      fetchBackups,
-      createBackup,
-      downloadBackup,
-      deleteBackup,
-      openResetModal,
-      confirmResetOrders,
+      onOrdersReset,
       chefs,
       productionSubTab,
       chefModalOpen,
@@ -15501,6 +13697,10 @@ const closeSuggestionsWithDelay = () => {
       newOrderCustomerInputRef,
       newOrderProductInputRef,
       newOrder,
+      matchedPosCustomer,
+      lastPosCustomerOrder,
+      repeatLastCustomerOrder,
+      clearNewOrderCart,
       filteredNewOrderCustomers,
       filteredNewOrderProducts,
       displayedNewOrderProducts,
@@ -15544,34 +13744,10 @@ const closeSuggestionsWithDelay = () => {
       openCustomerFavsModal,
       removeCustomerFavorite,
       carouselItems,
-      editingCarouselId,
+      carouselLoading,
       carouselModalOpen,
-      carouselDragActive,
-      carouselFileInput,
-      recompressingBanners,
-      recompressProgress,
-      recompressAllBanners,
-      recompressingProducts,
-      recompressProductsProgress,
-      recompressAllProductImages,
-      newCarouselItem,
       openCarouselModal,
-      deleteCarouselItem,
-      saveCarouselItem,
-      triggerCarouselImageSelect,
-      handleCarouselImageFileSelect,
-      handleCarouselDrop,
-      clearCarouselFile,
       cropperModalOpen,
-      cropperImageElement,
-      cropperImageSrc,
-      activeAspectRatio,
-      cropperInstance,
-      setAspectRatio,
-      cropAndSaveImage,
-      rotateCropperImage,
-      zoomCropperImage,
-      resetCropperImage,
       isAdminZoomLoaded,
       closeAdminZoom,
       adminZoomImgRef,
@@ -16179,211 +14355,6 @@ const closeSuggestionsWithDelay = () => {
   padding: 30px;
   color: #94a3b8;
   font-size: 0.9rem;
-}
-
-/* User Modal Popup Select Box Styling ONLY */
-.user-form-modal select,
-.user-form-select {
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  appearance: none !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  background-color: #1e293b !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: left 14px center !important;
-  background-size: 16px 16px !important;
-  padding: 10px 14px 10px 38px !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  border-radius: 12px !important;
-  color: #f8fafc !important;
-  font-family: 'Cairo', sans-serif !important;
-  font-size: 0.92rem !important;
-  font-weight: 600 !important;
-  outline: none !important;
-  direction: rtl !important;
-  text-align: right !important;
-  cursor: pointer !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
-}
-
-.user-form-modal select:focus,
-.user-form-select:focus {
-  border-color: #d97706 !important;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25) !important;
-  background-color: #0f172a !important;
-}
-
-.user-form-modal select option,
-.user-form-select option {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  font-family: 'Cairo', sans-serif !important;
-  font-size: 0.92rem !important;
-  padding: 10px 14px !important;
-}
-
-.premium-cropper-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.premium-cropper-content {
-  background: #ffffff;
-  border-radius: 24px;
-  width: 100%;
-  max-width: 1000px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-}
-
-.premium-cropper-header {
-  padding: 24px 32px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f8fafc;
-}
-
-.premium-close-btn {
-  background: white;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.premium-close-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  transform: scale(1.05);
-}
-
-.premium-cropper-body {
-  background: #1e293b;
-  display: flex;
-  flex-direction: column;
-}
-
-.cropper-canvas-container {
-  height: 60vh;
-  min-height: 400px;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-.cropper-toolbar {
-  background: rgba(15, 23, 42, 0.95);
-  border-top: 1px solid #334155;
-  padding: 16px 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.toolbar-label {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  font-weight: 500;
-  background: #334155;
-  padding: 6px 12px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-}
-
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #1e293b;
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid #334155;
-}
-
-.tool-btn {
-  background: transparent;
-  border: none;
-  color: #cbd5e1;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.tool-btn:hover {
-  background: #334155;
-  color: #ffffff;
-}
-
-.tool-divider {
-  width: 1px;
-  height: 24px;
-  background: #334155;
-  margin: 0 4px;
-}
-
-.premium-cropper-footer {
-  padding: 24px 32px;
-  background: #ffffff;
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.premium-btn-outline {
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  background: transparent;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-.premium-btn-outline:hover {
-  background: #f8fafc;
-  color: #0f172a;
-}
-
-.premium-btn-primary {
-  padding: 12px 32px;
-  border-radius: 12px;
-  font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border: none;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-  display: flex;
-  align-items: center;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-.premium-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
 }
 
 /* Glassmorphism dashboard styles using custom HSL/CSS tokens */
@@ -28951,157 +26922,6 @@ select.pos-control {
 
 
 
-/* ============ SETTINGS & BACKUP STYLES ============ */
-.settings-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.backup-action-bar {
-  background: rgba(255, 255, 255, 0.6);
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.backup-label-pill {
-  display: inline-block;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.badge-stat-pill {
-  display: inline-block;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 2px 7px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.danger-zone-card {
-  background: #fff5f5;
-  border: 1.5px solid #fecaca;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.06);
-}
-
-.danger-zone-header {
-  border-bottom: 1px dashed #fca5a5;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
-}
-
-.danger-zone-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #dc2626;
-}
-
-.danger-zone-desc {
-  color: #7f1d1d;
-  font-size: 0.92rem;
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.danger-points-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  padding: 14px;
-  border-radius: 10px;
-  border: 1px solid #fee2e2;
-}
-
-.danger-point-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.88rem;
-  color: #991b1b;
-}
-
-.danger-point-item.safe-point {
-  color: #15803d;
-  font-weight: 600;
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-.danger-bullet {
-  color: #ef4444;
-  font-weight: 900;
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.safe-bullet {
-  color: #22c55e;
-  font-weight: 900;
-}
-
-.btn-reset-trigger {
-  font-weight: 800;
-  padding: 10px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.btn-reset-trigger:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
-}
-
-/* Reset Modal Box */
-.reset-confirm-modal-box {
-  max-width: 520px;
-  border-radius: 18px;
-  border: 2px solid #ef4444;
-}
-
-.reset-modal-header {
-  border-bottom: 1px solid #fee2e2;
-  background: #fef2f2;
-}
-
-.reset-header-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #fee2e2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.alert-reset-warning {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-right: 4px solid #f43f5e;
-  border-radius: 8px;
-  padding: 10px 14px;
-  color: #9f1239;
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-
 /* ============ ORDER PRINT STATUS STYLES ============ */
 .order-id-cell-wrapper {
   display: flex;
@@ -32474,261 +30294,136 @@ select.pos-control {
 }
 
 /* ============================================================
-   INVENTORY & WAREHOUSE MANAGEMENT (SHOP 2 / DRY GOODS)
+   POS FAST ORDER ENHANCEMENTS (CUSTOMER INTEL & STOCK PILLS)
    ============================================================ */
-
-.inventory-tab-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.inventory-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.inventory-stats-grid .stat-card {
+.pos-customer-intel-strip {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  min-width: 0;
-}
-
-.inventory-stats-grid .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
-}
-
-.inventory-stats-grid .stat-card.has-alert {
-  border-color: rgba(245, 158, 11, 0.45);
-  background: linear-gradient(135deg, #ffffff 60%, rgba(254, 243, 199, 0.25) 100%);
-}
-
-.inventory-stats-grid .stat-card.has-critical {
-  border-color: rgba(239, 68, 68, 0.45);
-  background: linear-gradient(135deg, #ffffff 60%, rgba(254, 226, 226, 0.25) 100%);
-}
-
-.inventory-stats-grid .stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.bg-blue-subtle {
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-}
-
-.bg-amber-subtle {
-  background: rgba(217, 119, 6, 0.1);
-  color: #d97706;
-}
-
-.bg-emerald-subtle {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-}
-
-.bg-red-subtle {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-}
-
-.inventory-stats-grid .stat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
-}
-
-.inventory-stats-grid .stat-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 600;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.inventory-stats-grid .stat-value {
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.1;
-}
-
-/* Inventory Toolbar Unified Layout */
-.inventory-toolbar-unified {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  flex-wrap: wrap !important;
-}
-
-.inventory-toolbar-unified .toolbar-search-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 auto;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-.inventory-toolbar-unified .filters-inline {
-  display: flex;
-  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.inventory-filter-select {
-  width: auto !important;
-  min-width: 140px !important;
-  flex: 0 0 auto !important;
-}
-
-.inventory-toolbar-unified .toolbar-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* Desktop Inventory Table */
-.desktop-inventory-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.desktop-inventory-table th,
-.desktop-inventory-table td {
-  padding: 10px 8px !important;
-  vertical-align: middle;
-  white-space: nowrap;
-  font-size: 0.86rem;
-}
-
-.desktop-inventory-table th.col-center,
-.desktop-inventory-table td.col-center {
-  text-align: center !important;
-}
-
-.desktop-inventory-table th {
-  color: #475569 !important;
-  font-weight: 700 !important;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
   background: #f8fafc;
-}
-
-.desktop-inventory-table td {
-  color: #0f172a !important;
-}
-
-/* Category Pill */
-.category-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 600;
   border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
 }
 
-/* Stock State Pill (ok, low, out) */
-.stock-state-pill {
-  display: inline-flex;
+.pos-intel-badges {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.stock-state-pill.ok {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.28);
-}
-
-.stock-state-pill.low {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.28);
-}
-
-.stock-state-pill.out {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.28);
-}
-
-/* Link Badges */
-.badge-link-success {
+.pos-intel-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
   border-radius: 6px;
-  font-size: 0.76rem;
-  font-weight: 600;
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  max-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.badge-link-pill {
+.pos-intel-pill.is-orders {
+  background: rgba(30, 58, 95, 0.08);
+  color: #1e3a5f;
+}
+
+.pos-intel-pill.is-debt {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.pos-intel-pill.is-clear {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.btn-pos-repeat-order {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  font-family: inherit;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-pos-repeat-order:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.35);
+}
+
+.suggestion-submeta-row,
+.quick-prod-price-stock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.pos-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pos-stock-pill.is-ok {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.pos-stock-pill.is-low {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.pos-stock-pill.is-out {
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+}
+
+.pos-cart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-pos-clear-cart {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  width: fit-content;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: inherit;
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.badge-reserved-count {
-  display: inline-block;
-  font-size: 0.88rem;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-}
-
-/* Table Row Stock Warning States */
-.admin-table tbody tr.row-low-stock {
-  background: rgba(254, 243, 199, 0.25) !important;
-}
-
-.admin-table tbody tr.row-out-stock {
-  background: rgba(254, 226, 226, 0.3) !important;
+.btn-pos-clear-cart:hover {
+  background: #ef4444;
+  color: #ffffff;
 }
 
 /* Order Stock Indicators (Table & Mobile Cards) */
@@ -32791,718 +30486,4 @@ select.pos-control {
   border-radius: 8px;
 }
 
-/* Mini Item Summary inside Reservations Modal */
-.inv-item-mini-summary {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-around !important;
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 12px !important;
-  padding: 14px 18px !important;
-  color: #0f172a !important;
-  gap: 12px !important;
-}
-
-.inv-item-mini-summary .mini-summary-item {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center !important;
-  gap: 4px !important;
-}
-
-.inv-item-mini-summary .mini-summary-label {
-  font-size: 0.8rem !important;
-  color: #64748b !important;
-  font-weight: 600 !important;
-}
-
-.inv-item-mini-summary .mini-summary-val {
-  font-size: 1.35rem !important;
-  font-weight: 800 !important;
-  color: #0f172a !important;
-}
-
-/* Mobile Inventory Cards */
-.mobile-inventory-cards {
-  display: none;
-}
-
-/* Responsive & Touch Optimization */
-@media (max-width: 1024px) {
-  .inventory-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .desktop-inventory-table-wrap {
-    display: none !important;
-  }
-  .mobile-inventory-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-  }
-  .inventory-mob-card {
-    background: #ffffff !important;
-    border: 1px solid rgba(226, 232, 240, 0.85) !important;
-    border-radius: 14px !important;
-    padding: 14px !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    position: relative !important;
-    overflow: hidden !important;
-    color: #0f172a !important;
-  }
-  .inventory-mob-card.is-low {
-    border-right: 4px solid #f59e0b !important;
-    background: linear-gradient(270deg, rgba(254, 243, 199, 0.2) 0%, #ffffff 20%) !important;
-  }
-  .inventory-mob-card.is-out {
-    border-right: 4px solid #ef4444 !important;
-    background: linear-gradient(270deg, rgba(254, 226, 226, 0.25) 0%, #ffffff 20%) !important;
-  }
-  .inv-mob-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .inv-mob-name {
-    font-size: 0.95rem !important;
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    margin: 0 0 4px 0 !important;
-  }
-  .inv-mob-metrics {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 6px !important;
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    padding: 8px 10px !important;
-    text-align: center !important;
-    color: #0f172a !important;
-  }
-  .inv-mob-metrics .metric-item {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2px !important;
-  }
-  .inv-mob-metrics .m-label {
-    font-size: 0.68rem !important;
-    color: #64748b !important;
-    font-weight: 600 !important;
-  }
-  .inv-mob-metrics .m-val {
-    font-size: 0.92rem !important;
-    font-weight: 800 !important;
-    color: #0f172a !important;
-  }
-  .inv-mob-metrics .m-val.text-amber {
-    color: #d97706 !important;
-  }
-  .inv-mob-metrics .m-val.text-danger {
-    color: #dc2626 !important;
-  }
-  .inv-mob-metrics .m-val.text-success {
-    color: #059669 !important;
-  }
-  .inv-mob-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    padding-top: 8px;
-    border-top: 1px solid #f1f5f9;
-    color: #0f172a !important;
-  }
-  .inv-mob-link {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .inventory-stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .inv-mob-metrics {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-}
-
-/* Print Styles for A4 Inventory Count */
-@media print {
-  .admin-sidebar,
-  .admin-header,
-  .card-toolbar,
-  .btn,
-  .modal-overlay,
-  .mobile-inventory-cards,
-  .order-actions-btns,
-  .theme-toggle,
-  .notification-center,
-  .live-pill {
-    display: none !important;
-  }
-  .admin-main-content,
-  .table-card,
-  .table-container,
-  .desktop-inventory-table-wrap {
-    display: block !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    background: transparent !important;
-  }
-  .desktop-inventory-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 10pt !important;
-  }
-  .desktop-inventory-table th,
-  .desktop-inventory-table td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 6px 8px !important;
-    color: #000000 !important;
-  }
-  .desktop-inventory-table th {
-    background: #f1f5f9 !important;
-    font-weight: bold !important;
-  }
-  .desktop-inventory-table tr {
-    page-break-inside: avoid !important;
-  }
-  .inventory-stats-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 8px !important;
-    margin-bottom: 14px !important;
-  }
-  .inventory-stats-grid .stat-card {
-    border: 1px solid #94a3b8 !important;
-    box-shadow: none !important;
-    padding: 8px !important;
-  }
-}
-
-/* ============ INVENTORY AUTO-MATCH & QUICK-LINK STYLES ============ */
-.btn-auto-match {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(99, 102, 241, 0.12)) !important;
-  border-color: rgba(99, 102, 241, 0.35) !important;
-  color: #4f46e5 !important;
-  font-weight: 700 !important;
-  transition: all 0.2s ease !important;
-}
-
-.shop-theme-shop2 .btn-auto-match {
-  color: #6366f1 !important;
-  background: rgba(99, 102, 241, 0.12) !important;
-  border-color: rgba(99, 102, 241, 0.4) !important;
-}
-
-.btn-auto-match:hover:not(:disabled) {
-  background: #4f46e5 !important;
-  color: #ffffff !important;
-  border-color: #4f46e5 !important;
-  transform: translateY(-1px);
-}
-
-.btn-linked-product-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #047857 !important;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  max-width: 100%;
-  text-decoration: none;
-}
-
-.btn-linked-product-badge:hover {
-  background: rgba(16, 185, 129, 0.22);
-  border-color: #10b981;
-  transform: translateY(-1px);
-}
-
-.btn-linked-product-badge .linked-pname {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 130px;
-}
-
-.btn-linked-product-badge .badge-factor {
-  background: #ffffff;
-  color: #065f46;
-  font-size: 0.74rem;
-  padding: 1px 6px;
-  border-radius: 6px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  font-weight: 800;
-}
-
-.btn-quick-link-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  color: #475569 !important;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.btn-quick-link-trigger:hover {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: #6366f1;
-  color: #4f46e5 !important;
-}
-
-/* Modal Boxes Base */
-.automatch-modal-box,
-.quicklink-modal-box {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-  border-radius: 16px;
-  max-height: 88vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-.automatch-modal-box .modal-header,
-.quicklink-modal-box .modal-header {
-  flex-shrink: 0 !important;
-}
-
-.automatch-modal-box .modal-body,
-.quicklink-modal-box .modal-body {
-  overflow-y: auto !important;
-  flex: 1 1 auto !important;
-  max-height: calc(88vh - 130px) !important;
-}
-
-.automatch-modal-box .modal-footer,
-.quicklink-modal-box .modal-footer {
-  flex-shrink: 0 !important;
-  background: #ffffff !important;
-  border-top: 1px solid #f1f5f9 !important;
-}
-
-.automatch-modal-box *,
-.quicklink-modal-box * {
-  box-sizing: border-box;
-}
-
-.automatch-modal-box h3,
-.quicklink-modal-box h3 {
-  color: #0f172a !important;
-  font-weight: 800;
-  margin: 0;
-  font-size: 1.15rem;
-}
-
-.automatch-modal-box .modal-subtitle,
-.quicklink-modal-box .modal-subtitle {
-  color: #64748b !important;
-  font-size: 0.85rem;
-}
-
-/* Stats Banner in Auto-Match Modal */
-.automatch-stats-banner {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.automatch-stat-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 4px;
-}
-
-.automatch-stat-chip .chip-label {
-  font-size: 0.76rem;
-  color: #64748b !important;
-  margin-bottom: 2px;
-}
-
-.automatch-stat-chip .chip-val {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.automatch-stat-chip.exact .chip-val {
-  color: #059669 !important;
-}
-
-.automatch-stat-chip.partial .chip-val {
-  color: #4f46e5 !important;
-}
-
-.automatch-stat-chip.selected .chip-val {
-  color: #d97706 !important;
-}
-
-/* Controls */
-.automatch-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 8px;
-}
-
-.filter-pills-row {
-  display: flex;
-  gap: 6px;
-}
-
-.filter-pills-row .pill-btn {
-  background: #f1f5f9;
-  border: 1px solid transparent;
-  color: #475569 !important;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.filter-pills-row .pill-btn.active {
-  background: #4f46e5;
-  color: #ffffff !important;
-}
-
-.select-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.82rem;
-}
-
-.select-actions-row .sep {
-  color: #cbd5e1;
-}
-
-.select-actions-row .btn-link-action {
-  background: none;
-  border: none;
-  color: #4f46e5 !important;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-
-/* Match Items List */
-.automatch-list-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.automatch-item-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-  transition: all 0.18s ease;
-}
-
-.automatch-item-card:hover {
-  border-color: #cbd5e1;
-  background: #fbfcfe;
-}
-
-.automatch-item-card.is-selected {
-  border-color: rgba(79, 70, 229, 0.4);
-  background: rgba(79, 70, 229, 0.02);
-}
-
-.automatch-item-card.is-selected.is-exact {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.02);
-}
-
-.match-check-wrap {
-  display: flex;
-  align-items: center;
-}
-
-.match-checkbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #4f46e5;
-}
-
-.match-flow {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  gap: 10px;
-}
-
-.match-box {
-  flex: 1;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
-.match-source-badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #64748b !important;
-  margin-bottom: 2px;
-}
-
-.match-source-badge.prod {
-  color: #0284c7 !important;
-}
-
-.match-name {
-  font-size: 0.92rem;
-  color: #0f172a !important;
-  margin-bottom: 2px;
-}
-
-.match-meta {
-  color: #64748b !important;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.match-arrow-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.confidence-badge {
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-.confidence-badge.exact {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.confidence-badge.partial {
-  background: rgba(79, 70, 229, 0.1);
-  color: #4f46e5 !important;
-  border: 1px solid rgba(79, 70, 229, 0.25);
-}
-
-.match-arrow-svg {
-  color: #94a3b8;
-}
-
-.match-factor-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  min-width: 85px;
-}
-
-.match-factor-wrap .factor-label {
-  font-size: 0.72rem;
-  color: #64748b !important;
-}
-
-.match-factor-wrap .factor-input {
-  width: 80px;
-  padding: 4px 8px;
-  font-size: 0.88rem;
-  text-align: center;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-}
-
-/* Quick-Link Target Card */
-.target-inv-item-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-
-.target-inv-item-card h4 {
-  color: #0f172a !important;
-  font-size: 1.05rem;
-}
-
-.badge-source {
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: #e2e8f0;
-  color: #334155 !important;
-  padding: 2px 8px;
-  border-radius: 6px;
-}
-
-.current-link-alert {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46 !important;
-}
-
-.btn-unlink-action {
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  color: #b91c1c !important;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-unlink-action:hover {
-  background: #ef4444;
-  color: #ffffff !important;
-}
-
-.pill-info-chip {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: #475569 !important;
-}
-
-/* Quick-Link Products Picker */
-.quicklink-products-picker-list {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #ffffff;
-  padding: 4px;
-  direction: rtl;
-  text-align: right;
-}
-
-.quicklink-product-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border-bottom: 1px solid #f8fafc;
-  color: #0f172a !important;
-  direction: rtl;
-  text-align: right;
-}
-
-.quicklink-product-option:last-child {
-  border-bottom: none;
-}
-
-.quicklink-product-option:hover {
-  background: #f1f5f9;
-}
-
-.quicklink-product-option.is-selected {
-  background: rgba(79, 70, 229, 0.08);
-  border: 1px solid rgba(79, 70, 229, 0.25);
-}
-
-.quicklink-product-option .picker-radio {
-  accent-color: #4f46e5;
-  width: 16px;
-  height: 16px;
-}
-
-.badge-warning-soft {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #b45309 !important;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .automatch-stats-banner {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .match-flow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .match-arrow-col {
-    flex-direction: row;
-    justify-content: center;
-    padding: 4px 0;
-  }
-  .match-arrow-svg {
-    transform: rotate(90deg);
-  }
-  .automatch-item-card {
-    flex-wrap: wrap;
-  }
-  .match-factor-wrap {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 6px;
-    margin-top: 4px;
-  }
-}
 </style>
