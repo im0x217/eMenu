@@ -378,7 +378,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-text-strong, #92400e);
+  color: var(--primary-color, #fdb518);
 }
 
 .dp-text-label {
@@ -495,16 +495,16 @@ onUnmounted(() => {
 }
 
 .dp-day-cell.is-today:not(.is-selected) {
-  border-color: var(--primary-text-strong, #92400e);
-  color: var(--primary-text-strong, #92400e);
+  border-color: var(--primary-color, #fdb518);
+  color: #d97706;
   font-weight: 800;
 }
 
 .dp-day-cell.is-selected {
-  background: var(--primary-color, #fdb518);
-  color: var(--on-primary-color, #0c0603);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
   font-weight: 800;
-  box-shadow: 0 2px 8px rgba(44, 37, 32, 0.14);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28);
 }
 
 .shop-theme-shop2 .dp-day-cell.is-selected {

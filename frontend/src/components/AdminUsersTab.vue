@@ -309,7 +309,7 @@ export default {
 
 .price-mode-badge.bulk {
   background: #fff4e6;
-  color: #9a3412;
+  color: #fd7e14;
 }
 
 .user-form-modal select,

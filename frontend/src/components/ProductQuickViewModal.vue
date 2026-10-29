@@ -640,7 +640,7 @@ const handleTagClick = (tagName) => {
   padding: 2px 10px;
   border-radius: 9999px;
   background: rgba(245, 158, 11, 0.14);
-  color: #92400e;
+  color: #b45309;
   font-weight: 800;
 }
 
@@ -682,7 +682,7 @@ const handleTagClick = (tagName) => {
   border-radius: 6px;
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(217, 119, 6, 0.22);
-  color: #92400e;
+  color: #b45309;
   font-family: 'Cairo', sans-serif;
   font-size: 0.75rem;
   font-weight: 800;
@@ -761,7 +761,7 @@ const handleTagClick = (tagName) => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.8rem;
   font-weight: 800;
-  color: #92400e;
+  color: #b45309;
 }
 
 .shop-theme-shop2 .price-curr {

@@ -1115,7 +1115,7 @@ const handleClearCart = () => {
 .price-val {
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--primary-text-strong, #92400e);
+  color: var(--primary-color);
 }
 
 .bulk-label {
@@ -1346,7 +1346,7 @@ const handleClearCart = () => {
 
 .date-pill-btn.active {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #0c0603;
+  color: #ffffff;
   border-color: #d97706;
   box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
 }
@@ -1435,7 +1435,7 @@ const handleClearCart = () => {
 .price-wrapper .value {
   font-size: 1.4rem;
   font-weight: 850;
-  color: var(--primary-text-strong, #92400e);
+  color: var(--primary-color);
 }
 
 .price-wrapper .unit {

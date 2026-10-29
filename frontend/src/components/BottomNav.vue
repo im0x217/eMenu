@@ -231,22 +231,22 @@ const navToShop = () => {
 }
 
 .nav-tab-btn.active {
-  color: #92400e;
+  color: #b45309;
 }
 
 :global(.shop-theme-shop2) .nav-tab-btn.active {
-  color: #1e3a5f;
+  color: #1d4ed8;
 }
 
 .nav-tab-btn.active svg {
   transform: translateY(-1.5px) scale(1.1);
-  color: #92400e;
+  color: #b45309;
   fill: rgba(180, 83, 9, 0.14);
 }
 
 :global(.shop-theme-shop2) .nav-tab-btn.active svg {
-  color: #1e3a5f;
-  fill: rgba(30, 58, 95, 0.14);
+  color: #1d4ed8;
+  fill: rgba(29, 78, 216, 0.14);
 }
 
 .tab-label {

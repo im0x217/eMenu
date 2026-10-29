@@ -169,7 +169,7 @@ const closeZoomModal = () => {
   position: relative;
   min-width: 44px;
   min-height: 44px;
-  color: #92400e;
+  color: #b45309;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,7 +207,7 @@ const closeZoomModal = () => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.8rem;
   font-weight: 800;
-  color: #92400e;
+  color: #b45309;
   background: #fef3c7;
   border: 1px solid rgba(217, 119, 6, 0.25);
   padding: 3px 10px;
@@ -235,7 +235,7 @@ const closeZoomModal = () => {
 
 .notice-icon-svg {
   flex-shrink: 0;
-  color: #92400e;
+  color: #b45309;
 }
 
 .notice-text {
@@ -260,7 +260,7 @@ const closeZoomModal = () => {
 
 .notice-link {
   position: relative;
-  color: #92400e;
+  color: #b45309;
   text-decoration: underline;
   font-weight: 800;
   display: inline-flex;

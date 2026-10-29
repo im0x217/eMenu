@@ -1840,19 +1840,19 @@ export default {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 .inv-segment-btn.is-low.active {
-  background: #b45309;
+  background: #f59e0b;
   color: #ffffff;
 }
 .inv-segment-btn.is-out.active {
-  background: #b91c1c;
+  background: #dc2626;
   color: #ffffff;
 }
 .inv-segment-btn.is-ok.active {
-  background: #047857;
+  background: #10b981;
   color: #ffffff;
 }
 .inv-segment-btn.is-reserved.active {
-  background: #92400e;
+  background: #d97706;
   color: #ffffff;
 }
 
@@ -2002,7 +2002,7 @@ export default {
   display: inline-block;
   margin-right: 4px;
   font-size: 0.78rem;
-  color: #b45309;
+  color: #d97706;
   font-weight: 900;
 }
 
@@ -2020,7 +2020,7 @@ export default {
 }
 .inv-res-sub {
   font-size: 0.65rem;
-  color: #b45309;
+  color: #d97706;
   font-weight: 700;
 }
 .inv-avail-val {

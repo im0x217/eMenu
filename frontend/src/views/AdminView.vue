@@ -14541,7 +14541,7 @@ const closeSuggestionsWithDelay = () => {
 
 /* Define chart/theme palettes based on selected shop context */
 .shop-theme-shop1 {
-  --primary-color: #b45309;
+  --primary-color: #d97706;
   --primary-color-rgb: 217, 119, 6;
   --primary-accent: #f59e0b;
   --primary-hover: #b45309;
@@ -14552,11 +14552,11 @@ const closeSuggestionsWithDelay = () => {
   --primary-gradient-hover: linear-gradient(135deg, #d97706, #b45309);
   --primary-border: #f59e0b;
   --chart-primary: #f59e0b;
-  --theme-btn-bg: linear-gradient(135deg, #b45309, #92400e);
-  --theme-btn-hover: linear-gradient(135deg, #92400e, #78350f);
+  --theme-btn-bg: #f59e0b;
+  --theme-btn-hover: #d97706;
   --theme-text-color: #ffffff;
   --shop-badge-bg: rgba(245, 158, 11, 0.14);
-  --shop-badge-color: #92400e;
+  --shop-badge-color: #d97706;
 }
 
 .shop-theme-shop2 {
@@ -15072,7 +15072,7 @@ const closeSuggestionsWithDelay = () => {
 
 .control-pill.active {
   background: #ffffff;
-  color: var(--primary-dark, #92400e);
+  color: var(--chart-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -16886,7 +16886,7 @@ select.form-control:focus {
 .modal-content .btn-save,
 .modal-box .btn-save,
 .btn-submit-payment {
-  background: linear-gradient(135deg, #b45309, #92400e) !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
   font-family: 'Cairo', sans-serif !important;
@@ -16912,7 +16912,7 @@ select.form-control:focus {
 .btn-submit-payment:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.38) !important;
-  background: linear-gradient(135deg, #92400e, #78350f) !important;
+  background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
 }
 
 .modal-box .btn-modal-save:active,
@@ -17525,7 +17525,7 @@ select.form-control:focus {
 }
 .price-mode-badge.bulk {
   background: #fff4e6;
-  color: #9a3412;
+  color: #fd7e14;
 }
 
 .order-id-pill {
@@ -17992,7 +17992,7 @@ select.form-control:focus {
   border-radius: 10px;
   font-weight: 800;
   font-size: 0.92rem;
-  background: linear-gradient(135deg, #b45309, #92400e) !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
   cursor: pointer;
@@ -18134,7 +18134,7 @@ select.form-control:focus {
 
 .price-pill.bulk {
   background: #fff4e6;
-  color: #9a3412;
+  color: #fd7e14;
 }
 
 .price-lbl {
@@ -19977,9 +19977,9 @@ select.form-control:focus {
 }
 
 .page-num-pill.active {
-  background: #92400e;
+  background: #c89551;
   color: #ffffff;
-  border-color: #92400e;
+  border-color: #c89551;
   box-shadow: 0 4px 12px rgba(200, 149, 81, 0.35);
   transform: scale(1.05);
 }
@@ -20192,7 +20192,7 @@ select.form-control:focus {
 
 .payment-status-badge.partial {
   background: #fffbeb !important;
-  color: #92400e !important;
+  color: #d97706 !important;
   border: 1px solid #fde68a !important;
 }
 
@@ -22320,7 +22320,7 @@ select.pos-control {
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   border-radius: 12px !important;
-  background: linear-gradient(135deg, #b45309, #92400e) !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
   box-shadow: 0 4px 16px rgba(217, 119, 6, 0.32) !important;
@@ -22336,7 +22336,7 @@ select.pos-control {
 
 .pos-btn-submit:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  background: linear-gradient(135deg, #92400e, #78350f) !important;
+  background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
   box-shadow: 0 8px 24px rgba(217, 119, 6, 0.45) !important;
 }
 
@@ -23199,7 +23199,7 @@ select.pos-control {
 
 .pos-date-shortcut-btn:hover {
   border-color: #f59e0b !important;
-  color: #92400e !important;
+  color: #d97706 !important;
   background: rgba(245, 158, 11, 0.08) !important;
   transform: translateY(-1px) !important;
 }
@@ -23209,7 +23209,7 @@ select.pos-control {
 }
 
 .pos-date-shortcut-btn.active {
-  background: linear-gradient(135deg, #b45309, #92400e) !important;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
   border-color: #d97706 !important;
   font-weight: 900 !important;
@@ -23242,18 +23242,18 @@ select.pos-control {
 
 .btn-standard-datepicker-trigger:hover {
   border-color: #f59e0b !important;
-  color: #92400e !important;
+  color: #d97706 !important;
   background: rgba(245, 158, 11, 0.04) !important;
 }
 
 .btn-standard-datepicker-trigger:hover .dp-icon-wrap {
   background: rgba(245, 158, 11, 0.12) !important;
-  color: #92400e !important;
+  color: #d97706 !important;
 }
 
 .btn-standard-datepicker-trigger:hover .dp-chevron-icon {
   opacity: 0.9 !important;
-  color: #92400e !important;
+  color: #d97706 !important;
 }
 
 .btn-standard-datepicker-trigger.active {
@@ -23269,7 +23269,7 @@ select.pos-control {
 .btn-standard-datepicker-trigger.active .dp-chevron-icon {
   transform: rotate(180deg) !important;
   opacity: 1 !important;
-  color: #92400e !important;
+  color: #d97706 !important;
 }
 
 /* ==========================================================================
@@ -23725,7 +23725,7 @@ select.pos-control {
 
   .mob-price-pill.bulk {
     background: #fff4e6;
-    color: #9a3412;
+    color: #fd7e14;
   }
 
   .mob-prod-footer {
@@ -24319,7 +24319,7 @@ select.pos-control {
 
 .cust-debt-print-btn:hover {
   border-color: #f59e0b !important;
-  color: #92400e !important;
+  color: #d97706 !important;
   background: rgba(245, 158, 11, 0.05) !important;
 }
 
@@ -30212,7 +30212,7 @@ select.pos-control {
 
   .mob-rank-icon-wrap.warning {
     background: #fef3c7 !important;
-    color: #92400e !important;
+    color: #d97706 !important;
   }
 
   .mob-rank-icon-wrap.danger {
@@ -30744,11 +30744,7 @@ select.pos-control {
    & Accessible Reduced-Motion Guards
    ========================================================================== */
 
-/* 1. WCAG 2.1 AA Contrast Calibration (>= 4.5:1 across Shop 1 & Shop 2) */
-.header-count-badge {
-  color: #92400e !important;
-}
-
+/* 1. Contrast Calibration across Shop 1 & Shop 2 (preserving vibrant brand gold/amber) */
 .shop-theme-shop2 .header-count-badge {
   color: #1d4ed8 !important;
 }
@@ -30782,10 +30778,6 @@ select.pos-control {
   stroke: #475569 !important;
 }
 
-.mob-price-val {
-  color: var(--primary-dark, #92400e) !important;
-}
-
 .shop-theme-shop2 .mob-price-val {
   color: #1d4ed8 !important;
 }
@@ -30795,25 +30787,10 @@ select.pos-control {
   color: #047857 !important;
 }
 
-.order-print-badge.is-unprinted,
-.selected-counter-badge,
-.prod-tab-pill .pill-badge,
-.btn-chef-action.btn-chef-assign {
-  color: #92400e !important;
-}
-
 .shop-theme-shop2 .selected-counter-badge,
 .shop-theme-shop2 .prod-tab-pill .pill-badge,
 .shop-theme-shop2 .btn-chef-action.btn-chef-assign {
   color: #1d4ed8 !important;
-}
-
-.chef-avatar,
-.btn-quick-add,
-.assign-cat-pill.active {
-  background: linear-gradient(135deg, #b45309, #92400e) !important;
-  color: #ffffff !important;
-  border-color: #92400e !important;
 }
 
 .shop-theme-shop2 .chef-avatar,
@@ -30834,11 +30811,6 @@ select.pos-control {
 .mob-action-circle.call-circle,
 .edit-call-circle {
   color: #1d4ed8 !important;
-}
-
-.mob-status-btn.pending.active {
-  background: #b45309 !important;
-  color: #ffffff !important;
 }
 
 .mob-status-btn.ready.active {

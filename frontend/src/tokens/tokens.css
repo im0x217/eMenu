@@ -6,8 +6,6 @@
 :root {
   /* Global Tokens: Typography, Spacing, Radius, Touch */
   --color-gold: #fdb518;
-  --color-gold-text: #92400e;
-  --color-espresso: #0c0603;
   --color-blue: #1e3a5f;
   --color-danger-badge: #dc2626;
   --color-slate-600: #475569;
@@ -75,15 +73,11 @@
 /* Shop 1 Theme (Gold Luxury) */
 .shop-theme-shop1 {
   --primary-color: #fdb518;
-  --primary-text-strong: #92400e;
-  --on-primary-color: #0c0603;
   --primary-glow: rgba(253, 181, 24, 0.15);
 }
 
 /* Shop 2 Theme (Navy Dry Pastries) */
 .shop-theme-shop2 {
   --primary-color: #1e3a5f;
-  --primary-text-strong: #1e3a5f;
-  --on-primary-color: #ffffff;
   --primary-glow: rgba(30, 58, 95, 0.15);
 }

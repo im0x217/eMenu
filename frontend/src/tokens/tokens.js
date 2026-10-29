@@ -6,8 +6,6 @@
 export const tokens = {
   "global": {
     "color-gold": "#fdb518",
-    "color-gold-text": "#92400e",
-    "color-espresso": "#0c0603",
     "color-blue": "#1e3a5f",
     "color-danger-badge": "#dc2626",
     "color-slate-600": "#475569",
@@ -59,14 +57,10 @@ export const tokens = {
   "semantic": {
     "shop1": {
       "primary": "#fdb518",
-      "text-strong": "#92400e",
-      "on-primary": "#0c0603",
       "glow": "rgba(253, 181, 24, 0.15)"
     },
     "shop2": {
       "primary": "#1e3a5f",
-      "text-strong": "#1e3a5f",
-      "on-primary": "#ffffff",
       "glow": "rgba(30, 58, 95, 0.15)"
     }
   }

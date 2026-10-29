@@ -960,12 +960,12 @@ const handleResendWhatsApp = () => {
   gap: 8px;
   font-size: 0.82rem;
   font-weight: 750;
-  color: #92400e;
+  color: #b45309;
 }
 
 .btn-set-pwd-quick {
   background: #f59e0b;
-  color: #0c0603;
+  color: #ffffff;
   border: none;
   min-height: 44px;
   padding: 8px 14px;
@@ -1082,7 +1082,7 @@ const handleResendWhatsApp = () => {
 
 .balance-status-badge.has-debt {
   background: rgba(245, 158, 11, 0.16);
-  color: #92400e;
+  color: #d97706;
 }
 
 .balance-hero-card {
@@ -1128,7 +1128,7 @@ const handleResendWhatsApp = () => {
 }
 
 .balance-hero-card.is-debt .balance-amount-val .num {
-  color: #92400e;
+  color: #d97706;
 }
 
 .balance-hero-card.is-clear .balance-amount-val .num {
@@ -1290,7 +1290,7 @@ const handleResendWhatsApp = () => {
   border-radius: 12px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   border: 1px solid #d97706;
-  color: #0c0603;
+  color: #ffffff;
   font-family: inherit;
   font-size: 0.96rem;
   font-weight: 850;
@@ -1302,8 +1302,7 @@ const handleResendWhatsApp = () => {
 .btn-auth-submit:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.4);
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #0c0603;
+  background: linear-gradient(135deg, #fbbf24, #ea580c);
 }
 
 .btn-auth-submit:disabled {

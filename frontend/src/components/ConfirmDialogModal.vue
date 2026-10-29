@@ -208,7 +208,7 @@ onUnmounted(() => {
 
 .confirm-icon-badge.is-warning {
   background: #fffbeb;
-  color: #b45309;
+  color: #d97706;
   border: 1px solid #fde68a;
 }
 
@@ -268,13 +268,13 @@ onUnmounted(() => {
 }
 
 .confirm-action-btn.is-confirm.is-warning {
-  background: #b45309;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.22);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.24);
 }
 
 .confirm-action-btn.is-confirm.is-warning:hover {
-  background: #92400e;
+  background: linear-gradient(135deg, #fbbf24, #ea580c);
 }
 
 .confirm-action-btn.is-confirm.is-primary {

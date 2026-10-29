@@ -690,7 +690,7 @@ const handleCardPointerLeave = () => {
   line-height: 1.25;
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(217, 119, 6, 0.22);
-  color: #92400e;
+  color: #b45309;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
   user-select: none;
@@ -1037,10 +1037,10 @@ const handleCardPointerLeave = () => {
   padding: 8px 12px;
   border-radius: 12px;
   background: var(--primary-color, #d97706);
-  color: #0c0603;
+  color: #ffffff;
   border: none;
   font-family: 'Cairo', sans-serif;
-  font-weight: 850;
+  font-weight: 800;
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -1052,17 +1052,18 @@ const handleCardPointerLeave = () => {
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Shop 1 Theme: Warm Gold/Amber gradient with high-contrast dark espresso text (9.4:1 WCAG AA) */
+/* Shop 1 Theme: Warm Gold/Amber gradient with white text */
 .shop-theme-shop1 .add-btn-wide {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #0c0603;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
 }
 
 .shop-theme-shop1 .add-btn-wide:hover {
   transform: translateY(-1px);
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #0c0603;
+  color: #ffffff;
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.55);
 }
 

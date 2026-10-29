@@ -1090,7 +1090,7 @@ watch(carouselItems, (newItems) => {
 .bulk-toggle-btn.disabled:hover {
   background: rgba(245, 158, 11, 0.12);
   border-color: rgba(245, 158, 11, 0.45);
-  color: #92400e;
+  color: #d97706;
 }
 
 .bulk-toggle-btn.active {
@@ -1423,7 +1423,7 @@ watch(carouselItems, (newItems) => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.78rem;
   font-weight: 800;
-  color: #92400e;
+  color: #b45309;
   background: rgba(245, 158, 11, 0.14);
   border: 1px solid rgba(217, 119, 6, 0.32);
   cursor: pointer;

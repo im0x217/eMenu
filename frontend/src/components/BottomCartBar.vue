@@ -189,7 +189,7 @@ const handleNavigateToCart = () => {
 
 .cart-icon-group {
   position: relative;
-  color: var(--primary-text-strong, #92400e);
+  color: var(--primary-color);
   display: flex;
   align-items: center;
 }
@@ -263,7 +263,7 @@ const handleNavigateToCart = () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--primary-text-strong, #92400e);
+  color: var(--primary-color);
   font-weight: 800;
   font-size: 0.95rem;
 }
