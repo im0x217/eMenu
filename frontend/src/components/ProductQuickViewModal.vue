@@ -11,6 +11,7 @@ import { flyToCart } from '../utils/flyToCart';
 import { bindSheetGesture } from '../utils/sheetGesture';
 import { normalizeImageUrl, isImageCached, markImageLoaded } from '../utils/imageCache';
 import { telemetry } from '../utils/telemetry';
+import { lockBodyScroll, unlockBodyScroll, trapTabKey, restoreElementFocus } from '../utils/modalA11y';
 
 const props = defineProps({
   product: {
@@ -32,10 +33,14 @@ const toastStore = useToastStore();
 const authStore = useAuthStore();
 
 const sheetRef = ref(null);
+const backdropRef = ref(null);
+const closeBtnRef = ref(null);
 const heroImgRef = ref(null);
 const isFullscreenZoom = ref(false);
 const isImgLoaded = ref(false);
 let cleanupGesture = null;
+let triggerElement = null;
+let hasScrollLock = false;
 
 const isOpen = computed(() => !!(props.product || props.imageUrl));
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
@@ -61,8 +66,31 @@ const toggleFullscreenZoom = () => {
   isFullscreenZoom.value = !isFullscreenZoom.value;
 };
 
+const handleModalKeydown = (e) => {
+  if (!isOpen.value) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isFullscreenZoom.value && props.product) {
+      triggerHaptic('light');
+      isFullscreenZoom.value = false;
+    } else {
+      handleClose();
+    }
+    return;
+  }
+  if (e.key === 'Tab' && backdropRef.value) {
+    trapTabKey(e, backdropRef.value);
+  }
+};
+
 watch(isOpen, (open) => {
   if (open) {
+    triggerElement = typeof document !== 'undefined' ? document.activeElement : null;
+    if (!hasScrollLock) {
+      lockBodyScroll(true);
+      hasScrollLock = true;
+    }
     isFullscreenZoom.value = !props.product && !!props.imageUrl;
     isImgLoaded.value = isImageCached(resolvedImageUrl.value);
     nextTick(() => {
@@ -72,6 +100,9 @@ watch(isOpen, (open) => {
           handleClose();
         });
       }
+      if (closeBtnRef.value) {
+        closeBtnRef.value.focus({ preventScroll: true });
+      }
     });
   } else {
     isFullscreenZoom.value = false;
@@ -79,13 +110,29 @@ watch(isOpen, (open) => {
       cleanupGesture();
       cleanupGesture = null;
     }
+    if (hasScrollLock) {
+      unlockBodyScroll(true);
+      hasScrollLock = false;
+    }
+    const prev = triggerElement;
+    triggerElement = null;
+    nextTick(() => restoreElementFocus(prev));
   }
 }, { immediate: true });
 
+onMounted(() => {
+  window.addEventListener('keydown', handleModalKeydown);
+});
+
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleModalKeydown);
   if (cleanupGesture) {
     cleanupGesture();
     cleanupGesture = null;
+  }
+  if (hasScrollLock) {
+    unlockBodyScroll(true);
+    hasScrollLock = false;
   }
 });
 
@@ -215,6 +262,7 @@ const handleTagClick = (tagName) => {
     <Transition name="qv-modal-fade">
       <div
         v-if="isOpen"
+        ref="backdropRef"
         class="qv-backdrop"
         :class="['shop-theme-' + activeShop, { 'is-fullscreen-lightbox': isFullscreenZoom || !product }]"
         role="dialog"
@@ -287,6 +335,7 @@ const handleTagClick = (tagName) => {
 
             <!-- Top Controls Overlay -->
             <button
+              ref="closeBtnRef"
               type="button"
               class="qv-overlay-btn qv-close-btn"
               @click="handleClose"
@@ -553,16 +602,16 @@ const handleTagClick = (tagName) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  min-height: 36px;
+  padding: 8px 14px;
+  min-height: 44px;
   border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.68);
+  background: rgba(15, 23, 42, 0.76);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   color: #ffffff;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   z-index: 5;
@@ -584,14 +633,14 @@ const handleTagClick = (tagName) => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #8a8078;
+  color: #685f58;
 }
 
 .qv-cat-pill {
   padding: 2px 10px;
   border-radius: 9999px;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: rgba(245, 158, 11, 0.14);
+  color: #92400e;
   font-weight: 800;
 }
 
@@ -620,11 +669,12 @@ const handleTagClick = (tagName) => {
 .qv-tags-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 2px;
 }
 
 .product-tag-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -639,6 +689,15 @@ const handleTagClick = (tagName) => {
   line-height: 1.25;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.product-tag-chip::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  bottom: -11px;
+  left: 0;
+  right: 0;
 }
 
 .product-tag-chip:hover {
@@ -675,7 +734,7 @@ const handleTagClick = (tagName) => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #8a8078;
+  color: #685f58;
 }
 
 .qv-price-row {
@@ -702,7 +761,7 @@ const handleTagClick = (tagName) => {
   font-family: 'Cairo', sans-serif;
   font-size: 0.8rem;
   font-weight: 800;
-  color: #b45309;
+  color: #92400e;
 }
 
 .shop-theme-shop2 .price-curr {
@@ -780,8 +839,9 @@ const handleTagClick = (tagName) => {
 }
 
 .qv-step-btn {
-  width: 40px;
-  height: 40px;
+  position: relative;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   border: none;
   display: flex;
@@ -790,6 +850,16 @@ const handleTagClick = (tagName) => {
   cursor: pointer;
   background: rgba(44, 37, 32, 0.06);
   color: #2c2520;
+}
+
+.qv-step-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .qv-step-btn.plus {
@@ -896,5 +966,19 @@ const handleTagClick = (tagName) => {
 .qv-modal-fade-enter-from .qv-sheet-card,
 .qv-modal-fade-leave-to .qv-sheet-card {
   transform: translate3d(0, 28px, 0) scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qv-modal-fade-enter-active,
+  .qv-modal-fade-leave-active,
+  .qv-modal-fade-enter-active .qv-sheet-card,
+  .qv-modal-fade-leave-active .qv-sheet-card,
+  .product-tag-chip,
+  .qv-add-btn {
+    transition: none !important;
+  }
+  .qv-spinner {
+    animation: none !important;
+  }
 }
 </style>

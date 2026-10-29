@@ -7,13 +7,16 @@ import { useAuthStore } from '../stores/auth';
 import { useFavoritesStore } from '../stores/favorites';
 import { useCartStore } from '../stores/cart';
 import { useToastStore } from '../stores/toast';
+import { useConfirmStore } from '../stores/confirm';
 import { vSheetGesture } from '../utils/sheetGesture';
+import { lockBodyScroll, unlockBodyScroll, trapTabKey, restoreElementFocus } from '../utils/modalA11y';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const favoritesStore = useFavoritesStore();
 const cartStore = useCartStore();
 const toastStore = useToastStore();
+const confirmStore = useConfirmStore();
 
 // Auth form tabs: 'login' | 'register'
 const activeAuthTab = ref('login');
@@ -85,12 +88,18 @@ const loadCustomerData = async () => {
   }
 };
 
+let modalTriggerEl = null;
+let hasAccountModalLock = false;
+
 const handleKeydown = (e) => {
+  if (!isModalOpen.value) return;
   if (e.key === 'Escape') {
-    if (isModalOpen.value) {
-      e.preventDefault();
-      closeModal();
-    }
+    e.preventDefault();
+    closeModal();
+    return;
+  }
+  if (e.key === 'Tab') {
+    trapTabKey(e, '.modal-content[role="dialog"]');
   }
 };
 
@@ -105,6 +114,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  if (hasAccountModalLock) {
+    unlockBodyScroll(true);
+    hasAccountModalLock = false;
+  }
 });
 
 // Watch phone number changes to refetch history & balance
@@ -172,8 +185,15 @@ const handleRegister = async () => {
   }
 };
 
-const handleSignOut = () => {
-  if (confirm('هل أنت متأكد من تسجيل الخروج من هذا الحساب؟')) {
+const handleSignOut = async () => {
+  const confirmed = await confirmStore.ask({
+    title: 'تسجيل الخروج',
+    message: 'هل أنت متأكد من تسجيل الخروج من هذا الحساب؟',
+    confirmText: 'تسجيل الخروج',
+    cancelText: 'إلغاء',
+    variant: 'danger'
+  });
+  if (confirmed) {
     authStore.clearIdentity();
     orders.value = [];
     balanceData.value = { outstandingBalance: 0, unpaidOrdersCount: 0, lifetimeTotal: 0 };
@@ -358,15 +378,31 @@ const getWhatsAppNumber = (order) => {
 };
 
 const openResendModal = (order) => {
+  modalTriggerEl = typeof document !== 'undefined' ? document.activeElement : null;
   selectedOrder.value = order;
   whatsappMessageText.value = generateWhatsAppMessage(order);
   isModalOpen.value = true;
+  if (!hasAccountModalLock) {
+    lockBodyScroll(true);
+    hasAccountModalLock = true;
+  }
+  nextTick(() => {
+    const firstBtn = document.querySelector('.modal-content[role="dialog"] button');
+    if (firstBtn) firstBtn.focus({ preventScroll: true });
+  });
 };
 
 const closeModal = () => {
   isModalOpen.value = false;
   selectedOrder.value = null;
   whatsappMessageText.value = '';
+  if (hasAccountModalLock) {
+    unlockBodyScroll(true);
+    hasAccountModalLock = false;
+  }
+  const prev = modalTriggerEl;
+  modalTriggerEl = null;
+  nextTick(() => restoreElementFocus(prev));
 };
 
 const handleCopyMessage = async () => {
@@ -894,8 +930,8 @@ const handleResendWhatsApp = () => {
 .verified-badge {
   font-size: 0.74rem;
   font-weight: 800;
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
   padding: 2px 8px;
   border-radius: 6px;
   white-space: nowrap;
@@ -903,7 +939,7 @@ const handleResendWhatsApp = () => {
 
 .profile-phone {
   font-size: 0.9rem;
-  color: #64748b;
+  color: #475569;
   font-weight: 700;
 }
 
@@ -924,16 +960,17 @@ const handleResendWhatsApp = () => {
   gap: 8px;
   font-size: 0.82rem;
   font-weight: 750;
-  color: #b45309;
+  color: #92400e;
 }
 
 .btn-set-pwd-quick {
   background: #f59e0b;
-  color: #ffffff;
+  color: #0c0603;
   border: none;
-  padding: 6px 12px;
+  min-height: 44px;
+  padding: 8px 14px;
   border-radius: 8px;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 800;
   cursor: pointer;
   align-self: flex-start;
@@ -949,13 +986,13 @@ const handleResendWhatsApp = () => {
   align-items: center;
   gap: 6px;
   font-size: 0.76rem;
-  color: #94a3b8;
+  color: #526072;
   margin-bottom: 14px;
 }
 
 .profile-security-notice svg {
   flex-shrink: 0;
-  color: #94a3b8;
+  color: #526072;
 }
 
 .profile-actions-grid {
@@ -969,7 +1006,8 @@ const handleResendWhatsApp = () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 40px;
+  min-height: 44px;
+  height: 44px;
   border-radius: 10px;
   font-family: inherit;
   font-size: 0.86rem;
@@ -1038,13 +1076,13 @@ const handleResendWhatsApp = () => {
 }
 
 .balance-status-badge.paid-up {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
 }
 
 .balance-status-badge.has-debt {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
+  background: rgba(245, 158, 11, 0.16);
+  color: #92400e;
 }
 
 .balance-hero-card {
@@ -1090,11 +1128,11 @@ const handleResendWhatsApp = () => {
 }
 
 .balance-hero-card.is-debt .balance-amount-val .num {
-  color: #d97706;
+  color: #92400e;
 }
 
 .balance-hero-card.is-clear .balance-amount-val .num {
-  color: #059669;
+  color: #047857;
 }
 
 .balance-amount-val .curr {
@@ -1246,14 +1284,15 @@ const handleResendWhatsApp = () => {
 
 .btn-auth-submit {
   width: 100%;
-  height: 44px;
+  min-height: 48px;
+  height: 48px;
   margin-top: 6px;
   border-radius: 12px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   border: 1px solid #d97706;
-  color: #ffffff;
+  color: #0c0603;
   font-family: inherit;
-  font-size: 0.94rem;
+  font-size: 0.96rem;
   font-weight: 850;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1263,7 +1302,8 @@ const handleResendWhatsApp = () => {
 .btn-auth-submit:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.4);
-  background: linear-gradient(135deg, #fbbf24, #ea580c);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #0c0603;
 }
 
 .btn-auth-submit:disabled {
@@ -1953,10 +1993,11 @@ const handleResendWhatsApp = () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 40px;
+  min-height: 44px;
+  height: 44px;
   border-radius: 10px;
   font-family: inherit;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1973,13 +2014,13 @@ const handleResendWhatsApp = () => {
 }
 
 .btn-send-wa {
-  background: #25d366;
-  border: 1px solid #22c55e;
+  background: #15803d;
+  border: 1px solid #166534;
   color: #ffffff;
 }
 
 .btn-send-wa:hover {
-  background: #20ba5a;
+  background: #166534;
 }
 
 @keyframes skeletonShimmer {
@@ -1995,6 +2036,19 @@ const handleResendWhatsApp = () => {
 
 .skeleton-card {
   pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-spinner,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+  .btn-profile-action,
+  .btn-auth-submit,
+  .btn-modal-action,
+  .auth-tab-btn {
+    transition: none !important;
+  }
 }
 
 </style>

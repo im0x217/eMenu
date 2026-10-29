@@ -5,6 +5,8 @@ import { useCartStore } from '../stores/cart';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 import { useShopStore } from '../stores/shop';
+import { useConfirmStore } from '../stores/confirm';
+import RtlDatePicker from '../components/RtlDatePicker.vue';
 import { gsap } from 'gsap';
 import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
@@ -16,6 +18,7 @@ const cartStore = useCartStore();
 const authStore = useAuthStore();
 const toastStore = useToastStore();
 const shopStore = useShopStore();
+const confirmStore = useConfirmStore();
 
 const activeShop = computed(() => shopStore.activeShop || 'shop1');
 
@@ -257,8 +260,15 @@ const formattedAnimatedTotal = computed(() => {
   return Number.isInteger(rounded) ? Math.round(rounded) : rounded.toFixed(2);
 });
 
-const handleCancelEditMode = () => {
-  if (confirm('هل أنت متأكد من إلغاء وضع تعديل الطلب؟ سيتم تفريغ التغييرات غير المحفوظة.')) {
+const handleCancelEditMode = async () => {
+  const confirmed = await confirmStore.ask({
+    title: 'إلغاء تعديل الطلب',
+    message: 'هل أنت متأكد من إلغاء وضع تعديل الطلب؟ سيتم تفريغ التغييرات غير المحفوظة.',
+    confirmText: 'نعم، إلغاء التعديل',
+    cancelText: 'تراجع',
+    variant: 'warning'
+  });
+  if (confirmed) {
     cartStore.cancelOrderEditing();
     toastStore.show('تم إلغاء وضع تعديل الطلب', 'info');
     router.push('/account');
@@ -488,7 +498,7 @@ const handleClearCart = () => {
 
         <div class="form-group">
           <div class="date-header-row">
-            <label for="cart-delivery-date" class="form-label">تاريخ استلام الطلب</label>
+            <span class="form-label">تاريخ استلام الطلب</span>
             <div class="date-shortcuts-pills">
               <button 
                 type="button" 
@@ -504,7 +514,14 @@ const handleClearCart = () => {
               >غداً</button>
             </div>
           </div>
-          <input id="cart-delivery-date" type="date" :min="minDeliveryDate" v-model="cartStore.deliveryDate" @change="cartStore.persist" class="form-input date-input" />
+          <RtlDatePicker
+            v-model="cartStore.deliveryDate"
+            :min-date="minDeliveryDate"
+            :theme="activeShop"
+            aria-label="تاريخ استلام الطلب"
+            placeholder="تاريخ الاستلام…"
+            @change="cartStore.persist"
+          />
         </div>
 
         <div class="form-group">
@@ -975,9 +992,9 @@ const handleClearCart = () => {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 10px;
-  min-height: 36px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  min-height: 44px;
+  border-radius: 8px;
   position: relative;
   touch-action: manipulation;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
@@ -1097,8 +1114,8 @@ const handleClearCart = () => {
 
 .price-val {
   font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--primary-color);
+  font-weight: 800;
+  color: var(--primary-text-strong, #92400e);
 }
 
 .bulk-label {
@@ -1159,11 +1176,12 @@ const handleClearCart = () => {
 }
 
 .qty-input-field {
-  width: 38px;
-  height: 26px;
+  width: 44px;
+  min-height: 44px;
+  height: 44px;
   text-align: center;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 16px;
   font-weight: 750;
   border: none;
   background: transparent;
@@ -1176,13 +1194,13 @@ const handleClearCart = () => {
 
 .item-note-input {
   width: 100%;
-  min-height: 36px;
-  height: 36px;
-  padding: 6px 10px;
+  min-height: 44px;
+  height: 44px;
+  padding: 8px 12px;
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   color: #334155;
   box-sizing: border-box;
@@ -1226,19 +1244,19 @@ const handleClearCart = () => {
 
 .preview-badge {
   font-size: 0.7rem;
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
 }
 
 .change-btn {
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
-  color: #475569;
-  padding: 6px 12px;
-  min-height: 36px;
+  color: #334155;
+  padding: 8px 12px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1292,33 +1310,33 @@ const handleClearCart = () => {
 .date-shortcuts-pills {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .date-pill-btn {
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  color: #475569;
+  color: #334155;
   font-family: inherit;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  padding: 4px 10px;
-  min-height: 28px;
+  padding: 6px 14px;
+  min-height: 36px;
   border-radius: 20px;
   cursor: pointer;
   position: relative;
   touch-action: manipulation;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .date-pill-btn::before {
   content: '';
   position: absolute;
-  top: -8px;
-  bottom: -8px;
-  left: -8px;
-  right: -8px;
+  top: -6px;
+  bottom: -6px;
+  left: -4px;
+  right: -4px;
 }
 
 .date-pill-btn:hover {
@@ -1328,9 +1346,16 @@ const handleClearCart = () => {
 
 .date-pill-btn.active {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #ffffff;
+  color: #0c0603;
   border-color: #d97706;
   box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+}
+
+:global(.shop-theme-shop2) .date-pill-btn.active {
+  background: #1e3a5f;
+  color: #ffffff;
+  border-color: #1e3a5f;
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.25);
 }
 
 .date-pill-btn:focus-visible {
@@ -1410,7 +1435,7 @@ const handleClearCart = () => {
 .price-wrapper .value {
   font-size: 1.4rem;
   font-weight: 850;
-  color: var(--primary-color);
+  color: var(--primary-text-strong, #92400e);
 }
 
 .price-wrapper .unit {
@@ -2075,22 +2100,28 @@ const handleClearCart = () => {
   }
 
   .qty-input-field {
-    width: 34px;
-    height: 26px;
-    font-size: 0.85rem !important;
+    width: 44px;
+    min-height: 44px;
+    height: 44px;
+    font-size: 16px !important;
   }
 
   /* iOS Safari Auto-Zoom Guard: Enforce 16px font-size on all mobile inputs */
   .item-note-input {
     font-size: 16px !important;
-    min-height: 36px;
-    height: 36px;
+    min-height: 44px;
+    height: 44px;
   }
 
   .form-input {
     font-size: 16px !important;
-    min-height: 42px;
-    height: 42px;
+    min-height: 46px;
+    height: 46px;
+  }
+
+  .text-area {
+    height: auto !important;
+    min-height: 84px;
   }
 
   .checkout-details-section {
@@ -2108,9 +2139,23 @@ const handleClearCart = () => {
   }
 
   .checkout-btn {
-    height: 44px;
-    font-size: 0.88rem;
-    border-radius: 10px;
+    min-height: 48px;
+    height: 48px;
+    font-size: 0.92rem;
+    border-radius: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-item-flip-move,
+  .cart-item-flip-enter-active,
+  .cart-item-flip-leave-active,
+  .price-wrapper,
+  .date-pill-btn {
+    transition: none !important;
+  }
+  .clear-cart-btn.confirming {
+    animation: none !important;
   }
 }
 </style>

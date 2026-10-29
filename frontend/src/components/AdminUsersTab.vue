@@ -38,7 +38,7 @@
               <td class="text-mono text-small">{{ u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-LY') : '-' }}</td>
               <td>
                 <div class="order-actions-btns">
-                  <button @click="openUserModal(u)" class="btn-table-action btn-action-edit" title="تعديل المستخدم">
+                  <button @click="openUserModal(u)" class="btn-table-action btn-action-edit" title="تعديل المستخدم" :aria-label="`تعديل المستخدم ${u.name}`">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     <span>تعديل</span>
                   </button>
@@ -162,6 +162,7 @@
 <script>
 import { ref, reactive, watch, nextTick } from 'vue';
 import { useToastStore } from '../stores/toast';
+import { useConfirmStore } from '../stores/confirm';
 
 export default {
   name: 'AdminUsersTab',
@@ -176,6 +177,7 @@ export default {
   emits: ['update:modalOpen', 'refresh'],
   setup(props, { emit }) {
     const toast = useToastStore();
+    const confirmStore = useConfirmStore();
     const saving = ref(false);
     const nameInputRef = ref(null);
     const editingUser = reactive({
@@ -257,7 +259,13 @@ export default {
     };
 
     const deleteUser = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف هذا المستخدم نهائياً؟')) return;
+      const ok = await confirmStore.ask({
+        title: 'حذف حساب المستخدم',
+        message: 'هل أنت متأكد من حذف هذا المستخدم نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+        confirmText: 'حذف المستخدم',
+        variant: 'danger'
+      });
+      if (!ok) return;
       try {
         const res = await props.adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
         if (res.ok) {
@@ -296,12 +304,12 @@ export default {
 
 .price-mode-badge.regular {
   background: #e7f5ff;
-  color: #228be6;
+  color: #1d4ed8;
 }
 
 .price-mode-badge.bulk {
   background: #fff4e6;
-  color: #fd7e14;
+  color: #9a3412;
 }
 
 .user-form-modal select,
@@ -386,12 +394,12 @@ export default {
 
   .mob-user-avatar.admin {
     background: #eff6ff !important;
-    color: #2563eb !important;
+    color: #1d4ed8 !important;
   }
 
   .mob-user-avatar.staff {
     background: #f0fdf4 !important;
-    color: #16a34a !important;
+    color: #15803d !important;
   }
 
   .mob-user-meta {
@@ -448,15 +456,22 @@ export default {
   }
 
   .btn-card-action.btn-action-edit {
-    color: #2563eb !important;
+    color: #1d4ed8 !important;
     border-color: #bfdbfe !important;
     background: #eff6ff !important;
   }
 
   .btn-card-action.btn-action-delete {
-    color: #ef4444 !important;
+    color: #b91c1c !important;
     border-color: #fca5a5 !important;
     background: #fef2f2 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-user-card,
+  .btn-card-action {
+    transition: none !important;
   }
 }
 </style>

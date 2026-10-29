@@ -419,11 +419,12 @@ let cleanupBulkGesture = null;
 let cleanupDisableGesture = null;
 
 // Body scroll lock, background nav dismissal and gesture-dismissible binding
-watch([showBulkModal, showDisableConfirm, zoomedImgUrl], ([bulk, disable, zoom]) => {
-  if (bulk || disable || zoom) {
+// Note: zoomedImgUrl / quickViewProduct scroll locking is owned by ProductQuickViewModal via modalA11y
+watch([showBulkModal, showDisableConfirm], ([bulk, disable]) => {
+  if (bulk || disable) {
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
-  } else {
+  } else if (!quickViewProduct.value && !zoomedImgUrl.value) {
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
   }
@@ -1081,22 +1082,22 @@ watch(carouselItems, (newItems) => {
 }
 
 .bulk-toggle-btn.disabled {
-  background: rgba(255, 253, 249, 0.9);
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  color: #64748b;
+  background: rgba(255, 253, 249, 0.94);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #475569;
 }
 
 .bulk-toggle-btn.disabled:hover {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #92400e;
 }
 
 .bulk-toggle-btn.active {
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-color: #059669;
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: #047857;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+  box-shadow: 0 2px 8px rgba(4, 120, 87, 0.25);
 }
 
 /* Fancy Slide-Down Entrance for Bulk Prices Button */
@@ -1238,7 +1239,7 @@ watch(carouselItems, (newItems) => {
 .search-icon {
   position: absolute;
   right: 12px;
-  color: #8a8078;
+  color: #685f58;
   display: flex;
   align-items: center;
   transition: color 0.2s ease;
@@ -1246,6 +1247,7 @@ watch(carouselItems, (newItems) => {
 
 .search-input {
   width: 100%;
+  min-height: 46px;
   padding: 0.75rem 2.5rem 0.75rem 2rem;
   background: transparent;
   border: none;
@@ -1415,12 +1417,13 @@ watch(carouselItems, (newItems) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  min-height: 44px;
+  padding: 6px 14px;
   border-radius: 999px;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  color: #b45309;
+  color: #92400e;
   background: rgba(245, 158, 11, 0.14);
   border: 1px solid rgba(217, 119, 6, 0.32);
   cursor: pointer;
@@ -1533,14 +1536,14 @@ watch(carouselItems, (newItems) => {
 
 .modal-desc {
   font-size: 0.85rem;
-  color: #6c757d;
-  line-height: 1.4;
+  color: #52525b;
+  line-height: 1.45;
 }
 
 .error-msg {
-  color: #e63946;
+  color: #dc2626;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .modal-actions {
@@ -1570,8 +1573,8 @@ watch(carouselItems, (newItems) => {
 }
 
 .modal-btn.confirm {
-  background: #37b24d;
-  color: #fff;
+  background: #15803d;
+  color: #ffffff;
 }
 
 .modal-btn.cancel {
@@ -2079,7 +2082,7 @@ watch(carouselItems, (newItems) => {
   }
   
   .bulk-toggle-btn {
-    min-height: 44px;
+    min-height: 46px;
     padding: 8px 12px;
     font-size: 0.84rem;
     border-radius: 10px;
@@ -2091,13 +2094,13 @@ watch(carouselItems, (newItems) => {
   }
   
   .search-input {
-    min-height: 44px;
+    min-height: 46px;
     padding: 0.55rem 2.2rem 0.55rem 1.8rem;
     font-size: 16px !important;
   }
   
   .cat-btn {
-    min-height: 44px;
+    min-height: 46px;
     padding: 0.45rem 1rem;
     gap: 6px;
     font-size: 0.84rem;
@@ -2118,9 +2121,9 @@ watch(carouselItems, (newItems) => {
     padding: 2px 7px;
   }
 
-  /* Compact 1-row product grid matching 80% zoom scale */
+  /* Compact 1-row product grid with ~20%-22% trailing card peek (RICO / Mobile-UI-Design §2) */
   .subcat-products-grid-1row {
-    grid-auto-columns: minmax(172px, 205px);
+    grid-auto-columns: calc((100% - 20px) / 2.2);
     gap: 10px;
     padding: 4px 6px 10px 6px;
   }

@@ -367,6 +367,7 @@ export const useCartStore = defineStore('cart', () => {
     getItemQty,
     importOrderForEditing,
     cancelOrderEditing,
-    submitOrder
+    submitOrder,
+    persist
   };
 });

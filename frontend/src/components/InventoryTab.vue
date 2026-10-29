@@ -31,6 +31,7 @@
             :disabled="loading || isRefreshing"
             @click="fetchInventory(true)"
             title="تحديث بيانات المستودع"
+            aria-label="تحديث بيانات المستودع"
           >
             <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'inv-spin': isRefreshing }">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -45,6 +46,7 @@
             :disabled="loading || isSyncing"
             @click="syncAllProducts"
             title="مزامنة جميع منتجات المتجر مع المستودع بقيمة صفر للأصناف الجديدة"
+            aria-label="مزامنة جميع أصناف المتجر مع المستودع"
           >
             <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :class="{ 'inv-spin': isSyncing }">
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -60,6 +62,7 @@
             class="inv-btn inv-btn-outline"
             @click="isPrintDialogOpen = true"
             title="طباعة كشف جرد المخزون A4"
+            aria-label="طباعة كشف جرد المخزون A4"
           >
             <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -172,7 +175,8 @@
             <input
               type="text"
               v-model="searchQuery"
-              placeholder="ابحث بالاسم، الفئة، أو رقم الصنف…"
+              placeholder="بحث بالاسم، الفئة، أو رقم الصنف…"
+              aria-label="بحث في أصناف المستودع"
               class="inv-search-input"
             />
             <button
@@ -396,7 +400,7 @@
                       aria-label="إنقاص وحدة"
                       title="إنقاص وحدة واحدة من المستودع"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                       </svg>
                     </button>
@@ -417,7 +421,7 @@
                       aria-label="زيادة وحدة"
                       title="زيادة وحدة واحدة إلى المستودع"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                       </svg>
@@ -488,7 +492,7 @@
                       :aria-label="`ضبط كمية ${item.name}`"
                       title="ضبط الكمية والحد الأدنى"
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <path d="M12 20h9"></path>
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                       </svg>
@@ -575,7 +579,7 @@
                     @click="adjustStock(item, -1)"
                     aria-label="إنقاص وحدة"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                   </button>
@@ -595,7 +599,7 @@
                     @click="adjustStock(item, 1)"
                     aria-label="زيادة وحدة"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
@@ -614,9 +618,10 @@
                   type="button"
                   class="inv-btn inv-btn-outline inv-btn-sm"
                   @click="openStockAdjustModal(item)"
+                  :aria-label="`ضبط كمية ${item.name}`"
                   title="ضبط الكمية والحد الأدنى"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                   </svg>
@@ -634,16 +639,23 @@
     <!-- Modal: Stock & Alert Adjustment Modal -->
     <Teleport to="body">
       <div v-if="isAdjustModalOpen && adjustingItem" class="inv-modal-overlay" @click.self="isAdjustModalOpen = false">
-        <div class="inv-modal-dialog animate-scale-in" dir="rtl">
+        <div
+          ref="adjustDialogRef"
+          class="inv-modal-dialog animate-scale-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="inv-adjust-modal-title"
+          dir="rtl"
+        >
           <div class="inv-modal-header">
-            <div class="inv-modal-icon-wrap icon-info">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <div class="inv-modal-icon-wrap icon-info" aria-hidden="true">
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
             </div>
             <div>
-              <h3 class="inv-modal-title">ضبط كمية المخزون والحد الأدنى</h3>
+              <h3 id="inv-adjust-modal-title" class="inv-modal-title">ضبط كمية المخزون والحد الأدنى</h3>
               <p class="inv-modal-desc mb-1 font-bold">{{ adjustingItem.name }}</p>
             </div>
           </div>
@@ -682,8 +694,9 @@
             <div class="inv-form-group mt-3">
               <div class="d-flex gap-3">
                 <div class="flex-1">
-                  <label class="inv-form-label">الكمية المتوفرة بالمستودع:</label>
+                  <label for="inv-adjust-qty-input" class="inv-form-label">الكمية المتوفرة بالمستودع:</label>
                   <input
+                    id="inv-adjust-qty-input"
                     type="number"
                     v-model.number="adjustExactQty"
                     min="0"
@@ -692,8 +705,9 @@
                   />
                 </div>
                 <div class="flex-1">
-                  <label class="inv-form-label">حد التنبيه (الحد الأدنى):</label>
+                  <label for="inv-adjust-min-input" class="inv-form-label">حد التنبيه (الحد الأدنى):</label>
                   <input
+                    id="inv-adjust-min-input"
                     type="number"
                     v-model.number="adjustMinStock"
                     min="0"
@@ -724,25 +738,32 @@
     <!-- Modal 4: Print Options Dialog -->
     <Teleport to="body">
       <div v-if="isPrintDialogOpen" class="inv-modal-overlay" @click.self="isPrintDialogOpen = false">
-        <div class="inv-modal-dialog animate-scale-in" dir="rtl">
+        <div
+          ref="printDialogRef"
+          class="inv-modal-dialog animate-scale-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="inv-print-modal-title"
+          dir="rtl"
+        >
           <div class="inv-modal-header">
-            <div class="inv-modal-icon-wrap icon-neutral">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <div class="inv-modal-icon-wrap icon-neutral" aria-hidden="true">
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <polyline points="6 9 6 2 18 2 18 9"></polyline>
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                 <rect x="6" y="14" width="12" height="8"></rect>
               </svg>
             </div>
             <div>
-              <h3 class="inv-modal-title">طباعة كشف جرد المخزون (A4)</h3>
+              <h3 id="inv-print-modal-title" class="inv-modal-title">طباعة كشف جرد المخزون (A4)</h3>
               <p class="inv-modal-desc">اختر الفئة التي ترغب بتضمينها في تقرير الجرد الورقي الرسمي:</p>
             </div>
           </div>
 
           <div class="inv-modal-body">
             <div class="inv-form-group">
-              <label class="inv-form-label">الفئة المراد طباعتها:</label>
-              <select v-model="printCategory" class="inv-form-input">
+              <label for="inv-print-cat-select" class="inv-form-label">الفئة المراد طباعتها:</label>
+              <select id="inv-print-cat-select" v-model="printCategory" class="inv-form-input">
                 <option value="all">جميع الأصناف بالمستودع ({{ items.length }})</option>
                 <option v-for="cat in categoryOptions" :key="cat.label" :value="cat.label">
                   {{ cat.label }} ({{ cat.count }})
@@ -767,7 +788,7 @@
 
           <div class="inv-modal-footer">
             <button type="button" class="inv-btn inv-btn-primary flex-1" @click="triggerPrint">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1">
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1">
                 <polyline points="6 9 6 2 18 2 18 9"></polyline>
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                 <rect x="6" y="14" width="12" height="8"></rect>
@@ -875,8 +896,15 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useToastStore } from '../stores/toast';
+import {
+  lockBodyScroll,
+  unlockBodyScroll,
+  trapTabKey,
+  restoreElementFocus,
+  getFocusableElements
+} from '../utils/modalA11y';
 import PocketBase from 'pocketbase';
 
 const POCKETBASE_LIVE_URL = 'https://crystal-crocodile.pikapod.net';
@@ -930,6 +958,56 @@ export default {
     const isPrintDialogOpen = ref(false);
     const printCategory = ref('all');
     const printDate = ref('');
+    const adjustDialogRef = ref(null);
+    const printDialogRef = ref(null);
+    let invModalTriggerEl = null;
+    let isInvScrollLocked = false;
+
+    const anyInvModalOpen = computed(() => Boolean(isAdjustModalOpen.value || isPrintDialogOpen.value));
+
+    watch(anyInvModalOpen, (isOpen, wasOpen) => {
+      if (isOpen && !wasOpen) {
+        if (typeof document !== 'undefined') {
+          invModalTriggerEl = document.activeElement;
+        }
+        lockBodyScroll(false);
+        isInvScrollLocked = true;
+        nextTick(() => {
+          const dialogEl = isAdjustModalOpen.value ? adjustDialogRef.value : printDialogRef.value;
+          const focusables = getFocusableElements(dialogEl);
+          if (focusables.length > 0) {
+            focusables[0].focus();
+          }
+        });
+      } else if (!isOpen && wasOpen) {
+        if (isInvScrollLocked) {
+          unlockBodyScroll(false);
+          isInvScrollLocked = false;
+        }
+        const toRestore = invModalTriggerEl;
+        invModalTriggerEl = null;
+        restoreElementFocus(toRestore);
+      }
+    });
+
+    const handleInvKeydown = (e) => {
+      if (!anyInvModalOpen.value) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (isAdjustModalOpen.value) {
+          isAdjustModalOpen.value = false;
+        } else if (isPrintDialogOpen.value) {
+          isPrintDialogOpen.value = false;
+        }
+        return;
+      }
+      if (e.key === 'Tab') {
+        const activeDialog = isAdjustModalOpen.value ? adjustDialogRef.value : printDialogRef.value;
+        if (activeDialog) {
+          trapTabKey(e, activeDialog);
+        }
+      }
+    };
 
     // Authenticated API helper
     const adminFetch = async (url, options = {}) => {
@@ -1311,9 +1389,20 @@ export default {
       } catch (e) {
         console.warn('Realtime subscription skipped:', e);
       }
+
+      if (typeof window !== 'undefined') {
+        window.addEventListener('keydown', handleInvKeydown);
+      }
     });
 
     onUnmounted(() => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('keydown', handleInvKeydown);
+      }
+      if (isInvScrollLocked) {
+        unlockBodyScroll(false);
+        isInvScrollLocked = false;
+      }
       try {
         pb.collection('inventory').unsubscribe('*');
       } catch (e) {}
@@ -1346,6 +1435,8 @@ export default {
       adjustExactQty,
       adjustMinStock,
       isPrintDialogOpen,
+      adjustDialogRef,
+      printDialogRef,
       fetchInventory,
       calcStockRatio,
       toggleSort,
@@ -1454,7 +1545,7 @@ export default {
 .inv-brand-subtitle {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #64748b;
+  color: #475569;
   margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -1609,7 +1700,7 @@ export default {
 .inv-stat-label {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #64748b;
+  color: #475569;
 }
 
 .inv-stat-number {
@@ -1639,7 +1730,7 @@ export default {
 .inv-stat-subtext {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #526072;
   margin-top: 6px;
 }
 
@@ -1677,14 +1768,14 @@ export default {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: #526072;
   pointer-events: none;
 }
 
 .inv-search-input {
   width: 100%;
-  height: 40px;
-  padding: 0 36px 0 32px;
+  height: 44px;
+  padding: 0 36px 0 44px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   font-size: 0.9rem !important;
@@ -1702,14 +1793,19 @@ export default {
 
 .inv-search-clear {
   position: absolute;
-  left: 8px;
+  left: 2px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   font-size: 1.25rem;
-  color: #94a3b8;
+  color: #526072;
   cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 4px;
   line-height: 1;
 }
@@ -1730,7 +1826,7 @@ export default {
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #475569;
   font-size: 0.82rem;
   font-weight: 800;
   font-family: 'Cairo', sans-serif !important;
@@ -1744,19 +1840,19 @@ export default {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 .inv-segment-btn.is-low.active {
-  background: #f59e0b;
+  background: #b45309;
   color: #ffffff;
 }
 .inv-segment-btn.is-out.active {
-  background: #dc2626;
+  background: #b91c1c;
   color: #ffffff;
 }
 .inv-segment-btn.is-ok.active {
-  background: #10b981;
+  background: #047857;
   color: #ffffff;
 }
 .inv-segment-btn.is-reserved.active {
-  background: #d97706;
+  background: #92400e;
   color: #ffffff;
 }
 
@@ -1821,7 +1917,7 @@ export default {
   padding: 0 4px;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #64748b;
+  color: #475569;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -1838,7 +1934,7 @@ export default {
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.8rem;
   font-weight: 800;
-  color: #64748b;
+  color: #475569;
   padding: 3px 8px;
   border-radius: 6px;
   cursor: pointer;
@@ -1906,7 +2002,7 @@ export default {
   display: inline-block;
   margin-right: 4px;
   font-size: 0.78rem;
-  color: #d97706;
+  color: #b45309;
   font-weight: 900;
 }
 
@@ -1934,8 +2030,12 @@ export default {
 .col-center { text-align: center !important; }
 
 .inv-item-id {
-  color: #94a3b8;
+  color: #526072;
   font-size: 0.78rem;
+}
+
+.inv-text-muted {
+  color: #526072;
 }
 
 .inv-item-name {
@@ -1972,7 +2072,7 @@ export default {
 }
 
 .inv-min-stock {
-  color: #64748b;
+  color: #475569;
   font-weight: 700;
 }
 
@@ -2146,7 +2246,7 @@ export default {
 
 .inv-mob-id {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: #526072;
   font-weight: 700;
 }
 
@@ -2228,7 +2328,13 @@ export default {
 .inv-mob-foot-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #64748b;
+  color: #475569;
+}
+
+.inv-mob-threshold-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .inv-mob-threshold {
@@ -2236,7 +2342,7 @@ export default {
   align-items: center;
   gap: 5px;
   font-size: 0.74rem;
-  color: #64748b;
+  color: #475569;
   font-weight: 700;
 }
 
@@ -2300,7 +2406,7 @@ export default {
 
 .inv-modal-desc {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #475569;
   margin: 4px 0 0;
   line-height: 1.4;
 }
@@ -2319,7 +2425,7 @@ export default {
 
 .inv-form-input {
   width: 100%;
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
@@ -2339,11 +2445,85 @@ export default {
   .inv-search-input,
   .inv-form-input {
     font-size: 16px !important;
+    min-height: 46px;
+  }
+
+  .inv-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 14px;
+  }
+
+  .inv-status-segments {
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .inv-segment-btn {
+    min-height: 44px;
+    padding: 8px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .inv-category-pills-row {
+    gap: 8px;
+  }
+
+  .inv-cat-pill {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+
+  .inv-sort-actions {
+    gap: 8px;
+  }
+
+  .inv-sort-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .inv-mob-card-footer {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .inv-mob-stepper-wrap {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .inv-mob-threshold-actions {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .inv-stepper {
+    gap: 6px;
+    padding: 4px;
+  }
+
+  .inv-stepper-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .inv-stepper-value {
+    min-width: 48px;
+    height: 44px;
   }
 }
 
 .inv-form-error {
-  color: #dc2626;
+  color: #b91c1c;
   font-size: 0.74rem;
   font-weight: 700;
   margin-top: 4px;
@@ -2354,6 +2534,10 @@ export default {
   align-items: center;
   gap: 8px;
   margin-top: 18px;
+}
+
+.inv-modal-footer .inv-btn {
+  min-height: 46px;
 }
 
 /* Stock Adjustment Modal Breakdown Strip */
@@ -2387,14 +2571,16 @@ export default {
   border-color: #bbf7d0;
 }
 
-.inv-adj-label {
+.inv-adj-label,
+.adj-label {
   font-size: 0.68rem;
-  color: #64748b;
+  color: #475569;
   font-weight: 700;
   margin-bottom: 2px;
 }
 
-.inv-adj-val {
+.inv-adj-val,
+.adj-val {
   font-size: 1.05rem;
   font-weight: 900;
   color: #0f172a;
@@ -2404,12 +2590,12 @@ export default {
 .inv-delta-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
 .inv-delta-btn {
-  height: 36px;
+  min-height: 44px;
   border-radius: 8px;
   border: 1px solid transparent;
   font-family: 'Cairo', -apple-system, sans-serif !important;
@@ -2604,6 +2790,26 @@ export default {
     padding-top: 12px;
     font-size: 0.75rem;
     font-weight: 800;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inv-live-dot,
+  .inv-spin,
+  .inv-loader-spinner,
+  .animate-scale-in {
+    animation: none !important;
+  }
+  .inv-btn,
+  .inv-stat-card,
+  .inv-segment-btn,
+  .inv-cat-pill,
+  .inv-sort-btn,
+  .inv-stepper-btn,
+  .inv-stepper-value,
+  .inv-mob-progress-fill,
+  .inv-delta-btn {
+    transition: none !important;
   }
 }
 </style>

@@ -1392,7 +1392,7 @@
               <!-- Total Categories -->
               <div class="cat-kpi-card glass-panel">
                 <div class="cat-kpi-icon cat-kpi-gold" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 </div>
                 <div class="cat-kpi-info">
                   <span class="cat-kpi-label">إجمالي الأصناف الرئيسية</span>
@@ -1404,7 +1404,7 @@
               <!-- Total Subcategories -->
               <div class="cat-kpi-card glass-panel">
                 <div class="cat-kpi-icon cat-kpi-sky" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
                 </div>
                 <div class="cat-kpi-info">
                   <span class="cat-kpi-label">الأصناف الفرعية</span>
@@ -1416,7 +1416,7 @@
               <!-- Total Categorized Products -->
               <div class="cat-kpi-card glass-panel">
                 <div class="cat-kpi-icon cat-kpi-emerald" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 </div>
                 <div class="cat-kpi-info">
                   <span class="cat-kpi-label">المنتجات المصنفة</span>
@@ -1428,7 +1428,7 @@
               <!-- Avg Products per Category -->
               <div class="cat-kpi-card glass-panel">
                 <div class="cat-kpi-icon cat-kpi-purple" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10h-10z"/></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10h-10z"/></svg>
                 </div>
                 <div class="cat-kpi-info">
                   <span class="cat-kpi-label">متوسط التوزيع</span>
@@ -1513,7 +1513,7 @@
               <!-- Empty State -->
               <div v-else-if="filteredCategories.length === 0" class="mgmt-empty-state glass-panel">
                 <div class="empty-icon-wrap" aria-hidden="true">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 </div>
                 <h4 class="empty-title">{{ categorySearchQuery ? 'لا توجد نتائج تطابق بحثك' : 'لا توجد أصناف مدخلة حتى الآن' }}</h4>
                 <p class="empty-desc">{{ categorySearchQuery ? 'جرب البحث بكلمة أخرى أو امسح شريط البحث' : 'ابدأ بإضافة أول صنف رئيسي لقائمتك لتنظيم المنتجات' }}</p>
@@ -1674,7 +1674,7 @@
               <!-- Total Tags -->
               <div class="tag-kpi-card glass-panel">
                 <div class="tag-kpi-icon tag-kpi-gold" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
                 </div>
                 <div class="tag-kpi-info">
                   <span class="tag-kpi-label">إجمالي العلامات المميزة</span>
@@ -1686,7 +1686,7 @@
               <!-- Tagged Products Count -->
               <div class="tag-kpi-card glass-panel">
                 <div class="tag-kpi-icon tag-kpi-amber" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
                 <div class="tag-kpi-info">
                   <span class="tag-kpi-label">المنتجات الموسومة</span>
@@ -1699,7 +1699,7 @@
               <!-- Most Used Tag -->
               <div class="tag-kpi-card glass-panel">
                 <div class="tag-kpi-icon tag-kpi-sky" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                 </div>
                 <div class="tag-kpi-info">
                   <span class="tag-kpi-label">الوسم الأكثر استخداماً</span>
@@ -1780,7 +1780,7 @@
               <!-- Empty State -->
               <div v-else-if="filteredTags.length === 0" class="mgmt-empty-state glass-panel">
                 <div class="empty-icon-wrap" aria-hidden="true">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                  <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
                 </div>
                 <h4 class="empty-title">{{ tagSearchQuery ? 'لا توجد علامات تطابق بحثك' : 'لا توجد علامات مميزة حتى الآن' }}</h4>
                 <p class="empty-desc">{{ tagSearchQuery ? 'جرب البحث بكلمة أخرى أو امسح شريط البحث' : 'أضف شارات ترويجية مثل الأكثر طلباً أو جديد لتظهر على منتجاتك في المنيو' }}</p>
@@ -1846,7 +1846,7 @@
                           @click="openTagAssignModal(t)"
                           title="تخصيص منتجات الوسم"
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
                           <span>تخصيص</span>
                         </button>
                       </div>
@@ -1885,7 +1885,7 @@
                       type="button" 
                       class="btn-tag-action-secondary" 
                       @click="filterProductsByTag(t.name)"
-                      title="عرض المنتجات في جدول الأصناف"
+                      title="عرض المنتجات في جدول الأصناف" aria-label="عرض المنتجات في جدول الأصناف"
                     >
                       <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
                     </button>
@@ -1947,7 +1947,7 @@
                           @click="openTagAssignModal(t)"
                           title="تعيين المنتجات لهذا الوسم"
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+                          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
                           <span>تعيين المنتجات</span>
                         </button>
                       </td>
@@ -2356,10 +2356,10 @@
                         <span class="mob-cust-phone text-mono" dir="ltr">{{ formatLibyanPhone(order.customerInfo.phone) }}</span>
                       </div>
                       <div class="mob-cust-quick-actions">
-                        <a :href="getLibyanWhatsAppUrl(order.customerInfo.phone)" target="_blank" class="mob-action-circle whatsapp-circle" title="مراسلة عبر واتساب">
+                        <a :href="getLibyanWhatsAppUrl(order.customerInfo.phone)" target="_blank" class="mob-action-circle whatsapp-circle" title="مراسلة عبر واتساب" aria-label="مراسلة العميل عبر واتساب">
                           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         </a>
-                        <a :href="'tel:' + order.customerInfo.phone" class="mob-action-circle call-circle" title="اتصال">
+                        <a :href="'tel:' + order.customerInfo.phone" class="mob-action-circle call-circle" title="اتصال" aria-label="الاتصال بالعميل">
                           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                         </a>
                       </div>
@@ -3014,10 +3014,10 @@
                           <div class="chef-phone-row" v-if="chef.phone">
                             <span class="chef-phone text-mono" dir="ltr">{{ formatLibyanPhone(chef.phone) }}</span>
                             <div class="chef-quick-actions">
-                              <a :href="getLibyanWhatsAppUrl(chef.phone)" target="_blank" class="chef-icon-btn whatsapp" title="واتساب">
+                              <a :href="getLibyanWhatsAppUrl(chef.phone)" target="_blank" class="chef-icon-btn whatsapp" title="واتساب" aria-label="مراسلة الشيف عبر واتساب">
                                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                               </a>
-                              <a :href="'tel:' + chef.phone" class="chef-icon-btn call" title="اتصال">
+                              <a :href="'tel:' + chef.phone" class="chef-icon-btn call" title="اتصال" aria-label="الاتصال بالشيف">
                                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                               </a>
                             </div>
@@ -4378,14 +4378,14 @@
                         :href="getLibyanWhatsAppUrl(editingOrder.customerPhone)" 
                         target="_blank" 
                         class="edit-action-circle edit-whatsapp-circle" 
-                        title="مراسلة عبر واتساب (+218)"
+                        title="مراسلة عبر واتساب (+218)" aria-label="مراسلة العميل عبر واتساب"
                       >
                         <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                       </a>
                       <a 
                         :href="'tel:' + editingOrder.customerPhone" 
                         class="edit-action-circle edit-call-circle" 
-                        title="اتصال هاتفي"
+                        title="اتصال هاتفي" aria-label="اتصال هاتفي بالعميل"
                       >
                         <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                       </a>
@@ -4762,7 +4762,7 @@
                             @click="removeOrderItem(idx)" 
                             class="btn-item-delete" 
                             :disabled="editingOrder.items.length <= 1" 
-                            title="حذف الصنف من الطلب"
+                            title="حذف الصنف من الطلب" aria-label="حذف الصنف من الطلب"
                           >
                             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
@@ -5322,7 +5322,7 @@
               <div class="tag-edit-mockup-col">
                 <div class="tag-mockup-sticky-panel">
                   <div class="tag-mockup-header-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <span>معاينة حية للشارة على الكارت</span>
                   </div>
 
@@ -5332,7 +5332,7 @@
                       <!-- Image Wrapper with Floating Badge -->
                       <div class="tag-mockup-image-wrap">
                         <div class="tag-mockup-img-inner">
-                          <svg class="mockup-burger-icon" viewBox="0 0 64 64" fill="none">
+                          <svg aria-hidden="true" class="mockup-burger-icon" viewBox="0 0 64 64" fill="none">
                             <circle cx="32" cy="32" r="28" fill="#fbbf24" fill-opacity="0.35"/>
                             <path d="M16 27C16 18.5 23 12 32 12C41 12 48 18.5 48 27H16Z" fill="#d97706"/>
                             <circle cx="24" cy="18" r="1.5" fill="#fef3c7"/>
@@ -5345,8 +5345,8 @@
                         </div>
 
                         <!-- Mock Heart Favorite Button in RTL Top Left Corner -->
-                        <button type="button" class="tag-mockup-heart-btn" disabled aria-hidden="true">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        <button type="button" class="tag-mockup-heart-btn" disabled tabindex="-1" aria-hidden="true" aria-label="معاينة المفضلة">
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                         </button>
                       </div>
 
@@ -5373,7 +5373,7 @@
                             <span class="price-curr">د.ل</span>
                           </div>
                           <div class="tag-mockup-add-btn">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             <span>إضافة</span>
                           </div>
                         </div>
@@ -5410,7 +5410,7 @@
         <div class="modal-header">
           <div class="modal-title-group">
             <div class="modal-title-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
             </div>
             <div>
               <h3 id="tag-assign-modal-title">إدارة وتعيين المنتجات للوسم</h3>
@@ -5438,7 +5438,7 @@
               <input 
                 v-model="tagAssignSearch" 
                 type="text" 
-                placeholder="ابحث بالاسم أو الصنف…" 
+                placeholder="بحث بالاسم أو الصنف…" 
                 class="form-control search-input"
               />
               <button 
@@ -5452,11 +5452,11 @@
 
             <div class="tag-assign-quick-actions">
               <button type="button" class="btn btn-outline btn-sm" @click="selectAllProductsForTag">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>تحديد الكل ({{ filteredAssignProducts.length }})</span>
               </button>
               <button type="button" class="btn btn-outline btn-sm text-danger" @click="clearAllProductsForTag">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 <span>إلغاء التحديد</span>
               </button>
             </div>
@@ -5478,7 +5478,7 @@
               @click="toggleProductInTagAssign(p._id)"
             >
               <div class="tag-assign-checkbox">
-                <svg v-if="tagSelectedProductIds.has(p._id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg aria-hidden="true" v-if="tagSelectedProductIds.has(p._id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </div>
@@ -7285,6 +7285,8 @@ import CategoryIcon from '../components/CategoryIcon.vue';
 import JsBarcode from 'jsbarcode';
 import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput, cleanPhoneDigits } from '../utils/phone';
 import { vSheetGesture } from '../utils/sheetGesture';
+import { useConfirmStore } from '../stores/confirm';
+import { lockBodyScroll, unlockBodyScroll, trapTabKey, restoreElementFocus } from '../utils/modalA11y';
 
 const InventoryTab = defineAsyncComponent(() => import('../components/InventoryTab.vue'));
 const AdminShortcutsModal = defineAsyncComponent(() => import('../components/AdminShortcutsModal.vue'));
@@ -7309,6 +7311,7 @@ export default {
     const route = useRoute();
     const router = useRouter();
     const toast = useToastStore();
+    const confirmStore = useConfirmStore();
     const loading = ref(false);
     const isAuthenticated = ref(false);
     const sidebarOpen = ref(false);
@@ -8638,7 +8641,7 @@ export default {
 
     // Delete Product
     const deleteProduct = async (id) => {
-      if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المنتج نهائياً؟')) return;
+      if (!(await confirmStore.ask({ title: 'حذف المنتج', message: 'هل أنت متأكد من رغبتك في حذف هذا المنتج نهائياً؟', confirmText: 'حذف المنتج', variant: 'danger' }))) return;
       const url = activeShop.value === 'shop2'
         ? `/api/shop2/products/${id}`
         : `/api/products/${id}`;
@@ -8943,23 +8946,23 @@ export default {
 
     // SVG ICON POOL FOR CATEGORIES (HUGEICONS)
     const svgIconPool = [
-      { key: 'cheesecake02', label: 'حلويات غربية', emoji: '🍰', keyword: 'غربي' },
-      { key: 'cheesecake01', label: 'تورت كيك', emoji: '🎂', keyword: 'تورت' },
-      { key: 'bread04', label: 'نواشف ماكرون', emoji: '🥐', keyword: 'نواشف' },
-      { key: 'biscuit', label: 'بيتي فور ولوزيات', emoji: '🍪', keyword: 'بيتي فور' },
-      { key: 'oriental', label: 'شرقي', emoji: '🍯', keyword: 'شرقي' },
-      { key: 'heart', label: 'عبمبر', emoji: '💖', keyword: 'عبمبر' },
-      { key: 'juice', label: 'عصائر', emoji: '🥤', keyword: 'عصائر' },
-      { key: 'coffee', label: 'قهوة', emoji: '☕', keyword: 'قهوة' },
-      { key: 'ice-cream', label: 'آيس كريم', emoji: '🍦', keyword: 'مثلجات' },
-      { key: 'service', label: 'خدمات', emoji: '🛎️', keyword: 'خدمات' },
-      { key: 'gift', label: 'هدايا', emoji: '🎁', keyword: 'هدايا' },
-      { key: 'star', label: 'مميز', emoji: '⭐', keyword: 'مميز' },
-      { key: 'utensils', label: 'عام', emoji: '🍽️', keyword: 'عام' },
+      { key: 'cheesecake02', label: 'حلويات غربية', keyword: 'غربي' },
+      { key: 'cheesecake01', label: 'تورت كيك', keyword: 'تورت' },
+      { key: 'bread04', label: 'نواشف ماكرون', keyword: 'نواشف' },
+      { key: 'biscuit', label: 'بيتي فور ولوزيات', keyword: 'بيتي فور' },
+      { key: 'oriental', label: 'شرقي', keyword: 'شرقي' },
+      { key: 'heart', label: 'عبمبر', keyword: 'عبمبر' },
+      { key: 'juice', label: 'عصائر', keyword: 'عصائر' },
+      { key: 'coffee', label: 'قهوة', keyword: 'قهوة' },
+      { key: 'ice-cream', label: 'آيس كريم', keyword: 'مثلجات' },
+      { key: 'service', label: 'خدمات', keyword: 'خدمات' },
+      { key: 'gift', label: 'هدايا', keyword: 'هدايا' },
+      { key: 'star', label: 'مميز', keyword: 'مميز' },
+      { key: 'utensils', label: 'عام', keyword: 'عام' },
     ];
 
     const selectCategoryIcon = (item) => {
-      editingCategory.emoji = item.emoji;
+      editingCategory.emoji = '';
       editingCategory.icon = item.key;
     };
 
@@ -9028,7 +9031,7 @@ export default {
     };
 
     const deleteCategory = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف الصنف؟ ستبقى المنتجات تابعة له إلا إذا قمت بنقلها.')) return;
+      if (!(await confirmStore.ask({ title: 'حذف الصنف الرئيسي', message: 'هل أنت متأكد من حذف الصنف؟ ستبقى المنتجات تابعة له إلا إذا قمت بنقلها.', confirmText: 'حذف الصنف', variant: 'danger' }))) return;
       const url = activeShop.value === 'shop2'
         ? `/api/shop2/categories/${id}`
         : `/api/categories/${id}`;
@@ -9129,7 +9132,7 @@ export default {
     const deleteTag = async (id) => {
       const tagToDelete = tags.value.find(t => t._id === id);
       const tagName = tagToDelete ? tagToDelete.name : '';
-      if (!confirm(`هل أنت متأكد من حذف العلامة "${tagName || ''}"؟`)) return;
+      if (!(await confirmStore.ask({ title: 'حذف العلامة المميزة', message: `هل أنت متأكد من حذف العلامة "${tagName || ''}"؟`, confirmText: 'حذف العلامة', variant: 'danger' }))) return;
       const url = activeShop.value === 'shop2'
         ? `/api/shop2/tags/${id}`
         : `/api/tags/${id}`;
@@ -10273,7 +10276,7 @@ export default {
       if (!payment || !payment._id) return;
       
       const formattedAmt = formatCurrency(payment.amount);
-      const isConfirmed = window.confirm(`هل أنت متأكد من إلغاء واسترجاع هذه الدفعة بقيمة ${formattedAmt}؟\n\nسيتم خصم هذا المبلغ من مدفوعات الطلبات وإعادة الرصيد المستحق على العميل تلقائياً.`);
+      const isConfirmed = await confirmStore.ask({ title: 'إلغاء واسترجاع الدفعة', message: `هل أنت متأكد من إلغاء واسترجاع هذه الدفعة بقيمة ${formattedAmt}؟ سيتم خصم هذا المبلغ من مدفوعات الطلبات وإعادة الرصيد المستحق على العميل تلقائياً.`, confirmText: 'إلغاء الدفعة', variant: 'danger' });
       if (!isConfirmed) return;
 
       cancellingPaymentId.value = payment._id;
@@ -10786,7 +10789,7 @@ export default {
     };
 
     const deleteChef = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف هذا الشيف؟ سيتم إلغاء ربط جميع الأصناف المخصصة له.')) return;
+      if (!(await confirmStore.ask({ title: 'حذف الشيف', message: 'هل أنت متأكد من حذف هذا الشيف؟ سيتم إلغاء ربط جميع الأصناف المخصصة له.', confirmText: 'حذف الشيف', variant: 'danger' }))) return;
       loading.value = true;
       try {
         const res = await adminFetch(`/api/admin/chefs/${id}?shop=${activeShop.value}`, {
@@ -11316,7 +11319,7 @@ export default {
     };
 
     const deleteCustomer = async (id) => {
-      if (!confirm('هل أنت متأكد من حذف ملف هذا العميل؟ ستظل طلباته وسجلاته المالية محفوظة لأغراض التدقيق والمحاسبة.')) return;
+      if (!(await confirmStore.ask({ title: 'حذف ملف العميل', message: 'هل أنت متأكد من حذف ملف هذا العميل؟ ستظل طلباته وسجلاته المالية محفوظة لأغراض التدقيق والمحاسبة.', confirmText: 'حذف العميل', variant: 'danger' }))) return;
       
       loading.value = true;
       try {
@@ -12243,7 +12246,7 @@ const closeSuggestionsWithDelay = () => {
         } else {
           const err = await res.json().catch(() => ({}));
           if (res.status === 409 && err.isDuplicate) {
-            const confirmForce = window.confirm(`${err.error}\n\nهل تريد بالتأكيد تسجيل هذا الطلب كطلب إضافي مكرر الآن؟`);
+            const confirmForce = await confirmStore.ask({ title: 'تنبيه طلب مكرر', message: `${err.error} — هل تريد بالتأكيد تسجيل هذا الطلب كطلب إضافي مكرر الآن؟`, confirmText: 'تسجيل الطلب المكرر', variant: 'warning' });
             if (confirmForce) {
               const forceRes = await adminFetch(url, {
                 method: 'POST',
@@ -12525,10 +12528,46 @@ const closeSuggestionsWithDelay = () => {
         paymentHistoryModalOpen.value || customerModalOpen.value || customerFavsModalOpen.value ||
         customerDetailsModalOpen.value || chefModalOpen.value || assignProductsModalOpen.value ||
         userModalOpen.value || carouselModalOpen.value || cropperModalOpen.value || shortcutsModalOpen.value ||
-        commandPaletteOpen.value || resetModalOpen.value || !!zoomedImageSrc.value;
+        commandPaletteOpen.value || resetModalOpen.value || tagAssignModalOpen.value || productCustomersModalOpen.value || !!zoomedImageSrc.value;
     };
 
+    let adminModalTriggerEl = null;
+    let isAdminScrollLocked = false;
+
+    watch(
+      () => anyModalOpen(),
+      (isOpen, wasOpen) => {
+        if (isOpen && !wasOpen) {
+          if (typeof document !== 'undefined') {
+            adminModalTriggerEl = document.activeElement;
+          }
+          lockBodyScroll(false);
+          isAdminScrollLocked = true;
+        } else if (!isOpen && wasOpen) {
+          if (isAdminScrollLocked) {
+            unlockBodyScroll(false);
+            isAdminScrollLocked = false;
+          }
+          const toRestore = adminModalTriggerEl;
+          adminModalTriggerEl = null;
+          restoreElementFocus(toRestore);
+        }
+      }
+    );
+
     const handleGlobalKeydown = (e) => {
+      if (e.defaultPrevented || confirmStore.isOpen) return;
+
+      if (e.key === 'Tab' && anyModalOpen()) {
+        const visibleDialogs = Array.from(document.querySelectorAll('[role="dialog"]')).filter(
+          (el) => el.offsetParent !== null || window.getComputedStyle(el).position === 'fixed'
+        );
+        const topDialog = visibleDialogs.length ? visibleDialogs[visibleDialogs.length - 1] : null;
+        if (topDialog) {
+          trapTabKey(e, topDialog);
+          return;
+        }
+      }
       // 1. Modal Close / Cancel with Escape (Standardized LIFO Overlay Stack)
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -12561,6 +12600,7 @@ const closeSuggestionsWithDelay = () => {
         if (customerFavsModalOpen.value) { customerFavsModalOpen.value = false; return; }
         if (productCustomersModalOpen.value) { productCustomersModalOpen.value = false; return; }
         if (paymentHistoryModalOpen.value) { paymentHistoryModalOpen.value = false; return; }
+        if (tagAssignModalOpen.value) { tagAssignModalOpen.value = false; return; }
 
         // Layer 5: Primary Entity Modals
         if (newOrderModalOpen.value) { newOrderModalOpen.value = false; return; }
@@ -13142,6 +13182,10 @@ const closeSuggestionsWithDelay = () => {
       window.removeEventListener('keydown', handleGlobalKeydown);
       document.removeEventListener('click', closeAllDatePickers);
       detachScrollListeners();
+      if (isAdminScrollLocked) {
+        unlockBodyScroll(false);
+        isAdminScrollLocked = false;
+      }
     });
 
     // =========================================================================
@@ -14497,7 +14541,7 @@ const closeSuggestionsWithDelay = () => {
 
 /* Define chart/theme palettes based on selected shop context */
 .shop-theme-shop1 {
-  --primary-color: #d97706;
+  --primary-color: #b45309;
   --primary-color-rgb: 217, 119, 6;
   --primary-accent: #f59e0b;
   --primary-hover: #b45309;
@@ -14508,11 +14552,11 @@ const closeSuggestionsWithDelay = () => {
   --primary-gradient-hover: linear-gradient(135deg, #d97706, #b45309);
   --primary-border: #f59e0b;
   --chart-primary: #f59e0b;
-  --theme-btn-bg: #f59e0b;
-  --theme-btn-hover: #d97706;
+  --theme-btn-bg: linear-gradient(135deg, #b45309, #92400e);
+  --theme-btn-hover: linear-gradient(135deg, #92400e, #78350f);
   --theme-text-color: #ffffff;
   --shop-badge-bg: rgba(245, 158, 11, 0.14);
-  --shop-badge-color: #d97706;
+  --shop-badge-color: #92400e;
 }
 
 .shop-theme-shop2 {
@@ -15028,7 +15072,7 @@ const closeSuggestionsWithDelay = () => {
 
 .control-pill.active {
   background: #ffffff;
-  color: var(--chart-primary);
+  color: var(--primary-dark, #92400e);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -16571,7 +16615,7 @@ select.form-control:focus {
 
 .badge-sub {
   background: #e3faf2;
-  color: #0ca678;
+  color: #047857;
   font-size: 0.75rem;
   padding: 1px 6px;
   border-radius: 4px;
@@ -16842,7 +16886,7 @@ select.form-control:focus {
 .modal-content .btn-save,
 .modal-box .btn-save,
 .btn-submit-payment {
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
   font-family: 'Cairo', sans-serif !important;
@@ -16868,7 +16912,7 @@ select.form-control:focus {
 .btn-submit-payment:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.38) !important;
-  background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
+  background: linear-gradient(135deg, #92400e, #78350f) !important;
 }
 
 .modal-box .btn-modal-save:active,
@@ -17477,11 +17521,11 @@ select.form-control:focus {
 }
 .price-mode-badge.regular {
   background: #e7f5ff;
-  color: #228be6;
+  color: #1d4ed8;
 }
 .price-mode-badge.bulk {
   background: #fff4e6;
-  color: #fd7e14;
+  color: #9a3412;
 }
 
 .order-id-pill {
@@ -17800,7 +17844,7 @@ select.form-control:focus {
 }
 .suggestion-price {
   font-weight: 700;
-  color: #228be6;
+  color: #1d4ed8;
   font-size: 0.85rem;
   margin-right: auto;
 }
@@ -17948,7 +17992,7 @@ select.form-control:focus {
   border-radius: 10px;
   font-weight: 800;
   font-size: 0.92rem;
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
   cursor: pointer;
@@ -18085,12 +18129,12 @@ select.form-control:focus {
 
 .price-pill.regular {
   background: #e7f5ff;
-  color: #228be6;
+  color: #1d4ed8;
 }
 
 .price-pill.bulk {
   background: #fff4e6;
-  color: #fd7e14;
+  color: #9a3412;
 }
 
 .price-lbl {
@@ -19933,9 +19977,9 @@ select.form-control:focus {
 }
 
 .page-num-pill.active {
-  background: #c89551;
+  background: #92400e;
   color: #ffffff;
-  border-color: #c89551;
+  border-color: #92400e;
   box-shadow: 0 4px 12px rgba(200, 149, 81, 0.35);
   transform: scale(1.05);
 }
@@ -20142,19 +20186,19 @@ select.form-control:focus {
 
 .payment-status-badge.unpaid {
   background: #fef2f2 !important;
-  color: #dc2626 !important;
+  color: #b91c1c !important;
   border: 1px solid #fecaca !important;
 }
 
 .payment-status-badge.partial {
   background: #fffbeb !important;
-  color: #d97706 !important;
+  color: #92400e !important;
   border: 1px solid #fde68a !important;
 }
 
 .payment-status-badge.paid {
   background: #ecfdf5 !important;
-  color: #059669 !important;
+  color: #047857 !important;
   border: 1px solid #a7f3d0 !important;
 }
 
@@ -20195,7 +20239,7 @@ select.form-control:focus {
 
 .balance-outstanding .balance-label {
   font-size: 0.8rem;
-  color: #dc2626 !important;
+  color: #b91c1c !important;
   font-weight: 600;
 }
 
@@ -20214,7 +20258,7 @@ select.form-control:focus {
 
 .balance-after .balance-label {
   font-size: 0.8rem;
-  color: #059669 !important;
+  color: #047857 !important;
   font-weight: 600;
 }
 
@@ -20300,7 +20344,7 @@ select.form-control:focus {
   border: 1px dashed #a7f3d0 !important;
   border-radius: 12px;
   margin-bottom: 20px;
-  color: #059669 !important;
+  color: #047857 !important;
   font-weight: 600;
 }
 
@@ -20326,7 +20370,7 @@ select.form-control:focus {
 .payment-amount-input {
   font-size: 1.1rem !important;
   font-weight: 800 !important;
-  color: #059669 !important;
+  color: #047857 !important;
 }
 
 /* Mode Selector Pills */
@@ -20472,7 +20516,7 @@ select.form-control:focus {
 
 .payment-history-amount {
   font-weight: 800;
-  color: #059669 !important;
+  color: #047857 !important;
   font-family: 'Cairo', sans-serif;
   font-variant-numeric: tabular-nums;
 }
@@ -20911,7 +20955,7 @@ select.form-control:focus {
 
 .cust-btn.btn-pay {
   background: #ecfdf5 !important;
-  color: #059669 !important;
+  color: #047857 !important;
   border-color: #a7f3d0 !important;
 }
 
@@ -22276,7 +22320,7 @@ select.pos-control {
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   border-radius: 12px !important;
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
   box-shadow: 0 4px 16px rgba(217, 119, 6, 0.32) !important;
@@ -22292,7 +22336,7 @@ select.pos-control {
 
 .pos-btn-submit:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
+  background: linear-gradient(135deg, #92400e, #78350f) !important;
   box-shadow: 0 8px 24px rgba(217, 119, 6, 0.45) !important;
 }
 
@@ -23155,7 +23199,7 @@ select.pos-control {
 
 .pos-date-shortcut-btn:hover {
   border-color: #f59e0b !important;
-  color: #d97706 !important;
+  color: #92400e !important;
   background: rgba(245, 158, 11, 0.08) !important;
   transform: translateY(-1px) !important;
 }
@@ -23165,7 +23209,7 @@ select.pos-control {
 }
 
 .pos-date-shortcut-btn.active {
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
   color: #ffffff !important;
   border-color: #d97706 !important;
   font-weight: 900 !important;
@@ -23198,18 +23242,18 @@ select.pos-control {
 
 .btn-standard-datepicker-trigger:hover {
   border-color: #f59e0b !important;
-  color: #d97706 !important;
+  color: #92400e !important;
   background: rgba(245, 158, 11, 0.04) !important;
 }
 
 .btn-standard-datepicker-trigger:hover .dp-icon-wrap {
   background: rgba(245, 158, 11, 0.12) !important;
-  color: #d97706 !important;
+  color: #92400e !important;
 }
 
 .btn-standard-datepicker-trigger:hover .dp-chevron-icon {
   opacity: 0.9 !important;
-  color: #d97706 !important;
+  color: #92400e !important;
 }
 
 .btn-standard-datepicker-trigger.active {
@@ -23225,7 +23269,7 @@ select.pos-control {
 .btn-standard-datepicker-trigger.active .dp-chevron-icon {
   transform: rotate(180deg) !important;
   opacity: 1 !important;
-  color: #d97706 !important;
+  color: #92400e !important;
 }
 
 /* ==========================================================================
@@ -23676,12 +23720,12 @@ select.pos-control {
 
   .mob-price-pill.regular {
     background: #e7f5ff;
-    color: #228be6;
+    color: #1d4ed8;
   }
 
   .mob-price-pill.bulk {
     background: #fff4e6;
-    color: #fd7e14;
+    color: #9a3412;
   }
 
   .mob-prod-footer {
@@ -24275,7 +24319,7 @@ select.pos-control {
 
 .cust-debt-print-btn:hover {
   border-color: #f59e0b !important;
-  color: #d97706 !important;
+  color: #92400e !important;
   background: rgba(245, 158, 11, 0.05) !important;
 }
 
@@ -26679,7 +26723,7 @@ select.pos-control {
 
 .payment-history-item.is-cancelled .payment-history-amount {
   text-decoration: line-through;
-  color: #dc2626 !important;
+  color: #b91c1c !important;
 }
 
 .payment-status-badge {
@@ -26739,7 +26783,7 @@ select.pos-control {
 .shop-theme-shop2 .btn-shortcuts-done,
 .shop-theme-shop2 .btn-confirm-save,
 .shop-theme-shop2 .btn-modal-primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   border-color: #1d4ed8 !important;
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
@@ -26762,7 +26806,7 @@ select.pos-control {
 .shop-theme-shop2 .admin-tab-btn.active,
 .shop-theme-shop2 .tab-pill.active,
 .shop-theme-shop2 .nav-pill.active {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28) !important;
@@ -26775,7 +26819,7 @@ select.pos-control {
 
 /* 3. Shop Switcher Pill */
 .shop-theme-shop2 .shop-pill.active {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
@@ -26784,7 +26828,7 @@ select.pos-control {
 /* 4. Segmented Control Pills (Price Mode, Date Shortcuts, Filters) */
 .shop-theme-shop2 .price-mode-pill.active,
 .shop-theme-shop2 .fast-order-price-mode-switch .price-mode-pill.active {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
 }
@@ -26806,7 +26850,7 @@ select.pos-control {
 
 /* 5. Datepickers & Calendar in Shop 2 */
 .shop-theme-shop2 .dp-day-cell.is-selected {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   font-weight: 800 !important;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
@@ -26871,12 +26915,12 @@ select.pos-control {
 
 .shop-theme-shop2 .pos-item-qty-badge,
 .shop-theme-shop2 .pos-cart-badge {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
 }
 
 .shop-theme-shop2 .pos-quick-add-btn:hover {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
 }
@@ -26893,7 +26937,7 @@ select.pos-control {
 }
 
 .shop-theme-shop2 .pos-cart-total-badge {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
 }
 
@@ -26950,7 +26994,7 @@ select.pos-control {
 }
 
 .shop-theme-shop2 .btn-hub-pay {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
 }
@@ -26958,7 +27002,7 @@ select.pos-control {
 /* 10. Command Palette & Autocomplete Selection */
 .shop-theme-shop2 .palette-item.active,
 .shop-theme-shop2 .suggestion-item.active {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
 }
 
@@ -26972,7 +27016,7 @@ select.pos-control {
 /* 11. Pagination & Active Page Pill */
 .shop-theme-shop2 .pagination-btn.active,
 .shop-theme-shop2 .page-number-btn.active {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
 }
@@ -27152,7 +27196,7 @@ select.pos-control {
 
 .pos-cust-status-badge.status-received {
   background: rgba(16, 185, 129, 0.12) !important;
-  color: #059669 !important;
+  color: #047857 !important;
   border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
@@ -27164,7 +27208,7 @@ select.pos-control {
 
 .pos-cust-status-badge.status-cancelled {
   background: rgba(239, 68, 68, 0.12) !important;
-  color: #dc2626 !important;
+  color: #b91c1c !important;
   border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
@@ -30168,12 +30212,12 @@ select.pos-control {
 
   .mob-rank-icon-wrap.warning {
     background: #fef3c7 !important;
-    color: #d97706 !important;
+    color: #92400e !important;
   }
 
   .mob-rank-icon-wrap.danger {
     background: #fee2e2 !important;
-    color: #dc2626 !important;
+    color: #b91c1c !important;
   }
 
   .mob-rank-details {
@@ -30695,4 +30739,263 @@ select.pos-control {
   box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.06) !important;
 }
 
+/* ==========================================================================
+   Wave 1, 2 & 4: WCAG 2.1 AA Contrast (>= 4.5:1), Mobile Touch Targets (>= 44x44px)
+   & Accessible Reduced-Motion Guards
+   ========================================================================== */
+
+/* 1. WCAG 2.1 AA Contrast Calibration (>= 4.5:1 across Shop 1 & Shop 2) */
+.header-count-badge {
+  color: #92400e !important;
+}
+
+.shop-theme-shop2 .header-count-badge {
+  color: #1d4ed8 !important;
+}
+
+.page-num-pill.ellipsis,
+.subcats-empty-text,
+.tag-no-products-hint,
+.pos-catalog-empty,
+.pos-empty-cart-msg {
+  color: #526072 !important;
+}
+
+.price-mode-pill:not(.active),
+.chef-status-badge.inactive,
+.chef-phone,
+.mob-price-label,
+.subcats-label,
+.tag-desc-text {
+  color: #475569;
+}
+
+.pos-scroll-loader-dots {
+  color: #1d4ed8 !important;
+}
+
+.pos-btn-submit:disabled {
+  color: #475569 !important;
+}
+
+.pos-btn-submit:disabled svg {
+  stroke: #475569 !important;
+}
+
+.mob-price-val {
+  color: var(--primary-dark, #92400e) !important;
+}
+
+.shop-theme-shop2 .mob-price-val {
+  color: #1d4ed8 !important;
+}
+
+.chef-status-badge.active,
+.order-print-badge.is-printed {
+  color: #047857 !important;
+}
+
+.order-print-badge.is-unprinted,
+.selected-counter-badge,
+.prod-tab-pill .pill-badge,
+.btn-chef-action.btn-chef-assign {
+  color: #92400e !important;
+}
+
+.shop-theme-shop2 .selected-counter-badge,
+.shop-theme-shop2 .prod-tab-pill .pill-badge,
+.shop-theme-shop2 .btn-chef-action.btn-chef-assign {
+  color: #1d4ed8 !important;
+}
+
+.chef-avatar,
+.btn-quick-add,
+.assign-cat-pill.active {
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
+  color: #ffffff !important;
+  border-color: #92400e !important;
+}
+
+.shop-theme-shop2 .chef-avatar,
+.shop-theme-shop2 .btn-quick-add,
+.shop-theme-shop2 .assign-cat-pill.active {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+.chef-icon-btn.whatsapp,
+.mob-action-circle.whatsapp-circle,
+.edit-whatsapp-circle {
+  color: #15803d !important;
+}
+
+.chef-icon-btn.call,
+.mob-action-circle.call-circle,
+.edit-call-circle {
+  color: #1d4ed8 !important;
+}
+
+.mob-status-btn.pending.active {
+  background: #b45309 !important;
+  color: #ffffff !important;
+}
+
+.mob-status-btn.ready.active {
+  background: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+.mob-status-btn.received.active {
+  background: #047857 !important;
+  color: #ffffff !important;
+}
+
+.mob-status-btn.cancelled.active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.btn-cat-delete,
+.btn-action-delete,
+.btn-chef-action.btn-chef-delete {
+  color: #b91c1c !important;
+}
+
+/* 2. Touch Target Geometry (>= 44x44px, 48x48px primary/nav, >= 8px clearance) */
+.menu-toggle-btn {
+  min-width: 48px !important;
+  min-height: 48px !important;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.chef-phone-row {
+  flex-wrap: wrap;
+}
+
+.chef-quick-actions,
+.mob-cust-quick-actions,
+.edit-cust-quick-actions {
+  gap: 8px !important;
+}
+
+.chef-icon-btn,
+.mob-action-circle,
+.edit-action-circle,
+.modal-close-btn,
+.btn-item-delete,
+.btn-tag-action-secondary,
+.btn-tag-action-primary {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .admin-mobile-header {
+    min-height: calc(52px + env(safe-area-inset-top, 0px)) !important;
+    height: auto !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: 0 !important;
+  }
+
+  .btn-datepicker-trigger,
+  .btn-standard-datepicker-trigger,
+  .btn-range-trigger,
+  .btn-today-shortcut,
+  .selected-date-badge,
+  .orders-toolbar-actions-group .btn,
+  .orders-search-print-row .reconciliation-print-btn,
+  .orders-search-print-row .order-notes-print-btn,
+  .btn-cat-action,
+  .btn-table-action,
+  .btn-chef-action,
+  .btn-bulk-pick,
+  .control-pill,
+  .segmented-control .control-pill,
+  .assign-cat-pill,
+  .pagination-btn,
+  .page-num-pill:not(.ellipsis) {
+    min-height: 44px !important;
+    height: auto !important;
+  }
+
+  .pagination-btn,
+  .page-num-pill:not(.ellipsis) {
+    min-width: 44px !important;
+  }
+
+  .btn-make-order,
+  .card-toolbar-top .btn-primary {
+    min-height: 48px !important;
+    height: auto !important;
+  }
+
+  .mob-card-footer-actions {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .mob-status-segmented {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 4px !important;
+  }
+
+  .mob-status-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    flex: 1 1 44px !important;
+  }
+
+  .mob-action-buttons-group {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .mob-action-buttons-group .btn-table-action {
+    width: 100% !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    justify-content: center !important;
+  }
+
+  .admin-layout input:not([type="checkbox"]):not([type="radio"]),
+  .admin-layout select,
+  .admin-layout textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* 3. Accessible Motion Guard (prefers-reduced-motion) */
+@media (prefers-reduced-motion: reduce) {
+  .unprinted-pulse-dot,
+  .pos-scroll-loader-dots,
+  .skeleton-shimmer,
+  .datepicker-popover {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .admin-tab-fade-enter-active,
+  .admin-tab-fade-leave-active,
+  .kpi-card,
+  .kpi-card:hover {
+    transition: none !important;
+    transform: none !important;
+  }
+}
 </style>

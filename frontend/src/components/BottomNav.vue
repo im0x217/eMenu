@@ -231,22 +231,22 @@ const navToShop = () => {
 }
 
 .nav-tab-btn.active {
-  color: #b45309;
+  color: #92400e;
 }
 
 :global(.shop-theme-shop2) .nav-tab-btn.active {
-  color: #1d4ed8;
+  color: #1e3a5f;
 }
 
 .nav-tab-btn.active svg {
   transform: translateY(-1.5px) scale(1.1);
-  color: #b45309;
+  color: #92400e;
   fill: rgba(180, 83, 9, 0.14);
 }
 
 :global(.shop-theme-shop2) .nav-tab-btn.active svg {
-  color: #1d4ed8;
-  fill: rgba(29, 78, 216, 0.14);
+  color: #1e3a5f;
+  fill: rgba(30, 58, 95, 0.14);
 }
 
 .tab-label {
@@ -270,8 +270,8 @@ const navToShop = () => {
   position: absolute;
   top: -6px;
   right: -10px;
-  background-color: #e63946;
-  color: white;
+  background-color: #dc2626;
+  color: #ffffff;
   border-radius: 999px;
   font-size: 0.65rem;
   min-width: 17px;
@@ -322,6 +322,20 @@ const navToShop = () => {
   to {
     opacity: 0;
     transform: scale(0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-active-pill,
+  .nav-tab-btn,
+  .nav-tab-btn svg,
+  .tab-label {
+    transition: none !important;
+  }
+  .badge-count.is-pulsing,
+  .badge-pop-enter-active,
+  .badge-pop-leave-active {
+    animation: none !important;
   }
 }
 

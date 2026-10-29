@@ -78,7 +78,7 @@
                   </td>
                   <td>
                     <div class="order-actions-btns">
-                      <button @click="downloadBackup(b._id, b.fileName)" class="btn-table-action btn-action-edit" title="تحميل ملف JSON">
+                      <button @click="downloadBackup(b._id, b.fileName)" class="btn-table-action btn-action-edit" title="تحميل ملف JSON" :aria-label="`تنزيل ملف النسخة الاحتياطية ${b.label || ''}`">
                         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         <span>تنزيل JSON</span>
                       </button>
@@ -201,6 +201,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useToastStore } from '../stores/toast';
+import { useConfirmStore } from '../stores/confirm';
 
 export default {
   name: 'AdminSettingsTab',
@@ -211,6 +212,7 @@ export default {
   emits: ['update:resetModalOpen', 'orders-reset'],
   setup(props, { emit }) {
     const toast = useToastStore();
+    const confirmStore = useConfirmStore();
     const backups = ref([]);
     const backupDir = ref('');
     const backupLoading = ref(false);
@@ -287,7 +289,13 @@ export default {
     };
 
     const deleteBackup = async (id) => {
-      if (!window.confirm('هل أنت متأكد من رغبتك في حذف هذه النسخة الاحتياطية؟')) return;
+      const ok = await confirmStore.ask({
+        title: 'حذف النسخة الاحتياطية',
+        message: 'هل أنت متأكد من رغبتك في حذف هذه النسخة الاحتياطية من السجل؟',
+        confirmText: 'حذف النسخة',
+        variant: 'danger'
+      });
+      if (!ok) return;
       try {
         const res = await props.adminFetch(`/api/admin/backup/${id}`, { method: 'DELETE' });
         if (res.ok) {
@@ -389,7 +397,7 @@ export default {
 
 .backup-file-sub {
   font-size: 0.74rem;
-  color: #64748b;
+  color: #475569;
 }
 
 .backup-action-bar {
@@ -440,7 +448,7 @@ export default {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 800;
-  color: #dc2626;
+  color: #b91c1c;
 }
 
 .danger-zone-desc {
@@ -491,6 +499,7 @@ export default {
 
 .btn-reset-trigger {
   font-weight: 800;
+  min-height: 44px;
   padding: 10px 20px;
   border-radius: 10px;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
@@ -535,11 +544,37 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
 }
 
 .form-check-input {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .backup-action-bar {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .backup-action-bar .form-control,
+  .reset-confirm-modal-box .form-control {
+    font-size: 16px !important;
+    min-height: 46px;
+  }
+
+  .backup-action-bar .btn {
+    min-height: 46px;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-reset-trigger,
+  .btn-table-action {
+    transition: none !important;
+  }
 }
 </style>

@@ -122,6 +122,8 @@ export function buildTokens() {
     lines.push('.shop-theme-shop1 {');
     const shop1 = flattenTokens(tokens.semantic.shop1, tokens);
     if (shop1['primary']) lines.push(`  --primary-color: ${shop1['primary']};`);
+    if (shop1['text-strong']) lines.push(`  --primary-text-strong: ${shop1['text-strong']};`);
+    if (shop1['on-primary']) lines.push(`  --on-primary-color: ${shop1['on-primary']};`);
     if (shop1['glow']) lines.push(`  --primary-glow: ${shop1['glow']};`);
     lines.push('}');
     lines.push('');
@@ -132,6 +134,8 @@ export function buildTokens() {
     lines.push('.shop-theme-shop2 {');
     const shop2 = flattenTokens(tokens.semantic.shop2, tokens);
     if (shop2['primary']) lines.push(`  --primary-color: ${shop2['primary']};`);
+    if (shop2['text-strong']) lines.push(`  --primary-text-strong: ${shop2['text-strong']};`);
+    if (shop2['on-primary']) lines.push(`  --on-primary-color: ${shop2['on-primary']};`);
     if (shop2['glow']) lines.push(`  --primary-glow: ${shop2['glow']};`);
     lines.push('}');
     lines.push('');

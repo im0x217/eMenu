@@ -86,10 +86,10 @@
                 <div v-else class="dropzone-preview" @click.stop>
                   <img :src="newCarouselItem.filePreview" alt="Preview" style="max-height: 160px; width: 100%; object-fit: contain; border-radius: 8px; margin-bottom: 8px;" />
                   <span class="file-name">{{ newCarouselItem.file ? newCarouselItem.file.name : 'البنر الحالي (تغيير الصورة)' }}</span>
-                  <span v-if="newCarouselItem.dimensions" class="file-dimensions block text-muted text-small mt-1" style="font-size: 0.75rem; color: #868e96; font-weight: 500;">
+                  <span v-if="newCarouselItem.dimensions" class="file-dimensions block text-muted text-small mt-1" style="font-size: 0.75rem; color: #526072; font-weight: 600;">
                     المقاسات: {{ newCarouselItem.dimensions }}
                   </span>
-                  <button type="button" @click="clearCarouselFile" class="btn btn-outline btn-xs mt-2" style="color: #fa5252; border-color: #ffc9c9;">إزالة الصورة</button>
+                  <button type="button" @click="clearCarouselFile" class="btn btn-outline btn-xs mt-2" style="color: #b91c1c; border-color: #fca5a5; min-height: 44px;">إزالة الصورة</button>
                 </div>
               </div>
             </div>
@@ -172,6 +172,7 @@
 <script>
 import { ref, reactive, nextTick, onBeforeUnmount } from 'vue';
 import { useToastStore } from '../stores/toast';
+import { useConfirmStore } from '../stores/confirm';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 
@@ -188,6 +189,7 @@ export default {
   emits: ['update:modalOpen', 'update:cropperOpen', 'refresh', 'zoom'],
   setup(props, { emit }) {
     const toast = useToastStore();
+    const confirmStore = useConfirmStore();
     const saving = ref(false);
     const editingCarouselId = ref(null);
     const carouselDragActive = ref(false);
@@ -380,7 +382,13 @@ export default {
     };
 
     const deleteCarouselItem = async (itemId) => {
-      if (!confirm('هل أنت متأكد من رغبتك في حذف هذا البنر الإعلاني؟')) return;
+      const ok = await confirmStore.ask({
+        title: 'حذف البنر الإعلاني',
+        message: 'هل أنت متأكد من رغبتك في حذف هذا البنر الإعلاني؟',
+        confirmText: 'حذف البنر',
+        variant: 'danger'
+      });
+      if (!ok) return;
       try {
         const res = await props.adminFetch(`/api/admin/marketing-carousel/${itemId}`, { method: 'DELETE' });
         if (res.ok) {
@@ -472,7 +480,7 @@ export default {
 
 .card-date {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #475569;
 }
 
 .image-dropzone {
@@ -503,7 +511,7 @@ export default {
   flex-direction: column;
   align-items: center;
   font-size: 0.85rem;
-  color: #64748b;
+  color: #475569;
 }
 
 .dropzone-preview {
@@ -554,9 +562,9 @@ export default {
 .premium-close-btn {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  color: #64748b;
-  width: 40px;
-  height: 40px;
+  color: #475569;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -590,7 +598,7 @@ export default {
 }
 
 .toolbar-label {
-  color: #94a3b8;
+  color: #e2e8f0;
   font-size: 0.88rem;
   font-weight: 600;
   background: #334155;
@@ -640,5 +648,14 @@ export default {
   justify-content: flex-end;
   gap: 16px;
   border-top: 1px solid #e2e8f0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-dropzone,
+  .tool-btn,
+  .carousel-admin-card {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 </style>

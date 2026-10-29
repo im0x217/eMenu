@@ -124,6 +124,7 @@ const handleNavigateToCart = () => {
   bottom: calc(64px + var(--safe-bottom)); /* Float just above BottomNav */
   left: max(0.75rem, env(safe-area-inset-left, 0px));
   right: max(0.75rem, env(safe-area-inset-right, 0px));
+  min-height: 48px;
   padding: 0.65rem 1rem;
   border-radius: 18px;
   display: flex;
@@ -188,7 +189,7 @@ const handleNavigateToCart = () => {
 
 .cart-icon-group {
   position: relative;
-  color: var(--primary-color);
+  color: var(--primary-text-strong, #92400e);
   display: flex;
   align-items: center;
 }
@@ -197,7 +198,7 @@ const handleNavigateToCart = () => {
   position: absolute;
   top: -8px;
   right: -9px;
-  background: #e63946;
+  background: #dc2626;
   color: #fff;
   border-radius: 999px;
   font-size: 0.65rem;
@@ -230,14 +231,22 @@ const handleNavigateToCart = () => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .item-count-badge.badge-bounce {
+  .item-count-badge.badge-bounce,
+  .floating-cart-bar.is-shimmering .cart-bar-specular-sweep {
     animation: none !important;
+  }
+  .slide-up-enter-active,
+  .slide-up-leave-active,
+  .floating-cart-bar,
+  .action-arrow-svg {
+    transition: none !important;
   }
 }
 
 .price-info {
   font-weight: 800;
   font-size: 1.06rem;
+  color: #2c2520;
   display: flex;
   align-items: baseline;
 }
@@ -254,7 +263,7 @@ const handleNavigateToCart = () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--primary-color);
+  color: var(--primary-text-strong, #92400e);
   font-weight: 800;
   font-size: 0.95rem;
 }

@@ -677,6 +677,7 @@ const handleCardPointerLeave = () => {
 }
 
 .product-tag-chip {
+  position: relative;
   direction: rtl;
   display: inline-flex;
   align-items: center;
@@ -689,10 +690,19 @@ const handleCardPointerLeave = () => {
   line-height: 1.25;
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(217, 119, 6, 0.22);
-  color: #b45309;
+  color: #92400e;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
   user-select: none;
+}
+
+.product-tag-chip::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  left: 0;
+  right: 0;
 }
 
 .product-tag-chip:hover {
@@ -845,7 +855,7 @@ const handleCardPointerLeave = () => {
 .regular-price-item .price-curr {
   font-size: 0.74rem;
   font-weight: 700;
-  color: #78716c;
+  color: #685f58;
 }
 
 /* Secondary muted state when wholesale mode is active */
@@ -884,7 +894,7 @@ const handleCardPointerLeave = () => {
   font-weight: 800;
   padding: 1px 4px;
   border-radius: 4px;
-  background: #059669;
+  background: #047857;
   color: #ffffff;
   line-height: 1.2;
 }
@@ -900,7 +910,7 @@ const handleCardPointerLeave = () => {
 .bulk-price-item .price-curr {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #059669;
+  color: #047857;
 }
 
 /* Dark Mode Harmonization */
@@ -1023,14 +1033,14 @@ const handleCardPointerLeave = () => {
 
 .add-btn-wide {
   width: 100%;
-  min-height: 42px;
+  min-height: 46px;
   padding: 8px 12px;
   border-radius: 12px;
   background: var(--primary-color, #d97706);
-  color: #ffffff;
+  color: #0c0603;
   border: none;
   font-family: 'Cairo', sans-serif;
-  font-weight: 800;
+  font-weight: 850;
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -1042,18 +1052,17 @@ const handleCardPointerLeave = () => {
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Shop 1 Theme: Warm Gold/Amber gradient with white text */
+/* Shop 1 Theme: Warm Gold/Amber gradient with high-contrast dark espresso text (9.4:1 WCAG AA) */
 .shop-theme-shop1 .add-btn-wide {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  color: #0c0603;
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
 }
 
 .shop-theme-shop1 .add-btn-wide:hover {
   transform: translateY(-1px);
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #ffffff;
+  color: #0c0603;
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.55);
 }
 
@@ -1097,7 +1106,7 @@ const handleCardPointerLeave = () => {
     padding: 8px 12px;
     font-size: 0.82rem;
     border-radius: 11px;
-    min-height: 44px;
+    min-height: 46px;
   }
   .card-stepper-control {
     border-radius: 10px;
@@ -1110,6 +1119,18 @@ const handleCardPointerLeave = () => {
   }
   .card-stepper-val {
     font-size: 0.88rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card,
+  .product-img,
+  .product-tag-chip,
+  .add-btn-wide,
+  .card-stepper-btn,
+  .heart-burst-ring {
+    animation: none !important;
+    transition: none !important;
   }
 }
 </style>

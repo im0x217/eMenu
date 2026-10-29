@@ -6,7 +6,10 @@
 export const tokens = {
   "global": {
     "color-gold": "#fdb518",
+    "color-gold-text": "#92400e",
+    "color-espresso": "#0c0603",
     "color-blue": "#1e3a5f",
+    "color-danger-badge": "#dc2626",
     "color-slate-600": "#475569",
     "color-slate-700": "#334155",
     "color-slate-800": "#1e293b",
@@ -15,7 +18,7 @@ export const tokens = {
     "color-warm-bg": "#f7f3ec",
     "color-warm-card": "#fffdf9",
     "color-warm-text": "#2c2520",
-    "color-warm-muted": "#8a8078",
+    "color-warm-muted": "#685f58",
     "spacing-xs": "4px",
     "spacing-sm": "8px",
     "spacing-md": "16px",
@@ -56,10 +59,14 @@ export const tokens = {
   "semantic": {
     "shop1": {
       "primary": "#fdb518",
+      "text-strong": "#92400e",
+      "on-primary": "#0c0603",
       "glow": "rgba(253, 181, 24, 0.15)"
     },
     "shop2": {
       "primary": "#1e3a5f",
+      "text-strong": "#1e3a5f",
+      "on-primary": "#ffffff",
       "glow": "rgba(30, 58, 95, 0.15)"
     }
   }

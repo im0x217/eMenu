@@ -31,12 +31,14 @@ html, body, button, input, select, textarea {
 :root {
   --primary-color: #fdb518; /* Shop1 Gold */
   --primary-color-rgb: 253, 181, 24;
+  --primary-text-strong: #92400e;
+  --on-primary-color: #0c0603;
   --primary-glow: rgba(253, 181, 24, 0.15);
   
   --bg-dark: #f7f3ec;
   --bg-card: #fffdf9;
   --border-card: rgba(44, 37, 32, 0.06);
-  --text-muted: #8a8078;
+  --text-muted: #685f58;
   
   /* Spacing tokens */
   --space-xs: 4px;
@@ -83,12 +85,16 @@ html, body, button, input, select, textarea {
 .shop-theme-shop1 {
   --primary-color: #fdb518; /* Gold */
   --primary-color-rgb: 253, 181, 24;
+  --primary-text-strong: #92400e;
+  --on-primary-color: #0c0603;
   --primary-glow: rgba(253, 181, 24, 0.15);
 }
 
 .shop-theme-shop2 {
   --primary-color: #1e3a5f; /* Deep Blue */
   --primary-color-rgb: 30, 58, 95;
+  --primary-text-strong: #1e3a5f;
+  --on-primary-color: #ffffff;
   --primary-glow: rgba(30, 58, 95, 0.15);
 }
 
@@ -397,8 +403,8 @@ body.modal-open .app-container {
   position: absolute;
   top: -4px;
   right: -4px;
-  background-color: #e63946;
-  color: white;
+  background-color: #dc2626;
+  color: #ffffff;
   border-radius: 50%;
   font-size: 0.75rem;
   min-width: 18px;
@@ -829,9 +835,9 @@ button:active:not(:disabled),
 .suggestion-no-results {
   padding: 18px 12px;
   text-align: center;
-  color: #94a3b8;
+  color: #5b6b7f;
   font-size: 0.84rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ==========================================================================

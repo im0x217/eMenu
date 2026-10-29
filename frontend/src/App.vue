@@ -5,6 +5,7 @@ import BottomNav from './components/BottomNav.vue';
 import BottomCartBar from './components/BottomCartBar.vue';
 import Toast from './components/Toast.vue';
 import SetPasswordModal from './components/SetPasswordModal.vue';
+import ConfirmDialogModal from './components/ConfirmDialogModal.vue';
 import { useFavoritesStore } from './stores/favorites';
 import { useAuthStore } from './stores/auth';
 
@@ -54,6 +55,9 @@ onMounted(() => {
 
     <!-- Global Modern Set Password Popup Alert Modal -->
     <SetPasswordModal v-if="showCustomerNav" />
+
+    <!-- Global Accessible RTL Confirmation Dialog Modal -->
+    <ConfirmDialogModal />
   </div>
 </template>
 
