@@ -2686,10 +2686,10 @@ app.get("/api/admin/telemetry/insights", checkMongoDB, checkAdmin, async (req, r
 
 // ============ ADMIN ORDERS & CUSTOMERS APIs ============
 
-// Get all orders for the admin panel
+// Get all orders for the admin panel (returns complete order history by default)
 app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
-  const status = req.query.status;
+  const { status, deliveryDate, phone, limit: limitParam } = req.query;
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
 
   try {
@@ -2697,9 +2697,19 @@ app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
     if (status) {
       query.status = status;
     }
-    const limitParam = req.query.limit;
-    const limit = limitParam ? Math.min(Number(limitParam) || 1000, 5000) : 1000;
-    const orders = await ordColl.find(query).sort({ createdAt: -1 }).limit(limit).toArray();
+    if (deliveryDate && typeof deliveryDate === "string") {
+      query.deliveryDate = deliveryDate.trim().slice(0, 10);
+    }
+    if (phone && typeof phone === "string") {
+      query["customerInfo.phone"] = { $in: getLibyanPhoneVariants(phone) };
+    }
+
+    let cursor = ordColl.find(query).sort({ createdAt: -1 });
+    const parsedLimit = Number(limitParam);
+    if (limitParam && Number.isFinite(parsedLimit) && parsedLimit > 0) {
+      cursor = cursor.limit(parsedLimit);
+    }
+    const orders = await cursor.toArray();
     res.json(orders);
   } catch (err) {
     console.error("Fetch admin orders error:", err);
@@ -3603,11 +3613,12 @@ app.get("/api/admin/inventory/reservations", checkMongoDB, checkAdmin, async (re
       query.orderNumber = Number(req.query.orderNumber);
     }
 
-    const limit = Math.min(Number(req.query.limit) || 100, 500);
-    const reservations = await stockReservationsCollection.find(query)
-      .sort({ reservedAt: -1, createdAt: -1 })
-      .limit(limit)
-      .toArray();
+    let cursor = stockReservationsCollection.find(query).sort({ reservedAt: -1, createdAt: -1 });
+    const parsedLimit = Number(req.query.limit);
+    if (req.query.limit && Number.isFinite(parsedLimit) && parsedLimit > 0) {
+      cursor = cursor.limit(parsedLimit);
+    }
+    const reservations = await cursor.toArray();
 
     res.json({ success: true, reservations });
   } catch (err) {
@@ -3950,7 +3961,7 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
     const recentPayments = await paymentsCollection.find({
       customerPhone: { $in: phoneVariants },
       shop
-    }).sort({ createdAt: -1 }).limit(20).toArray();
+    }).sort({ createdAt: -1 }).toArray();
 
     res.json({
       totalOwed,
@@ -4185,12 +4196,18 @@ app.post("/api/admin/migrate-unpaid-orders", checkMongoDB, checkAdmin, async (re
 app.get("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
   const { phone, shop: reqShop, limit: reqLimit } = req.query;
   const shop = reqShop === "shop2" ? "shop2" : "shop1";
-  const limit = Math.min(Number(reqLimit) || 50, 200);
 
   try {
     const query = { shop };
-    if (phone) query.customerPhone = phone;
-    const payments = await paymentsCollection.find(query).sort({ createdAt: -1 }).limit(limit).toArray();
+    if (phone && typeof phone === "string") {
+      query.customerPhone = { $in: getLibyanPhoneVariants(phone) };
+    }
+    let cursor = paymentsCollection.find(query).sort({ createdAt: -1 });
+    const parsedLimit = Number(reqLimit);
+    if (reqLimit && Number.isFinite(parsedLimit) && parsedLimit > 0) {
+      cursor = cursor.limit(parsedLimit);
+    }
+    const payments = await cursor.toArray();
     res.json(payments);
   } catch (err) {
     console.error("Fetch payments error:", err);
@@ -4964,9 +4981,16 @@ app.get("/api/customer/orders", checkMongoDB, customerLimiter, checkCustomerAuth
     
     const phoneVariants = getLibyanPhoneVariants(phone);
     
-    // Query both databases/collections with limits matching any phone variant
-    const orders1 = await ordersCollection.find({ "customerInfo.phone": { $in: phoneVariants } }).sort({ createdAt: -1 }).limit(50).toArray();
-    const orders2 = await ordersCollection2.find({ "customerInfo.phone": { $in: phoneVariants } }).sort({ createdAt: -1 }).limit(50).toArray();
+    // Query both databases/collections matching any phone variant (full history by default)
+    const parsedLimit = Number(req.query.limit);
+    const hasCustomLimit = req.query.limit && Number.isFinite(parsedLimit) && parsedLimit > 0;
+    let cursor1 = ordersCollection.find({ "customerInfo.phone": { $in: phoneVariants } }).sort({ createdAt: -1 });
+    let cursor2 = ordersCollection2.find({ "customerInfo.phone": { $in: phoneVariants } }).sort({ createdAt: -1 });
+    if (hasCustomLimit) {
+      cursor1 = cursor1.limit(parsedLimit);
+      cursor2 = cursor2.limit(parsedLimit);
+    }
+    const [orders1, orders2] = await Promise.all([cursor1.toArray(), cursor2.toArray()]);
     
     // Add shop tags
     const taggedOrders1 = orders1.map(o => ({ ...o, shop: 'shop1' }));
@@ -6034,123 +6058,125 @@ const ensureLocalBackupDir = () => {
   }
 };
 
+// Reusable full database backup helper (writes JSON to LOCAL_BACKUP_DIR and metadata to MongoDB)
+const performFullDatabaseBackup = async (customLabel = "") => {
+  const [
+    products, categories, tags, orders, customers, favorites,
+    payments, counters, chefs, carousel, adminUsers,
+    products2, categories2, tags2, orders2, chefs2, stockReservations2
+  ] = await Promise.all([
+    productsCollection.find({}).toArray(),
+    categoriesCollection.find({}).toArray(),
+    tagsCollection.find({}).toArray(),
+    ordersCollection.find({}).toArray(),
+    customersCollection.find({}).toArray(),
+    favoritesCollection.find({}).toArray(),
+    paymentsCollection.find({}).toArray(),
+    countersCollection.find({}).toArray(),
+    chefsCollection.find({}).toArray(),
+    carouselCollection.find({}).toArray(),
+    adminUsersCollection.find({}).toArray(),
+    productsCollection2.find({}).toArray(),
+    categoriesCollection2.find({}).toArray(),
+    tagsCollection2.find({}).toArray(),
+    ordersCollection2.find({}).toArray(),
+    chefsCollection2.find({}).toArray(),
+    stockReservationsCollection.find({}).toArray()
+  ]);
+
+  const backupId = new ObjectId();
+  const now = new Date();
+  const fileName = formatBackupFileName(now, backupId.toString());
+  const filePath = path.join(LOCAL_BACKUP_DIR, fileName);
+
+  const backupDoc = {
+    _id: backupId,
+    createdAt: now,
+    label: customLabel || `نسخة احتياطية - ${now.toLocaleString('ar-LY')}`,
+    fileName,
+    filePath,
+    collections: {
+      "emenu.products": products,
+      "emenu.categories": categories,
+      "emenu.tags": tags,
+      "emenu.orders": orders,
+      "emenu.customers": customers,
+      "emenu.favorites": favorites,
+      "emenu.payments": payments,
+      "emenu.counters": counters,
+      "emenu.chefs": chefs,
+      "emenu.marketing_carousel": carousel,
+      "emenu.admin_users": adminUsers,
+      "emenu2.products": products2,
+      "emenu2.categories": categories2,
+      "emenu2.tags": tags2,
+      "emenu2.orders": orders2,
+      "emenu2.chefs": chefs2,
+      "emenu2.stock_reservations": stockReservations2
+    },
+    stats: {
+      "emenu.products": products.length,
+      "emenu.categories": categories.length,
+      "emenu.tags": tags.length,
+      "emenu.orders": orders.length,
+      "emenu.customers": customers.length,
+      "emenu.favorites": favorites.length,
+      "emenu.payments": payments.length,
+      "emenu.counters": counters.length,
+      "emenu.chefs": chefs.length,
+      "emenu.marketing_carousel": carousel.length,
+      "emenu.admin_users": adminUsers.length,
+      "emenu2.products": products2.length,
+      "emenu2.categories": categories2.length,
+      "emenu2.tags": tags2.length,
+      "emenu2.orders": orders2.length,
+      "emenu2.chefs": chefs2.length,
+      "emenu2.stock_reservations": stockReservations2.length
+    }
+  };
+
+  let savedToDisk = false;
+  if (ensureLocalBackupDir()) {
+    try {
+      await fs.promises.writeFile(filePath, JSON.stringify(backupDoc, null, 2), "utf8");
+      savedToDisk = true;
+      console.log(`[BACKUP] Saved JSON backup to disk: ${filePath}`);
+    } catch (diskErr) {
+      console.error("[BACKUP] Failed writing JSON to disk:", diskErr.message);
+    }
+  }
+
+  const { collections, ...metaOnlyDoc } = backupDoc;
+  if (savedToDisk) {
+    await backupsCollection.insertOne(metaOnlyDoc);
+  } else {
+    try {
+      await backupsCollection.insertOne(backupDoc);
+    } catch (dbErr) {
+      console.warn("[BACKUP] Full document insert failed, storing metadata-only in MongoDB:", dbErr.message);
+      await backupsCollection.insertOne(metaOnlyDoc);
+    }
+  }
+
+  console.log(`[BACKUP] Backup created successfully: ${backupId}`);
+  return { backupId, fileName, filePath: savedToDisk ? filePath : null, savedToDisk, stats: backupDoc.stats };
+};
+
 // Create a full backup of all collections and save JSON to C:\Users\<user>\Documents\EmenuBackup
 app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const { label } = req.body;
     console.log("[BACKUP] Creating full database backup...");
-
-    // Dump all collections from both databases
-    const [
-      products, categories, tags, orders, customers, favorites,
-      payments, counters, chefs, carousel, adminUsers,
-      products2, categories2, tags2, orders2, chefs2, stockReservations2
-    ] = await Promise.all([
-      productsCollection.find({}).toArray(),
-      categoriesCollection.find({}).toArray(),
-      tagsCollection.find({}).toArray(),
-      ordersCollection.find({}).toArray(),
-      customersCollection.find({}).toArray(),
-      favoritesCollection.find({}).toArray(),
-      paymentsCollection.find({}).toArray(),
-      countersCollection.find({}).toArray(),
-      chefsCollection.find({}).toArray(),
-      carouselCollection.find({}).toArray(),
-      adminUsersCollection.find({}).toArray(),
-      productsCollection2.find({}).toArray(),
-      categoriesCollection2.find({}).toArray(),
-      tagsCollection2.find({}).toArray(),
-      ordersCollection2.find({}).toArray(),
-      chefsCollection2.find({}).toArray(),
-      stockReservationsCollection.find({}).toArray()
-    ]);
-
-    const backupId = new ObjectId();
-    const now = new Date();
-    const fileName = formatBackupFileName(now, backupId.toString());
-    const filePath = path.join(LOCAL_BACKUP_DIR, fileName);
-
-    const backupDoc = {
-      _id: backupId,
-      createdAt: now,
-      label: label || `نسخة احتياطية - ${now.toLocaleString('ar-LY')}`,
-      fileName,
-      filePath,
-      collections: {
-        "emenu.products": products,
-        "emenu.categories": categories,
-        "emenu.tags": tags,
-        "emenu.orders": orders,
-        "emenu.customers": customers,
-        "emenu.favorites": favorites,
-        "emenu.payments": payments,
-        "emenu.counters": counters,
-        "emenu.chefs": chefs,
-        "emenu.marketing_carousel": carousel,
-        "emenu.admin_users": adminUsers,
-        "emenu2.products": products2,
-        "emenu2.categories": categories2,
-        "emenu2.tags": tags2,
-        "emenu2.orders": orders2,
-        "emenu2.chefs": chefs2,
-        "emenu2.stock_reservations": stockReservations2
-      },
-      stats: {
-        "emenu.products": products.length,
-        "emenu.categories": categories.length,
-        "emenu.tags": tags.length,
-        "emenu.orders": orders.length,
-        "emenu.customers": customers.length,
-        "emenu.favorites": favorites.length,
-        "emenu.payments": payments.length,
-        "emenu.counters": counters.length,
-        "emenu.chefs": chefs.length,
-        "emenu.marketing_carousel": carousel.length,
-        "emenu.admin_users": adminUsers.length,
-        "emenu2.products": products2.length,
-        "emenu2.categories": categories2.length,
-        "emenu2.tags": tags2.length,
-        "emenu2.orders": orders2.length,
-        "emenu2.chefs": chefs2.length,
-        "emenu2.stock_reservations": stockReservations2.length
-      }
-    };
-
-    // 1. Save JSON directly to C:\Users\<user>\Documents\EmenuBackup
-    let savedToDisk = false;
-    if (ensureLocalBackupDir()) {
-      try {
-        await fs.promises.writeFile(filePath, JSON.stringify(backupDoc, null, 2), "utf8");
-        savedToDisk = true;
-        console.log(`[BACKUP] Saved JSON backup to disk: ${filePath}`);
-      } catch (diskErr) {
-        console.error("[BACKUP] Failed writing JSON to disk:", diskErr.message);
-      }
-    }
-
-    // 2. Store lightweight metadata + stats in MongoDB when full JSON is saved on disk (keeps Atlas lean)
-    const { collections, ...metaOnlyDoc } = backupDoc;
-    if (savedToDisk) {
-      await backupsCollection.insertOne(metaOnlyDoc);
-    } else {
-      try {
-        await backupsCollection.insertOne(backupDoc);
-      } catch (dbErr) {
-        console.warn("[BACKUP] Full document insert failed, storing metadata-only in MongoDB:", dbErr.message);
-        await backupsCollection.insertOne(metaOnlyDoc);
-      }
-    }
-
-    console.log(`[BACKUP] Backup created successfully: ${backupId}`);
+    const result = await performFullDatabaseBackup(label);
 
     res.json({
       success: true,
       message: "تم إنشاء وحفظ النسخة الاحتياطية بنجاح",
-      backupId,
-      fileName,
-      filePath: savedToDisk ? filePath : null,
+      backupId: result.backupId,
+      fileName: result.fileName,
+      filePath: result.filePath,
       backupDir: LOCAL_BACKUP_DIR,
-      stats: backupDoc.stats
+      stats: result.stats
     });
   } catch (err) {
     console.error("Backup creation error:", err);
@@ -6263,6 +6289,16 @@ app.post("/api/admin/reset/orders", checkMongoDB, checkAdmin, async (req, res) =
 
     if (confirm !== "RESET_ALL_ORDERS") {
       return res.status(400).json({ success: false, error: "رمز التأكيد غير صحيح" });
+    }
+
+    // Mandatory pre-reset safety backup to prevent any accidental data loss
+    console.log("[RESET] Creating mandatory pre-reset safety backup before deleting orders...");
+    const preResetBackup = await performFullDatabaseBackup(`نسخة أمان تلقائية قبل تصفير الطلبات - ${new Date().toLocaleString('ar-LY')}`);
+    if (!preResetBackup || !preResetBackup.savedToDisk) {
+      return res.status(500).json({
+        success: false,
+        error: "تم إيقاف عملية المسح تلقائياً لعدم إمكانية حفظ نسخة الأمان الاحتياطية على القرص"
+      });
     }
 
     console.log("[RESET] Starting orders/payments reset...");
