@@ -15318,7 +15318,10 @@ const closeSuggestionsWithDelay = () => {
   margin-bottom: 24px;
 }
 
-@media (max-width: 1200px) {
+/* Six KPI columns need ~200px per card to fit "1,104,019 د.ل" next to its icon.
+   With the ~280px sidebar that only holds from ~1600px viewports; below that,
+   switch to 3 columns so large currency values never clip (mobile keeps its 2-col rule). */
+@media (max-width: 1599px) {
   .kpi-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

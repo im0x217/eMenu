@@ -12,6 +12,7 @@ import { bindSheetGesture } from '../utils/sheetGesture';
 import { normalizeImageUrl, isImageCached, markImageLoaded } from '../utils/imageCache';
 import { telemetry } from '../utils/telemetry';
 import { lockBodyScroll, unlockBodyScroll, trapTabKey, restoreElementFocus } from '../utils/modalA11y';
+import { isProductMorphing, PRODUCT_HERO_VT_NAME } from '../utils/viewTransition';
 
 const props = defineProps({
   product: {
@@ -55,11 +56,19 @@ const resolvedImageUrl = computed(() => {
   return '/res/logo.jpg';
 });
 
-const handleClose = () => {
+const handleClose = (via = 'button') => {
   triggerHaptic('light');
   isFullscreenZoom.value = false;
-  emit('close');
+  // `via: 'gesture'` tells the parent the sheet already left the screen under the finger,
+  // so it must not run the shared-element morph back into the card.
+  // (Template bindings like @click="handleClose" pass a DOM Event, so normalize non-strings.)
+  emit('close', { via: typeof via === 'string' ? via : 'button' });
 };
+
+// Shared-element morph: only the hero carries the transition name, and only while morphing.
+const heroMorphStyle = computed(() => (
+  isProductMorphing.value ? { viewTransitionName: PRODUCT_HERO_VT_NAME } : null
+));
 
 const toggleFullscreenZoom = () => {
   triggerHaptic('light');
@@ -97,7 +106,7 @@ watch(isOpen, (open) => {
       if (sheetRef.value) {
         if (cleanupGesture) cleanupGesture();
         cleanupGesture = bindSheetGesture(sheetRef.value, () => {
-          handleClose();
+          handleClose('gesture');
         });
       }
       if (closeBtnRef.value) {
@@ -259,7 +268,7 @@ const handleTagClick = (tagName) => {
 
 <template>
   <Teleport to="body">
-    <Transition name="qv-modal-fade">
+    <Transition name="qv-modal-fade" :css="!isProductMorphing">
       <div
         v-if="isOpen"
         ref="backdropRef"
@@ -325,6 +334,7 @@ const handleTagClick = (tagName) => {
               :alt="product.name"
               class="qv-hero-img"
               :class="{ loaded: isImgLoaded }"
+              :style="heroMorphStyle"
               fetchpriority="high"
               loading="eager"
               decoding="async"

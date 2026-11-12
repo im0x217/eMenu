@@ -30,6 +30,12 @@ const props = defineProps({
 
 const emit = defineEmits(['zoom', 'select-tag']);
 
+// Opens the Quick View. The card image element is passed along so the parent can morph
+// the photo from this exact card into the sheet hero (shared-element view transition).
+const openDetails = () => {
+  emit('zoom', getImageUrl(), props.product, imgRef.value);
+};
+
 const shopStore = useShopStore();
 const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
@@ -330,9 +336,9 @@ const handleCardPointerLeave = () => {
       role="button"
       tabindex="0"
       :aria-label="'عرض تفاصيل وصورة ' + product.name"
-      @click="emit('zoom', getImageUrl(), product)"
-      @keydown.enter="emit('zoom', getImageUrl(), product)"
-      @keydown.space.prevent="emit('zoom', getImageUrl(), product)"
+      @click="openDetails"
+      @keydown.enter="openDetails"
+      @keydown.space.prevent="openDetails"
     >
       <!-- Pulsing Glass Shimmer Placeholder (Fades out smoothly when image loads) -->
       <div class="img-skeleton-shimmer" :class="{ 'hidden-skeleton': isLoaded }">
@@ -358,7 +364,7 @@ const handleCardPointerLeave = () => {
 
     <!-- Product Details Content -->
     <div class="product-info">
-      <div class="info-body" @click="emit('zoom', getImageUrl(), product)" style="cursor: pointer;">
+      <div class="info-body" @click="openDetails" style="cursor: pointer;">
         <h3 class="product-title" :title="product.name">{{ product.name }}</h3>
         <p class="product-desc" v-if="product.desc">{{ product.desc }}</p>
 

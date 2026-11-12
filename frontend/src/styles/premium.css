@@ -1,0 +1,140 @@
+/* ==========================================================================
+   PREMIUM INTERACTION LAYER (Storefront + Admin)
+   --------------------------------------------------------------------------
+   Additive, low-specificity refinements loaded after style.css. Everything
+   here either (a) only activates during a View Transition, (b) uses :where()
+   so any existing component rule still wins, or (c) is an accessibility
+   fallback. No existing component design is overridden.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shared-element morph: product card photo <-> Quick View hero
+   -------------------------------------------------------------------------- */
+:root {
+  /* iOS sheet curve: fast departure, long soft settle (critically damped feel). */
+  --vt-ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --vt-morph-duration: 420ms;
+  --vt-fade-duration: 260ms;
+}
+
+/* Page cross-fade while the hero morphs (backdrop + sheet body dissolve in). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--vt-fade-duration);
+  animation-timing-function: var(--vt-ease-emphasized);
+}
+
+::view-transition-group(product-hero) {
+  animation-duration: var(--vt-morph-duration);
+  animation-timing-function: var(--vt-ease-emphasized);
+  /* Clip the snapshot so rounded card corners morph into the sheet's hero edge. */
+  border-radius: 18px;
+  overflow: clip;
+  z-index: 10;
+}
+
+/* Card (4:3-ish) and hero (4:3) crop differently: cover the group instead of stretching. */
+::view-transition-old(product-hero),
+::view-transition-new(product-hero) {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  animation-duration: var(--vt-morph-duration);
+  animation-timing-function: var(--vt-ease-emphasized);
+}
+
+/* Freeze competing CSS motion so snapshots capture true final geometry:
+   the background "depth recession" (body.modal-open .app-container) would otherwise
+   still be mid-transition when the new snapshot is taken. */
+.vt-product-morph .app-container,
+.vt-product-morph .bottom-nav,
+.vt-product-morph .bottom-nav-bar,
+.vt-product-morph .floating-cart-bar,
+.vt-product-morph .qv-hero-img {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Brand-tinted selection, native controls & focus (both apps)
+   -------------------------------------------------------------------------- */
+::selection {
+  background: rgba(var(--primary-color-rgb, 253, 181, 24), 0.24);
+  color: inherit;
+}
+
+:root {
+  /* Native checkboxes, radios, range sliders and progress adopt the active shop color. */
+  accent-color: var(--primary-color, #fdb518);
+}
+
+/* Zero-specificity fallback ring: only applies where a component defines no :focus-visible of its own. */
+:where(button, a[href], [role="button"], [tabindex]:not([tabindex="-1"]), summary):focus-visible {
+  outline: 2px solid var(--primary-color, #fdb518);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Typography craft
+   -------------------------------------------------------------------------- */
+/* Arabic is a connected script: letter-spacing breaks glyph joining and kashida.
+   Keep tracking neutral for Arabic headings (Latin/numeric runs keep their own rules). */
+:where(:lang(ar)) :is(h1, h2, h3, .display-title, .modal-title) {
+  letter-spacing: normal;
+}
+
+/* Balanced headings and orphan-free paragraphs (progressive; ignored by older engines). */
+:where(h1, h2, h3, h4, .modal-title) {
+  text-wrap: balance;
+}
+
+:where(p, .product-desc, .qv-desc) {
+  text-wrap: pretty;
+}
+
+/* Figures that change in place (prices, totals, KPIs, table cells) must not jitter in width. */
+:where(.price-figure, .kpi-value, .admin-table td, .debt-kpi-val, .recon-kpi-value) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   4. Scrollbars: intentionally NOT set globally. In Chromium ≥121, any
+   `scrollbar-width`/`scrollbar-color` disables `::-webkit-scrollbar` styling,
+   which would erase the admin's existing custom scrollbar design.
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   5. Accessibility fallbacks for translucent surfaces (Apple Design §14)
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-transparency: reduce) {
+  .qv-sheet-card,
+  .qv-overlay-btn,
+  .qv-expand-img-pill,
+  .admin-sidebar,
+  .admin-mobile-header,
+  .modal-box,
+  .cmdk-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .qv-sheet-card,
+  .modal-box,
+  .kpi-card,
+  .chart-card {
+    border: 1.5px solid #2c2520 !important;
+  }
+
+  :where(button, a[href], [role="button"]):focus-visible {
+    outline-width: 3px;
+  }
+}

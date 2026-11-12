@@ -9,6 +9,7 @@ import { triggerHaptic } from '../utils/haptics';
 import { bindSheetGesture } from '../utils/sheetGesture';
 import { isImageCached, warmImageUrls } from '../utils/imageCache';
 import { telemetry } from '../utils/telemetry';
+import { createQuickViewMorph } from '../utils/viewTransition';
 
 const shopStore = useShopStore();
 
@@ -347,16 +348,20 @@ const handleVerifyBulk = async () => {
 const zoomedImgUrl = ref('');
 const quickViewProduct = ref(null);
 const isZoomImgLoaded = ref(false);
+const qvMorph = createQuickViewMorph();
 
-const openZoomModal = (url, product = null) => {
+const openZoomModal = (url, product = null, sourceEl = null) => {
   if (dragMoved.value) {
     dragMoved.value = false;
     return;
   }
   triggerHaptic('light');
-  isZoomImgLoaded.value = isImageCached(url);
-  zoomedImgUrl.value = url;
-  quickViewProduct.value = product || null;
+  const cached = isImageCached(url);
+  qvMorph.open(product ? sourceEl : null, cached, () => {
+    isZoomImgLoaded.value = cached;
+    zoomedImgUrl.value = url;
+    quickViewProduct.value = product || null;
+  });
   if (product) {
     telemetry.track('product_quick_view', {
       productId: product._id,
@@ -366,11 +371,13 @@ const openZoomModal = (url, product = null) => {
   }
 };
 
-const closeZoomModal = () => {
+const closeZoomModal = (payload) => {
   triggerHaptic('light');
-  zoomedImgUrl.value = '';
-  quickViewProduct.value = null;
-  isZoomImgLoaded.value = false;
+  qvMorph.close(payload, () => {
+    zoomedImgUrl.value = '';
+    quickViewProduct.value = null;
+    isZoomImgLoaded.value = false;
+  });
 };
 
 const handleFilterTagFromQuickView = (tagName) => {
@@ -382,7 +389,9 @@ const handleKeydown = (e) => {
   if (e.key === 'Escape') {
     e.preventDefault();
     if (zoomedImgUrl.value) {
-      closeZoomModal();
+      // Escape for the Quick View / lightbox is owned by ProductQuickViewModal (it emits `close`);
+      // handling it here too would fire a second close mid-morph.
+      return;
     } else if (showDisableConfirm.value) {
       showDisableConfirm.value = false;
     } else if (showBulkModal.value) {

@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth';
 import ProductCard from '../components/ProductCard.vue';
 import ProductQuickViewModal from '../components/ProductQuickViewModal.vue';
 import { isImageCached, warmImageUrls } from '../utils/imageCache';
+import { createQuickViewMorph } from '../utils/viewTransition';
 
 const shopStore = useShopStore();
 const favoritesStore = useFavoritesStore();
@@ -38,17 +39,23 @@ watch(favoriteProducts, (prods) => {
 const zoomedImgUrl = ref('');
 const quickViewProduct = ref(null);
 const isZoomImgLoaded = ref(false);
+const qvMorph = createQuickViewMorph();
 
-const openZoomModal = (url, product = null) => {
-  isZoomImgLoaded.value = isImageCached(url);
-  zoomedImgUrl.value = url;
-  quickViewProduct.value = product || null;
+const openZoomModal = (url, product = null, sourceEl = null) => {
+  const cached = isImageCached(url);
+  qvMorph.open(product ? sourceEl : null, cached, () => {
+    isZoomImgLoaded.value = cached;
+    zoomedImgUrl.value = url;
+    quickViewProduct.value = product || null;
+  });
 };
 
-const closeZoomModal = () => {
-  zoomedImgUrl.value = '';
-  quickViewProduct.value = null;
-  isZoomImgLoaded.value = false;
+const closeZoomModal = (payload) => {
+  qvMorph.close(payload, () => {
+    zoomedImgUrl.value = '';
+    quickViewProduct.value = null;
+    isZoomImgLoaded.value = false;
+  });
 };
 </script>
 
