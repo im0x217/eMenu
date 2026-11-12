@@ -118,27 +118,27 @@
 
           <form @submit.prevent="saveUser" class="modal-form">
             <div class="form-group mb-3">
-              <label class="form-label">الاسم / اسم الحساب للدخول</label>
-              <input ref="nameInputRef" type="text" v-model="editingUser.name" class="form-input" placeholder="مثال: علي محمد…" required />
+              <label for="user-form-name" class="form-label">الاسم / اسم الحساب للدخول</label>
+              <input id="user-form-name" ref="nameInputRef" type="text" v-model="editingUser.name" class="form-input" aria-label="الاسم أو اسم الحساب للدخول" placeholder="مثال: علي محمد…" required />
             </div>
 
             <div class="form-group mb-3">
-              <label class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
-              <input type="password" v-model="editingUser.password" class="form-input" :placeholder="editingUser._id ? 'بدون تغيير إذا تُرك فارغاً…' : 'كلمة المرور…'" :required="!editingUser._id" />
+              <label for="user-form-password" class="form-label">{{ editingUser._id ? 'كلمة المرور الجديدة (اتركه فارغاً للإبقاء على الحالية)' : 'كلمة المرور' }}</label>
+              <input id="user-form-password" type="password" v-model="editingUser.password" class="form-input" aria-label="كلمة المرور" :placeholder="editingUser._id ? 'بدون تغيير إذا تُرك فارغاً…' : 'كلمة المرور…'" :required="!editingUser._id" />
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">الدور وصلاحيات الوصول</label>
-                <select v-model="editingUser.role" class="form-select user-form-select">
+                <label for="user-form-role" class="form-label">الدور وصلاحيات الوصول</label>
+                <select id="user-form-role" v-model="editingUser.role" class="form-select user-form-select" aria-label="الدور وصلاحيات الوصول">
                   <option value="order_manager">موظف إدارة الطلبات والإنتاج (Order & Production Manager - طلبات، عملاء، إنتاج)</option>
                   <option value="admin">مدير النظام (Admin - وصول كامل)</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label class="form-label">نطاق المتجر</label>
-                <select v-model="editingUser.shopAccess" class="form-select user-form-select">
+                <label for="user-form-shop-access" class="form-label">نطاق المتجر</label>
+                <select id="user-form-shop-access" v-model="editingUser.shopAccess" class="form-select user-form-select" aria-label="نطاق المتجر">
                   <option value="all">جميع المتاجر</option>
                   <option value="shop1">المتجر الرئيسي فقط</option>
                   <option value="shop2">قسم النواشف فقط</option>
@@ -244,11 +244,15 @@ export default {
           body: JSON.stringify(editingUser)
         });
         if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data && data.token) {
+            localStorage.setItem('admin_token', data.token);
+          }
           toast.show(isEdit ? 'تم تحديث بيانات المستخدم بنجاح' : 'تم إضافة المستخدم بنجاح', 'success');
           emit('update:modalOpen', false);
           emit('refresh');
         } else {
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}));
           toast.show(data.error || 'فشل حفظ بيانات المستخدم', 'danger');
         }
       } catch (e) {
@@ -272,7 +276,8 @@ export default {
           toast.show('تم حذف المستخدم بنجاح', 'success');
           emit('refresh');
         } else {
-          toast.show('فشل حذف المستخدم', 'danger');
+          const errData = await res.json().catch(() => ({}));
+          toast.show(errData.error || 'فشل حذف المستخدم', 'danger');
         }
       } catch (e) {
         toast.show('حدث خطأ بالاتصال بالخادم', 'danger');

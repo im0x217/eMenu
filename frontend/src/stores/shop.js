@@ -89,6 +89,9 @@ export const useShopStore = defineStore('shop', () => {
         if (data.success) {
           isBulkVerified.value = true;
           localStorage.setItem('bulk_verified', 'true');
+          if (data.bulkToken) {
+            localStorage.setItem('bulk_token', data.bulkToken);
+          }
           return true;
         }
       }

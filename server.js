@@ -15,12 +15,92 @@ const crypto = require("crypto");
 const LOCAL_BACKUP_DIR = process.env.BACKUP_DIR || path.join(os.homedir(), "Documents", "EmenuBackup");
 
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'emenu-admin-secret-key-2026';
+const STAFF_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// Deterministic session tokens derived from ADMIN_SESSION_SECRET via HMAC-SHA256.
-// These are stable across server restarts — a logged-in admin stays logged in
-// as long as ADMIN_SESSION_SECRET does not change (rotating the secret = force re-login).
-const SESSION_TOKEN_SHOP1 = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update('shop1-admin-token-v1').digest('hex');
-const SESSION_TOKEN_SHOP2 = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update('shop2-admin-token-v1').digest('hex');
+// Constant-time string & hex digest comparisons to prevent timing side-channel attacks
+function safeCompareStrings(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const hashA = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(a).digest();
+  const hashB = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
+function safeCompareHex(hexA, hexB) {
+  if (typeof hexA !== 'string' || typeof hexB !== 'string' || hexA.length !== hexB.length || hexA.length % 2 !== 0) {
+    return false;
+  }
+  try {
+    const bufA = Buffer.from(hexA, 'hex');
+    const bufB = Buffer.from(hexB, 'hex');
+    if (bufA.length !== bufB.length || bufA.length === 0) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
+
+// Normalize Arabic hamza/alef & spacing variants for forgiving username matching
+function normalizeArabicUsername(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .toLowerCase();
+}
+
+// Signed, revocable per-user staff session tokens (emu1.<base64urlPayload>.<hmacHex>)
+function generateStaffSessionToken(user) {
+  const now = Date.now();
+  const payloadObj = {
+    sub: String(user.id || user._id || 'env:admin'),
+    u: String(user.username || user.name || 'admin'),
+    name: String(user.name || user.username || 'المدير العام'),
+    role: user.role === 'order_manager' ? 'order_manager' : 'admin',
+    shopAccess: ['shop1', 'shop2', 'all'].includes(user.shopAccess) ? user.shopAccess : 'all',
+    tv: Number.isInteger(user.tokenVersion) && user.tokenVersion > 0 ? user.tokenVersion : 1,
+    iat: now,
+    exp: now + STAFF_SESSION_TTL_MS
+  };
+  const encodedPayload = Buffer.from(JSON.stringify(payloadObj), 'utf8').toString('base64url');
+  const sig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
+    .update(`emu1.${encodedPayload}`)
+    .digest('hex');
+  return `emu1.${encodedPayload}.${sig}`;
+}
+
+function verifyStaffSessionTokenCrypto(token) {
+  if (!token || typeof token !== 'string') return null;
+  const trimmed = token.trim();
+  if (!trimmed.startsWith('emu1.')) return null;
+  const parts = trimmed.split('.');
+  if (parts.length !== 3) return null;
+  const [, encodedPayload, providedSig] = parts;
+  const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
+    .update(`emu1.${encodedPayload}`)
+    .digest('hex');
+  if (!safeCompareHex(providedSig, expectedSig)) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
+    if (!payload || !payload.sub || typeof payload.exp !== 'number' || payload.exp <= Date.now()) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function generateBulkAccessToken() {
+  const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+  const nonce = crypto.randomBytes(12).toString('hex');
+  const data = `bulk1.${exp}.${nonce}`;
+  const sig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(data).digest('hex');
+  return `${data}.${sig}`;
+}
 
 // ============ PASSWORD & CUSTOMER AUTH HELPERS ============
 function hashCustomerPassword(password) {
@@ -30,11 +110,11 @@ function hashCustomerPassword(password) {
 }
 
 function verifyCustomerPassword(password, storedHash, storedPlain) {
-  if (storedPlain && String(storedPlain).trim() === String(password).trim()) return true;
+  if (storedPlain && safeCompareStrings(String(storedPlain).trim(), String(password).trim())) return true;
   if (!storedHash || !storedHash.includes(':')) return false;
   const [salt, originalHash] = storedHash.split(':');
   const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-  return hash === originalHash;
+  return safeCompareHex(hash, originalHash);
 }
 
 function generateCustomerToken(phone) {
@@ -57,7 +137,7 @@ function verifyCustomerToken(token, expectedPhone) {
     const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
       .update(payload)
       .digest('hex');
-    if (signature !== expectedSig) return false;
+    if (!safeCompareHex(signature, expectedSig)) return false;
 
     if (expectedPhone) {
       const cleanExpected = convertArabicDigits(expectedPhone).toString().replace(/[^0-9]/g, '');
@@ -884,7 +964,18 @@ const getNextOrderNumber = async () => {
   return result.seq;
 };
 
-// ============ MIDDLEWARE ============
+// ============ STAFF SESSION CACHE, AUTH & RBAC MIDDLEWARE ============
+const STAFF_CACHE_TTL_MS = 5000;
+const staffSessionCache = new Map();
+
+const invalidateStaffSessionCache = (userId = null) => {
+  if (userId) {
+    staffSessionCache.delete(String(userId));
+  } else {
+    staffSessionCache.clear();
+  }
+};
+
 const checkMongoDB = (req, res, next) => {
   if (!mongoConnected) {
     return res.status(503).json({ error: "Database not ready" });
@@ -892,18 +983,224 @@ const checkMongoDB = (req, res, next) => {
   next();
 };
 
-const isStaffSession = (req) => {
+const resolveStaffUserFromRequest = async (req) => {
   const authHeader = req.headers.authorization;
   const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-  const signedToken = req.signedCookies?.admin_session || req.signedCookies?.admin_session_shop2;
-  const token = bearerToken || signedToken;
-  return !!(token && (token === SESSION_TOKEN_SHOP1 || token === SESSION_TOKEN_SHOP2));
+  const candidates = [
+    bearerToken,
+    req.signedCookies?.admin_session,
+    req.signedCookies?.admin_session_shop2
+  ].filter((t, idx, arr) => typeof t === 'string' && t.length > 0 && arr.indexOf(t) === idx);
+
+  if (candidates.length === 0) return null;
+
+  for (const rawToken of candidates) {
+    const payload = verifyStaffSessionTokenCrypto(rawToken);
+    if (!payload) continue;
+
+    if (payload.sub === 'env:admin') {
+      return {
+        id: 'env:admin',
+        username: payload.u || ADMIN_USER,
+        name: payload.name || 'المدير العام',
+        role: 'admin',
+        shopAccess: 'all',
+        tokenVersion: 1,
+        isEnvAdmin: true
+      };
+    }
+
+    if (!ObjectId.isValid(payload.sub)) continue;
+
+    if (mongoConnected && adminUsersCollection) {
+      const cacheKey = String(payload.sub);
+      const now = Date.now();
+      let cached = staffSessionCache.get(cacheKey);
+      let userDoc = null;
+
+      if (cached && cached.expiresAt > now) {
+        userDoc = cached.doc;
+      } else {
+        try {
+          userDoc = await adminUsersCollection.findOne(
+            { _id: new ObjectId(payload.sub) },
+            { projection: { username: 1, name: 1, role: 1, shopAccess: 1, tokenVersion: 1 } }
+          );
+          staffSessionCache.set(cacheKey, { doc: userDoc || null, expiresAt: now + STAFF_CACHE_TTL_MS });
+        } catch (err) {
+          console.error('[Auth] Failed to verify staff session against DB:', err.message);
+          continue;
+        }
+      }
+
+      // Instant revocation on account deletion
+      if (!userDoc) continue;
+
+      // Instant revocation on password rotation / tokenVersion bump
+      const dbTv = Number.isInteger(userDoc.tokenVersion) && userDoc.tokenVersion > 0 ? userDoc.tokenVersion : 1;
+      const tokTv = Number.isInteger(payload.tv) && payload.tv > 0 ? payload.tv : 1;
+      if (dbTv !== tokTv) continue;
+
+      return {
+        id: String(userDoc._id),
+        username: userDoc.username || userDoc.name,
+        name: userDoc.name || userDoc.username,
+        role: userDoc.role === 'order_manager' ? 'order_manager' : 'admin',
+        shopAccess: ['shop1', 'shop2', 'all'].includes(userDoc.shopAccess) ? userDoc.shopAccess : 'all',
+        tokenVersion: dbTv,
+        isEnvAdmin: false
+      };
+    }
+
+    // Graceful fallback using verified cryptographic claims if DB is transiently reconnecting
+    return {
+      id: String(payload.sub),
+      username: payload.u || 'staff',
+      name: payload.name || payload.u || 'مستخدم',
+      role: payload.role === 'order_manager' ? 'order_manager' : 'admin',
+      shopAccess: ['shop1', 'shop2', 'all'].includes(payload.shopAccess) ? payload.shopAccess : 'all',
+      tokenVersion: payload.tv || 1,
+      isEnvAdmin: false
+    };
+  }
+
+  return null;
 };
 
-const checkAdmin = (req, res, next) => {
-  if (isStaffSession(req)) return next();
-  res.status(403).json({ success: false, message: "Forbidden" });
+const attachStaffSession = async (req, res, next) => {
+  try {
+    req.staffUser = await resolveStaffUserFromRequest(req);
+  } catch (err) {
+    req.staffUser = null;
+  }
+  next();
 };
+
+const isStaffSession = (req) => Boolean(req.staffUser);
+const isAdminSession = (req) => Boolean(req.staffUser && req.staffUser.role === 'admin');
+
+const verifyShopScopeForUser = (req, res, fixedShop = null) => {
+  const user = req.staffUser;
+  if (!user) return false;
+  if (user.shopAccess === 'all') return true;
+
+  const allowed = user.shopAccess; // 'shop1' or 'shop2'
+  const contentType = req.headers['content-type'] || '';
+  const isMultipart = contentType.includes('multipart/form-data');
+
+  let targetShop = fixedShop;
+  if (!targetShop) {
+    const explicitShop = req.query?.shop || (!isMultipart ? req.body?.shop : null);
+    if (explicitShop === 'shop1' || explicitShop === 'shop2') {
+      targetShop = explicitShop;
+    } else if (!isMultipart) {
+      // Pin omitted shop parameter to the user's strictly authorized shop so handlers never default to another shop
+      if (req.query) req.query.shop = allowed;
+      if (req.body && typeof req.body === 'object' && !req.body.shop) {
+        req.body.shop = allowed;
+      }
+      targetShop = allowed;
+    }
+  }
+
+  if (targetShop && targetShop !== allowed) {
+    const shopLabel = allowed === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي';
+    res.status(403).json({
+      success: false,
+      ok: false,
+      code: 'SHOP_FORBIDDEN',
+      allowedShop: allowed,
+      error: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`,
+      message: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`
+    });
+    return false;
+  }
+
+  return true;
+};
+
+// Allows any authenticated staff role ('admin' or 'order_manager') within their shopAccess scope
+const checkStaffShop = (fixedShop = null) => (req, res, next) => {
+  if (!req.staffUser) {
+    return res.status(401).json({
+      success: false,
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً'
+    });
+  }
+  if (!verifyShopScopeForUser(req, res, fixedShop)) return;
+  next();
+};
+
+// Strictly requires 'admin' role within their shopAccess scope
+const requireAdminShop = (fixedShop = null) => (req, res, next) => {
+  if (!req.staffUser) {
+    return res.status(401).json({
+      success: false,
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً'
+    });
+  }
+  if (req.staffUser.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      ok: false,
+      code: 'ROLE_FORBIDDEN',
+      error: 'هذه العملية متاحة لمدير النظام فقط',
+      message: 'هذه العملية متاحة لمدير النظام فقط'
+    });
+  }
+  if (!verifyShopScopeForUser(req, res, fixedShop)) return;
+  next();
+};
+
+// Strictly requires 'admin' role AND global ('all') shopAccess for system-wide operations (users, full DB backups, global resets)
+const requireGlobalAdmin = (req, res, next) => {
+  if (!req.staffUser) {
+    return res.status(401).json({
+      success: false,
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً'
+    });
+  }
+  if (req.staffUser.role !== 'admin' || req.staffUser.shopAccess !== 'all') {
+    return res.status(403).json({
+      success: false,
+      ok: false,
+      code: 'ROLE_FORBIDDEN',
+      error: 'هذه العملية متاحة للمدير العام للنظام فقط',
+      message: 'هذه العملية متاحة للمدير العام للنظام فقط'
+    });
+  }
+  next();
+};
+
+// Post-multer shop scope check when shop field was submitted inside multipart/form-data
+const enforceParsedBodyShopScope = (req, res, next) => {
+  if (!req.staffUser || req.staffUser.shopAccess === 'all') return next();
+  const bodyShop = req.body?.shop || req.query?.shop || 'shop1';
+  if (bodyShop !== req.staffUser.shopAccess) {
+    const shopLabel = req.staffUser.shopAccess === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي';
+    return res.status(403).json({
+      success: false,
+      code: 'SHOP_FORBIDDEN',
+      allowedShop: req.staffUser.shopAccess,
+      error: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`
+    });
+  }
+  next();
+};
+
+const checkStaff = checkStaffShop(null);
+const requireAdmin = requireAdminShop(null);
+// Backward-compatible alias pointing to strict admin role check
+const checkAdmin = requireAdmin;
 
 const checkCustomerAuth = (req, res, next) => {
   // 1. Authenticated staff/admin sessions have operational access to customer records
@@ -944,6 +1241,9 @@ const getOrderEffectiveDateStr = (order) => {
   return '';
 };
 
+// Mount per-request staff session resolution across all /api routes
+app.use("/api", attachStaffSession);
+
 // ============ HEALTH CHECK ============
 app.get("/api/health", (req, res) => {
   console.log("[ROUTE] GET /api/health called");
@@ -955,7 +1255,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // ============ DEBUG ENDPOINTS ============
-app.get("/api/debug/products-by-category", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/debug/products-by-category", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const categories = await categoriesCollection.find({}).toArray();
     const result = {};
@@ -977,7 +1277,7 @@ app.get("/api/debug/products-by-category", checkMongoDB, checkAdmin, async (req,
   }
 });
 
-app.get("/api/debug/purchase-types", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/debug/purchase-types", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const results = await productsCollection.aggregate([
       {
@@ -999,7 +1299,7 @@ app.get("/api/debug/purchase-types", checkMongoDB, checkAdmin, async (req, res) 
   }
 });
 
-app.get("/api/debug/subcategories", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/debug/subcategories", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const category = req.query.category;
     let query = {};
@@ -1029,10 +1329,11 @@ app.get("/api/debug/subcategories", checkMongoDB, checkAdmin, async (req, res) =
   }
 });
 
-// ============ LOGIN ============
 // ============ RATE LIMITING ============
-const createRateLimiter = (windowMs, maxRequests) => {
+const createRateLimiter = (windowMs, maxRequests, options = {}) => {
   const ipCache = new Map();
+  const customMessage = options.message || "طلبات كثيرة جداً، يرجى المحاولة مرة أخرى لاحقاً.";
+  const skipFn = typeof options.skip === 'function' ? options.skip : null;
   
   // Cleanup interval to prevent memory leak
   setInterval(() => {
@@ -1045,62 +1346,139 @@ const createRateLimiter = (windowMs, maxRequests) => {
         ipCache.set(ip, valid);
       }
     }
-  }, Math.min(windowMs, 5 * 60 * 1000)); // Run at most every 5 mins
+  }, Math.min(windowMs, 5 * 60 * 1000)).unref();
 
   return (req, res, next) => {
-    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    if (skipFn && skipFn(req)) {
+      return next();
+    }
+
+    const forwarded = req.headers["x-forwarded-for"];
+    const rawIp = (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : null) || req.ip || req.socket?.remoteAddress || 'unknown';
     const now = Date.now();
     
-    if (!ipCache.has(ip)) {
-      ipCache.set(ip, []);
-    }
-    
-    const timestamps = ipCache.get(ip).filter(t => now - t < windowMs);
+    const timestamps = (ipCache.get(rawIp) || []).filter(t => now - t < windowMs);
     timestamps.push(now);
-    ipCache.set(ip, timestamps);
+    ipCache.set(rawIp, timestamps);
     
     if (timestamps.length > maxRequests) {
-      console.log(`[RATE LIMIT EXCEEDED] IP: ${ip} exceeded limit.`);
-      return res.status(429).json({ error: "Too many requests. Please try again later." });
+      const retryAfterSec = Math.max(1, Math.ceil(windowMs / 1000));
+      res.setHeader('Retry-After', String(retryAfterSec));
+      console.log(`[RATE LIMIT EXCEEDED] IP: ${rawIp} on ${req.method} ${req.originalUrl}`);
+      return res.status(429).json({
+        success: false,
+        error: customMessage,
+        message: customMessage,
+        retryAfterSeconds: retryAfterSec
+      });
     }
     next();
   };
 };
 
-const loginLimiter = createRateLimiter(15 * 60 * 1000, 10); // 10 per 15 min
-const customerLimiter = createRateLimiter(5 * 60 * 1000, 60); // 60 per 5 min
+const loginLimiter = createRateLimiter(15 * 60 * 1000, 10, {
+  message: "محاولات تسجيل دخول كثيرة جداً. يرجى الانتظار 15 دقيقة."
+});
+const customerLimiter = createRateLimiter(5 * 60 * 1000, 60);
+const bulkCodeLimiter = createRateLimiter(15 * 60 * 1000, 10, {
+  message: "محاولات كثيرة للتحقق من رمز الجملة. يرجى المحاولة لاحقاً."
+});
+const publicDirectoryLimiter = createRateLimiter(15 * 60 * 1000, 30);
+const publicOrderLimiter = createRateLimiter(10 * 60 * 1000, 20, {
+  // Never throttle authenticated in-store POS cashiers during peak rush hours
+  skip: (req) => isStaffSession(req),
+  message: "تم تجاوز الحد المسموح لإرسال الطلبات خلال فترة قصيرة. يرجى الانتظار قليلاً."
+});
+const telemetryLimiter = createRateLimiter(60 * 1000, 30, {
+  message: "Too many telemetry batches"
+});
 
-app.post("/api/login", loginLimiter, async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+// ============ UNIFIED STAFF LOGIN HANDLER ============
+const handleStaffLogin = async (req, res, requestedShop = "shop1") => {
+  const { username, password } = req.body || {};
+  if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان" });
   }
 
-  // 1. Search database users
-  if (mongoConnected) {
+  const cleanUser = username.trim();
+  const cleanPass = password.trim();
+  const isSecure = Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https');
+  const cookieOpts = {
+    httpOnly: true,
+    sameSite: "Lax",
+    secure: isSecure,
+    signed: true,
+    path: "/",
+    maxAge: STAFF_SESSION_TTL_MS
+  };
+
+  const issueSessionResponse = (sessionProfile) => {
+    const shopAccess = ['shop1', 'shop2', 'all'].includes(sessionProfile.shopAccess) ? sessionProfile.shopAccess : 'all';
+    const effectiveShop = shopAccess === 'all' ? requestedShop : shopAccess;
+    const token = generateStaffSessionToken(sessionProfile);
+
+    res.clearCookie("admin_session", { path: "/" });
+    res.clearCookie("admin_session_shop2", { path: "/" });
+    if (shopAccess === 'all' || shopAccess === 'shop1') {
+      res.cookie("admin_session", token, cookieOpts);
+    }
+    if (shopAccess === 'all' || shopAccess === 'shop2') {
+      res.cookie("admin_session_shop2", token, cookieOpts);
+    }
+
+    return res.json({
+      success: true,
+      token,
+      role: sessionProfile.role === 'order_manager' ? 'order_manager' : 'admin',
+      name: sessionProfile.name || sessionProfile.username,
+      username: sessionProfile.username || sessionProfile.name,
+      shopAccess,
+      effectiveShop
+    });
+  };
+
+  // 1. Search database staff/admin users (exact match + Arabic hamza-normalized fallback)
+  if (mongoConnected && adminUsersCollection) {
     try {
-      const user = await adminUsersCollection.findOne({ username: username.trim() });
+      let user = await adminUsersCollection.findOne({
+        $or: [{ username: cleanUser }, { name: cleanUser }]
+      });
+
+      if (!user) {
+        const targetNorm = normalizeArabicUsername(cleanUser);
+        if (targetNorm) {
+          const allStaff = await adminUsersCollection.find({}).toArray();
+          user = allStaff.find(
+            u => normalizeArabicUsername(u.username) === targetNorm || normalizeArabicUsername(u.name) === targetNorm
+          ) || null;
+        }
+      }
+
       if (user) {
-        const isMatch = verifyCustomerPassword(password.trim(), user.passwordHash, user.password);
+        const isMatch = verifyCustomerPassword(cleanPass, user.passwordHash, user.password);
         if (isMatch) {
-          // Transparently upgrade legacy plain password to PBKDF2 hash
-          if (!user.passwordHash) {
+          const currentTv = Number.isInteger(user.tokenVersion) && user.tokenVersion > 0 ? user.tokenVersion : 1;
+          if (!user.passwordHash || !user.tokenVersion) {
             await adminUsersCollection.updateOne(
               { _id: user._id },
-              { 
-                $set: { passwordHash: hashCustomerPassword(password.trim()) },
-                $unset: { password: "" }
+              {
+                $set: {
+                  passwordHash: user.passwordHash || hashCustomerPassword(cleanPass),
+                  tokenVersion: currentTv
+                },
+                ...(user.password ? { $unset: { password: "" } } : {})
               }
             ).catch(err => console.error("Password migration error:", err));
+            invalidateStaffSessionCache(user._id);
           }
-          const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-          res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
-          return res.json({ 
-            success: true, 
-            token: SESSION_TOKEN_SHOP1,
-            role: user.role || "admin",
+
+          return issueSessionResponse({
+            _id: user._id,
+            username: user.username || user.name,
             name: user.name || user.username,
-            shopAccess: user.shopAccess || "all"
+            role: user.role || "admin",
+            shopAccess: user.shopAccess || "all",
+            tokenVersion: currentTv
           });
         }
       }
@@ -1109,18 +1487,34 @@ app.post("/api/login", loginLimiter, async (req, res) => {
     }
   }
 
-  // 2. Fallback ENV check
-  if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_session", SESSION_TOKEN_SHOP1, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
-    return res.json({ success: true, token: SESSION_TOKEN_SHOP1, role: "admin", name: "المدير العام", shopAccess: "all" });
+  // 2. Fallback ENV super-admin check (timing-safe)
+  if (safeCompareStrings(cleanUser, String(ADMIN_USER)) && safeCompareStrings(cleanPass, String(ADMIN_PASS))) {
+    return issueSessionResponse({
+      id: "env:admin",
+      username: ADMIN_USER,
+      name: "المدير العام",
+      role: "admin",
+      shopAccess: "all",
+      tokenVersion: 1
+    });
   }
 
-  res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
-});
+  return res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
+};
 
-app.get("/api/admin-check", checkAdmin, (req, res) => {
-  res.json({ ok: true });
+app.post("/api/login", loginLimiter, (req, res) => handleStaffLogin(req, res, "shop1"));
+
+app.get("/api/admin-check", checkStaffShop("shop1"), (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    user: {
+      username: req.staffUser.username,
+      name: req.staffUser.name,
+      role: req.staffUser.role,
+      shopAccess: req.staffUser.shopAccess
+    }
+  });
 });
 
 app.post("/api/logout", (req, res) => {
@@ -1131,20 +1525,27 @@ app.post("/api/logout", (req, res) => {
   res.json({ success: true });
 });
 
-// Public endpoint to list available admin/staff user accounts for login dropdown selector
-app.get("/api/public/admin-users", async (req, res) => {
+// Rate-limited login selector directory (strips internal _id and privilege roles from unauthenticated responses)
+app.get("/api/public/admin-users", publicDirectoryLimiter, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  if (process.env.PUBLIC_STAFF_SELECTOR === "false") {
+    return res.json({ success: true, users: [], manualOnly: true });
+  }
   try {
     let users = [];
     if (mongoConnected && adminUsersCollection) {
-      users = await adminUsersCollection.find({}, { projection: { username: 1, name: 1, role: 1 } }).sort({ name: 1 }).toArray();
+      users = await adminUsersCollection
+        .find({}, { projection: { _id: 0, username: 1, name: 1 } })
+        .sort({ name: 1 })
+        .toArray();
     }
     if (!users || users.length === 0) {
-      users = [{ username: ADMIN_USER, name: "المدير العام", role: "admin" }];
+      users = [{ username: ADMIN_USER, name: "المدير العام" }];
     }
     res.json({ success: true, users });
   } catch (err) {
     console.error("Public admin users fetch error:", err);
-    res.json({ success: true, users: [{ username: ADMIN_USER, name: "المدير العام", role: "admin" }] });
+    res.json({ success: true, users: [{ username: ADMIN_USER, name: "المدير العام" }] });
   }
 });
 
@@ -1167,6 +1568,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
     }
     
     const isStaff = isStaffSession(req);
+    const isAdmin = isAdminSession(req);
     const products = await productsCollection
       .find(query, {
         projection: {
@@ -1183,7 +1585,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           allowFloat: 1,
           purchaseType: 1,
           tags: 1,
-          ...(isStaff ? { makingCost: 1, chefId: 1, chefName: 1 } : {})
+          ...(isStaff ? { chefId: 1, chefName: 1, ...(isAdmin ? { makingCost: 1 } : {}) } : {})
         },
       })
       .sort({ name: 1 })
@@ -1209,17 +1611,27 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/verify-bulk-code", (req, res) => {
-  const { code } = req.body;
-  const BULK_CODE = process.env.BULK_CODE || "1234";
-  if (code === BULK_CODE) {
-    res.json({ success: true });
+app.post("/api/verify-bulk-code", bulkCodeLimiter, (req, res) => {
+  const rawCode = req.body && req.body.code !== undefined ? String(req.body.code).trim() : "";
+  const BULK_CODE = String(process.env.BULK_CODE || "1234").trim();
+  if (rawCode && safeCompareStrings(rawCode, BULK_CODE)) {
+    const bulkToken = generateBulkAccessToken();
+    const isSecure = Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https');
+    res.cookie("bulk_session", bulkToken, {
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: isSecure,
+      signed: true,
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    res.json({ success: true, bulkToken });
   } else {
     res.status(401).json({ error: "Invalid code" });
   }
 });
 
-app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags, chefId, chefName } = req.body;
   
   let parsedTags = [];
@@ -1293,7 +1705,7 @@ app.post("/api/products", checkAdmin, upload.single('img'), uploadErrorHandler, 
   }
 });
 
-app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.put("/api/products/:id", requireAdminShop("shop1"), upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags, chefId, chefName } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
@@ -1370,7 +1782,7 @@ app.put("/api/products/:id", checkAdmin, upload.single('img'), uploadErrorHandle
   }
 });
 
-app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
+app.patch("/api/products/:id/availability", requireAdminShop("shop1"), async (req, res) => {
   const { available } = req.body;
   if (typeof available !== 'boolean') {
       return res.status(400).json({ error: "Invalid available status" });
@@ -1390,7 +1802,7 @@ app.patch("/api/products/:id/availability", checkAdmin, async (req, res) => {
   }
 });
 
-app.delete("/api/products/:id", checkAdmin, async (req, res) => {
+app.delete("/api/products/:id", requireAdminShop("shop1"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
@@ -1418,7 +1830,7 @@ app.get("/api/categories", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/categories", checkAdmin, async (req, res) => {
+app.post("/api/categories", requireAdminShop("shop1"), async (req, res) => {
   try {
     const { name, icon, emoji, subCategories } = req.body;
     if (!name) {
@@ -1436,7 +1848,7 @@ app.post("/api/categories", checkAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/categories/:id", checkAdmin, async (req, res) => {
+app.put("/api/categories/:id", requireAdminShop("shop1"), async (req, res) => {
   try {
     const { name, icon, emoji, subCategories } = req.body;
     if (!name) {
@@ -1455,7 +1867,7 @@ app.put("/api/categories/:id", checkAdmin, async (req, res) => {
   }
 });
 
-app.delete("/api/categories/:id", checkAdmin, async (req, res) => {
+app.delete("/api/categories/:id", requireAdminShop("shop1"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid category ID" });
@@ -1477,7 +1889,7 @@ app.get("/api/tags", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/tags", checkMongoDB, requireAdminShop("shop1"), async (req, res) => {
   try {
     const { name, color, icon, badgeStyle, placement, description, active } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
@@ -1498,7 +1910,7 @@ app.post("/api/tags", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/tags/:id", checkMongoDB, requireAdminShop("shop1"), async (req, res) => {
   try {
     const { name, color, icon, badgeStyle, placement, description, active } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
@@ -1537,7 +1949,7 @@ app.put("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-app.delete("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/tags/:id", checkMongoDB, requireAdminShop("shop1"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
     const currentTag = await tagsCollection.findOne({ _id: new ObjectId(req.params.id) });
@@ -1556,7 +1968,7 @@ app.delete("/api/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Bulk assign / unassign tag products
-app.put("/api/tags/:id/products", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/tags/:id/products", checkMongoDB, requireAdminShop("shop1"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
     const { productIds } = req.body;
@@ -1598,7 +2010,7 @@ app.get("/api/shop2/categories", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/shop2/categories", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/shop2/categories", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     const { name, emoji, subCategories } = req.body;
     if (!name || !emoji) {
@@ -1612,7 +2024,7 @@ app.post("/api/shop2/categories", checkMongoDB, checkAdmin, async (req, res) => 
   }
 });
 
-app.put("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/shop2/categories/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     const { name, emoji, subCategories } = req.body;
     if (!name || !emoji) {
@@ -1632,7 +2044,7 @@ app.put("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) 
   }
 });
 
-app.delete("/api/shop2/categories/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/shop2/categories/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid category ID" });
@@ -1654,7 +2066,7 @@ app.get("/api/shop2/tags", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/shop2/tags", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     const { name, color, icon, badgeStyle, placement, description, active } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
@@ -1675,7 +2087,7 @@ app.post("/api/shop2/tags", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/shop2/tags/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     const { name, color, icon, badgeStyle, placement, description, active } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
@@ -1714,7 +2126,7 @@ app.put("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-app.delete("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/shop2/tags/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
     const currentTag = await tagsCollection2.findOne({ _id: new ObjectId(req.params.id) });
@@ -1733,7 +2145,7 @@ app.delete("/api/shop2/tags/:id", checkMongoDB, checkAdmin, async (req, res) => 
 });
 
 // Bulk assign / unassign shop2 tag products
-app.put("/api/shop2/tags/:id/products", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/shop2/tags/:id/products", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: "Invalid ID" });
     const { productIds } = req.body;
@@ -1778,6 +2190,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
     }
     
     const isStaff = isStaffSession(req);
+    const isAdmin = isAdminSession(req);
     const products = await productsCollection2
       .find(query, {
         projection: {
@@ -1794,7 +2207,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           allowFloat: 1,
           purchaseType: 1,
           tags: 1,
-          ...(isStaff ? { makingCost: 1, chefId: 1, chefName: 1 } : {})
+          ...(isStaff ? { chefId: 1, chefName: 1, hasStorage: 1, inventoryLink: 1, ...(isAdmin ? { makingCost: 1 } : {}) } : {})
         },
       })
       .sort({ name: 1 })
@@ -1820,7 +2233,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
   }
 });
 
-app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags, chefId, chefName } = req.body;
   
   let parsedTags = [];
@@ -1906,7 +2319,7 @@ app.post("/api/shop2/products", checkMongoDB, checkAdmin, upload.single('img'), 
   }
 });
 
-app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.put("/api/shop2/products/:id", checkMongoDB, requireAdminShop("shop2"), upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
     const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags, chefId, chefName } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
@@ -1993,7 +2406,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, checkAdmin, upload.single('img'
   }
 });
 
-app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/shop2/products/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
@@ -2015,7 +2428,7 @@ app.delete("/api/shop2/products/:id", checkMongoDB, checkAdmin, async (req, res)
   }
 });
 
-app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, async (req, res) => {
+app.patch("/api/shop2/products/:id/availability", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { available } = req.body;
   if (typeof available !== 'boolean') {
       return res.status(400).json({ error: "Invalid available status" });
@@ -2036,57 +2449,10 @@ app.patch("/api/shop2/products/:id/availability", checkMongoDB, checkAdmin, asyn
 });
 
 // ============ SHOP2 ADMIN ROUTES ============
-app.post("/api/shop2/login", loginLimiter, async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان" });
-  }
+app.post("/api/shop2/login", loginLimiter, (req, res) => handleStaffLogin(req, res, "shop2"));
 
-  // 1. Search database users
-  if (mongoConnected) {
-    try {
-      const user = await adminUsersCollection.findOne({ username: username.trim() });
-      if (user) {
-        const isMatch = verifyCustomerPassword(password.trim(), user.passwordHash, user.password);
-        if (isMatch) {
-          // Transparently upgrade legacy plain password to PBKDF2 hash
-          if (!user.passwordHash) {
-            await adminUsersCollection.updateOne(
-              { _id: user._id },
-              { 
-                $set: { passwordHash: hashCustomerPassword(password.trim()) },
-                $unset: { password: "" }
-              }
-            ).catch(err => console.error("Password migration error:", err));
-          }
-          const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-          res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
-          return res.json({ 
-            success: true, 
-            token: SESSION_TOKEN_SHOP2,
-            role: user.role || "admin",
-            name: user.name || user.username,
-            shopAccess: user.shopAccess || "all"
-          });
-        }
-      }
-    } catch (e) {
-      console.error("Shop2 Login DB check error:", e);
-    }
-  }
-
-  // 2. Fallback ENV check
-  if (username.trim() === ADMIN_USER && password.trim() === ADMIN_PASS) {
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie("admin_session_shop2", SESSION_TOKEN_SHOP2, { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: 30 * 24 * 60 * 60 * 1000 });
-    return res.json({ success: true, token: SESSION_TOKEN_SHOP2, role: "admin", name: "المدير العام", shopAccess: "all" });
-  }
-
-  res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
-});
-
-// ============ USER MANAGEMENT APIs (ADMIN ONLY) ============
-app.get("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
+// ============ USER MANAGEMENT APIs (GLOBAL ADMIN ONLY) ============
+app.get("/api/admin/users", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const users = await adminUsersCollection.find({}, { projection: { password: 0, passwordHash: 0 } }).sort({ createdAt: -1 }).toArray();
     res.json({ users });
@@ -2096,27 +2462,33 @@ app.get("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/users", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
-    const { name, password, role, shopAccess } = req.body;
-    if (!name || !password) {
+    const { name, password, role, shopAccess } = req.body || {};
+    if (!name || !password || typeof name !== 'string' || typeof password !== 'string') {
       return res.status(400).json({ error: "الاسم وكلمة المرور مطلوبان" });
     }
     const cleanName = name.trim();
+    const cleanPass = password.trim();
+    if (cleanPass.length < 4) {
+      return res.status(400).json({ error: "يجب أن تتكون كلمة المرور من 4 أحرف أو أرقام على الأقل" });
+    }
     const existing = await adminUsersCollection.findOne({ $or: [{ name: cleanName }, { username: cleanName }] });
     if (existing) {
       return res.status(400).json({ error: "هذا الاسم مستخدم بالفعل" });
     }
-    const cleanPass = password.trim();
+    const validShopAccess = ['shop1', 'shop2', 'all'].includes(shopAccess) ? shopAccess : 'all';
     const newUser = {
       name: cleanName,
       username: cleanName,
       passwordHash: hashCustomerPassword(cleanPass),
       role: role === 'order_manager' ? 'order_manager' : 'admin',
-      shopAccess: shopAccess || 'all',
+      shopAccess: validShopAccess,
+      tokenVersion: 1,
       createdAt: new Date()
     };
     await adminUsersCollection.insertOne(newUser);
+    invalidateStaffSessionCache();
     delete newUser.passwordHash;
     res.json({ success: true, user: newUser });
   } catch (err) {
@@ -2125,40 +2497,129 @@ app.post("/api/admin/users", checkMongoDB, checkAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/users/:id", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, password, role, shopAccess } = req.body;
+    const { name, password, role, shopAccess } = req.body || {};
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ error: "Invalid user ID" });
     }
-    const cleanName = name ? name.trim() : '';
+
+    const targetUser = await adminUsersCollection.findOne({ _id: new ObjectId(id) });
+    if (!targetUser) {
+      return res.status(404).json({ error: "المستخدم غير موجود" });
+    }
+
+    const cleanName = name ? String(name).trim() : targetUser.name;
+    if (!cleanName) {
+      return res.status(400).json({ error: "اسم المستخدم مطلوب" });
+    }
+
+    // Check duplicate name with another user
+    const duplicate = await adminUsersCollection.findOne({
+      _id: { $ne: new ObjectId(id) },
+      $or: [{ name: cleanName }, { username: cleanName }]
+    });
+    if (duplicate) {
+      return res.status(400).json({ error: "هذا الاسم مستخدم بالفعل لحساب آخر" });
+    }
+
+    const nextRole = role === 'order_manager' ? 'order_manager' : 'admin';
+    const nextShopAccess = ['shop1', 'shop2', 'all'].includes(shopAccess) ? shopAccess : 'all';
+
+    // Prevent demoting or scope-restricting the last remaining global admin
+    if (targetUser.role === 'admin' && (targetUser.shopAccess || 'all') === 'all') {
+      if (nextRole !== 'admin' || nextShopAccess !== 'all') {
+        const otherGlobalAdmins = await adminUsersCollection.countDocuments({
+          _id: { $ne: new ObjectId(id) },
+          role: 'admin',
+          $or: [{ shopAccess: 'all' }, { shopAccess: { $exists: false } }]
+        });
+        if (otherGlobalAdmins === 0) {
+          return res.status(400).json({ error: "لا يمكن خفض صلاحية أو تقييد نطاق المدير العام الوحيد للنظام" });
+        }
+      }
+    }
+
+    const currentTv = Number.isInteger(targetUser.tokenVersion) && targetUser.tokenVersion > 0 ? targetUser.tokenVersion : 1;
+    let nextTv = currentTv;
+
     const updateData = {
       name: cleanName,
       username: cleanName,
-      role: role === 'order_manager' ? 'order_manager' : 'admin',
-      shopAccess: shopAccess || 'all'
+      role: nextRole,
+      shopAccess: nextShopAccess,
+      updatedAt: new Date()
     };
-    let updateFields = { $set: updateData };
-    if (password && password.trim().length > 0) {
-      updateData.passwordHash = hashCustomerPassword(password.trim());
+
+    const updateFields = { $set: updateData };
+    if (password && String(password).trim().length > 0) {
+      const cleanPass = String(password).trim();
+      if (cleanPass.length < 4) {
+        return res.status(400).json({ error: "يجب أن تتكون كلمة المرور من 4 أحرف أو أرقام على الأقل" });
+      }
+      nextTv = currentTv + 1;
+      updateData.passwordHash = hashCustomerPassword(cleanPass);
+      updateData.tokenVersion = nextTv;
       updateFields.$unset = { password: "" };
     }
+
     await adminUsersCollection.updateOne({ _id: new ObjectId(id) }, updateFields);
-    res.json({ success: true });
+    invalidateStaffSessionCache(id);
+
+    // If the currently logged-in admin rotated their own password, issue a fresh token seamlessly
+    let refreshedToken = null;
+    if (req.staffUser && String(req.staffUser.id) === String(id) && nextTv !== currentTv) {
+      refreshedToken = generateStaffSessionToken({
+        _id: id,
+        username: cleanName,
+        name: cleanName,
+        role: nextRole,
+        shopAccess: nextShopAccess,
+        tokenVersion: nextTv
+      });
+      const isSecure = Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https');
+      const cookieOpts = { httpOnly: true, sameSite: "Lax", secure: isSecure, signed: true, path: "/", maxAge: STAFF_SESSION_TTL_MS };
+      res.cookie("admin_session", refreshedToken, cookieOpts);
+      res.cookie("admin_session_shop2", refreshedToken, cookieOpts);
+    }
+
+    res.json({ success: true, ...(refreshedToken ? { token: refreshedToken } : {}) });
   } catch (err) {
     console.error("Update user error:", err);
     res.status(500).json({ error: "Failed to update user" });
   }
 });
 
-app.delete("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/admin/users/:id", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ error: "Invalid user ID" });
     }
+
+    if (req.staffUser && String(req.staffUser.id) === String(id)) {
+      return res.status(400).json({ error: "لا يمكنك حذف حسابك النشط حالياً" });
+    }
+
+    const targetUser = await adminUsersCollection.findOne({ _id: new ObjectId(id) });
+    if (!targetUser) {
+      return res.status(404).json({ error: "المستخدم غير موجود" });
+    }
+
+    if (targetUser.role === 'admin' && (targetUser.shopAccess || 'all') === 'all') {
+      const otherGlobalAdmins = await adminUsersCollection.countDocuments({
+        _id: { $ne: new ObjectId(id) },
+        role: 'admin',
+        $or: [{ shopAccess: 'all' }, { shopAccess: { $exists: false } }]
+      });
+      if (otherGlobalAdmins === 0) {
+        return res.status(400).json({ error: "لا يمكن حذف المدير العام الوحيد للنظام" });
+      }
+    }
+
     await adminUsersCollection.deleteOne({ _id: new ObjectId(id) });
+    invalidateStaffSessionCache(id);
     res.json({ success: true });
   } catch (err) {
     console.error("Delete user error:", err);
@@ -2166,8 +2627,17 @@ app.delete("/api/admin/users/:id", checkMongoDB, checkAdmin, async (req, res) =>
   }
 });
 
-app.get("/api/shop2/admin-check", checkAdmin, (req, res) => {
-  res.json({ ok: true });
+app.get("/api/shop2/admin-check", checkStaffShop("shop2"), (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    user: {
+      username: req.staffUser.username,
+      name: req.staffUser.name,
+      role: req.staffUser.role,
+      shopAccess: req.staffUser.shopAccess
+    }
+  });
 });
 
 // ============ REUSABLE TELEMETRY INSIGHTS COMPUTATION ============
@@ -2624,8 +3094,35 @@ app.get("/api/admin/analytics", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // ============ INTERACTION TELEMETRY & BEHAVIORAL ANALYTICS ============
+// Recursively strip MongoDB operator keys ($ / .) and cap telemetry metadata payload size
+const sanitizeTelemetryMetadata = (rawMeta, depth = 0) => {
+  if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta) || depth > 3) return {};
+  const cleaned = {};
+  const keys = Object.keys(rawMeta).slice(0, 20);
+  for (const key of keys) {
+    if (!key || key.startsWith('$') || key.includes('.')) continue;
+    const safeKey = key.slice(0, 40);
+    const val = rawMeta[key];
+    if (val === null || typeof val === 'boolean') {
+      cleaned[safeKey] = val;
+    } else if (typeof val === 'number') {
+      cleaned[safeKey] = Number.isFinite(val) ? val : null;
+    } else if (typeof val === 'string') {
+      cleaned[safeKey] = val.slice(0, 256);
+    } else if (typeof val === 'object' && !Array.isArray(val)) {
+      cleaned[safeKey] = sanitizeTelemetryMetadata(val, depth + 1);
+    }
+  }
+  try {
+    if (JSON.stringify(cleaned).length > 2048) return {};
+  } catch {
+    return {};
+  }
+  return cleaned;
+};
+
 // Public ingestion endpoint for anonymous client interaction telemetry (inspired by UX Datasets: 03_interaction_telemetry)
-app.post("/api/telemetry/batch", async (req, res) => {
+app.post("/api/telemetry/batch", telemetryLimiter, async (req, res) => {
   if (!mongoConnected || !telemetryCollection) {
     return res.status(200).json({ success: false, reason: "Database initializing" });
   }
@@ -2640,23 +3137,26 @@ app.post("/api/telemetry/batch", async (req, res) => {
     const now = new Date();
 
     // Map and sanitize each event (limit batch to 50 max to prevent abuse)
-    const docs = events.slice(0, 50).map(evt => {
-      let evtDate = now;
-      if (evt.timestamp) {
-        const parsed = new Date(evt.timestamp);
-        if (!isNaN(parsed.getTime())) evtDate = parsed;
-      }
+    const docs = events
+      .filter(evt => evt && typeof evt === 'object')
+      .slice(0, 50)
+      .map(evt => {
+        let evtDate = now;
+        if (evt.timestamp) {
+          const parsed = new Date(evt.timestamp);
+          if (!isNaN(parsed.getTime())) evtDate = parsed;
+        }
 
-      return {
-        sessionId: safeSessionId,
-        event: typeof evt.event === 'string' ? evt.event.slice(0, 40) : 'unknown',
-        shop: evt.shop === 'shop2' ? 'shop2' : 'shop1',
-        device: evt.device === 'tablet' ? 'tablet' : evt.device === 'desktop' ? 'desktop' : 'mobile',
-        timestamp: evtDate,
-        viewportWidth: typeof evt.viewportWidth === 'number' ? evt.viewportWidth : null,
-        metadata: evt.metadata && typeof evt.metadata === 'object' ? evt.metadata : {}
-      };
-    });
+        return {
+          sessionId: safeSessionId,
+          event: typeof evt.event === 'string' ? evt.event.slice(0, 40) : 'unknown',
+          shop: evt.shop === 'shop2' ? 'shop2' : 'shop1',
+          device: evt.device === 'tablet' ? 'tablet' : evt.device === 'desktop' ? 'desktop' : 'mobile',
+          timestamp: evtDate,
+          viewportWidth: typeof evt.viewportWidth === 'number' && Number.isFinite(evt.viewportWidth) ? evt.viewportWidth : null,
+          metadata: sanitizeTelemetryMetadata(evt.metadata)
+        };
+      });
 
     if (docs.length > 0) {
       await telemetryCollection.insertMany(docs, { ordered: false });
@@ -2687,7 +3187,7 @@ app.get("/api/admin/telemetry/insights", checkMongoDB, checkAdmin, async (req, r
 // ============ ADMIN ORDERS & CUSTOMERS APIs ============
 
 // Get all orders for the admin panel (returns complete order history by default)
-app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/orders", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const { status, deliveryDate, phone, limit: limitParam } = req.query;
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
@@ -2718,7 +3218,7 @@ app.get("/api/admin/orders", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Update order status
-app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/orders/:id/status", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
   const { id } = req.params;
@@ -2783,7 +3283,7 @@ app.put("/api/admin/orders/:id/status", checkMongoDB, checkAdmin, async (req, re
 });
 
 // Full order edit
-app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/orders/:id", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
   const { id } = req.params;
@@ -2926,7 +3426,7 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkAdmin, async (req, res) => {
 // ============ INVENTORY INTEGRATION ADMIN ROUTES ============
 
 // 1. Fetch inventory items list from PocketBase with computed active reservations
-app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/inventory/items", checkMongoDB, checkStaffShop("shop2"), async (req, res) => {
   try {
     const pbData = await pbFetch("/collections/inventory/records?sort=name&perPage=500");
     const records = Array.isArray(pbData.items) ? pbData.items : (Array.isArray(pbData) ? pbData : []);
@@ -3058,7 +3558,7 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res)
 });
 
 // 2. Fetch single inventory item stock
-app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkStaffShop("shop2"), async (req, res) => {
   try {
     const item = await getInventoryStock(req.params.recordId);
     let reserved = 0;
@@ -3085,7 +3585,7 @@ app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkAdmin, async 
 });
 
 // 2a. Adjust or set quantity of an inventory item in PocketBase
-app.patch("/api/admin/inventory/items/:id/quantity", checkMongoDB, checkAdmin, async (req, res) => {
+app.patch("/api/admin/inventory/items/:id/quantity", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { id } = req.params;
   const { quantity, delta } = req.body;
 
@@ -3117,7 +3617,7 @@ app.patch("/api/admin/inventory/items/:id/quantity", checkMongoDB, checkAdmin, a
 });
 
 // 2b. Update item details (name, category, min_stock, quantity)
-app.put("/api/admin/inventory/items/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/inventory/items/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { id } = req.params;
   const { name, category, min_stock, quantity } = req.body;
 
@@ -3143,7 +3643,7 @@ app.put("/api/admin/inventory/items/:id", checkMongoDB, checkAdmin, async (req, 
 });
 
 // 2c. Create new inventory item
-app.post("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/inventory/items", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { name, category, quantity, min_stock } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: "Item name is required" });
@@ -3181,7 +3681,7 @@ app.post("/api/admin/inventory/items", checkMongoDB, checkAdmin, async (req, res
 });
 
 // 2d. Delete inventory item
-app.delete("/api/admin/inventory/items/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/admin/inventory/items/:id", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { id } = req.params;
   try {
     await pbFetch(`/collections/inventory/records/${id}`, {
@@ -3195,7 +3695,7 @@ app.delete("/api/admin/inventory/items/:id", checkMongoDB, checkAdmin, async (re
 });
 
 // 3. Link or unlink an e-Menu product to a PocketBase inventory item
-app.put("/api/admin/products/:id/inventory-link", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/products/:id/inventory-link", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { id } = req.params;
   const { inventoryLink, shop } = req.body;
   const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
@@ -3235,7 +3735,7 @@ app.put("/api/admin/products/:id/inventory-link", checkMongoDB, checkAdmin, asyn
 });
 
 // 3a. Auto-match PocketBase inventory items with e-Menu products using normalized Arabic text
-app.post("/api/admin/inventory/auto-match", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/inventory/auto-match", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const shop = req.body.shop || "shop2";
   const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
 
@@ -3368,7 +3868,7 @@ app.post("/api/admin/inventory/auto-match", checkMongoDB, checkAdmin, async (req
 });
 
 // 3b. Batch-link matched products to PocketBase inventory items
-app.post("/api/admin/inventory/batch-link", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/inventory/batch-link", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { links, shop } = req.body;
   const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
 
@@ -3411,7 +3911,7 @@ app.post("/api/admin/inventory/batch-link", checkMongoDB, checkAdmin, async (req
 });
 
 // 3b-2. Sync all Shop products to PocketBase, creating missing items with quantity 0
-app.post("/api/admin/inventory/sync-all-products", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/inventory/sync-all-products", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const shop = req.body.shop || "shop2";
   const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
 
@@ -3509,7 +4009,7 @@ app.post("/api/admin/inventory/sync-all-products", checkMongoDB, checkAdmin, asy
 
 
 // 3c. Link or unlink an inventory item directly from the inventory dashboard
-app.put("/api/admin/inventory/link-item", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/inventory/link-item", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const { pbRecordId, productId, conversionFactor, shop } = req.body;
   const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
 
@@ -3581,7 +4081,7 @@ app.put("/api/admin/inventory/link-item", checkMongoDB, checkAdmin, async (req, 
 });
 
 // 3d. Lightweight list of products for shop (used in Quick Link modal autocomplete)
-app.get("/api/admin/inventory/products-list", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/inventory/products-list", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   const shop = req.query.shop || "shop2";
   const targetColl = (shop === "shop1") ? productsCollection : productsCollection2;
 
@@ -3599,7 +4099,7 @@ app.get("/api/admin/inventory/products-list", checkMongoDB, checkAdmin, async (r
 });
 
 // 4. List stock reservations with filters
-app.get("/api/admin/inventory/reservations", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/inventory/reservations", checkMongoDB, checkStaffShop("shop2"), async (req, res) => {
   if (!stockReservationsCollection) {
     return res.status(503).json({ error: "Stock reservations collection not initialized" });
   }
@@ -3628,7 +4128,7 @@ app.get("/api/admin/inventory/reservations", checkMongoDB, checkAdmin, async (re
 });
 
 // 5. Trigger manual reconciliation sweep
-app.post("/api/admin/inventory/reconcile", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/inventory/reconcile", checkMongoDB, requireAdminShop("shop2"), async (req, res) => {
   try {
     await reconcileInventoryStock();
     res.json({ success: true, message: "تمت مواءمة ومطابقة المخزون بنجاح" });
@@ -3639,7 +4139,7 @@ app.post("/api/admin/inventory/reconcile", checkMongoDB, checkAdmin, async (req,
 });
 
 // 6. Overall inventory sync status & health check
-app.get("/api/admin/inventory/status", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/inventory/status", checkMongoDB, checkStaffShop("shop2"), async (req, res) => {
   try {
     let pbConnected = false;
     let totalItems = 0;
@@ -3687,7 +4187,7 @@ app.get("/api/admin/inventory/status", checkMongoDB, checkAdmin, async (req, res
 });
 
 // Get all customers with details (Filtered accurately by rec_date / deliveryDate)
-app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/customers", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
 
@@ -3797,7 +4297,7 @@ app.get("/api/admin/customers", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Update customer details (with reference linkage preservation & password management)
-app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/customers/:id", checkMongoDB, checkStaff, async (req, res) => {
   const { id } = req.params;
   const { name, phone, password } = req.body;
 
@@ -3864,7 +4364,7 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) =
 });
 
 // Delete customer and all their data (orders, favorites)
-app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/admin/customers/:id", checkMongoDB, checkStaff, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -3893,7 +4393,7 @@ app.delete("/api/admin/customers/:id", checkMongoDB, checkAdmin, async (req, res
 
 
 // Mark order as printed by admin
-app.put("/api/admin/orders/:id/printed", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/orders/:id/printed", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const { shop } = req.body;
@@ -3915,7 +4415,7 @@ app.put("/api/admin/orders/:id/printed", checkMongoDB, checkAdmin, async (req, r
 // ============ CUSTOMER PAYMENTS & BALANCES ============
 
 // Get customer balance & unpaid orders
-app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
   const { phone } = req.params;
@@ -3977,7 +4477,7 @@ app.get("/api/admin/customers/:phone/balance", checkMongoDB, checkAdmin, async (
 });
 
 // Get all customer orders for Admin A5 Statement & History
-app.get("/api/admin/customers/:phone/orders", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/customers/:phone/orders", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : (req.query.shop === "all" ? "all" : "shop1");
   const { phone } = req.params;
 
@@ -4035,7 +4535,7 @@ app.get("/api/admin/customers/:phone/orders", checkMongoDB, checkAdmin, async (r
 
 
 // Record a payment (FIFO distribution)
-app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/payments", checkMongoDB, checkStaff, async (req, res) => {
   const { customerPhone, customerName, amount, shop: reqShop, note, method, targetOrderId } = req.body;
   const shop = reqShop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
@@ -4166,7 +4666,7 @@ app.post("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Admin endpoint to safely migrate unpaid orders paymentMethod to empty string
-app.post("/api/admin/migrate-unpaid-orders", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/migrate-unpaid-orders", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const query = {
       $or: [
@@ -4193,7 +4693,7 @@ app.post("/api/admin/migrate-unpaid-orders", checkMongoDB, checkAdmin, async (re
 });
 
 // Get payment history for a customer
-app.get("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/payments", checkMongoDB, checkStaff, async (req, res) => {
   const { phone, shop: reqShop, limit: reqLimit } = req.query;
   const shop = reqShop === "shop2" ? "shop2" : "shop1";
 
@@ -4216,7 +4716,7 @@ app.get("/api/admin/payments", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Cancel / Reverse a payment
-app.post("/api/admin/payments/:id/cancel", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/payments/:id/cancel", checkMongoDB, checkStaff, async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) {
     return res.status(400).json({ error: "Invalid payment ID" });
@@ -4365,7 +4865,7 @@ app.delete("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res)
 });
 
 // Get single payment receipt
-app.get("/api/admin/payments/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/payments/:id", checkMongoDB, checkStaff, async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) {
     return res.status(400).json({ error: "Invalid payment ID" });
@@ -4792,7 +5292,7 @@ app.get("/api/customer/profile", checkMongoDB, customerLimiter, async (req, res)
 });
 
 // Admin reset customer password
-app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const { newPassword } = req.body;
@@ -5155,7 +5655,9 @@ const areOrderItemsEqual = (itemsA, itemsB) => {
 // Server-Side Price Recalculation & Privilege Segregation Helper
 const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl, isStaffPOS, body = {}) => {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
-    throw new Error("يجب أن يحتوي الطلب على صنف واحد على الأقل");
+    const emptyErr = new Error("يجب أن يحتوي الطلب على صنف واحد على الأقل");
+    emptyErr.statusCode = 400;
+    throw emptyErr;
   }
 
   // Pre-fetch all products referenced in items
@@ -5172,11 +5674,22 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
 
   let computedTotal = 0;
   const sanitizedItems = rawItems.map(item => {
-    const qty = Math.max(item.allowFloat ? 0.05 : 1, Number(item.quantity) || 1);
-    let unitPrice = 0;
-
     const prodIdStr = item.productId ? item.productId.toString() : '';
     const dbProd = dbProductsMap.get(prodIdStr);
+
+    if (!dbProd && !isStaffPOS) {
+      const invalidItemErr = new Error("أحد الأصناف المطلوبة غير موجود أو لم يعد متاحاً");
+      invalidItemErr.statusCode = 400;
+      throw invalidItemErr;
+    }
+
+    const canFloat = isStaffPOS ? Boolean(item.allowFloat || dbProd?.allowFloat) : Boolean(dbProd?.allowFloat);
+    const rawNumericQty = Number(item.quantity);
+    const normalizedQty = Number.isFinite(rawNumericQty) && rawNumericQty > 0
+      ? (canFloat ? rawNumericQty : Math.round(rawNumericQty))
+      : 1;
+    const qty = Math.max(canFloat ? 0.05 : 1, normalizedQty);
+    let unitPrice = 0;
 
     if (dbProd) {
       if (isStaffPOS && typeof item.price === 'number' && !isNaN(item.price) && item.price >= 0) {
@@ -5194,12 +5707,9 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
           unitPrice = Number(dbProd.price || 0);
         }
       }
-    } else if (isStaffPOS) {
-      // Staff POS can enter custom off-menu items
-      unitPrice = Math.round(Number(item.price || 0) * 100) / 100;
     } else {
-      // Public order referencing non-existent item
-      unitPrice = 0;
+      // Staff POS can enter custom off-menu items
+      unitPrice = Math.max(0, Math.round(Number(item.price || 0) * 100) / 100);
     }
 
     unitPrice = Math.round(unitPrice * 100) / 100;
@@ -5210,7 +5720,7 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
       name: dbProd ? dbProd.name : (item.name || 'صنف غير محدد'),
       price: unitPrice,
       quantity: Math.round(qty * 100) / 100,
-      allowFloat: !!item.allowFloat,
+      allowFloat: canFloat,
       notes: typeof item.notes === 'string' ? item.notes.slice(0, 500) : ''
     };
   });
@@ -5249,18 +5759,19 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
 
 // ============ ORDER SUBMISSION APIs ============
 
-app.post("/api/orders", checkMongoDB, async (req, res) => {
+app.post("/api/orders", checkMongoDB, publicOrderLimiter, async (req, res) => {
   try {
-    const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body;
-    if (!customer || !items || !Array.isArray(items)) {
+    const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body || {};
+    if (!customer || !customer.name || !customer.phone || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
 
     const canonicalPhone = formatCanonicalLibyanPhone(customer.phone);
     const phoneVariants = getLibyanPhoneVariants(customer.phone);
-    const normalizedName = customer.name.trim();
+    const normalizedName = String(customer.name).trim();
 
-    const isStaff = isStaffSession(req);
+    // Only grant staff POS privileges on Shop 1 if the staff member has access to Shop 1
+    const isStaff = Boolean(req.staffUser && (req.staffUser.shopAccess === 'all' || req.staffUser.shopAccess === 'shop1'));
     const {
       items: sanitizedItems,
       totalPrice: parsedTotal,
@@ -5270,8 +5781,9 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       status: parsedStatus
     } = await sanitizeAndCalculateOrder(items, priceMode, productsCollection, isStaff, req.body);
 
-    // 5-Minute Duplicate Order Prevention (Cooldown)
-    if (!force && !bypassDuplicateCheck) {
+    // 5-Minute Duplicate Order Prevention (Cooldown) — only authenticated POS staff may force-bypass
+    const canBypassCooldown = isStaff && Boolean(force || bypassDuplicateCheck);
+    if (!canBypassCooldown) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const recentOrders = await ordersCollection.find({
         "customerInfo.phone": { $in: phoneVariants },
@@ -5360,23 +5872,27 @@ app.post("/api/orders", checkMongoDB, async (req, res) => {
       order: { ...orderDoc, _id: result.insertedId }
     });
   } catch (err) {
+    if (err && err.statusCode === 400) {
+      return res.status(400).json({ error: err.message });
+    }
     console.error("Save order error:", err);
     res.status(500).json({ error: "Failed to save order" });
   }
 });
 
-app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
+app.post("/api/shop2/orders", checkMongoDB, publicOrderLimiter, async (req, res) => {
   try {
-    const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body;
-    if (!customer || !items || !Array.isArray(items)) {
+    const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body || {};
+    if (!customer || !customer.name || !customer.phone || !items || !Array.isArray(items)) {
       return res.status(400).json({ error: "Missing order details" });
     }
 
     const canonicalPhone = formatCanonicalLibyanPhone(customer.phone);
     const phoneVariants = getLibyanPhoneVariants(customer.phone);
-    const normalizedName = customer.name.trim();
+    const normalizedName = String(customer.name).trim();
 
-    const isStaff = isStaffSession(req);
+    // Only grant staff POS privileges on Shop 2 if the staff member has access to Shop 2
+    const isStaff = Boolean(req.staffUser && (req.staffUser.shopAccess === 'all' || req.staffUser.shopAccess === 'shop2'));
     const {
       items: sanitizedItems,
       totalPrice: parsedTotal,
@@ -5386,8 +5902,9 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       status: parsedStatus
     } = await sanitizeAndCalculateOrder(items, priceMode, productsCollection2, isStaff, req.body);
 
-    // 5-Minute Duplicate Order Prevention (Cooldown)
-    if (!force && !bypassDuplicateCheck) {
+    // 5-Minute Duplicate Order Prevention (Cooldown) — only authenticated POS staff may force-bypass
+    const canBypassCooldown = isStaff && Boolean(force || bypassDuplicateCheck);
+    if (!canBypassCooldown) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const recentOrders = await ordersCollection2.find({
         "customerInfo.phone": { $in: phoneVariants },
@@ -5487,6 +6004,9 @@ app.post("/api/shop2/orders", checkMongoDB, async (req, res) => {
       order: { ...orderDoc, _id: result.insertedId }
     });
   } catch (err) {
+    if (err && err.statusCode === 400) {
+      return res.status(400).json({ error: err.message });
+    }
     console.error("Save shop2 order error:", err);
     res.status(500).json({ error: "Failed to save order" });
   }
@@ -5571,7 +6091,7 @@ app.get("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, async (req, r
 });
 
 // Add carousel item (Admin)
-app.post("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.post("/api/admin/marketing-carousel", checkMongoDB, requireAdmin, upload.single('img'), uploadErrorHandler, enforceParsedBodyShopScope, async (req, res) => {
   const { shop, title, subtitle, link } = req.body;
   if (!shop) {
     return res.status(400).json({ error: "Missing required shop field" });
@@ -5606,7 +6126,7 @@ app.post("/api/admin/marketing-carousel", checkMongoDB, checkAdmin, upload.singl
 });
 
 // Update carousel item (Admin)
-app.put("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
+app.put("/api/admin/marketing-carousel/:id", checkMongoDB, requireAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { id } = req.params;
   const { title, subtitle, link } = req.body;
   
@@ -5615,9 +6135,15 @@ app.put("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, upload.si
   }
 
   try {
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid carousel ID" });
+    }
     const item = await carouselCollection.findOne({ _id: new ObjectId(id) });
     if (!item) {
       return res.status(404).json({ error: "Carousel item not found" });
+    }
+    if (req.staffUser.shopAccess !== 'all' && (item.shop || 'shop1') !== req.staffUser.shopAccess) {
+      return res.status(403).json({ error: "ليس لديك صلاحية لتعديل بنرات متجر آخر" });
     }
 
     const updateFields = {
@@ -5646,13 +6172,20 @@ app.put("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, upload.si
 
 
 // Delete carousel item (Admin)
-app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, requireAdmin, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await carouselCollection.deleteOne({ _id: new ObjectId(id) });
-    if (result.deletedCount === 0) {
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid carousel ID" });
+    }
+    const existing = await carouselCollection.findOne({ _id: new ObjectId(id) });
+    if (!existing) {
       return res.status(404).json({ error: "Item not found" });
     }
+    if (req.staffUser.shopAccess !== 'all' && (existing.shop || 'shop1') !== req.staffUser.shopAccess) {
+      return res.status(403).json({ error: "ليس لديك صلاحية لحذف بنرات متجر آخر" });
+    }
+    await carouselCollection.deleteOne({ _id: new ObjectId(id) });
     res.json({ success: true });
   } catch (err) {
     console.error("Delete carousel item error:", err);
@@ -5669,7 +6202,7 @@ app.use((err, req, res, next) => {
 // ============ CHEF MANAGEMENT & PRODUCTION REPORT ============
 
 // Get all chefs for active shop
-app.get("/api/admin/chefs", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/chefs", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const shop = req.query.shop || 'shop1';
     const chefColl = shop === 'shop2' ? chefsCollection2 : chefsCollection;
@@ -5682,7 +6215,7 @@ app.get("/api/admin/chefs", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Create a new chef
-app.post("/api/admin/chefs", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/chefs", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { name, phone, shop } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
@@ -5705,7 +6238,7 @@ app.post("/api/admin/chefs", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Update chef details
-app.put("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/chefs/:id", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, phone, active, shop } = req.body;
@@ -5742,7 +6275,7 @@ app.put("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Delete chef (and unlink products)
-app.delete("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/admin/chefs/:id", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const shop = req.query.shop || 'shop1';
@@ -5767,7 +6300,7 @@ app.delete("/api/admin/chefs/:id", checkMongoDB, checkAdmin, async (req, res) =>
 });
 
 // Bulk assign products to a chef (robust ObjectId and string matching)
-app.put("/api/admin/chefs/:id/assign-products", checkMongoDB, checkAdmin, async (req, res) => {
+app.put("/api/admin/chefs/:id/assign-products", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const { productIds, shop } = req.body;
@@ -5813,7 +6346,7 @@ app.put("/api/admin/chefs/:id/assign-products", checkMongoDB, checkAdmin, async 
 });
 
 // Production report: aggregate order items by chef via product→chef mapping
-app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/production/report", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { shop, startDate, endDate, chefId } = req.query;
     const ordColl = shop === 'shop2' ? ordersCollection2 : ordersCollection;
@@ -5931,7 +6464,7 @@ app.get("/api/admin/production/report", checkMongoDB, checkAdmin, async (req, re
 });
 
 // Production report: get all customer orders containing a specific product within the date range
-app.get("/api/admin/production/product-orders", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/production/product-orders", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { shop, productName, productId, startDate, endDate } = req.query;
     if (!productName && !productId) {
@@ -6163,7 +6696,7 @@ const performFullDatabaseBackup = async (customLabel = "") => {
 };
 
 // Create a full backup of all collections and save JSON to C:\Users\<user>\Documents\EmenuBackup
-app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/backup", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const { label } = req.body;
     console.log("[BACKUP] Creating full database backup...");
@@ -6185,7 +6718,7 @@ app.post("/api/admin/backup", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // List all backups (metadata + sync existing MongoDB backups to C:\Users\<user>\Documents\EmenuBackup)
-app.get("/api/admin/backups", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/backups", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     ensureLocalBackupDir();
     const backups = await backupsCollection.find({}, {
@@ -6226,7 +6759,7 @@ app.get("/api/admin/backups", checkMongoDB, checkAdmin, async (req, res) => {
 });
 
 // Download a backup as JSON (reads from local disk first, falls back to MongoDB)
-app.get("/api/admin/backup/:id/download", checkMongoDB, checkAdmin, async (req, res) => {
+app.get("/api/admin/backup/:id/download", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const backup = await backupsCollection.findOne({ _id: new ObjectId(req.params.id) });
     if (!backup) {
@@ -6251,7 +6784,7 @@ app.get("/api/admin/backup/:id/download", checkMongoDB, checkAdmin, async (req, 
 });
 
 // Delete a backup (removes from both MongoDB and local disk)
-app.delete("/api/admin/backup/:id", checkMongoDB, checkAdmin, async (req, res) => {
+app.delete("/api/admin/backup/:id", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const existing = await backupsCollection.findOne(
       { _id: new ObjectId(req.params.id) },
@@ -6283,7 +6816,7 @@ app.delete("/api/admin/backup/:id", checkMongoDB, checkAdmin, async (req, res) =
 });
 
 // Reset orders, payments, and optionally customer balances
-app.post("/api/admin/reset/orders", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/reset/orders", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const { confirm, resetCustomerBalances } = req.body;
 
@@ -6475,19 +7008,46 @@ const connectWithRetry = async () => {
       console.warn("Product makingCost migration warning:", migErr.message);
     }
 
-    // Seed default admin user if empty
+    // Seed default admin user with PBKDF2 passwordHash if empty, and migrate any legacy plaintext passwords
     const userCount = await adminUsersCollection.countDocuments();
     if (userCount === 0) {
       console.log("Initializing default admin user...");
       await adminUsersCollection.insertOne({
         name: "المدير العام",
         username: ADMIN_USER,
-        password: ADMIN_PASS,
+        passwordHash: hashCustomerPassword(ADMIN_PASS),
         role: "admin",
         shopAccess: "all",
+        tokenVersion: 1,
         createdAt: new Date()
       });
-      console.log("✓ Default admin user initialized");
+      console.log("✓ Default admin user initialized (PBKDF2 hashed)");
+    } else {
+      const legacyUsers = await adminUsersCollection.find({
+        $or: [
+          { password: { $exists: true } },
+          { tokenVersion: { $exists: false } }
+        ]
+      }).toArray();
+      for (const lu of legacyUsers) {
+        const setOps = {
+          tokenVersion: Number.isInteger(lu.tokenVersion) && lu.tokenVersion > 0 ? lu.tokenVersion : 1
+        };
+        if (!lu.passwordHash && lu.password) {
+          setOps.passwordHash = hashCustomerPassword(String(lu.password).trim());
+        }
+        await adminUsersCollection.updateOne(
+          { _id: lu._id },
+          {
+            $set: setOps,
+            ...(lu.password !== undefined ? { $unset: { password: "" } } : {})
+          }
+        );
+      }
+      if (legacyUsers.length > 0) {
+        invalidateStaffSessionCache();
+        console.log(`✓ Migrated ${legacyUsers.length} staff account(s) to PBKDF2 + tokenVersion`);
+      }
     }
 
     const count = await categoriesCollection.countDocuments();
@@ -6644,7 +7204,7 @@ const cleanupExpiredCancelledOrders = async () => {
 };
 
 // Admin endpoint to manually trigger cancelled orders cleanup
-app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, checkAdmin, async (req, res) => {
+app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   const result = await cleanupExpiredCancelledOrders();
   if (result.totalDeleted > 0) {
     invalidateAnalyticsCache();

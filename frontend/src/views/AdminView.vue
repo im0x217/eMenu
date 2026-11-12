@@ -16,15 +16,35 @@
 
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
-            <label>حساب المستخدم</label>
-            <div class="login-select-wrapper">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <label style="margin-bottom: 0;">حساب المستخدم</label>
+              <button
+                v-if="publicAdminUsers.length > 0"
+                type="button"
+                @click="toggleManualLoginMode"
+                style="background: none; border: none; color: var(--accent-primary, #f59e0b); font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 4px 8px; min-height: 32px;"
+              >
+                {{ manualLoginMode ? 'اختيار من القائمة' : 'إدخال يدوي' }}
+              </button>
+            </div>
+            <div v-if="!manualLoginMode && publicAdminUsers.length > 0" class="login-select-wrapper">
               <select v-model="loginForm.username" required aria-label="حساب المستخدم" class="form-control login-user-select">
                 <option value="" disabled>اختر حساب المستخدم…</option>
                 <option v-for="u in publicAdminUsers" :key="u.username" :value="u.username">
-                  {{ u.name }} ({{ u.role === 'admin' ? 'مدير عام' : u.role === 'order_manager' ? 'إدارة الطلبات والإنتاج' : 'مستخدم' }})
+                  {{ u.role ? `${u.name} (${u.role === 'admin' ? 'مدير عام' : 'إدارة الطلبات والإنتاج'})` : u.name }}
                 </option>
               </select>
             </div>
+            <input
+              v-else
+              v-model="loginForm.username"
+              type="text"
+              required
+              autocomplete="username"
+              aria-label="حساب المستخدم"
+              placeholder="اسم المستخدم…"
+              class="form-control"
+            />
           </div>
 
           <div class="form-group">
@@ -73,8 +93,20 @@
         <div class="shop-switcher">
           <label class="switch-label">المتجر الحالي:</label>
           <div class="shop-select-pills compact">
-            <button class="shop-pill" :class="{ active: activeShop === 'shop1' }" @click="switchShop('shop1')">رئيسي</button>
-            <button class="shop-pill" :class="{ active: activeShop === 'shop2' }" @click="switchShop('shop2')">نواشف</button>
+            <button
+              class="shop-pill"
+              :class="{ active: activeShop === 'shop1' }"
+              :disabled="userShopAccess === 'shop2'"
+              :title="userShopAccess === 'shop2' ? 'حسابك مخوّل لقسم النواشف فقط' : 'التبديل إلى المتجر الرئيسي'"
+              @click="switchShop('shop1')"
+            >رئيسي</button>
+            <button
+              class="shop-pill"
+              :class="{ active: activeShop === 'shop2' }"
+              :disabled="userShopAccess === 'shop1'"
+              :title="userShopAccess === 'shop1' ? 'حسابك مخوّل للمتجر الرئيسي فقط' : 'التبديل إلى قسم النواشف'"
+              @click="switchShop('shop2')"
+            >نواشف</button>
           </div>
         </div>
 
@@ -120,11 +152,11 @@
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
             <span>البنرات التسويقية</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'users' }" @click="setTab('users')" role="tab" :aria-selected="activeTab === 'users'" :tabindex="activeTab === 'users' ? 0 : -1">
+          <button v-if="userRole === 'admin' && userShopAccess === 'all'" class="menu-item" :class="{ active: activeTab === 'users' }" @click="setTab('users')" role="tab" :aria-selected="activeTab === 'users'" :tabindex="activeTab === 'users' ? 0 : -1">
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
             <span>إدارة المستخدمين</span>
           </button>
-          <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'settings' }" @click="setTab('settings')" role="tab" :aria-selected="activeTab === 'settings'" :tabindex="activeTab === 'settings' ? 0 : -1">
+          <button v-if="userRole === 'admin' && userShopAccess === 'all'" class="menu-item" :class="{ active: activeTab === 'settings' }" @click="setTab('settings')" role="tab" :aria-selected="activeTab === 'settings'" :tabindex="activeTab === 'settings' ? 0 : -1">
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             <span>الإعدادات والنسخ الاحتياطي</span>
           </button>
@@ -3555,7 +3587,7 @@
 
           <!-- USERS MANAGEMENT TAB -->
           <AdminUsersTab
-            v-else-if="activeTab === 'users' && userRole === 'admin'"
+            v-else-if="activeTab === 'users' && userRole === 'admin' && userShopAccess === 'all'"
             :adminUsers="adminUsers"
             :isMobileScreen="isMobileScreen"
             :selectedTableRowIndex="selectedTableRowIndex"
@@ -3567,7 +3599,7 @@
 
           <!-- Settings & Backup Tab -->
           <AdminSettingsTab
-            v-else-if="activeTab === 'settings' && userRole === 'admin'"
+            v-else-if="activeTab === 'settings' && userRole === 'admin' && userShopAccess === 'all'"
             v-model:resetModalOpen="resetModalOpen"
             :adminFetch="adminFetch"
             @orders-reset="onOrdersReset"
@@ -7373,9 +7405,19 @@ export default {
       return 'analytics';
     };
 
+    const getInitialActiveShop = () => {
+      try {
+        const access = localStorage.getItem('admin_shop_access');
+        if (access === 'shop1' || access === 'shop2') return access;
+        const savedShop = localStorage.getItem('admin_active_shop');
+        if (savedShop === 'shop1' || savedShop === 'shop2') return savedShop;
+      } catch (e) {}
+      return 'shop1';
+    };
+
     const activeTab = ref(getInitialTab());
-    const activeShop = ref('shop1');
-    const loginShop = ref('shop1');
+    const activeShop = ref(getInitialActiveShop());
+    const loginShop = ref(getInitialActiveShop());
 
 
     const isScanning = ref(false);
@@ -7698,15 +7740,32 @@ export default {
     // Login Data
     const loginForm = reactive({ username: '', password: '' });
     const loginError = ref('');
-    const publicAdminUsers = ref([{ username: 'admin', name: 'المدير العام', role: 'admin' }]);
+    const manualLoginMode = ref(false);
+    const publicAdminUsers = ref([{ username: 'admin', name: 'المدير العام' }]);
+
+    const toggleManualLoginMode = () => {
+      manualLoginMode.value = !manualLoginMode.value;
+      if (!manualLoginMode.value && publicAdminUsers.value.length > 0) {
+        const exists = publicAdminUsers.value.some(u => u.username === loginForm.username);
+        if (!exists) {
+          loginForm.username = publicAdminUsers.value[0].username;
+        }
+      } else if (manualLoginMode.value) {
+        loginForm.username = '';
+      }
+    };
 
     const fetchPublicAdminUsers = async () => {
       try {
         const res = await fetch('/api/public/admin-users');
         if (res.ok) {
           const data = await res.json();
-          if (data.users && data.users.length > 0) {
+          if (data.manualOnly) {
+            publicAdminUsers.value = [];
+            manualLoginMode.value = true;
+          } else if (data.users && data.users.length > 0) {
             publicAdminUsers.value = data.users;
+            manualLoginMode.value = false;
             // Auto select first user if not set
             if (!loginForm.username && data.users.length > 0) {
               loginForm.username = data.users[0].username;
@@ -7720,9 +7779,10 @@ export default {
 
     const cropperModalOpen = ref(false);
 
-    // User Roles & Authentication State
+    // User Roles & Authentication State (authoritatively synced from /api/admin-check on mount)
     const userRole = ref(localStorage.getItem('admin_role') || 'admin');
     const userDisplayName = ref(localStorage.getItem('admin_name') || 'المدير العام');
+    const userShopAccess = ref(localStorage.getItem('admin_shop_access') || 'all');
     const adminUsers = ref([]);
     const userModalOpen = ref(false);
     const pendingEditUser = ref(null);
@@ -9343,6 +9403,7 @@ export default {
     // IMAGE RECOVERY TAB LOGIC
     // MARKETING CAROUSEL LOGIC
     const fetchCarousel = async () => {
+      if (userRole.value !== 'admin') return;
       try {
         const res = await adminFetch(`/api/admin/marketing-carousel?shop=${activeShop.value}`);
         if (res.ok) {
@@ -9374,6 +9435,40 @@ export default {
       return formatTotal(val);
     };
 
+    const clearClientAuthSession = () => {
+      isAuthenticated.value = false;
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_role');
+      localStorage.removeItem('admin_name');
+      localStorage.removeItem('admin_shop_access');
+    };
+
+    const applyServerUserProfile = (profile) => {
+      if (!profile) return;
+      const resolvedRole = profile.role === 'order_manager' ? 'order_manager' : 'admin';
+      const resolvedName = profile.name || profile.username || 'المدير العام';
+      const resolvedAccess = ['shop1', 'shop2', 'all'].includes(profile.shopAccess) ? profile.shopAccess : 'all';
+
+      userRole.value = resolvedRole;
+      userDisplayName.value = resolvedName;
+      userShopAccess.value = resolvedAccess;
+
+      localStorage.setItem('admin_role', resolvedRole);
+      localStorage.setItem('admin_name', resolvedName);
+      localStorage.setItem('admin_shop_access', resolvedAccess);
+
+      if (resolvedAccess !== 'all' && activeShop.value !== resolvedAccess) {
+        activeShop.value = resolvedAccess;
+        localStorage.setItem('admin_active_shop', resolvedAccess);
+      }
+
+      if (resolvedRole === 'order_manager' && !['orders', 'customers', 'production'].includes(activeTab.value)) {
+        activeTab.value = 'orders';
+      } else if (resolvedAccess !== 'all' && ['users', 'settings'].includes(activeTab.value)) {
+        activeTab.value = 'orders';
+      }
+    };
+
     const adminFetch = async (url, options = {}) => {
       if (!options.headers) options.headers = {};
       if (options.body && !(options.body instanceof FormData)) {
@@ -9388,29 +9483,42 @@ export default {
       }
       
       const res = await fetch(url, options);
-      if (res.status === 401 || res.status === 403) {
-        isAuthenticated.value = false;
-        localStorage.removeItem('admin_token');
+      // Only 401 (expired, missing, or revoked token) terminates the session; 403 means authenticated but insufficient role/scope
+      if (res.status === 401) {
+        clearClientAuthSession();
       }
       return res;
     };
 
     // Authentication Checks
-    const checkAuthentication = async () => {
+    const checkAuthentication = async (retriedRedirect = false) => {
       loading.value = true;
       try {
         const checkUrl = activeShop.value === 'shop2' ? '/api/shop2/admin-check' : '/api/admin-check';
         const res = await adminFetch(checkUrl);
         if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data && data.user) {
+            applyServerUserProfile(data.user);
+          }
+          localStorage.setItem('admin_active_shop', activeShop.value);
           isAuthenticated.value = true;
           // Unblock the main layout so that the admin shell & active tab skeleton loader mount immediately!
           loading.value = false;
-          if (activeTab.value === 'analytics') {
+          if (activeTab.value === 'analytics' && userRole.value === 'admin') {
             analyticsLoading.value = true;
           }
           await loadAllData();
+        } else if (res.status === 403 && !retriedRedirect) {
+          const errData = await res.json().catch(() => ({}));
+          if (errData && errData.code === 'SHOP_FORBIDDEN' && (errData.allowedShop === 'shop1' || errData.allowedShop === 'shop2')) {
+            activeShop.value = errData.allowedShop;
+            localStorage.setItem('admin_active_shop', errData.allowedShop);
+            return await checkAuthentication(true);
+          }
+          clearClientAuthSession();
         } else {
-          isAuthenticated.value = false;
+          clearClientAuthSession();
         }
       } catch (err) {
         console.error(err);
@@ -9432,23 +9540,29 @@ export default {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          activeShop.value = loginShop.value;
+          const targetShop = data.effectiveShop || loginShop.value;
+          activeShop.value = targetShop;
+          localStorage.setItem('admin_active_shop', targetShop);
           localStorage.setItem('admin_token', data.token); // Save token for mobile compatibility
-          localStorage.setItem('admin_role', data.role || 'admin');
-          localStorage.setItem('admin_name', data.name || 'المدير العام');
-          userRole.value = data.role || 'admin';
-          userDisplayName.value = data.name || 'المدير العام';
 
-          if (userRole.value === 'order_manager' && !['orders', 'customers', 'production'].includes(activeTab.value)) {
-            activeTab.value = 'orders';
-          }
+          applyServerUserProfile({
+            username: data.username || loginForm.username,
+            name: data.name || 'المدير العام',
+            role: data.role || 'admin',
+            shopAccess: data.shopAccess || 'all'
+          });
 
           isAuthenticated.value = true;
           loading.value = false;
-          if (activeTab.value === 'analytics') {
+          if (activeTab.value === 'analytics' && userRole.value === 'admin') {
             analyticsLoading.value = true;
           }
-          toast.show('تم تسجيل الدخول بنجاح', 'success');
+          if (data.shopAccess && data.shopAccess !== 'all' && data.effectiveShop !== loginShop.value) {
+            const shopLabel = data.effectiveShop === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي';
+            toast.show(`تم تسجيل الدخول وتوجيهك إلى ${shopLabel} حسب صلاحية حسابك`, 'success');
+          } else {
+            toast.show('تم تسجيل الدخول بنجاح', 'success');
+          }
           await loadAllData();
         } else {
           loginError.value = data.message || 'بيانات الدخول غير صحيحة';
@@ -9461,27 +9575,39 @@ export default {
     };
 
     const handleLogout = async () => {
-      document.cookie = activeShop.value === 'shop2' ? 'admin_shop2=; Max-Age=0; path=/;' : 'admin=; Max-Age=0; path=/;';
-      localStorage.removeItem('admin_token'); // Clear token
-      localStorage.removeItem('admin_role');
-      localStorage.removeItem('admin_name');
+      const token = localStorage.getItem('admin_token');
+      try {
+        await fetch('/api/logout', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+      } catch (e) {}
+      clearClientAuthSession();
+      localStorage.removeItem('admin_active_shop');
       userRole.value = 'admin';
       userDisplayName.value = 'المدير العام';
-      isAuthenticated.value = false;
+      userShopAccess.value = 'all';
+      loginForm.password = '';
       toast.show('تم تسجيل الخروج بنجاح', 'success');
     };
 
     // Switch shops context in dashboard
     const switchShop = async (shop) => {
+      if (userShopAccess.value !== 'all' && shop !== userShopAccess.value) {
+        const shopLabel = userShopAccess.value === 'shop2' ? 'قسم النواشف' : 'المتجر الرئيسي';
+        toast.show(`حسابك مخوّل للوصول إلى ${shopLabel} فقط`, 'warning');
+        return;
+      }
       activeShop.value = shop;
+      localStorage.setItem('admin_active_shop', shop);
       sidebarOpen.value = false;
       await checkAuthentication();
-      if (activeTab.value === 'analytics') {
+      if (activeTab.value === 'analytics' && userRole.value === 'admin') {
         triggerAnalyticsAnimations();
       }
     };
 
-    // Tab switcher with locked routing for secondary order_manager role (Orders, Customers, Production)
+    // Tab switcher with locked routing for secondary order_manager role & single-shop admins
     const setTab = (tab) => {
       const allowed = ['orders', 'customers', 'production'];
       if (userRole.value === 'order_manager' && !allowed.includes(tab)) {
@@ -9489,6 +9615,11 @@ export default {
         if (!allowed.includes(activeTab.value)) {
           activeTab.value = 'orders';
         }
+        sidebarOpen.value = false;
+        return;
+      }
+      if (userShopAccess.value !== 'all' && ['users', 'settings'].includes(tab)) {
+        toast.show('إدارة المستخدمين والنسخ الاحتياطي متاحة للمدير العام فقط', 'warning');
         sidebarOpen.value = false;
         return;
       }
@@ -9515,7 +9646,7 @@ export default {
 
     // User Management Methods
     const fetchUsers = async () => {
-      if (userRole.value !== 'admin') return;
+      if (userRole.value !== 'admin' || userShopAccess.value !== 'all') return;
       try {
         const res = await adminFetch('/api/admin/users');
         if (res.ok) {
@@ -9676,6 +9807,10 @@ export default {
     };
 
     const fetchAnalytics = async () => {
+      if (userRole.value !== 'admin') {
+        analyticsLoading.value = false;
+        return;
+      }
       analyticsLoading.value = true;
 
       try {
@@ -13500,6 +13635,8 @@ const closeSuggestionsWithDelay = () => {
       loginShop,
       loginForm,
       loginError,
+      manualLoginMode,
+      toggleManualLoginMode,
       publicAdminUsers,
       fetchPublicAdminUsers,
       tabTitles,
@@ -13756,6 +13893,7 @@ const closeSuggestionsWithDelay = () => {
       getDevicePct,
       userRole,
       userDisplayName,
+      userShopAccess,
       adminFetch,
       fetchUsers,
       fetchCarousel,
@@ -14837,6 +14975,12 @@ const closeSuggestionsWithDelay = () => {
 
 .shop-theme-shop2 .shop-pill.active {
   color: #ffffff !important;
+}
+
+.shop-pill:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
 }
 
 /* Strictly lock sidebar tabs horizontally */
