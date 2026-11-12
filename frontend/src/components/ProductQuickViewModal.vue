@@ -655,8 +655,8 @@ const handleTagClick = (tagName) => {
 }
 
 .shop-theme-shop2 .qv-cat-pill {
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
+  background: rgba(var(--shop2-ink-rgb), 0.12);
+  color: var(--shop2-ink);
 }
 
 .qv-title {
@@ -715,9 +715,9 @@ const handleTagClick = (tagName) => {
 }
 
 .shop-theme-shop2 .product-tag-chip {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.2);
-  color: #1e40af;
+  background: rgba(var(--shop2-ink-rgb), 0.08);
+  border-color: rgba(var(--shop2-ink-rgb), 0.2);
+  color: var(--shop2-ink);
 }
 
 .tag-chip-icon {
@@ -728,7 +728,7 @@ const handleTagClick = (tagName) => {
 }
 
 .shop-theme-shop2 .tag-chip-icon {
-  color: #2563eb;
+  color: var(--shop2-ink);
 }
 
 .qv-price-section {
@@ -769,13 +769,14 @@ const handleTagClick = (tagName) => {
 
 .price-curr {
   font-family: 'Cairo', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: #b45309;
+  font-size: 0.78rem;
+  /* Currency is secondary information: lighter weight and muted ink let the figure lead. */
+  font-weight: 600;
+  color: #685f58;
 }
 
 .shop-theme-shop2 .price-curr {
-  color: #1d4ed8;
+  color: #5b6472;
 }
 
 .price-item.is-muted-secondary {
@@ -823,7 +824,7 @@ const handleTagClick = (tagName) => {
 
 .shop-theme-shop2 .qv-add-btn {
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 4px 14px rgba(var(--shop2-ink-rgb), 0.25);
 }
 
 .qv-add-btn:disabled {

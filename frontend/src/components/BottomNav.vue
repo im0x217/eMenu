@@ -195,9 +195,9 @@ const navToShop = () => {
   box-shadow: 0 2px 10px rgba(217, 119, 6, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-:global(.shop-theme-shop2) .nav-pill-inner {
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.14) 0%, rgba(30, 58, 95, 0.08) 100%);
-  border-color: rgba(37, 99, 235, 0.22);
+:global(body.shop-theme-shop2 .nav-pill-inner) {
+  background: linear-gradient(180deg, rgba(var(--shop2-ink-rgb), 0.14) 0%, rgba(30, 58, 95, 0.08) 100%);
+  border-color: rgba(var(--shop2-ink-rgb), 0.22);
   box-shadow: 0 2px 10px rgba(30, 58, 95, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
@@ -234,8 +234,8 @@ const navToShop = () => {
   color: #b45309;
 }
 
-:global(.shop-theme-shop2) .nav-tab-btn.active {
-  color: #1d4ed8;
+:global(body.shop-theme-shop2 .nav-tab-btn.active) {
+  color: var(--shop2-ink);
 }
 
 .nav-tab-btn.active svg {
@@ -244,9 +244,9 @@ const navToShop = () => {
   fill: rgba(180, 83, 9, 0.14);
 }
 
-:global(.shop-theme-shop2) .nav-tab-btn.active svg {
-  color: #1d4ed8;
-  fill: rgba(29, 78, 216, 0.14);
+:global(body.shop-theme-shop2 .nav-tab-btn.active svg) {
+  color: var(--shop2-ink);
+  fill: rgba(var(--shop2-ink-rgb), 0.14);
 }
 
 .tab-label {

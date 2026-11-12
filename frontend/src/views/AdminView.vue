@@ -112,10 +112,12 @@
 
         <nav 
           class="sidebar-menu" 
+          :class="{ 'has-sliding-indicator': menuIndicatorState.visible, 'indicator-animated': menuIndicatorState.animate }"
           ref="sidebarMenuRef"
           role="tablist" 
           aria-label="أقسام لوحة التحكم"
         >
+          <span class="menu-active-indicator" :style="menuIndicatorStyle" aria-hidden="true"></span>
           <button v-if="userRole === 'admin'" class="menu-item" :class="{ active: activeTab === 'analytics' }" @click="setTab('analytics')" role="tab" :aria-selected="activeTab === 'analytics'" :tabindex="activeTab === 'analytics' ? 0 : -1">
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
             <span>الإحصائيات والتقارير</span>
@@ -7355,6 +7357,7 @@ import CategoryIcon from '../components/CategoryIcon.vue';
 import JsBarcode from 'jsbarcode';
 import { formatLibyanWhatsappNumber, getLibyanWhatsAppUrl, formatLibyanPhone, formatPhoneInput, cleanPhoneDigits } from '../utils/phone';
 import { vSheetGesture } from '../utils/sheetGesture';
+import { useSlidingIndicator } from '../utils/slidingIndicator';
 import { useConfirmStore } from '../stores/confirm';
 import { lockBodyScroll, unlockBodyScroll, trapTabKey, restoreElementFocus } from '../utils/modalA11y';
 
@@ -7824,6 +7827,14 @@ export default {
     const adminUsers = ref([]);
     const userModalOpen = ref(false);
     const pendingEditUser = ref(null);
+
+    // Sidebar active highlight glides between items; re-measure whenever the active tab
+    // or the visible item set (auth, role, shop-scoped tabs like inventory) changes.
+    const { indicatorState: menuIndicatorState, indicatorStyle: menuIndicatorStyle } = useSlidingIndicator(
+      sidebarMenuRef,
+      '.menu-item.active',
+      () => [activeTab.value, activeShop.value, isAuthenticated.value, userRole.value, userShopAccess.value]
+    );
 
     // Tabs Titles
     const tabTitles = {
@@ -9662,6 +9673,12 @@ export default {
         return;
       }
       sidebarOpen.value = false;
+      if (activeTab.value === tab) {
+        if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+        return;
+      }
       // Reset keyboard table row selection to first row when switching tabs
       selectedTableRowIndex.value = 0;
 
@@ -9672,6 +9689,11 @@ export default {
 
       // Update activeTab immediately for instant, buttery-smooth navigation
       activeTab.value = tab;
+
+      const mainScrollEl = typeof document !== 'undefined' ? document.querySelector('.admin-main') : null;
+      if (mainScrollEl && mainScrollEl.scrollTop > 0) {
+        mainScrollEl.scrollTop = 0;
+      }
 
       if (tab === 'analytics') {
         fetchAnalytics();
@@ -13705,6 +13727,8 @@ const closeSuggestionsWithDelay = () => {
       isScanning,
       adminMainRef,
       sidebarMenuRef,
+      menuIndicatorState,
+      menuIndicatorStyle,
       handleSidebarKeydown,
       formatLibyanWhatsappNumber,
       getLibyanWhatsAppUrl,
@@ -14761,6 +14785,16 @@ const closeSuggestionsWithDelay = () => {
   background: radial-gradient(circle at 10% 20%, rgba(246, 248, 252, 0.95) 0%, rgba(230, 237, 246, 0.95) 90%);
   font-family: 'Cairo', sans-serif;
   direction: rtl;
+  /* Elevation tokens for dashboard surfaces: hairline ring (replaces 1px borders),
+     a tight contact shadow, and a soft ambient shadow pulled in with negative spread. */
+  --admin-card-elevation:
+    0 0 0 1px rgba(15, 23, 42, 0.05),
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px -16px rgba(15, 23, 42, 0.16);
+  --admin-card-elevation-hover:
+    0 0 0 1px rgba(15, 23, 42, 0.06),
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 18px 36px -18px rgba(15, 23, 42, 0.24);
 }
 
 /* Define chart/theme palettes based on selected shop context */
@@ -14944,8 +14978,8 @@ const closeSuggestionsWithDelay = () => {
   background: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--admin-card-elevation) !important;
 }
 
 /* Sidebar Navigation */
@@ -15158,6 +15192,54 @@ const closeSuggestionsWithDelay = () => {
   transform: scale(1.08);
 }
 
+/* Sliding active highlight: one shared surface glides to the active tab (transform-only).
+   It carries exactly the visuals `.menu-item.active` used to paint itself, so the static
+   look is unchanged — only the movement between tabs is new. */
+.sidebar-menu {
+  position: relative;
+}
+
+.menu-active-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(var(--primary-color-rgb, 217, 119, 6), 0.16) 0%, rgba(var(--primary-color-rgb, 217, 119, 6), 0.05) 100%);
+  border-right: 4px solid var(--primary-color, #d97706);
+  box-shadow: 0 0 16px rgba(var(--primary-color-rgb, 217, 119, 6), 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-sizing: border-box;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+}
+
+.sidebar-menu.indicator-animated .menu-active-indicator {
+  /* Critically damped feel: quick departure, soft settle, no overshoot. */
+  transition:
+    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    height 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease;
+}
+
+.sidebar-menu .menu-item {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-menu.has-sliding-indicator .menu-item.active {
+  background: transparent;
+  border-right-color: transparent;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-menu.indicator-animated .menu-active-indicator {
+    transition: opacity 0.15s ease;
+  }
+}
+
 .sidebar-footer {
   margin-top: auto;
   border-top: 1px solid #e2e8f0;
@@ -15336,8 +15418,10 @@ const closeSuggestionsWithDelay = () => {
   padding: 14px 16px;
   background: #ffffff;
   border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  /* Depth from light, not lines: a transparent border keeps the box size identical while a
+     hairline ring + soft ambient shadow replaces the hard 1px outline. */
+  border: 1px solid transparent;
+  box-shadow: var(--admin-card-elevation);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   opacity: 0;
   transform: translateY(12px);
@@ -15363,7 +15447,7 @@ const closeSuggestionsWithDelay = () => {
 
 .kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--admin-card-elevation-hover);
 }
 
 .kpi-info {
@@ -15417,8 +15501,8 @@ const closeSuggestionsWithDelay = () => {
   background: #ffffff;
   border-radius: 16px;
   padding: 20px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid transparent;
+  box-shadow: var(--admin-card-elevation);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -15436,7 +15520,7 @@ const closeSuggestionsWithDelay = () => {
 
 .chart-card:not(.skeleton-card).in-view:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--admin-card-elevation-hover);
 }
 
 /* Staggered entrance delays for chart cards */
@@ -15505,23 +15589,23 @@ const closeSuggestionsWithDelay = () => {
   color: #0f172a;
 }
 
-:global(.dark-mode) .chart-card {
+:global(.dark-mode .chart-card) {
   color: #f8fafc;
 }
-:global(.dark-mode) .chart-card .text-muted,
-:global(.dark-mode) .chart-card .cat-rank-num,
-:global(.dark-mode) .chart-card .split-clean-pct,
-:global(.dark-mode) .chart-card .fav-clean-rank,
-:global(.dark-mode) .chart-card .fav-clean-count {
+:global(.dark-mode .chart-card .text-muted),
+:global(.dark-mode .chart-card .cat-rank-num),
+:global(.dark-mode .chart-card .split-clean-pct),
+:global(.dark-mode .chart-card .fav-clean-rank),
+:global(.dark-mode .chart-card .fav-clean-count) {
   color: #94a3b8 !important;
 }
-:global(.dark-mode) .chart-card .split-clean-name,
-:global(.dark-mode) .chart-card .split-clean-val,
-:global(.dark-mode) .chart-card .pm-clean-name,
-:global(.dark-mode) .chart-card .pm-clean-meta,
-:global(.dark-mode) .chart-card .cat-name,
-:global(.dark-mode) .chart-card .cat-val,
-:global(.dark-mode) .chart-card .fav-clean-name {
+:global(.dark-mode .chart-card .split-clean-name),
+:global(.dark-mode .chart-card .split-clean-val),
+:global(.dark-mode .chart-card .pm-clean-name),
+:global(.dark-mode .chart-card .pm-clean-meta),
+:global(.dark-mode .chart-card .cat-name),
+:global(.dark-mode .chart-card .cat-val),
+:global(.dark-mode .chart-card .fav-clean-name) {
   color: #f1f5f9;
 }
 
@@ -17520,17 +17604,6 @@ select.form-control:focus {
 .active-tab-container {
   position: relative;
   width: 100%;
-}
-
-/* Snappy CSS Tab Fade (120ms Hardware-Composited Crossfade) */
-.admin-tab-fade-enter-active,
-.admin-tab-fade-leave-active {
-  transition: opacity 0.12s ease-out;
-}
-
-.admin-tab-fade-enter-from,
-.admin-tab-fade-leave-to {
-  opacity: 0;
 }
 
 .tab-content-wrapper .table-card {
@@ -25585,6 +25658,8 @@ select.pos-control {
     animation: none !important;
     transition: none !important;
     box-shadow: none !important;
+    /* On screen depth comes from shadows; paper has none, so restore a hairline outline. */
+    border-color: rgba(15, 23, 42, 0.14) !important;
     min-width: 0 !important;
     break-inside: avoid;
     page-break-inside: avoid;
@@ -27928,21 +28003,20 @@ select.pos-control {
 
 .prod-cust-kpi-item {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid transparent;
   border-radius: 14px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--admin-card-elevation);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .prod-cust-kpi-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
-  border-color: #cbd5e1;
+  box-shadow: var(--admin-card-elevation-hover);
 }
 
 .prod-cust-kpi-item.highlight {
@@ -28935,17 +29009,16 @@ select.pos-control {
   gap: 16px;
   padding: 18px 20px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: var(--admin-card-elevation);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
 .cat-kpi-card:hover,
 .tag-kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
-  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: var(--admin-card-elevation-hover) !important;
 }
 
 .cat-kpi-icon,
@@ -30972,26 +31045,23 @@ select.pos-control {
 
 .admin-tab-fade-enter-active {
   transition:
-    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    opacity 0.21s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
   will-change: opacity, transform;
 }
 
 .admin-tab-fade-leave-active {
-  transition:
-    opacity 0.14s cubic-bezier(0.4, 0, 1, 1),
-    transform 0.16s cubic-bezier(0.4, 0, 1, 1) !important;
-  will-change: opacity, transform;
+  transition: opacity 0.095s cubic-bezier(0.4, 0, 1, 1);
+  will-change: opacity;
 }
 
 .admin-tab-fade-enter-from {
   opacity: 0;
-  transform: translate3d(0, 8px, 0) scale(0.996);
+  transform: translate3d(0, 6px, 0);
 }
 
 .admin-tab-fade-leave-to {
   opacity: 0;
-  transform: translate3d(0, -4px, 0) scale(0.998);
 }
 
 .kpi-card {
@@ -31003,7 +31073,7 @@ select.pos-control {
 
 .kpi-card:hover {
   transform: translate3d(0, -3px, 0) scale(1.01) !important;
-  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.06) !important;
+  box-shadow: var(--admin-card-elevation-hover) !important;
 }
 
 /* ==========================================================================

@@ -252,8 +252,9 @@ const handleNavigateToCart = () => {
 }
 
 .price-unit {
-  font-size: 0.8rem;
-  margin-right: 3px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  margin-right: 4px;
   color: var(--text-muted);
 }
 

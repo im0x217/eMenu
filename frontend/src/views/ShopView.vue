@@ -1030,8 +1030,8 @@ watch(carouselItems, (newItems) => {
   transition: transform 0.2s;
 }
 
-:global(.shop-theme-shop2) .back-home-btn {
-  color: #1d4ed8;
+:global(body.shop-theme-shop2 .back-home-btn) {
+  color: var(--shop2-ink);
 }
 
 .back-home-btn::before {
@@ -1107,6 +1107,17 @@ watch(carouselItems, (newItems) => {
   border-color: #047857;
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(4, 120, 87, 0.25);
+}
+
+:global(body.shop-theme-shop2 .bulk-toggle-btn:not(.active):not(.disabled)) {
+  background: rgba(var(--shop2-ink-rgb), 0.08);
+  border-color: rgba(var(--shop2-ink-rgb), 0.22);
+}
+
+:global(body.shop-theme-shop2 .bulk-toggle-btn.disabled:hover) {
+  background: rgba(var(--shop2-ink-rgb), 0.08);
+  border-color: rgba(var(--shop2-ink-rgb), 0.32);
+  color: var(--shop2-ink);
 }
 
 /* Fancy Slide-Down Entrance for Bulk Prices Button */
@@ -1241,7 +1252,7 @@ watch(carouselItems, (newItems) => {
   background: rgba(255, 253, 249, 0.94);
   backdrop-filter: blur(20px) saturate(190%);
   -webkit-backdrop-filter: blur(20px) saturate(190%);
-  border-color: rgba(217, 119, 6, 0.22);
+  border-color: rgba(var(--primary-color-rgb), 0.20);
   box-shadow: 0 10px 26px -6px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.65) inset;
 }
 
@@ -1331,8 +1342,9 @@ watch(carouselItems, (newItems) => {
   white-space: nowrap;
   cursor: pointer;
   border-radius: 9999px !important;
-  border-color: rgba(44, 37, 32, 0.06);
-  background: rgba(255, 253, 249, 0.9);
+  border: 1px solid transparent;
+  background: rgba(255, 253, 249, 0.94);
+  box-shadow: 0 0 0 1px rgba(44, 37, 32, 0.05), 0 2px 6px rgba(44, 37, 32, 0.04);
   transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
   flex-shrink: 0;
 }
@@ -1340,6 +1352,7 @@ watch(carouselItems, (newItems) => {
 .cat-btn.active {
   background: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.26);
 }
 
 .cat-emoji {
@@ -1386,10 +1399,10 @@ watch(carouselItems, (newItems) => {
   border-radius: 12px;
 }
 
-:global(.shop-theme-shop2) .subcat-plain-badge {
-  color: #1e40af;
-  background: #dbeafe;
-  border-color: rgba(37, 99, 235, 0.25);
+:global(body.shop-theme-shop2 .subcat-plain-badge) {
+  color: var(--shop2-ink);
+  background: rgba(var(--shop2-ink-rgb), 0.08);
+  border-color: rgba(var(--shop2-ink-rgb), 0.25);
 }
 
 .subcat-products-grid-1row {
@@ -1446,6 +1459,16 @@ watch(carouselItems, (newItems) => {
 
 .active-search-clear-pill:active {
   transform: scale(0.96);
+}
+
+:global(body.shop-theme-shop2 .active-search-clear-pill) {
+  color: var(--shop2-ink);
+  background: rgba(var(--shop2-ink-rgb), 0.10);
+  border-color: rgba(var(--shop2-ink-rgb), 0.25);
+}
+
+:global(body.shop-theme-shop2 .active-search-clear-pill:hover) {
+  background: rgba(var(--shop2-ink-rgb), 0.16);
 }
 
 @media (max-width: 640px) {

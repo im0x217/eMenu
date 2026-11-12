@@ -401,7 +401,7 @@ const handleClearCart = () => {
               <div class="item-details">
                 <h4 class="item-title">{{ item.name }}</h4>
                 <div class="item-price-info">
-                  <span class="price-val">{{ getItemPrice(item) }} د.ل</span>
+                  <span class="price-val text-mono">{{ getItemPrice(item) }} <span class="price-curr">د.ل</span></span>
                   <span v-if="item.priceMode === 'bulk'" class="bulk-label">سعر جملة</span>
                 </div>
               </div>
@@ -675,7 +675,7 @@ const handleClearCart = () => {
                     </div>
                     <div class="confirm-item-math">
                       <span class="confirm-item-qty-price text-mono">{{ item.quantity }} × {{ getItemPrice(item) }}</span>
-                      <span class="confirm-item-subtotal text-mono">{{ Math.round(getItemPrice(item) * item.quantity) }} د.ل</span>
+                      <span class="confirm-item-subtotal text-mono">{{ Math.round(getItemPrice(item) * item.quantity) }} <span class="confirm-curr">د.ل</span></span>
                     </div>
                   </div>
                 </div>
@@ -1113,15 +1113,26 @@ const handleClearCart = () => {
 }
 
 .price-val {
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--primary-color);
+  font-size: 0.88rem;
+  font-weight: 850;
+  color: #1c1917;
+}
+
+.price-val .price-curr {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #685f58;
+}
+
+:global(body.shop-theme-shop2 .price-val .price-curr) {
+  color: #5b6472;
 }
 
 .bulk-label {
   font-size: 0.68rem;
-  background: rgba(147, 51, 234, 0.1);
-  color: #7e22ce;
+  background: rgba(16, 185, 129, 0.10);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.22);
   padding: 1px 5px;
   border-radius: 4px;
   font-weight: 700;
@@ -1351,7 +1362,7 @@ const handleClearCart = () => {
   box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
 }
 
-:global(.shop-theme-shop2) .date-pill-btn.active {
+:global(body.shop-theme-shop2 .date-pill-btn.active) {
   background: #1e3a5f;
   color: #ffffff;
   border-color: #1e3a5f;
@@ -1434,14 +1445,23 @@ const handleClearCart = () => {
 
 .price-wrapper .value {
   font-size: 1.4rem;
-  font-weight: 850;
-  color: var(--primary-color);
+  font-weight: 900;
+  color: #b45309;
+}
+
+:global(body.shop-theme-shop2 .price-wrapper .value) {
+  color: var(--shop2-ink);
 }
 
 .price-wrapper .unit {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   margin-right: 4px;
-  font-weight: 750;
+  font-weight: 500;
+  color: #685f58;
+}
+
+:global(body.shop-theme-shop2 .price-wrapper .unit) {
+  color: #5b6472;
 }
 
 .checkout-btn {
@@ -1800,6 +1820,12 @@ const handleClearCart = () => {
   font-size: 0.84rem;
 }
 
+.confirm-curr {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
 /* Order Notes Box */
 .confirm-notes-box {
   background: #fffbeb;
@@ -1858,9 +1884,42 @@ const handleClearCart = () => {
 }
 
 .confirm-total-currency {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #92400e;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #685f58;
+}
+
+:global(body.shop-theme-shop2 .confirm-icon-badge) {
+  background: rgba(var(--shop2-ink-rgb), 0.12);
+  color: var(--shop2-ink);
+}
+
+:global(body.shop-theme-shop2 .confirm-meta-item) {
+  border-color: rgba(var(--shop2-ink-rgb), 0.18);
+}
+
+:global(body.shop-theme-shop2 .confirm-meta-item svg),
+:global(body.shop-theme-shop2 .confirm-item-note) {
+  color: var(--shop2-ink);
+}
+
+:global(body.shop-theme-shop2 .confirm-price-tier-tag) {
+  background: rgba(var(--shop2-ink-rgb), 0.10);
+  color: var(--shop2-ink);
+}
+
+:global(body.shop-theme-shop2 .confirm-total-card) {
+  background: linear-gradient(135deg, rgba(var(--shop2-ink-rgb), 0.06), rgba(var(--shop2-ink-rgb), 0.12));
+  border-color: rgba(var(--shop2-ink-rgb), 0.28);
+}
+
+:global(body.shop-theme-shop2 .confirm-total-label),
+:global(body.shop-theme-shop2 .confirm-total-number) {
+  color: var(--shop2-ink);
+}
+
+:global(body.shop-theme-shop2 .confirm-total-currency) {
+  color: #5b6472;
 }
 
 /* Action Buttons Bar */

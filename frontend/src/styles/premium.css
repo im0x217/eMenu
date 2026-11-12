@@ -100,7 +100,7 @@
 }
 
 /* Figures that change in place (prices, totals, KPIs, table cells) must not jitter in width. */
-:where(.price-figure, .kpi-value, .admin-table td, .debt-kpi-val, .recon-kpi-value) {
+:where(.price-figure, .price-val, .total-price-val, .confirm-total-number, .kpi-value, .inv-stat-number, .admin-table td, .debt-kpi-val, .recon-kpi-value) {
   font-variant-numeric: tabular-nums;
 }
 
@@ -127,10 +127,17 @@
 }
 
 @media (prefers-contrast: more) {
+  .glass-panel,
+  .product-card,
   .qv-sheet-card,
   .modal-box,
   .kpi-card,
-  .chart-card {
+  .chart-card,
+  .cat-kpi-card,
+  .tag-kpi-card,
+  .inv-stat-card,
+  .table-card,
+  .modern-order-card {
     border: 1.5px solid #2c2520 !important;
   }
 

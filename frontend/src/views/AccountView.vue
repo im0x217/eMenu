@@ -1136,8 +1136,8 @@ const handleResendWhatsApp = () => {
 }
 
 .balance-amount-val .curr {
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 500;
   color: #64748b;
 }
 
@@ -1169,8 +1169,8 @@ const handleResendWhatsApp = () => {
   padding: 20px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid transparent;
+  box-shadow: var(--card-elevation);
 }
 
 .auth-tabs-nav {
@@ -1329,7 +1329,8 @@ const handleResendWhatsApp = () => {
   padding: 20px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid transparent;
+  box-shadow: var(--card-elevation);
 }
 
 .orders-header-row {
@@ -1393,8 +1394,11 @@ const handleResendWhatsApp = () => {
   padding: 16px;
   border-radius: 18px;
   background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02), 0 1px 3px rgba(15, 23, 42, 0.03);
+  border: 1px solid transparent;
+  box-shadow:
+    0 0 0 1px rgba(44, 37, 32, 0.05),
+    0 2px 6px rgba(44, 37, 32, 0.03),
+    0 10px 24px -14px rgba(44, 37, 32, 0.12);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -1402,8 +1406,9 @@ const handleResendWhatsApp = () => {
 }
 
 .modern-order-card:hover {
-  border-color: rgba(15, 23, 42, 0.14);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  box-shadow:
+    0 0 0 1px rgba(44, 37, 32, 0.08),
+    0 14px 28px -14px rgba(44, 37, 32, 0.18);
 }
 
 .order-card.skeleton-card .skeleton-shimmer {
@@ -1452,9 +1457,9 @@ const handleResendWhatsApp = () => {
 }
 
 .order-shop-pill.shop2 {
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
-  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(var(--shop2-ink-rgb), 0.08);
+  color: var(--shop2-ink);
+  border-color: rgba(var(--shop2-ink-rgb), 0.2);
 }
 
 .order-mode-pill {
@@ -1676,8 +1681,8 @@ const handleResendWhatsApp = () => {
 }
 
 .curr-symbol {
-  font-size: 0.8rem;
-  font-weight: 750;
+  font-size: 0.76rem;
+  font-weight: 500;
   color: #64748b;
 }
 

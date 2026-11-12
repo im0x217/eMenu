@@ -504,7 +504,7 @@ const handleCardPointerLeave = () => {
   .product-card.shop-theme-shop2::after {
     background: radial-gradient(
       220px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      rgba(59, 130, 246, 0.12),
+      rgba(var(--shop2-ink-rgb), 0.12),
       transparent 72%
     );
   }
@@ -749,40 +749,40 @@ const handleCardPointerLeave = () => {
 
 /* Shop 2 Royal Blue Variant for unified singular theme */
 .shop-theme-shop2 .product-tag-chip {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.22);
-  color: #1d4ed8;
+  background: rgba(var(--shop2-ink-rgb), 0.08);
+  border-color: rgba(var(--shop2-ink-rgb), 0.22);
+  color: var(--shop2-ink);
 }
 
 .shop-theme-shop2 .product-card:hover .product-tag-chip {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(var(--shop2-ink-rgb), 0.12);
+  border-color: rgba(var(--shop2-ink-rgb), 0.32);
 }
 
 .shop-theme-shop2 .tag-chip-icon {
-  background: rgba(37, 99, 235, 0.16);
-  color: #1d4ed8;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);
+  background: rgba(var(--shop2-ink-rgb), 0.16);
+  color: var(--shop2-ink);
+  box-shadow: 0 1px 2px rgba(var(--shop2-ink-rgb), 0.12);
 }
 
-:global(.dark-mode) .product-tag-chip {
+:global(.dark-mode .product-tag-chip) {
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.3);
   color: #fde68a;
 }
 
-:global(.dark-mode) .tag-chip-icon {
+:global(.dark-mode .tag-chip-icon) {
   background: rgba(245, 158, 11, 0.25);
   color: #fde68a;
 }
 
-:global(.dark-mode) .shop-theme-shop2 .product-tag-chip {
+:global(.dark-mode .shop-theme-shop2 .product-tag-chip) {
   background: rgba(59, 130, 246, 0.16);
   border-color: rgba(59, 130, 246, 0.32);
   color: #93c5fd;
 }
 
-:global(.dark-mode) .shop-theme-shop2 .tag-chip-icon {
+:global(.dark-mode .shop-theme-shop2 .tag-chip-icon) {
   background: rgba(59, 130, 246, 0.25);
   color: #93c5fd;
 }
@@ -859,9 +859,13 @@ const handleCardPointerLeave = () => {
 }
 
 .regular-price-item .price-curr {
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 500;
   color: #685f58;
+}
+
+.shop-theme-shop2 .regular-price-item .price-curr {
+  color: #5b6472;
 }
 
 /* Secondary muted state when wholesale mode is active */
@@ -914,36 +918,37 @@ const handleCardPointerLeave = () => {
 }
 
 .bulk-price-item .price-curr {
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 500;
   color: #047857;
+  opacity: 0.85;
 }
 
 /* Dark Mode Harmonization */
-:global(.dark-mode) .regular-price-item .price-figure {
+:global(.dark-mode .regular-price-item .price-figure) {
   color: #f1f5f9;
 }
 
-:global(.dark-mode) .regular-price-item .price-curr {
+:global(.dark-mode .regular-price-item .price-curr) {
   color: #94a3b8;
 }
 
-:global(.dark-mode) .regular-price-item.is-muted-secondary .price-figure,
-:global(.dark-mode) .regular-price-item.is-muted-secondary .price-curr {
+:global(.dark-mode .regular-price-item.is-muted-secondary .price-figure),
+:global(.dark-mode .regular-price-item.is-muted-secondary .price-curr) {
   color: #64748b;
   text-decoration-color: rgba(100, 116, 139, 0.7);
 }
 
-:global(.dark-mode) .bulk-price-item {
+:global(.dark-mode .bulk-price-item) {
   background: rgba(16, 185, 129, 0.14);
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-:global(.dark-mode) .bulk-price-item .price-figure {
+:global(.dark-mode .bulk-price-item .price-figure) {
   color: #34d399;
 }
 
-:global(.dark-mode) .bulk-price-item .price-curr {
+:global(.dark-mode .bulk-price-item .price-curr) {
   color: #10b981;
 }
 
@@ -1019,7 +1024,7 @@ const handleCardPointerLeave = () => {
 }
 
 .shop-theme-shop2 .card-stepper-btn.plus {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, var(--shop2-ink-strong), var(--shop2-ink));
   color: #ffffff;
 }
 
@@ -1075,15 +1080,15 @@ const handleCardPointerLeave = () => {
 
 /* Shop 2 Theme: Deep Royal Blue gradient with white text */
 .shop-theme-shop2 .add-btn-wide {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, var(--shop2-ink-strong), var(--shop2-ink));
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 14px rgba(var(--shop2-ink-rgb), 0.4);
 }
 
 .shop-theme-shop2 .add-btn-wide:hover {
   transform: translateY(-1px);
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.55);
+  background: linear-gradient(135deg, var(--shop2-ink-hover), var(--shop2-ink-strong));
+  box-shadow: 0 6px 18px rgba(var(--shop2-ink-rgb), 0.55);
 }
 
 .add-btn-wide:active {

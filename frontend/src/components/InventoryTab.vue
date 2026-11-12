@@ -1566,11 +1566,11 @@ export default {
   justify-content: space-between;
   gap: 12px;
   background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid transparent;
   border-radius: 16px;
   padding: 12px 16px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--admin-card-elevation, 0 0 0 1px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -16px rgba(15, 23, 42, 0.16));
   flex-wrap: wrap;
 }
 
@@ -1733,14 +1733,15 @@ export default {
 
 .inv-stat-card {
   background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid transparent;
   border-radius: 16px;
   padding: 16px 18px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-  transition: all 0.2s ease;
+  box-shadow: var(--admin-card-elevation, 0 0 0 1px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -16px rgba(15, 23, 42, 0.16));
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
-.inv-stat-card:hover {
-  border-color: #cbd5e1;
+.inv-stat-card:not(.is-warning):not(.is-danger):not(.is-reserved):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-card-elevation-hover, 0 0 0 1px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.05), 0 18px 36px -18px rgba(15, 23, 42, 0.24));
 }
 
 .inv-stat-card.is-warning {
