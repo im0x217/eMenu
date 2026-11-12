@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-layout" :class="'shop-theme-' + activeShop">
+  <div class="admin-layout" :class="['shop-theme-' + activeShop, { 'is-printing-analytics': printingAnalytics }]">
     <!-- Spinner overlay -->
     <div v-if="loading" class="spinner-overlay">
       <div class="spinner"></div>
@@ -5968,23 +5968,27 @@
       </div>
 
       <!-- Chef Breakdown Tables -->
-      <div v-for="cReport in productionReportData.chefReport" :key="cReport.chefId" class="mb-4" style="page-break-inside: avoid;">
-        <div class="d-flex justify-content-between align-items-center mb-2 pb-1" style="border-bottom: 2px solid #1e293b;">
+      <div v-if="(!productionReportData.chefReport || productionReportData.chefReport.length === 0) && (!productionReportData.unassigned || productionReportData.unassigned.length === 0)" class="text-center py-4" style="border: 1.5px solid #000000; border-radius: 8px; margin-bottom: 12px; font-weight: 700;">
+        لا توجد مبيعات أو بيانات إنتاج مسجلة في هذه الفترة.
+      </div>
+
+      <div v-for="cReport in productionReportData.chefReport" :key="cReport.chefId" class="chef-print-section mb-4">
+        <div class="chef-print-heading d-flex justify-content-between align-items-center mb-2 pb-1" style="border-bottom: 2px solid #1e293b;">
           <h3 class="font-bold mb-0 d-inline-flex align-items-center gap-1" style="font-size: 11pt;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             <span>الشيف: {{ cReport.chefName }}</span>
           </h3>
-          <span class="text-mono font-bold" style="font-size: 9pt;">إجمالي القطع: {{ cReport.totalQty }} | الإيراد: {{ formatCurrency(cReport.totalRevenue) }} | التكلفة: {{ formatCurrency(cReport.totalCost) }}</span>
+          <span class="text-mono font-bold chef-print-stats" style="font-size: 9pt;">إجمالي القطع: {{ cReport.totalQty }} | الإيراد: {{ formatCurrency(cReport.totalRevenue) }} | التكلفة: {{ formatCurrency(cReport.totalCost) }}</span>
         </div>
 
         <table class="debt-report-table">
           <thead>
             <tr>
-              <th style="width: 5%;">ت</th>
-              <th style="width: 45%;">اسم الصنف</th>
-              <th style="width: 15%;">الكمية المباعة</th>
-              <th style="width: 15%;">التكلفة الإجمالية</th>
-              <th style="width: 20%;">إجمالي المبيعات</th>
+              <th style="width: 6%;">ت</th>
+              <th style="width: 44%;">اسم الصنف</th>
+              <th style="width: 14%;">الكمية المباعة</th>
+              <th style="width: 18%;">التكلفة الإجمالية</th>
+              <th style="width: 18%;">إجمالي المبيعات</th>
             </tr>
           </thead>
           <tbody>
@@ -5999,20 +6003,50 @@
         </table>
       </div>
 
-      <!-- Official Report Footer & Signatures -->
-      <div class="debt-report-footer">
-        <div class="debt-signature-block">
-          <span class="sig-label">المسؤول عن الإنتاج:</span>
-          <span class="sig-line">.....................................</span>
+      <!-- Unassigned Products Breakdown (when printing all chefs) -->
+      <div v-if="productionReportData.unassigned && productionReportData.unassigned.length > 0 && !productionReportFilters.chefId" class="chef-print-section mb-4">
+        <div class="chef-print-heading d-flex justify-content-between align-items-center mb-2 pb-1" style="border-bottom: 2px solid #1e293b;">
+          <h3 class="font-bold mb-0 d-inline-flex align-items-center gap-1" style="font-size: 10.5pt;">
+            <span>أصناف مباعة بدون شيف مخصص ({{ productionReportData.unassigned.length }})</span>
+          </h3>
         </div>
-        <div class="debt-stamp-block">
-          <span class="sig-label">خاتم وتوقيع الإدارة:</span>
-          <span class="sig-line">.....................................</span>
-        </div>
+
+        <table class="debt-report-table">
+          <thead>
+            <tr>
+              <th style="width: 6%;">ت</th>
+              <th style="width: 56%;">اسم الصنف</th>
+              <th style="width: 18%;">الكمية المباعة</th>
+              <th style="width: 20%;">إجمالي المبيعات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(u, uIdx) in productionReportData.unassigned" :key="u.name">
+              <td class="text-center text-mono text-muted">{{ uIdx + 1 }}</td>
+              <td class="font-bold">{{ u.name }}</td>
+              <td class="text-mono text-bold">{{ u.qty }}</td>
+              <td class="text-mono text-success text-bold">{{ formatCurrency(u.revenue) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      
-      <div class="debt-watermark-row">
-        <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — تقرير إنتاج الشيفات</span>
+
+      <!-- Official Report Footer & Signatures -->
+      <div class="a4-end-block">
+        <div class="debt-report-footer">
+          <div class="debt-signature-block">
+            <span class="sig-label">المسؤول عن الإنتاج:</span>
+            <span class="sig-line">.....................................</span>
+          </div>
+          <div class="debt-stamp-block">
+            <span class="sig-label">خاتم وتوقيع الإدارة:</span>
+            <span class="sig-line">.....................................</span>
+          </div>
+        </div>
+        
+        <div class="debt-watermark-row">
+          <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — تقرير إنتاج الشيفات</span>
+        </div>
       </div>
     </div>
   </div>
@@ -6120,19 +6154,21 @@
       </div>
 
       <!-- Official Report Footer & Signatures -->
-      <div class="debt-report-footer">
-        <div class="debt-signature-block">
-          <span class="sig-label">المحاسب المسؤول:</span>
-          <span class="sig-line">.....................................</span>
+      <div class="a4-end-block">
+        <div class="debt-report-footer">
+          <div class="debt-signature-block">
+            <span class="sig-label">المحاسب المسؤول:</span>
+            <span class="sig-line">.....................................</span>
+          </div>
+          <div class="debt-stamp-block">
+            <span class="sig-label">خاتم وتوقيع الإدارة:</span>
+            <span class="sig-line">.....................................</span>
+          </div>
         </div>
-        <div class="debt-stamp-block">
-          <span class="sig-label">خاتم وتوقيع الإدارة:</span>
-          <span class="sig-line">.....................................</span>
+        
+        <div class="debt-watermark-row">
+          <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — كشف مديونيات العملاء</span>
         </div>
-      </div>
-      
-      <div class="debt-watermark-row">
-        <span>تم استخراج هذا التقرير المالي آلياً عبر نظام المنيو الإلكتروني — كشف مديونيات العملاء</span>
       </div>
     </div>
   </div>
@@ -6303,12 +6339,12 @@
       <table class="notes-report-table">
         <thead>
           <tr>
-            <th style="width: 32px; text-align: center;">#</th>
-            <th style="width: 25%; text-align: right;">اسم المنتج</th>
-            <th style="width: 10%; text-align: center;">الكمية</th>
-            <th style="width: 33%; text-align: right;">الملاحظة / التعليق المطلوب</th>
-            <th style="width: 18%; text-align: right;">اسم العميل</th>
-            <th style="width: 14%; text-align: center;">رقم الطلب</th>
+            <th style="width: 5%; text-align: center;">#</th>
+            <th style="width: 22%; text-align: right;">اسم المنتج</th>
+            <th style="width: 8%; text-align: center;">الكمية</th>
+            <th style="width: 36%; text-align: right;">الملاحظة / التعليق المطلوب</th>
+            <th style="width: 17%; text-align: right;">اسم العميل</th>
+            <th style="width: 12%; text-align: center;">رقم الطلب</th>
           </tr>
         </thead>
         <tbody>
@@ -6416,45 +6452,47 @@
             <table class="recon-detail-table">
               <thead>
                 <tr class="recon-col-header-row">
-                  <th style="width: 36%; text-align: right; padding: 7px 8px 5px 8px;">اسم المنتج</th>
-                  <th style="width: 14%; text-align: center; padding: 7px 6px 5px 6px;">الكمية المباعة</th>
-                  <th style="width: 22%; text-align: center; padding: 7px 8px 5px 8px;">سعر الوحدة</th>
-                  <th style="width: 28%; text-align: left; padding: 7px 10px 5px 10px;">إجمالي المبيعات</th>
+                  <th style="width: 36%; text-align: right;">اسم المنتج</th>
+                  <th style="width: 14%; text-align: center;">الكمية المباعة</th>
+                  <th style="width: 22%; text-align: center;">سعر الوحدة</th>
+                  <th style="width: 28%; text-align: left;">إجمالي المبيعات</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
-                  <td style="width: 36%; text-align: right; padding: 5px 8px;" class="recon-bold">{{ prod.name }}</td>
-                  <td style="width: 14%; text-align: center; padding: 5px 6px;" class="recon-mono recon-bold">{{ prod.quantity }}</td>
-                  <td style="width: 22%; text-align: center; padding: 5px 8px;" class="recon-mono">{{ prod.unitPriceFormatted }}</td>
-                  <td style="width: 28%; text-align: left; padding: 5px 10px;" class="recon-mono recon-bold">{{ prod.totalRevenueFormatted }}</td>
+                  <td style="width: 36%; text-align: right;" class="recon-bold recon-prod-name-cell">{{ prod.name }}</td>
+                  <td style="width: 14%; text-align: center;" class="recon-mono recon-bold">{{ prod.quantity }}</td>
+                  <td style="width: 22%; text-align: center;" class="recon-mono">{{ prod.unitPriceFormatted }}</td>
+                  <td style="width: 28%; text-align: left;" class="recon-mono recon-bold">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
               </tbody>
               <tfoot v-if="mainCat.subCategories.length > 1 && subCat.products.length > 1">
                 <tr class="recon-subtotal-row">
-                  <td style="width: 36%; text-align: right; padding: 5px 8px;">مجموع فرعي ({{ subCat.name }})</td>
-                  <td style="width: 14%; text-align: center; padding: 5px 6px;" class="recon-mono recon-bold">{{ subCat.totalQty }}</td>
-                  <td style="width: 22%; text-align: center; padding: 5px 8px;" class="recon-mono">—</td>
-                  <td style="width: 28%; text-align: left; padding: 5px 10px;" class="recon-mono recon-bold">{{ subCat.totalRevenueFormatted }}</td>
+                  <td style="width: 36%; text-align: right;" class="recon-prod-name-cell">مجموع فرعي ({{ subCat.name }})</td>
+                  <td style="width: 14%; text-align: center;" class="recon-mono recon-bold">{{ subCat.totalQty }}</td>
+                  <td style="width: 22%; text-align: center;" class="recon-mono">—</td>
+                  <td style="width: 28%; text-align: left;" class="recon-mono recon-bold">{{ subCat.totalRevenueFormatted }}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
 
-        <!-- Grand Total Summary Card -->
-        <div class="recon-grand-total-card">
-          <div class="recon-gt-title">الإجمالي الكلي لجميع المبيعات والمنتجات</div>
-          <div class="recon-gt-metrics">
-            <span class="gt-metric">إجمالي القطع: <strong class="recon-mono">{{ reconciliationData.grandTotalItemsQty }} قطعة</strong></span>
-            <span class="gt-metric highlight">الإيراد الكلي: <strong class="recon-mono">{{ reconciliationData.totalRevenueFormatted }}</strong></span>
+        <!-- Grand Total Summary Card & Footer -->
+        <div class="a4-end-block">
+          <div class="recon-grand-total-card">
+            <div class="recon-gt-title">الإجمالي الكلي لجميع المبيعات والمنتجات</div>
+            <div class="recon-gt-metrics">
+              <span class="gt-metric">إجمالي القطع: <strong class="recon-mono">{{ reconciliationData.grandTotalItemsQty }} قطعة</strong></span>
+              <span class="gt-metric highlight">الإيراد الكلي: <strong class="recon-mono">{{ reconciliationData.totalRevenueFormatted }}</strong></span>
+            </div>
+          </div>
+
+          <div class="recon-footer">
+            <p>كشف تسوية مبيعات رسمية — {{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }} — طرابلس، ليبيا</p>
+            <p class="recon-footer-sub">تم إنشاؤه واستخراجه من لوحة التحكم الذكية e-Menu</p>
           </div>
         </div>
-      </div>
-
-      <div class="recon-footer">
-        <p>كشف تسوية مبيعات رسمية — {{ activeShop === 'shop2' ? 'قسم النواشف' : 'حلويات عبمبر الزروق' }} — طرابلس، ليبيا</p>
-        <p class="recon-footer-sub">تم إنشاؤه واستخراجه من لوحة التحكم الذكية e-Menu</p>
       </div>
     </div>
   </div>
@@ -9901,8 +9939,9 @@ export default {
       if (!styleTag) {
         styleTag = document.createElement('style');
         styleTag.id = 'forced-print-page-size-style';
-        document.head.appendChild(styleTag);
       }
+      // Always place last in <head> so dynamic @page overrides any lazy-loaded component styles
+      document.head.appendChild(styleTag);
 
       // Exact millimeter dimensions & profile definitions
       const profiles = {
@@ -9929,6 +9968,9 @@ export default {
         },
         analytics: {
           size: '210mm 297mm' // A4 Portrait
+        },
+        inventory: {
+          size: '210mm 297mm' // A4 Portrait
         }
       };
 
@@ -9939,11 +9981,14 @@ export default {
         size = '210mm 297mm';
       }
 
+      const isA4 = size.startsWith('210mm');
+      const paperWidth = isA4 ? '210mm' : '100%';
+
       // Valid top-level @page rule:
       // margin: 0 !important ensures:
       // 1. Browser headers & footers (URL, page numbers, timestamp) are suppressed
       // 2. The entire paper area is accessible without arbitrary page-level clipping
-      // 3. Document padding defines the safe margins symmetrically on all sides
+      // 3. Document padding + box-decoration-break: clone define safe margins symmetrically on every page
       styleTag.textContent = `
 @page {
   size: ${size} !important;
@@ -9955,11 +10000,12 @@ export default {
     print-color-adjust: exact !important;
   }
   html, body {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-    margin: 0 !important;
+    width: ${paperWidth} !important;
+    max-width: ${paperWidth} !important;
+    min-width: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
+    overflow-x: hidden !important;
     box-sizing: border-box !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -9980,9 +10026,45 @@ export default {
       }
     };
 
-    const printReport = () => {
+    const waitForPrintImages = async (selector) => {
+      try {
+        const container = document.querySelector(selector);
+        if (!container) return;
+        const imgs = Array.from(container.querySelectorAll('img'));
+        if (!imgs.length) return;
+        await Promise.race([
+          Promise.all(
+            imgs.map(img =>
+              img.complete
+                ? Promise.resolve()
+                : new Promise(resolve => {
+                    img.addEventListener('load', resolve, { once: true });
+                    img.addEventListener('error', resolve, { once: true });
+                  })
+            )
+          ),
+          new Promise(resolve => setTimeout(resolve, 250))
+        ]);
+      } catch {}
+    };
+
+    const printingAnalytics = ref(false);
+
+    const printReport = async () => {
+      if (userRole.value !== 'admin') return;
+      if (activeTab.value !== 'analytics') {
+        activeTab.value = 'analytics';
+        await nextTick();
+      }
+      if (analyticsLoading.value) {
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
       setPrintPageSize('analytics');
+      printingAnalytics.value = true;
+      await nextTick();
+
       const cleanup = () => {
+        printingAnalytics.value = false;
         clearPrintPageSize();
         window.removeEventListener('afterprint', cleanup);
       };
@@ -10043,6 +10125,7 @@ export default {
       setPrintPageSize('debtReport');
       printingCustomerDebtReport.value = true;
       await nextTick();
+      await waitForPrintImages('.print-debt-report-wrapper');
 
       const cleanup = () => {
         printingCustomerDebtReport.value = false;
@@ -10748,7 +10831,7 @@ export default {
       setPrintPageSize('notesReport');
       printingOrderNotesReport.value = true;
       await nextTick();
-      await new Promise(r => setTimeout(r, 150));
+      await waitForPrintImages('.print-order-notes-wrapper');
 
       const cleanup = () => {
         printingOrderNotesReport.value = false;
@@ -10764,6 +10847,7 @@ export default {
       setPrintPageSize('reconciliation');
       printingReconciliation.value = true;
       await nextTick();
+      await waitForPrintImages('.print-reconciliation-wrapper');
 
       const cleanup = () => {
         printingReconciliation.value = false;
@@ -11106,6 +11190,7 @@ export default {
       setPrintPageSize('productionReport');
       printingProductionReport.value = true;
       await nextTick();
+      await waitForPrintImages('.print-production-report-wrapper');
 
       const cleanup = () => {
         printingProductionReport.value = false;
@@ -13756,6 +13841,7 @@ const closeSuggestionsWithDelay = () => {
       fetchAnalytics,
       exportReport,
       printReport,
+      printingAnalytics,
       printingOrder,
       printingOrderCustomerBalance,
       printingReconciliation,
@@ -18504,14 +18590,20 @@ select.form-control:focus {
 }
 
 @media print {
+  :root {
+    font-size: 100% !important;
+  }
+
   /* Hide all dashboard layout, modal pop-ups, backdrops, and web view elements */
-  .admin-layout,
+  .admin-layout:not(.is-printing-analytics),
   .modal-overlay,
   .modal-box,
   .modal-content,
   .admin-header,
   .admin-sidebar,
-  .toast-container {
+  .toast-container,
+  .cmdk-backdrop,
+  .datepicker-modal-wrapper {
     display: none !important;
   }
 
@@ -18526,10 +18618,10 @@ select.form-control:focus {
     color: inherit !important;
   }
 
-  .reconciliation-page {
-    /* page: reconciliation */
-    padding: 8mm 10mm;
-    box-sizing: border-box;
+  /* Shared unbreakable report end block (totals/signatures + watermark) */
+  .a4-end-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   /* Order Receipt Print Styles (A5) */
@@ -18821,9 +18913,9 @@ select.form-control:focus {
 
   .reconciliation-page {
     display: block !important;
-    width: 100%;
+    width: 210mm;
     max-width: 210mm;
-    padding: 6mm 8mm;
+    padding: 7mm 9mm;
     box-sizing: border-box;
     margin: 0 auto;
     background: #ffffff !important;
@@ -18832,12 +18924,17 @@ select.form-control:focus {
     direction: rtl;
     font-size: 8.5pt;
     line-height: 1.3;
+    overflow-x: hidden;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 
   .recon-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
     padding-bottom: 4px;
     margin-bottom: 4px;
   }
@@ -18846,6 +18943,7 @@ select.form-control:focus {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
   }
 
   .recon-logo {
@@ -18854,11 +18952,13 @@ select.form-control:focus {
     object-fit: cover;
     border-radius: 4px;
     border: 1px solid #000000;
+    flex-shrink: 0;
   }
 
   .recon-brand-text {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .recon-shop-name {
@@ -18893,7 +18993,7 @@ select.form-control:focus {
 
   .recon-meta {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px 12px;
     background: #ffffff;
     padding: 4px 8px;
@@ -18907,16 +19007,21 @@ select.form-control:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 4px;
+    min-width: 0;
   }
 
   .recon-label {
     color: #333333 !important;
     font-weight: 700;
+    flex-shrink: 0;
   }
 
   .recon-value {
     font-weight: 800;
     color: #000000 !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .recon-date-pill {
@@ -18928,7 +19033,7 @@ select.form-control:focus {
 
   .recon-kpi-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     margin: 4px 0 6px 0;
   }
@@ -18939,6 +19044,7 @@ select.form-control:focus {
     border: 1.5px solid #000000 !important;
     border-radius: 6px;
     background: #ffffff !important;
+    min-width: 0;
   }
 
   .recon-kpi-card.highlight {
@@ -18960,6 +19066,7 @@ select.form-control:focus {
     font-weight: 800;
     color: #000000 !important;
     line-height: 1.1;
+    overflow-wrap: anywhere;
   }
 
   .recon-kpi-money {
@@ -18979,6 +19086,8 @@ select.form-control:focus {
     padding: 4px 10px;
     border-radius: 4px 4px 0 0;
     margin-bottom: 0;
+    page-break-after: avoid;
+    break-after: avoid;
   }
 
   .recon-section-title {
@@ -19004,18 +19113,23 @@ select.form-control:focus {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2px 8px;
     background: #e6e6e6 !important;
     color: #000000 !important;
     padding: 3px 8px;
     border-bottom: 1px solid #000000;
     page-break-after: avoid;
     break-after: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .recon-cat-title {
     font-weight: 800;
     font-size: 9pt;
     color: #000000 !important;
+    overflow-wrap: anywhere;
   }
 
   .recon-cat-stats {
@@ -19052,11 +19166,14 @@ select.form-control:focus {
     background: #f1f5f9;
     border-radius: 3px;
     border: 1px solid #cbd5e1;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   /* Level 3: Products Table */
   .recon-detail-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 8pt;
     margin-bottom: 2px;
@@ -19082,6 +19199,7 @@ select.form-control:focus {
     color: #000000 !important;
     border-bottom: 1px solid #000000;
     text-align: right;
+    overflow-wrap: anywhere;
   }
 
   .recon-detail-table tr {
@@ -19098,6 +19216,13 @@ select.form-control:focus {
     border-bottom: 1px solid #e0e0e0;
     vertical-align: middle;
     color: #000000 !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .recon-prod-name-cell {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .recon-detail-table tbody tr:last-child td {
@@ -19139,6 +19264,8 @@ select.form-control:focus {
     display: flex;
     justify-content: space-around;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
     font-size: 9.5pt;
   }
 
@@ -19183,296 +19310,137 @@ select.form-control:focus {
     color: #555555 !important;
     margin-top: 1px;
   }
+
+  /* ==========================================================================
+     ADAPTIVE A4 DENSITY TIERS (Dynamically Scaled Based on Items & Category Count)
+     ========================================================================== */
+
+  /* Tier 1: Spacious (Small Catalogs <= 12 visual units -> Fills 1 A4 page beautifully) */
+  .reconciliation-page.recon-density-spacious {
+    padding: 10mm 12mm;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+  .recon-density-spacious .recon-logo { width: 48px; height: 48px; }
+  .recon-density-spacious .recon-shop-name { font-size: 15pt; }
+  .recon-density-spacious .recon-subtitle { font-size: 9.5pt; }
+  .recon-density-spacious .recon-header-badge { font-size: 9pt; padding: 4px 10px; }
+  .recon-density-spacious .recon-meta { padding: 6px 12px; font-size: 9pt; gap: 6px 14px; margin-bottom: 6px; }
+  .recon-density-spacious .recon-kpi-grid { gap: 8px; margin: 6px 0 8px 0; }
+  .recon-density-spacious .recon-kpi-card { padding: 6px 8px; }
+  .recon-density-spacious .recon-kpi-label { font-size: 8.5pt; }
+  .recon-density-spacious .recon-kpi-value { font-size: 14pt; }
+  .recon-density-spacious .recon-section-header { padding: 6px 12px; font-size: 9.5pt; }
+  .recon-density-spacious .recon-cat-block { margin: 8px 0; border-width: 1.5px !important; }
+  .recon-density-spacious .recon-cat-header { padding: 5px 12px; font-size: 10.5pt; }
+  .recon-density-spacious .recon-cat-title { font-size: 10.5pt; }
+  .recon-density-spacious .recon-cat-stats { font-size: 8.5pt; }
+  .recon-density-spacious .recon-subcat-block { padding: 4px 8px; }
+  .recon-density-spacious .recon-subcat-title { font-size: 9pt; padding: 2px 8px; }
+  .recon-density-spacious .recon-detail-table { font-size: 9pt; }
+  .recon-density-spacious .recon-col-header-row th { padding: 6px 8px; font-size: 8.5pt; }
+  .recon-density-spacious .recon-detail-table td { padding: 5px 8px; }
+  .recon-density-spacious .recon-subtotal-row { font-size: 9pt; }
+  .recon-density-spacious .recon-subtotal-row td { padding: 5px 8px; }
+  .recon-density-spacious .recon-grand-total-card { margin-top: 10px; padding: 8px 14px; font-size: 11pt; }
+  .recon-density-spacious .recon-gt-metrics { font-size: 11pt; }
+
+  /* Tier 2: Balanced (Medium Catalogs 13-28 visual units -> Compact & Balanced) */
+  .reconciliation-page.recon-density-balanced {
+    padding: 7mm 9mm;
+    font-size: 8.5pt;
+    line-height: 1.35;
+  }
+  .recon-density-balanced .recon-logo { width: 38px; height: 38px; }
+  .recon-density-balanced .recon-shop-name { font-size: 13.5pt; }
+  .recon-density-balanced .recon-subtitle { font-size: 8.2pt; }
+  .recon-density-balanced .recon-header-badge { font-size: 8.2pt; padding: 3px 8px; }
+  .recon-density-balanced .recon-meta { padding: 4px 8px; font-size: 8.2pt; gap: 4px 10px; margin-bottom: 4px; }
+  .recon-density-balanced .recon-kpi-grid { gap: 6px; margin: 4px 0 6px 0; }
+  .recon-density-balanced .recon-kpi-card { padding: 4px 6px; }
+  .recon-density-balanced .recon-kpi-label { font-size: 7.8pt; }
+  .recon-density-balanced .recon-kpi-value { font-size: 12pt; }
+  .recon-density-balanced .recon-section-header { padding: 4px 10px; font-size: 8.8pt; }
+  .recon-density-balanced .recon-cat-block { margin: 5px 0; border-width: 1px !important; }
+  .recon-density-balanced .recon-cat-header { padding: 3.5px 8px; font-size: 9.5pt; }
+  .recon-density-balanced .recon-cat-title { font-size: 9.5pt; }
+  .recon-density-balanced .recon-cat-stats { font-size: 7.8pt; }
+  .recon-density-balanced .recon-subcat-block { padding: 3px 6px; }
+  .recon-density-balanced .recon-subcat-title { font-size: 8.2pt; padding: 1.5px 6px; }
+  .recon-density-balanced .recon-detail-table { font-size: 8.2pt; }
+  .recon-density-balanced .recon-col-header-row th { padding: 4.5px 6px; font-size: 7.8pt; }
+  .recon-density-balanced .recon-detail-table td { padding: 3.5px 6px; }
+  .recon-density-balanced .recon-subtotal-row { font-size: 8.2pt; }
+  .recon-density-balanced .recon-subtotal-row td { padding: 3.5px 6px; }
+  .recon-density-balanced .recon-grand-total-card { margin-top: 6px; padding: 6px 10px; }
+  .recon-density-balanced .recon-gt-metrics { font-size: 9.5pt; }
+
+  /* Tier 3: Dense (Large Catalogs 29-52 visual units -> High Space Compression) */
+  .reconciliation-page.recon-density-dense {
+    padding: 6mm 7mm;
+    font-size: 7.8pt;
+    line-height: 1.25;
+  }
+  .recon-density-dense .recon-logo { width: 32px; height: 32px; }
+  .recon-density-dense .recon-shop-name { font-size: 12pt; }
+  .recon-density-dense .recon-subtitle { font-size: 7.5pt; }
+  .recon-density-dense .recon-header-badge { font-size: 7.5pt; padding: 2px 6px; }
+  .recon-density-dense .recon-meta { padding: 3px 6px; font-size: 7.5pt; gap: 3px 8px; margin-bottom: 3px; }
+  .recon-density-dense .recon-kpi-grid { gap: 5px; margin: 3px 0 5px 0; }
+  .recon-density-dense .recon-kpi-card { padding: 3px 5px; }
+  .recon-density-dense .recon-kpi-label { font-size: 7.2pt; }
+  .recon-density-dense .recon-kpi-value { font-size: 10.5pt; }
+  .recon-density-dense .recon-section-header { padding: 3px 8px; font-size: 8pt; }
+  .recon-density-dense .recon-cat-block { margin: 3.5px 0; }
+  .recon-density-dense .recon-cat-header { padding: 2.5px 6px; font-size: 8.5pt; }
+  .recon-density-dense .recon-cat-title { font-size: 8.5pt; }
+  .recon-density-dense .recon-cat-stats { font-size: 7.2pt; }
+  .recon-density-dense .recon-subcat-block { padding: 2px 4px; }
+  .recon-density-dense .recon-subcat-title { font-size: 7.5pt; padding: 1px 5px; }
+  .recon-density-dense .recon-detail-table { font-size: 7.5pt; }
+  .recon-density-dense .recon-col-header-row th { padding: 3px 5px; font-size: 7.2pt; }
+  .recon-density-dense .recon-detail-table td { padding: 2.5px 5px; }
+  .recon-density-dense .recon-subtotal-row td { padding: 2.5px 5px; font-size: 7.5pt; }
+  .recon-density-dense .recon-grand-total-card { margin-top: 5px; padding: 5px 8px; }
+  .recon-density-dense .recon-gt-metrics { font-size: 8.8pt; }
+
+  /* Tier 4: Ultra-Dense (Massive Catalogs > 52 visual units -> Ultra Compact Multi-Page) */
+  .reconciliation-page.recon-density-ultra-dense {
+    padding: 5.5mm 6mm;
+    font-size: 7.2pt;
+    line-height: 1.2;
+  }
+  .recon-density-ultra-dense .recon-logo { width: 26px; height: 26px; }
+  .recon-density-ultra-dense .recon-shop-name { font-size: 11pt; }
+  .recon-density-ultra-dense .recon-subtitle { font-size: 7pt; }
+  .recon-density-ultra-dense .recon-header-badge { font-size: 7pt; padding: 1.5px 5px; }
+  .recon-density-ultra-dense .recon-meta { padding: 2px 5px; font-size: 7pt; gap: 2px 6px; margin-bottom: 2px; }
+  .recon-density-ultra-dense .recon-kpi-grid { gap: 4px; margin: 2px 0 4px 0; }
+  .recon-density-ultra-dense .recon-kpi-card { padding: 2px 4px; }
+  .recon-density-ultra-dense .recon-kpi-label { font-size: 6.8pt; }
+  .recon-density-ultra-dense .recon-kpi-value { font-size: 9.5pt; }
+  .recon-density-ultra-dense .recon-section-header { padding: 2px 6px; font-size: 7.5pt; }
+  .recon-density-ultra-dense .recon-cat-block { margin: 2.5px 0; }
+  .recon-density-ultra-dense .recon-cat-header { padding: 2px 5px; font-size: 7.8pt; }
+  .recon-density-ultra-dense .recon-cat-title { font-size: 7.8pt; }
+  .recon-density-ultra-dense .recon-cat-stats { font-size: 6.8pt; }
+  .recon-density-ultra-dense .recon-subcat-block { padding: 1.5px 3px; }
+  .recon-density-ultra-dense .recon-subcat-title { font-size: 7pt; padding: 1px 4px; }
+  .recon-density-ultra-dense .recon-detail-table { font-size: 7pt; }
+  .recon-density-ultra-dense .recon-col-header-row th { padding: 2.5px 4px; font-size: 6.8pt; }
+  .recon-density-ultra-dense .recon-detail-table td { padding: 2px 4px; }
+  .recon-density-ultra-dense .recon-subtotal-row td { padding: 2px 4px; font-size: 7pt; }
+  .recon-density-ultra-dense .recon-grand-total-card { margin-top: 4px; padding: 4px 6px; }
+  .recon-density-ultra-dense .recon-gt-metrics { font-size: 8.2pt; }
 }
 
-  .recon-header-badge {
-    background: #f1f5f9;
-    color: #1e3a5f;
-    border: 1.5px solid #cbd5e1;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 8.5pt;
-    font-weight: 700;
-  }
+.text-center {
+  text-align: center !important;
+}
 
-  .recon-divider {
-    border-bottom: 1.5px solid #e2e8f0;
-    margin: 10px 0;
-  }
-
-  .recon-meta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
-    background: #f8fafc;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    font-size: 9pt;
-  }
-
-  .recon-meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .recon-label {
-    color: #64748b;
-    font-weight: 600;
-  }
-
-  .recon-value {
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  .recon-date-pill {
-    background: #ffffff;
-    padding: 2px 8px;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-  }
-
-  .recon-kpi-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin: 6px 0 8px 0;
-  }
-
-  .recon-kpi-card {
-    text-align: center;
-    padding: 8px 6px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    background: #ffffff;
-  }
-
-  .recon-kpi-card.highlight {
-    background: #f8fafc;
-    border-color: #1e3a5f;
-  }
-
-  .recon-kpi-label {
-    display: block;
-    font-size: 8.5pt;
-    color: #64748b;
-    font-weight: 600;
-    margin-bottom: 2px;
-  }
-
-  .recon-kpi-value {
-    display: block;
-    font-size: 13pt;
-    font-weight: 800;
-    color: #1e3a5f;
-  }
-
-  .recon-kpi-money {
-    font-family: 'Fira Code', monospace;
-  }
-
-  .recon-section {
-    margin: 4px 0 0 0;
-  }
-
-  .recon-section-header {
-    background: #1e3a5f;
-    color: #ffffff;
-    padding: 6px 12px;
-    border-radius: 6px 6px 0 0;
-    margin-bottom: 0;
-  }
-
-  .recon-section-title {
-    font-size: 9.5pt;
-    font-weight: 800;
-    margin: 0;
-    color: #ffffff;
-  }
-
-  .recon-master-header-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 8.5pt;
-    background: #e2e8f0;
-    border-left: 1.5px solid #cbd5e1;
-    border-right: 1.5px solid #cbd5e1;
-    border-bottom: 2px solid #1e3a5f;
-    margin-bottom: 6px;
-  }
-
-  .recon-master-header-table th {
-    padding: 6px 8px;
-    font-weight: 800;
-    font-size: 8.5pt;
-    color: #0f172a;
-    text-align: right;
-  }
-
-  .recon-cat-block {
-    margin-top: 6px;
-    margin-bottom: 10px;
-    border: 1.5px solid #cbd5e1;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .recon-cat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 8px 12px;
-    border-bottom: 1.5px solid #cbd5e1;
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  .recon-cat-title {
-    font-weight: 800;
-    font-size: 10pt;
-    color: #0f172a;
-  }
-
-  .recon-cat-stats {
-    font-size: 9pt;
-    color: #334155;
-  }
-
-  .recon-subcat-block {
-    padding: 8px 10px;
-    border-bottom: 1px dashed #e2e8f0;
-  }
-
-  .recon-subcat-block:last-child {
-    border-bottom: none;
-  }
-
-  .recon-subcat-title {
-    font-weight: 700;
-    font-size: 9pt;
-    color: #1e3a5f;
-    margin-bottom: 6px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #e2e8f0;
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  .recon-detail-table tr {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  .recon-detail-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 8.5pt;
-  }
-
-  .recon-detail-table th {
-    background: #f8fafc;
-    padding: 4px 6px;
-    text-align: right;
-    font-weight: 700;
-    font-size: 8pt;
-    border-bottom: 1.5px solid #cbd5e1;
-    color: #475569;
-  }
-
-  .recon-detail-table td {
-    padding: 4px 6px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: middle;
-  }
-
-  .recon-subtotal-row {
-    background: #f8fafc;
-    font-size: 8.5pt;
-    font-weight: 700;
-    border-top: 1.5px solid #cbd5e1;
-  }
-
-  .recon-subtotal-row td {
-    padding: 4px 6px;
-  }
-
-  .recon-grand-total-card {
-    margin-top: 14px;
-    background: #f8fafc;
-    border: 2px solid #1e3a5f;
-    border-radius: 10px;
-    padding: 10px 14px;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  .recon-gt-title {
-    font-size: 9.5pt;
-    font-weight: 800;
-    color: #1e3a5f;
-    margin-bottom: 6px;
-    text-align: center;
-  }
-
-  .recon-gt-metrics {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    font-size: 11pt;
-  }
-
-  .gt-metric {
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  .gt-metric.highlight {
-    color: #1e3a5f;
-    font-size: 12pt;
-  }
-
-  .recon-mono {
-    font-family: 'Fira Code', monospace;
-  }
-
-  .recon-bold {
-    font-weight: 700;
-  }
-
-  .recon-empty-text {
-    text-align: center;
-    padding: 16px;
-    color: #64748b;
-    font-style: italic;
-  }
-
-  .text-center {
-    text-align: center !important;
-  }
-
-  .text-left {
-    text-align: left !important;
-  }
-
-  .recon-footer {
-    text-align: center;
-    margin-top: 14px;
-    padding-top: 8px;
-    border-top: 1px dashed #cbd5e1;
-    font-size: 8.5pt;
-    font-weight: 700;
-    color: #475569;
-  }
-
-  .recon-footer-sub {
-    font-size: 7.5pt;
-    color: #94a3b8;
-    font-weight: 400;
-    margin-top: 2px;
-  }
+.text-left {
+  text-align: left !important;
+}
 
 /* Carousel Admin Grid Layout */
 .carousel-grid {
@@ -21465,11 +21433,11 @@ select.form-control:focus {
 }
 
 @media print {
-  /* Ensure modal overlays and admin layout remain hidden */
+  /* Ensure modal overlays and admin layout remain hidden unless printing analytics */
   .modal-overlay,
   .modal-box,
   .modal-content,
-  .admin-layout {
+  .admin-layout:not(.is-printing-analytics) {
     display: none !important;
   }
 
@@ -23026,130 +22994,6 @@ select.pos-control {
   }
 }
 
-
-
-  /* ==========================================================================
-     ADAPTIVE A4 DENSITY TIERS (Dynamically Scaled Based on Items & Category Count)
-     ========================================================================== */
-
-  /* Tier 1: Spacious (Small Catalogs <= 12 visual units -> Fills 1 A4 page beautifully) */
-  .reconciliation-page.recon-density-spacious {
-    padding: 10mm 12mm;
-    font-size: 9.5pt;
-    line-height: 1.45;
-  }
-  .recon-density-spacious .recon-logo { width: 48px; height: 48px; }
-  .recon-density-spacious .recon-shop-name { font-size: 15pt; }
-  .recon-density-spacious .recon-subtitle { font-size: 9.5pt; }
-  .recon-density-spacious .recon-header-badge { font-size: 9pt; padding: 4px 10px; }
-  .recon-density-spacious .recon-meta { padding: 6px 12px; font-size: 9pt; gap: 6px 14px; margin-bottom: 6px; }
-  .recon-density-spacious .recon-kpi-grid { gap: 8px; margin: 6px 0 8px 0; }
-  .recon-density-spacious .recon-kpi-card { padding: 6px 8px; }
-  .recon-density-spacious .recon-kpi-label { font-size: 8.5pt; }
-  .recon-density-spacious .recon-kpi-value { font-size: 14pt; }
-  .recon-density-spacious .recon-section-header { padding: 6px 12px; font-size: 9.5pt; }
-  .recon-density-spacious .recon-cat-block { margin: 8px 0; border-width: 1.5px !important; }
-  .recon-density-spacious .recon-cat-header { padding: 5px 12px; font-size: 10.5pt; }
-  .recon-density-spacious .recon-cat-title { font-size: 10.5pt; }
-  .recon-density-spacious .recon-cat-stats { font-size: 8.5pt; }
-  .recon-density-spacious .recon-subcat-block { padding: 4px 8px; }
-  .recon-density-spacious .recon-subcat-title { font-size: 9pt; padding: 2px 8px; }
-  .recon-density-spacious .recon-detail-table { font-size: 9pt; }
-  .recon-density-spacious .recon-col-header-row th { padding: 6px 8px; font-size: 8.5pt; }
-  .recon-density-spacious .recon-detail-table td { padding: 5px 8px; }
-  .recon-density-spacious .recon-subtotal-row { font-size: 9pt; }
-  .recon-density-spacious .recon-subtotal-row td { padding: 5px 8px; }
-  .recon-density-spacious .recon-grand-total-card { margin-top: 10px; padding: 8px 14px; font-size: 11pt; }
-  .recon-density-spacious .recon-gt-metrics { font-size: 11pt; }
-
-  /* Tier 2: Balanced (Medium Catalogs 13-28 visual units -> Compact & Balanced) */
-  .reconciliation-page.recon-density-balanced {
-    padding: 7mm 9mm;
-    font-size: 8.5pt;
-    line-height: 1.35;
-  }
-  .recon-density-balanced .recon-logo { width: 38px; height: 38px; }
-  .recon-density-balanced .recon-shop-name { font-size: 13.5pt; }
-  .recon-density-balanced .recon-subtitle { font-size: 8.2pt; }
-  .recon-density-balanced .recon-header-badge { font-size: 8.2pt; padding: 3px 8px; }
-  .recon-density-balanced .recon-meta { padding: 4px 8px; font-size: 8.2pt; gap: 4px 10px; margin-bottom: 4px; }
-  .recon-density-balanced .recon-kpi-grid { gap: 6px; margin: 4px 0 6px 0; }
-  .recon-density-balanced .recon-kpi-card { padding: 4px 6px; }
-  .recon-density-balanced .recon-kpi-label { font-size: 7.8pt; }
-  .recon-density-balanced .recon-kpi-value { font-size: 12pt; }
-  .recon-density-balanced .recon-section-header { padding: 4px 10px; font-size: 8.8pt; }
-  .recon-density-balanced .recon-cat-block { margin: 5px 0; border-width: 1px !important; }
-  .recon-density-balanced .recon-cat-header { padding: 3.5px 8px; font-size: 9.5pt; }
-  .recon-density-balanced .recon-cat-title { font-size: 9.5pt; }
-  .recon-density-balanced .recon-cat-stats { font-size: 7.8pt; }
-  .recon-density-balanced .recon-subcat-block { padding: 3px 6px; }
-  .recon-density-balanced .recon-subcat-title { font-size: 8.2pt; padding: 1.5px 6px; }
-  .recon-density-balanced .recon-detail-table { font-size: 8.2pt; }
-  .recon-density-balanced .recon-col-header-row th { padding: 4.5px 6px; font-size: 7.8pt; }
-  .recon-density-balanced .recon-detail-table td { padding: 3.5px 6px; }
-  .recon-density-balanced .recon-subtotal-row { font-size: 8.2pt; }
-  .recon-density-balanced .recon-subtotal-row td { padding: 3.5px 6px; }
-  .recon-density-balanced .recon-grand-total-card { margin-top: 6px; padding: 6px 10px; }
-  .recon-density-balanced .recon-gt-metrics { font-size: 9.5pt; }
-
-  /* Tier 3: Dense (Large Catalogs 29-52 visual units -> High Space Compression) */
-  .reconciliation-page.recon-density-dense {
-    padding: 5mm 7mm;
-    font-size: 7.8pt;
-    line-height: 1.25;
-  }
-  .recon-density-dense .recon-logo { width: 32px; height: 32px; }
-  .recon-density-dense .recon-shop-name { font-size: 12pt; }
-  .recon-density-dense .recon-subtitle { font-size: 7.5pt; }
-  .recon-density-dense .recon-header-badge { font-size: 7.5pt; padding: 2px 6px; }
-  .recon-density-dense .recon-meta { padding: 3px 6px; font-size: 7.5pt; gap: 3px 8px; margin-bottom: 3px; }
-  .recon-density-dense .recon-kpi-grid { gap: 5px; margin: 3px 0 5px 0; }
-  .recon-density-dense .recon-kpi-card { padding: 3px 5px; }
-  .recon-density-dense .recon-kpi-label { font-size: 7.2pt; }
-  .recon-density-dense .recon-kpi-value { font-size: 10.5pt; }
-  .recon-density-dense .recon-section-header { padding: 3px 8px; font-size: 8pt; }
-  .recon-density-dense .recon-cat-block { margin: 3.5px 0; }
-  .recon-density-dense .recon-cat-header { padding: 2.5px 6px; font-size: 8.5pt; }
-  .recon-density-dense .recon-cat-title { font-size: 8.5pt; }
-  .recon-density-dense .recon-cat-stats { font-size: 7.2pt; }
-  .recon-density-dense .recon-subcat-block { padding: 2px 4px; }
-  .recon-density-dense .recon-subcat-title { font-size: 7.5pt; padding: 1px 5px; }
-  .recon-density-dense .recon-detail-table { font-size: 7.5pt; }
-  .recon-density-dense .recon-col-header-row th { padding: 3px 5px; font-size: 7.2pt; }
-  .recon-density-dense .recon-detail-table td { padding: 2.5px 5px; }
-  .recon-density-dense .recon-subtotal-row td { padding: 2.5px 5px; font-size: 7.5pt; }
-  .recon-density-dense .recon-grand-total-card { margin-top: 5px; padding: 5px 8px; }
-  .recon-density-dense .recon-gt-metrics { font-size: 8.8pt; }
-
-  /* Tier 4: Ultra-Dense (Massive Catalogs > 52 visual units -> Ultra Compact Multi-Page) */
-  .reconciliation-page.recon-density-ultra-dense {
-    padding: 4mm 6mm;
-    font-size: 7.2pt;
-    line-height: 1.2;
-  }
-  .recon-density-ultra-dense .recon-logo { width: 26px; height: 26px; }
-  .recon-density-ultra-dense .recon-shop-name { font-size: 11pt; }
-  .recon-density-ultra-dense .recon-subtitle { font-size: 7pt; }
-  .recon-density-ultra-dense .recon-header-badge { font-size: 7pt; padding: 1.5px 5px; }
-  .recon-density-ultra-dense .recon-meta { padding: 2px 5px; font-size: 7pt; gap: 2px 6px; margin-bottom: 2px; }
-  .recon-density-ultra-dense .recon-kpi-grid { gap: 4px; margin: 2px 0 4px 0; }
-  .recon-density-ultra-dense .recon-kpi-card { padding: 2px 4px; }
-  .recon-density-ultra-dense .recon-kpi-label { font-size: 6.8pt; }
-  .recon-density-ultra-dense .recon-kpi-value { font-size: 9.5pt; }
-  .recon-density-ultra-dense .recon-section-header { padding: 2px 6px; font-size: 7.5pt; }
-  .recon-density-ultra-dense .recon-cat-block { margin: 2.5px 0; }
-  .recon-density-ultra-dense .recon-cat-header { padding: 2px 5px; font-size: 7.8pt; }
-  .recon-density-ultra-dense .recon-cat-title { font-size: 7.8pt; }
-  .recon-density-ultra-dense .recon-cat-stats { font-size: 6.8pt; }
-  .recon-density-ultra-dense .recon-subcat-block { padding: 1.5px 3px; }
-  .recon-density-ultra-dense .recon-subcat-title { font-size: 7pt; padding: 1px 4px; }
-  .recon-density-ultra-dense .recon-detail-table { font-size: 7pt; }
-  .recon-density-ultra-dense .recon-col-header-row th { padding: 2.5px 4px; font-size: 6.8pt; }
-  .recon-density-ultra-dense .recon-detail-table td { padding: 2px 4px; }
-  .recon-density-ultra-dense .recon-subtotal-row td { padding: 2px 4px; font-size: 7pt; }
-  .recon-density-ultra-dense .recon-grand-total-card { margin-top: 4px; padding: 4px 6px; }
-  .recon-density-ultra-dense .recon-gt-metrics { font-size: 8.2pt; }
-
 .cust-date-range-group {
   display: inline-flex;
   align-items: center;
@@ -24483,7 +24327,10 @@ select.pos-control {
 
   .order-notes-page {
     /* page: notesReport */
-    padding: 6mm 8mm;
+    width: 210mm;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 7mm 9mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
     direction: rtl;
@@ -24491,30 +24338,59 @@ select.pos-control {
     line-height: 1.35;
     color: #000000 !important;
     background: #ffffff !important;
+    overflow-x: hidden;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .order-notes-page .recon-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .notes-report-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin: 8px 0 12px 0;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  .notes-report-table thead {
+    display: table-header-group;
+  }
+
+  .notes-report-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .notes-report-table th {
     background: #f0f0f0 !important;
     border-bottom: 2px solid #333333;
     border-top: 1px solid #333333;
-    padding: 6px 8px;
+    padding: 6px 6px;
     font-weight: 800;
     font-size: 8.5pt;
     color: #000000 !important;
+    overflow-wrap: anywhere;
   }
 
   .notes-report-table td {
-    padding: 6px 8px;
+    padding: 6px 6px;
     border-bottom: 1px solid #cccccc;
     vertical-align: middle;
     font-size: 8.5pt;
     color: #000000 !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .notes-product-cell,
+  .notes-customer-cell,
+  .cust-name-line {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .notes-report-row:nth-child(even) {
@@ -24532,6 +24408,17 @@ select.pos-control {
     display: flex;
     align-items: flex-start;
     gap: 5px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .comment-highlight-box span {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: pre-wrap;
   }
 
   .comment-highlight-box .comment-icon {
@@ -24551,6 +24438,8 @@ select.pos-control {
     font-weight: 700;
     font-size: 8pt;
     color: #000000 !important;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .delivery-date-mini {
@@ -24589,15 +24478,26 @@ select.pos-control {
 
   .debt-report-page {
     /* page: debtReport */
+    width: 210mm;
+    max-width: 210mm;
+    margin: 0 auto;
     padding: 8mm 10mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
+    direction: rtl;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow-x: hidden;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 
   .debt-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
     margin-bottom: 6px;
   }
 
@@ -24605,6 +24505,7 @@ select.pos-control {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
   }
 
   .debt-logo {
@@ -24612,6 +24513,7 @@ select.pos-control {
     height: 44px;
     border-radius: 10px;
     object-fit: cover;
+    flex-shrink: 0;
   }
 
   .debt-shop-name {
@@ -24647,6 +24549,8 @@ select.pos-control {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
     background: #ffffff;
     border: 1.5px solid #000000;
     border-radius: 8px;
@@ -24667,13 +24571,16 @@ select.pos-control {
   .debt-meta-val {
     font-weight: 800;
     color: #000000;
+    overflow-wrap: anywhere;
   }
 
   .debt-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .debt-kpi-card {
@@ -24682,6 +24589,7 @@ select.pos-control {
     border-radius: 8px;
     padding: 6px 8px;
     text-align: center;
+    min-width: 0;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -24704,33 +24612,56 @@ select.pos-control {
     font-size: 11pt;
     font-weight: 900;
     color: #000000 !important;
+    display: block;
+    overflow-wrap: anywhere;
   }
 
   .debt-report-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 8.8pt;
     margin-bottom: 14px;
     border: 1.5px solid #000000 !important;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  .debt-report-table thead {
+    display: table-header-group;
+  }
+
+  .debt-report-table tfoot {
+    display: table-row-group !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .debt-report-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .debt-report-table th {
     background: #000000 !important;
     color: #ffffff !important;
     font-weight: 900;
-    padding: 6px 8px;
+    padding: 6px 6px;
     text-align: right;
     border: 1px solid #000000 !important;
+    overflow-wrap: anywhere;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .debt-report-table td {
-    padding: 5px 8px;
+    padding: 5px 6px;
     border: 1px solid #000000 !important;
     vertical-align: middle;
     color: #000000 !important;
     background: #ffffff !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .debt-report-table tbody tr,
@@ -24745,12 +24676,15 @@ select.pos-control {
     display: flex;
     flex-direction: column;
     gap: 1px;
+    min-width: 0;
   }
 
   .debt-cust-name {
     font-size: 9pt;
     color: #000000 !important;
     font-weight: 800;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .debt-cust-phone {
@@ -25526,9 +25460,195 @@ select.pos-control {
 
   .production-report-page {
     /* page: productionReport */
+    width: 210mm;
+    max-width: 210mm;
+    margin: 0 auto;
     padding: 8mm 10mm;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
+    direction: rtl;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow-x: hidden;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .chef-print-section {
+    margin-bottom: 14px;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  .chef-print-heading {
+    background: #f1f5f9 !important;
+    border: 1.5px solid #000000 !important;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    page-break-after: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Analytics & Sales Dashboard A4 Print Mode (Command Palette printReport) */
+  .admin-layout.is-printing-analytics {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  .admin-layout.is-printing-analytics .admin-sidebar,
+  .admin-layout.is-printing-analytics .admin-mobile-header,
+  .admin-layout.is-printing-analytics .sidebar-backdrop,
+  .admin-layout.is-printing-analytics .main-header,
+  .admin-layout.is-printing-analytics .date-range-bar,
+  .admin-layout.is-printing-analytics .no-print,
+  .admin-layout.is-printing-analytics .mobile-analytics-cards-grid,
+  .admin-layout.is-printing-analytics .spinner-overlay {
+    display: none !important;
+  }
+
+  .admin-layout.is-printing-analytics .admin-container,
+  .admin-layout.is-printing-analytics .admin-main,
+  .admin-layout.is-printing-analytics .tab-content-wrapper,
+  .admin-layout.is-printing-analytics .active-tab-container {
+    display: block !important;
+    width: 100% !important;
+    max-width: 210mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .admin-layout.is-printing-analytics .analytics-tab-content {
+    display: block !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
+    box-sizing: border-box !important;
+    direction: rtl;
+    background: #ffffff !important;
+    overflow-x: hidden !important;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .admin-layout.is-printing-analytics .kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .admin-layout.is-printing-analytics .charts-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .admin-layout.is-printing-analytics .chart-card.span-3,
+  .admin-layout.is-printing-analytics .chart-card.span-2,
+  .admin-layout.is-printing-analytics .chart-card.span-full,
+  .admin-layout.is-printing-analytics .chart-card:has(table) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .admin-layout.is-printing-analytics .kpi-card,
+  .admin-layout.is-printing-analytics .chart-card {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+    min-width: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .admin-layout.is-printing-analytics .chart-card:has(table) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .admin-layout.is-printing-analytics .chart-card-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .admin-layout.is-printing-analytics .table-container {
+    overflow: visible !important;
+    max-height: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+
+  .admin-layout.is-printing-analytics .top-cust-row,
+  .admin-layout.is-printing-analytics .clickable-product-row,
+  .admin-layout.is-printing-analytics .analytics-tab-content tr,
+  .admin-layout.is-printing-analytics .category-bar-fill,
+  .admin-layout.is-printing-analytics .pm-bar-fill {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .admin-layout.is-printing-analytics .svg-trend-line {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+
+  .admin-layout.is-printing-analytics .svg-trend-area {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
+  .admin-layout.is-printing-analytics div.desktop-analytics-table {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .admin-layout.is-printing-analytics table.desktop-analytics-table {
+    display: table !important;
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  .admin-layout.is-printing-analytics table thead {
+    display: table-header-group;
+  }
+
+  .admin-layout.is-printing-analytics table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .admin-layout.is-printing-analytics th,
+  .admin-layout.is-printing-analytics td {
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 }
 

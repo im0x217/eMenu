@@ -803,95 +803,100 @@
       </div>
     </Teleport>
 
-    <!-- Formal A4 Portrait Print View (Only visible when printing) -->
-    <div class="print-only inv-print-sheet" dir="rtl">
-      <!-- Print Header -->
-      <div class="inv-print-header">
-        <div class="inv-print-brand">
-          <div class="brand-title">حلويات عبمبر الزروق</div>
-          <div class="brand-sub">قسم النواشف • إدارة المخزون والمستودع</div>
+    <!-- Formal A4 Portrait Print View (Teleported to body & gated to active inventory print) -->
+    <Teleport to="body">
+      <div v-if="isPrintingInventory" class="print-only inv-print-sheet" dir="rtl">
+        <!-- Print Header -->
+        <div class="inv-print-header">
+          <div class="inv-print-brand">
+            <div class="brand-title">حلويات عبمبر الزروق</div>
+            <div class="brand-sub">قسم النواشف • إدارة المخزون والمستودع</div>
+          </div>
+
+          <div class="inv-print-title-box">
+            <h2>كشف جرد المخزون والمستودع</h2>
+            <p>وثيقة جرد ومطابقة رسمية معتمدة</p>
+          </div>
+
+          <div class="inv-print-meta" dir="ltr">
+            <div>التاريخ: <span class="text-mono font-bold">{{ printDate }}</span></div>
+            <div>الفئة: <strong>{{ printCategoryLabel }}</strong></div>
+          </div>
         </div>
 
-        <div class="inv-print-title-box">
-          <h2>كشف جرد المخزون والمستودع</h2>
-          <p>وثيقة جرد ومطابقة رسمية معتمدة</p>
+        <!-- KPI Summary Strip -->
+        <div class="inv-print-kpis">
+          <div class="inv-print-kpi-box">
+            <div class="pkpi-label">إجمالي الأصناف</div>
+            <div class="pkpi-val text-mono">{{ printItems.length }}</div>
+          </div>
+          <div class="inv-print-kpi-box">
+            <div class="pkpi-label">أصناف منخفضة</div>
+            <div class="pkpi-val text-mono text-warning-deep">{{ printLowStockCount }}</div>
+          </div>
+          <div class="inv-print-kpi-box">
+            <div class="pkpi-label">نفدت بالكامل</div>
+            <div class="pkpi-val text-mono text-danger-deep">{{ printOutOfStockCount }}</div>
+          </div>
+          <div class="inv-print-kpi-box">
+            <div class="pkpi-label">إجمالي الدفتري</div>
+            <div class="pkpi-val text-mono">{{ printTotalUnits.toLocaleString('ar-LY') }}</div>
+          </div>
+          <div class="inv-print-kpi-box" v-if="printTotalReserved > 0">
+            <div class="pkpi-label">محجوز بالطلبات</div>
+            <div class="pkpi-val text-mono text-warning-deep">{{ printTotalReserved.toLocaleString('ar-LY') }}</div>
+          </div>
         </div>
 
-        <div class="inv-print-meta" dir="ltr">
-          <div>التاريخ: <span class="text-mono font-bold">{{ printDate }}</span></div>
-          <div>الفئة: <strong>{{ printCategoryLabel }}</strong></div>
+        <!-- Print Audit Table -->
+        <table class="inv-print-table">
+          <thead>
+            <tr>
+              <th style="width: 4.5%;" class="col-center">#</th>
+              <th style="width: 24.5%;">اسم الصنف في المستودع</th>
+              <th style="width: 10%;" class="col-center">الفئة</th>
+              <th style="width: 7.5%;" class="col-center">الرصيد الدفتري</th>
+              <th style="width: 7.5%;" class="col-center">محجوز (طلبات)</th>
+              <th style="width: 7.5%;" class="col-center">المتاح الصافي</th>
+              <th style="width: 7%;" class="col-center">حد التنبيه</th>
+              <th style="width: 8.5%;" class="col-center">الجرد الفعلي</th>
+              <th style="width: 7.5%;" class="col-center">المطابقة</th>
+              <th style="width: 15.5%;">ملاحظات أمين المستودع</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="printItems.length === 0">
+              <td colspan="10" class="col-center" style="padding: 16px;">لا توجد أصناف مطابقة في المستودع للطباعة</td>
+            </tr>
+            <tr v-for="(item, idx) in printItems" :key="'prt-' + item.id">
+              <td class="col-center text-mono">{{ item.legacy_id || (idx + 1) }}</td>
+              <td class="font-bold">{{ item.name }}</td>
+              <td class="col-center">{{ item.category || 'عام' }}</td>
+              <td class="col-center text-mono font-bold">{{ item.quantity }}</td>
+              <td class="col-center text-mono text-warning-deep">{{ item.reserved_qty || 0 }}</td>
+              <td class="col-center text-mono font-bold">{{ item.available_qty }}</td>
+              <td class="col-center text-mono">{{ item.min_stock }}</td>
+              <td class="col-center inv-audit-box"></td>
+              <td class="col-center inv-audit-box"></td>
+              <td class="inv-audit-notes"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Signatures Footer -->
+        <div class="inv-print-signatures">
+          <div class="sig-block">
+            <div class="sig-line">توقيع مسؤول المستودع: _____________________</div>
+          </div>
+          <div class="sig-block">
+            <div class="sig-line">توقيع المشرف المعتمد: _____________________</div>
+          </div>
+          <div class="sig-block">
+            <div class="sig-line">الختم والتاريخ: _____________________</div>
+          </div>
         </div>
       </div>
-
-      <!-- KPI Summary Strip -->
-      <div class="inv-print-kpis">
-        <div class="inv-print-kpi-box">
-          <div class="pkpi-label">إجمالي الأصناف</div>
-          <div class="pkpi-val text-mono">{{ printItems.length }}</div>
-        </div>
-        <div class="inv-print-kpi-box">
-          <div class="pkpi-label">أصناف منخفضة</div>
-          <div class="pkpi-val text-mono text-warning-deep">{{ printLowStockCount }}</div>
-        </div>
-        <div class="inv-print-kpi-box">
-          <div class="pkpi-label">نفدت بالكامل</div>
-          <div class="pkpi-val text-mono text-danger-deep">{{ printOutOfStockCount }}</div>
-        </div>
-        <div class="inv-print-kpi-box">
-          <div class="pkpi-label">إجمالي الدفتري</div>
-          <div class="pkpi-val text-mono">{{ printTotalUnits.toLocaleString('ar-LY') }}</div>
-        </div>
-        <div class="inv-print-kpi-box" v-if="printTotalReserved > 0">
-          <div class="pkpi-label">محجوز بالطلبات</div>
-          <div class="pkpi-val text-mono text-warning-deep">{{ printTotalReserved.toLocaleString('ar-LY') }}</div>
-        </div>
-      </div>
-
-      <!-- Print Audit Table -->
-      <table class="inv-print-table">
-        <thead>
-          <tr>
-            <th style="width: 35px;" class="col-center">#</th>
-            <th>اسم الصنف في المستودع</th>
-            <th style="width: 85px;" class="col-center">الفئة</th>
-            <th style="width: 70px;" class="col-center">الرصيد الدفتري</th>
-            <th style="width: 70px;" class="col-center">محجوز (طلبات)</th>
-            <th style="width: 70px;" class="col-center">المتاح الصافي</th>
-            <th style="width: 65px;" class="col-center">حد التنبيه</th>
-            <th style="width: 75px;" class="col-center">الجرد الفعلي</th>
-            <th style="width: 65px;" class="col-center">المطابقة</th>
-            <th>ملاحظات أمين المستودع</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, idx) in printItems" :key="'prt-' + item.id">
-            <td class="col-center text-mono">{{ item.legacy_id || (idx + 1) }}</td>
-            <td class="font-bold">{{ item.name }}</td>
-            <td class="col-center">{{ item.category || 'عام' }}</td>
-            <td class="col-center text-mono font-bold">{{ item.quantity }}</td>
-            <td class="col-center text-mono text-warning-deep">{{ item.reserved_qty || 0 }}</td>
-            <td class="col-center text-mono font-bold">{{ item.available_qty }}</td>
-            <td class="col-center text-mono">{{ item.min_stock }}</td>
-            <td class="col-center inv-audit-box"></td>
-            <td class="col-center inv-audit-box"></td>
-            <td class="inv-audit-notes"></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Signatures Footer -->
-      <div class="inv-print-signatures">
-        <div class="sig-block">
-          <div class="sig-line">توقيع مسؤول المستودع: _____________________</div>
-        </div>
-        <div class="sig-block">
-          <div class="sig-line">توقيع المشرف المعتمد: _____________________</div>
-        </div>
-        <div class="sig-block">
-          <div class="sig-line">الختم والتاريخ: _____________________</div>
-        </div>
-      </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -956,6 +961,7 @@ export default {
 
     // Print Dialog & View
     const isPrintDialogOpen = ref(false);
+    const isPrintingInventory = ref(false);
     const printCategory = ref('all');
     const printDate = ref('');
     const adjustDialogRef = ref(null);
@@ -1363,12 +1369,71 @@ export default {
       }
     };
 
-    // Print trigger
-    const triggerPrint = () => {
+    // Print trigger (A4 Portrait 210mm x 297mm isolated from AdminView receipts)
+    const applyInventoryPrintPageStyle = () => {
+      if (typeof document === 'undefined') return;
+      let styleEl = document.getElementById('forced-print-page-size-style');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'forced-print-page-size-style';
+      }
+      if (document.head.lastElementChild !== styleEl) {
+        document.head.appendChild(styleEl);
+      }
+      styleEl.innerHTML = `
+        @media print {
+          @page {
+            size: 210mm 297mm !important;
+            margin: 0 !important;
+          }
+          :root {
+            font-size: 100% !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            max-width: 210mm !important;
+            min-width: 0 !important;
+            height: auto !important;
+            overflow-x: hidden !important;
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `;
+    };
+
+    const clearInventoryPrintPageStyle = () => {
+      if (typeof document === 'undefined') return;
+      const styleEl = document.getElementById('forced-print-page-size-style');
+      if (styleEl) styleEl.innerHTML = '';
+    };
+
+    const triggerPrint = async () => {
+      printDate.value = new Date().toLocaleDateString('ar-LY', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
       isPrintDialogOpen.value = false;
+      applyInventoryPrintPageStyle();
+      isPrintingInventory.value = true;
+      await nextTick();
       setTimeout(() => {
+        let cleaned = false;
+        const cleanup = () => {
+          if (cleaned) return;
+          cleaned = true;
+          isPrintingInventory.value = false;
+          clearInventoryPrintPageStyle();
+          window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
         window.print();
-      }, 250);
+        setTimeout(cleanup, 1500);
+      }, 150);
     };
 
     // Lifecycle
@@ -1435,6 +1500,7 @@ export default {
       adjustExactQty,
       adjustMinStock,
       isPrintDialogOpen,
+      isPrintingInventory,
       adjustDialogRef,
       printDialogRef,
       fetchInventory,
@@ -2681,10 +2747,7 @@ export default {
     display: block !important;
   }
 
-  @page {
-    size: A4 portrait;
-    margin: 8mm 10mm;
-  }
+  /* Dynamic @page { size: 210mm 297mm !important; margin: 0 !important; } is injected via triggerPrint() */
 
   body {
     background: #ffffff !important;
@@ -2692,15 +2755,29 @@ export default {
   }
 
   .inv-print-sheet {
+    display: block !important;
+    width: 210mm;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 8mm 8mm !important;
+    box-sizing: border-box;
+    background: #ffffff !important;
     font-family: 'Cairo', sans-serif !important;
     color: #000000 !important;
-    padding: 0 !important;
+    direction: rtl;
+    overflow-x: hidden;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .inv-print-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 6px 12px;
     border-bottom: 2px solid #000000;
     padding-bottom: 8px;
     margin-bottom: 12px;
@@ -2736,17 +2813,20 @@ export default {
 
   .inv-print-kpis {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 8px;
     margin-bottom: 12px;
     text-align: center;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .inv-print-kpi-box {
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     padding: 6px;
-    background: #f8fafc;
+    background: #f8fafc !important;
+    min-width: 0;
   }
   .pkpi-label {
     font-size: 0.65rem;
@@ -2757,18 +2837,34 @@ export default {
     font-size: 1rem;
     font-weight: 900;
     margin-top: 2px;
+    overflow-wrap: anywhere;
   }
 
   .inv-print-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
-    font-size: 0.72rem;
+    font-size: 7.2pt;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  .inv-print-table thead {
+    display: table-header-group;
+  }
+
+  .inv-print-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .inv-print-table th,
   .inv-print-table td {
     border: 1px solid #94a3b8;
-    padding: 5px 6px;
+    padding: 4px 4px;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .inv-print-table th {
@@ -2776,20 +2872,17 @@ export default {
     font-weight: 900;
   }
 
-  .inv-audit-box {
-    width: 45px;
-  }
-  .inv-audit-notes {
-    width: 140px;
-  }
-
   .inv-print-signatures {
     display: flex;
     justify-content: space-between;
-    margin-top: 28px;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-top: 24px;
     padding-top: 12px;
     font-size: 0.75rem;
     font-weight: 800;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 
