@@ -2587,7 +2587,11 @@
                 <div class="card-toolbar-top">
 
                   <div class="customer-toolbar-actions">
-                    <button @click="printCustomerDebtReport" class="btn btn-outline btn-sm flex-center cust-debt-print-btn" title="طباعة كشف مديونيات وحسابات العملاء">
+                    <button type="button" @click="openAddCustomerModal" class="btn btn-primary btn-sm flex-center cust-add-btn" title="إضافة عميل جديد">
+                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                      <span>إضافة عميل جديد</span>
+                    </button>
+                    <button type="button" @click="printCustomerDebtReport" class="btn btn-outline btn-sm flex-center cust-debt-print-btn" title="طباعة كشف مديونيات وحسابات العملاء">
                       <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                       <span>كشف المديونيات</span>
                     </button>
@@ -5791,32 +5795,34 @@
         <div class="sheet-grab-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div class="modal-title-group">
-            <h2 id="customer-modal-title" class="modal-title">تعديل بيانات العميل</h2>
-            <span v-if="editingCustomer.phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(editingCustomer.phone) }}</span>
+            <h2 id="customer-modal-title" class="modal-title">{{ editingCustomer._id ? 'تعديل بيانات العميل' : 'إضافة عميل جديد' }}</h2>
+            <span v-if="editingCustomer._id && editingCustomer.phone" class="modal-subtitle text-mono" style="direction: ltr; display: inline-block;">{{ formatLibyanPhone(editingCustomer.phone) }}</span>
+            <span v-else-if="!editingCustomer._id" class="modal-subtitle">إضافة عميل جديد إلى سجل العملاء</span>
           </div>
-          <button @click="customerModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
+          <button type="button" @click="customerModalOpen = false" class="modal-close-btn" aria-label="إغلاق">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
         <form @submit.prevent="saveCustomerDetails" class="modal-form">
           <div class="modal-body">
             <div class="form-group mb-3">
-              <label class="form-label">اسم العميل *</label>
-              <input v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل…" />
+              <label for="customer-name-input" class="form-label">اسم العميل *</label>
+              <input id="customer-name-input" v-model="editingCustomer.name" type="text" required class="form-control" placeholder="اسم العميل…" />
             </div>
 
             <div class="form-group mb-3">
-              <label class="form-label">رقم الهاتف *</label>
-              <input v-model="editingCustomer.phone" @input="editingCustomer.phone = formatPhoneInput($event.target.value)" type="tel" inputmode="tel" spellcheck="false" required class="form-control text-mono" dir="ltr" placeholder="09x-xxxxxxx…" />
+              <label for="customer-phone-input" class="form-label">رقم الهاتف *</label>
+              <input id="customer-phone-input" v-model="editingCustomer.phone" @input="editingCustomer.phone = formatPhoneInput($event.target.value)" type="tel" inputmode="tel" spellcheck="false" required class="form-control text-mono" dir="ltr" placeholder="09x-xxxxxxx…" />
             </div>
 
             <div class="form-group mb-3">
               <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label mb-0">كلمة مرور الحساب</label>
+                <label for="customer-password-input" class="form-label mb-0">{{ editingCustomer._id ? 'كلمة مرور الحساب' : 'كلمة مرور الحساب (اختياري)' }}</label>
                 <span v-if="editingCustomer.password" class="text-small text-muted font-bold">({{ editingCustomer.password.length }} خانات)</span>
               </div>
               <div class="input-with-action-wrapper">
                 <input 
+                  id="customer-password-input"
                   v-model="editingCustomer.password" 
                   :type="editingCustomer.showPassword ? 'text' : 'password'" 
                   class="form-control text-mono" 
@@ -5842,7 +5848,7 @@
           <div class="modal-footer mt-4">
             <button type="submit" class="btn btn-primary btn-modal-save" :disabled="loading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <span>حفظ التغييرات</span>
+              <span>{{ editingCustomer._id ? 'حفظ التغييرات' : 'إضافة العميل' }}</span>
             </button>
           </div>
         </form>
@@ -12589,6 +12595,19 @@ const closeSuggestionsWithDelay = () => {
       customerDetailsModalOpen.value = true;
     };
 
+    const openAddCustomerModal = () => {
+      editingCustomer._id = '';
+      editingCustomer.name = '';
+      editingCustomer.phone = '';
+      editingCustomer.password = '';
+      editingCustomer.showPassword = false;
+      customerModalOpen.value = true;
+      nextTick(() => {
+        const el = document.querySelector('#customer-name-input');
+        if (!isMobileScreen.value && el) el.focus();
+      });
+    };
+
     const openCustomerEditModal = (cust) => {
       editingCustomer._id = cust._id;
       editingCustomer.name = cust.name;
@@ -12597,7 +12616,7 @@ const closeSuggestionsWithDelay = () => {
       editingCustomer.showPassword = false;
       customerModalOpen.value = true;
       nextTick(() => {
-        const el = document.querySelector('.modal-overlay input[type="text"]');
+        const el = document.querySelector('#customer-name-input');
         if (!isMobileScreen.value && el) el.focus();
       });
     };
@@ -12613,32 +12632,55 @@ const closeSuggestionsWithDelay = () => {
     };
 
     const saveCustomerDetails = async () => {
+      const cleanName = String(editingCustomer.name || '').trim();
+      if (!cleanName) {
+        toast.show('يرجى إدخال اسم العميل', 'warning');
+        return;
+      }
+      const phoneDigits = String(editingCustomer.phone || '').replace(/\D/g, '');
+      if (phoneDigits.length < 9) {
+        toast.show('يرجى إدخال رقم هاتف صحيح', 'warning');
+        return;
+      }
+      const cleanPass = String(editingCustomer.password || '').trim();
+      if (cleanPass.length > 0 && cleanPass.length < 4) {
+        toast.show('كلمة المرور يجب أن لا تقل عن 4 خانات', 'warning');
+        return;
+      }
+
       loading.value = true;
       try {
         const canonicalPhone = formatLibyanPhone(editingCustomer.phone);
-        const url = `/api/admin/customers/${editingCustomer._id}`;
+        const isEdit = !!editingCustomer._id;
+        const url = isEdit ? `/api/admin/customers/${editingCustomer._id}` : '/api/admin/customers';
         const res = await adminFetch(url, {
-          method: 'PUT',
+          method: isEdit ? 'PUT' : 'POST',
           body: JSON.stringify({
-            name: editingCustomer.name,
+            name: cleanName,
             phone: canonicalPhone,
-            password: editingCustomer.password
+            password: cleanPass
           })
         });
         if (res.ok) {
           const data = await res.json();
-          toast.show('تم تحديث بيانات وكلمة مرور العميل بنجاح', 'success');
-          if (selectedCustomer.value && selectedCustomer.value._id === editingCustomer._id) {
-            selectedCustomer.value.name = editingCustomer.name;
-            selectedCustomer.value.phone = data.phone || canonicalPhone;
-            selectedCustomer.value.password = editingCustomer.password;
-            selectedCustomer.value.hasPassword = !!editingCustomer.password;
+          if (isEdit) {
+            toast.show('تم تحديث بيانات وكلمة مرور العميل بنجاح', 'success');
+            if (selectedCustomer.value && selectedCustomer.value._id === editingCustomer._id) {
+              selectedCustomer.value.name = cleanName;
+              selectedCustomer.value.phone = data.phone || canonicalPhone;
+              selectedCustomer.value.password = cleanPass;
+              selectedCustomer.value.hasPassword = !!cleanPass;
+            }
+            customerModalOpen.value = false;
+            await Promise.all([fetchCustomers(), fetchOrders(), fetchAnalytics()]);
+          } else {
+            toast.show('تمت إضافة العميل الجديد بنجاح', 'success');
+            customerModalOpen.value = false;
+            await fetchCustomers();
           }
-          customerModalOpen.value = false;
-          await Promise.all([fetchCustomers(), fetchOrders(), fetchAnalytics()]);
         } else {
-          const errData = await res.json();
-          toast.show(errData.error || 'فشل تحديث العميل', 'danger');
+          const errData = await res.json().catch(() => ({}));
+          toast.show(errData.error || (isEdit ? 'فشل تحديث العميل' : 'فشل في إضافة العميل الجديد'), 'danger');
         }
       } catch (err) {
         toast.show('حدث خطأ بالاتصال بالخادم', 'danger');
@@ -12788,6 +12830,7 @@ const closeSuggestionsWithDelay = () => {
         { id: 'nav-carousel', title: 'الانتقال إلى صور وبنرات الواجهة', category: 'تنقل', shortcut: 'Alt+8', icon: 'image', action: () => setTab('carousel') },
         { id: 'nav-users', title: 'الانتقال إلى صلاحيات المستخدمين', category: 'تنقل', shortcut: 'Alt+9', icon: 'shield', action: () => setTab('users') },
         { id: 'new-product', title: 'إضافة منتج جديد', category: 'منتجات', shortcut: '', icon: 'plus-circle', action: () => openProductModal() },
+        { id: 'new-customer', title: 'إضافة عميل جديد', category: 'عملاء', shortcut: '', icon: 'user-plus', action: () => openAddCustomerModal() },
         { id: 'new-category', title: 'إضافة صنف رئيسي جديد', category: 'أصناف', shortcut: '', icon: 'folder-plus', action: () => openCategoryModal() },
         { id: 'new-chef', title: 'إضافة شيف / طاهٍ جديد', category: 'إنتاج', shortcut: '', icon: 'user-plus', action: () => openAddChefModal() },
         { id: 'new-tag', title: 'إضافة وسم / ميزة جديدة', category: 'وسوم', shortcut: '', icon: 'tag', action: () => openTagModal() },
@@ -12796,7 +12839,7 @@ const closeSuggestionsWithDelay = () => {
         { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
       ];
       const filteredByRole = userRole.value === 'order_manager'
-        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'nav-employees', 'new-chef', 'help-shortcuts'].includes(c.id))
+        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'new-customer', 'nav-production', 'nav-employees', 'new-chef', 'help-shortcuts'].includes(c.id))
         : allCmds;
 
       if (!q) return filteredByRole;
@@ -14228,6 +14271,7 @@ const closeSuggestionsWithDelay = () => {
       addSelectedProduct,
       closeSuggestionsWithDelay,
       removeOrderItem,
+      openAddCustomerModal,
       openCustomerEditModal,
       deleteCustomer,
       saveCustomerDetails,
@@ -23991,12 +24035,20 @@ select.pos-control {
 
   .customer-toolbar-actions {
     width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
   }
 
-  .cust-debt-print-btn {
-    width: 100% !important;
+  .card-toolbar-top .customer-toolbar-actions .cust-add-btn,
+  .card-toolbar-top .customer-toolbar-actions .cust-debt-print-btn {
+    flex: 1 1 calc(50% - 4px) !important;
+    width: auto !important;
     justify-content: center !important;
-    min-height: 40px !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 10px !important;
   }
 
   /* Adaptive Bottom-Sheet Modals on Mobile */
@@ -24444,6 +24496,26 @@ select.pos-control {
 /* ==========================================================================
    CUSTOMER DEBT REPORT PRINT STYLES (HABIT 17)
    ========================================================================== */
+
+.customer-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cust-add-btn {
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
 
 .cust-debt-print-btn {
   height: 38px !important;

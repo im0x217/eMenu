@@ -4325,6 +4325,61 @@ app.get("/api/admin/customers", checkMongoDB, checkStaff, async (req, res) => {
   }
 });
 
+// Create new customer from Admin/POS Customers tab
+app.post("/api/admin/customers", checkMongoDB, checkStaff, async (req, res) => {
+  try {
+    const { name, phone, password } = req.body || {};
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    if (!trimmedName) {
+      return res.status(400).json({ error: "يرجى إدخال اسم العميل" });
+    }
+    const rawPhone = typeof phone === "string" ? phone.trim() : "";
+    const phoneDigits = rawPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 9) {
+      return res.status(400).json({ error: "يرجى إدخال رقم هاتف صحيح" });
+    }
+    const cleanPass = password !== undefined && password !== null ? String(password).trim() : "";
+    if (cleanPass.length > 0 && cleanPass.length < 4) {
+      return res.status(400).json({ error: "كلمة المرور يجب أن لا تقل عن 4 خانات" });
+    }
+
+    const canonicalPhone = formatCanonicalLibyanPhone(rawPhone);
+    const existing = await findCustomerByPhone(canonicalPhone);
+    if (existing) {
+      return res.status(409).json({
+        error: `رقم الهاتف مسجل مسبقاً باسم: ${existing.name || canonicalPhone}`
+      });
+    }
+
+    const now = new Date();
+    const newCustomerDoc = {
+      name: trimmedName,
+      phone: canonicalPhone,
+      password: cleanPass,
+      passwordHash: cleanPass ? hashCustomerPassword(cleanPass) : "",
+      createdAt: now,
+      lastActive: now
+    };
+
+    const result = await customersCollection.insertOne(newCustomerDoc);
+    res.status(201).json({
+      success: true,
+      customer: {
+        _id: result.insertedId,
+        name: trimmedName,
+        phone: canonicalPhone,
+        hasPassword: !!cleanPass
+      }
+    });
+  } catch (err) {
+    if (err && err.code === 11000) {
+      return res.status(409).json({ error: "رقم الهاتف مسجل مسبقاً" });
+    }
+    console.error("Create customer error:", err);
+    res.status(500).json({ error: "فشل في إضافة العميل الجديد" });
+  }
+});
+
 // Update customer details (with reference linkage preservation & password management)
 app.put("/api/admin/customers/:id", checkMongoDB, checkStaff, async (req, res) => {
   const { id } = req.params;
