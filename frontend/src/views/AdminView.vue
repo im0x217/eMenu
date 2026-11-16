@@ -1237,6 +1237,7 @@
                       <td>
                         <div class="prod-name-wrap">
                           <span class="text-bold block">{{ prod.name }}</span>
+                          <span v-if="prod.piecesPerUnit && Number(prod.piecesPerUnit) > 0" class="badge-sub text-mono" title="عدد القطع في الوحدة">{{ prod.piecesPerUnit }} قطعة/وحدة</span>
                           <span v-if="activeShop === 'shop2' && prod.inventoryLink?.recordId" class="badge-link-pill" :title="'مرتبط بالمخزون: ' + prod.inventoryLink.itemName">
                             <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="me-1" style="display:inline-block; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                             <span>{{ prod.inventoryLink.itemName }}</span>
@@ -1328,6 +1329,7 @@
                         <div class="mob-prod-prices">
                           <span class="mob-price-pill regular text-mono">مفرد: {{ prod.price_regular ? formatPrice(prod.price_regular) : '-' }}</span>
                           <span v-if="prod.price_bulk" class="mob-price-pill bulk text-mono">جملة: {{ formatPrice(prod.price_bulk) }}</span>
+                          <span v-if="prod.piecesPerUnit && Number(prod.piecesPerUnit) > 0" class="badge-sub text-mono">{{ prod.piecesPerUnit }} قطعة/وحدة</span>
                         </div>
                         <div v-if="prod.tags && prod.tags.length" class="tags-container-small mt-1">
                           <span 
@@ -5201,6 +5203,19 @@
             </div>
           </div>
 
+          <div class="form-group mt-2">
+            <label for="modal-pieces-per-unit">عدد القطع في الوحدة الواحدة <span class="text-muted text-small">(اختياري — الافتراضي: بدون)</span></label>
+            <input
+              id="modal-pieces-per-unit"
+              v-model="editingProduct.piecesPerUnit"
+              type="number"
+              min="1"
+              step="any"
+              placeholder="بدون (مثال: 12)…"
+              class="form-control"
+            />
+          </div>
+
           <div class="form-group checkbox-group mt-2">
             <input type="checkbox" id="modal-allow-float" v-model="editingProduct.allowFloat" />
             <label for="modal-allow-float">يسمح بالكميات الكسرية (مثل: 0.5 كجم)</label>
@@ -6098,7 +6113,7 @@
         </div>
         <div class="debt-kpi-card">
           <span class="debt-kpi-label">العملاء المدينين</span>
-          <span class="debt-kpi-val text-mono">{{ customerDebtReportData.indebtedCount }} / {{ customerDebtReportData.totalCustomers }}</span>
+          <span class="debt-kpi-val text-mono">{{ customerDebtReportData.indebtedCount }}</span>
         </div>
       </div>
 
@@ -6116,7 +6131,7 @@
           </thead>
           <tbody>
             <tr v-if="!customerDebtReportData.customers || customerDebtReportData.customers.length === 0">
-              <td colspan="5" class="text-center py-4">لا توجد سجلات عملاء متطابقة في هذا النطاق.</td>
+              <td colspan="5" class="text-center py-4">لا يوجد عملاء عليهم ديون متبقية في هذا النطاق.</td>
             </tr>
             <tr 
               v-for="(cust, idx) in customerDebtReportData.customers" 
@@ -6559,6 +6574,7 @@
             <th class="receipt-th-num">#</th>
             <th class="receipt-th-name">المنتج</th>
             <th class="receipt-th-qty">الكمية</th>
+            <th class="receipt-th-pieces">عدد القطع</th>
             <th class="receipt-th-price">السعر</th>
             <th class="receipt-th-total">الإجمالي</th>
           </tr>
@@ -6571,6 +6587,7 @@
               <span v-if="item.notes" class="receipt-item-note">{{ item.notes }}</span>
             </td>
             <td class="receipt-td-qty">{{ item.quantity }}</td>
+            <td class="receipt-td-pieces">{{ getOrderItemPiecesPerUnit(item) }}</td>
             <td class="receipt-td-price">{{ Number(item.price) % 1 === 0 ? Number(item.price) : Number(item.price).toFixed(2) }}</td>
             <td class="receipt-td-total">{{ Math.round(Number(item.price) * Number(item.quantity)) }}</td>
           </tr>
@@ -8507,6 +8524,7 @@ export default {
       price_bulk: null,
       makingCost: 0,
       allowFloat: false,
+      piecesPerUnit: null,
       img: '',
       tags: [],
       chefId: '',
@@ -8787,6 +8805,7 @@ export default {
         editingProduct.price_bulk = prod.price_bulk || null;
         editingProduct.makingCost = prod.makingCost !== undefined && prod.makingCost !== null ? prod.makingCost : 0;
         editingProduct.allowFloat = !!prod.allowFloat;
+        editingProduct.piecesPerUnit = (prod.piecesPerUnit !== undefined && prod.piecesPerUnit !== null && prod.piecesPerUnit !== '' && Number(prod.piecesPerUnit) > 0) ? Number(prod.piecesPerUnit) : null;
         editingProduct.img = prod.img || '';
         modalFilePreview.value = prod.img || '';
         editingProduct.tags = Array.isArray(prod.tags) ? [...prod.tags] : [];
@@ -8810,6 +8829,7 @@ export default {
         editingProduct.price_bulk = null;
         editingProduct.makingCost = 0;
         editingProduct.allowFloat = false;
+        editingProduct.piecesPerUnit = null;
         editingProduct.img = '';
         modalFilePreview.value = '';
         editingProduct.tags = [];
@@ -8852,6 +8872,10 @@ export default {
       formData.append('subCategory', editingProduct.subCategory);
       formData.append('purchaseType', editingProduct.purchaseType);
       formData.append('allowFloat', editingProduct.allowFloat ? 'true' : 'false');
+      const cleanPiecesPerUnit = (editingProduct.piecesPerUnit !== null && editingProduct.piecesPerUnit !== undefined && editingProduct.piecesPerUnit !== '' && Number(editingProduct.piecesPerUnit) > 0)
+        ? String(Math.round(Number(editingProduct.piecesPerUnit) * 100) / 100)
+        : '';
+      formData.append('piecesPerUnit', cleanPiecesPerUnit);
       formData.append('tags', JSON.stringify(editingProduct.tags));
       formData.append('makingCost', editingProduct.makingCost !== null && editingProduct.makingCost !== undefined ? editingProduct.makingCost : 0);
       formData.append('chefId', editingProduct.chefId ? String(editingProduct.chefId) : '');
@@ -10101,8 +10125,10 @@ export default {
 
     const customerDebtReportData = computed(() => {
       const rawList = filteredCustomers.value || [];
+      // Exclude 0-debt customers from debt print while preserving fractional balances
+      const indebtedOnly = rawList.filter(c => Math.round((Number(c.outstandingBalance) || 0) * 100) > 0);
       // Alphabetical sorting by Arabic customer name
-      const list = [...rawList].sort((a, b) => {
+      const list = [...indebtedOnly].sort((a, b) => {
         const nameA = (a.name || '').trim();
         const nameB = (b.name || '').trim();
         return nameA.localeCompare(nameB, 'ar', { sensitivity: 'base' });
@@ -10110,7 +10136,7 @@ export default {
       const totalPurchases = list.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0);
       const totalDebt = list.reduce((sum, c) => sum + (Number(c.outstandingBalance) || 0), 0);
       const totalPaid = Math.max(0, totalPurchases - totalDebt);
-      const indebtedCount = list.filter(c => (Number(c.outstandingBalance) || 0) > 0).length;
+      const indebtedCount = list.length;
       const collectionRate = totalPurchases > 0 ? ((totalPaid / totalPurchases) * 100).toFixed(1) : '100.0';
 
       let filterLabel = 'جميع التواريخ المسجلة';
@@ -10578,6 +10604,19 @@ export default {
         priorCount += (paginatedOrderPages.value[p] || []).length;
       }
       return priorCount + idx + 1;
+    };
+
+    // Resolve pieces-per-unit for Order Print column (empty string '' when "none")
+    const getOrderItemPiecesPerUnit = (item) => {
+      if (!item) return '';
+      const matchedProd = (products.value || []).find(
+        p => (item.productId && String(p._id) === String(item.productId)) || (p.name || '').trim() === (item.name || '').trim()
+      );
+      const rawVal = matchedProd !== undefined ? matchedProd.piecesPerUnit : item.piecesPerUnit;
+      if (rawVal === null || rawVal === undefined || rawVal === '' || rawVal === 'none') return '';
+      const num = Number(rawVal);
+      if (!Number.isFinite(num) || num <= 0) return '';
+      return num % 1 === 0 ? String(num) : String(Math.round(num * 100) / 100);
     };
 
     const paginatedOrderPages = computed(() => {
@@ -11751,7 +11790,8 @@ const navigateSuggestions = (dir) => {
           price: Number(price) || 0,
           quantity: 1,
           notes: '',
-          allowFloat: !!prod.allowFloat
+          allowFloat: !!prod.allowFloat,
+          piecesPerUnit: prod.piecesPerUnit ?? null
         });
       }
       recalcOrderTotal();
@@ -11814,7 +11854,8 @@ const closeSuggestionsWithDelay = () => {
         return {
           ...item,
           notes: item.notes || '',
-          allowFloat: item.allowFloat !== undefined ? !!item.allowFloat : !!(matchedProd && matchedProd.allowFloat)
+          allowFloat: item.allowFloat !== undefined ? !!item.allowFloat : !!(matchedProd && matchedProd.allowFloat),
+          piecesPerUnit: item.piecesPerUnit !== undefined ? item.piecesPerUnit : (matchedProd?.piecesPerUnit ?? null)
         };
       });
       editingOrder.totalPrice = order.totalPrice || 0;
@@ -11902,6 +11943,7 @@ const closeSuggestionsWithDelay = () => {
             price: Number(item.price),
             quantity: Number(item.quantity),
             allowFloat: item.allowFloat || false,
+            piecesPerUnit: item.piecesPerUnit ?? null,
             notes: item.notes || ''
           })),
           totalPrice: Number(editingOrder.totalPrice),
@@ -12017,6 +12059,7 @@ const closeSuggestionsWithDelay = () => {
             price: Number(price) || 0,
             quantity: qtyToAdd,
             allowFloat: liveProd ? !!liveProd.allowFloat : !!oldItem.allowFloat,
+            piecesPerUnit: liveProd ? (liveProd.piecesPerUnit ?? null) : (oldItem.piecesPerUnit ?? null),
             notes: oldItem.notes || ''
           });
         }
@@ -12367,6 +12410,7 @@ const closeSuggestionsWithDelay = () => {
           price: Number(price) || 0,
           quantity: 1,
           allowFloat: !!prod.allowFloat,
+          piecesPerUnit: prod.piecesPerUnit ?? null,
           notes: ''
         });
       }
@@ -12459,6 +12503,7 @@ const closeSuggestionsWithDelay = () => {
             price: Number(item.price),
             quantity: Number(item.quantity),
             allowFloat: !!item.allowFloat,
+            piecesPerUnit: item.piecesPerUnit ?? null,
             notes: item.notes || ''
           })),
           totalPrice: newOrder.totalPrice,
@@ -13884,6 +13929,7 @@ const closeSuggestionsWithDelay = () => {
       printCustomerOrdersStatement,
       paginatedOrderPages,
       getPrintItemIndex,
+      getOrderItemPiecesPerUnit,
       printOrder,
       getOrderPaidAmount,
       getOrderRemaining,
@@ -18815,6 +18861,16 @@ select.form-control:focus {
     print-color-adjust: exact;
   }
 
+  .receipt-th-qty, .receipt-th-pieces, .receipt-th-price {
+    text-align: center !important;
+    white-space: nowrap;
+  }
+
+  .receipt-th-total {
+    text-align: left !important;
+    white-space: nowrap;
+  }
+
   .receipt-th-num, .receipt-td-num {
     width: 22px;
     text-align: center;
@@ -18832,9 +18888,10 @@ select.form-control:focus {
     print-color-adjust: exact;
   }
 
-  .receipt-td-qty, .receipt-td-price, .receipt-td-total {
+  .receipt-td-qty, .receipt-td-pieces, .receipt-td-price, .receipt-td-total {
     font-family: 'Fira Code', monospace;
     text-align: center;
+    white-space: nowrap;
   }
 
   .receipt-td-total {

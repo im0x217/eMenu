@@ -345,6 +345,13 @@ const parsePrice = (val, allowFloat) => {
   return isNaN(parsed) ? null : parsed;
 };
 
+const parsePiecesPerUnit = (val) => {
+  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined" || val === "none") return null;
+  const parsed = Number(val);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.round(parsed * 100) / 100;
+};
+
 // Get display image (with fallback for missing or old images)
 const getDisplayImage = (product) => {
   // If no image, use placeholder
@@ -1583,6 +1590,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           available: 1,
           cloudinary_public_id: 1,
           allowFloat: 1,
+          piecesPerUnit: 1,
           purchaseType: 1,
           tags: 1,
           ...(isStaff ? { chefId: 1, chefName: 1, ...(isAdmin ? { makingCost: 1 } : {}) } : {})
@@ -1632,7 +1640,7 @@ app.post("/api/verify-bulk-code", bulkCodeLimiter, (req, res) => {
 });
 
 app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags, chefId, chefName } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, piecesPerUnit, purchaseType, tags, chefId, chefName } = req.body;
   
   let parsedTags = [];
   try {
@@ -1669,6 +1677,7 @@ app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploa
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
   const parsedMakingCost = Number(makingCost) || 0;
+  const parsedPiecesPerUnit = parsePiecesPerUnit(piecesPerUnit);
 
   const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
@@ -1692,6 +1701,7 @@ app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploa
       subCategory,
       available: available === "false" ? false : true,
       allowFloat: isFloat,
+      piecesPerUnit: parsedPiecesPerUnit,
       purchaseType: purchaseType || 'both',
       tags: parsedTags,
       chefId: chefId || '',
@@ -1706,12 +1716,13 @@ app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploa
 });
 
 app.put("/api/products/:id", requireAdminShop("shop1"), upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags, chefId, chefName } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, piecesPerUnit, purchaseType, existingImg, tags, chefId, chefName } = req.body;
   const isFloat = allowFloat === 'true';
   const parsedPriceRegular = parsePrice(price_regular, isFloat);
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
   const parsedMakingCost = Number(makingCost) || 0;
+  const parsedPiecesPerUnit = parsePiecesPerUnit(piecesPerUnit);
   
   let parsedTags = [];
   try {
@@ -1731,6 +1742,7 @@ app.put("/api/products/:id", requireAdminShop("shop1"), upload.single('img'), up
       subCategory,
       available: available === "false" ? false : true,
       allowFloat: isFloat,
+      piecesPerUnit: parsedPiecesPerUnit,
       purchaseType: purchaseType || 'both',
       tags: parsedTags,
       chefId: chefId || '',
@@ -2205,6 +2217,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           available: 1,
           cloudinary_public_id: 1,
           allowFloat: 1,
+          piecesPerUnit: 1,
           purchaseType: 1,
           tags: 1,
           ...(isStaff ? { chefId: 1, chefName: 1, hasStorage: 1, inventoryLink: 1, ...(isAdmin ? { makingCost: 1 } : {}) } : {})
@@ -2234,7 +2247,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
 });
 
 app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.single('img'), uploadErrorHandler, async (req, res) => {
-  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, tags, chefId, chefName } = req.body;
+  const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, piecesPerUnit, purchaseType, tags, chefId, chefName } = req.body;
   
   let parsedTags = [];
   try {
@@ -2265,6 +2278,7 @@ app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.
   const parsedPriceBulk = parsePrice(price_bulk, isFloat);
   const parsedPrice = parsePrice(price, isFloat);
   const parsedMakingCost = Number(makingCost) || 0;
+  const parsedPiecesPerUnit = parsePiecesPerUnit(piecesPerUnit);
 
   const hasSomePrice = parsedPriceRegular !== null || parsedPrice !== null || (purchaseType === 'bulk' && parsedPriceBulk !== null);
   if (
@@ -2291,6 +2305,7 @@ app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.
       subCategory,
       available: available !== "false",
       allowFloat: isFloat,
+      piecesPerUnit: parsedPiecesPerUnit,
       purchaseType: purchaseType || "both",
       tags: parsedTags,
       chefId: chefId || '',
@@ -2321,7 +2336,7 @@ app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.
 
 app.put("/api/shop2/products/:id", checkMongoDB, requireAdminShop("shop2"), upload.single('img'), uploadErrorHandler, async (req, res) => {
   try {
-    const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, purchaseType, existingImg, tags, chefId, chefName } = req.body;
+    const { name, desc, price_regular, price_bulk, makingCost, category, subCategory, price, available, allowFloat, piecesPerUnit, purchaseType, existingImg, tags, chefId, chefName } = req.body;
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid product ID" });
     }
@@ -2359,6 +2374,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, requireAdminShop("shop2"), uplo
     const parsedPriceBulk = parsePrice(price_bulk, isFloat);
     const parsedPrice = parsePrice(price, isFloat);
     const parsedMakingCost = Number(makingCost) || 0;
+    const parsedPiecesPerUnit = parsePiecesPerUnit(piecesPerUnit);
 
     const hasStorage = req.body.hasStorage !== undefined 
       ? (req.body.hasStorage === 'true' || req.body.hasStorage === true)
@@ -2379,6 +2395,7 @@ app.put("/api/shop2/products/:id", checkMongoDB, requireAdminShop("shop2"), uplo
           subCategory,
           available: available !== "false",
           allowFloat: isFloat,
+          piecesPerUnit: parsedPiecesPerUnit,
           purchaseType: purchaseType || "both",
           tags: parsedTags,
           chefId: chefId || '',
@@ -3309,6 +3326,7 @@ app.put("/api/admin/orders/:id", checkMongoDB, checkStaff, async (req, res) => {
         price: Number(item.price) || 0,
         quantity: Number(item.quantity) || 1,
         allowFloat: !!item.allowFloat,
+        piecesPerUnit: parsePiecesPerUnit(item.piecesPerUnit),
         notes: item.notes || ''
       }));
       // Recalculate total price directly from items to guarantee mathematical correctness
@@ -5558,6 +5576,7 @@ app.put("/api/customer/orders/:id", checkMongoDB, customerLimiter, checkCustomer
         price: price,
         quantity: item.allowFloat ? Math.round(qty * 10) / 10 : Math.round(qty),
         allowFloat: !!item.allowFloat,
+        piecesPerUnit: parsePiecesPerUnit(item.piecesPerUnit),
         notes: (item.notes || '').trim()
       };
     });
@@ -5714,6 +5733,7 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
 
     unitPrice = Math.round(unitPrice * 100) / 100;
     computedTotal += unitPrice * qty;
+    const resolvedPiecesPerUnit = dbProd ? parsePiecesPerUnit(dbProd.piecesPerUnit) : parsePiecesPerUnit(item.piecesPerUnit);
 
     return {
       productId: item.productId && ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
@@ -5721,6 +5741,7 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
       price: unitPrice,
       quantity: Math.round(qty * 100) / 100,
       allowFloat: canFloat,
+      piecesPerUnit: resolvedPiecesPerUnit,
       notes: typeof item.notes === 'string' ? item.notes.slice(0, 500) : ''
     };
   });
@@ -7003,9 +7024,17 @@ const connectWithRetry = async () => {
         { $or: [{ makingCost: { $exists: false } }, { makingCost: null }] },
         { $set: { makingCost: 0 } }
       );
-      console.log("✓ Products makingCost migration check completed");
+      await productsCollection.updateMany(
+        { piecesPerUnit: { $exists: false } },
+        { $set: { piecesPerUnit: null } }
+      );
+      await productsCollection2.updateMany(
+        { piecesPerUnit: { $exists: false } },
+        { $set: { piecesPerUnit: null } }
+      );
+      console.log("✓ Products makingCost & piecesPerUnit migration check completed");
     } catch (migErr) {
-      console.warn("Product makingCost migration warning:", migErr.message);
+      console.warn("Product makingCost/piecesPerUnit migration warning:", migErr.message);
     }
 
     // Seed default admin user with PBKDF2 passwordHash if empty, and migrate any legacy plaintext passwords

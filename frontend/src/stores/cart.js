@@ -169,6 +169,7 @@ export const useCartStore = defineStore('cart', () => {
       price_bulk: item.price,
       quantity: item.quantity,
       allowFloat: item.allowFloat || false,
+      piecesPerUnit: item.piecesPerUnit ?? null,
       itemNotes: item.notes || '',
       shop: order.shop || 'shop1',
       priceMode: orderPriceMode
@@ -254,6 +255,7 @@ export const useCartStore = defineStore('cart', () => {
           price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk),
           quantity: item.quantity,
           allowFloat: item.allowFloat || false,
+          piecesPerUnit: item.piecesPerUnit ?? null,
           notes: item.itemNotes || ''
         })),
         deliveryDate: deliveryDate.value,
@@ -300,6 +302,7 @@ export const useCartStore = defineStore('cart', () => {
         price: item.priceMode === 'bulk' ? (item.price_bulk || item.price) : (item.price_regular || item.price || item.price_bulk),
         quantity: item.quantity,
         allowFloat: item.allowFloat || false,
+        piecesPerUnit: item.piecesPerUnit ?? null,
         notes: item.itemNotes || ''
       })),
       totalPrice: cartTotal.value,
