@@ -755,7 +755,7 @@
             <div v-if="selectedFormJob?.payType === 'production'" class="emp-production-link-box mb-3">
               <div class="font-bold text-primary mb-1">نظام احتساب الشيف / المنتج (بدون راتب أساسي)</div>
               <p class="text-small text-muted mb-2">
-                يتم احتساب الراتب تلقائياً من مجموع: <strong>(إجمالي مبيعات كل صنف ينتجه الشيف × نسبة الصنف %)</strong>. اختر ملف الشيف المرتبط من قسم الإنتاج:
+                يتم احتساب الراتب تلقائياً من مجموع: <strong>(الكمية المباعة من كل صنف ينتجه الشيف × القيمة الثابتة للوحدة)</strong>. اختر ملف الشيف المرتبط من قسم الإنتاج:
               </p>
 
               <div v-if="chefsOptions.shop1.length === 0 && chefsOptions.shop2.length === 0" class="text-small text-muted">
@@ -946,8 +946,8 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
               </div>
               <div>
-                <h3 id="chef-coeff-modal-title">معاملات وأرباح إنتاج الشيف: {{ selectedChefEmp.name }}</h3>
-                <p class="text-small text-muted m-0">الفترة: {{ selectedMonthLabel }} — بدون راتب أساسي (مجموع مبيعات كل صنف × نسبته المئوية %)</p>
+                <h3 id="chef-coeff-modal-title">قيمة الوحدة وأرباح إنتاج الشيف: {{ selectedChefEmp.name }}</h3>
+                <p class="text-small text-muted m-0">الفترة: {{ selectedMonthLabel }} — بدون راتب أساسي (مجموع الكمية المباعة لكل صنف × القيمة الثابتة للوحدة)</p>
               </div>
             </div>
             <button type="button" @click="closeAllModals" class="modal-close-btn" aria-label="إغلاق">
@@ -957,14 +957,14 @@
 
           <div class="chef-coeff-batch-bar mb-3">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <label for="uniform-coeff-input" class="font-bold text-small m-0">تطبيق نسبة مئوية موحّدة (%) على كل الأصناف:</label>
+              <label for="uniform-coeff-input" class="font-bold text-small m-0">تطبيق قيمة ثابتة موحّدة للوحدة على كل الأصناف:</label>
               <div class="d-flex align-items-center gap-1">
-                <input id="uniform-coeff-input" v-model.number="uniformCoeffValue" type="number" step="any" min="0" max="100" dir="ltr" class="form-control coeff-mini-input text-mono" placeholder="مثال: 15…" />
-                <span class="coeff-pct-hint text-mono">%</span>
+                <input id="uniform-coeff-input" v-model.number="uniformCoeffValue" type="number" step="any" min="0" dir="ltr" class="form-control coeff-mini-input text-mono" placeholder="مثال: 5…" />
+                <span class="coeff-pct-hint text-mono">د.ل</span>
               </div>
               <button type="button" class="btn btn-outline btn-xs" @click="applyUniformCoeff">تطبيق على الكل</button>
             </div>
-            <span class="text-small text-muted">مثال: إدخال <code dir="ltr">15</code> يعني <strong dir="ltr">15%</strong> من إجمالي مبيعات الصنف</span>
+            <span class="text-small text-muted">مثال: إدخال <code dir="ltr">5</code> يعني <strong dir="ltr">5 د.ل</strong> عن كل وحدة مباعة من الصنف</span>
           </div>
 
           <div v-if="editableBreakdown.length === 0" class="p-4 text-center text-muted">
@@ -979,8 +979,8 @@
                   <th>الفرع</th>
                   <th>الكمية المباعة</th>
                   <th>إجمالي المبيعات</th>
-                  <th>النسبة (%)</th>
-                  <th>المستحق (المبيعات × النسبة)</th>
+                  <th>قيمة الوحدة (د.ل)</th>
+                  <th>المستحق (الكمية × قيمة الوحدة)</th>
                 </tr>
               </thead>
               <tbody>
@@ -995,20 +995,19 @@
                   <td>
                     <div class="d-flex align-items-center gap-1">
                       <input
-                        v-model.number="row.chefPercent"
+                        v-model.number="row.chefCoefficient"
                         type="number"
                         step="any"
                         min="0"
-                        max="100"
                         dir="ltr"
                         class="form-control coeff-cell-input text-mono"
-                        :aria-label="`نسبة ${row.productName} المئوية`"
+                        :aria-label="`قيمة الوحدة لصنف ${row.productName}`"
                       />
-                      <span class="coeff-pct-hint text-mono">%</span>
+                      <span class="coeff-pct-hint text-mono">د.ل</span>
                     </div>
                   </td>
                   <td class="text-mono font-bold text-primary">
-                    {{ formatCurrency(round2((Number(row.totalSales) || 0) * percentToCoeff(row.chefPercent))) }}
+                    {{ formatCurrency(round2((Number(row.soldQty) || 0) * Math.max(0, Number(row.chefCoefficient) || 0))) }}
                   </td>
                 </tr>
               </tbody>
@@ -1036,7 +1035,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-primary btn-modal-save" :disabled="saving || editableBreakdown.length === 0" @click="saveChefCoefficients">
-              <span>{{ saving ? 'جاري الحفظ…' : 'حفظ المعاملات وتحديث المستحق' }}</span>
+              <span>{{ saving ? 'جاري الحفظ…' : 'حفظ قيم الوحدات وتحديث المستحق' }}</span>
             </button>
             <button type="button" class="btn btn-outline" @click="closeAllModals">إغلاق</button>
           </div>
@@ -1080,7 +1079,7 @@
               <label for="job-paytype-select" class="form-label">طريقة احتساب الراتب *</label>
               <select id="job-paytype-select" v-model="jobForm.payType" class="form-control">
                 <option value="fixed">راتب شهري ثابت</option>
-                <option value="production">إنتاج ومبيعات الأصناف (نسبة % لكل صنف — بدون راتب أساسي)</option>
+                <option value="production">إنتاج الأصناف (قيمة ثابتة لكل وحدة — بدون راتب أساسي)</option>
               </select>
             </div>
 
@@ -1499,7 +1498,7 @@ export default {
 
     const selectedChefEmp = ref(null);
     const editableBreakdown = ref([]);
-    const uniformCoeffValue = ref(15);
+    const uniformCoeffValue = ref(1);
 
     const ledgerEmp = ref(null);
     const ledgerTxs = ref([]);
@@ -1511,8 +1510,6 @@ export default {
 
     // Formatters & Helpers
     const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-    const coeffToPercent = (c) => Math.round((Number(c) || 0) * 10000) / 100;
-    const percentToCoeff = (pct) => Math.round(Math.max(0, Number(pct) || 0) * 10000) / 1000000;
     const formatNum = (val) => {
       const n = round2(val);
       return Number.isInteger(n) ? n.toLocaleString('en-US') : n.toFixed(2);
@@ -1605,7 +1602,7 @@ export default {
 
     // Live totals in Chef Breakdown Modal
     const liveChefGrossPay = computed(() =>
-      round2(editableBreakdown.value.reduce((s, r) => s + round2((Number(r.totalSales) || 0) * percentToCoeff(r.chefPercent)), 0))
+      round2(editableBreakdown.value.reduce((s, r) => s + round2((Number(r.soldQty) || 0) * Math.max(0, Number(r.chefCoefficient) || 0)), 0))
     );
     const liveChefNetPay = computed(() => {
       if (!selectedChefEmp.value) return 0;
@@ -1895,21 +1892,20 @@ export default {
       }
     };
 
-    // Chef Per-Product Coefficients Modal
+    // Chef Per-Product Unit Rates Modal
     const openChefBreakdownModal = (emp) => {
       selectedChefEmp.value = emp;
       editableBreakdown.value = (emp.productBreakdown || []).map(p => ({
         ...p,
-        chefPercent: coeffToPercent(p.chefCoefficient)
+        chefCoefficient: Math.max(0, Number(p.chefCoefficient) || 0)
       }));
       chefModalOpen.value = true;
     };
 
     const applyUniformCoeff = () => {
-      const pct = Math.max(0, Math.round((Number(uniformCoeffValue.value) || 0) * 100) / 100);
+      const val = Math.max(0, Math.round((Number(uniformCoeffValue.value) || 0) * 10000) / 10000);
       editableBreakdown.value.forEach(r => {
-        r.chefPercent = pct;
-        r.chefCoefficient = percentToCoeff(pct);
+        r.chefCoefficient = val;
       });
     };
 
@@ -1920,14 +1916,14 @@ export default {
         const updates = editableBreakdown.value.map(r => ({
           shop: r.shop,
           productId: r.productId,
-          chefCoefficient: percentToCoeff(r.chefPercent)
+          chefCoefficient: Math.max(0, Math.round((Number(r.chefCoefficient) || 0) * 10000) / 10000)
         }));
         const res = await props.adminFetch('/api/admin/employees/chef-coefficients', {
           method: 'PUT',
           body: JSON.stringify({ updates })
         });
         if (res.ok) {
-          toast.show('تم حفظ المعاملات وتحديث حسابات الشيف', 'success');
+          toast.show('تم حفظ قيم الوحدات وتحديث حسابات الشيف', 'success');
           chefModalOpen.value = false;
           await fetchSummary();
         } else {
@@ -2180,7 +2176,6 @@ export default {
       activePrintTx,
       printingPayroll,
       round2,
-      percentToCoeff,
       formatNum,
       formatCurrency,
       formatArabicDate,
@@ -2749,7 +2744,7 @@ export default {
   font-size: 0.85rem;
   font-weight: 800;
   color: #475569;
-  min-width: 20px;
+  min-width: 26px;
 }
 
 .chef-coeff-table-scroll {

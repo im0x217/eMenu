@@ -6418,11 +6418,9 @@ app.put("/api/admin/employees/chef-coefficients", checkMongoDB, checkAdmin, asyn
       if (userAccess !== 'all' && userAccess !== targetShop) {
         return res.status(403).json({ error: "ليس لديك صلاحية لتعديل معاملات أصناف هذا الفرع" });
       }
-      const rawRatio = (u.chefPercent !== undefined && u.chefPercent !== null)
-        ? (Number(u.chefPercent) / 100)
-        : Number(u.chefCoefficient);
-      const cleanCoeff = (Number.isFinite(rawRatio) && rawRatio > 0)
-        ? Math.round(rawRatio * 1000000) / 1000000
+      const numVal = Number(u.chefCoefficient);
+      const cleanCoeff = (Number.isFinite(numVal) && numVal > 0)
+        ? Math.round(numVal * 10000) / 10000
         : 0;
       const op = {
         updateOne: {
@@ -6595,6 +6593,7 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
       const isProduction = e.payType === 'production';
 
       let baseSalary = isProduction ? null : round2(e.salary);
+      let productionTotalQty = 0;
       let productionTotalSales = 0;
       let productionGrossPay = 0;
       const productBreakdown = [];
@@ -6612,19 +6611,23 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
             const uniqueKey = `${rec.shop}:${rec.productId}`;
             if (seenProds.has(uniqueKey)) continue;
             seenProds.add(uniqueKey);
+            const qtyRounded = round2(rec.soldQty);
             const salesRounded = round2(rec.totalSales);
-            const earningsRounded = round2(salesRounded * (Number(rec.chefCoefficient) || 0));
+            const unitRate = Math.max(0, Number(rec.chefCoefficient) || 0);
+            const earningsRounded = round2(qtyRounded * unitRate);
+            productionTotalQty += qtyRounded;
             productionTotalSales += salesRounded;
             productionGrossPay += earningsRounded;
             productBreakdown.push({
               ...rec,
-              soldQty: round2(rec.soldQty),
+              soldQty: qtyRounded,
               totalSales: salesRounded,
               chefEarnings: earningsRounded
             });
           }
         }
-        productBreakdown.sort((a, b) => b.totalSales - a.totalSales || a.productName.localeCompare(b.productName, 'ar'));
+        productBreakdown.sort((a, b) => b.soldQty - a.soldQty || b.totalSales - a.totalSales || a.productName.localeCompare(b.productName, 'ar'));
+        productionTotalQty = round2(productionTotalQty);
         productionTotalSales = round2(productionTotalSales);
         productionGrossPay = round2(productionGrossPay);
       }
@@ -6654,6 +6657,7 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
         linkedChefs: isProduction ? (e.linkedChefs || []) : [],
         active: e.active !== false,
         notes: e.notes || '',
+        productionTotalQty,
         productionTotalSales,
         productionGrossPay,
         productBreakdown,
@@ -7815,7 +7819,7 @@ const connectWithRetry = async () => {
       if (jobsCount === 0) {
         const now = new Date();
         await employeeJobsCollection.insertMany([
-          { name: "شيف / منتج", payType: "production", description: "احتساب المستحق الشهري من مجموع (مبيعات كل صنف ينتجه الشيف × معامل الصنف) بدون راتب أساسي", createdAt: now, updatedAt: now },
+          { name: "شيف / منتج", payType: "production", description: "احتساب المستحق الشهري من مجموع (الكمية المباعة لكل صنف × القيمة الثابتة للوحدة) بدون راتب أساسي", createdAt: now, updatedAt: now },
           { name: "كاشير", payType: "fixed", description: "موظف صندوق ومبيعات براتب شهري ثابت", createdAt: now, updatedAt: now },
           { name: "إداري", payType: "fixed", description: "إدارة وإشراف براتب شهري ثابت", createdAt: now, updatedAt: now },
           { name: "مبيعات وخدمة", payType: "fixed", description: "تجهيز وخدمة طلبات براتب شهري ثابت", createdAt: now, updatedAt: now }
