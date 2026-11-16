@@ -505,6 +505,7 @@ let db, productsCollection, categoriesCollection, tagsCollection;
 let db2, productsCollection2, categoriesCollection2, tagsCollection2;
 let customersCollection, favoritesCollection, ordersCollection, ordersCollection2, carouselCollection, adminUsersCollection, paymentsCollection, countersCollection;
 let chefsCollection, chefsCollection2;
+let employeesCollection, employeeJobsCollection, employeeTransactionsCollection;
 let backupsCollection;
 let telemetryCollection;
 let stockReservationsCollection;
@@ -969,6 +970,16 @@ const getNextOrderNumber = async () => {
     { upsert: true, returnDocument: "after" }
   );
   return result.seq;
+};
+
+// Helper: Atomic Sequential Employee Transaction Receipt Number Generator
+const getNextEmpTxNumber = async () => {
+  const result = await countersCollection.findOneAndUpdate(
+    { _id: "empTxNumber" },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after" }
+  );
+  return 1000 + (Number(result?.seq) || 1);
 };
 
 // ============ STAFF SESSION CACHE, AUTH & RBAC MIDDLEWARE ============
@@ -1593,7 +1604,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
           piecesPerUnit: 1,
           purchaseType: 1,
           tags: 1,
-          ...(isStaff ? { chefId: 1, chefName: 1, ...(isAdmin ? { makingCost: 1 } : {}) } : {})
+          ...(isStaff ? { chefId: 1, chefName: 1, ...(isAdmin ? { makingCost: 1, chefCoefficient: 1 } : {}) } : {})
         },
       })
       .sort({ name: 1 })
@@ -2220,7 +2231,7 @@ app.get("/api/shop2/products", checkMongoDB, async (req, res) => {
           piecesPerUnit: 1,
           purchaseType: 1,
           tags: 1,
-          ...(isStaff ? { chefId: 1, chefName: 1, hasStorage: 1, inventoryLink: 1, ...(isAdmin ? { makingCost: 1 } : {}) } : {})
+          ...(isStaff ? { chefId: 1, chefName: 1, hasStorage: 1, inventoryLink: 1, ...(isAdmin ? { makingCost: 1, chefCoefficient: 1 } : {}) } : {})
         },
       })
       .sort({ name: 1 })
@@ -6214,6 +6225,738 @@ app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, requireAdmin, asyn
   }
 });
 
+
+// ============ EMPLOYEES, JOBS, CHEF COEFFICIENTS & HR PAYROLL TRANSACTIONS ============
+
+const buildEmployeeBranchScopeQuery = (req, explicitBranch = null) => {
+  const userAccess = req.staffUser?.shopAccess || 'all';
+  if (userAccess === 'shop1' || userAccess === 'shop2') {
+    return { branch: { $in: [userAccess, 'all'] } };
+  }
+  if (explicitBranch === 'shop1' || explicitBranch === 'shop2') {
+    return { branch: { $in: [explicitBranch, 'all'] } };
+  }
+  return {};
+};
+
+const isEmployeeInUserScope = (emp, req) => {
+  if (!emp) return false;
+  const userAccess = req.staffUser?.shopAccess || 'all';
+  if (userAccess === 'all') return true;
+  return emp.branch === userAccess || emp.branch === 'all';
+};
+
+// 1. Jobs CRUD
+app.get("/api/admin/employee-jobs", checkMongoDB, checkStaff, async (req, res) => {
+  try {
+    const [jobs, empList] = await Promise.all([
+      employeeJobsCollection.find().sort({ name: 1 }).toArray(),
+      employeesCollection.find({}, { projection: { jobId: 1 } }).toArray()
+    ]);
+    const countMap = {};
+    for (const e of empList) {
+      if (e.jobId) {
+        const k = String(e.jobId);
+        countMap[k] = (countMap[k] || 0) + 1;
+      }
+    }
+    const enriched = jobs.map(j => ({
+      ...j,
+      employeeCount: countMap[String(j._id)] || 0
+    }));
+    res.json(enriched);
+  } catch (err) {
+    console.error("Fetch employee jobs error:", err);
+    res.status(500).json({ error: "فشل في جلب قائمة الوظائف" });
+  }
+});
+
+app.post("/api/admin/employee-jobs", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name, payType, description } = req.body || {};
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    if (!cleanName) {
+      return res.status(400).json({ error: "اسم الوظيفة مطلوب" });
+    }
+    if (!['fixed', 'production'].includes(payType)) {
+      return res.status(400).json({ error: "نوع احتساب الراتب غير صالح" });
+    }
+    const existing = await employeeJobsCollection.findOne({ name: cleanName });
+    if (existing) {
+      return res.status(400).json({ error: "يوجد وظيفة بنفس هذا الاسم مسبقاً" });
+    }
+    const now = new Date();
+    const doc = {
+      name: cleanName,
+      payType,
+      description: typeof description === 'string' ? description.trim() : '',
+      createdAt: now,
+      updatedAt: now
+    };
+    const result = await employeeJobsCollection.insertOne(doc);
+    res.status(201).json({ success: true, job: { _id: result.insertedId, ...doc, employeeCount: 0 } });
+  } catch (err) {
+    console.error("Create employee job error:", err);
+    res.status(500).json({ error: "فشل في إضافة الوظيفة" });
+  }
+});
+
+app.put("/api/admin/employee-jobs/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف الوظيفة غير صالح" });
+    }
+    const { name, payType, description } = req.body || {};
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    if (!cleanName) {
+      return res.status(400).json({ error: "اسم الوظيفة مطلوب" });
+    }
+    if (!['fixed', 'production'].includes(payType)) {
+      return res.status(400).json({ error: "نوع احتساب الراتب غير صالح" });
+    }
+    const jobObjId = new ObjectId(id);
+    const conflict = await employeeJobsCollection.findOne({ name: cleanName, _id: { $ne: jobObjId } });
+    if (conflict) {
+      return res.status(400).json({ error: "يوجد وظيفة أخرى بنفس هذا الاسم" });
+    }
+    const now = new Date();
+    const upd = await employeeJobsCollection.updateOne(
+      { _id: jobObjId },
+      {
+        $set: {
+          name: cleanName,
+          payType,
+          description: typeof description === 'string' ? description.trim() : '',
+          updatedAt: now
+        }
+      }
+    );
+    if (upd.matchedCount === 0) {
+      return res.status(404).json({ error: "الوظيفة غير موجودة" });
+    }
+
+    // Cascade job metadata changes to assigned employees safely
+    const empCascadeSet = { jobName: cleanName, payType, updatedAt: now };
+    if (payType === 'production') {
+      empCascadeSet.salary = null;
+    } else {
+      empCascadeSet.linkedChefs = [];
+    }
+    await employeesCollection.updateMany(
+      { jobId: jobObjId },
+      { $set: empCascadeSet }
+    );
+    await employeeTransactionsCollection.updateMany(
+      { jobId: jobObjId },
+      { $set: { employeeJobName: cleanName } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update employee job error:", err);
+    res.status(500).json({ error: "فشل في تحديث بيانات الوظيفة" });
+  }
+});
+
+app.delete("/api/admin/employee-jobs/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف الوظيفة غير صالح" });
+    }
+    const jobObjId = new ObjectId(id);
+    const assignedCount = await employeesCollection.countDocuments({ jobId: jobObjId });
+    if (assignedCount > 0) {
+      return res.status(400).json({
+        error: `لا يمكن حذف هذه الوظيفة لوجود ${assignedCount} موظف مسجل عليها حالياً`
+      });
+    }
+    const del = await employeeJobsCollection.deleteOne({ _id: jobObjId });
+    if (del.deletedCount === 0) {
+      return res.status(404).json({ error: "الوظيفة غير موجودة" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete employee job error:", err);
+    res.status(500).json({ error: "فشل في حذف الوظيفة" });
+  }
+});
+
+// 2. Available Production Chefs for Linking to Producer Employees (Admin Only)
+app.get("/api/admin/employees/chefs-options", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const access = req.staffUser?.shopAccess || 'all';
+    const [s1, s2] = await Promise.all([
+      (access === 'all' || access === 'shop1') ? chefsCollection.find().sort({ name: 1 }).toArray() : Promise.resolve([]),
+      (access === 'all' || access === 'shop2') ? chefsCollection2.find().sort({ name: 1 }).toArray() : Promise.resolve([])
+    ]);
+    res.json({
+      shop1: s1.map(c => ({ shop: 'shop1', chefId: String(c._id), chefName: c.name, phone: c.phone || '' })),
+      shop2: s2.map(c => ({ shop: 'shop2', chefId: String(c._id), chefName: c.name, phone: c.phone || '' }))
+    });
+  } catch (err) {
+    console.error("Fetch chef link options error:", err);
+    res.status(500).json({ error: "فشل في جلب قائمة الشيفات" });
+  }
+});
+
+// 3. Batch Update Per-Product Chef Coefficients (Admin Only)
+app.put("/api/admin/employees/chef-coefficients", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { updates } = req.body || {};
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ error: "لم يتم إرسال أي تعديلات للمعاملات" });
+    }
+    const userAccess = req.staffUser?.shopAccess || 'all';
+    const opsShop1 = [];
+    const opsShop2 = [];
+
+    for (const u of updates) {
+      if (!u || !u.productId || !ObjectId.isValid(u.productId)) continue;
+      const targetShop = u.shop === 'shop2' ? 'shop2' : 'shop1';
+      if (userAccess !== 'all' && userAccess !== targetShop) {
+        return res.status(403).json({ error: "ليس لديك صلاحية لتعديل معاملات أصناف هذا الفرع" });
+      }
+      const numVal = Number(u.chefCoefficient);
+      const cleanCoeff = (Number.isFinite(numVal) && numVal > 0)
+        ? Math.round(numVal * 10000) / 10000
+        : 0;
+      const op = {
+        updateOne: {
+          filter: { _id: new ObjectId(u.productId) },
+          update: { $set: { chefCoefficient: cleanCoeff } }
+        }
+      };
+      if (targetShop === 'shop2') opsShop2.push(op);
+      else opsShop1.push(op);
+    }
+
+    if (opsShop1.length > 0) await productsCollection.bulkWrite(opsShop1);
+    if (opsShop2.length > 0) await productsCollection2.bulkWrite(opsShop2);
+
+    res.json({ success: true, updatedCount: opsShop1.length + opsShop2.length });
+  } catch (err) {
+    console.error("Update chef coefficients error:", err);
+    res.status(500).json({ error: "فشل في حفظ معاملات الأصناف" });
+  }
+});
+
+// 4. Monthly Employee & Payroll Summary (Admin sees full financial payroll; Cashier sees branch list + adjustments only)
+app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, res) => {
+  try {
+    const rawMonth = typeof req.query.month === 'string' ? req.query.month.trim() : '';
+    const defaultMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
+    const monthKey = /^\d{4}-\d{2}$/.test(rawMonth) ? rawMonth : defaultMonth;
+    const requestedBranch = req.query.branch === 'shop1' ? 'shop1' : (req.query.branch === 'shop2' ? 'shop2' : 'all');
+    const isAdmin = req.staffUser?.role === 'admin';
+
+    const empFilter = buildEmployeeBranchScopeQuery(req, requestedBranch);
+    const txScopeFilter = buildEmployeeBranchScopeQuery(req, requestedBranch);
+
+    const [employees, monthTxs] = await Promise.all([
+      employeesCollection.find(empFilter).sort({ name: 1 }).toArray(),
+      employeeTransactionsCollection.find({ ...txScopeFilter, monthKey }).sort({ date: -1, createdAt: -1 }).toArray()
+    ]);
+
+    // Aggregate monthly bonuses / borrowings / penalties by employeeId
+    const txByEmp = {};
+    for (const tx of monthTxs) {
+      const eid = String(tx.employeeId);
+      if (!txByEmp[eid]) {
+        txByEmp[eid] = { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, txCount: 0 };
+      }
+      const amt = Number(tx.amount) || 0;
+      if (tx.type === 'bonus') txByEmp[eid].bonusesTotal += amt;
+      else if (tx.type === 'borrowing') txByEmp[eid].borrowingsTotal += amt;
+      else if (tx.type === 'penalty') txByEmp[eid].penaltiesTotal += amt;
+      txByEmp[eid].txCount += 1;
+    }
+
+    // For Cashiers: strip all sensitive salary / production earnings / coefficient details
+    if (!isAdmin) {
+      const safeEmployees = employees.map(e => {
+        const eid = String(e._id);
+        const agg = txByEmp[eid] || { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, txCount: 0 };
+        return {
+          _id: e._id,
+          name: e.name,
+          phone: e.phone || '',
+          branch: e.branch || 'shop1',
+          jobId: e.jobId,
+          jobName: e.jobName || '',
+          payType: e.payType || 'fixed',
+          active: e.active !== false,
+          notes: e.notes || '',
+          bonusesTotal: Math.round(agg.bonusesTotal * 100) / 100,
+          borrowingsTotal: Math.round(agg.borrowingsTotal * 100) / 100,
+          penaltiesTotal: Math.round(agg.penaltiesTotal * 100) / 100,
+          txCount: agg.txCount
+        };
+      });
+      return res.json({ success: true, monthKey, isAdmin: false, employees: safeEmployees });
+    }
+
+    // Admin payroll calculation: aggregate monthly production sales per chef per product
+    const hasProductionStaff = employees.some(e => e.payType === 'production');
+    const chefProductMetrics = {}; // key "shop:chefId" -> Map(productId -> { shop, productId, productName, category, soldQty, totalSales, chefCoefficient, chefEarnings })
+
+    if (hasProductionStaff) {
+      const monthStart = `${monthKey}-01`;
+      const monthEnd = `${monthKey}-31`;
+      const [prods1, prods2, ords1, ords2] = await Promise.all([
+        productsCollection.find().toArray(),
+        productsCollection2.find().toArray(),
+        ordersCollection.find({ status: { $ne: "cancelled" } }).toArray(),
+        ordersCollection2.find({ status: { $ne: "cancelled" } }).toArray()
+      ]);
+
+      const initShopCatalog = (shopKey, prodsList) => {
+        const prodMap = new Map();
+        for (const p of prodsList) {
+          const pid = String(p._id);
+          const coeff = Number(p.chefCoefficient) || 0;
+          const chefIdStr = p.chefId ? String(p.chefId) : '';
+          prodMap.set(pid, {
+            productId: pid,
+            name: p.name || '',
+            category: p.category || '',
+            chefId: chefIdStr,
+            chefName: p.chefName || '',
+            chefCoefficient: coeff
+          });
+          if (chefIdStr) {
+            const cKey = `${shopKey}:${chefIdStr}`;
+            if (!chefProductMetrics[cKey]) chefProductMetrics[cKey] = new Map();
+            chefProductMetrics[cKey].set(pid, {
+              shop: shopKey,
+              productId: pid,
+              productName: p.name || '',
+              category: p.category || '',
+              chefId: chefIdStr,
+              chefName: p.chefName || '',
+              soldQty: 0,
+              totalSales: 0,
+              chefCoefficient: coeff,
+              chefEarnings: 0
+            });
+          }
+        }
+        return prodMap;
+      };
+
+      const prodMap1 = initShopCatalog('shop1', prods1);
+      const prodMap2 = initShopCatalog('shop2', prods2);
+
+      const processOrders = (shopKey, ordList, prodMap) => {
+        for (const order of ordList) {
+          const effDate = getOrderEffectiveDateStr(order);
+          if (!effDate || effDate < monthStart || effDate > monthEnd) continue;
+          const items = Array.isArray(order.items) ? order.items : [];
+          for (const item of items) {
+            if (!item) continue;
+            const pid = (item.productId || item._id || '').toString();
+            const pInfo = prodMap.get(pid);
+            if (!pInfo || !pInfo.chefId) continue;
+            const qty = Number(item.quantity) || 0;
+            const itemRev = (Number(item.price) || 0) * qty;
+            const cKey = `${shopKey}:${pInfo.chefId}`;
+            const targetMap = chefProductMetrics[cKey];
+            if (targetMap && targetMap.has(pid)) {
+              const rec = targetMap.get(pid);
+              rec.soldQty += qty;
+              rec.totalSales += itemRev;
+            }
+          }
+        }
+      };
+
+      processOrders('shop1', ords1, prodMap1);
+      processOrders('shop2', ords2, prodMap2);
+    }
+
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+    let totalFixedSalaries = 0;
+    let totalProductionPay = 0;
+    let totalBonuses = 0;
+    let totalBorrowings = 0;
+    let totalPenalties = 0;
+    let totalNetPay = 0;
+    let activeCount = 0;
+
+    const fullEmployees = employees.map(e => {
+      const eid = String(e._id);
+      const agg = txByEmp[eid] || { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, txCount: 0 };
+      const bonusesTotal = round2(agg.bonusesTotal);
+      const borrowingsTotal = round2(agg.borrowingsTotal);
+      const penaltiesTotal = round2(agg.penaltiesTotal);
+      const isProduction = e.payType === 'production';
+
+      let baseSalary = isProduction ? null : round2(e.salary);
+      let productionTotalSales = 0;
+      let productionGrossPay = 0;
+      const productBreakdown = [];
+
+      if (isProduction) {
+        const seenProds = new Set();
+        const links = Array.isArray(e.linkedChefs) ? e.linkedChefs : [];
+        for (const link of links) {
+          if (!link || !link.chefId) continue;
+          const shopKey = link.shop === 'shop2' ? 'shop2' : 'shop1';
+          const cKey = `${shopKey}:${String(link.chefId)}`;
+          const metricMap = chefProductMetrics[cKey];
+          if (!metricMap) continue;
+          for (const rec of metricMap.values()) {
+            const uniqueKey = `${rec.shop}:${rec.productId}`;
+            if (seenProds.has(uniqueKey)) continue;
+            seenProds.add(uniqueKey);
+            const salesRounded = round2(rec.totalSales);
+            const earningsRounded = round2(salesRounded * (Number(rec.chefCoefficient) || 0));
+            productionTotalSales += salesRounded;
+            productionGrossPay += earningsRounded;
+            productBreakdown.push({
+              ...rec,
+              soldQty: round2(rec.soldQty),
+              totalSales: salesRounded,
+              chefEarnings: earningsRounded
+            });
+          }
+        }
+        productBreakdown.sort((a, b) => b.totalSales - a.totalSales || a.productName.localeCompare(b.productName, 'ar'));
+        productionTotalSales = round2(productionTotalSales);
+        productionGrossPay = round2(productionGrossPay);
+      }
+
+      const grossPay = isProduction ? productionGrossPay : (baseSalary || 0);
+      const netPay = round2(grossPay + bonusesTotal - borrowingsTotal - penaltiesTotal);
+
+      if (e.active !== false) {
+        activeCount += 1;
+        if (isProduction) totalProductionPay += productionGrossPay;
+        else totalFixedSalaries += (baseSalary || 0);
+        totalBonuses += bonusesTotal;
+        totalBorrowings += borrowingsTotal;
+        totalPenalties += penaltiesTotal;
+        totalNetPay += netPay;
+      }
+
+      return {
+        _id: e._id,
+        name: e.name,
+        phone: e.phone || '',
+        branch: e.branch || 'shop1',
+        jobId: e.jobId,
+        jobName: e.jobName || '',
+        payType: e.payType || 'fixed',
+        salary: baseSalary,
+        linkedChefs: isProduction ? (e.linkedChefs || []) : [],
+        active: e.active !== false,
+        notes: e.notes || '',
+        productionTotalSales,
+        productionGrossPay,
+        productBreakdown,
+        bonusesTotal,
+        borrowingsTotal,
+        penaltiesTotal,
+        deductionsTotal: round2(borrowingsTotal + penaltiesTotal),
+        txCount: agg.txCount,
+        netPay
+      };
+    });
+
+    res.json({
+      success: true,
+      monthKey,
+      isAdmin: true,
+      employees: fullEmployees,
+      kpis: {
+        totalEmployees: fullEmployees.length,
+        activeCount,
+        totalFixedSalaries: round2(totalFixedSalaries),
+        totalProductionPay: round2(totalProductionPay),
+        totalBonuses: round2(totalBonuses),
+        totalBorrowings: round2(totalBorrowings),
+        totalPenalties: round2(totalPenalties),
+        totalDeductions: round2(totalBorrowings + totalPenalties),
+        totalNetPay: round2(totalNetPay)
+      }
+    });
+  } catch (err) {
+    console.error("Fetch employees summary error:", err);
+    res.status(500).json({ error: "فشل في تحميل بيانات مسير الموظفين" });
+  }
+});
+
+// 5. Employees CRUD (Admin Only)
+app.post("/api/admin/employees", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { name, phone, branch, jobId, salary, linkedChefs, active, notes } = req.body || {};
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    if (!cleanName) {
+      return res.status(400).json({ error: "اسم الموظف مطلوب" });
+    }
+    if (!jobId || !ObjectId.isValid(jobId)) {
+      return res.status(400).json({ error: "يرجى اختيار الوظيفة" });
+    }
+    const job = await employeeJobsCollection.findOne({ _id: new ObjectId(jobId) });
+    if (!job) {
+      return res.status(404).json({ error: "الوظيفة المختارة غير موجودة" });
+    }
+
+    const userAccess = req.staffUser?.shopAccess || 'all';
+    let resolvedBranch = ['shop1', 'shop2', 'all'].includes(branch) ? branch : 'shop1';
+    if (userAccess !== 'all') {
+      resolvedBranch = userAccess;
+    }
+
+    const cleanPhone = phone ? formatCanonicalLibyanPhone(phone) : '';
+    const isProduction = job.payType === 'production';
+    const resolvedSalary = isProduction ? null : Math.max(0, Math.round((Number(salary) || 0) * 100) / 100);
+    const resolvedLinks = isProduction && Array.isArray(linkedChefs)
+      ? linkedChefs
+          .filter(c => c && c.chefId && (userAccess === 'all' || c.shop === userAccess))
+          .map(c => ({
+            shop: c.shop === 'shop2' ? 'shop2' : 'shop1',
+            chefId: String(c.chefId),
+            chefName: String(c.chefName || '').trim()
+          }))
+      : [];
+
+    const now = new Date();
+    const doc = {
+      name: cleanName,
+      phone: cleanPhone,
+      branch: resolvedBranch,
+      jobId: job._id,
+      jobName: job.name,
+      payType: job.payType,
+      salary: resolvedSalary,
+      linkedChefs: resolvedLinks,
+      active: active !== false,
+      notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
+      createdAt: now,
+      updatedAt: now
+    };
+    const result = await employeesCollection.insertOne(doc);
+    res.status(201).json({ success: true, employee: { _id: result.insertedId, ...doc } });
+  } catch (err) {
+    console.error("Create employee error:", err);
+    res.status(500).json({ error: "فشل في إضافة الموظف" });
+  }
+});
+
+app.put("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف الموظف غير صالح" });
+    }
+    const existing = await employeesCollection.findOne({ _id: new ObjectId(id) });
+    if (!existing) {
+      return res.status(404).json({ error: "الموظف غير موجود" });
+    }
+    if (!isEmployeeInUserScope(existing, req)) {
+      return res.status(403).json({ error: "ليس لديك صلاحية لتعديل موظف في فرع آخر" });
+    }
+
+    const { name, phone, branch, jobId, salary, linkedChefs, active, notes } = req.body || {};
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    if (!cleanName) {
+      return res.status(400).json({ error: "اسم الموظف مطلوب" });
+    }
+    if (!jobId || !ObjectId.isValid(jobId)) {
+      return res.status(400).json({ error: "يرجى اختيار الوظيفة" });
+    }
+    const job = await employeeJobsCollection.findOne({ _id: new ObjectId(jobId) });
+    if (!job) {
+      return res.status(404).json({ error: "الوظيفة المختارة غير موجودة" });
+    }
+
+    const userAccess = req.staffUser?.shopAccess || 'all';
+    let resolvedBranch = ['shop1', 'shop2', 'all'].includes(branch) ? branch : (existing.branch || 'shop1');
+    if (userAccess !== 'all') {
+      resolvedBranch = userAccess;
+    }
+
+    const cleanPhone = phone ? formatCanonicalLibyanPhone(phone) : '';
+    const isProduction = job.payType === 'production';
+    const resolvedSalary = isProduction ? null : Math.max(0, Math.round((Number(salary) || 0) * 100) / 100);
+    const resolvedLinks = isProduction && Array.isArray(linkedChefs)
+      ? linkedChefs
+          .filter(c => c && c.chefId && (userAccess === 'all' || c.shop === userAccess))
+          .map(c => ({
+            shop: c.shop === 'shop2' ? 'shop2' : 'shop1',
+            chefId: String(c.chefId),
+            chefName: String(c.chefName || '').trim()
+          }))
+      : [];
+
+    const now = new Date();
+    const updateSet = {
+      name: cleanName,
+      phone: cleanPhone,
+      branch: resolvedBranch,
+      jobId: job._id,
+      jobName: job.name,
+      payType: job.payType,
+      salary: resolvedSalary,
+      linkedChefs: resolvedLinks,
+      active: active !== false,
+      notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
+      updatedAt: now
+    };
+    await employeesCollection.updateOne({ _id: new ObjectId(id) }, { $set: updateSet });
+
+    // Keep cached employee labels aligned in transaction ledger
+    await employeeTransactionsCollection.updateMany(
+      { employeeId: new ObjectId(id) },
+      { $set: { employeeName: cleanName, employeePhone: cleanPhone, employeeJobName: job.name, branch: resolvedBranch } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update employee error:", err);
+    res.status(500).json({ error: "فشل في تحديث بيانات الموظف" });
+  }
+});
+
+app.delete("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف الموظف غير صالح" });
+    }
+    const existing = await employeesCollection.findOne({ _id: new ObjectId(id) });
+    if (!existing) {
+      return res.status(404).json({ error: "الموظف غير موجود" });
+    }
+    if (!isEmployeeInUserScope(existing, req)) {
+      return res.status(403).json({ error: "ليس لديك صلاحية لحذف موظف في فرع آخر" });
+    }
+    await employeesCollection.deleteOne({ _id: new ObjectId(id) });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete employee error:", err);
+    res.status(500).json({ error: "فشل في حذف الموظف" });
+  }
+});
+
+// 6. Employee Transactions (Bonuses, Borrowings & Penalties with mandatory Reason & Receipt Re-access)
+app.get("/api/admin/employees/transactions", checkMongoDB, checkStaff, async (req, res) => {
+  try {
+    const { month, employeeId, type, branch, q } = req.query;
+    const requestedBranch = branch === 'shop1' ? 'shop1' : (branch === 'shop2' ? 'shop2' : 'all');
+    const query = { ...buildEmployeeBranchScopeQuery(req, requestedBranch) };
+
+    if (month && month !== 'all' && /^\d{4}-\d{2}$/.test(month)) {
+      query.monthKey = month;
+    }
+    if (employeeId && ObjectId.isValid(employeeId)) {
+      query.employeeId = new ObjectId(employeeId);
+    }
+    if (type && ['bonus', 'borrowing', 'penalty'].includes(type)) {
+      query.type = type;
+    }
+
+    let list = await employeeTransactionsCollection.find(query).sort({ date: -1, createdAt: -1 }).toArray();
+    if (q && typeof q === 'string' && q.trim()) {
+      const term = q.trim().toLowerCase().replace(/^#?emp-?/i, '');
+      list = list.filter(tx => {
+        const txNumStr = String(tx.txNumber || '');
+        const eName = (tx.employeeName || '').toLowerCase();
+        const reasonStr = (tx.reason || '').toLowerCase();
+        const recName = (tx.recordedBy?.name || '').toLowerCase();
+        return txNumStr.includes(term) || eName.includes(term) || reasonStr.includes(term) || recName.includes(term);
+      });
+    }
+
+    res.json({ success: true, transactions: list });
+  } catch (err) {
+    console.error("Fetch employee transactions error:", err);
+    res.status(500).json({ error: "فشل في جلب سجل عمليات الموظفين" });
+  }
+});
+
+app.post("/api/admin/employees/transactions", checkMongoDB, checkStaff, async (req, res) => {
+  try {
+    const { employeeId, type, amount, reason, date } = req.body || {};
+    if (!employeeId || !ObjectId.isValid(employeeId)) {
+      return res.status(400).json({ error: "يرجى اختيار الموظف" });
+    }
+    if (!['bonus', 'borrowing', 'penalty'].includes(type)) {
+      return res.status(400).json({ error: "نوع العملية غير صالح" });
+    }
+    const cleanAmount = Math.round((Number(amount) || 0) * 100) / 100;
+    if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
+      return res.status(400).json({ error: "المبلغ يجب أن يكون أكبر من صفر" });
+    }
+    const cleanReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!cleanReason) {
+      return res.status(400).json({ error: "يرجى إدخال السبب / البيان الخاص بالعملية" });
+    }
+
+    const emp = await employeesCollection.findOne({ _id: new ObjectId(employeeId) });
+    if (!emp) {
+      return res.status(404).json({ error: "الموظف غير موجود" });
+    }
+    if (!isEmployeeInUserScope(emp, req)) {
+      return res.status(403).json({ error: "ليس لديك صلاحية لتسجيل عملية لموظف في فرع آخر" });
+    }
+
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const cleanDate = (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim()))
+      ? date.trim()
+      : todayStr;
+    const monthKey = cleanDate.slice(0, 7);
+    const txNumber = await getNextEmpTxNumber();
+    const now = new Date();
+
+    const txDoc = {
+      txNumber,
+      employeeId: emp._id,
+      jobId: emp.jobId || null,
+      employeeName: emp.name,
+      employeePhone: emp.phone || '',
+      employeeJobName: emp.jobName || '',
+      branch: emp.branch || 'shop1',
+      type,
+      amount: cleanAmount,
+      reason: cleanReason.slice(0, 600),
+      date: cleanDate,
+      monthKey,
+      recordedBy: {
+        username: req.staffUser?.username || 'staff',
+        name: req.staffUser?.name || req.staffUser?.username || 'موظف',
+        role: req.staffUser?.role === 'admin' ? 'admin' : 'order_manager'
+      },
+      createdAt: now
+    };
+
+    const result = await employeeTransactionsCollection.insertOne(txDoc);
+    res.status(201).json({ success: true, transaction: { _id: result.insertedId, ...txDoc } });
+  } catch (err) {
+    console.error("Create employee transaction error:", err);
+    res.status(500).json({ error: "فشل في تسجيل العملية المالية للموظف" });
+  }
+});
+
+app.delete("/api/admin/employees/transactions/:id", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف العملية غير صالح" });
+    }
+    const del = await employeeTransactionsCollection.deleteOne({ _id: new ObjectId(id) });
+    if (del.deletedCount === 0) {
+      return res.status(404).json({ error: "العملية غير موجودة" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete employee transaction error:", err);
+    res.status(500).json({ error: "فشل في حذف العملية" });
+  }
+});
+
 // ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
@@ -6616,7 +7359,8 @@ const ensureLocalBackupDir = () => {
 const performFullDatabaseBackup = async (customLabel = "") => {
   const [
     products, categories, tags, orders, customers, favorites,
-    payments, counters, chefs, carousel, adminUsers,
+    payments, counters, chefs, employees, employeeJobs, employeeTransactions,
+    carousel, adminUsers,
     products2, categories2, tags2, orders2, chefs2, stockReservations2
   ] = await Promise.all([
     productsCollection.find({}).toArray(),
@@ -6628,6 +7372,9 @@ const performFullDatabaseBackup = async (customLabel = "") => {
     paymentsCollection.find({}).toArray(),
     countersCollection.find({}).toArray(),
     chefsCollection.find({}).toArray(),
+    employeesCollection.find({}).toArray(),
+    employeeJobsCollection.find({}).toArray(),
+    employeeTransactionsCollection.find({}).toArray(),
     carouselCollection.find({}).toArray(),
     adminUsersCollection.find({}).toArray(),
     productsCollection2.find({}).toArray(),
@@ -6659,6 +7406,9 @@ const performFullDatabaseBackup = async (customLabel = "") => {
       "emenu.payments": payments,
       "emenu.counters": counters,
       "emenu.chefs": chefs,
+      "emenu.employees": employees,
+      "emenu.employee_jobs": employeeJobs,
+      "emenu.employee_transactions": employeeTransactions,
       "emenu.marketing_carousel": carousel,
       "emenu.admin_users": adminUsers,
       "emenu2.products": products2,
@@ -6678,6 +7428,9 @@ const performFullDatabaseBackup = async (customLabel = "") => {
       "emenu.payments": payments.length,
       "emenu.counters": counters.length,
       "emenu.chefs": chefs.length,
+      "emenu.employees": employees.length,
+      "emenu.employee_jobs": employeeJobs.length,
+      "emenu.employee_transactions": employeeTransactions.length,
       "emenu.marketing_carousel": carousel.length,
       "emenu.admin_users": adminUsers.length,
       "emenu2.products": products2.length,
@@ -6924,6 +7677,9 @@ const connectWithRetry = async () => {
     countersCollection = db.collection("counters");
     chefsCollection = db.collection("chefs");
     chefsCollection2 = db2.collection("chefs");
+    employeesCollection = db.collection("employees");
+    employeeJobsCollection = db.collection("employee_jobs");
+    employeeTransactionsCollection = db.collection("employee_transactions");
     backupsCollection = db.collection("backups");
     telemetryCollection = db.collection("telemetry");
     stockReservationsCollection = db2.collection("stock_reservations");
@@ -6974,6 +7730,12 @@ const connectWithRetry = async () => {
     safeIndex(adminUsersCollection, { username: 1 }, { unique: true });
     safeIndex(chefsCollection, { name: 1 });
     safeIndex(chefsCollection2, { name: 1 });
+    safeIndex(employeeJobsCollection, { name: 1 }, { unique: true });
+    safeIndex(employeesCollection, { branch: 1, active: 1 });
+    safeIndex(employeesCollection, { jobId: 1 });
+    safeIndex(employeeTransactionsCollection, { employeeId: 1, monthKey: 1, createdAt: -1 });
+    safeIndex(employeeTransactionsCollection, { monthKey: 1, branch: 1, createdAt: -1 });
+    safeIndex(employeeTransactionsCollection, { txNumber: 1 });
     safeIndex(backupsCollection, { createdAt: -1 });
 
     // Telemetry indexes with 30-day automatic pruning TTL + compound event/shop/timestamp index
@@ -7032,9 +7794,34 @@ const connectWithRetry = async () => {
         { piecesPerUnit: { $exists: false } },
         { $set: { piecesPerUnit: null } }
       );
-      console.log("✓ Products makingCost & piecesPerUnit migration check completed");
+      await productsCollection.updateMany(
+        { chefCoefficient: { $exists: false } },
+        { $set: { chefCoefficient: 0 } }
+      );
+      await productsCollection2.updateMany(
+        { chefCoefficient: { $exists: false } },
+        { $set: { chefCoefficient: 0 } }
+      );
+      console.log("✓ Products makingCost, piecesPerUnit & chefCoefficient migration check completed");
     } catch (migErr) {
-      console.warn("Product makingCost/piecesPerUnit migration warning:", migErr.message);
+      console.warn("Product migration warning:", migErr.message);
+    }
+
+    // Seed default employee jobs if empty
+    try {
+      const jobsCount = await employeeJobsCollection.countDocuments();
+      if (jobsCount === 0) {
+        const now = new Date();
+        await employeeJobsCollection.insertMany([
+          { name: "شيف / منتج", payType: "production", description: "احتساب المستحق الشهري من مجموع (مبيعات كل صنف ينتجه الشيف × معامل الصنف) بدون راتب أساسي", createdAt: now, updatedAt: now },
+          { name: "كاشير", payType: "fixed", description: "موظف صندوق ومبيعات براتب شهري ثابت", createdAt: now, updatedAt: now },
+          { name: "إداري", payType: "fixed", description: "إدارة وإشراف براتب شهري ثابت", createdAt: now, updatedAt: now },
+          { name: "مبيعات وخدمة", payType: "fixed", description: "تجهيز وخدمة طلبات براتب شهري ثابت", createdAt: now, updatedAt: now }
+        ]);
+        console.log("✓ Default employee jobs initialized");
+      }
+    } catch (jobErr) {
+      console.warn("Default employee jobs seed warning:", jobErr.message);
     }
 
     // Seed default admin user with PBKDF2 passwordHash if empty, and migrate any legacy plaintext passwords

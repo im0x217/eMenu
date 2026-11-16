@@ -146,6 +146,10 @@
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             <span>إدارة الإنتاج</span>
           </button>
+          <button class="menu-item" :class="{ active: activeTab === 'employees' }" @click="setTab('employees')" role="tab" :aria-selected="activeTab === 'employees'" :tabindex="activeTab === 'employees' ? 0 : -1">
+            <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+            <span>{{ userRole === 'admin' ? 'الموظفون والرواتب' : 'الموظفون والسلف' }}</span>
+          </button>
           <button v-if="userRole === 'admin' && activeShop === 'shop2'" class="menu-item" :class="{ active: activeTab === 'inventory' }" @click="setTab('inventory')" role="tab" :aria-selected="activeTab === 'inventory'" :tabindex="activeTab === 'inventory' ? 0 : -1">
             <svg aria-hidden="true" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             <span>المخزون والمستودع</span>
@@ -3581,6 +3585,17 @@
               </div>
             </div>
           </div>
+
+          <!-- EMPLOYEES, PAYROLL & TRANSACTIONS TAB -->
+          <AdminEmployeesTab
+            v-else-if="activeTab === 'employees'"
+            :activeShop="activeShop"
+            :userRole="userRole"
+            :userShopAccess="userShopAccess"
+            :isMobileScreen="isMobileScreen"
+            :adminFetch="adminFetch"
+            @count-change="employeesCount = $event"
+          />
 
           <!-- INVENTORY MANAGEMENT TAB (SHOP 2 ONLY) -->
           <InventoryTab
@@ -7383,6 +7398,7 @@ const AdminShortcutsModal = defineAsyncComponent(() => import('../components/Adm
 const AdminCarouselTab = defineAsyncComponent(() => import('../components/AdminCarouselTab.vue'));
 const AdminUsersTab = defineAsyncComponent(() => import('../components/AdminUsersTab.vue'));
 const AdminSettingsTab = defineAsyncComponent(() => import('../components/AdminSettingsTab.vue'));
+const AdminEmployeesTab = defineAsyncComponent(() => import('../components/AdminEmployeesTab.vue'));
 
 export default {
   name: 'AdminView',
@@ -7392,7 +7408,8 @@ export default {
     AdminShortcutsModal,
     AdminCarouselTab,
     AdminUsersTab,
-    AdminSettingsTab
+    AdminSettingsTab,
+    AdminEmployeesTab
   },
   directives: {
     sheetGesture: vSheetGesture
@@ -7452,7 +7469,7 @@ export default {
     };
 
     // Persistent Active Tab Management across page reloads
-    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'inventory', 'carousel', 'users', 'settings'];
+    const VALID_TABS = ['analytics', 'products', 'categories', 'tags', 'orders', 'customers', 'production', 'employees', 'inventory', 'carousel', 'users', 'settings'];
     const getInitialTab = () => {
       try {
         const queryTab = route.query && route.query.tab ? String(route.query.tab) : '';
@@ -7842,6 +7859,7 @@ export default {
     const userDisplayName = ref(localStorage.getItem('admin_name') || 'المدير العام');
     const userShopAccess = ref(localStorage.getItem('admin_shop_access') || 'all');
     const adminUsers = ref([]);
+    const employeesCount = ref(0);
     const userModalOpen = ref(false);
     const pendingEditUser = ref(null);
 
@@ -7862,6 +7880,7 @@ export default {
       orders: 'سجل وإدارة طلبات العملاء',
       customers: 'قائمة العملاء والمنتجات المفضلة',
       production: 'إدارة الإنتاج وتقارير الشيفات',
+      employees: 'إدارة الموظفين والرواتب والسلف',
       inventory: 'إدارة ومزامنة المخزون (قسم النواشف)',
       carousel: 'إدارة بنرات العروض التسويقية',
       users: 'إدارة المستخدمين وصلاحيات النظام',
@@ -8692,6 +8711,8 @@ export default {
           return productionSubTab.value === 'chefs'
             ? formatArabicPlural(chefs.value.length, 'chef')
             : `${productionReportData.chefReport ? productionReportData.chefReport.length : 0} شيف منتج`;
+        case 'employees':
+          return formatArabicPlural(employeesCount.value, 'employee');
         case 'carousel':
           return formatArabicPlural(carouselItems.value.length, 'banner');
         case 'users':
@@ -8714,6 +8735,7 @@ export default {
         unit: { s: 'وحدة', d: 'وحدتان', p: 'وحدات', a: 'وحدةً' },
         sale: { s: 'عملية بيع', d: 'عمليتا بيع', p: 'عمليات بيع', a: 'عملية بيع' },
         chef: { s: 'شيف', d: 'شيفان', p: 'شيفات', a: 'شيفاً' },
+        employee: { s: 'موظف', d: 'موظفان', p: 'موظفين', a: 'موظفاً' },
         banner: { s: 'بنر', d: 'بنران', p: 'بنرات', a: 'بنراً' },
         user: { s: 'مستخدم', d: 'مستخدمان', p: 'مستخدمين', a: 'مستخدماً' }
       };
@@ -9535,7 +9557,7 @@ export default {
         localStorage.setItem('admin_active_shop', resolvedAccess);
       }
 
-      if (resolvedRole === 'order_manager' && !['orders', 'customers', 'production'].includes(activeTab.value)) {
+      if (resolvedRole === 'order_manager' && !['orders', 'customers', 'production', 'employees'].includes(activeTab.value)) {
         activeTab.value = 'orders';
       } else if (resolvedAccess !== 'all' && ['users', 'settings'].includes(activeTab.value)) {
         activeTab.value = 'orders';
@@ -9682,9 +9704,9 @@ export default {
 
     // Tab switcher with locked routing for secondary order_manager role & single-shop admins
     const setTab = (tab) => {
-      const allowed = ['orders', 'customers', 'production'];
+      const allowed = ['orders', 'customers', 'production', 'employees'];
       if (userRole.value === 'order_manager' && !allowed.includes(tab)) {
-        toast.show('صلاحيات حسابك تشمل إدارة الطلبات، العملاء، والإنتاج فقط', 'warning');
+        toast.show('صلاحيات حسابك تشمل إدارة الطلبات، العملاء، الإنتاج، والموظفين فقط', 'warning');
         if (!allowed.includes(activeTab.value)) {
           activeTab.value = 'orders';
         }
@@ -12759,6 +12781,7 @@ const closeSuggestionsWithDelay = () => {
         { id: 'nav-products', title: 'الانتقال إلى إدارة المنتجات', category: 'تنقل', shortcut: 'Alt+2', icon: 'package', action: () => setTab('products') },
         { id: 'nav-customers', title: 'الانتقال إلى سجل ومديونيات العملاء', category: 'تنقل', shortcut: 'Alt+6', icon: 'users', action: () => setTab('customers') },
         { id: 'nav-production', title: 'الانتقال إلى خطة الإنتاج والشيفات', category: 'تنقل', shortcut: 'Alt+7', icon: 'chef-hat', action: () => setTab('production') },
+        { id: 'nav-employees', title: 'الانتقال إلى الموظفين والرواتب والسلف', category: 'تنقل', shortcut: '', icon: 'users', action: () => setTab('employees') },
         { id: 'nav-analytics', title: 'الانتقال إلى التحليلات والمبيعات', category: 'تنقل', shortcut: 'Alt+1', icon: 'trending-up', action: () => setTab('analytics') },
         { id: 'nav-categories', title: 'الانتقال إلى إدارة الأصناف والأقسام', category: 'تنقل', shortcut: 'Alt+3', icon: 'folder', action: () => setTab('categories') },
         { id: 'nav-tags', title: 'الانتقال إلى إدارة الوسوم والعلامات', category: 'تنقل', shortcut: 'Alt+4', icon: 'tag', action: () => setTab('tags') },
@@ -12773,7 +12796,7 @@ const closeSuggestionsWithDelay = () => {
         { id: 'help-shortcuts', title: 'عرض دليل اختصارات لوحة المفاتيح الكامل', category: 'مساعدة', shortcut: 'Alt+H', icon: 'help-circle', action: () => { shortcutsModalOpen.value = true; } },
       ];
       const filteredByRole = userRole.value === 'order_manager'
-        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'new-chef', 'help-shortcuts'].includes(c.id))
+        ? allCmds.filter(c => ['new-order', 'nav-orders', 'nav-customers', 'nav-production', 'nav-employees', 'new-chef', 'help-shortcuts'].includes(c.id))
         : allCmds;
 
       if (!q) return filteredByRole;
@@ -13794,6 +13817,7 @@ const closeSuggestionsWithDelay = () => {
       publicAdminUsers,
       fetchPublicAdminUsers,
       tabTitles,
+      employeesCount,
       inventoryItems,
       inventoryLoading,
       inventoryReservations,
