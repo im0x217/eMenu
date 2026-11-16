@@ -6418,9 +6418,11 @@ app.put("/api/admin/employees/chef-coefficients", checkMongoDB, checkAdmin, asyn
       if (userAccess !== 'all' && userAccess !== targetShop) {
         return res.status(403).json({ error: "ليس لديك صلاحية لتعديل معاملات أصناف هذا الفرع" });
       }
-      const numVal = Number(u.chefCoefficient);
-      const cleanCoeff = (Number.isFinite(numVal) && numVal > 0)
-        ? Math.round(numVal * 10000) / 10000
+      const rawRatio = (u.chefPercent !== undefined && u.chefPercent !== null)
+        ? (Number(u.chefPercent) / 100)
+        : Number(u.chefCoefficient);
+      const cleanCoeff = (Number.isFinite(rawRatio) && rawRatio > 0)
+        ? Math.round(rawRatio * 1000000) / 1000000
         : 0;
       const op = {
         updateOne: {

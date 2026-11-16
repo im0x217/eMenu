@@ -755,7 +755,7 @@
             <div v-if="selectedFormJob?.payType === 'production'" class="emp-production-link-box mb-3">
               <div class="font-bold text-primary mb-1">نظام احتساب الشيف / المنتج (بدون راتب أساسي)</div>
               <p class="text-small text-muted mb-2">
-                يتم احتساب الراتب تلقائياً من مجموع: <strong>(إجمالي مبيعات كل صنف ينتجه الشيف × معامل الصنف)</strong>. اختر ملف الشيف المرتبط من قسم الإنتاج:
+                يتم احتساب الراتب تلقائياً من مجموع: <strong>(إجمالي مبيعات كل صنف ينتجه الشيف × نسبة الصنف %)</strong>. اختر ملف الشيف المرتبط من قسم الإنتاج:
               </p>
 
               <div v-if="chefsOptions.shop1.length === 0 && chefsOptions.shop2.length === 0" class="text-small text-muted">
@@ -947,7 +947,7 @@
               </div>
               <div>
                 <h3 id="chef-coeff-modal-title">معاملات وأرباح إنتاج الشيف: {{ selectedChefEmp.name }}</h3>
-                <p class="text-small text-muted m-0">الفترة: {{ selectedMonthLabel }} — بدون راتب أساسي (مجموع مبيعات كل صنف × معامله)</p>
+                <p class="text-small text-muted m-0">الفترة: {{ selectedMonthLabel }} — بدون راتب أساسي (مجموع مبيعات كل صنف × نسبته المئوية %)</p>
               </div>
             </div>
             <button type="button" @click="closeAllModals" class="modal-close-btn" aria-label="إغلاق">
@@ -957,11 +957,14 @@
 
           <div class="chef-coeff-batch-bar mb-3">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <label for="uniform-coeff-input" class="font-bold text-small m-0">تطبيق معامل موحّد على كل الأصناف:</label>
-              <input id="uniform-coeff-input" v-model.number="uniformCoeffValue" type="number" step="0.01" min="0" class="form-control coeff-mini-input" placeholder="مثال: 0.15…" />
+              <label for="uniform-coeff-input" class="font-bold text-small m-0">تطبيق نسبة مئوية موحّدة (%) على كل الأصناف:</label>
+              <div class="d-flex align-items-center gap-1">
+                <input id="uniform-coeff-input" v-model.number="uniformCoeffValue" type="number" step="any" min="0" max="100" dir="ltr" class="form-control coeff-mini-input text-mono" placeholder="مثال: 15…" />
+                <span class="coeff-pct-hint text-mono">%</span>
+              </div>
               <button type="button" class="btn btn-outline btn-xs" @click="applyUniformCoeff">تطبيق على الكل</button>
             </div>
-            <span class="text-small text-muted">مثال: <code dir="ltr">0.15</code> = <strong dir="ltr">15%</strong> من إجمالي مبيعات الصنف</span>
+            <span class="text-small text-muted">مثال: إدخال <code dir="ltr">15</code> يعني <strong dir="ltr">15%</strong> من إجمالي مبيعات الصنف</span>
           </div>
 
           <div v-if="editableBreakdown.length === 0" class="p-4 text-center text-muted">
@@ -976,8 +979,8 @@
                   <th>الفرع</th>
                   <th>الكمية المباعة</th>
                   <th>إجمالي المبيعات</th>
-                  <th>المعامل</th>
-                  <th>المستحق (المبيعات × المعامل)</th>
+                  <th>النسبة (%)</th>
+                  <th>المستحق (المبيعات × النسبة)</th>
                 </tr>
               </thead>
               <tbody>
@@ -992,18 +995,20 @@
                   <td>
                     <div class="d-flex align-items-center gap-1">
                       <input
-                        v-model.number="row.chefCoefficient"
+                        v-model.number="row.chefPercent"
                         type="number"
-                        step="0.005"
+                        step="any"
                         min="0"
+                        max="100"
+                        dir="ltr"
                         class="form-control coeff-cell-input text-mono"
-                        :aria-label="`معامل ${row.productName}`"
+                        :aria-label="`نسبة ${row.productName} المئوية`"
                       />
-                      <span class="coeff-pct-hint text-mono">{{ Math.round((Number(row.chefCoefficient) || 0) * 1000) / 10 }}%</span>
+                      <span class="coeff-pct-hint text-mono">%</span>
                     </div>
                   </td>
                   <td class="text-mono font-bold text-primary">
-                    {{ formatCurrency(round2((Number(row.totalSales) || 0) * (Number(row.chefCoefficient) || 0))) }}
+                    {{ formatCurrency(round2((Number(row.totalSales) || 0) * percentToCoeff(row.chefPercent))) }}
                   </td>
                 </tr>
               </tbody>
@@ -1075,7 +1080,7 @@
               <label for="job-paytype-select" class="form-label">طريقة احتساب الراتب *</label>
               <select id="job-paytype-select" v-model="jobForm.payType" class="form-control">
                 <option value="fixed">راتب شهري ثابت</option>
-                <option value="production">إنتاج ومبيعات الأصناف (معامل لكل صنف — بدون راتب أساسي)</option>
+                <option value="production">إنتاج ومبيعات الأصناف (نسبة % لكل صنف — بدون راتب أساسي)</option>
               </select>
             </div>
 
@@ -1494,7 +1499,7 @@ export default {
 
     const selectedChefEmp = ref(null);
     const editableBreakdown = ref([]);
-    const uniformCoeffValue = ref(0.15);
+    const uniformCoeffValue = ref(15);
 
     const ledgerEmp = ref(null);
     const ledgerTxs = ref([]);
@@ -1506,6 +1511,8 @@ export default {
 
     // Formatters & Helpers
     const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+    const coeffToPercent = (c) => Math.round((Number(c) || 0) * 10000) / 100;
+    const percentToCoeff = (pct) => Math.round(Math.max(0, Number(pct) || 0) * 10000) / 1000000;
     const formatNum = (val) => {
       const n = round2(val);
       return Number.isInteger(n) ? n.toLocaleString('en-US') : n.toFixed(2);
@@ -1598,7 +1605,7 @@ export default {
 
     // Live totals in Chef Breakdown Modal
     const liveChefGrossPay = computed(() =>
-      round2(editableBreakdown.value.reduce((s, r) => s + round2((Number(r.totalSales) || 0) * (Number(r.chefCoefficient) || 0)), 0))
+      round2(editableBreakdown.value.reduce((s, r) => s + round2((Number(r.totalSales) || 0) * percentToCoeff(r.chefPercent)), 0))
     );
     const liveChefNetPay = computed(() => {
       if (!selectedChefEmp.value) return 0;
@@ -1891,14 +1898,18 @@ export default {
     // Chef Per-Product Coefficients Modal
     const openChefBreakdownModal = (emp) => {
       selectedChefEmp.value = emp;
-      editableBreakdown.value = (emp.productBreakdown || []).map(p => ({ ...p }));
+      editableBreakdown.value = (emp.productBreakdown || []).map(p => ({
+        ...p,
+        chefPercent: coeffToPercent(p.chefCoefficient)
+      }));
       chefModalOpen.value = true;
     };
 
     const applyUniformCoeff = () => {
-      const val = Math.max(0, Number(uniformCoeffValue.value) || 0);
+      const pct = Math.max(0, Math.round((Number(uniformCoeffValue.value) || 0) * 100) / 100);
       editableBreakdown.value.forEach(r => {
-        r.chefCoefficient = val;
+        r.chefPercent = pct;
+        r.chefCoefficient = percentToCoeff(pct);
       });
     };
 
@@ -1909,7 +1920,7 @@ export default {
         const updates = editableBreakdown.value.map(r => ({
           shop: r.shop,
           productId: r.productId,
-          chefCoefficient: Math.max(0, Number(r.chefCoefficient) || 0)
+          chefCoefficient: percentToCoeff(r.chefPercent)
         }));
         const res = await props.adminFetch('/api/admin/employees/chef-coefficients', {
           method: 'PUT',
@@ -2169,6 +2180,7 @@ export default {
       activePrintTx,
       printingPayroll,
       round2,
+      percentToCoeff,
       formatNum,
       formatCurrency,
       formatArabicDate,
@@ -2734,10 +2746,10 @@ export default {
 }
 
 .coeff-pct-hint {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #64748b;
-  min-width: 38px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #475569;
+  min-width: 20px;
 }
 
 .chef-coeff-table-scroll {
@@ -2866,6 +2878,12 @@ export default {
 
   textarea.form-control {
     font-size: 16px !important;
+  }
+
+  .coeff-mini-input,
+  .coeff-cell-input {
+    font-size: 16px !important;
+    min-height: 44px !important;
   }
 
   .modal-overlay {
