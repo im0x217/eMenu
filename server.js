@@ -6301,6 +6301,18 @@ const isEmployeeInUserScope = (emp, req) => {
   return emp.branch === userAccess || emp.branch === 'all';
 };
 
+const normalizeOptionalIsoDate = (val) => {
+  if (typeof val !== 'string') return '';
+  const s = val.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (isNaN(dt.getTime()) || dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) {
+    return '';
+  }
+  return s;
+};
+
 // 1. Jobs CRUD
 app.get("/api/admin/employee-jobs", checkMongoDB, checkStaff, async (req, res) => {
   try {
@@ -6542,6 +6554,8 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
           jobName: e.jobName || '',
           payType: e.payType || 'fixed',
           active: e.active !== false,
+          startDate: e.startDate || '',
+          healthCertExpiry: e.healthCertExpiry || '',
           notes: e.notes || '',
           bonusesTotal: Math.round(agg.bonusesTotal * 100) / 100,
           borrowingsTotal: Math.round(agg.borrowingsTotal * 100) / 100,
@@ -6711,6 +6725,8 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
         salary: baseSalary,
         linkedChefs: isProduction ? (e.linkedChefs || []) : [],
         active: e.active !== false,
+        startDate: e.startDate || '',
+        healthCertExpiry: e.healthCertExpiry || '',
         notes: e.notes || '',
         productionTotalQty,
         productionTotalSales,
@@ -6751,7 +6767,7 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
 // 5. Employees CRUD (Admin Only)
 app.post("/api/admin/employees", checkMongoDB, checkAdmin, async (req, res) => {
   try {
-    const { name, phone, branch, jobId, salary, linkedChefs, active, notes } = req.body || {};
+    const { name, phone, branch, jobId, salary, linkedChefs, active, notes, startDate, healthCertExpiry } = req.body || {};
     const cleanName = typeof name === 'string' ? name.trim() : '';
     if (!cleanName) {
       return res.status(400).json({ error: "اسم الموظف مطلوب" });
@@ -6794,6 +6810,8 @@ app.post("/api/admin/employees", checkMongoDB, checkAdmin, async (req, res) => {
       salary: resolvedSalary,
       linkedChefs: resolvedLinks,
       active: active !== false,
+      startDate: normalizeOptionalIsoDate(startDate),
+      healthCertExpiry: normalizeOptionalIsoDate(healthCertExpiry),
       notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
       createdAt: now,
       updatedAt: now
@@ -6820,7 +6838,7 @@ app.put("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res) =
       return res.status(403).json({ error: "ليس لديك صلاحية لتعديل موظف في فرع آخر" });
     }
 
-    const { name, phone, branch, jobId, salary, linkedChefs, active, notes } = req.body || {};
+    const { name, phone, branch, jobId, salary, linkedChefs, active, notes, startDate, healthCertExpiry } = req.body || {};
     const cleanName = typeof name === 'string' ? name.trim() : '';
     if (!cleanName) {
       return res.status(400).json({ error: "اسم الموظف مطلوب" });
@@ -6863,6 +6881,8 @@ app.put("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res) =
       salary: resolvedSalary,
       linkedChefs: resolvedLinks,
       active: active !== false,
+      startDate: startDate !== undefined ? normalizeOptionalIsoDate(startDate) : (existing.startDate || ''),
+      healthCertExpiry: healthCertExpiry !== undefined ? normalizeOptionalIsoDate(healthCertExpiry) : (existing.healthCertExpiry || ''),
       notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
       updatedAt: now
     };
@@ -7864,6 +7884,15 @@ const connectWithRetry = async () => {
         { $set: { chefCoefficient: 0 } }
       );
       console.log("✓ Products makingCost, piecesPerUnit & chefCoefficient migration check completed");
+
+      await employeesCollection.updateMany(
+        { startDate: { $exists: false } },
+        { $set: { startDate: "" } }
+      );
+      await employeesCollection.updateMany(
+        { healthCertExpiry: { $exists: false } },
+        { $set: { healthCertExpiry: "" } }
+      );
     } catch (migErr) {
       console.warn("Product migration warning:", migErr.message);
     }

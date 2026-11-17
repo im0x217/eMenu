@@ -233,6 +233,8 @@
                 <th>الموظف</th>
                 <th>الفرع</th>
                 <th>الوظيفة</th>
+                <th>تاريخ المباشرة</th>
+                <th>الشهادة الصحية</th>
                 <th v-if="isAdmin">الأساسي / الإنتاج ({{ selectedMonthShort }})</th>
                 <th>المكافآت (+)</th>
                 <th>السلف (−)</th>
@@ -243,10 +245,10 @@
             </thead>
             <tbody>
               <tr v-if="loading && employees.length === 0">
-                <td :colspan="isAdmin ? 9 : 7" class="text-center p-5 text-muted">جاري تحميل بيانات الموظفين…</td>
+                <td :colspan="isAdmin ? 11 : 9" class="text-center p-5 text-muted">جاري تحميل بيانات الموظفين…</td>
               </tr>
               <tr v-else-if="filteredEmployees.length === 0">
-                <td :colspan="isAdmin ? 9 : 7" class="text-center p-5 text-muted">
+                <td :colspan="isAdmin ? 11 : 9" class="text-center p-5 text-muted">
                   لا يوجد موظفون مطابقون للبحث.
                   <span v-if="isAdmin"> يمكنك إضافة موظف جديد من الزر أعلاه.</span>
                 </td>
@@ -305,6 +307,26 @@
                     <span class="text-small text-muted" v-if="emp.payType === 'production'">
                       إنتاج ومبيعات الأصناف
                     </span>
+                  </div>
+                </td>
+
+                <td>
+                  <span v-if="emp.startDate" class="emp-start-date-pill text-mono" dir="ltr">{{ emp.startDate }}</span>
+                  <span v-else class="text-muted text-small">—</span>
+                </td>
+
+                <td>
+                  <div
+                    class="hc-badge"
+                    :class="getHealthCertInfo(emp.healthCertExpiry).className"
+                    :title="getHealthCertInfo(emp.healthCertExpiry).tooltip"
+                  >
+                    <span class="hc-dot" aria-hidden="true"></span>
+                    <div class="hc-text">
+                      <span class="hc-label">{{ getHealthCertInfo(emp.healthCertExpiry).label }}</span>
+                      <span v-if="emp.healthCertExpiry" class="hc-date text-mono" dir="ltr">{{ emp.healthCertExpiry }}</span>
+                      <span v-if="getHealthCertInfo(emp.healthCertExpiry).subLabel" class="hc-sub">{{ getHealthCertInfo(emp.healthCertExpiry).subLabel }}</span>
+                    </div>
                   </div>
                 </td>
 
@@ -450,6 +472,26 @@
                 <a v-if="whatsappUrl(emp.phone)" :href="whatsappUrl(emp.phone)" target="_blank" rel="noopener noreferrer" class="emp-contact-circle lg whatsapp" :aria-label="`واتساب للموظف ${emp.name}`">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                 </a>
+              </div>
+            </div>
+
+            <div class="mob-emp-dates-strip">
+              <div class="mob-date-item">
+                <span class="lbl">تاريخ المباشرة</span>
+                <span class="val text-mono" dir="ltr">{{ emp.startDate || 'غير محدد' }}</span>
+              </div>
+              <div class="mob-date-item">
+                <span class="lbl">الشهادة الصحية</span>
+                <span
+                  class="hc-badge compact"
+                  :class="getHealthCertInfo(emp.healthCertExpiry).className"
+                  :title="getHealthCertInfo(emp.healthCertExpiry).tooltip"
+                >
+                  <span class="hc-dot" aria-hidden="true"></span>
+                  <span class="hc-label">{{ getHealthCertInfo(emp.healthCertExpiry).label }}</span>
+                  <span v-if="emp.healthCertExpiry" class="hc-date text-mono" dir="ltr">{{ emp.healthCertExpiry }}</span>
+                  <span v-if="getHealthCertInfo(emp.healthCertExpiry).subLabel" class="hc-sub">{{ getHealthCertInfo(emp.healthCertExpiry).subLabel }}</span>
+                </span>
               </div>
             </div>
 
@@ -748,6 +790,43 @@
                     {{ j.name }} ({{ j.payType === 'production' ? 'نسبة إنتاج' : 'راتب ثابت' }})
                   </option>
                 </select>
+              </div>
+            </div>
+
+            <div class="form-row emp-dates-form-row">
+              <div class="form-group">
+                <label class="form-label">تاريخ مباشرة العمل</label>
+                <RtlDatePicker
+                  v-model="empForm.startDate"
+                  placeholder="تاريخ مباشرة العمل…"
+                  ariaLabel="تاريخ مباشرة العمل"
+                  :clearable="true"
+                  :allowYearSelect="true"
+                  popoverAlign="start"
+                  :theme="activeShop"
+                />
+              </div>
+              <div class="form-group">
+                <div class="d-flex justify-content-between align-items-center mb-1 gap-2 flex-wrap">
+                  <label class="form-label mb-0">انتهاء الشهادة الصحية</label>
+                  <span
+                    v-if="empForm.healthCertExpiry"
+                    class="hc-inline-preview"
+                    :class="getHealthCertInfo(empForm.healthCertExpiry).className"
+                  >
+                    <span class="hc-dot" aria-hidden="true"></span>
+                    <span>{{ getHealthCertInfo(empForm.healthCertExpiry).label }}</span>
+                  </span>
+                </div>
+                <RtlDatePicker
+                  v-model="empForm.healthCertExpiry"
+                  placeholder="تاريخ انتهاء الشهادة…"
+                  ariaLabel="تاريخ انتهاء الشهادة الصحية"
+                  :clearable="true"
+                  :allowYearSelect="true"
+                  popoverAlign="end"
+                  :theme="activeShop"
+                />
               </div>
             </div>
 
@@ -1477,6 +1556,8 @@ export default {
       salary: 0,
       linkedChefs: [],
       active: true,
+      startDate: '',
+      healthCertExpiry: '',
       notes: ''
     });
 
@@ -1569,6 +1650,60 @@ export default {
       branchFilter.value = b;
     };
 
+    const getHealthCertInfo = (isoStr) => {
+      if (!isoStr || !/^\d{4}-\d{2}-\d{2}$/.test(String(isoStr).trim())) {
+        return {
+          status: 'unset',
+          className: 'is-unset',
+          label: 'غير مسجلة',
+          subLabel: '',
+          tooltip: 'لم يتم تسجيل تاريخ انتهاء الشهادة الصحية'
+        };
+      }
+      const cleanStr = String(isoStr).trim();
+      const [y, m, d] = cleanStr.split('-').map(Number);
+      const expDate = new Date(y, m - 1, d);
+      if (isNaN(expDate.getTime()) || expDate.getFullYear() !== y || expDate.getMonth() !== m - 1 || expDate.getDate() !== d) {
+        return {
+          status: 'unset',
+          className: 'is-unset',
+          label: 'غير مسجلة',
+          subLabel: '',
+          tooltip: 'لم يتم تسجيل تاريخ انتهاء الشهادة الصحية'
+        };
+      }
+      const now = new Date();
+      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const daysRemaining = Math.round((expDate.getTime() - todayDate.getTime()) / 86400000);
+      if (daysRemaining < 0) {
+        const overdue = Math.abs(daysRemaining);
+        return {
+          status: 'expired',
+          className: 'is-expired',
+          label: 'منتهية',
+          subLabel: `منذ ${overdue} يوم`,
+          tooltip: `منتهية الصلاحية منذ ${overdue} يوم (${cleanStr})`
+        };
+      }
+      if (daysRemaining <= 30) {
+        const sub = daysRemaining === 0 ? 'تنتهي اليوم' : `باقي ${daysRemaining} يوم`;
+        return {
+          status: 'approaching',
+          className: 'is-approaching',
+          label: 'قرب الانتهاء',
+          subLabel: sub,
+          tooltip: `تقترب من الانتهاء (${daysRemaining === 0 ? 'اليوم' : 'باقي ' + daysRemaining + ' يوم'}) — ${cleanStr}`
+        };
+      }
+      return {
+        status: 'valid',
+        className: 'is-valid',
+        label: 'سارية',
+        subLabel: '',
+        tooltip: `سارية الصلاحية حتى ${cleanStr} (باقي ${daysRemaining} يوم)`
+      };
+    };
+
     // Computed filters
     const filteredEmployees = computed(() => {
       const q = searchQuery.value.trim().toLowerCase();
@@ -1576,7 +1711,10 @@ export default {
       return employees.value.filter(e =>
         (e.name && e.name.toLowerCase().includes(q)) ||
         (e.phone && e.phone.toLowerCase().includes(q)) ||
-        (e.jobName && e.jobName.toLowerCase().includes(q))
+        (e.jobName && e.jobName.toLowerCase().includes(q)) ||
+        (e.startDate && e.startDate.includes(q)) ||
+        (e.healthCertExpiry && e.healthCertExpiry.includes(q)) ||
+        getHealthCertInfo(e.healthCertExpiry).label.includes(q)
       );
     });
 
@@ -1727,6 +1865,8 @@ export default {
         empForm.salary = emp.salary !== null && emp.salary !== undefined ? Number(emp.salary) : 0;
         empForm.linkedChefs = Array.isArray(emp.linkedChefs) ? emp.linkedChefs.map(c => ({ ...c })) : [];
         empForm.active = emp.active !== false;
+        empForm.startDate = emp.startDate || '';
+        empForm.healthCertExpiry = emp.healthCertExpiry || '';
         empForm.notes = emp.notes || '';
       } else {
         empForm._id = '';
@@ -1737,6 +1877,8 @@ export default {
         empForm.salary = 0;
         empForm.linkedChefs = [];
         empForm.active = true;
+        empForm.startDate = '';
+        empForm.healthCertExpiry = '';
         empForm.notes = '';
       }
       employeeModalOpen.value = true;
@@ -1764,6 +1906,8 @@ export default {
             salary: selectedFormJob.value?.payType === 'production' ? null : Number(empForm.salary) || 0,
             linkedChefs: selectedFormJob.value?.payType === 'production' ? empForm.linkedChefs : [],
             active: empForm.active,
+            startDate: empForm.startDate || '',
+            healthCertExpiry: empForm.healthCertExpiry || '',
             notes: empForm.notes.trim()
           })
         });
@@ -2179,6 +2323,7 @@ export default {
       formatNum,
       formatCurrency,
       formatArabicDate,
+      getHealthCertInfo,
       branchLabel,
       txTypeLabel,
       txReceiptTitle,
@@ -2783,6 +2928,121 @@ export default {
   font-weight: 800;
 }
 
+/* Job Start Date & Health Certificate Status Badges */
+.emp-start-date-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  min-width: 112px;
+}
+
+.hc-badge.compact {
+  padding: 4px 8px;
+  border-radius: 8px;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.hc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.hc-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hc-label {
+  font-weight: 800;
+}
+
+.hc-date {
+  font-size: 0.76rem;
+  font-weight: 700;
+  opacity: 0.92;
+}
+
+.hc-sub {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.88;
+}
+
+.hc-inline-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  border: 1.5px solid transparent;
+}
+
+.hc-badge.is-valid,
+.hc-inline-preview.is-valid {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+}
+.is-valid .hc-dot { background: #10b981; }
+
+.hc-badge.is-approaching,
+.hc-inline-preview.is-approaching {
+  background: #fefce8;
+  border-color: #facc15;
+  color: #854d0e;
+}
+.is-approaching .hc-dot { background: #eab308; }
+
+.hc-badge.is-expired,
+.hc-inline-preview.is-expired {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.is-expired .hc-dot { background: #ef4444; }
+
+.hc-badge.is-unset,
+.hc-inline-preview.is-unset {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+}
+.is-unset .hc-dot { background: #94a3b8; }
+
+.emp-dates-form-row :deep(.btn-datepicker-trigger) {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  font-size: 0.88rem;
+}
+
 /* Mobile Cards (Hidden on desktop) */
 .mobile-emp-cards-grid {
   display: none;
@@ -2821,6 +3081,35 @@ export default {
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .mob-emp-dates-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mob-date-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .mob-date-item .lbl {
+    font-size: 0.74rem;
+    color: #475569;
+    font-weight: 700;
+  }
+
+  .mob-date-item .val {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0f172a;
   }
 
   .mob-emp-metrics {

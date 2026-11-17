@@ -23,6 +23,18 @@ const props = defineProps({
   theme: {
     type: String,
     default: 'shop1'
+  },
+  clearable: {
+    type: Boolean,
+    default: false
+  },
+  allowYearSelect: {
+    type: Boolean,
+    default: false
+  },
+  popoverAlign: {
+    type: String,
+    default: 'center'
   }
 });
 
@@ -79,6 +91,14 @@ const formattedLabel = computed(() => {
 });
 
 const monthYearLabel = computed(() => `${ARABIC_MONTHS[viewMonth.value]} ${viewYear.value}`);
+
+const yearOptions = computed(() => {
+  const cur = new Date().getFullYear();
+  const years = new Set();
+  for (let y = cur - 25; y <= cur + 10; y++) years.add(y);
+  if (viewYear.value) years.add(viewYear.value);
+  return Array.from(years).sort((a, b) => a - b);
+});
 
 const calendarDays = computed(() => {
   const year = viewYear.value;
@@ -182,6 +202,21 @@ const selectDate = (cell) => {
   closePopover(true);
 };
 
+const selectToday = () => {
+  if (props.minDate && todayIso < props.minDate) return;
+  triggerHaptic('light');
+  emit('update:modelValue', todayIso);
+  emit('change', todayIso);
+  closePopover(true);
+};
+
+const clearDate = () => {
+  triggerHaptic('light');
+  emit('update:modelValue', '');
+  emit('change', '');
+  closePopover(true);
+};
+
 const handleResize = () => {
   isMobileScreen.value = window.innerWidth <= 768;
 };
@@ -271,6 +306,7 @@ onUnmounted(() => {
         <div
           ref="popoverRef"
           class="datepicker-popover glass-panel"
+          :class="'align-' + popoverAlign"
           role="dialog"
           :aria-modal="isMobileScreen ? 'true' : 'false'"
           :aria-label="ariaLabel"
@@ -290,7 +326,15 @@ onUnmounted(() => {
               </svg>
             </button>
 
-            <span class="dp-month-title">{{ monthYearLabel }}</span>
+            <span v-if="!allowYearSelect" class="dp-month-title">{{ monthYearLabel }}</span>
+            <div v-else class="dp-month-title dp-month-year-selects">
+              <select v-model.number="viewMonth" class="dp-inline-select" aria-label="الشهر">
+                <option v-for="(mLabel, mIdx) in ARABIC_MONTHS" :key="mIdx" :value="mIdx">{{ mLabel }}</option>
+              </select>
+              <select v-model.number="viewYear" class="dp-inline-select text-mono" aria-label="السنة">
+                <option v-for="yr in yearOptions" :key="yr" :value="yr">{{ yr }}</option>
+              </select>
+            </div>
 
             <button
               type="button"
@@ -328,6 +372,11 @@ onUnmounted(() => {
             >
               {{ cell.day }}
             </button>
+          </div>
+
+          <div v-if="clearable" class="datepicker-footer">
+            <button type="button" class="dp-footer-btn" @click="selectToday">تحديد اليوم</button>
+            <button v-if="modelValue" type="button" class="dp-footer-btn is-clear" @click="clearDate">مسح التاريخ</button>
           </div>
         </div>
       </div>
@@ -416,6 +465,22 @@ onUnmounted(() => {
   animation: datePickerModalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.datepicker-popover.align-start {
+  right: 0;
+  left: auto;
+  width: 304px;
+  max-width: min(320px, 90vw);
+  margin-inline: 0;
+}
+
+.datepicker-popover.align-end {
+  left: 0;
+  right: auto;
+  width: 304px;
+  max-width: min(320px, 90vw);
+  margin-inline: 0;
+}
+
 .datepicker-header {
   display: flex;
   align-items: center;
@@ -431,6 +496,31 @@ onUnmounted(() => {
   font-weight: 800;
   color: #2c2520;
   line-height: 1.4;
+}
+
+.dp-month-year-selects {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dp-inline-select {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #2c2520;
+  background: #ffffff;
+  border: 1px solid rgba(44, 37, 32, 0.16);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.dp-inline-select:focus {
+  outline: 2px solid var(--primary-color, #fdb518);
+  border-color: var(--primary-color, #fdb518);
 }
 
 .dp-nav-btn {
@@ -517,6 +607,52 @@ onUnmounted(() => {
   opacity: 0.35;
   cursor: not-allowed;
   text-decoration: line-through;
+}
+
+.datepicker-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(44, 37, 32, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dp-footer-btn {
+  min-height: 38px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(44, 37, 32, 0.14);
+  background: #ffffff;
+  color: #2c2520;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.dp-footer-btn:hover {
+  background: #f7f3ec;
+  border-color: var(--primary-color, #fdb518);
+}
+
+.dp-footer-btn.is-clear {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.22);
+}
+
+.dp-footer-btn.is-clear:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .dp-inline-select {
+    font-size: 16px;
+    min-height: 40px;
+  }
 }
 
 /* Mobile Teleport Fullscreen Blurred Overlay (Design System §5) */
