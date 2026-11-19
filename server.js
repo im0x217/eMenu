@@ -6509,7 +6509,131 @@ app.put("/api/admin/employees/chef-coefficients", checkMongoDB, checkAdmin, asyn
   }
 });
 
-// 4. Monthly Employee & Payroll Summary (Admin sees full financial payroll; Cashier sees branch list + adjustments only)
+// Reusable helper: aggregate monthly sales & per-unit chef earnings across both shops
+const computeChefProductMetricsForMonth = async (monthKey) => {
+  const monthStart = `${monthKey}-01`;
+  const monthEnd = `${monthKey}-31`;
+  const chefProductMetrics = {}; // key "shop:chefId" -> Map(productId -> { shop, productId, productName, category, soldQty, totalSales, chefCoefficient, chefEarnings })
+
+  const [prods1, prods2, ords1, ords2] = await Promise.all([
+    productsCollection.find().toArray(),
+    productsCollection2.find().toArray(),
+    ordersCollection.find({ status: { $ne: "cancelled" } }).toArray(),
+    ordersCollection2.find({ status: { $ne: "cancelled" } }).toArray()
+  ]);
+
+  const initShopCatalog = (shopKey, prodsList) => {
+    const prodMap = new Map();
+    for (const p of prodsList) {
+      const pid = String(p._id);
+      const coeff = Number(p.chefCoefficient) || 0;
+      const chefIdStr = p.chefId ? String(p.chefId) : '';
+      prodMap.set(pid, {
+        productId: pid,
+        name: p.name || '',
+        category: p.category || '',
+        chefId: chefIdStr,
+        chefName: p.chefName || '',
+        chefCoefficient: coeff
+      });
+      if (chefIdStr) {
+        const cKey = `${shopKey}:${chefIdStr}`;
+        if (!chefProductMetrics[cKey]) chefProductMetrics[cKey] = new Map();
+        chefProductMetrics[cKey].set(pid, {
+          shop: shopKey,
+          productId: pid,
+          productName: p.name || '',
+          category: p.category || '',
+          chefId: chefIdStr,
+          chefName: p.chefName || '',
+          soldQty: 0,
+          totalSales: 0,
+          chefCoefficient: coeff,
+          chefEarnings: 0
+        });
+      }
+    }
+    return prodMap;
+  };
+
+  const prodMap1 = initShopCatalog('shop1', prods1);
+  const prodMap2 = initShopCatalog('shop2', prods2);
+
+  const processOrders = (shopKey, ordList, prodMap) => {
+    for (const order of ordList) {
+      const effDate = getOrderEffectiveDateStr(order);
+      if (!effDate || effDate < monthStart || effDate > monthEnd) continue;
+      const items = Array.isArray(order.items) ? order.items : [];
+      for (const item of items) {
+        if (!item) continue;
+        const pid = (item.productId || item._id || '').toString();
+        const pInfo = prodMap.get(pid);
+        if (!pInfo || !pInfo.chefId) continue;
+        const qty = Number(item.quantity) || 0;
+        const itemRev = (Number(item.price) || 0) * qty;
+        const cKey = `${shopKey}:${pInfo.chefId}`;
+        const targetMap = chefProductMetrics[cKey];
+        if (targetMap && targetMap.has(pid)) {
+          const rec = targetMap.get(pid);
+          rec.soldQty += qty;
+          rec.totalSales += itemRev;
+        }
+      }
+    }
+  };
+
+  processOrders('shop1', ords1, prodMap1);
+  processOrders('shop2', ords2, prodMap2);
+  return chefProductMetrics;
+};
+
+const summarizeEmployeeProduction = (emp, chefProductMetrics) => {
+  const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  let productionTotalQty = 0;
+  let productionTotalSales = 0;
+  let productionGrossPay = 0;
+  const productBreakdown = [];
+
+  if (emp.payType === 'production') {
+    const seenProds = new Set();
+    const links = Array.isArray(emp.linkedChefs) ? emp.linkedChefs : [];
+    for (const link of links) {
+      if (!link || !link.chefId) continue;
+      const shopKey = link.shop === 'shop2' ? 'shop2' : 'shop1';
+      const cKey = `${shopKey}:${String(link.chefId)}`;
+      const metricMap = chefProductMetrics[cKey];
+      if (!metricMap) continue;
+      for (const rec of metricMap.values()) {
+        const uniqueKey = `${rec.shop}:${rec.productId}`;
+        if (seenProds.has(uniqueKey)) continue;
+        seenProds.add(uniqueKey);
+        const qtyRounded = r2(rec.soldQty);
+        const salesRounded = r2(rec.totalSales);
+        const unitRate = Math.max(0, Number(rec.chefCoefficient) || 0);
+        const earningsRounded = r2(qtyRounded * unitRate);
+        productionTotalQty += qtyRounded;
+        productionTotalSales += salesRounded;
+        productionGrossPay += earningsRounded;
+        productBreakdown.push({
+          ...rec,
+          soldQty: qtyRounded,
+          totalSales: salesRounded,
+          chefEarnings: earningsRounded
+        });
+      }
+    }
+    productBreakdown.sort((a, b) => b.soldQty - a.soldQty || b.totalSales - a.totalSales || a.productName.localeCompare(b.productName, 'ar'));
+  }
+
+  return {
+    productionTotalQty: r2(productionTotalQty),
+    productionTotalSales: r2(productionTotalSales),
+    productionGrossPay: r2(productionGrossPay),
+    productBreakdown
+  };
+};
+
+// 4. Monthly Employee & Payroll Summary (Admin sees full financial payroll; Cashier sees branch list + unsettled adjustments only)
 app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const rawMonth = typeof req.query.month === 'string' ? req.query.month.trim() : '';
@@ -6526,25 +6650,64 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
       employeeTransactionsCollection.find({ ...txScopeFilter, monthKey }).sort({ date: -1, createdAt: -1 }).toArray()
     ]);
 
-    // Aggregate monthly bonuses / borrowings / penalties by employeeId
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+    // Aggregate unsettled monthly bonuses / borrowings / penalties and settled payout totals by employeeId
     const txByEmp = {};
     for (const tx of monthTxs) {
       const eid = String(tx.employeeId);
       if (!txByEmp[eid]) {
-        txByEmp[eid] = { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, txCount: 0 };
+        txByEmp[eid] = {
+          bonusesTotal: 0,
+          borrowingsTotal: 0,
+          penaltiesTotal: 0,
+          nonPayoutTxCount: 0,
+          totalTxCount: 0,
+          unsettledItems: [],
+          payoutCount: 0,
+          paidTotalThisMonth: 0,
+          settledGrossTotal: 0,
+          hasBaseSalarySettled: false,
+          latestPayout: null
+        };
       }
+      const bucket = txByEmp[eid];
       const amt = Number(tx.amount) || 0;
-      if (tx.type === 'bonus') txByEmp[eid].bonusesTotal += amt;
-      else if (tx.type === 'borrowing') txByEmp[eid].borrowingsTotal += amt;
-      else if (tx.type === 'penalty') txByEmp[eid].penaltiesTotal += amt;
-      txByEmp[eid].txCount += 1;
+      bucket.totalTxCount += 1;
+
+      if (tx.type === 'payout') {
+        bucket.payoutCount += 1;
+        bucket.paidTotalThisMonth += amt;
+        bucket.settledGrossTotal += Number(tx.payoutDetails?.grossPaySettled) || 0;
+        if (tx.payoutDetails?.settledBaseSalary) bucket.hasBaseSalarySettled = true;
+        if (!bucket.latestPayout) bucket.latestPayout = tx;
+      } else {
+        bucket.nonPayoutTxCount += 1;
+        if (!tx.settledByPayoutId) {
+          if (tx.type === 'bonus') bucket.bonusesTotal += amt;
+          else if (tx.type === 'borrowing') bucket.borrowingsTotal += amt;
+          else if (tx.type === 'penalty') bucket.penaltiesTotal += amt;
+          bucket.unsettledItems.push({
+            _id: tx._id,
+            txNumber: tx.txNumber,
+            type: tx.type,
+            amount: round2(amt),
+            reason: tx.reason || '',
+            date: tx.date || ''
+          });
+        }
+      }
     }
 
-    // For Cashiers: strip all sensitive salary / production earnings / coefficient details
+    for (const eid of Object.keys(txByEmp)) {
+      txByEmp[eid].unsettledItems.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (Number(a.txNumber) || 0) - (Number(b.txNumber) || 0));
+    }
+
+    // For Cashiers: strip all sensitive salary / production earnings / payout details
     if (!isAdmin) {
       const safeEmployees = employees.map(e => {
         const eid = String(e._id);
-        const agg = txByEmp[eid] || { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, txCount: 0 };
+        const agg = txByEmp[eid] || { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, nonPayoutTxCount: 0 };
         return {
           _id: e._id,
           name: e.name,
@@ -6557,10 +6720,10 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
           startDate: e.startDate || '',
           healthCertExpiry: e.healthCertExpiry || '',
           notes: e.notes || '',
-          bonusesTotal: Math.round(agg.bonusesTotal * 100) / 100,
-          borrowingsTotal: Math.round(agg.borrowingsTotal * 100) / 100,
-          penaltiesTotal: Math.round(agg.penaltiesTotal * 100) / 100,
-          txCount: agg.txCount
+          bonusesTotal: round2(agg.bonusesTotal),
+          borrowingsTotal: round2(agg.borrowingsTotal),
+          penaltiesTotal: round2(agg.penaltiesTotal),
+          txCount: agg.nonPayoutTxCount
         };
       });
       return res.json({ success: true, monthKey, isAdmin: false, employees: safeEmployees });
@@ -6568,150 +6731,61 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
 
     // Admin payroll calculation: aggregate monthly production sales per chef per product
     const hasProductionStaff = employees.some(e => e.payType === 'production');
-    const chefProductMetrics = {}; // key "shop:chefId" -> Map(productId -> { shop, productId, productName, category, soldQty, totalSales, chefCoefficient, chefEarnings })
+    const chefProductMetrics = hasProductionStaff ? await computeChefProductMetricsForMonth(monthKey) : {};
 
-    if (hasProductionStaff) {
-      const monthStart = `${monthKey}-01`;
-      const monthEnd = `${monthKey}-31`;
-      const [prods1, prods2, ords1, ords2] = await Promise.all([
-        productsCollection.find().toArray(),
-        productsCollection2.find().toArray(),
-        ordersCollection.find({ status: { $ne: "cancelled" } }).toArray(),
-        ordersCollection2.find({ status: { $ne: "cancelled" } }).toArray()
-      ]);
-
-      const initShopCatalog = (shopKey, prodsList) => {
-        const prodMap = new Map();
-        for (const p of prodsList) {
-          const pid = String(p._id);
-          const coeff = Number(p.chefCoefficient) || 0;
-          const chefIdStr = p.chefId ? String(p.chefId) : '';
-          prodMap.set(pid, {
-            productId: pid,
-            name: p.name || '',
-            category: p.category || '',
-            chefId: chefIdStr,
-            chefName: p.chefName || '',
-            chefCoefficient: coeff
-          });
-          if (chefIdStr) {
-            const cKey = `${shopKey}:${chefIdStr}`;
-            if (!chefProductMetrics[cKey]) chefProductMetrics[cKey] = new Map();
-            chefProductMetrics[cKey].set(pid, {
-              shop: shopKey,
-              productId: pid,
-              productName: p.name || '',
-              category: p.category || '',
-              chefId: chefIdStr,
-              chefName: p.chefName || '',
-              soldQty: 0,
-              totalSales: 0,
-              chefCoefficient: coeff,
-              chefEarnings: 0
-            });
-          }
-        }
-        return prodMap;
-      };
-
-      const prodMap1 = initShopCatalog('shop1', prods1);
-      const prodMap2 = initShopCatalog('shop2', prods2);
-
-      const processOrders = (shopKey, ordList, prodMap) => {
-        for (const order of ordList) {
-          const effDate = getOrderEffectiveDateStr(order);
-          if (!effDate || effDate < monthStart || effDate > monthEnd) continue;
-          const items = Array.isArray(order.items) ? order.items : [];
-          for (const item of items) {
-            if (!item) continue;
-            const pid = (item.productId || item._id || '').toString();
-            const pInfo = prodMap.get(pid);
-            if (!pInfo || !pInfo.chefId) continue;
-            const qty = Number(item.quantity) || 0;
-            const itemRev = (Number(item.price) || 0) * qty;
-            const cKey = `${shopKey}:${pInfo.chefId}`;
-            const targetMap = chefProductMetrics[cKey];
-            if (targetMap && targetMap.has(pid)) {
-              const rec = targetMap.get(pid);
-              rec.soldQty += qty;
-              rec.totalSales += itemRev;
-            }
-          }
-        }
-      };
-
-      processOrders('shop1', ords1, prodMap1);
-      processOrders('shop2', ords2, prodMap2);
-    }
-
-    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
     let totalFixedSalaries = 0;
     let totalProductionPay = 0;
     let totalBonuses = 0;
     let totalBorrowings = 0;
     let totalPenalties = 0;
     let totalNetPay = 0;
+    let totalPaidOut = 0;
     let activeCount = 0;
 
     const fullEmployees = employees.map(e => {
       const eid = String(e._id);
-      const agg = txByEmp[eid] || { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, txCount: 0 };
+      const agg = txByEmp[eid] || {
+        bonusesTotal: 0,
+        borrowingsTotal: 0,
+        penaltiesTotal: 0,
+        totalTxCount: 0,
+        unsettledItems: [],
+        payoutCount: 0,
+        paidTotalThisMonth: 0,
+        settledGrossTotal: 0,
+        hasBaseSalarySettled: false,
+        latestPayout: null
+      };
       const bonusesTotal = round2(agg.bonusesTotal);
       const borrowingsTotal = round2(agg.borrowingsTotal);
       const penaltiesTotal = round2(agg.penaltiesTotal);
       const isProduction = e.payType === 'production';
 
-      let baseSalary = isProduction ? null : round2(e.salary);
-      let productionTotalQty = 0;
-      let productionTotalSales = 0;
-      let productionGrossPay = 0;
-      const productBreakdown = [];
+      // Preserve configured permanent salary on fixed staff so Modal 1 editing never zeros it out
+      const configuredBaseSalary = isProduction ? null : round2(e.salary);
+      const prod = isProduction
+        ? summarizeEmployeeProduction(e, chefProductMetrics)
+        : { productionTotalQty: 0, productionTotalSales: 0, productionGrossPay: 0, productBreakdown: [] };
 
-      if (isProduction) {
-        const seenProds = new Set();
-        const links = Array.isArray(e.linkedChefs) ? e.linkedChefs : [];
-        for (const link of links) {
-          if (!link || !link.chefId) continue;
-          const shopKey = link.shop === 'shop2' ? 'shop2' : 'shop1';
-          const cKey = `${shopKey}:${String(link.chefId)}`;
-          const metricMap = chefProductMetrics[cKey];
-          if (!metricMap) continue;
-          for (const rec of metricMap.values()) {
-            const uniqueKey = `${rec.shop}:${rec.productId}`;
-            if (seenProds.has(uniqueKey)) continue;
-            seenProds.add(uniqueKey);
-            const qtyRounded = round2(rec.soldQty);
-            const salesRounded = round2(rec.totalSales);
-            const unitRate = Math.max(0, Number(rec.chefCoefficient) || 0);
-            const earningsRounded = round2(qtyRounded * unitRate);
-            productionTotalQty += qtyRounded;
-            productionTotalSales += salesRounded;
-            productionGrossPay += earningsRounded;
-            productBreakdown.push({
-              ...rec,
-              soldQty: qtyRounded,
-              totalSales: salesRounded,
-              chefEarnings: earningsRounded
-            });
-          }
-        }
-        productBreakdown.sort((a, b) => b.soldQty - a.soldQty || b.totalSales - a.totalSales || a.productName.localeCompare(b.productName, 'ar'));
-        productionTotalQty = round2(productionTotalQty);
-        productionTotalSales = round2(productionTotalSales);
-        productionGrossPay = round2(productionGrossPay);
-      }
-
-      const grossPay = isProduction ? productionGrossPay : (baseSalary || 0);
-      const netPay = round2(grossPay + bonusesTotal - borrowingsTotal - penaltiesTotal);
+      const rawProductionGrossPay = prod.productionGrossPay;
+      const unpaidProductionPay = isProduction
+        ? Math.max(0, round2(rawProductionGrossPay - agg.settledGrossTotal))
+        : 0;
+      const effectiveBaseSalary = isProduction ? 0 : (agg.hasBaseSalarySettled ? 0 : (configuredBaseSalary || 0));
+      const effectiveGrossPay = isProduction ? unpaidProductionPay : effectiveBaseSalary;
+      const netPay = round2(effectiveGrossPay + bonusesTotal - borrowingsTotal - penaltiesTotal);
+      const paidTotalThisMonth = round2(agg.paidTotalThisMonth);
+      const isMonthSettled = agg.payoutCount > 0 && effectiveGrossPay === 0 && agg.unsettledItems.length === 0;
 
       if (e.active !== false) {
         activeCount += 1;
-        if (isProduction) totalProductionPay += productionGrossPay;
-        else totalFixedSalaries += (baseSalary || 0);
+        if (isProduction) totalProductionPay += unpaidProductionPay;
+        else totalFixedSalaries += effectiveBaseSalary;
         totalBonuses += bonusesTotal;
         totalBorrowings += borrowingsTotal;
         totalPenalties += penaltiesTotal;
         totalNetPay += netPay;
+        totalPaidOut += paidTotalThisMonth;
       }
 
       return {
@@ -6722,21 +6796,29 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
         jobId: e.jobId,
         jobName: e.jobName || '',
         payType: e.payType || 'fixed',
-        salary: baseSalary,
+        salary: configuredBaseSalary,
+        effectiveGrossPay,
+        rawProductionGrossPay,
         linkedChefs: isProduction ? (e.linkedChefs || []) : [],
         active: e.active !== false,
         startDate: e.startDate || '',
         healthCertExpiry: e.healthCertExpiry || '',
         notes: e.notes || '',
-        productionTotalQty,
-        productionTotalSales,
-        productionGrossPay,
-        productBreakdown,
+        productionTotalQty: prod.productionTotalQty,
+        productionTotalSales: prod.productionTotalSales,
+        productionGrossPay: unpaidProductionPay,
+        productBreakdown: prod.productBreakdown,
         bonusesTotal,
         borrowingsTotal,
         penaltiesTotal,
         deductionsTotal: round2(borrowingsTotal + penaltiesTotal),
-        txCount: agg.txCount,
+        unsettledItems: agg.unsettledItems,
+        paidTotalThisMonth,
+        payoutCountThisMonth: agg.payoutCount,
+        hasBaseSalarySettled: agg.hasBaseSalarySettled,
+        isMonthSettled,
+        latestPayout: agg.latestPayout || null,
+        txCount: agg.totalTxCount,
         netPay
       };
     });
@@ -6755,6 +6837,7 @@ app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, re
         totalBorrowings: round2(totalBorrowings),
         totalPenalties: round2(totalPenalties),
         totalDeductions: round2(totalBorrowings + totalPenalties),
+        totalPaidOut: round2(totalPaidOut),
         totalNetPay: round2(totalNetPay)
       }
     });
@@ -6922,7 +7005,152 @@ app.delete("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res
   }
 });
 
-// 6. Employee Transactions (Bonuses, Borrowings & Penalties with mandatory Reason & Receipt Re-access)
+// 5b. Settle & Pay Employee Monthly Dues (Admin Only) — Resets month due to 0 and records payout invoice
+app.post("/api/admin/employees/:id/payout", checkMongoDB, checkAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "معرف الموظف غير صالح" });
+    }
+    const emp = await employeesCollection.findOne({ _id: new ObjectId(id) });
+    if (!emp) {
+      return res.status(404).json({ error: "الموظف غير موجود" });
+    }
+    if (!isEmployeeInUserScope(emp, req)) {
+      return res.status(403).json({ error: "ليس لديك صلاحية لصرف مستحقات موظف في فرع آخر" });
+    }
+
+    const { monthKey: rawMonth, date: rawDate, note } = req.body || {};
+    const defaultMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
+    const monthKey = (typeof rawMonth === 'string' && /^\d{4}-\d{2}$/.test(rawMonth.trim()))
+      ? rawMonth.trim()
+      : defaultMonth;
+
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const cleanDate = (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawDate.trim()))
+      ? rawDate.trim()
+      : todayStr;
+    const cleanNote = typeof note === 'string' ? note.trim().slice(0, 600) : '';
+
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+    const monthTxs = await employeeTransactionsCollection
+      .find({ employeeId: emp._id, monthKey })
+      .sort({ date: 1, createdAt: 1, txNumber: 1 })
+      .toArray();
+
+    const unsettledAdjustments = monthTxs.filter(
+      tx => ['bonus', 'borrowing', 'penalty'].includes(tx.type) && !tx.settledByPayoutId
+    );
+    const priorPayouts = monthTxs.filter(tx => tx.type === 'payout');
+
+    let bonusesTotal = 0;
+    let borrowingsTotal = 0;
+    let penaltiesTotal = 0;
+    const settledTransactions = [];
+
+    for (const t of unsettledAdjustments) {
+      const amt = round2(t.amount);
+      if (t.type === 'bonus') bonusesTotal += amt;
+      else if (t.type === 'borrowing') borrowingsTotal += amt;
+      else if (t.type === 'penalty') penaltiesTotal += amt;
+      settledTransactions.push({
+        _id: t._id,
+        txNumber: t.txNumber,
+        date: t.date || '',
+        type: t.type,
+        amount: amt,
+        reason: t.reason || ''
+      });
+    }
+    bonusesTotal = round2(bonusesTotal);
+    borrowingsTotal = round2(borrowingsTotal);
+    penaltiesTotal = round2(penaltiesTotal);
+
+    const alreadySettledBase = priorPayouts.some(p => Boolean(p.payoutDetails?.settledBaseSalary));
+    const alreadySettledProdGross = round2(
+      priorPayouts.reduce((s, p) => s + (Number(p.payoutDetails?.grossPaySettled) || 0), 0)
+    );
+
+    const isProduction = emp.payType === 'production';
+    let grossPayToSettle = 0;
+    let productionTotalQty = 0;
+    const configuredBaseSalary = isProduction ? 0 : round2(emp.salary);
+
+    if (isProduction) {
+      const chefMetrics = await computeChefProductMetricsForMonth(monthKey);
+      const prodSummary = summarizeEmployeeProduction(emp, chefMetrics);
+      grossPayToSettle = Math.max(0, round2(prodSummary.productionGrossPay - alreadySettledProdGross));
+      productionTotalQty = prodSummary.productionTotalQty;
+    } else {
+      grossPayToSettle = alreadySettledBase ? 0 : round2(emp.salary);
+    }
+
+    if (grossPayToSettle <= 0 && unsettledAdjustments.length === 0) {
+      return res.status(400).json({ error: "تم صرف وتصفية مستحقات هذا الموظف لهذا الشهر مسبقاً ولا توجد مبالغ جديدة" });
+    }
+
+    const deductionsTotal = round2(borrowingsTotal + penaltiesTotal);
+    const totalPayReceived = round2(grossPayToSettle + bonusesTotal - deductionsTotal);
+    if (totalPayReceived < 0) {
+      return res.status(400).json({ error: "إجمالي السلف والخصومات يتجاوز المستحق؛ يرجى مراجعة الحساب قبل الصرف" });
+    }
+
+    const txNumber = await getNextEmpTxNumber();
+    const now = new Date();
+    const settledBaseSalaryFlag = !isProduction && !alreadySettledBase;
+
+    const payoutDoc = {
+      txNumber,
+      employeeId: emp._id,
+      jobId: emp.jobId || null,
+      employeeName: emp.name,
+      employeePhone: emp.phone || '',
+      employeeJobName: emp.jobName || '',
+      branch: emp.branch || 'shop1',
+      type: 'payout',
+      amount: totalPayReceived,
+      reason: cleanNote || `تصفية وصرف مستحقات شهر ${monthKey}`,
+      date: cleanDate,
+      monthKey,
+      payoutDetails: {
+        payType: emp.payType || 'fixed',
+        configuredBaseSalary,
+        settledBaseSalary: settledBaseSalaryFlag,
+        grossPaySettled: grossPayToSettle,
+        productionTotalQty,
+        bonusesTotal,
+        borrowingsTotal,
+        penaltiesTotal,
+        deductionsTotal,
+        totalPayReceived,
+        settledTxIds: unsettledAdjustments.map(t => t._id),
+        settledTransactions
+      },
+      recordedBy: {
+        username: req.staffUser?.username || 'admin',
+        name: req.staffUser?.name || req.staffUser?.username || 'المدير العام',
+        role: 'admin'
+      },
+      createdAt: now
+    };
+
+    const insertRes = await employeeTransactionsCollection.insertOne(payoutDoc);
+    if (unsettledAdjustments.length > 0) {
+      await employeeTransactionsCollection.updateMany(
+        { _id: { $in: unsettledAdjustments.map(t => t._id) } },
+        { $set: { settledByPayoutId: insertRes.insertedId, settledAt: now } }
+      );
+    }
+
+    res.status(201).json({ success: true, payout: { _id: insertRes.insertedId, ...payoutDoc } });
+  } catch (err) {
+    console.error("Employee monthly payout error:", err);
+    res.status(500).json({ error: "فشل في اعتماد وصرف مستحقات الموظف" });
+  }
+});
+
+// 6. Employee Transactions (Bonuses, Borrowings, Penalties & Admin Payouts with Receipt Re-access)
 app.get("/api/admin/employees/transactions", checkMongoDB, checkStaff, async (req, res) => {
   try {
     const { month, employeeId, type, branch, q } = req.query;
@@ -6932,11 +7160,18 @@ app.get("/api/admin/employees/transactions", checkMongoDB, checkStaff, async (re
     if (month && month !== 'all' && /^\d{4}-\d{2}$/.test(month)) {
       query.monthKey = month;
     }
+    const isAdmin = req.staffUser?.role === 'admin';
     if (employeeId && ObjectId.isValid(employeeId)) {
       query.employeeId = new ObjectId(employeeId);
     }
-    if (type && ['bonus', 'borrowing', 'penalty'].includes(type)) {
-      query.type = type;
+    if (isAdmin) {
+      if (type && ['bonus', 'borrowing', 'penalty', 'payout'].includes(type)) {
+        query.type = type;
+      }
+    } else {
+      query.type = (type && ['bonus', 'borrowing', 'penalty'].includes(type))
+        ? type
+        : { $in: ['bonus', 'borrowing', 'penalty'] };
     }
 
     let list = await employeeTransactionsCollection.find(query).sort({ date: -1, createdAt: -1 }).toArray();
@@ -7027,9 +7262,16 @@ app.delete("/api/admin/employees/transactions/:id", checkMongoDB, checkAdmin, as
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ error: "معرف العملية غير صالح" });
     }
-    const del = await employeeTransactionsCollection.deleteOne({ _id: new ObjectId(id) });
-    if (del.deletedCount === 0) {
+    const existingTx = await employeeTransactionsCollection.findOne({ _id: new ObjectId(id) });
+    if (!existingTx) {
       return res.status(404).json({ error: "العملية غير موجودة" });
+    }
+    await employeeTransactionsCollection.deleteOne({ _id: existingTx._id });
+    if (existingTx.type === 'payout') {
+      await employeeTransactionsCollection.updateMany(
+        { settledByPayoutId: existingTx._id },
+        { $unset: { settledByPayoutId: "", settledAt: "" } }
+      );
     }
     res.json({ success: true });
   } catch (err) {

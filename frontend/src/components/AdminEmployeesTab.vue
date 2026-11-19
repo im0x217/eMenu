@@ -216,6 +216,9 @@
           <div class="emp-kpi-info">
             <span class="emp-kpi-label">صافي مسير الشهر المستحق</span>
             <span class="emp-kpi-val text-mono">{{ formatCurrency(kpis.totalNetPay) }}</span>
+            <small v-if="kpis.totalPaidOut > 0" class="text-small text-success font-bold">
+              تم صرف: <span class="text-mono">{{ formatCurrency(kpis.totalPaidOut) }}</span>
+            </small>
           </div>
           <div class="emp-kpi-icon icon-emerald" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -332,7 +335,7 @@
 
                 <td v-if="isAdmin">
                   <div v-if="emp.payType === 'production'" class="d-flex flex-column gap-1 align-items-start">
-                    <span class="text-mono font-bold text-primary">{{ formatCurrency(emp.productionGrossPay || 0) }}</span>
+                    <span class="text-mono font-bold text-primary">{{ formatCurrency(emp.effectiveGrossPay ?? emp.productionGrossPay ?? 0) }}</span>
                     <button
                       type="button"
                       class="btn-coeff-chip"
@@ -343,8 +346,11 @@
                       <span>معاملات ({{ (emp.productBreakdown || []).length }})</span>
                     </button>
                   </div>
-                  <div v-else class="text-mono font-bold">
-                    {{ formatCurrency(emp.salary || 0) }}
+                  <div v-else class="d-flex flex-column gap-1 align-items-start">
+                    <span class="text-mono font-bold">{{ formatCurrency(emp.effectiveGrossPay ?? emp.salary ?? 0) }}</span>
+                    <span v-if="emp.hasBaseSalarySettled" class="text-small text-success font-bold">
+                      تم صرف الأساسي ({{ formatNum(emp.salary) }})
+                    </span>
                   </div>
                 </td>
 
@@ -361,16 +367,45 @@
                 </td>
 
                 <td v-if="isAdmin">
-                  <span
-                    class="net-pay-pill text-mono font-bold"
-                    :class="emp.netPay < 0 ? 'is-negative' : 'is-positive'"
-                  >
-                    {{ formatCurrency(emp.netPay || 0) }}
-                  </span>
+                  <div class="d-flex flex-column gap-1 align-items-start">
+                    <span
+                      class="net-pay-pill text-mono font-bold"
+                      :class="emp.netPay < 0 ? 'is-negative' : 'is-positive'"
+                    >
+                      {{ formatCurrency(emp.netPay || 0) }}
+                    </span>
+                    <span v-if="emp.paidTotalThisMonth > 0" class="emp-paid-chip text-mono">
+                      تم الصرف: {{ formatCurrency(emp.paidTotalThisMonth) }}
+                    </span>
+                  </div>
                 </td>
 
                 <td>
                   <div class="order-actions-btns flex-wrap">
+                    <button
+                      v-if="canSettleEmployee(emp)"
+                      type="button"
+                      class="btn-table-action emp-action-pay"
+                      @click="openPayoutModal(emp)"
+                      title="صرف مستحق الشهر وتصفير الحساب وطباعة فاتورة"
+                      :aria-label="`صرف مستحق الموظف ${emp.name}`"
+                    >
+                      <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                      <span>صرف المستحق</span>
+                    </button>
+
+                    <button
+                      v-else-if="isAdmin && emp.latestPayout"
+                      type="button"
+                      class="btn-table-action emp-action-pay-done"
+                      @click="printTransactionReceipt(emp.latestPayout)"
+                      title="إعادة طباعة فاتورة الصرف الشهرية"
+                      :aria-label="`طباعة فاتورة صرف ${emp.name}`"
+                    >
+                      <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                      <span>فاتورة الصرف</span>
+                    </button>
+
                     <button
                       type="button"
                       class="btn-table-action emp-action-tx"
@@ -498,7 +533,7 @@
             <div class="mob-emp-metrics">
               <div v-if="isAdmin" class="mob-metric">
                 <span class="lbl">{{ emp.payType === 'production' ? 'مستحق الإنتاج' : 'الراتب الأساسي' }}</span>
-                <span class="val text-mono font-bold">{{ formatCurrency(emp.payType === 'production' ? (emp.productionGrossPay || 0) : (emp.salary || 0)) }}</span>
+                <span class="val text-mono font-bold">{{ formatCurrency(emp.effectiveGrossPay ?? (emp.payType === 'production' ? emp.productionGrossPay : emp.salary) ?? 0) }}</span>
               </div>
               <div class="mob-metric">
                 <span class="lbl">المكافآت</span>
@@ -510,11 +545,32 @@
               </div>
               <div v-if="isAdmin" class="mob-metric net">
                 <span class="lbl">صافي المستحق</span>
-                <span class="val text-mono font-bold text-primary">{{ formatCurrency(emp.netPay || 0) }}</span>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                  <span class="val text-mono font-bold text-primary">{{ formatCurrency(emp.netPay || 0) }}</span>
+                  <span v-if="emp.paidTotalThisMonth > 0" class="emp-paid-chip text-mono">
+                    تم الصرف: {{ formatCurrency(emp.paidTotalThisMonth) }}
+                  </span>
+                </div>
               </div>
             </div>
 
             <div class="mob-emp-actions">
+              <button
+                v-if="canSettleEmployee(emp)"
+                type="button"
+                class="btn-table-action emp-action-pay"
+                @click="openPayoutModal(emp)"
+              >
+                <span>صرف المستحق</span>
+              </button>
+              <button
+                v-else-if="isAdmin && emp.latestPayout"
+                type="button"
+                class="btn-table-action emp-action-pay-done"
+                @click="printTransactionReceipt(emp.latestPayout)"
+              >
+                <span>فاتورة الصرف</span>
+              </button>
               <button type="button" class="btn-table-action emp-action-tx" @click="openTransactionModal(emp, 'bonus')">
                 <span>+ مكافأة / سلفة / خصم</span>
               </button>
@@ -558,6 +614,7 @@
                 <button type="button" class="emp-filter-pill" :class="{ active: txTypeFilter === 'bonus' }" @click="txTypeFilter = 'bonus'">مكافأة</button>
                 <button type="button" class="emp-filter-pill" :class="{ active: txTypeFilter === 'borrowing' }" @click="txTypeFilter = 'borrowing'">سلفة</button>
                 <button type="button" class="emp-filter-pill" :class="{ active: txTypeFilter === 'penalty' }" @click="txTypeFilter = 'penalty'">خصم</button>
+                <button v-if="isAdmin" type="button" class="emp-filter-pill" :class="{ active: txTypeFilter === 'payout' }" @click="txTypeFilter = 'payout'">فواتير الصرف</button>
               </div>
             </div>
           </div>
@@ -585,7 +642,9 @@
                 <td colspan="8" class="text-center p-4 text-muted">لا توجد عمليات مسجلة في هذا النطاق.</td>
               </tr>
               <tr v-else v-for="tx in filteredTransactions" :key="tx._id">
-                <td class="text-mono font-bold">#EMP-{{ tx.txNumber || String(tx._id).slice(-5) }}</td>
+                <td class="text-mono font-bold">
+                  #{{ tx.type === 'payout' ? 'PAY' : 'EMP' }}-{{ tx.txNumber || String(tx._id).slice(-5) }}
+                </td>
                 <td class="text-mono text-small">{{ formatArabicDate(tx.date) }}</td>
                 <td>
                   <div class="d-flex flex-column">
@@ -594,10 +653,16 @@
                   </div>
                 </td>
                 <td>
-                  <span class="tx-type-badge" :class="'tx-' + tx.type">{{ txTypeLabel(tx.type) }}</span>
+                  <div class="d-flex align-items-center gap-1 flex-wrap">
+                    <span class="tx-type-badge" :class="'tx-' + tx.type">{{ txTypeLabel(tx.type) }}</span>
+                    <span v-if="tx.settledByPayoutId" class="tx-settled-tag">مسوّى</span>
+                  </div>
                 </td>
-                <td class="text-mono font-bold" :class="tx.type === 'bonus' ? 'text-success' : 'text-danger'">
-                  {{ tx.type === 'bonus' ? '+' : '−' }}{{ formatCurrency(tx.amount) }}
+                <td
+                  class="text-mono font-bold"
+                  :class="tx.type === 'payout' ? 'text-primary' : (tx.type === 'bonus' ? 'text-success' : 'text-danger')"
+                >
+                  {{ tx.type === 'payout' ? '' : (tx.type === 'bonus' ? '+' : '−') }}{{ formatCurrency(tx.amount) }}
                 </td>
                 <td class="tx-reason-cell">{{ tx.reason }}</td>
                 <td>
@@ -609,11 +674,11 @@
                       type="button"
                       class="btn-table-action btn-action-edit"
                       @click="printTransactionReceipt(tx)"
-                      title="طباعة أو إعادة طباعة الإيصال"
-                      :aria-label="`طباعة إيصال #EMP-${tx.txNumber || ''}`"
+                      :title="tx.type === 'payout' ? 'طباعة فاتورة الصرف' : 'طباعة أو إعادة طباعة الإيصال'"
+                      :aria-label="`طباعة ${tx.type === 'payout' ? 'فاتورة #PAY-' : 'إيصال #EMP-'}${tx.txNumber || ''}`"
                     >
                       <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                      <span>طباعة الإيصال</span>
+                      <span>{{ tx.type === 'payout' ? 'طباعة الفاتورة' : 'طباعة الإيصال' }}</span>
                     </button>
                     <button
                       v-if="isAdmin"
@@ -621,7 +686,7 @@
                       class="btn-table-action btn-action-delete"
                       @click="deleteTransaction(tx)"
                       title="حذف السجل"
-                      :aria-label="`حذف الإيصال #EMP-${tx.txNumber || ''}`"
+                      :aria-label="`حذف السجل #${tx.type === 'payout' ? 'PAY' : 'EMP'}-${tx.txNumber || ''}`"
                     >
                       <span>حذف</span>
                     </button>
@@ -639,15 +704,19 @@
           <div v-else v-for="tx in filteredTransactions" :key="'mob-tx-' + tx._id" class="mobile-emp-card glass-panel">
             <div class="mob-emp-header">
               <div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="text-mono font-bold">#EMP-{{ tx.txNumber || String(tx._id).slice(-5) }}</span>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="text-mono font-bold">#{{ tx.type === 'payout' ? 'PAY' : 'EMP' }}-{{ tx.txNumber || String(tx._id).slice(-5) }}</span>
                   <span class="tx-type-badge" :class="'tx-' + tx.type">{{ txTypeLabel(tx.type) }}</span>
+                  <span v-if="tx.settledByPayoutId" class="tx-settled-tag">مسوّى</span>
                 </div>
                 <div class="font-bold mt-1">{{ tx.employeeName }}</div>
                 <div class="text-small text-muted">{{ formatArabicDate(tx.date) }} • {{ branchLabel(tx.branch) }}</div>
               </div>
-              <div class="text-mono font-bold" :class="tx.type === 'bonus' ? 'text-success' : 'text-danger'">
-                {{ tx.type === 'bonus' ? '+' : '−' }}{{ formatCurrency(tx.amount) }}
+              <div
+                class="text-mono font-bold"
+                :class="tx.type === 'payout' ? 'text-primary' : (tx.type === 'bonus' ? 'text-success' : 'text-danger')"
+              >
+                {{ tx.type === 'payout' ? '' : (tx.type === 'bonus' ? '+' : '−') }}{{ formatCurrency(tx.amount) }}
               </div>
             </div>
             <div class="tx-reason-box">
@@ -658,7 +727,7 @@
               <span class="text-small text-muted">بواسطة: {{ tx.recordedBy?.name || 'إدارة' }}</span>
               <div class="d-flex gap-2">
                 <button type="button" class="btn-table-action btn-action-edit" @click="printTransactionReceipt(tx)">
-                  <span>طباعة الإيصال</span>
+                  <span>{{ tx.type === 'payout' ? 'طباعة الفاتورة' : 'طباعة الإيصال' }}</span>
                 </button>
                 <button v-if="isAdmin" type="button" class="btn-table-action btn-action-delete" @click="deleteTransaction(tx)">
                   <span>حذف</span>
@@ -1231,17 +1300,25 @@
               </thead>
               <tbody>
                 <tr v-for="tx in ledgerTxs" :key="'led-' + tx._id">
-                  <td class="text-mono font-bold">#EMP-{{ tx.txNumber || String(tx._id).slice(-5) }}</td>
+                  <td class="text-mono font-bold">#{{ tx.type === 'payout' ? 'PAY' : 'EMP' }}-{{ tx.txNumber || String(tx._id).slice(-5) }}</td>
                   <td class="text-mono text-small">{{ formatArabicDate(tx.date) }}</td>
-                  <td><span class="tx-type-badge" :class="'tx-' + tx.type">{{ txTypeLabel(tx.type) }}</span></td>
-                  <td class="text-mono font-bold" :class="tx.type === 'bonus' ? 'text-success' : 'text-danger'">
-                    {{ tx.type === 'bonus' ? '+' : '−' }}{{ formatCurrency(tx.amount) }}
+                  <td>
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                      <span class="tx-type-badge" :class="'tx-' + tx.type">{{ txTypeLabel(tx.type) }}</span>
+                      <span v-if="tx.settledByPayoutId" class="tx-settled-tag">مسوّى</span>
+                    </div>
+                  </td>
+                  <td
+                    class="text-mono font-bold"
+                    :class="tx.type === 'payout' ? 'text-primary' : (tx.type === 'bonus' ? 'text-success' : 'text-danger')"
+                  >
+                    {{ tx.type === 'payout' ? '' : (tx.type === 'bonus' ? '+' : '−') }}{{ formatCurrency(tx.amount) }}
                   </td>
                   <td>{{ tx.reason }}</td>
                   <td class="text-small">{{ tx.recordedBy?.name || 'إدارة' }}</td>
                   <td>
                     <button type="button" class="btn-table-action btn-action-edit" @click="printTransactionReceipt(tx)">
-                      طباعة الإيصال
+                      {{ tx.type === 'payout' ? 'طباعة الفاتورة' : 'طباعة الإيصال' }}
                     </button>
                   </td>
                 </tr>
@@ -1253,11 +1330,148 @@
     </Transition>
 
     <!-- ================================================================== -->
-    <!-- PRINT VIEW 1: A5 EMPLOYEE TRANSACTION RECEIPT (TELEPORTED TO BODY)  -->
+    <!-- MODAL 6: PAY EMPLOYEE & RESET MONTHLY DUES (ADMIN ONLY)            -->
+    <!-- ================================================================== -->
+    <Transition name="modal-spring-fade">
+      <div v-if="payoutModalOpen && payoutEmp && isAdmin" class="modal-overlay" @click.self="closeAllModals">
+        <div
+          ref="payoutModalRef"
+          class="modal-box glass-panel modal-wide"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="emp-payout-modal-title"
+          v-sheet-gesture="closeAllModals"
+        >
+          <div class="sheet-grab-handle" aria-hidden="true"></div>
+          <div class="modal-header">
+            <div class="modal-title-group">
+              <div class="modal-title-icon payout" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <h3 id="emp-payout-modal-title">صرف وتصفية مستحقات: {{ payoutEmp.name }}</h3>
+                <p class="text-small text-muted m-0">
+                  {{ payoutEmp.jobName }} — {{ branchLabel(payoutEmp.branch) }} | شهر التصفية: {{ selectedMonthLabel }}
+                </p>
+              </div>
+            </div>
+            <button type="button" @click="closeAllModals" class="modal-close-btn" aria-label="إغلاق">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <form @submit.prevent="confirmEmployeePayout" class="modal-form">
+            <!-- Summary Breakdown Chips -->
+            <div class="emp-payout-breakdown-grid mb-3">
+              <div class="payout-stat-chip">
+                <span class="lbl">{{ payoutEmp.payType === 'production' ? 'مستحق الإنتاج غير المدفوع' : 'الراتب الأساسي المتبقي' }}</span>
+                <strong class="val text-mono text-primary">{{ formatCurrency(payoutEmp.effectiveGrossPay ?? 0) }}</strong>
+              </div>
+              <div class="payout-stat-chip is-bonus">
+                <span class="lbl">المكافآت (+)</span>
+                <strong class="val text-mono text-success">+{{ formatNum(payoutEmp.bonusesTotal) }}</strong>
+              </div>
+              <div class="payout-stat-chip is-borrowing">
+                <span class="lbl">السلف (−)</span>
+                <strong class="val text-mono text-amber">−{{ formatNum(payoutEmp.borrowingsTotal) }}</strong>
+              </div>
+              <div class="payout-stat-chip is-penalty">
+                <span class="lbl">الخصومات (−)</span>
+                <strong class="val text-mono text-danger">−{{ formatNum(payoutEmp.penaltiesTotal) }}</strong>
+              </div>
+            </div>
+
+            <!-- Itemized Unsettled Bonuses & Deductions -->
+            <div class="mb-3">
+              <div class="font-bold text-small mb-2">
+                تفاصيل المكافآت والخصومات المشمولة في هذه الفاتورة ({{ (payoutEmp.unsettledItems || []).length }}):
+              </div>
+              <div v-if="!payoutEmp.unsettledItems || payoutEmp.unsettledItems.length === 0" class="p-3 text-center text-muted emp-payout-empty-items">
+                لا توجد مكافآت أو سلف أو خصومات غير مسوّاة لهذا الشهر — سيتم صرف الراتب/الإنتاج المستحق فقط.
+              </div>
+              <div v-else class="chef-coeff-table-scroll emp-payout-items-scroll">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>الإيصال</th>
+                      <th>التاريخ</th>
+                      <th>النوع</th>
+                      <th>البيان</th>
+                      <th>المبلغ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in payoutEmp.unsettledItems" :key="'pi-' + item._id">
+                      <td class="text-mono font-bold">#EMP-{{ item.txNumber || String(item._id).slice(-5) }}</td>
+                      <td class="text-mono text-small">{{ formatArabicDate(item.date) }}</td>
+                      <td><span class="tx-type-badge" :class="'tx-' + item.type">{{ txTypeLabel(item.type) }}</span></td>
+                      <td>{{ item.reason }}</td>
+                      <td class="text-mono font-bold" :class="item.type === 'bonus' ? 'text-success' : 'text-danger'">
+                        {{ item.type === 'bonus' ? '+' : '−' }}{{ formatCurrency(item.amount) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Prominent Total Pay to Receive Box -->
+            <div class="emp-payout-total-banner mb-3" :class="{ 'is-negative': payoutEmp.netPay < 0 }">
+              <div class="d-flex flex-column gap-1">
+                <span class="font-extrabold">صافي المبلغ المستلم (الإجمالي الواجب دفعه)</span>
+                <small class="text-small">سيتم تصفير رصيد هذا الشهر إلى 0 د.ل وإغلاق البنود أعلاه فور الاعتماد.</small>
+              </div>
+              <span class="emp-payout-total-val text-mono">{{ formatCurrency(payoutEmp.netPay || 0) }}</span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">تاريخ الصرف *</label>
+                <RtlDatePicker
+                  v-model="payoutForm.date"
+                  placeholder="تاريخ الصرف…"
+                  ariaLabel="تاريخ الصرف"
+                  :theme="activeShop"
+                />
+              </div>
+              <div class="form-group">
+                <label for="payout-note-input" class="form-label">ملاحظة الفاتورة (اختياري)</label>
+                <input
+                  id="payout-note-input"
+                  v-model="payoutForm.note"
+                  type="text"
+                  class="form-control"
+                  :placeholder="`تصفية وصرف مستحقات ${selectedMonthLabel}…`"
+                />
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <input id="payout-autoprint" type="checkbox" v-model="payoutAutoPrint" />
+              <label for="payout-autoprint" class="font-bold m-0" style="cursor: pointer;">طباعة فاتورة الصرف المفصّلة تلقائياً فور الاعتماد</label>
+            </div>
+
+            <div class="modal-footer">
+              <button
+                type="submit"
+                class="btn btn-emerald btn-modal-save"
+                :disabled="saving || (payoutEmp.netPay || 0) < 0"
+              >
+                <span>{{ saving ? 'جاري اعتماد الصرف…' : 'اعتماد الصرف وتصفير مستحق الشهر' }}</span>
+              </button>
+              <button type="button" class="btn btn-outline" @click="closeAllModals">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ================================================================== -->
+    <!-- PRINT VIEW 1: A5 EMPLOYEE TRANSACTION OR PAYOUT INVOICE (BODY)     -->
     <!-- ================================================================== -->
     <Teleport to="body">
       <div v-if="printingTxReceipt && activePrintTx" class="emp-tx-receipt-print-wrapper" dir="rtl">
-        <div class="emp-tx-receipt-page">
+        <div class="emp-tx-receipt-page" :class="{ 'is-payout-invoice': activePrintTx.type === 'payout' }">
           <div class="emp-receipt-header">
             <img :src="activePrintTx.branch === 'shop2' ? '/res/logo2.jpg.jpeg' : '/res/logo.jpg'" alt="Logo" class="emp-receipt-logo" />
             <div>
@@ -1273,11 +1487,11 @@
 
           <div class="emp-receipt-meta-grid">
             <div class="meta-item">
-              <span class="meta-lbl">رقم الإيصال:</span>
-              <span class="meta-val text-mono">#EMP-{{ activePrintTx.txNumber || String(activePrintTx._id).slice(-6) }}</span>
+              <span class="meta-lbl">{{ activePrintTx.type === 'payout' ? 'رقم الفاتورة:' : 'رقم الإيصال:' }}</span>
+              <span class="meta-val text-mono">#{{ activePrintTx.type === 'payout' ? 'PAY' : 'EMP' }}-{{ activePrintTx.txNumber || String(activePrintTx._id).slice(-6) }}</span>
             </div>
             <div class="meta-item">
-              <span class="meta-lbl">تاريخ العملية:</span>
+              <span class="meta-lbl">{{ activePrintTx.type === 'payout' ? 'تاريخ الصرف:' : 'تاريخ العملية:' }}</span>
               <span class="meta-val">{{ formatArabicDate(activePrintTx.date) }}</span>
             </div>
             <div class="meta-item">
@@ -1288,25 +1502,87 @@
               <span class="meta-lbl">الوظيفة / الفرع:</span>
               <span class="meta-val">{{ activePrintTx.employeeJobName || '-' }} — {{ branchLabel(activePrintTx.branch) }}</span>
             </div>
-            <div class="meta-item" v-if="activePrintTx.employeePhone">
+            <div class="meta-item" v-if="activePrintTx.type === 'payout'">
+              <span class="meta-lbl">شهر التسوية:</span>
+              <span class="meta-val text-mono" dir="ltr">{{ activePrintTx.monthKey }}</span>
+            </div>
+            <div class="meta-item" v-else-if="activePrintTx.employeePhone">
               <span class="meta-lbl">رقم الهاتف:</span>
               <span class="meta-val text-mono" dir="ltr">{{ activePrintTx.employeePhone }}</span>
             </div>
             <div class="meta-item">
-              <span class="meta-lbl">المسجل بواسطة:</span>
+              <span class="meta-lbl">{{ activePrintTx.type === 'payout' ? 'معتمد الصرف:' : 'المسجل بواسطة:' }}</span>
               <span class="meta-val">{{ activePrintTx.recordedBy?.name || 'الإدارة' }}</span>
             </div>
           </div>
 
-          <div class="emp-receipt-amount-box" :class="'is-' + activePrintTx.type">
-            <span class="amount-box-label">المبلغ المعتمد ({{ txTypeLabel(activePrintTx.type) }})</span>
-            <span class="amount-box-value text-mono">{{ formatCurrency(activePrintTx.amount) }}</span>
-          </div>
+          <!-- PAYOUT INVOICE BODY (WITH ALL BONUSES, DEDUCTIONS & TOTAL RECEIVED) -->
+          <template v-if="activePrintTx.type === 'payout' && activePrintTx.payoutDetails">
+            <div class="emp-payout-summary-grid">
+              <div class="ps-cell">
+                <span class="ps-lbl">{{ activePrintTx.payoutDetails.payType === 'production' ? 'مستحق الإنتاج' : 'الراتب الأساسي' }}</span>
+                <strong class="ps-val text-mono">{{ formatCurrency(activePrintTx.payoutDetails.grossPaySettled || 0) }}</strong>
+              </div>
+              <div class="ps-cell">
+                <span class="ps-lbl">إجمالي المكافآت (+)</span>
+                <strong class="ps-val text-mono">+{{ formatNum(activePrintTx.payoutDetails.bonusesTotal || 0) }}</strong>
+              </div>
+              <div class="ps-cell">
+                <span class="ps-lbl">إجمالي السلف (−)</span>
+                <strong class="ps-val text-mono">−{{ formatNum(activePrintTx.payoutDetails.borrowingsTotal || 0) }}</strong>
+              </div>
+              <div class="ps-cell">
+                <span class="ps-lbl">إجمالي الخصومات (−)</span>
+                <strong class="ps-val text-mono">−{{ formatNum(activePrintTx.payoutDetails.penaltiesTotal || 0) }}</strong>
+              </div>
+            </div>
 
-          <div class="emp-receipt-reason-card">
-            <div class="reason-card-title">السبب والبيان:</div>
-            <p class="reason-card-text">{{ activePrintTx.reason }}</p>
-          </div>
+            <div class="emp-payout-items-section" v-if="activePrintTx.payoutDetails.settledTransactions && activePrintTx.payoutDetails.settledTransactions.length > 0">
+              <div class="reason-card-title">بيان المكافآت والسلف والخصومات المسوّاة:</div>
+              <table class="emp-payout-items-table">
+                <thead>
+                  <tr>
+                    <th>الإيصال</th>
+                    <th>التاريخ</th>
+                    <th>النوع</th>
+                    <th>البيان</th>
+                    <th>المبلغ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="st in activePrintTx.payoutDetails.settledTransactions" :key="'pst-' + st._id">
+                    <td class="text-mono">#EMP-{{ st.txNumber }}</td>
+                    <td class="text-mono">{{ st.date }}</td>
+                    <td>{{ txTypeLabel(st.type) }}</td>
+                    <td>{{ st.reason }}</td>
+                    <td class="text-mono font-bold">{{ st.type === 'bonus' ? '+' : '−' }}{{ formatCurrency(st.amount) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="emp-receipt-amount-box is-payout">
+              <span class="amount-box-label">صافي المبلغ المستلم (الإجمالي المدفوع)</span>
+              <span class="amount-box-value text-mono">{{ formatCurrency(activePrintTx.amount) }}</span>
+            </div>
+
+            <div v-if="activePrintTx.reason" class="emp-payout-note-line">
+              <span class="font-bold">بيان الصرف:</span> {{ activePrintTx.reason }}
+            </div>
+          </template>
+
+          <!-- SINGLE TRANSACTION RECEIPT BODY -->
+          <template v-else>
+            <div class="emp-receipt-amount-box" :class="'is-' + activePrintTx.type">
+              <span class="amount-box-label">المبلغ المعتمد ({{ txTypeLabel(activePrintTx.type) }})</span>
+              <span class="amount-box-value text-mono">{{ formatCurrency(activePrintTx.amount) }}</span>
+            </div>
+
+            <div class="emp-receipt-reason-card">
+              <div class="reason-card-title">السبب والبيان:</div>
+              <p class="reason-card-text">{{ activePrintTx.reason }}</p>
+            </div>
+          </template>
 
           <div class="emp-receipt-barcode-box">
             <svg id="barcode-emp-tx" aria-hidden="true" class="emp-receipt-barcode-svg"></svg>
@@ -1314,11 +1590,11 @@
 
           <div class="emp-receipt-signatures">
             <div class="sig-col">
-              <span class="sig-title">توقيع المستلم / الموظف</span>
+              <span class="sig-title">{{ activePrintTx.type === 'payout' ? 'توقيع الموظف باستلام كامل المستحق وتصفية الشهر' : 'توقيع المستلم / الموظف' }}</span>
               <span class="sig-line">...................................</span>
             </div>
             <div class="sig-col">
-              <span class="sig-title">توقيع المسؤول / المحاسب</span>
+              <span class="sig-title">{{ activePrintTx.type === 'payout' ? 'اعتماد الإدارة / المحاسب' : 'توقيع المسؤول / المحاسب' }}</span>
               <span class="sig-line">...................................</span>
             </div>
           </div>
@@ -1377,7 +1653,7 @@
                 <td>{{ emp.name }}</td>
                 <td>{{ branchLabel(emp.branch) }}</td>
                 <td>{{ emp.jobName }}</td>
-                <td class="text-mono">{{ formatNum(emp.payType === 'production' ? emp.productionGrossPay : emp.salary) }}</td>
+                <td class="text-mono">{{ formatNum(emp.effectiveGrossPay ?? (emp.payType === 'production' ? emp.productionGrossPay : emp.salary) ?? 0) }}</td>
                 <td class="text-mono">{{ emp.bonusesTotal > 0 ? '+' + formatNum(emp.bonusesTotal) : '0' }}</td>
                 <td class="text-mono">{{ emp.borrowingsTotal > 0 ? '−' + formatNum(emp.borrowingsTotal) : '0' }}</td>
                 <td class="text-mono">{{ emp.penaltiesTotal > 0 ? '−' + formatNum(emp.penaltiesTotal) : '0' }}</td>
@@ -1468,6 +1744,7 @@ export default {
       totalBorrowings: 0,
       totalPenalties: 0,
       totalDeductions: 0,
+      totalPaidOut: 0,
       totalNetPay: 0
     });
 
@@ -1477,12 +1754,14 @@ export default {
     const chefModalOpen = ref(false);
     const jobModalOpen = ref(false);
     const ledgerModalOpen = ref(false);
+    const payoutModalOpen = ref(false);
 
     const empModalRef = ref(null);
     const txModalRef = ref(null);
     const chefModalRef = ref(null);
     const jobModalRef = ref(null);
     const ledgerModalRef = ref(null);
+    const payoutModalRef = ref(null);
     const empFirstInputRef = ref(null);
     const txFirstInputRef = ref(null);
     const jobFirstInputRef = ref(null);
@@ -1491,7 +1770,7 @@ export default {
     let scrollLockActive = false;
 
     const anyModalOpen = computed(() =>
-      employeeModalOpen.value || txModalOpen.value || chefModalOpen.value || jobModalOpen.value || ledgerModalOpen.value
+      employeeModalOpen.value || txModalOpen.value || chefModalOpen.value || jobModalOpen.value || ledgerModalOpen.value || payoutModalOpen.value
     );
 
     watch(anyModalOpen, (open) => {
@@ -1511,6 +1790,7 @@ export default {
     });
 
     const closeTopModal = () => {
+      if (payoutModalOpen.value) { payoutModalOpen.value = false; return; }
       if (ledgerModalOpen.value && !txModalOpen.value) {
         ledgerModalOpen.value = false;
         return;
@@ -1527,7 +1807,7 @@ export default {
     };
 
     const getTopDialogEl = () => {
-      const candidates = [txModalRef.value, jobModalRef.value, chefModalRef.value, empModalRef.value, ledgerModalRef.value].filter(Boolean);
+      const candidates = [txModalRef.value, payoutModalRef.value, jobModalRef.value, chefModalRef.value, empModalRef.value, ledgerModalRef.value].filter(Boolean);
       return candidates[0] || null;
     };
 
@@ -1570,6 +1850,13 @@ export default {
     });
     const txAutoPrint = ref(true);
 
+    const payoutEmp = ref(null);
+    const payoutAutoPrint = ref(true);
+    const payoutForm = reactive({
+      date: new Date().toLocaleDateString('en-CA'),
+      note: ''
+    });
+
     const jobForm = reactive({
       _id: '',
       name: '',
@@ -1611,12 +1898,14 @@ export default {
       if (t === 'bonus') return 'مكافأة';
       if (t === 'borrowing') return 'سلفة';
       if (t === 'penalty') return 'خصم';
+      if (t === 'payout') return 'صرف مستحقات';
       return t;
     };
     const txReceiptTitle = (t) => {
       if (t === 'bonus') return 'إيصال صرف مكافأة';
       if (t === 'borrowing') return 'إيصال استلام سلفة';
       if (t === 'penalty') return 'إشعار خصم إداري';
+      if (t === 'payout') return 'فاتورة صرف راتب ومستحقات';
       return 'إيصال مالي';
     };
     const cleanPhone = (p) => cleanPhoneDigits(p || '');
@@ -2218,6 +2507,61 @@ export default {
       if (styleTag) styleTag.textContent = '';
     };
 
+    const canSettleEmployee = (emp) => {
+      if (!isAdmin.value || !emp) return false;
+      const gross = emp.effectiveGrossPay !== undefined
+        ? (Number(emp.effectiveGrossPay) || 0)
+        : (emp.payType === 'production' ? (Number(emp.productionGrossPay) || 0) : (Number(emp.salary) || 0));
+      const hasUnsettled = Array.isArray(emp.unsettledItems) && emp.unsettledItems.length > 0;
+      return gross > 0 || hasUnsettled;
+    };
+
+    const openPayoutModal = (emp) => {
+      if (!isAdmin.value || !emp) return;
+      payoutEmp.value = emp;
+      payoutForm.date = new Date().toLocaleDateString('en-CA');
+      payoutForm.note = '';
+      payoutAutoPrint.value = true;
+      payoutModalOpen.value = true;
+    };
+
+    const confirmEmployeePayout = async () => {
+      if (!isAdmin.value || !payoutEmp.value) return;
+      if ((Number(payoutEmp.value.netPay) || 0) < 0) {
+        toast.show('إجمالي السلف والخصومات يتجاوز المستحق؛ يرجى مراجعة الحساب قبل الصرف', 'danger');
+        return;
+      }
+      const targetEmpId = String(payoutEmp.value._id);
+      const shouldPrint = payoutAutoPrint.value;
+      saving.value = true;
+      try {
+        const res = await props.adminFetch(`/api/admin/employees/${targetEmpId}/payout`, {
+          method: 'POST',
+          body: JSON.stringify({
+            monthKey: selectedMonth.value,
+            date: payoutForm.date,
+            note: payoutForm.note.trim()
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          toast.show('تم اعتماد صرف المستحقات وتصفير حساب الشهر', 'success');
+          payoutModalOpen.value = false;
+          await Promise.all([fetchSummary(), fetchTransactions()]);
+          if (shouldPrint && data.payout) {
+            await printTransactionReceipt(data.payout);
+          }
+        } else {
+          toast.show(data.error || 'فشل في اعتماد وصرف المستحقات', 'danger');
+        }
+      } catch (e) {
+        console.error('Employee payout error:', e);
+        toast.show('حدث خطأ في الاتصال بالخادم', 'danger');
+      } finally {
+        saving.value = false;
+      }
+    };
+
     const printTransactionReceipt = async (tx) => {
       activePrintTx.value = tx;
       injectPrintPageStyle(false); // A5 Portrait
@@ -2228,7 +2572,8 @@ export default {
       try {
         const el = document.querySelector('#barcode-emp-tx');
         if (el) {
-          const codeVal = `EMP-${tx.txNumber || String(tx._id).slice(-6)}`;
+          const prefix = tx.type === 'payout' ? 'PAY' : 'EMP';
+          const codeVal = `${prefix}-${tx.txNumber || String(tx._id).slice(-6)}`;
           JsBarcode(el, codeVal, {
             format: 'CODE128',
             width: 1.5,
@@ -2308,11 +2653,13 @@ export default {
       chefModalOpen,
       jobModalOpen,
       ledgerModalOpen,
+      payoutModalOpen,
       empModalRef,
       txModalRef,
       chefModalRef,
       jobModalRef,
       ledgerModalRef,
+      payoutModalRef,
       empFirstInputRef,
       txFirstInputRef,
       jobFirstInputRef,
@@ -2320,6 +2667,9 @@ export default {
       selectedFormJob,
       txForm,
       txAutoPrint,
+      payoutEmp,
+      payoutAutoPrint,
+      payoutForm,
       jobForm,
       selectedChefEmp,
       editableBreakdown,
@@ -2363,6 +2713,9 @@ export default {
       saveJob,
       deleteJob,
       openEmployeeLedgerModal,
+      canSettleEmployee,
+      openPayoutModal,
+      confirmEmployeePayout,
       printTransactionReceipt,
       printMonthlyPayroll
     };
@@ -3195,6 +3548,133 @@ export default {
   }
 }
 
+/* Payout & Settlement Badges / Modal */
+.emp-action-pay {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  color: #ffffff !important;
+  border-color: #047857 !important;
+}
+
+.emp-action-pay-done {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.emp-paid-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.tx-payout {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.tx-settled-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.modal-title-icon.payout {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.emp-payout-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.payout-stat-chip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payout-stat-chip .lbl {
+  font-size: 0.76rem;
+  color: #475569;
+  font-weight: 700;
+}
+
+.payout-stat-chip .val {
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
+.emp-payout-empty-items {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.86rem;
+}
+
+.emp-payout-items-scroll {
+  max-height: 28vh;
+}
+
+.emp-payout-total-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border: 1.5px solid #6ee7b7;
+  color: #065f46;
+}
+
+.emp-payout-total-banner.is-negative {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.emp-payout-total-val {
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.btn-emerald {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #ffffff;
+  border: none;
+  font-weight: 800;
+}
+
+.btn-emerald:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857, #065f46);
+}
+
+@media (max-width: 768px) {
+  .emp-payout-breakdown-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Teleported Print Views */
 .emp-tx-receipt-print-wrapper,
 .emp-payroll-print-wrapper {
@@ -3445,6 +3925,70 @@ export default {
   .emp-payroll-table tfoot td {
     background: #f8fafc;
     border-top: 2px solid #0f172a;
+  }
+
+  .emp-payout-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+
+  .emp-payout-summary-grid .ps-cell {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 5px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: #f8fafc;
+  }
+
+  .emp-payout-summary-grid .ps-lbl {
+    font-size: 7.2pt;
+    color: #475569;
+    font-weight: 700;
+  }
+
+  .emp-payout-summary-grid .ps-val {
+    font-size: 9pt;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .emp-payout-items-section {
+    margin-bottom: 8px;
+  }
+
+  .emp-payout-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.6pt;
+    margin-top: 3px;
+  }
+
+  .emp-payout-items-table th,
+  .emp-payout-items-table td {
+    border: 1px solid #cbd5e1;
+    padding: 3px 5px;
+    text-align: right;
+  }
+
+  .emp-payout-items-table th {
+    background: #f1f5f9;
+    font-weight: 800;
+  }
+
+  .emp-receipt-amount-box.is-payout {
+    background: #ecfdf5;
+    border-color: #047857;
+    color: #064e3b;
+  }
+
+  .emp-payout-note-line {
+    font-size: 8.2pt;
+    color: #334155;
+    margin-bottom: 6px;
   }
 }
 </style>
