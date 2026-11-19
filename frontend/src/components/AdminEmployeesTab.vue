@@ -1372,7 +1372,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(emp, idx) in filteredEmployees" :key="'pr-' + emp._id">
+              <tr v-for="(emp, idx) in sortedPrintEmployees" :key="'pr-' + emp._id">
                 <td>{{ idx + 1 }}</td>
                 <td>{{ emp.name }}</td>
                 <td>{{ branchLabel(emp.branch) }}</td>
@@ -1716,6 +1716,18 @@ export default {
         (e.healthCertExpiry && e.healthCertExpiry.includes(q)) ||
         getHealthCertInfo(e.healthCertExpiry).label.includes(q)
       );
+    });
+
+    const sortedPrintEmployees = computed(() => {
+      return [...filteredEmployees.value].sort((a, b) => {
+        const jobA = (a.jobName || '').trim();
+        const jobB = (b.jobName || '').trim();
+        if (jobA && !jobB) return -1;
+        if (!jobA && jobB) return 1;
+        const jobCmp = jobA.localeCompare(jobB, 'ar', { sensitivity: 'base', numeric: true });
+        if (jobCmp !== 0) return jobCmp;
+        return (a.name || '').trim().localeCompare((b.name || '').trim(), 'ar', { sensitivity: 'base', numeric: true });
+      });
     });
 
     const filteredTransactions = computed(() => {
@@ -2320,6 +2332,7 @@ export default {
       activePrintTx,
       printingPayroll,
       round2,
+      sortedPrintEmployees,
       formatNum,
       formatCurrency,
       formatArabicDate,
@@ -3401,6 +3414,20 @@ export default {
     width: 100%;
     border-collapse: collapse;
     font-size: 8.5pt;
+  }
+
+  .emp-payroll-table thead {
+    display: table-header-group;
+  }
+
+  .emp-payroll-table tfoot {
+    display: table-row-group;
+  }
+
+  .emp-payroll-table tr,
+  .emp-receipt-signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .emp-payroll-table th,
