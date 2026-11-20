@@ -41,7 +41,9 @@
 .text-center { text-align: center !important; }
 .text-muted { color: var(--text-muted) !important; }
 .text-primary { color: var(--primary-color) !important; }
+.text-success { color: var(--status-valid-fg) !important; }
 .text-danger { color: var(--color-danger-badge) !important; }
+.text-dark { color: var(--color-slate-900) !important; }
 .text-small { font-size: 0.82rem !important; }
 .text-bold, .font-bold { font-weight: 700 !important; }
 .font-semibold { font-weight: 600 !important; }

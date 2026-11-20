@@ -213,6 +213,21 @@ function auditFile(filePath) {
     }
   });
 
+  const scopedStyleMatch = content.match(/<style\b[^>]*\bscoped\b[^>]*>([\s\S]*?)<\/style>/i);
+  if (scopedStyleMatch) {
+    const scopedCss = scopedStyleMatch[1];
+    // Guard C: Vue 3 @vue/compiler-sfc drops trailing selectors after :global(...)
+    // e.g. `:global(.shop-theme-shop2) .child` compiles to bare `.shop-theme-shop2`
+    const brokenGlobals = scopedCss.match(/:global\([^)]+\)\s+(?![,{])/g) || [];
+    for (const sel of brokenGlobals) {
+      issues.push({
+        type: 'ERROR',
+        rule: 'Vue Scoped CSS (:global Selector Truncation)',
+        msg: `Scoped selector "${sel.trim()} ..." has trailing tokens after :global(...) which Vue 3 strips.`
+      });
+    }
+  }
+
   // 6. Audit Small Interactive Hit Targets (WCAG 2.5.5 / RICO Mobile Bounding Box)
   // Scoped to mobile & customer-facing views; desktop back-office dashboards use dense pointer metrics
   const isDesktopBackOffice = filePath.endsWith('AdminView.vue');

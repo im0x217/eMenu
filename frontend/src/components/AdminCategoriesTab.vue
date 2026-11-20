@@ -341,7 +341,7 @@ export default {
 <style scoped>
 @import '../assets/admin-tabs-shared.css';
 
-:global(.admin-container) .glass-panel {
+.admin-container .glass-panel {
   background: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -568,7 +568,7 @@ select.form-control:focus {
   gap: 6px;
 }
 
-:global(.tab-content-wrapper) .table-card {
+.tab-content-wrapper .table-card {
   contain: content;
 }
 
@@ -700,7 +700,7 @@ select.form-control:focus {
 }
 
 @media print {
-  :global(.admin-layout.is-printing-analytics) .table-container {
+  .admin-layout.is-printing-analytics .table-container {
     overflow: visible !important;
     max-height: none !important;
     mask-image: none !important;
@@ -718,20 +718,20 @@ select.form-control:focus {
   transition: background 0.15s ease, outline 0.15s ease;
 }
 
-:global(.shop-theme-shop2) .btn-primary {
+.shop-theme-shop2 .btn-primary {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   border-color: #1d4ed8 !important;
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
 }
 
-:global(.shop-theme-shop2) .btn-primary:hover {
+.shop-theme-shop2 .btn-primary:hover {
   background: linear-gradient(135deg, #2563eb, #1e40af) !important;
   border-color: #1e40af !important;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
 }
 
-:global(.shop-theme-shop2) .form-control:focus {
+.shop-theme-shop2 .form-control:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
   outline: none !important;
@@ -744,7 +744,7 @@ select.form-control:focus {
   border-radius: 6px;
 }
 
-:global(.shop-theme-shop2) .skeleton-shimmer {
+.shop-theme-shop2 .skeleton-shimmer {
   background: linear-gradient(90deg, #eff6ff 25%, #dbeafe 50%, #eff6ff 75%);
   background-size: 200% 100%;
 }

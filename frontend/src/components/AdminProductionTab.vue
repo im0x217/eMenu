@@ -806,7 +806,7 @@ export default {
 <style scoped>
 @import '../assets/admin-tabs-shared.css';
 
-:global(.admin-container) .glass-panel {
+.admin-container .glass-panel {
   background: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -1343,7 +1343,7 @@ select.form-control:focus {
   animation: fadeIn 0.3s ease;
 }
 
-:global(.tab-content-wrapper) .table-card {
+.tab-content-wrapper .table-card {
   contain: content;
 }
 
@@ -1665,14 +1665,14 @@ select.form-control:focus {
 }
 
 @media print {
-  :global(.admin-layout.is-printing-analytics) .table-container {
+  .admin-layout.is-printing-analytics .table-container {
     overflow: visible !important;
     max-height: none !important;
     mask-image: none !important;
     -webkit-mask-image: none !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .clickable-product-row {
+  .admin-layout.is-printing-analytics .clickable-product-row {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -2186,53 +2186,53 @@ select.form-control:focus {
   border-bottom: 1px solid #fed7aa;
 }
 
-:global(.shop-theme-shop2) .btn-primary {
+.shop-theme-shop2 .btn-primary {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   border-color: #1d4ed8 !important;
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
 }
 
-:global(.shop-theme-shop2) .btn-primary:hover {
+.shop-theme-shop2 .btn-primary:hover {
   background: linear-gradient(135deg, #2563eb, #1e40af) !important;
   border-color: #1e40af !important;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
 }
 
-:global(.shop-theme-shop2) .dp-day-cell.is-selected {
+.shop-theme-shop2 .dp-day-cell.is-selected {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   font-weight: 800 !important;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
 }
 
-:global(.shop-theme-shop2) .dp-day-cell.is-today {
+.shop-theme-shop2 .dp-day-cell.is-today {
   border-color: #3b82f6 !important;
   color: #1d4ed8 !important;
 }
 
-:global(.shop-theme-shop2) .dp-nav-btn:hover {
+.shop-theme-shop2 .dp-nav-btn:hover {
   background: rgba(37, 99, 235, 0.12) !important;
   border-color: #3b82f6 !important;
   color: #1d4ed8 !important;
 }
 
-:global(.shop-theme-shop2) .btn-datepicker-trigger.active {
+.shop-theme-shop2 .btn-datepicker-trigger.active {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
 }
 
-:global(.shop-theme-shop2) .btn-dp-show-all {
+.shop-theme-shop2 .btn-dp-show-all {
   color: #2563eb !important;
   border-color: rgba(37, 99, 235, 0.25) !important;
 }
 
-:global(.shop-theme-shop2) .btn-dp-show-all:hover {
+.shop-theme-shop2 .btn-dp-show-all:hover {
   background: rgba(37, 99, 235, 0.08) !important;
   border-color: #2563eb !important;
 }
 
-:global(.shop-theme-shop2) .form-control:focus {
+.shop-theme-shop2 .form-control:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
   outline: none !important;
@@ -2245,7 +2245,7 @@ select.form-control:focus {
   border-radius: 6px;
 }
 
-:global(.shop-theme-shop2) .skeleton-shimmer {
+.shop-theme-shop2 .skeleton-shimmer {
   background: linear-gradient(90deg, #eff6ff 25%, #dbeafe 50%, #eff6ff 75%);
   background-size: 200% 100%;
 }
@@ -2264,7 +2264,7 @@ select.form-control:focus {
   background: rgba(253, 181, 24, 0.08) !important;
 }
 
-:global(.shop-theme-shop2) .clickable-product-row:hover {
+.shop-theme-shop2 .clickable-product-row:hover {
   background: rgba(30, 58, 95, 0.08) !important;
 }
 
@@ -2282,7 +2282,7 @@ select.form-control:focus {
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
-:global(.shop-theme-shop2) .row-hover-icon {
+.shop-theme-shop2 .row-hover-icon {
   color: #1e3a5f;
 }
 
@@ -2472,12 +2472,12 @@ select.form-control:focus {
   color: #047857 !important;
 }
 
-:global(.shop-theme-shop2) .prod-tab-pill .pill-badge,
-:global(.shop-theme-shop2) .btn-chef-action.btn-chef-assign {
+.shop-theme-shop2 .prod-tab-pill .pill-badge,
+.shop-theme-shop2 .btn-chef-action.btn-chef-assign {
   color: #1d4ed8 !important;
 }
 
-:global(.shop-theme-shop2) .chef-avatar {
+.shop-theme-shop2 .chef-avatar {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;

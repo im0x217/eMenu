@@ -1549,7 +1549,7 @@ export default {
 <style scoped>
 @import '../assets/admin-tabs-shared.css';
 
-:global(.admin-container) .glass-panel {
+.admin-container .glass-panel {
   background: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -2825,13 +2825,13 @@ export default {
 }
 
 @media print {
-  :global(.admin-layout.is-printing-analytics) .date-range-bar,
-:global(.admin-layout.is-printing-analytics) .no-print,
-:global(.admin-layout.is-printing-analytics) .mobile-analytics-cards-grid {
+  .admin-layout.is-printing-analytics .date-range-bar,
+.admin-layout.is-printing-analytics .no-print,
+.admin-layout.is-printing-analytics .mobile-analytics-cards-grid {
     display: none !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .analytics-tab-content {
+  .admin-layout.is-printing-analytics .analytics-tab-content {
     display: block !important;
     width: 210mm !important;
     max-width: 210mm !important;
@@ -2847,7 +2847,7 @@ export default {
     print-color-adjust: exact;
   }
 
-  :global(.admin-layout.is-printing-analytics) .kpi-grid {
+  .admin-layout.is-printing-analytics .kpi-grid {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 8px !important;
@@ -2856,20 +2856,20 @@ export default {
     page-break-inside: avoid;
   }
 
-  :global(.admin-layout.is-printing-analytics) .charts-grid {
+  .admin-layout.is-printing-analytics .charts-grid {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .chart-card.span-3,
-:global(.admin-layout.is-printing-analytics) .chart-card.span-2,
-:global(.admin-layout.is-printing-analytics) .chart-card:has(table) {
+  .admin-layout.is-printing-analytics .chart-card.span-3,
+.admin-layout.is-printing-analytics .chart-card.span-2,
+.admin-layout.is-printing-analytics .chart-card:has(table) {
     grid-column: 1 / -1 !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .kpi-card,
-:global(.admin-layout.is-printing-analytics) .chart-card {
+  .admin-layout.is-printing-analytics .kpi-card,
+.admin-layout.is-printing-analytics .chart-card {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
@@ -2882,98 +2882,98 @@ export default {
     page-break-inside: avoid;
   }
 
-  :global(.admin-layout.is-printing-analytics) .chart-card:has(table) {
+  .admin-layout.is-printing-analytics .chart-card:has(table) {
     break-inside: auto !important;
     page-break-inside: auto !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .chart-card-header {
+  .admin-layout.is-printing-analytics .chart-card-header {
     break-after: avoid;
     page-break-after: avoid;
   }
 
-  :global(.admin-layout.is-printing-analytics) .table-container {
+  .admin-layout.is-printing-analytics .table-container {
     overflow: visible !important;
     max-height: none !important;
     mask-image: none !important;
     -webkit-mask-image: none !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .top-cust-row,
-:global(.admin-layout.is-printing-analytics) .clickable-product-row,
-:global(.admin-layout.is-printing-analytics) .analytics-tab-content tr {
+  .admin-layout.is-printing-analytics .top-cust-row,
+.admin-layout.is-printing-analytics .clickable-product-row,
+.admin-layout.is-printing-analytics .analytics-tab-content tr {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
     animation: none !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .svg-trend-line {
+  .admin-layout.is-printing-analytics .svg-trend-line {
     stroke-dashoffset: 0 !important;
     animation: none !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) .svg-trend-area {
+  .admin-layout.is-printing-analytics .svg-trend-area {
     opacity: 1 !important;
     animation: none !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) div.desktop-analytics-table {
+  .admin-layout.is-printing-analytics div.desktop-analytics-table {
     display: block !important;
     overflow: visible !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) table.desktop-analytics-table {
+  .admin-layout.is-printing-analytics table.desktop-analytics-table {
     display: table !important;
     width: 100% !important;
     table-layout: auto !important;
   }
 
-  :global(.admin-layout.is-printing-analytics) table thead {
+  .admin-layout.is-printing-analytics table thead {
     display: table-header-group;
   }
 
-  :global(.admin-layout.is-printing-analytics) table tr {
+  .admin-layout.is-printing-analytics table tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  :global(.admin-layout.is-printing-analytics) th,
-:global(.admin-layout.is-printing-analytics) td {
+  .admin-layout.is-printing-analytics th,
+.admin-layout.is-printing-analytics td {
     overflow-wrap: break-word;
     word-break: normal;
   }
 }
 
-:global(.shop-theme-shop2) .dp-day-cell.is-selected {
+.shop-theme-shop2 .dp-day-cell.is-selected {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   font-weight: 800 !important;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
 }
 
-:global(.shop-theme-shop2) .dp-day-cell.is-today {
+.shop-theme-shop2 .dp-day-cell.is-today {
   border-color: #3b82f6 !important;
   color: #1d4ed8 !important;
 }
 
-:global(.shop-theme-shop2) .dp-nav-btn:hover {
+.shop-theme-shop2 .dp-nav-btn:hover {
   background: rgba(37, 99, 235, 0.12) !important;
   border-color: #3b82f6 !important;
   color: #1d4ed8 !important;
 }
 
-:global(.shop-theme-shop2) .btn-datepicker-trigger.active {
+.shop-theme-shop2 .btn-datepicker-trigger.active {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
 }
 
-:global(.shop-theme-shop2) .btn-dp-show-all {
+.shop-theme-shop2 .btn-dp-show-all {
   color: #2563eb !important;
   border-color: rgba(37, 99, 235, 0.25) !important;
 }
 
-:global(.shop-theme-shop2) .btn-dp-show-all:hover {
+.shop-theme-shop2 .btn-dp-show-all:hover {
   background: rgba(37, 99, 235, 0.08) !important;
   border-color: #2563eb !important;
 }
@@ -2985,7 +2985,7 @@ export default {
   border-radius: 6px;
 }
 
-:global(.shop-theme-shop2) .skeleton-shimmer {
+.shop-theme-shop2 .skeleton-shimmer {
   background: linear-gradient(90deg, #eff6ff 25%, #dbeafe 50%, #eff6ff 75%);
   background-size: 200% 100%;
 }
@@ -3039,7 +3039,7 @@ export default {
   background: rgba(253, 181, 24, 0.08) !important;
 }
 
-:global(.shop-theme-shop2) .clickable-product-row:hover {
+.shop-theme-shop2 .clickable-product-row:hover {
   background: rgba(30, 58, 95, 0.08) !important;
 }
 
@@ -3069,11 +3069,11 @@ export default {
   color: #d97706;
 }
 
-:global(.shop-theme-shop2) .top-products-interactive-table th.th-sortable:hover {
+.shop-theme-shop2 .top-products-interactive-table th.th-sortable:hover {
   background-color: rgba(30, 58, 95, 0.08);
 }
 
-:global(.shop-theme-shop2) .top-products-interactive-table th.th-sortable.active {
+.shop-theme-shop2 .top-products-interactive-table th.th-sortable.active {
   color: #1e3a5f;
 }
 
