@@ -1812,6 +1812,7 @@ const handleResendWhatsApp = () => {
 }
 
 .btn-confirm-received-subtle {
+  position: relative;
   flex: 1;
   min-height: 38px;
   display: flex;
@@ -1830,6 +1831,17 @@ const handleResendWhatsApp = () => {
   transition: all 0.2s ease;
 }
 
+.btn-confirm-received-subtle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .btn-confirm-received-subtle:hover {
   background: #10b981;
   color: #ffffff;
@@ -1837,6 +1849,7 @@ const handleResendWhatsApp = () => {
 }
 
 .btn-edit-order-subtle {
+  position: relative;
   flex: 1;
   min-height: 38px;
   display: flex;
@@ -1853,6 +1866,17 @@ const handleResendWhatsApp = () => {
   font-weight: 750;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.btn-edit-order-subtle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .btn-edit-order-subtle:hover {

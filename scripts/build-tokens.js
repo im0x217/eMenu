@@ -105,9 +105,6 @@ export function buildTokens() {
   if (globalTokens['border-radius-xl']) lines.push(`  --radius-xl: var(--border-radius-xl);`);
   if (globalTokens['border-radius-pill']) lines.push(`  --radius-pill: var(--border-radius-pill);`);
 
-  if (globalTokens['touch-target-min']) lines.push(`  --touch-target-min: var(--touch-target-min);`);
-  if (globalTokens['touch-target-clearance']) lines.push(`  --touch-target-clearance: var(--touch-target-clearance);`);
-
   lines.push('');
   lines.push('  /* Component-Scoped Tokens */');
   for (const [key, val] of Object.entries(componentTokens)) {

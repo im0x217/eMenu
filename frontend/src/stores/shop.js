@@ -14,7 +14,9 @@ export const useShopStore = defineStore('shop', () => {
       const saved = window.sessionStorage?.getItem('emenu_view');
       if (saved === 'shop2') return 'shop2';
       if (saved === 'shop1') return 'shop1';
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[ShopStore] Failed to resolve initial shop from sessionStorage/URL:', e);
+    }
     return null;
   };
 
@@ -34,7 +36,9 @@ export const useShopStore = defineStore('shop', () => {
       if (window.sessionStorage) {
         window.sessionStorage.setItem('emenu_view', shopId);
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[ShopStore] Failed to persist active shop in sessionStorage:', e);
+    }
     
     // Apply styling class to body for theme transitions
     document.body.className = '';

@@ -66,7 +66,7 @@
 
             <!-- S3 Image Upload Dropzone -->
             <div class="form-group animate-fade-in">
-              <input type="file" ref="carouselFileInput" class="hidden-file-input" style="display: none;" accept="image/*" @click.stop @change="handleCarouselImageFileSelect" />
+              <input type="file" ref="carouselFileInput" class="hidden-file-input" style="display: none;" accept="image/*" aria-label="اختيار ملف صورة البنر الإعلاني" @click.stop @change="handleCarouselImageFileSelect" />
               <div
                 class="image-dropzone"
                 :class="{ active: carouselDragActive }"
@@ -127,7 +127,7 @@
 
           <div class="premium-cropper-body">
             <div class="cropper-canvas-container">
-              <img ref="cropperImageElement" :src="cropperImageSrc" style="display: block; max-width: 100%;" />
+              <img ref="cropperImageElement" :src="cropperImageSrc" alt="معاينة قص البنر الإعلاني" style="display: block; max-width: 100%;" />
             </div>
 
             <div class="cropper-toolbar">

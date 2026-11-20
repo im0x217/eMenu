@@ -1470,7 +1470,9 @@ export default {
       }
       try {
         pb.collection('inventory').unsubscribe('*');
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[InventoryTab] Realtime unsubscribe skipped:', e);
+      }
     });
 
     return {
@@ -2155,6 +2157,7 @@ export default {
 }
 
 .inv-stepper-btn {
+  position: relative;
   width: 30px;
   height: 30px;
   border-radius: 8px;
@@ -2167,6 +2170,16 @@ export default {
   cursor: pointer;
   font-family: 'Cairo', sans-serif !important;
   transition: all 0.15s ease;
+}
+
+.inv-stepper-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
 }
 .inv-stepper-btn:hover:not(:disabled) {
   background: #ffffff;
