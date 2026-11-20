@@ -13,27 +13,35 @@ Authoritative token values compiled from `frontend/src/tokens/tokens.json` by `s
 
 | Role | Hex / Value | Token / CSS Variable | Usage & Contrast Rule |
 | --- | --- | --- | --- |
-| **Shop 1 Primary (Gold)** | `#fdb518` | `--color-gold` / `--primary-color` (`.shop-theme-shop1`) | Luxury pastries & sweets; pair with `#0c0603` foreground on primary buttons and active category pills |
+| **Shop 1 Primary (Gold)** | `#fdb518` | `--color-gold` / `--primary-color` (`.shop-theme-shop1`) | Luxury pastries & sweets; pair with `--primary-on-color` (`#0c0603`) on primary buttons and active pills |
+| **Shop 1 On-Primary** | `#0c0603` | `--primary-on-color` (`.shop-theme-shop1`) | Dark high-contrast foreground on Shop 1 gold surfaces |
 | **Shop 1 Glow** | `rgba(253, 181, 24, 0.15)` | `--primary-glow` (`.shop-theme-shop1`) | Active states and subtle focus/card highlights |
-| **Shop 2 Primary (Navy)** | `#1e3a5f` | `--color-blue` / `--primary-color` / `--shop2-ink` (`.shop-theme-shop2`) | Dry pastries (`قسم النواشف`); pair with `#ffffff` foreground on primary buttons and active category pills |
+| **Shop 2 Primary (Navy)** | `#1e3a5f` | `--color-blue` / `--primary-color` / `--shop2-ink` (`.shop-theme-shop2`) | Dry pastries (`قسم النواشف`); pair with `--primary-on-color` (`#ffffff`) on primary buttons and active pills |
+| **Shop 2 On-Primary** | `#ffffff` | `--primary-on-color` (`.shop-theme-shop2`) | White high-contrast foreground on Shop 2 navy surfaces |
 | **Shop 2 Glow** | `rgba(30, 58, 95, 0.15)` | `--primary-glow` (`.shop-theme-shop2`) | Active states and subtle focus/card highlights |
-| **Warm Cream Canvas** | `#f7f3ec` | `--color-warm-bg` / `--bg-dark` | Global app background and light meta `theme-color` |
-| **Warm Card Surface** | `#fffdf9` | `--color-warm-card` / `--bg-card` | Elevated panels, product cards, modal sheets |
-| **Primary Text** | `#2c2520` | `--color-warm-text` | High-contrast body and heading copy |
-| **Muted Text** | `#685f58` | `--color-warm-muted` / `--text-muted` | Secondary metadata (`>= 5.4:1` WCAG AA on warm surfaces) |
+| **Surface Canvas** | `#f7f3ec` | `--surface-canvas` (`--color-warm-bg`, `--bg-dark`) | Global app background and light meta `theme-color` |
+| **Surface Card** | `#fffdf9` | `--surface-card` (`--color-warm-card`, `--bg-card`) | Elevated panels, product cards, modal sheets |
+| **Surface Subtle** | `#f1ece4` | `--surface-subtle` | Inset warm background for segmented controls, pills, and subtle containers |
+| **Surface Elevated** | `#ffffff` | `--surface-elevated` | Crisp white surface for popovers, modals, and admin cards |
+| **Text Primary** | `#2c2520` | `--text-primary` (`--color-warm-text`) | High-contrast body and heading copy |
+| **Text Muted** | `#685f58` | `--text-muted` (`--color-warm-muted`) | Secondary metadata (`>= 5.4:1` WCAG AA on warm surfaces) |
+| **Text Inverse** | `#ffffff` | `--text-inverse` | White text on dark or saturated fills |
+| **Border Subtle** | `rgba(44, 37, 32, 0.08)` | `--border-subtle` | Hairline warm divider and subtle border |
+| **Border Default** | `#e5dfd5` | `--border-default` | Default warm border for cards, tables, and containers |
+| **Border Strong** | `#cbd5e1` | `--border-strong` | Strong control border for inputs, outline buttons, and dividers |
 | **Danger / Badge Red** | `#dc2626` | `--color-danger-badge` | WCAG AA notification badges (`4.83:1` with white text) and destructive states |
 | **Dark Media Backdrop** | `#0f172a` | `--color-slate-900` / `--product-card-image-bg` | Product card image wrapper foundation and admin dark header theme |
 
-## 3. Health Certificate Badge Semantics
+## 3. Status & Health Certificate Badge Semantics
 
-Defined in `frontend/src/components/AdminEmployeesTab.vue` (`getHealthCertInfo`):
+Compiled from `semantic.status` in `tokens.json` and consumed by `frontend/src/components/AdminEmployeesTab.vue` (`getHealthCertInfo`):
 
-| State | Rule | Class | Background | Border | Text | Dot | Arabic Label |
+| State | Rule | Class | Background (`--*-bg`) | Border (`--*-border`) | Text (`--*-fg`) | Dot | Arabic Label |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Valid** | `> 30` days remaining | `.is-valid` | `#ecfdf5` | `#6ee7b7` | `#047857` | `#10b981` | `سارية` |
-| **Approaching** | `0..30` days remaining | `.is-approaching` | `#fefce8` | `#facc15` | `#854d0e` | `#eab308` | `قرب الانتهاء` |
-| **Expired** | `< 0` days remaining | `.is-expired` | `#fef2f2` | `#fca5a5` | `#b91c1c` | `#ef4444` | `منتهية` |
-| **Unset / Invalid** | Empty or invalid ISO date | `.is-unset` | `#f8fafc` | `#cbd5e1` (dashed) | `#64748b` | `#94a3b8` | `غير مسجلة` |
+| **Valid** | `> 30` days remaining | `.is-valid` | `--status-valid-bg` (`#dcfce7`) | `--status-valid-border` (`#86efac`) | `--status-valid-fg` (`#166534`) | `--status-valid-fg` | `سارية` |
+| **Approaching** | `0..30` days remaining | `.is-approaching` | `--status-approaching-bg` (`#fef3c7`) | `--status-approaching-border` (`#fcd34d`) | `--status-approaching-fg` (`#92400e`) | `--status-approaching-fg` | `قرب الانتهاء` |
+| **Expired** | `< 0` days remaining | `.is-expired` | `--status-expired-bg` (`#fee2e2`) | `--status-expired-border` (`#fca5a5`) | `--status-expired-fg` (`#991b1b`) | `--color-danger-badge` (`#dc2626`) | `منتهية` |
+| **Unset / Invalid** | Empty or invalid ISO date | `.is-unset` | `--surface-subtle` (`#f1ece4`) | `--border-strong` (`#cbd5e1`, dashed) | `--text-muted` (`#685f58`) | `--text-muted` | `غير مسجلة` |
 
 ## 4. Typography, Grid, and Touch Ergonomics
 

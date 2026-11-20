@@ -57,11 +57,40 @@ export const tokens = {
   "semantic": {
     "shop1": {
       "primary": "#fdb518",
-      "glow": "rgba(253, 181, 24, 0.15)"
+      "glow": "rgba(253, 181, 24, 0.15)",
+      "on-primary": "#0c0603"
     },
     "shop2": {
       "primary": "#1e3a5f",
-      "glow": "rgba(30, 58, 95, 0.15)"
+      "glow": "rgba(30, 58, 95, 0.15)",
+      "on-primary": "#ffffff"
+    },
+    "surface": {
+      "canvas": "#f7f3ec",
+      "card": "#fffdf9",
+      "subtle": "#f1ece4",
+      "elevated": "#ffffff"
+    },
+    "text": {
+      "primary": "#2c2520",
+      "muted": "#685f58",
+      "inverse": "#ffffff"
+    },
+    "border": {
+      "subtle": "rgba(44, 37, 32, 0.08)",
+      "default": "#e5dfd5",
+      "strong": "#cbd5e1"
+    },
+    "status": {
+      "valid-bg": "#dcfce7",
+      "valid-fg": "#166534",
+      "valid-border": "#86efac",
+      "approaching-bg": "#fef3c7",
+      "approaching-fg": "#92400e",
+      "approaching-border": "#fcd34d",
+      "expired-bg": "#fee2e2",
+      "expired-fg": "#991b1b",
+      "expired-border": "#fca5a5"
     }
   }
 };

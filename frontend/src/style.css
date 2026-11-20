@@ -8,8 +8,8 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: #2c2520;
-  background-color: #f7f3ec;
+  color: var(--text-primary);
+  background-color: var(--surface-canvas);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -29,7 +29,7 @@ html, body, button, input, select, textarea {
 }
 
 :root {
-  --primary-color: #fdb518; /* Shop1 Gold */
+  --primary-color: var(--color-gold); /* Shop1 Gold */
   --primary-color-rgb: 253, 181, 24;
 
 
@@ -37,15 +37,15 @@ html, body, button, input, select, textarea {
 
   /* Shop 2 single-accent ink family (navy brand). Use these instead of royal-blue literals
      so Shop 2 reads as one accent everywhere: text, tints, borders, CTA gradients. */
-  --shop2-ink: #1e3a5f;
+  --shop2-ink: var(--color-blue);
   --shop2-ink-rgb: 30, 58, 95;
   --shop2-ink-strong: #2c5282;
   --shop2-ink-hover: #3a64a0;
   
-  --bg-dark: #f7f3ec;
-  --bg-card: #fffdf9;
+  --bg-dark: var(--surface-canvas);
+  --bg-card: var(--surface-card);
   --border-card: rgba(44, 37, 32, 0.06);
-  --text-muted: #685f58;
+  --text-muted: var(--color-warm-muted);
   
   /* Spacing tokens */
   --space-xs: 4px;
@@ -98,7 +98,7 @@ html, body, button, input, select, textarea {
 
 /* Shop Theme Overrides */
 .shop-theme-shop1 {
-  --primary-color: #fdb518; /* Gold */
+  --primary-color: var(--color-gold); /* Gold */
   --primary-color-rgb: 253, 181, 24;
 
 
@@ -106,7 +106,7 @@ html, body, button, input, select, textarea {
 }
 
 .shop-theme-shop2 {
-  --primary-color: #1e3a5f; /* Deep Blue */
+  --primary-color: var(--color-blue); /* Deep Blue */
   --primary-color-rgb: 30, 58, 95;
 
 
@@ -150,7 +150,7 @@ html, body, button, input, select, textarea {
 }
 
 html {
-  background-color: #f7f3ec; /* Prevents white flash/bounce backgrounds on mobile */
+  background-color: var(--surface-canvas); /* Prevents white flash/bounce backgrounds on mobile */
   height: 100%;
   min-height: 100dvh;
 }
@@ -421,8 +421,8 @@ body.modal-open .app-container {
   position: absolute;
   top: -4px;
   right: -4px;
-  background-color: #dc2626;
-  color: #ffffff;
+  background-color: var(--color-danger-badge);
+  color: var(--text-inverse);
   border-radius: 50%;
   font-size: 0.75rem;
   min-width: 18px;
@@ -432,7 +432,7 @@ body.modal-open .app-container {
   justify-content: center;
   font-weight: 700;
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-  border: 1px solid #ffffff;
+  border: 1px solid var(--surface-elevated);
 }
 
 /* Inputs and Forms styling */
@@ -444,7 +444,7 @@ body.modal-open .app-container {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 12px;
-  color: #2c2520;
+  color: var(--text-primary);
   font-family: 'Cairo', sans-serif;
   font-size: 1rem; /* 16px minimum guard against iOS Safari auto-zoom */
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
@@ -463,8 +463,8 @@ input[type="date"].form-input,
   -moz-appearance: none !important;
   appearance: none !important;
   min-height: 42px;
-  background-color: var(--bg-card, #ffffff);
-  color: #2c2520;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   font-family: 'Cairo', sans-serif;
   font-size: 0.92rem;
   direction: rtl;
@@ -499,7 +499,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-height: 44px;
   padding: 0.85rem 1.5rem;
   background: var(--primary-color);
-  color: #ffffff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   font-family: 'Cairo', sans-serif;
@@ -514,13 +514,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 2px 8px rgba(var(--primary-color-rgb), 0.25);
 }
 
-/* Ensure readable contrast for white text on primary button */
+/* Ensure readable contrast for text on primary button */
 .shop-theme-shop1 .btn-primary {
-  color: #0c0603; /* Dark text for gold button */
+  color: var(--primary-on-color); /* Dark text for gold button */
 }
 
 .shop-theme-shop2 .btn-primary {
-  color: #ffffff; /* White text for blue button */
+  color: var(--primary-on-color); /* White text for blue button */
 }
 
 .btn-primary:active {
@@ -551,12 +551,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Category Button active contrast rules (Global to bypass Vue scoped selector limitations) */
 .shop-theme-shop1 .cat-btn.active,
 .shop-theme-shop1 .cat-btn.active * {
-  color: #0c0603 !important;
+  color: var(--primary-on-color) !important;
 }
 
 .shop-theme-shop2 .cat-btn.active,
 .shop-theme-shop2 .cat-btn.active * {
-  color: #ffffff !important;
+  color: var(--primary-on-color) !important;
 }
 
 /* Touch Action & Tap Delay Optimization */
@@ -629,7 +629,7 @@ button:active:not(:disabled),
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #ffffff !important;
+    background: var(--surface-elevated) !important;
     color: #000000 !important;
   }
 }
@@ -645,9 +645,9 @@ button:active:not(:disabled),
   right: 0;
   left: 0;
   z-index: 9999 !important;
-  background: #ffffff !important;
+  background: var(--surface-elevated) !important;
   border-radius: 14px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-strong);
   box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.22), 0 6px 16px -2px rgba(15, 23, 42, 0.1);
   max-height: 320px;
   overflow-y: auto;
@@ -675,7 +675,7 @@ button:active:not(:disabled),
 
 .autocomplete-suggestions-dropdown::-webkit-scrollbar-thumb,
 .standard-suggestions-dropdown::-webkit-scrollbar-thumb {
-  background: #cbd5e1 !important;
+  background: var(--border-strong) !important;
   border-radius: 10px !important;
 }
 
@@ -687,7 +687,7 @@ button:active:not(:disabled),
   border-radius: 10px;
   cursor: pointer;
   transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
-  border-bottom: 1px solid #f8fafc;
+  border-bottom: 1px solid var(--border-subtle);
   position: relative;
   user-select: none;
 }
@@ -697,17 +697,17 @@ button:active:not(:disabled),
 }
 
 .suggestion-item:hover {
-  background: #f8fafc;
+  background: var(--surface-subtle);
 }
 
 .suggestion-item.highlighted {
   background: rgba(30, 58, 95, 0.08) !important;
-  outline: 1.5px solid var(--primary-color, #1e3a5f);
+  outline: 1.5px solid var(--primary-color);
   outline-offset: -1.5px;
 }
 
 .suggestion-item.is-in-cart {
-  border-right: 3px solid #16a34a;
+  border-right: 3px solid var(--status-valid-fg);
   background: rgba(22, 163, 74, 0.03);
 }
 
@@ -716,8 +716,8 @@ button:active:not(:disabled),
   height: 38px;
   border-radius: 8px;
   object-fit: cover;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border: 1px solid var(--border-default);
+  background: var(--surface-subtle);
   flex-shrink: 0;
 }
 
@@ -726,8 +726,8 @@ button:active:not(:disabled),
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-slate-800), var(--color-slate-900));
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -757,7 +757,7 @@ button:active:not(:disabled),
 .cust-sugg-name {
   font-weight: 700;
   font-size: 0.88rem;
-  color: #0f172a;
+  color: var(--color-slate-900);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -766,7 +766,7 @@ button:active:not(:disabled),
 .suggestion-category,
 .cust-sugg-phone {
   font-size: 0.74rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -780,7 +780,7 @@ button:active:not(:disabled),
 
 .suggestion-price {
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-slate-900);
   font-size: 0.88rem;
 }
 
@@ -790,9 +790,9 @@ button:active:not(:disabled),
   gap: 4px;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #166534;
-  background: #dcfce7;
-  border: 1px solid #bbf7d0;
+  color: var(--status-valid-fg);
+  background: var(--status-valid-bg);
+  border: 1px solid var(--status-valid-border);
   padding: 1px 7px;
   border-radius: 20px;
 }
@@ -811,31 +811,31 @@ button:active:not(:disabled),
   font-size: 0.76rem;
   font-weight: 700;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #1e293b;
+  border: 1px solid var(--border-default);
+  background: var(--surface-elevated);
+  color: var(--color-slate-800);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-quick-add:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--surface-subtle);
+  border-color: var(--border-strong);
 }
 
 .btn-quick-add.btn-quick-add-active {
-  background: #16a34a !important;
-  color: #ffffff !important;
-  border-color: #16a34a !important;
+  background: var(--status-valid-fg) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--status-valid-fg) !important;
 }
 
 .btn-sugg-qty-minus {
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #ef4444;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-elevated);
+  color: var(--color-danger-badge);
   font-weight: 800;
   font-size: 0.95rem;
   display: inline-flex;
@@ -846,14 +846,14 @@ button:active:not(:disabled),
 }
 
 .btn-sugg-qty-minus:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
+  background: var(--status-expired-bg);
+  border-color: var(--status-expired-border);
 }
 
 .suggestion-no-results {
   padding: 18px 12px;
   text-align: center;
-  color: #5b6b7f;
+  color: var(--text-muted);
   font-size: 0.84rem;
   font-weight: 600;
 }
@@ -1151,7 +1151,7 @@ body.modal-open .floating-cart-bar {
   .glass-panel,
   .bottom-nav-bar,
   .floating-cart-bar {
-    background: #fffdf9 !important;
+    background: var(--surface-card) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -1162,7 +1162,7 @@ body.modal-open .floating-cart-bar {
   .bottom-nav-bar,
   .floating-cart-bar,
   .product-card {
-    border: 1.5px solid #2c2520 !important;
+    border: 1.5px solid var(--text-primary) !important;
   }
 }
 
