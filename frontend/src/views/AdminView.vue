@@ -194,172 +194,6 @@
               </span>
             </Transition>
           </div>
-          <!-- Period & Actions for Analytics -->
-          <div v-if="activeTab === 'analytics'" class="analytics-header-actions">
-            <!-- Period Selector -->
-            <div class="segmented-control">
-              <button v-for="p in periods" :key="p.val" class="control-pill" :class="{ active: analyticsPeriod === p.val }" @click="changePeriod(p.val)">
-                {{ p.label }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Custom Date Range Bar (Standardized Order Management Design) -->
-        <div v-if="activeTab === 'analytics' && analyticsPeriod === 'custom'" class="date-range-bar no-print animate-fade-in">
-          <div class="date-filter-group">
-            <!-- From Date Trigger -->
-            <div class="position-relative">
-              <button 
-                type="button" 
-                class="btn-datepicker-trigger" 
-                :class="{ active: analyticsFromOpen || analyticsStartDate }"
-                @click.stop="openAnalyticsFromPicker"
-                title="تاريخ البداية (من)"
-              >
-                <span class="dp-trigger-main">
-                  <span class="dp-icon-wrap" aria-hidden="true">
-                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  </span>
-                  <span class="dp-text-label">{{ analyticsStartDate ? ('من: ' + formatArabicDate(analyticsStartDate)) : 'من تاريخ' }}</span>
-                </span>
-                <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-
-              <!-- From Date Popover -->
-              <Teleport to="body" :disabled="!isMobileScreen">
-                <div v-if="analyticsFromOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (analyticsFromOpen = false) : null">
-                  <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                    <div class="datepicker-header">
-                      <button type="button" class="dp-nav-btn" @click="analyticsFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                      </button>
-                      <span class="dp-month-title">{{ analyticsFromMonthYearLabel }}</span>
-                      <button type="button" class="dp-nav-btn" @click="analyticsFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                      </button>
-                    </div>
-
-                    <div class="dp-weekdays">
-                      <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                    </div>
-
-                    <div class="dp-days-grid">
-                      <button 
-                        type="button"
-                        v-for="(dayObj, idx) in analyticsFromCalendarDays" 
-                        :key="idx" 
-                        class="dp-day-cell"
-                        :class="{ 
-                          'other-month': !dayObj.inMonth,
-                          'is-today': dayObj.isToday,
-                          'is-selected': analyticsStartDate === dayObj.dateStr
-                        }"
-                        @click="selectAnalyticsFrom(dayObj.dateStr)"
-                      >
-                        {{ dayObj.dayNum }}
-                      </button>
-                    </div>
-
-                    <div class="datepicker-footer">
-                      <button type="button" class="btn-dp-show-all" @click="selectAnalyticsFrom(getTodayStr())">تحديد تاريخ اليوم</button>
-                    </div>
-                  </div>
-                </div>
-              </Teleport>
-            </div>
-
-            <!-- To Date Trigger -->
-            <div class="position-relative">
-              <button 
-                type="button" 
-                class="btn-datepicker-trigger" 
-                :class="{ active: analyticsToOpen || analyticsEndDate }"
-                @click.stop="openAnalyticsToPicker"
-                title="تاريخ النهاية (إلى)"
-              >
-                <span class="dp-trigger-main">
-                  <span class="dp-icon-wrap" aria-hidden="true">
-                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  </span>
-                  <span class="dp-text-label">{{ analyticsEndDate ? ('إلى: ' + formatArabicDate(analyticsEndDate)) : 'إلى تاريخ' }}</span>
-                </span>
-                <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-
-              <!-- To Date Popover -->
-              <Teleport to="body" :disabled="!isMobileScreen">
-                <div v-if="analyticsToOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (analyticsToOpen = false) : null">
-                  <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                    <div class="datepicker-header">
-                      <button type="button" class="dp-nav-btn" @click="analyticsToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                      </button>
-                      <span class="dp-month-title">{{ analyticsToMonthYearLabel }}</span>
-                      <button type="button" class="dp-nav-btn" @click="analyticsToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                      </button>
-                    </div>
-
-                    <div class="dp-weekdays">
-                      <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                    </div>
-
-                    <div class="dp-days-grid">
-                      <button 
-                        type="button"
-                        v-for="(dayObj, idx) in analyticsToCalendarDays" 
-                        :key="idx" 
-                        class="dp-day-cell"
-                        :class="{ 
-                          'other-month': !dayObj.inMonth,
-                          'is-today': dayObj.isToday,
-                          'is-selected': analyticsEndDate === dayObj.dateStr
-                        }"
-                        @click="selectAnalyticsTo(dayObj.dateStr)"
-                      >
-                        {{ dayObj.dayNum }}
-                      </button>
-                    </div>
-
-                    <div class="datepicker-footer">
-                      <button type="button" class="btn-dp-show-all" @click="selectAnalyticsTo(getTodayStr())">تحديد تاريخ اليوم</button>
-                    </div>
-                  </div>
-                </div>
-              </Teleport>
-            </div>
-
-            <!-- Quick Preset Shortcuts -->
-            <button 
-              type="button" 
-              class="btn-today-shortcut" 
-              :class="{ active: isAnalyticsToday }" 
-              @click="setAnalyticsShortcut('today')"
-              title="تحليلات اليوم فقط"
-            >اليوم</button>
-
-            <button 
-              type="button" 
-              class="btn-today-shortcut" 
-              :class="{ active: isAnalytics7d }" 
-              @click="setAnalyticsShortcut('7d')"
-              title="تحليلات آخر 7 أيام"
-            >آخر 7 أيام</button>
-
-            <button 
-              type="button" 
-              class="btn-today-shortcut" 
-              :class="{ active: isAnalyticsMonth }" 
-              @click="setAnalyticsShortcut('month')"
-              title="تحليلات هذا الشهر"
-            >هذا الشهر</button>
-
-            <!-- Selected Date Range Display Badge -->
-            <div v-if="analyticsStartDate && analyticsEndDate" class="selected-date-badge animate-fade-in">
-              <span class="date-text">{{ formatArabicDate(analyticsStartDate) + ' ← ' + formatArabicDate(analyticsEndDate) }}</span>
-            </div>
-          </div>
         </div>
 
         <!-- Tab Content with Snappy Hardware-Accelerated CSS Fade -->
@@ -368,776 +202,29 @@
             <div :key="activeTab" class="active-tab-container">
           
           <!-- ANALYTICS TAB -->
-          <div v-if="activeTab === 'analytics' && userRole === 'admin'" class="analytics-tab-content">
-            
-            <!-- SKELETON LOADER (Displayed during date filter, period loading, and initial fetch) -->
-            <div v-if="analyticsLoading" class="analytics-skeleton-view animate-fade-in">
-              <!-- KPI Cards Skeleton (Single row on desktop, 2-col on mobile) -->
-              <div class="kpi-grid">
-                <div v-for="i in 6" :key="'kpi-skel-' + i" class="kpi-card skeleton-card">
-                  <div class="kpi-info" style="flex: 1 1 auto; min-width: 0;">
-                    <div class="skeleton-shimmer skeleton-title-line"></div>
-                    <div class="skeleton-shimmer skeleton-val-line"></div>
-                  </div>
-                  <div class="skeleton-shimmer skeleton-icon-wrap"></div>
-                </div>
-              </div>
-
-              <!-- Charts & Metrics Grid Skeleton -->
-              <div class="charts-grid">
-                <!-- 1. Daily Revenue Line Chart Skeleton (Hero Span-3) -->
-                <div class="chart-card span-3 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="skeleton-shimmer skeleton-chart-box"></div>
-                </div>
-
-                <!-- 2. Sales Split Skeleton (Dual-Segment Bar) -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="split-display-clean">
-                    <div class="skeleton-shimmer skeleton-line" style="width: 100%; height: 8px; border-radius: 999px; margin-bottom: 16px;"></div>
-                    <div class="d-flex flex-column gap-3">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div class="skeleton-shimmer skeleton-line" style="width: 90px; height: 14px;"></div>
-                        <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
-                      </div>
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div class="skeleton-shimmer skeleton-line" style="width: 85px; height: 14px;"></div>
-                        <div class="skeleton-shimmer skeleton-line" style="width: 75px; height: 14px;"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 3. Payment Methods Skeleton -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 100px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="pm-clean-list">
-                    <div v-for="i in 3" :key="'pm-skel-' + i" class="pm-clean-item">
-                      <div class="d-flex justify-content-between align-items-center mb-1">
-                        <div class="skeleton-shimmer skeleton-line" style="width: 60px; height: 14px;"></div>
-                        <div class="skeleton-shimmer skeleton-line" style="width: 90px; height: 14px;"></div>
-                      </div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 100%; height: 4px; border-radius: 999px;"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 4. Top Favorites Skeleton -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="list-cards">
-                    <div v-for="i in 5" :key="'fav-skel-' + i" class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 14px;"></div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 45px; height: 14px;"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 5. Category Sales Skeleton -->
-                <div class="chart-card span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 130px; height: 18px; margin-bottom: 20px;"></div>
-                  <div class="bar-chart-list">
-                    <div v-for="i in 5" :key="'cat-skel-' + i" class="category-bar-row">
-                      <div class="d-flex justify-content-between align-items-center mb-1">
-                        <div class="skeleton-shimmer skeleton-line" style="width: 100px; height: 14px;"></div>
-                        <div class="skeleton-shimmer skeleton-line" style="width: 70px; height: 14px;"></div>
-                      </div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 100%; height: 4px; border-radius: 999px;"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 6. Top Customers Skeleton -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 130px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="desktop-analytics-table">
-                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'cust-skel-' + i"></div>
-                  </div>
-                  <div class="mobile-analytics-cards-grid">
-                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-cust-skel-' + i"></div>
-                  </div>
-                </div>
-
-                <!-- 7. Top Products Skeleton -->
-                <div class="chart-card span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="desktop-analytics-table">
-                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 5" :key="'prod-skel-' + i"></div>
-                  </div>
-                  <div class="mobile-analytics-cards-grid">
-                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 4" :key="'mob-prod-skel-' + i"></div>
-                  </div>
-                </div>
-
-                <!-- 8. Inactive Customers Skeleton -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="desktop-analytics-table">
-                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 4" :key="'inact-skel-' + i"></div>
-                  </div>
-                  <div class="mobile-analytics-cards-grid">
-                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 3" :key="'mob-inact-skel-' + i"></div>
-                  </div>
-                </div>
-
-                <!-- 9. Stagnant Products Skeleton -->
-                <div class="chart-card skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 150px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="desktop-analytics-table">
-                    <div class="skeleton-shimmer skeleton-table-row" v-for="i in 4" :key="'stag-skel-' + i"></div>
-                  </div>
-                  <div class="mobile-analytics-cards-grid">
-                    <div class="skeleton-shimmer skeleton-table-row" style="height: 52px;" v-for="i in 3" :key="'mob-stag-skel-' + i"></div>
-                  </div>
-                </div>
-
-                <!-- 10. UX Funnel & Telemetry Skeleton -->
-                <div class="chart-card span-2 skeleton-card">
-                  <div class="skeleton-shimmer skeleton-line" style="width: 160px; height: 18px; margin-bottom: 16px;"></div>
-                  <div class="ux-clean-wrapper">
-                    <div class="skeleton-shimmer" style="height: 70px; border-radius: 12px; margin-bottom: 8px;"></div>
-                    <div class="d-flex gap-4 pb-2 border-bottom">
-                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 16px;"></div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 120px; height: 16px;"></div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 16px;"></div>
-                    </div>
-                    <div class="d-flex gap-4">
-                      <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
-                      <div class="skeleton-shimmer skeleton-line" style="width: 80px; height: 14px;"></div>
-                    </div>
-                    <!-- Top Engaged Categories Shimmer -->
-                    <div class="mt-4 pt-3 border-top">
-                      <div class="d-flex justify-content-between mb-3">
-                        <div class="skeleton-shimmer skeleton-line" style="width: 140px; height: 16px;"></div>
-                        <div class="skeleton-shimmer skeleton-line" style="width: 65px; height: 14px;"></div>
-                      </div>
-                      <div class="d-flex flex-column gap-3">
-                        <div v-for="i in 5" :key="'ux-cat-skel-' + i">
-                          <div class="d-flex justify-content-between mb-1">
-                            <div class="skeleton-shimmer skeleton-line" :style="{ width: (80 + (i * 10)) + 'px', height: '14px' }"></div>
-                            <div class="skeleton-shimmer skeleton-line" style="width: 28px; height: 14px;"></div>
-                          </div>
-                          <div class="skeleton-shimmer" :style="{ width: (100 - (i * 12)) + '%', height: '6px', borderRadius: '999px' }"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- REAL ANALYTICS DATA CONTENT -->
-            <div v-else class="analytics-real-content animate-fade-in">
-            <!-- KPI Cards Grid -->
-            <div class="kpi-grid" ref="kpiGridRef" :class="{ 'in-view': isKpiInView }">
-              <!-- KPI 1: Revenue -->
-              <div class="kpi-card" style="--kpi-delay: 0ms;">
-                <div class="kpi-info">
-                  <span class="kpi-title">المبيعات</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.totalRevenue) }}</span>
-                </div>
-                <div class="kpi-icon-wrap">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </div>
-              </div>
-
-              <!-- KPI 2: Paid -->
-              <div class="kpi-card" style="--kpi-delay: 40ms;">
-                <div class="kpi-info">
-                  <span class="kpi-title">المدفوع</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.totalPaid) }}</span>
-                </div>
-                <div class="kpi-icon-wrap">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                </div>
-              </div>
-
-              <!-- KPI 3: Remaining (Debt) -->
-              <div class="kpi-card" style="--kpi-delay: 80ms;">
-                <div class="kpi-info">
-                  <span class="kpi-title">المتبقي</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.totalRemaining) }}</span>
-                </div>
-                <div class="kpi-icon-wrap">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                </div>
-              </div>
-
-              <!-- KPI 4: Orders -->
-              <div class="kpi-card" style="--kpi-delay: 120ms;">
-                <div class="kpi-info">
-                  <span class="kpi-title">الطلبات</span>
-                  <span class="kpi-value text-mono">{{ formatArabicPlural(animatedKpi.orderCount, 'order') }}</span>
-                </div>
-                <div class="kpi-icon-wrap">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                </div>
-              </div>
-
-              <!-- KPI 5: AOV -->
-              <div class="kpi-card" style="--kpi-delay: 160ms;">
-                <div class="kpi-info">
-                  <span class="kpi-title">متوسط الطلب</span>
-                  <span class="kpi-value text-mono">{{ formatCurrency(animatedKpi.avgOrderValue) }}</span>
-                </div>
-                <div class="kpi-icon-wrap">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
-              </div>
-
-              <!-- KPI 6: Customers -->
-              <div class="kpi-card" style="--kpi-delay: 200ms;">
-                <div class="kpi-info">
-                  <span class="kpi-title">العملاء النشطون</span>
-                  <span class="kpi-value text-mono">{{ formatArabicPlural(animatedKpi.activeCustomers, 'customer') }}</span>
-                </div>
-                <div class="kpi-icon-wrap">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- Charts & Metrics Grid -->
-            <div class="charts-grid">
-              <!-- 1. Sales Trend Hero Chart Card (Span-3 / Full Width) -->
-              <div class="chart-card span-3 trend-chart-card" ref="trendChartCardRef" :class="{ 'in-view': isTrendChartInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">الإيرادات اليومية</h3>
-                  <Transition name="badge-pop" mode="out-in">
-                    <span v-if="hoveredTrendIndex !== null && trendCoordinates[hoveredTrendIndex]" :key="'hov-' + hoveredTrendIndex" class="chart-live-hover-pill text-mono">
-                      <span class="hover-pill-date">{{ trendCoordinates[hoveredTrendIndex].date }}</span>
-                      <span class="hover-pill-sep">•</span>
-                      <strong class="hover-pill-val">{{ formatCurrency(trendCoordinates[hoveredTrendIndex].val) }}</strong>
-                    </span>
-                    <span v-else-if="trendMaxVal > 0" key="peak" class="chart-peak-pill text-mono">
-                      أعلى إيراد يومي: <strong>{{ formatCurrency(trendMaxVal) }}</strong>
-                    </span>
-                  </Transition>
-                </div>
-                <div class="svg-chart-container">
-                  <div v-if="analyticsData.revenueTrend.length === 0" class="empty-chart">
-                    لا توجد بيانات كافية لرسم المخطط البياني في هذه الفترة.
-                  </div>
-                  <svg aria-hidden="true" v-else class="svg-line-chart" viewBox="0 0 900 220" @mouseleave="hoveredTrendIndex = null">
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="var(--chart-primary, #d97706)" stop-opacity="0.22"/>
-                        <stop offset="100%" stop-color="var(--chart-primary, #d97706)" stop-opacity="0.0"/>
-                      </linearGradient>
-                    </defs>
-                    <!-- Horizontal Grid Lines -->
-                    <line x1="45" y1="35" x2="855" y2="35" stroke="#f1f5f9" stroke-dasharray="4"/>
-                    <line x1="45" y1="80" x2="855" y2="80" stroke="#f1f5f9" stroke-dasharray="4"/>
-                    <line x1="45" y1="125" x2="855" y2="125" stroke="#f1f5f9" stroke-dasharray="4"/>
-                    <line x1="45" y1="170" x2="855" y2="170" stroke="#e2e8f0" stroke-width="1.2"/>
-                    
-                    <!-- Y-Axis Value Labels -->
-                    <text v-if="trendMaxVal > 0" x="855" y="27" class="chart-text label-y" text-anchor="end">{{ formatCurrency(trendMaxVal) }}</text>
-                    <text x="855" y="164" class="chart-text label-y" text-anchor="end">0 د.ل</text>
-
-                    <!-- Gradient Area -->
-                    <path :d="svgTrendAreaPath" class="svg-trend-area" :class="{ 'show-area': isTrendChartInView }" fill="url(#chartGradient)"/>
-
-                    <!-- Animated Line -->
-                    <path :d="svgTrendLinePath" pathLength="100" class="svg-trend-line" :class="{ 'draw-line': isTrendChartInView }" fill="none" stroke="var(--chart-primary, #d97706)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    
-                    <!-- Interactive Hover Crosshair Line -->
-                    <line
-                      v-if="hoveredTrendIndex !== null && trendCoordinates[hoveredTrendIndex]"
-                      :x1="trendCoordinates[hoveredTrendIndex].x"
-                      y1="30"
-                      :x2="trendCoordinates[hoveredTrendIndex].x"
-                      y2="170"
-                      stroke="var(--chart-primary, #d97706)"
-                      stroke-width="1.5"
-                      stroke-dasharray="4 3"
-                      opacity="0.6"
-                      class="chart-crosshair-line"
-                    />
-
-                    <!-- Animated Dots -->
-                    <g
-                      v-for="(dot, idx) in trendCoordinates"
-                      :key="idx"
-                      class="chart-dot-group"
-                      :class="{ 'show-dot': isTrendChartInView, 'is-hovered': hoveredTrendIndex === idx }"
-                      :style="{ '--dot-delay': `${Math.min(idx * 30 + 150, 950)}ms` }"
-                      @mouseenter="hoveredTrendIndex = idx"
-                      @touchstart.passive="hoveredTrendIndex = idx"
-                    >
-                      <circle v-if="hoveredTrendIndex === idx" :cx="dot.x" :cy="dot.y" r="10" fill="var(--chart-primary, #d97706)" opacity="0.18" class="dot-halo-pulse" />
-                      <circle :cx="dot.x" :cy="dot.y" :r="hoveredTrendIndex === idx ? 6 : 4.5" fill="#fff" stroke="var(--chart-primary, #d97706)" :stroke-width="hoveredTrendIndex === idx ? 3 : 2.5" />
-                      <circle :cx="dot.x" :cy="dot.y" r="18" fill="transparent" class="dot-hover-trigger">
-                        <title>{{ dot.date }}: {{ formatCurrency(dot.val) }}</title>
-                      </circle>
-                    </g>
-                    <!-- X-Axis Date Labels with generous clearance preventing dot overlap -->
-                    <text v-for="(label, idx) in trendXLabels" :key="'lbl-'+idx" :x="label.x" y="202" class="chart-text label-x" text-anchor="middle">
-                      {{ label.text }}
-                    </text>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- 2. Price Mode Split Chart Card -->
-              <div class="chart-card price-mode-card" ref="priceModeCardRef" :class="{ 'in-view': isPriceModeInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">توزيع المبيعات</h3>
-                </div>
-                <div class="split-display-clean">
-                  <div class="split-dual-bar">
-                    <div class="split-dual-segment segment-bulk" :style="{ width: (isPriceModeInView ? priceModePercentages.bulk : 0) + '%' }"></div>
-                    <div class="split-dual-segment segment-regular" :style="{ width: (isPriceModeInView ? priceModePercentages.regular : 0) + '%' }"></div>
-                  </div>
-                  <div class="split-clean-list">
-                    <div class="split-clean-row">
-                      <div class="split-clean-left">
-                        <span class="split-clean-dot dot-bulk"></span>
-                        <span class="split-clean-name font-bold">بيع بالجملة</span>
-                      </div>
-                      <div class="split-clean-right text-mono">
-                        <span class="split-clean-val font-bold">{{ formatCurrency(analyticsData.priceModeSplit.bulk.revenue) }}</span>
-                        <span class="split-clean-pct text-muted">({{ Math.round(priceModePercentages.bulk) }}%)</span>
-                      </div>
-                    </div>
-                    <div class="split-clean-row">
-                      <div class="split-clean-left">
-                        <span class="split-clean-dot dot-regular"></span>
-                        <span class="split-clean-name font-bold">بيع بالمفرد</span>
-                      </div>
-                      <div class="split-clean-right text-mono">
-                        <span class="split-clean-val font-bold">{{ formatCurrency(analyticsData.priceModeSplit.regular.revenue) }}</span>
-                        <span class="split-clean-pct text-muted">({{ Math.round(priceModePercentages.regular) }}%)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3. Payment Methods Distribution Card -->
-              <div class="chart-card payment-methods-card" ref="paymentMethodsCardRef" :class="{ 'in-view': isPaymentMethodsInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">طرق الدفع</h3>
-                </div>
-                <div class="pm-clean-list">
-                  <!-- Cash -->
-                  <div class="pm-clean-item">
-                    <div class="pm-clean-header">
-                      <span class="pm-clean-name font-bold">نقدي</span>
-                      <div class="pm-clean-meta text-mono">
-                        <span class="font-bold">{{ formatCurrency(analyticsData.paymentMethodsSplit.cash.revenue) }}</span>
-                        <span class="text-muted">({{ getPaymentMethodPct('cash') }}%)</span>
-                      </div>
-                    </div>
-                    <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-cash" :style="{ width: (isPaymentMethodsInView ? getPaymentMethodPct('cash') : 0) + '%', transitionDelay: '50ms' }"></div>
-                    </div>
-                  </div>
-
-                  <!-- Card -->
-                  <div class="pm-clean-item">
-                    <div class="pm-clean-header">
-                      <span class="pm-clean-name font-bold">بطاقة مصرفية</span>
-                      <div class="pm-clean-meta text-mono">
-                        <span class="font-bold">{{ formatCurrency(analyticsData.paymentMethodsSplit.card.revenue) }}</span>
-                        <span class="text-muted">({{ getPaymentMethodPct('card') }}%)</span>
-                      </div>
-                    </div>
-                    <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-card" :style="{ width: (isPaymentMethodsInView ? getPaymentMethodPct('card') : 0) + '%', transitionDelay: '150ms' }"></div>
-                    </div>
-                  </div>
-
-                  <!-- Bank Transfer -->
-                  <div class="pm-clean-item">
-                    <div class="pm-clean-header">
-                      <span class="pm-clean-name font-bold">تحويل بنكي</span>
-                      <div class="pm-clean-meta text-mono">
-                        <span class="font-bold">{{ formatCurrency(analyticsData.paymentMethodsSplit.bank_transfer.revenue) }}</span>
-                        <span class="text-muted">({{ getPaymentMethodPct('bank_transfer') }}%)</span>
-                      </div>
-                    </div>
-                    <div class="pm-clean-bar">
-                      <div class="pm-clean-fill fill-bank" :style="{ width: (isPaymentMethodsInView ? getPaymentMethodPct('bank_transfer') : 0) + '%', transitionDelay: '250ms' }"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4. Top Favorites Card -->
-              <div class="chart-card top-favorites-card" ref="topFavoritesCardRef" :class="{ 'in-view': isTopFavoritesInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">الأكثر تفضيلاً</h3>
-                </div>
-                <div class="list-cards">
-                  <div v-if="activeTopFavorites.length === 0" class="empty-list py-3 text-center text-muted">
-                    لا توجد تفضيلات مسجلة بعد.
-                  </div>
-                  <div 
-                    v-for="(fav, idx) in activeTopFavorites" 
-                    :key="idx" 
-                    class="fav-clean-row"
-                  >
-                    <span class="fav-clean-rank text-mono text-muted">{{ idx + 1 }}.</span>
-                    <span class="fav-clean-name font-bold">{{ fav.name }}</span>
-                    <span class="fav-clean-count text-mono text-muted">{{ formatArabicPlural(fav.count, 'customer') }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 5. Category Sales Share Card -->
-              <div class="chart-card span-2 category-sales-card" ref="categorySalesCardRef" :class="{ 'in-view': isCategorySalesInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">مبيعات الفئات</h3>
-                </div>
-                <div class="bar-chart-list">
-                  <div v-if="analyticsData.categorySales.length === 0" class="empty-list py-3 text-center text-muted">
-                    لا توجد أصناف مبيعات في هذه الفترة.
-                  </div>
-                  <div 
-                    v-for="(cat, cIdx) in analyticsData.categorySales" 
-                    :key="cat.category" 
-                    class="category-bar-row"
-                  >
-                    <div class="bar-info">
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="cat-rank-num text-muted text-mono">{{ cIdx + 1 }}.</span>
-                        <span class="cat-name font-bold">{{ cat.category }}</span>
-                      </div>
-                      <span class="cat-val text-mono font-bold">{{ formatCurrency(cat.revenue) }}</span>
-                    </div>
-                    <div class="bar-gauge">
-                      <div 
-                        class="bar-fill" 
-                        :style="{ width: (isCategorySalesInView ? getCategoryBarWidth(cat.revenue) : 0) + '%', transitionDelay: `${Math.min(cIdx * 50 + 60, 600)}ms` }"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 6. Top Customers Card -->
-              <div class="chart-card top-customers-card" ref="topCustomersCardRef" :class="{ 'in-view': isTopCustomersInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">كبار العملاء</h3>
-                </div>
-                <div class="table-container">
-                  <table class="admin-table desktop-analytics-table top-customers-interactive-table">
-                    <thead>
-                      <tr>
-                        <th class="col-center" style="width: 40px;">#</th>
-                        <th>العميل</th>
-                        <th style="width: 140px;">الهاتف</th>
-                        <th class="col-center" style="width: 130px;">الإنفاق</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="analyticsData.topCustomers.length === 0">
-                        <td colspan="4" class="text-center py-4 text-muted">لا توجد بيانات عملاء في هذه الفترة.</td>
-                      </tr>
-                      <tr 
-                        v-for="(cust, cIdx) in analyticsData.topCustomers" 
-                        :key="cust.phone"
-                        class="top-cust-row"
-                        :class="{ 'in-view': isTopCustomersInView }"
-                        :style="{ '--row-delay': `${Math.min(cIdx * 35 + 50, 450)}ms` }"
-                      >
-                        <td class="col-center text-mono text-muted">{{ cIdx + 1 }}</td>
-                        <td class="font-bold">{{ cust.name }}</td>
-                        <td class="text-mono" dir="ltr">
-                          <a :href="'tel:' + cust.phone" class="phone-clean-link">{{ formatLibyanPhone(cust.phone) }}</a>
-                        </td>
-                        <td class="col-center text-mono font-bold">{{ formatCurrency(cust.totalSpent) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- Mobile Top Customers Cards -->
-                  <div class="mobile-analytics-cards-grid">
-                    <div v-if="analyticsData.topCustomers.length === 0" class="empty-state-card p-3 text-center">
-                      <p class="text-muted mb-0">لا توجد بيانات عملاء.</p>
-                    </div>
-                    <div
-                      v-for="(cust, idx) in analyticsData.topCustomers"
-                      :key="'mob-top-cust-' + cust.phone"
-                      class="mob-clean-item"
-                    >
-                      <div class="mob-clean-line">
-                        <span class="mob-clean-title font-bold">{{ idx + 1 }}. {{ cust.name }}</span>
-                        <span class="mob-clean-rev text-mono font-bold">{{ formatCurrency(cust.totalSpent) }}</span>
-                      </div>
-                      <div class="mob-clean-sub">
-                        <a :href="'tel:' + cust.phone" class="phone-clean-link text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 7. Top Products Card -->
-              <div class="chart-card span-2 top-products-card" ref="topProductsCardRef" :class="{ 'in-view': isTopProductsInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">المنتجات الأكثر مبيعاً</h3>
-                </div>
-
-                <div class="table-container">
-                  <table class="admin-table desktop-analytics-table top-products-interactive-table">
-                    <thead>
-                      <tr>
-                        <th class="col-center" style="width: 50px;">#</th>
-                        <th class="th-sortable" @click="toggleTopProductsSort('name')">اسم المنتج</th>
-                        <th style="width: 140px;">الفئة</th>
-                        <th class="col-center th-sortable" @click="toggleTopProductsSort('quantity')" style="width: 130px;">الكمية</th>
-                        <th class="col-center th-sortable" @click="toggleTopProductsSort('revenue')" style="width: 150px;">الإيراد</th>
-                        <th style="width: 120px;">الحصة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="sortedTopProducts.length === 0">
-                        <td colspan="6" class="text-center py-4 text-muted">
-                          لا توجد منتجات مباعة في هذه الفترة.
-                        </td>
-                      </tr>
-                      <tr 
-                        v-for="prod in sortedTopProducts" 
-                        :key="prod.productId"
-                        class="clickable-product-row"
-                        :class="{ 'in-view': isTopProductsInView }"
-                        :style="{ '--row-delay': `${Math.min(prod.originalRank * 35 + 50, 450)}ms` }"
-                        @click="openProductCustomersModal(prod)"
-                      >
-                        <td class="col-center text-mono text-muted">{{ prod.originalRank }}</td>
-                        <td class="font-bold">{{ prod.name }}</td>
-                        <td class="text-muted">{{ prod.category || '—' }}</td>
-                        <td class="col-center text-mono font-bold">{{ formatArabicPlural(prod.quantity, 'unit') }}</td>
-                        <td class="col-center text-mono font-bold">{{ formatCurrency(prod.revenue) }}</td>
-                        <td>
-                          <div class="share-mini-cell">
-                            <span class="text-mono font-bold text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
-                            <div class="share-mini-bar">
-                              <div class="share-mini-fill" :style="{ width: (isTopProductsInView ? Math.min(100, Math.max(4, getSalesSharePct(prod.revenue))) : 0) + '%', transitionDelay: `${Math.min(prod.originalRank * 35 + 60, 500)}ms` }"></div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- Mobile Top Products Cards -->
-                  <div class="mobile-analytics-cards-grid">
-                    <div v-if="sortedTopProducts.length === 0" class="empty-state-card p-3 text-center">
-                      <p class="text-muted mb-0">لا توجد منتجات مباعة في هذه الفترة.</p>
-                    </div>
-                    <div
-                      v-for="prod in sortedTopProducts"
-                      :key="'mob-top-prod-' + prod.productId"
-                      class="mob-clean-item"
-                      @click="openProductCustomersModal(prod)"
-                    >
-                      <div class="mob-clean-line">
-                        <span class="mob-clean-title font-bold">{{ prod.originalRank }}. {{ prod.name }}</span>
-                        <span class="mob-clean-rev text-mono font-bold">{{ formatCurrency(prod.revenue) }}</span>
-                      </div>
-                      <div class="mob-clean-sub">
-                        <span>{{ prod.category || '—' }}</span>
-                        <span>•</span>
-                        <span class="text-mono">{{ formatArabicPlural(prod.quantity, 'unit') }}</span>
-                        <span>•</span>
-                        <span class="text-mono text-muted">{{ getSalesSharePct(prod.revenue) }}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 8. Inactive Customers Card -->
-              <div class="chart-card inactive-customers-card" ref="inactiveCustomersCardRef" :class="{ 'in-view': isInactiveCustomersInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">عملاء غير نشطين</h3>
-                </div>
-                <div class="table-container">
-                  <table class="admin-table desktop-analytics-table">
-                    <thead>
-                      <tr>
-                        <th>الاسم</th>
-                        <th style="width: 140px;">الهاتف</th>
-                        <th style="width: 120px;">آخر نشاط</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="analyticsData.inactiveCustomers.length === 0">
-                        <td colspan="3" class="text-center py-4 text-muted">جميع العملاء نشطون في هذه الفترة!</td>
-                      </tr>
-                      <tr 
-                        v-for="cust in analyticsData.inactiveCustomers" 
-                        :key="cust.phone"
-                      >
-                        <td class="font-bold">{{ cust.name }}</td>
-                        <td class="text-mono" dir="ltr">
-                          <a :href="'tel:' + cust.phone" class="phone-clean-link">{{ formatLibyanPhone(cust.phone) }}</a>
-                        </td>
-                        <td class="text-muted text-mono">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- Mobile Inactive Customers Cards -->
-                  <div class="mobile-analytics-cards-grid">
-                    <div v-if="analyticsData.inactiveCustomers.length === 0" class="empty-state-card p-3 text-center">
-                      <p class="text-muted mb-0">جميع العملاء نشطون!</p>
-                    </div>
-                    <div
-                      v-for="cust in analyticsData.inactiveCustomers"
-                      :key="'mob-inact-cust-' + cust.phone"
-                      class="mob-clean-item"
-                    >
-                      <div class="mob-clean-line">
-                        <span class="mob-clean-title font-bold">{{ cust.name }}</span>
-                        <span class="text-muted text-mono">{{ new Date(cust.lastActive).toLocaleDateString('ar-LY') }}</span>
-                      </div>
-                      <div class="mob-clean-sub">
-                        <a :href="'tel:' + cust.phone" class="phone-clean-link text-mono" dir="ltr">{{ formatLibyanPhone(cust.phone) }}</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 9. Low Performing Products Card -->
-              <div class="chart-card low-products-card" ref="lowProductsCardRef" :class="{ 'in-view': isLowProductsInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">منتجات بدون مبيعات</h3>
-                </div>
-                <div class="table-container">
-                  <table class="admin-table desktop-analytics-table">
-                    <thead>
-                      <tr>
-                        <th>اسم المنتج</th>
-                        <th style="width: 140px;">الفئة</th>
-                        <th class="col-center" style="width: 130px;">السعر</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="activeLowPerformingProducts.length === 0">
-                        <td colspan="3" class="text-center py-4 text-muted">كل المنتجات تحقق مبيعات!</td>
-                      </tr>
-                      <tr 
-                        v-for="prod in activeLowPerformingProducts" 
-                        :key="prod.productId"
-                      >
-                        <td class="font-bold">{{ prod.name }}</td>
-                        <td class="text-muted">{{ prod.category || '—' }}</td>
-                        <td class="col-center text-mono font-bold">{{ formatCurrency(prod.price) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- Mobile Low Performing Cards -->
-                  <div class="mobile-analytics-cards-grid">
-                    <div v-if="activeLowPerformingProducts.length === 0" class="empty-state-card p-3 text-center">
-                      <p class="text-muted mb-0">كل المنتجات تحقق مبيعات!</p>
-                    </div>
-                    <div
-                      v-for="prod in activeLowPerformingProducts"
-                      :key="'mob-low-prod-' + prod.productId"
-                      class="mob-clean-item"
-                    >
-                      <div class="mob-clean-line">
-                        <span class="mob-clean-title font-bold">{{ prod.name }}</span>
-                        <span class="text-mono font-bold">{{ formatCurrency(prod.price) }}</span>
-                      </div>
-                      <div class="mob-clean-sub">
-                        <span>{{ prod.category || '—' }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 10. UX Insights & Conversion Funnel Card -->
-              <div class="chart-card span-2 ux-insights-card" ref="uxInsightsCardRef" :class="{ 'in-view': isUxInsightsInView }">
-                <div class="chart-card-header">
-                  <h3 class="chart-title">الزيارات ومسار التحويل</h3>
-                </div>
-
-                <div class="ux-clean-wrapper">
-                  <!-- Clean 4-Metric Funnel Strip -->
-                  <div class="ux-funnel-strip">
-                    <div class="funnel-metric">
-                      <span class="funnel-metric-label">جلسات التصفح</span>
-                      <span class="funnel-metric-val text-mono">{{ telemetryInsights.funnel?.totalSessions || 0 }}</span>
-                    </div>
-                    <div class="funnel-metric">
-                      <span class="funnel-metric-label">إضافة للسلة</span>
-                      <span class="funnel-metric-val text-mono">{{ telemetryInsights.funnel?.cartSessions || 0 }}</span>
-                    </div>
-                    <div class="funnel-metric">
-                      <span class="funnel-metric-label">مراجعة الطلب</span>
-                      <span class="funnel-metric-val text-mono">{{ telemetryInsights.funnel?.checkoutSessions || 0 }}</span>
-                    </div>
-                    <div class="funnel-metric highlight">
-                      <span class="funnel-metric-label">الطلبات المكتملة</span>
-                      <span class="funnel-metric-val text-mono">{{ telemetryInsights.funnel?.orderSessions || 0 }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Clean Performance Rates -->
-                  <div class="ux-rates-row">
-                    <div class="ux-rate-item">
-                      <span class="ux-rate-label">معدل التحويل:</span>
-                      <span class="ux-rate-val text-mono font-bold">{{ telemetryInsights.funnel?.conversionRate || 0 }}%</span>
-                    </div>
-                    <div class="ux-rate-item">
-                      <span class="ux-rate-label">معدل ترك السلة:</span>
-                      <span class="ux-rate-val text-mono font-bold">{{ telemetryInsights.funnel?.cartAbandonmentRate || 0 }}%</span>
-                    </div>
-                    <div class="ux-rate-item">
-                      <span class="ux-rate-label">متوسط وقت المعاينة:</span>
-                      <span class="ux-rate-val text-mono font-bold">{{ telemetryInsights.avgDwellSeconds || 0 }} ثانية</span>
-                    </div>
-                  </div>
-
-                  <!-- Clean Device Breakdown Strip -->
-                  <div class="device-clean-strip">
-                    <div class="device-clean-item">
-                      <span>هاتف:</span>
-                      <span class="text-mono font-bold">{{ getDevicePct('mobile') }}%</span>
-                    </div>
-                    <div class="device-clean-item">
-                      <span>حاسوب:</span>
-                      <span class="text-mono font-bold">{{ getDevicePct('desktop') }}%</span>
-                    </div>
-                    <div class="device-clean-item">
-                      <span>لوحي:</span>
-                      <span class="text-mono font-bold">{{ getDevicePct('tablet') }}%</span>
-                    </div>
-                  </div>
-
-                  <!-- Top Engaged Categories by Visitor Interactions -->
-                  <div v-if="telemetryInsights.topCategories && telemetryInsights.topCategories.length" class="ux-categories-section mt-4 pt-3 border-top">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="font-bold text-slate-800" style="font-size: 0.88rem;">الفئات الأكثر تفاعلاً وزيارة</span>
-                      <span class="text-muted text-mono" style="font-size: 0.78rem;">مرات التفاعل</span>
-                    </div>
-                    <div class="ux-cat-list d-flex flex-column gap-3">
-                      <div v-for="(cat, cIdx) in telemetryInsights.topCategories" :key="cat.name" class="ux-cat-row">
-                        <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.82rem;">
-                          <span class="font-semibold text-slate-700">{{ cat.name }}</span>
-                          <span class="text-mono font-bold text-slate-600">{{ cat.interactions }}</span>
-                        </div>
-                        <div class="ux-cat-bar-bg" style="height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; position: relative; width: 100%;">
-                          <div class="ux-cat-bar-fill" :style="{ width: (isUxInsightsInView ? Math.min(100, Math.round((cat.interactions / (telemetryInsights.topCategories[0]?.interactions || 1)) * 100)) : 0) + '%', transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)', transitionDelay: `${Math.min(cIdx * 50 + 80, 500)}ms`, background: '#3b82f6', height: '100%', borderRadius: '999px', float: 'right' }"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            </div>
-          </div>
+          <AdminAnalyticsTab
+            v-if="activeTab === 'analytics' && userRole === 'admin'"
+            :analyticsPeriod="analyticsPeriod"
+            :analyticsStartDate="analyticsStartDate"
+            :analyticsEndDate="analyticsEndDate"
+            :analyticsLoading="analyticsLoading"
+            v-model:fromOpen="analyticsFromOpen"
+            v-model:toOpen="analyticsToOpen"
+            :isMobileScreen="isMobileScreen"
+            :analyticsData="analyticsData"
+            :telemetryInsights="telemetryInsights"
+            :products="products"
+            :activeShop="activeShop"
+            :formatCurrency="formatCurrency"
+            :formatArabicPlural="formatArabicPlural"
+            :formatArabicDate="formatArabicDate"
+            :buildCalendarMatrix="buildCalendarMatrix"
+            @change-period="changePeriod"
+            @select-from="selectAnalyticsFrom"
+            @select-to="selectAnalyticsTo"
+            @set-shortcut="setAnalyticsShortcut"
+            @open-product-customers="openProductCustomersModal"
+          />
 
           <!-- PRODUCTS CRUD TAB -->
           <div v-else-if="activeTab === 'products' && userRole === 'admin'" class="products-tab-content">
@@ -1424,591 +511,36 @@
             </div>
           </div>
 
-          <!-- CATEGORIES CRUD TAB (REDESIGNED SHOWCASE & MANAGEMENT) -->
-          <div v-else-if="activeTab === 'categories' && userRole === 'admin'" class="categories-tab-content">
-            
-            <!-- 1. Executive KPI Summary Cards Grid -->
-            <div class="cat-kpi-grid">
-              <!-- Total Categories -->
-              <div class="cat-kpi-card glass-panel">
-                <div class="cat-kpi-icon cat-kpi-gold" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <div class="cat-kpi-info">
-                  <span class="cat-kpi-label">إجمالي الأصناف الرئيسية</span>
-                  <div class="cat-kpi-value text-mono">{{ categories.length }}</div>
-                  <span class="cat-kpi-desc">تصنيف رئيسي في القائمة</span>
-                </div>
-              </div>
+          <!-- CATEGORIES CRUD TAB -->
+          <AdminCategoriesTab
+            v-else-if="activeTab === 'categories' && userRole === 'admin'"
+            :categories="categories"
+            :products="products"
+            :categoriesLoading="categoriesLoading"
+            :isMobileScreen="isMobileScreen"
+            :selectedTableRowIndex="selectedTableRowIndex"
+            v-model:searchQuery="categorySearchQuery"
+            v-model:viewMode="categoriesViewMode"
+            @open-modal="openCategoryModal"
+            @delete-category="deleteCategory"
+            @filter-products="filterProductsByCategory"
+          />
 
-              <!-- Total Subcategories -->
-              <div class="cat-kpi-card glass-panel">
-                <div class="cat-kpi-icon cat-kpi-sky" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-                </div>
-                <div class="cat-kpi-info">
-                  <span class="cat-kpi-label">الأصناف الفرعية</span>
-                  <div class="cat-kpi-value text-mono">{{ totalSubcategoriesCount }}</div>
-                  <span class="cat-kpi-desc">قسم فرعي مفعل</span>
-                </div>
-              </div>
-
-              <!-- Total Categorized Products -->
-              <div class="cat-kpi-card glass-panel">
-                <div class="cat-kpi-icon cat-kpi-emerald" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                </div>
-                <div class="cat-kpi-info">
-                  <span class="cat-kpi-label">المنتجات المصنفة</span>
-                  <div class="cat-kpi-value text-mono">{{ categorizedProductsCount }}</div>
-                  <span class="cat-kpi-desc">من إجمالي {{ products.length }} منتج</span>
-                </div>
-              </div>
-
-              <!-- Avg Products per Category -->
-              <div class="cat-kpi-card glass-panel">
-                <div class="cat-kpi-icon cat-kpi-purple" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10h-10z"/></svg>
-                </div>
-                <div class="cat-kpi-info">
-                  <span class="cat-kpi-label">متوسط التوزيع</span>
-                  <div class="cat-kpi-value text-mono">{{ categories.length ? Math.round(categorizedProductsCount / categories.length) : 0 }}</div>
-                  <span class="cat-kpi-desc">منتج / صنف رئيسي</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. Main Section Card -->
-            <div class="table-card glass-panel overflow-hidden">
-              <!-- Toolbar -->
-              <div class="card-toolbar card-toolbar-unified">
-                <div class="toolbar-search-filter-group">
-                  <div class="search-input-wrapper flex-grow-1">
-                    <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input 
-                      v-model="categorySearchQuery" 
-                      type="text" 
-                      placeholder="بحث في الأصناف…" 
-                      class="form-control search-input"
-                    />
-                    <button 
-                      v-if="categorySearchQuery" 
-                      type="button" 
-                      class="btn-clear-search" 
-                      @click="categorySearchQuery = ''"
-                      aria-label="مسح البحث"
-                    >&times;</button>
-                  </div>
-                </div>
-
-                <div class="toolbar-actions-group">
-                  <!-- View Mode Toggle (Desktop Only) -->
-                  <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
-                    <button 
-                      type="button" 
-                      class="btn-toggle-mode" 
-                      :class="{ active: categoriesViewMode === 'cards' }" 
-                      @click="categoriesViewMode = 'cards'"
-                      title="عرض البطاقات البصرية"
-                    >
-                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                      <span>بطاقات</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="btn-toggle-mode" 
-                      :class="{ active: categoriesViewMode === 'table' }" 
-                      @click="categoriesViewMode = 'table'"
-                      title="عرض الجدول المنظم"
-                    >
-                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                      <span>جدول</span>
-                    </button>
-                  </div>
-
-                  <!-- Add Category Button -->
-                  <button @click="openCategoryModal()" class="btn btn-primary btn-add-highlight">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>إضافة صنف جديد</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Loading Skeleton -->
-              <div v-if="categoriesLoading" class="categories-skeleton-grid">
-                <div v-for="i in 6" :key="'cat-skel-' + i" class="cat-skeleton-card glass-panel">
-                  <div class="cat-skel-top">
-                    <div class="skeleton-shimmer cat-skel-icon"></div>
-                    <div class="cat-skel-meta">
-                      <div class="skeleton-shimmer cat-skel-title"></div>
-                      <div class="skeleton-shimmer cat-skel-badge"></div>
-                    </div>
-                  </div>
-                  <div class="cat-skel-chips">
-                    <div class="skeleton-shimmer cat-skel-chip" v-for="j in 3" :key="j"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Empty State -->
-              <div v-else-if="filteredCategories.length === 0" class="mgmt-empty-state glass-panel">
-                <div class="empty-icon-wrap" aria-hidden="true">
-                  <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <h4 class="empty-title">{{ categorySearchQuery ? 'لا توجد نتائج تطابق بحثك' : 'لا توجد أصناف مدخلة حتى الآن' }}</h4>
-                <p class="empty-desc">{{ categorySearchQuery ? 'جرب البحث بكلمة أخرى أو امسح شريط البحث' : 'ابدأ بإضافة أول صنف رئيسي لقائمتك لتنظيم المنتجات' }}</p>
-                <button v-if="!categorySearchQuery" @click="openCategoryModal()" class="btn btn-primary mt-2">
-                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span>إضافة أول صنف الآن</span>
-                </button>
-                <button v-else @click="categorySearchQuery = ''" class="btn btn-outline mt-2">مسح البحث</button>
-              </div>
-
-              <!-- 3. Cards Showcase Grid (Default on mobile and when viewMode === 'cards') -->
-              <div v-else-if="isMobileScreen || categoriesViewMode === 'cards'" class="categories-showcase-grid">
-                <div 
-                  v-for="cat in filteredCategories" 
-                  :key="cat._id" 
-                  class="category-showcase-card glass-panel"
-                >
-                  <!-- Card Top Row: Icon, Title, Product Count, Actions -->
-                  <div class="cat-card-header">
-                    <div class="cat-card-visual">
-                      <div class="cat-icon-container">
-                        <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" size="28" />
-                      </div>
-                      <div class="cat-title-stack">
-                        <h4 class="cat-card-title">{{ cat.name }}</h4>
-                        <button 
-                          type="button" 
-                          class="cat-product-count-badge" 
-                          @click="filterProductsByCategory(cat.name)"
-                          :title="'عرض منتجات ' + cat.name + ' في القائمة'"
-                        >
-                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                          <span>{{ getCategoryProductCount(cat.name) }} منتج</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Quick Action Buttons -->
-                    <div class="cat-actions-cluster">
-                      <button 
-                        type="button" 
-                        class="btn-cat-action btn-cat-edit" 
-                        @click="openCategoryModal(cat)" 
-                        title="تعديل الصنف"
-                        aria-label="تعديل الصنف"
-                      >
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        <span class="btn-text-label">تعديل</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="btn-cat-action btn-cat-delete" 
-                        @click="deleteCategory(cat._id)" 
-                        title="حذف الصنف"
-                        aria-label="حذف الصنف"
-                      >
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        <span class="btn-text-label">حذف</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Subcategories Section -->
-                  <div class="cat-card-subcats">
-                    <div class="subcats-header">
-                      <span class="subcats-label">الأقسام الفرعية</span>
-                      <span class="subcats-count-badge">{{ cat.subCategories?.length || 0 }}</span>
-                    </div>
-                    <div v-if="cat.subCategories && cat.subCategories.length" class="subcats-cloud">
-                      <span v-for="sub in cat.subCategories" :key="sub" class="subcat-pill">
-                        <span class="subcat-dot" aria-hidden="true"></span>
-                        <span>{{ sub }}</span>
-                      </span>
-                    </div>
-                    <div v-else class="subcats-empty">
-                      <span class="subcats-empty-text">صنف مباشر (بدون أقسام فرعية)</span>
-                    </div>
-                  </div>
-
-                  <!-- Card Footer Link -->
-                  <div class="cat-card-footer">
-                    <button 
-                      type="button" 
-                      class="btn-cat-view-products" 
-                      @click="filterProductsByCategory(cat.name)"
-                    >
-                      <span>استعراض منتجات الصنف ({{ getCategoryProductCount(cat.name) }})</span>
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4. Table View (Desktop Only when viewMode === 'table') -->
-              <div v-else class="table-container">
-                <table class="admin-table desktop-categories-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 70px;">الرمز</th>
-                      <th>اسم الصنف الرئيسي</th>
-                      <th style="width: 140px;">المنتجات المرتبطة</th>
-                      <th>الأقسام الفرعية</th>
-                      <th style="width: 160px; text-align: center;">إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(cat, idx) in filteredCategories" :key="cat._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
-                      <td class="text-center">
-                        <div class="cat-icon-container cat-icon-table">
-                          <CategoryIcon :icon="cat.icon" :name="cat.name" :emoji="cat.emoji" size="22" />
-                        </div>
-                      </td>
-                      <td class="text-bold text-dark">{{ cat.name }}</td>
-                      <td>
-                        <button 
-                          type="button" 
-                          class="cat-product-count-badge" 
-                          @click="filterProductsByCategory(cat.name)"
-                          :title="'عرض منتجات ' + cat.name"
-                        >
-                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                          <span>{{ getCategoryProductCount(cat.name) }} منتج</span>
-                        </button>
-                      </td>
-                      <td>
-                        <div class="chips-list">
-                          <span v-if="!cat.subCategories || cat.subCategories.length === 0" class="text-muted text-small">بدون أقسام فرعية</span>
-                          <span v-for="sub in cat.subCategories" :key="sub" class="subcat-pill">
-                            <span class="subcat-dot" aria-hidden="true"></span>
-                            {{ sub }}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="btn-group-row justify-center">
-                          <button @click="openCategoryModal(cat)" class="btn-table-action btn-action-edit" title="تعديل الصنف">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            <span>تعديل</span>
-                          </button>
-                          <button @click="deleteCategory(cat._id)" class="btn-table-action btn-action-delete" title="حذف الصنف">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            <span>حذف</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAGS MANAGEMENT TAB (REDESIGNED SHOWCASE & MANAGEMENT) -->
-          <div v-else-if="activeTab === 'tags' && userRole === 'admin'" class="tags-tab-content">
-            
-            <!-- 1. Executive KPI Summary Cards Grid -->
-            <div class="tag-kpi-grid">
-              <!-- Total Tags -->
-              <div class="tag-kpi-card glass-panel">
-                <div class="tag-kpi-icon tag-kpi-gold" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-                </div>
-                <div class="tag-kpi-info">
-                  <span class="tag-kpi-label">إجمالي العلامات المميزة</span>
-                  <div class="tag-kpi-value text-mono">{{ tags.length }}</div>
-                  <span class="tag-kpi-desc">وسم ترويجي نشط</span>
-                </div>
-              </div>
-
-              <!-- Tagged Products Count -->
-              <div class="tag-kpi-card glass-panel">
-                <div class="tag-kpi-icon tag-kpi-amber" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </div>
-                <div class="tag-kpi-info">
-                  <span class="tag-kpi-label">المنتجات الموسومة</span>
-                  <div class="tag-kpi-value text-mono">{{ taggedProductsCount }}</div>
-                  <span class="tag-kpi-desc">منتج يحمل شارة في المنيو</span>
-                </div>
-              </div>
-
-
-              <!-- Most Used Tag -->
-              <div class="tag-kpi-card glass-panel">
-                <div class="tag-kpi-icon tag-kpi-sky" aria-hidden="true">
-                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                </div>
-                <div class="tag-kpi-info">
-                  <span class="tag-kpi-label">الوسم الأكثر استخداماً</span>
-                  <div class="tag-kpi-value text-mono" style="font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    {{ mostUsedTag ? mostUsedTag.name : '—' }}
-                  </div>
-                  <span class="tag-kpi-desc">
-                    {{ mostUsedTag ? mostUsedTag.count + ' منتج مرتبط' : 'لا توجد منتجات بعد' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. Main Section Card -->
-            <div class="table-card glass-panel overflow-hidden">
-              <!-- Toolbar -->
-              <div class="card-toolbar card-toolbar-unified">
-                <div class="toolbar-search-filter-group">
-                  <div class="search-input-wrapper flex-grow-1">
-                    <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input 
-                      v-model="tagSearchQuery" 
-                      type="text" 
-                      placeholder="بحث في العلامات المميزة والشارات…" 
-                      class="form-control search-input"
-                    />
-                    <button 
-                      v-if="tagSearchQuery" 
-                      type="button" 
-                      class="btn-clear-search" 
-                      @click="tagSearchQuery = ''"
-                      aria-label="مسح البحث"
-                    >&times;</button>
-                  </div>
-                </div>
-
-                <div class="toolbar-actions-group">
-                  <!-- View Mode Toggle (Desktop Only) -->
-                  <div class="view-mode-toggle d-none d-md-inline-flex" v-if="!isMobileScreen">
-                    <button 
-                      type="button" 
-                      class="btn-toggle-mode" 
-                      :class="{ active: tagsViewMode === 'cards' }" 
-                      @click="tagsViewMode = 'cards'"
-                      title="عرض البطاقات البصرية"
-                    >
-                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                      <span>بطاقات</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="btn-toggle-mode" 
-                      :class="{ active: tagsViewMode === 'table' }" 
-                      @click="tagsViewMode = 'table'"
-                      title="عرض الجدول المنظم"
-                    >
-                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                      <span>جدول</span>
-                    </button>
-                  </div>
-
-                  <!-- Add Tag Button -->
-                  <button @click="openTagModal()" class="btn btn-primary btn-add-highlight">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>إضافة علامة مميزة</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Loading Skeleton -->
-              <div v-if="tagsLoading" class="tags-skeleton-grid">
-                <div v-for="i in 6" :key="'tag-skel-' + i" class="tag-skeleton-card glass-panel">
-                  <div class="skeleton-shimmer tag-skel-pill"></div>
-                  <div class="skeleton-shimmer tag-skel-line"></div>
-                </div>
-              </div>
-
-              <!-- Empty State -->
-              <div v-else-if="filteredTags.length === 0" class="mgmt-empty-state glass-panel">
-                <div class="empty-icon-wrap" aria-hidden="true">
-                  <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-                </div>
-                <h4 class="empty-title">{{ tagSearchQuery ? 'لا توجد علامات تطابق بحثك' : 'لا توجد علامات مميزة حتى الآن' }}</h4>
-                <p class="empty-desc">{{ tagSearchQuery ? 'جرب البحث بكلمة أخرى أو امسح شريط البحث' : 'أضف شارات ترويجية مثل الأكثر طلباً أو جديد لتظهر على منتجاتك في المنيو' }}</p>
-                <button v-if="!tagSearchQuery" @click="openTagModal()" class="btn btn-primary mt-2">
-                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span>إضافة أول علامة مميزة</span>
-                </button>
-                <button v-else @click="tagSearchQuery = ''" class="btn btn-outline mt-2">مسح البحث</button>
-              </div>
-
-              <!-- 3. Tags Showcase Cards Grid (Default on mobile and when viewMode === 'cards') -->
-              <div v-else-if="isMobileScreen || tagsViewMode === 'cards'" class="tags-showcase-grid">
-                <div 
-                  v-for="t in filteredTags" 
-                  :key="t._id" 
-                  class="tag-showcase-card glass-panel"
-                >
-                  <!-- Top: Live Badge Preview + Actions -->
-                  <div class="tag-card-header">
-                    <!-- Live Storefront Tag Pill Preview (Singular Unified Theme) -->
-                    <span class="product-tag-chip tag-showcase-chip">
-                      <span class="tag-chip-icon">
-                        <CategoryIcon :icon="t.icon || 'trophy'" :name="t.name" size="14" />
-                      </span>
-                      <span class="tag-chip-text">{{ t.name }}</span>
-                    </span>
-
-                    <div class="cat-actions-cluster">
-                      <button 
-                        type="button" 
-                        class="btn-cat-action btn-cat-edit" 
-                        @click="openTagModal(t)" 
-                        title="تعديل العلامة"
-                        aria-label="تعديل العلامة"
-                      >
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        <span class="btn-text-label">تعديل</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        class="btn-cat-action btn-cat-delete" 
-                        @click="deleteTag(t._id)" 
-                        title="حذف العلامة"
-                        aria-label="حذف العلامة"
-                      >
-                        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        <span class="btn-text-label">حذف</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Tag Details -->
-                  <div class="tag-card-body">
-                    <p v-if="t.description" class="tag-desc-text">{{ t.description }}</p>
-
-                    <!-- Linked Products Avatar Stack -->
-                    <div class="tag-products-preview-box">
-                      <div class="tag-products-preview-header">
-                        <span class="tag-meta-label">المنتجات المرتبطة ({{ getTagProductCount(t.name) }}):</span>
-                        <button 
-                          type="button" 
-                          class="btn-quick-manage-prod" 
-                          @click="openTagAssignModal(t)"
-                          title="تخصيص منتجات الوسم"
-                        >
-                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
-                          <span>تخصيص</span>
-                        </button>
-                      </div>
-
-                      <div class="tag-product-avatar-stack">
-                        <div 
-                          v-for="(p, pIdx) in getTagProducts(t.name).slice(0, 4)" 
-                          :key="p._id || pIdx" 
-                          class="tag-avatar-item" 
-                          :title="p.name"
-                        >
-                          <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" />
-                          <span v-else class="tag-avatar-placeholder">{{ p.name ? p.name.charAt(0) : 'م' }}</span>
-                        </div>
-                        <span v-if="getTagProducts(t.name).length > 4" class="tag-avatar-overflow">
-                          +{{ getTagProducts(t.name).length - 4 }}
-                        </span>
-                        <span v-if="getTagProducts(t.name).length === 0" class="tag-no-products-hint">
-                          لا توجد منتجات معينة حتى الآن
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Card Action Footer -->
-                  <div class="tag-card-footer">
-                    <button 
-                      type="button" 
-                      class="btn-tag-action-primary" 
-                      @click="openTagAssignModal(t)"
-                    >
-                      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
-                      <span>إدارة منتجات الوسم ({{ getTagProductCount(t.name) }})</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="btn-tag-action-secondary" 
-                      @click="filterProductsByTag(t.name)"
-                      title="عرض المنتجات في جدول الأصناف" aria-label="عرض المنتجات في جدول الأصناف"
-                    >
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4. Table View (Desktop Only when viewMode === 'table') -->
-              <div v-else class="table-container">
-                <table class="admin-table desktop-tags-table">
-                  <thead>
-                    <tr>
-                      <th>اسم العلامة</th>
-                      <th>معاينة المظهر في المنيو (Live Preview)</th>
-                      <th style="width: 170px;">المنتجات المرتبطة</th>
-                      <th style="width: 140px; text-align: center;">إدارة المنتجات</th>
-                      <th style="width: 140px; text-align: center;">إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(t, idx) in filteredTags" :key="t._id" :class="{ 'keyboard-selected-row': !isMobileScreen && selectedTableRowIndex === idx }">
-                      <td>
-                        <div class="text-bold text-dark">{{ t.name }}</div>
-                        <div v-if="t.description" class="text-muted text-small">{{ t.description }}</div>
-                      </td>
-                      <td>
-                        <span class="product-tag-chip tag-showcase-chip">
-                          <span class="tag-chip-icon">
-                            <CategoryIcon :icon="t.icon || 'trophy'" :name="t.name" size="14" />
-                          </span>
-                          <span class="tag-chip-text">{{ t.name }}</span>
-                        </span>
-                      </td>
-                      <td>
-                        <div class="d-flex align-items-center gap-2">
-                          <div class="tag-product-avatar-stack mini">
-                            <div 
-                              v-for="(p, pIdx) in getTagProducts(t.name).slice(0, 3)" 
-                              :key="p._id || pIdx" 
-                              class="tag-avatar-item" 
-                              :title="p.name"
-                            >
-                              <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" />
-                              <span v-else class="tag-avatar-placeholder">{{ p.name ? p.name.charAt(0) : 'م' }}</span>
-                            </div>
-                            <span v-if="getTagProducts(t.name).length > 3" class="tag-avatar-overflow">
-                              +{{ getTagProducts(t.name).length - 3 }}
-                            </span>
-                          </div>
-                          <span class="text-mono font-bold" style="font-size: 0.85rem; color: #0284c7;">
-                            ({{ getTagProductCount(t.name) }})
-                          </span>
-                        </div>
-                      </td>
-                      <td class="text-center">
-                        <button 
-                          type="button" 
-                          class="btn-table-action btn-action-assign" 
-                          @click="openTagAssignModal(t)"
-                          title="تعيين المنتجات لهذا الوسم"
-                        >
-                          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
-                          <span>تعيين المنتجات</span>
-                        </button>
-                      </td>
-                      <td>
-                        <div class="btn-group-row justify-center">
-                          <button @click="openTagModal(t)" class="btn-table-action btn-action-edit" title="تعديل العلامة">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            <span>تعديل</span>
-                          </button>
-                          <button @click="deleteTag(t._id)" class="btn-table-action btn-action-delete" title="حذف العلامة">
-                            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            <span>حذف</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <!-- TAGS MANAGEMENT TAB -->
+          <AdminTagsTab
+            v-else-if="activeTab === 'tags' && userRole === 'admin'"
+            :tags="tags"
+            :products="products"
+            :tagsLoading="tagsLoading"
+            :isMobileScreen="isMobileScreen"
+            :selectedTableRowIndex="selectedTableRowIndex"
+            v-model:searchQuery="tagSearchQuery"
+            v-model:viewMode="tagsViewMode"
+            @open-modal="openTagModal"
+            @delete-tag="deleteTag"
+            @open-assign-modal="openTagAssignModal"
+            @filter-products="filterProductsByTag"
+          />
 
 
 
@@ -2974,621 +1506,37 @@
           </div>
 
           <!-- PRODUCTION MANAGEMENT TAB -->
-          <div v-else-if="activeTab === 'production'" class="production-tab-content">
-            <!-- Navigation Sub-Tab Pills Switcher -->
-            <div class="production-subnav-bar glass-panel mb-3">
-              <div class="production-tabs-pills">
-                <button 
-                  type="button"
-                  class="prod-tab-pill" 
-                  :class="{ active: productionSubTab === 'chefs' }"
-                  @click="productionSubTab = 'chefs'"
-                >
-                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
-                  <span>دليل الشيفات والأصناف</span>
-                  <span class="pill-badge">{{ chefs.length }}</span>
-                </button>
-
-                <button 
-                  type="button"
-                  class="prod-tab-pill" 
-                  :class="{ active: productionSubTab === 'report' }"
-                  @click="productionSubTab = 'report'; loadProductionReport();"
-                >
-                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                  <span>تقرير مبيعات وإنتاج الشيفات</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- SUB-TAB 1: CHEFS MANAGEMENT (INSIDE UNIFIED CONTAINER CARD) -->
-            <div v-if="productionSubTab === 'chefs'" class="chefs-view-section animate-fade-in">
-              <div class="table-card glass-panel overflow-hidden">
-                <!-- Toolbar Header -->
-                <div class="card-toolbar card-toolbar-unified justify-content-end">
-                  <button @click="openAddChefModal" class="btn btn-primary">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1" style="display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>إضافة شيف جديد</span>
-                  </button>
-                </div>
-
-                <!-- Card Content Body -->
-                <div class="p-4">
-                  <div v-if="chefs.length === 0" class="empty-chefs-placeholder text-center py-5">
-                    <div class="empty-icon-circle mx-auto mb-3">
-                      <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
-                    </div>
-                    <h4 class="text-bold mb-2">لا يوجد شيفات مسجلين حتى الآن</h4>
-                    <p class="text-muted mb-3" style="max-width: 420px; margin: 0 auto 16px auto;">أضف شيفات لتوزيع منتجات القائمة عليهم ومتابعة إنتاج ومبيعات كل شيف بدقة متناهية.</p>
-                    <button @click="openAddChefModal" class="btn btn-primary">
-                      <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      إضافة الشيف الأول
-                    </button>
-                  </div>
-
-                  <!-- SKELETON CHEFS GRID -->
-                  <div v-if="chefsLoading" class="chefs-cards-grid">
-                    <div v-for="i in 3" :key="'chef-skel-' + i" class="chef-card glass-panel skeleton-card p-3">
-                      <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="skeleton-shimmer" style="width: 48px; height: 48px; border-radius: 50%;"></div>
-                        <div class="d-flex flex-column gap-1 flex-grow-1">
-                          <div class="skeleton-shimmer" style="width: 110px; height: 18px;"></div>
-                          <div class="skeleton-shimmer" style="width: 80px; height: 14px;"></div>
-                        </div>
-                      </div>
-                      <div class="skeleton-shimmer mb-2" style="width: 40%; height: 14px;"></div>
-                      <div class="d-flex gap-1 mb-3 flex-wrap">
-                        <div class="skeleton-shimmer" style="width: 60px; height: 22px; border-radius: 12px;"></div>
-                        <div class="skeleton-shimmer" style="width: 75px; height: 22px; border-radius: 12px;"></div>
-                      </div>
-                      <div class="d-flex gap-2">
-                        <div class="skeleton-shimmer flex-grow-1" style="height: 32px; border-radius: 8px;"></div>
-                        <div class="skeleton-shimmer flex-grow-1" style="height: 32px; border-radius: 8px;"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Chefs Grid -->
-                  <div v-else-if="chefs.length > 0" class="chefs-cards-grid">
-                    <div v-for="chef in chefs" :key="chef._id" class="chef-card glass-panel animate-scale-in">
-                      <div class="chef-card-header">
-                        <div class="chef-avatar">{{ (chef.name || 'ش').charAt(0) }}</div>
-                        <div class="chef-details">
-                          <h4 class="chef-name font-bold">{{ chef.name }}</h4>
-                          <div class="chef-phone-row" v-if="chef.phone">
-                            <span class="chef-phone text-mono" dir="ltr">{{ formatLibyanPhone(chef.phone) }}</span>
-                            <div class="chef-quick-actions">
-                              <a :href="getLibyanWhatsAppUrl(chef.phone)" target="_blank" class="chef-icon-btn whatsapp" title="واتساب" aria-label="مراسلة الشيف عبر واتساب">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                              </a>
-                              <a :href="'tel:' + chef.phone" class="chef-icon-btn call" title="اتصال" aria-label="الاتصال بالشيف">
-                                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                        <span class="chef-status-badge" :class="chef.active !== false ? 'active' : 'inactive'">
-                          {{ chef.active !== false ? 'نشط' : 'متوقف' }}
-                        </span>
-                      </div>
-
-                      <!-- Assigned Products Summary Box -->
-                      <div class="chef-assigned-products-box">
-                        <div class="assigned-box-header">
-                          <span class="assigned-title font-bold">الأصناف المسندة ({{ getChefAssignedProducts(chef._id).length }}):</span>
-                        </div>
-
-                        <div v-if="getChefAssignedProducts(chef._id).length > 0" class="assigned-chips-list">
-                          <span 
-                            v-for="p in getChefAssignedProducts(chef._id)" 
-                            :key="p._id" 
-                            class="assigned-chip"
-                          >
-                            {{ p.name }}
-                          </span>
-                        </div>
-                        <div v-else class="assigned-chips-empty">
-                          <span class="text-muted text-small">لم يتم تخصيص أي أصناف لهذا الشيف بعد.</span>
-                        </div>
-                      </div>
-
-                      <!-- Chef Card Actions -->
-                      <div class="chef-card-footer">
-                        <button 
-                          type="button" 
-                          @click="openAssignProductsModal(chef)" 
-                          class="btn-chef-action btn-chef-assign"
-                          title="تخصيص وإضافة أصناف للشيف"
-                        >
-                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                          <span>تخصيص الأصناف</span>
-                        </button>
-
-                        <button 
-                          type="button" 
-                          @click="openEditChefModal(chef)" 
-                          class="btn-chef-action btn-chef-edit"
-                          title="تعديل بيانات الشيف"
-                        >
-                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                          <span>تعديل</span>
-                        </button>
-
-                        <button 
-                          type="button" 
-                          @click="deleteChef(chef._id)" 
-                          class="btn-chef-action btn-chef-delete"
-                          title="حذف الشيف"
-                          aria-label="حذف الشيف"
-                        >
-                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                          <span>حذف</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- SUB-TAB 2: PRODUCTION & SALES REPORT (STANDARDIZED DATE PICKER, MATCHED BUTTONS & SKELETON LOADER) -->
-            <div v-else-if="productionSubTab === 'report'" class="production-report-section animate-fade-in">
-              <div class="table-card glass-panel" style="overflow: visible;">
-                <!-- Toolbar Header with Title & Matched Action Buttons -->
-                <div class="card-toolbar card-toolbar-split">
-                  <div class="card-toolbar-top justify-content-end">
-                    <!-- Matched Action Buttons -->
-                    <div class="report-header-actions-row">
-                      <button @click="printProductionReport" class="btn btn-outline btn-report-action" title="طباعة كشف الإنتاج الرسمي بصيغة A4">
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span>طباعة التقرير</span>
-                      </button>
-                      <button @click="loadProductionReport" class="btn btn-primary btn-report-action" :disabled="isLoadingReport" title="تحديث بيانات التقرير">
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                        <span>تحديث البيانات</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Standardized Arabic Date Picker & Filter Controls Bar (Habit 6) -->
-                  <div class="card-toolbar-bottom report-filter-bar">
-                    <div class="report-standard-filters-row">
-                      <!-- Chef Selector Dropdown -->
-                      <div class="report-chef-select-box">
-                        <label class="filter-field-label">الشيف:</label>
-                        <select v-model="productionReportFilters.chefId" @change="loadProductionReport" class="form-control form-control-sm select-chef-control">
-                          <option value="">جميع الشيفات المسجلين</option>
-                          <option v-for="c in chefs" :key="c._id" :value="c._id">{{ c.name }}</option>
-                        </select>
-                      </div>
-
-                      <!-- Standard Date Filter Component Group -->
-                      <div class="date-filter-group">
-                        <!-- From Date Trigger -->
-                        <div class="position-relative">
-                          <button 
-                            type="button" 
-                            class="btn-datepicker-trigger" 
-                            :class="{ active: prodDateFromOpen || productionReportFilters.dateFrom }"
-                            @click.stop="openProdDateFromPicker"
-                            title="تاريخ البداية (من)"
-                          >
-                            <span class="dp-trigger-main">
-                              <span class="dp-icon-wrap" aria-hidden="true">
-                                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                              </span>
-                              <span class="dp-text-label">{{ productionReportFilters.dateFrom ? ('من: ' + formatArabicDate(productionReportFilters.dateFrom)) : 'من تاريخ' }}</span>
-                            </span>
-                            <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                          </button>
-
-                          <!-- From Date Popover -->
-                          <Teleport to="body" :disabled="!isMobileScreen">
-                            <div v-if="prodDateFromOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (prodDateFromOpen = false) : null">
-                              <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                                <div class="datepicker-header">
-                                  <button type="button" class="dp-nav-btn" @click="prodFromPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                  </button>
-                                  <span class="dp-month-title">{{ prodFromMonthYearLabel }}</span>
-                                  <button type="button" class="dp-nav-btn" @click="prodFromNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                                  </button>
-                                </div>
-
-                                <div class="dp-weekdays">
-                                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                                </div>
-
-                                <div class="dp-days-grid">
-                                  <button 
-                                    type="button"
-                                    v-for="(dayObj, idx) in prodFromCalendarDays" 
-                                    :key="idx" 
-                                    class="dp-day-cell"
-                                    :class="{ 
-                                      'other-month': !dayObj.inMonth,
-                                      'is-today': dayObj.isToday,
-                                      'is-selected': productionReportFilters.dateFrom === dayObj.dateStr
-                                    }"
-                                    @click="selectProdDateFrom(dayObj.dateStr)"
-                                  >
-                                    {{ dayObj.dayNum }}
-                                  </button>
-                                </div>
-
-                                <div class="datepicker-footer">
-                                  <button type="button" class="btn-dp-show-all" @click="selectProdDateFrom(getTodayStr())">تحديد تاريخ اليوم</button>
-                                </div>
-                              </div>
-                            </div>
-                          </Teleport>
-                        </div>
-
-                        <!-- To Date Trigger -->
-                        <div class="position-relative">
-                          <button 
-                            type="button" 
-                            class="btn-datepicker-trigger" 
-                            :class="{ active: prodDateToOpen || productionReportFilters.dateTo }"
-                            @click.stop="openProdDateToPicker"
-                            title="تاريخ النهاية (إلى)"
-                          >
-                            <span class="dp-trigger-main">
-                              <span class="dp-icon-wrap" aria-hidden="true">
-                                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                              </span>
-                              <span class="dp-text-label">{{ productionReportFilters.dateTo ? ('إلى: ' + formatArabicDate(productionReportFilters.dateTo)) : 'إلى تاريخ' }}</span>
-                            </span>
-                            <svg class="dp-chevron-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                          </button>
-
-                          <!-- To Date Popover -->
-                          <Teleport to="body" :disabled="!isMobileScreen">
-                            <div v-if="prodDateToOpen" class="datepicker-modal-wrapper" :class="{ 'is-mobile': isMobileScreen }" @click="isMobileScreen ? (prodDateToOpen = false) : null">
-                              <div class="datepicker-popover glass-panel animate-fade-in" @click.stop>
-                                <div class="datepicker-header">
-                                  <button type="button" class="dp-nav-btn" @click="prodToPrevMonth" title="الشهر السابق" aria-label="الشهر السابق">
-                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                  </button>
-                                  <span class="dp-month-title">{{ prodToMonthYearLabel }}</span>
-                                  <button type="button" class="dp-nav-btn" @click="prodToNextMonth" title="الشهر التالي" aria-label="الشهر التالي">
-                                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                                  </button>
-                                </div>
-
-                                <div class="dp-weekdays">
-                                  <span>أح</span><span>إث</span><span>ثلا</span><span>أرب</span><span>خم</span><span>جم</span><span>سب</span>
-                                </div>
-
-                                <div class="dp-days-grid">
-                                  <button 
-                                    type="button"
-                                    v-for="(dayObj, idx) in prodToCalendarDays" 
-                                    :key="idx" 
-                                    class="dp-day-cell"
-                                    :class="{ 
-                                      'other-month': !dayObj.inMonth,
-                                      'is-today': dayObj.isToday,
-                                      'is-selected': productionReportFilters.dateTo === dayObj.dateStr
-                                    }"
-                                    @click="selectProdDateTo(dayObj.dateStr)"
-                                  >
-                                    {{ dayObj.dayNum }}
-                                  </button>
-                                </div>
-
-                                <div class="datepicker-footer">
-                                  <button type="button" class="btn-dp-show-all" @click="selectProdDateTo(getTodayStr())">تحديد تاريخ اليوم</button>
-                                </div>
-                              </div>
-                            </div>
-                          </Teleport>
-                        </div>
-
-                        <!-- Date Shortcuts -->
-                        <button 
-                          type="button" 
-                          class="btn-today-shortcut" 
-                          :class="{ active: isProdRangeToday }" 
-                          @click="setProductionDateShortcut('today')"
-                          title="عرض مبيعات وإنتاج اليوم"
-                        >اليوم</button>
-
-                        <button 
-                          type="button" 
-                          class="btn-today-shortcut" 
-                          :class="{ active: isProdRange7d }" 
-                          @click="setProductionDateShortcut('7d')"
-                          title="عرض آخر 7 أيام"
-                        >آخر 7 أيام</button>
-
-                        <button 
-                          type="button" 
-                          class="btn-today-shortcut" 
-                          :class="{ active: isProdRangeMonth }" 
-                          @click="setProductionDateShortcut('month')"
-                          title="عرض هذا الشهر"
-                        >هذا الشهر</button>
-
-                        <!-- Selected Date Range Display Badge -->
-                        <div v-if="productionReportFilters.dateFrom || productionReportFilters.dateTo" class="selected-date-badge animate-fade-in">
-                          <span class="date-text">{{ productionReportFilters.dateFrom && productionReportFilters.dateTo ? (formatArabicDate(productionReportFilters.dateFrom) + ' ← ' + formatArabicDate(productionReportFilters.dateTo)) : formatArabicDate(productionReportFilters.dateFrom || productionReportFilters.dateTo) }}</span>
-                          <button type="button" class="btn-remove-date" @click="clearProdDateRange" title="إلغاء التصفية بالتاريخ">&times;</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Report Content Body -->
-                <div class="p-4">
-                  <!-- Shimmering Skeleton Loader State -->
-                  <div v-if="isLoadingReport" class="report-skeleton-container animate-fade-in">
-                    <!-- Skeleton KPI Cards -->
-                    <div class="report-kpi-cards-grid mb-4">
-                      <div v-for="i in 4" :key="'sk-kpi-' + i" class="report-kpi-box skeleton-box">
-                        <div class="skeleton-shimmer-circle"></div>
-                        <div class="kpi-box-content flex-grow-1">
-                          <div class="skeleton-shimmer-line sm mb-2" style="width: 55%;"></div>
-                          <div class="skeleton-shimmer-line lg" style="width: 40%;"></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Skeleton Breakdown Tables -->
-                    <div v-for="i in 2" :key="'sk-card-' + i" class="chef-breakdown-card skeleton-box mb-4">
-                      <div class="chef-breakdown-header">
-                        <div class="d-flex align-items-center gap-3">
-                          <div class="skeleton-shimmer-circle sm"></div>
-                          <div>
-                            <div class="skeleton-shimmer-line md mb-2" style="width: 140px;"></div>
-                            <div class="skeleton-shimmer-line sm" style="width: 90px;"></div>
-                          </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                          <div class="skeleton-shimmer-pill" style="width: 70px;"></div>
-                          <div class="skeleton-shimmer-pill" style="width: 90px;"></div>
-                        </div>
-                      </div>
-                      <div class="p-3">
-                        <div class="skeleton-shimmer-line sm mb-3"></div>
-                        <div class="skeleton-shimmer-line sm mb-3"></div>
-                        <div class="skeleton-shimmer-line sm"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div v-else>
-                    <!-- Summary KPI Cards Grid (Organized & Spaced) -->
-                    <div class="report-kpi-cards-grid mb-4">
-                      <div class="report-kpi-box primary">
-                        <div class="kpi-box-icon">
-                          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                        </div>
-                        <div class="kpi-box-content">
-                          <span class="kpi-box-title">إجمالي القطع المباعة</span>
-                          <span class="kpi-box-number text-mono text-primary">{{ productionReportData.grandTotalQty || 0 }}</span>
-                        </div>
-                      </div>
-
-                      <div class="report-kpi-box success">
-                        <div class="kpi-box-icon">
-                          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                        </div>
-                        <div class="kpi-box-content">
-                          <span class="kpi-box-title">إجمالي الإيرادات</span>
-                          <span class="kpi-box-number text-mono text-success">{{ formatCurrency(productionReportData.grandTotalRevenue || 0) }}</span>
-                        </div>
-                      </div>
-
-                      <div class="report-kpi-box danger">
-                        <div class="kpi-box-icon">
-                          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-                        </div>
-                        <div class="kpi-box-content">
-                          <span class="kpi-box-title">إجمالي تكلفة الإنتاج</span>
-                          <span class="kpi-box-number text-mono text-danger">{{ formatCurrency(productionReportData.grandTotalCost || 0) }}</span>
-                        </div>
-                      </div>
-
-                      <div class="report-kpi-box info">
-                        <div class="kpi-box-icon">
-                          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                        </div>
-                        <div class="kpi-box-content">
-                          <span class="kpi-box-title">صافي الأرباح التقديرية</span>
-                          <span class="kpi-box-number text-mono text-dark">{{ formatCurrency(Math.max(0, (productionReportData.grandTotalRevenue || 0) - (productionReportData.grandTotalCost || 0))) }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Per-Chef Breakdown Cards -->
-                    <div v-if="productionReportData.chefReport && productionReportData.chefReport.length > 0" class="chef-report-list">
-                      <div v-for="cReport in productionReportData.chefReport" :key="cReport.chefId" class="chef-breakdown-card mb-4">
-                        <div class="chef-breakdown-header">
-                          <div class="chef-header-profile">
-                            <div class="chef-avatar sm">{{ (cReport.chefName || 'ش').charAt(0) }}</div>
-                            <div>
-                              <h4 class="font-bold mb-0 text-dark" style="font-size: 1.05rem;">الشيف: {{ cReport.chefName }}</h4>
-                              <span class="text-small text-muted">{{ cReport.products.length }} صنف تم إنتاجه وبيعه</span>
-                            </div>
-                          </div>
-
-                          <div class="chef-header-pills">
-                            <div class="header-stat-tag">
-                              <span class="lbl">القطع:</span>
-                              <strong class="val text-mono">{{ cReport.totalQty }}</strong>
-                            </div>
-                            <div class="header-stat-tag">
-                              <span class="lbl">المبيعات:</span>
-                              <strong class="val text-mono text-success">{{ formatCurrency(cReport.totalRevenue) }}</strong>
-                            </div>
-                            <div class="header-stat-tag">
-                              <span class="lbl">التكلفة:</span>
-                              <strong class="val text-mono text-danger">{{ formatCurrency(cReport.totalCost) }}</strong>
-                            </div>
-                            <div class="header-stat-tag highlight">
-                              <span class="lbl">الربح:</span>
-                              <strong class="val text-mono text-primary">{{ formatCurrency(Math.max(0, cReport.totalRevenue - cReport.totalCost)) }}</strong>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Products Table for this Chef -->
-                        <div class="table-container">
-                          <table class="admin-table desktop-production-table">
-                            <thead>
-                              <tr>
-                                <th>اسم الصنف</th>
-                                <th>التصنيف</th>
-                                <th>الكمية المباعة</th>
-                                <th>تكلفة الإنتاج</th>
-                                <th>إجمالي المبيعات</th>
-                                <th>هامش الربح</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr 
-                                v-for="p in cReport.products" 
-                                :key="p.name" 
-                                class="clickable-product-row"
-                                @click="openProductCustomersModal(p, cReport)"
-                                title="تفاصيل العملاء والطلبات لهذا الصنف"
-                              >
-                                <td class="font-bold product-cell-interactive">
-                                  <span class="product-name-text">{{ p.name }}</span>
-                                  <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                </td>
-                                <td><span class="category-pill">{{ p.category || '-' }}</span></td>
-                                <td class="text-mono text-bold">{{ p.qty }}</td>
-                                <td class="text-mono text-danger">{{ formatCurrency(p.cost) }}</td>
-                                <td class="text-mono text-success text-bold">{{ formatCurrency(p.revenue) }}</td>
-                                <td class="text-mono text-primary text-bold">{{ formatCurrency(Math.max(0, p.revenue - p.cost)) }}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-
-                          <!-- Mobile Chef Products Cards Grid (Active on screens <= 768px) -->
-                          <div class="mobile-production-cards-grid">
-                            <div 
-                              v-for="p in cReport.products" 
-                              :key="'mob-prod-rep-' + p.name"
-                              class="mobile-production-card glass-panel"
-                              @click="openProductCustomersModal(p, cReport)"
-                            >
-                              <div class="mob-prod-rep-header">
-                                <div class="mob-prod-rep-title">
-                                  <span class="font-bold">{{ p.name }}</span>
-                                  <span class="category-pill">{{ p.category || '-' }}</span>
-                                </div>
-                                <span class="mob-qty-badge text-mono">{{ p.qty }} مبيع</span>
-                              </div>
-                              <div class="mob-prod-rep-metrics">
-                                <div class="mob-metric-item">
-                                  <span class="lbl">التكلفة:</span>
-                                  <span class="val text-mono text-danger">{{ formatCurrency(p.cost) }}</span>
-                                </div>
-                                <div class="mob-metric-item">
-                                  <span class="lbl">المبيعات:</span>
-                                  <span class="val text-mono text-success font-bold">{{ formatCurrency(p.revenue) }}</span>
-                                </div>
-                                <div class="mob-metric-item highlight">
-                                  <span class="lbl">الربح:</span>
-                                  <span class="val text-mono text-primary font-bold">{{ formatCurrency(Math.max(0, p.revenue - p.cost)) }}</span>
-                                </div>
-                              </div>
-                              <div class="mob-prod-rep-hint">
-                                <span>تفاصيل الطلبات والعملاء</span>
-                                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Unassigned Products (if any) -->
-                    <div v-if="productionReportData.unassigned && productionReportData.unassigned.length > 0" class="unassigned-breakdown-card mb-4">
-                      <div class="unassigned-header-box">
-                        <div class="d-flex align-items-center gap-2">
-                          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-warning"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                          <div>
-                            <h4 class="font-bold mb-0 text-dark">أصناف مباعة بدون شيف مخصص ({{ productionReportData.unassigned.length }})</h4>
-                            <span class="text-small text-muted">يمكنك تخصيص هذه الأصناف لشيف من تبويب "دليل الشيفات والأصناف" لتندرج تحت تقريره</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="table-container">
-                        <table class="admin-table desktop-production-table">
-                          <thead>
-                            <tr>
-                              <th>اسم الصنف</th>
-                              <th>الكمية المباعة</th>
-                              <th>إجمالي المبيعات</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr 
-                              v-for="u in productionReportData.unassigned" 
-                              :key="u.name" 
-                              class="clickable-product-row"
-                              @click="openProductCustomersModal(u, null)"
-                              title="تفاصيل العملاء والطلبات لهذا الصنف"
-                            >
-                              <td class="font-bold product-cell-interactive">
-                                <span class="product-name-text">{{ u.name }}</span>
-                                <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                              </td>
-                              <td class="text-mono text-bold">{{ u.qty }}</td>
-                              <td class="text-mono text-success text-bold">{{ formatCurrency(u.revenue) }}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-
-                        <!-- Mobile Unassigned Cards Grid (Active on screens <= 768px) -->
-                        <div class="mobile-production-cards-grid">
-                          <div 
-                            v-for="u in productionReportData.unassigned"
-                            :key="'mob-unassigned-' + u.name"
-                            class="mobile-production-card glass-panel"
-                            @click="openProductCustomersModal(u, null)"
-                          >
-                            <div class="mob-prod-rep-header">
-                              <div class="mob-prod-rep-title">
-                                <span class="font-bold">{{ u.name }}</span>
-                                <span class="badge badge-warning text-small">غير مخصص لشيف</span>
-                              </div>
-                              <span class="mob-qty-badge text-mono">{{ u.qty }} مبيع</span>
-                            </div>
-                            <div class="mob-prod-rep-metrics">
-                              <div class="mob-metric-item highlight">
-                                <span class="lbl">إجمالي المبيعات:</span>
-                                <span class="val text-mono text-success font-bold">{{ formatCurrency(u.revenue) }}</span>
-                              </div>
-                            </div>
-                            <div class="mob-prod-rep-hint">
-                              <span>تفاصيل الطلبات والعملاء</span>
-                              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div v-if="(!productionReportData.chefReport || productionReportData.chefReport.length === 0) && (!productionReportData.unassigned || productionReportData.unassigned.length === 0)" class="text-center py-5">
-                      <div class="empty-icon-circle mx-auto mb-3">
-                        <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                      </div>
-                      <h4 class="text-bold mb-1">لا توجد مبيعات مسجلة في هذه الفترة</h4>
-                      <p class="text-muted mb-0">جرّب تغيير نطاق التاريخ أو تحديد شيف آخر لعرض البيانات.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AdminProductionTab
+            v-else-if="activeTab === 'production'"
+            v-model:subTab="productionSubTab"
+            :chefs="chefs"
+            :chefsLoading="chefsLoading"
+            :products="products"
+            :isMobileScreen="isMobileScreen"
+            :reportData="productionReportData"
+            :isLoadingReport="isLoadingReport"
+            v-model:chefId="productionReportFilters.chefId"
+            :dateFrom="productionReportFilters.dateFrom"
+            :dateTo="productionReportFilters.dateTo"
+            v-model:dateFromOpen="prodDateFromOpen"
+            v-model:dateToOpen="prodDateToOpen"
+            :activeShop="activeShop"
+            :formatCurrency="formatCurrency"
+            :formatArabicDate="formatArabicDate"
+            :buildCalendarMatrix="buildCalendarMatrix"
+            @change-chef="onProductionChefFilterChange"
+            @load-report="loadProductionReport"
+            @print-report="printProductionReport"
+            @open-add-chef="openAddChefModal"
+            @open-edit-chef="openEditChefModal"
+            @delete-chef="deleteChef"
+            @open-assign-products="openAssignProductsModal"
+            @select-date-from="selectProdDateFrom"
+            @select-date-to="selectProdDateTo"
+            @set-date-shortcut="setProductionDateShortcut"
+            @clear-date-range="clearProdDateRange"
+            @open-product-customers="openProductCustomersModal"
+          />
 
           <!-- EMPLOYEES, PAYROLL & TRANSACTIONS TAB -->
           <AdminEmployeesTab
@@ -7388,7 +5336,6 @@
 
 <script>
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick, defineAsyncComponent } from 'vue';
-import { gsap } from 'gsap';
 import { useRoute, useRouter, isNavigationFailure, NavigationFailureType } from 'vue-router';
 import { useToastStore } from '../stores/toast';
 import CategoryIcon from '../components/CategoryIcon.vue';
@@ -7405,6 +5352,10 @@ const AdminCarouselTab = defineAsyncComponent(() => import('../components/AdminC
 const AdminUsersTab = defineAsyncComponent(() => import('../components/AdminUsersTab.vue'));
 const AdminSettingsTab = defineAsyncComponent(() => import('../components/AdminSettingsTab.vue'));
 const AdminEmployeesTab = defineAsyncComponent(() => import('../components/AdminEmployeesTab.vue'));
+const AdminAnalyticsTab = defineAsyncComponent(() => import('../components/AdminAnalyticsTab.vue'));
+const AdminProductionTab = defineAsyncComponent(() => import('../components/AdminProductionTab.vue'));
+const AdminCategoriesTab = defineAsyncComponent(() => import('../components/AdminCategoriesTab.vue'));
+const AdminTagsTab = defineAsyncComponent(() => import('../components/AdminTagsTab.vue'));
 
 export default {
   name: 'AdminView',
@@ -7415,7 +5366,11 @@ export default {
     AdminCarouselTab,
     AdminUsersTab,
     AdminSettingsTab,
-    AdminEmployeesTab
+    AdminEmployeesTab,
+    AdminAnalyticsTab,
+    AdminProductionTab,
+    AdminCategoriesTab,
+    AdminTagsTab
   },
   directives: {
     sheetGesture: vSheetGesture
@@ -7510,249 +5465,6 @@ export default {
     const sidebarMenuRef = ref(null);
     let activeScanTimeline = null;
 
-    // Animation on Scroll & Load for Analytics Dashboard Sections
-    const isAnalyticsAnimated = ref(false);
-
-    const kpiGridRef = ref(null);
-    const isKpiInView = ref(false);
-
-    const trendChartCardRef = ref(null);
-    const isTrendChartInView = ref(false);
-
-    const priceModeCardRef = ref(null);
-    const isPriceModeInView = ref(false);
-
-    const paymentMethodsCardRef = ref(null);
-    const isPaymentMethodsInView = ref(false);
-
-    const categorySalesCardRef = ref(null);
-    const isCategorySalesInView = ref(false);
-
-    const topFavoritesCardRef = ref(null);
-    const isTopFavoritesInView = ref(false);
-
-    const topProductsCardRef = ref(null);
-    const isTopProductsInView = ref(false);
-
-    const topCustomersCardRef = ref(null);
-    const isTopCustomersInView = ref(false);
-
-    const inactiveCustomersCardRef = ref(null);
-    const isInactiveCustomersInView = ref(false);
-
-    const lowProductsCardRef = ref(null);
-    const isLowProductsInView = ref(false);
-
-    const uxInsightsCardRef = ref(null);
-    const isUxInsightsInView = ref(false);
-
-    const resetAnalyticsScrollStates = () => {
-      isAnalyticsAnimated.value = false;
-      isKpiInView.value = false;
-      isTrendChartInView.value = false;
-      isPriceModeInView.value = false;
-      isPaymentMethodsInView.value = false;
-      isCategorySalesInView.value = false;
-      isTopFavoritesInView.value = false;
-      isTopProductsInView.value = false;
-      isTopCustomersInView.value = false;
-      isInactiveCustomersInView.value = false;
-      isLowProductsInView.value = false;
-      isUxInsightsInView.value = false;
-    };
-
-    let analyticsObserver = null;
-    const setupAnalyticsObserver = () => {
-      if (typeof window === 'undefined') return;
-
-      if (typeof IntersectionObserver !== 'undefined') {
-        if (analyticsObserver) {
-          analyticsObserver.disconnect();
-          analyticsObserver = null;
-        }
-
-        analyticsObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const el = entry.target;
-              if (el === kpiGridRef.value) isKpiInView.value = true;
-              else if (el === trendChartCardRef.value) isTrendChartInView.value = true;
-              else if (el === priceModeCardRef.value) isPriceModeInView.value = true;
-              else if (el === paymentMethodsCardRef.value) isPaymentMethodsInView.value = true;
-              else if (el === topFavoritesCardRef.value) isTopFavoritesInView.value = true;
-              else if (el === categorySalesCardRef.value) isCategorySalesInView.value = true;
-              else if (el === topProductsCardRef.value) isTopProductsInView.value = true;
-              else if (el === topCustomersCardRef.value) isTopCustomersInView.value = true;
-              else if (el === inactiveCustomersCardRef.value) isInactiveCustomersInView.value = true;
-              else if (el === lowProductsCardRef.value) isLowProductsInView.value = true;
-              else if (el === uxInsightsCardRef.value) isUxInsightsInView.value = true;
-            }
-          });
-        }, {
-          root: adminMainRef.value || null,
-          rootMargin: '120px 0px 50px 0px',
-          threshold: [0, 0.05]
-        });
-
-        const cards = [
-          kpiGridRef.value,
-          trendChartCardRef.value,
-          priceModeCardRef.value,
-          paymentMethodsCardRef.value,
-          topFavoritesCardRef.value,
-          categorySalesCardRef.value,
-          topProductsCardRef.value,
-          topCustomersCardRef.value,
-          inactiveCustomersCardRef.value,
-          lowProductsCardRef.value,
-          uxInsightsCardRef.value
-        ];
-
-        cards.forEach(card => {
-          if (card) analyticsObserver.observe(card);
-        });
-      }
-
-      attachScrollListeners();
-      handleScrollCheck();
-    };
-
-    // Argon 4 Smooth GSAP KPI Odometer Counters
-    const animatedKpi = reactive({
-      totalRevenue: 0,
-      totalPaid: 0,
-      totalRemaining: 0,
-      orderCount: 0,
-      avgOrderValue: 0,
-      activeCustomers: 0
-    });
-
-    const animateKpiCounters = () => {
-      const kpi = analyticsData.kpi || {};
-      const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) {
-        animatedKpi.totalRevenue = Number(kpi.totalRevenue) || 0;
-        animatedKpi.totalPaid = Number(kpi.totalPaid) || 0;
-        animatedKpi.totalRemaining = Number(kpi.totalRemaining) || 0;
-        animatedKpi.orderCount = Number(kpi.orderCount) || 0;
-        animatedKpi.avgOrderValue = Number(kpi.avgOrderValue) || 0;
-        animatedKpi.activeCustomers = Number(kpi.activeCustomers) || 0;
-        return;
-      }
-      gsap.to(animatedKpi, {
-        totalRevenue: Number(kpi.totalRevenue) || 0,
-        totalPaid: Number(kpi.totalPaid) || 0,
-        totalRemaining: Number(kpi.totalRemaining) || 0,
-        orderCount: Number(kpi.orderCount) || 0,
-        avgOrderValue: Number(kpi.avgOrderValue) || 0,
-        activeCustomers: Number(kpi.activeCustomers) || 0,
-        duration: 0.72,
-        ease: 'expo.out',
-        overwrite: true,
-        onUpdate: () => {
-          animatedKpi.totalRevenue = Math.round(animatedKpi.totalRevenue);
-          animatedKpi.totalPaid = Math.round(animatedKpi.totalPaid);
-          animatedKpi.totalRemaining = Math.round(animatedKpi.totalRemaining);
-          animatedKpi.orderCount = Math.round(animatedKpi.orderCount);
-          animatedKpi.avgOrderValue = Math.round(animatedKpi.avgOrderValue);
-          animatedKpi.activeCustomers = Math.round(animatedKpi.activeCustomers);
-        }
-      });
-    };
-
-    let analyticsLatchTimer = null;
-    const triggerAnalyticsAnimations = () => {
-      animateKpiCounters();
-      resetAnalyticsScrollStates();
-      if (analyticsLatchTimer) clearTimeout(analyticsLatchTimer);
-      nextTick(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            isAnalyticsAnimated.value = true;
-            setupAnalyticsObserver();
-            handleScrollCheck();
-          });
-        });
-      });
-      // Resilient fallback latch: guarantee all charts, bars, and metrics are fully visible
-      analyticsLatchTimer = setTimeout(() => {
-        isKpiInView.value = true;
-        isTrendChartInView.value = true;
-        isPriceModeInView.value = true;
-        isPaymentMethodsInView.value = true;
-        isCategorySalesInView.value = true;
-        isTopFavoritesInView.value = true;
-        isTopProductsInView.value = true;
-        isTopCustomersInView.value = true;
-        isInactiveCustomersInView.value = true;
-        isLowProductsInView.value = true;
-        isUxInsightsInView.value = true;
-      }, 500);
-    };
-
-    let scrollRafId = null;
-    const handleScrollCheck = () => {
-      if (typeof window === 'undefined') return;
-      if (scrollRafId) return;
-      scrollRafId = requestAnimationFrame(() => {
-        scrollRafId = null;
-        const vH = window.innerHeight || document.documentElement.clientHeight || 800;
-
-        const checkInView = (elRef, targetRef) => {
-          if (!elRef || !elRef.value) return;
-          if (targetRef.value) return; // Latch once in view to maintain smooth display
-          const r = elRef.value.getBoundingClientRect();
-          // Visible when element top is within 94% of screen height and bottom has not scrolled past top
-          const inView = r.top <= vH * 0.94 && r.bottom >= 20;
-          if (inView) {
-            targetRef.value = true;
-          }
-        };
-
-        checkInView(kpiGridRef, isKpiInView);
-        checkInView(trendChartCardRef, isTrendChartInView);
-        checkInView(priceModeCardRef, isPriceModeInView);
-        checkInView(paymentMethodsCardRef, isPaymentMethodsInView);
-        checkInView(categorySalesCardRef, isCategorySalesInView);
-        checkInView(topFavoritesCardRef, isTopFavoritesInView);
-        checkInView(topProductsCardRef, isTopProductsInView);
-        checkInView(topCustomersCardRef, isTopCustomersInView);
-        checkInView(inactiveCustomersCardRef, isInactiveCustomersInView);
-        checkInView(lowProductsCardRef, isLowProductsInView);
-        checkInView(uxInsightsCardRef, isUxInsightsInView);
-      });
-    };
-
-    const attachScrollListeners = () => {
-      if (typeof window === 'undefined') return;
-      if (adminMainRef.value) {
-        adminMainRef.value.removeEventListener('scroll', handleScrollCheck);
-        adminMainRef.value.addEventListener('scroll', handleScrollCheck, { passive: true });
-      }
-      window.removeEventListener('scroll', handleScrollCheck);
-      window.addEventListener('scroll', handleScrollCheck, { passive: true });
-      window.removeEventListener('resize', handleScrollCheck);
-      window.addEventListener('resize', handleScrollCheck, { passive: true });
-
-      handleScrollCheck();
-    };
-
-    const detachScrollListeners = () => {
-      if (typeof window === 'undefined') return;
-      if (analyticsObserver) {
-        analyticsObserver.disconnect();
-        analyticsObserver = null;
-      }
-      if (adminMainRef.value) {
-        adminMainRef.value.removeEventListener('scroll', handleScrollCheck);
-      }
-      window.removeEventListener('scroll', handleScrollCheck);
-      window.removeEventListener('resize', handleScrollCheck);
-      if (scrollRafId) {
-        cancelAnimationFrame(scrollRafId);
-        scrollRafId = null;
-      }
-    };
 
     const handleSidebarKeydown = (e) => {
       // Up/Down arrows are strictly reserved for traversing table rows (Section 22 of design guide)
@@ -7810,9 +5522,6 @@ export default {
         scrollActiveTabIntoView();
         if (adminMainRef.value) {
           adminMainRef.value.scrollTop = 0;
-        }
-        if (newTab === 'analytics') {
-          triggerAnalyticsAnimations();
         }
       }
     }, { flush: 'post' });
@@ -7919,50 +5628,6 @@ export default {
     // Standardized Analytics Date Range Popover Logic
     const analyticsFromOpen = ref(false);
     const analyticsToOpen = ref(false);
-    const analyticsFromYear = ref(new Date().getFullYear());
-    const analyticsFromMonth = ref(new Date().getMonth());
-    const analyticsToYear = ref(new Date().getFullYear());
-    const analyticsToMonth = ref(new Date().getMonth());
-
-    const analyticsFromMonthYearLabel = computed(() => {
-      const d = new Date(analyticsFromYear.value, analyticsFromMonth.value, 1);
-      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
-    });
-
-    const analyticsToMonthYearLabel = computed(() => {
-      const d = new Date(analyticsToYear.value, analyticsToMonth.value, 1);
-      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
-    });
-
-    const analyticsFromPrevMonth = () => {
-      if (analyticsFromMonth.value === 0) { analyticsFromMonth.value = 11; analyticsFromYear.value--; }
-      else { analyticsFromMonth.value--; }
-    };
-    const analyticsFromNextMonth = () => {
-      if (analyticsFromMonth.value === 11) { analyticsFromMonth.value = 0; analyticsFromYear.value++; }
-      else { analyticsFromMonth.value++; }
-    };
-
-    const analyticsToPrevMonth = () => {
-      if (analyticsToMonth.value === 0) { analyticsToMonth.value = 11; analyticsToYear.value--; }
-      else { analyticsToMonth.value--; }
-    };
-    const analyticsToNextMonth = () => {
-      if (analyticsToMonth.value === 11) { analyticsToMonth.value = 0; analyticsToYear.value++; }
-      else { analyticsToMonth.value++; }
-    };
-
-    const analyticsFromCalendarDays = computed(() => buildCalendarMatrix(analyticsFromYear.value, analyticsFromMonth.value));
-    const analyticsToCalendarDays = computed(() => buildCalendarMatrix(analyticsToYear.value, analyticsToMonth.value));
-
-    const openAnalyticsFromPicker = () => {
-      analyticsToOpen.value = false;
-      analyticsFromOpen.value = !analyticsFromOpen.value;
-    };
-    const openAnalyticsToPicker = () => {
-      analyticsFromOpen.value = false;
-      analyticsToOpen.value = !analyticsToOpen.value;
-    };
 
     const selectAnalyticsFrom = async (dateStr) => {
       analyticsStartDate.value = dateStr;
@@ -8055,12 +5720,6 @@ export default {
       d.setDate(d.getDate() + offsetDays);
       return newOrder.deliveryDate === d.toLocaleDateString('en-CA');
     };
-    const periods = [
-      { val: '7d', label: 'آخر 7 أيام' },
-      { val: '30d', label: 'آخر 30 يوم' },
-      { val: 'all', label: 'كل الأوقات' },
-      { val: 'custom', label: 'فترة مخصصة' }
-    ];
 
     const analyticsData = reactive({
       kpi: { totalRevenue: 0, totalPaid: 0, totalRemaining: 0, orderCount: 0, avgOrderValue: 0, activeCustomers: 0 },
@@ -8430,67 +6089,6 @@ export default {
     });
     const prodDateFromOpen = ref(false);
     const prodDateToOpen = ref(false);
-    const prodFromYear = ref(new Date().getFullYear());
-    const prodFromMonth = ref(new Date().getMonth());
-    const prodToYear = ref(new Date().getFullYear());
-    const prodToMonth = ref(new Date().getMonth());
-
-    const openProdDateFromPicker = () => {
-      prodDateToOpen.value = false;
-      prodDateFromOpen.value = !prodDateFromOpen.value;
-      if (prodDateFromOpen.value && productionReportFilters.dateFrom) {
-        const parts = productionReportFilters.dateFrom.split('-').map(Number);
-        if (parts[0] && parts[1]) {
-          prodFromYear.value = parts[0];
-          prodFromMonth.value = parts[1] - 1;
-        }
-      }
-    };
-
-    const openProdDateToPicker = () => {
-      prodDateFromOpen.value = false;
-      prodDateToOpen.value = !prodDateToOpen.value;
-      if (prodDateToOpen.value && productionReportFilters.dateTo) {
-        const parts = productionReportFilters.dateTo.split('-').map(Number);
-        if (parts[0] && parts[1]) {
-          prodToYear.value = parts[0];
-          prodToMonth.value = parts[1] - 1;
-        }
-      }
-    };
-
-    const prodFromPrevMonth = () => {
-      if (prodFromMonth.value === 0) { prodFromMonth.value = 11; prodFromYear.value--; }
-      else { prodFromMonth.value--; }
-    };
-
-    const prodFromNextMonth = () => {
-      if (prodFromMonth.value === 11) { prodFromMonth.value = 0; prodFromYear.value++; }
-      else { prodFromMonth.value++; }
-    };
-
-    const prodToPrevMonth = () => {
-      if (prodToMonth.value === 0) { prodToMonth.value = 11; prodToYear.value--; }
-      else { prodToMonth.value--; }
-    };
-
-    const prodToNextMonth = () => {
-      if (prodToMonth.value === 11) { prodToMonth.value = 0; prodToYear.value++; }
-      else { prodToMonth.value++; }
-    };
-
-    const prodFromMonthYearLabel = computed(() => {
-      const d = new Date(prodFromYear.value, prodFromMonth.value, 1);
-      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
-    });
-
-    const prodToMonthYearLabel = computed(() => {
-      const d = new Date(prodToYear.value, prodToMonth.value, 1);
-      return d.toLocaleDateString('ar-LY', { month: 'long', year: 'numeric' });
-    });
-
-    const prodFromCalendarDays = computed(() => buildCalendarMatrix(prodFromYear.value, prodFromMonth.value));
-    const prodToCalendarDays = computed(() => buildCalendarMatrix(prodToYear.value, prodToMonth.value));
 
     const selectProdDateFrom = (dateStr) => {
       productionReportFilters.dateFrom = dateStr;
@@ -8726,7 +6324,7 @@ export default {
         case 'production':
           return productionSubTab.value === 'chefs'
             ? formatArabicPlural(chefs.value.length, 'chef')
-            : `${productionReportData.chefReport ? productionReportData.chefReport.length : 0} شيف منتج`;
+            : `${productionReportData.value?.chefReport ? productionReportData.value.chefReport.length : 0} شيف منتج`;
         case 'employees':
           return formatArabicPlural(employeesCount.value, 'employee');
         case 'carousel':
@@ -9418,37 +7016,6 @@ export default {
       };
     };
 
-    const getTagProducts = (tagName) => {
-      if (!tagName) return [];
-      return (products.value || []).filter(p => p.tags && Array.isArray(p.tags) && p.tags.includes(tagName));
-    };
-
-    const mostUsedTag = computed(() => {
-      if (!tags.value || tags.value.length === 0) return null;
-      let maxCount = -1;
-      let bestTag = null;
-      for (const t of tags.value) {
-        const count = getTagProductCount(t.name);
-        if (count > maxCount) {
-          maxCount = count;
-          bestTag = { ...t, count };
-        }
-      }
-      return bestTag;
-    });
-
-    const getIconUrl = (iconKey) => {
-      const map = {
-        heart: 'sprout',
-        star: 'medal',
-        sparkles: 'diamond',
-        fire: 'starburst_pct',
-        tag: 'tag_pct',
-        gift: 'gift'
-      };
-      const key = map[iconKey] || iconKey || 'trophy';
-      return `/res/tags/${key}.png`;
-    };
 
     // --- CATEGORIES & TAGS REDESIGNED SHOWCASE LOGIC ---
     const categorySearchQuery = ref('');
@@ -9472,32 +7039,6 @@ export default {
       return (tags.value || []).filter(t => (t.name || '').toLowerCase().includes(q));
     });
 
-    const totalSubcategoriesCount = computed(() => {
-      return (categories.value || []).reduce((acc, c) => acc + (c.subCategories?.length || 0), 0);
-    });
-
-    const categorizedProductsCount = computed(() => {
-      return (products.value || []).filter(p => p.category).length;
-    });
-
-    const taggedProductsCount = computed(() => {
-      return (products.value || []).filter(p => p.tags && p.tags.length > 0).length;
-    });
-
-    const getCategoryProductCount = (catName) => {
-      if (!catName) return 0;
-      return (products.value || []).filter(p => p.category === catName).length;
-    };
-
-    const getTagProductCount = (tagName) => {
-      if (!tagName) return 0;
-      return (products.value || []).filter(p => (p.tags || []).includes(tagName)).length;
-    };
-
-    const getTagColorLabel = (colorKey) => {
-      const match = tagColors.find(c => c.key === colorKey);
-      return match ? match.label.split(' ')[0] : 'ذهبي';
-    };
 
     const filterProductsByCategory = (catName) => {
       filters.category = catName;
@@ -9715,9 +7256,6 @@ export default {
       localStorage.setItem('admin_active_shop', shop);
       sidebarOpen.value = false;
       await checkAuthentication();
-      if (activeTab.value === 'analytics' && userRole.value === 'admin') {
-        triggerAnalyticsAnimations();
-      }
     };
 
     // Tab switcher with locked routing for secondary order_manager role & single-shop admins
@@ -9992,8 +7530,6 @@ export default {
         toast.show('حدث خطأ أثناء تحميل بيانات التحليلات', 'danger');
       } finally {
         analyticsLoading.value = false;
-        await nextTick();
-        triggerAnalyticsAnimations();
       }
     };
 
@@ -11130,10 +8666,9 @@ export default {
       }
     };
 
-    const getChefAssignedProducts = (chefId) => {
-      if (!chefId) return [];
-      const idStr = String(chefId);
-      return products.value.filter(p => String(p.chefId) === idStr);
+    const onProductionChefFilterChange = (val) => {
+      productionReportFilters.chefId = val;
+      loadProductionReport();
     };
 
     const isProductAssignedToOtherChef = (prod) => {
@@ -13534,21 +11069,12 @@ const closeSuggestionsWithDelay = () => {
       document.addEventListener('click', closeAllDatePickers);
       scrollActiveTabIntoView();
       updateHeadIcon();
-      if (activeTab.value === 'analytics') {
-        triggerAnalyticsAnimations();
-      } else {
-        nextTick(() => {
-          attachScrollListeners();
-          handleScrollCheck();
-        });
-      }
     });
 
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleGlobalKeydown);
       document.removeEventListener('click', closeAllDatePickers);
-      detachScrollListeners();
       if (isAdminScrollLocked) {
         unlockBodyScroll(false);
         isAdminScrollLocked = false;
@@ -13637,211 +11163,6 @@ const closeSuggestionsWithDelay = () => {
       updateHeadIcon();
     });
 
-    const isProdDisabled = (p) => {
-      if (!p) return false;
-      return p.available === false || p.available === 'false' || p.available === 0 || p.available === '0';
-    };
-
-    const activeLowPerformingProducts = computed(() => {
-      const disabledMap = new Set(
-        products.value.filter(isProdDisabled).map(p => p._id.toString())
-      );
-      const disabledNameSet = new Set(
-        products.value.filter(isProdDisabled).map(p => p.name.trim().toLowerCase())
-      );
-      return analyticsData.lowPerformingProducts.filter(p => {
-        if (p.productId && disabledMap.has(p.productId.toString())) return false;
-        if (p.name && disabledNameSet.has(p.name.trim().toLowerCase())) return false;
-        return true;
-      });
-    });
-
-    const activeTopProducts = computed(() => {
-      const disabledMap = new Set(
-        products.value.filter(isProdDisabled).map(p => p._id.toString())
-      );
-      const disabledNameSet = new Set(
-        products.value.filter(isProdDisabled).map(p => p.name.trim().toLowerCase())
-      );
-      return analyticsData.topProducts.filter(p => {
-        if (p.productId && disabledMap.has(p.productId.toString())) return false;
-        if (p.name && disabledNameSet.has(p.name.trim().toLowerCase())) return false;
-        return true;
-      });
-    });
-
-    // Top Products Multi-Sort (Direct Table Header Driven)
-    const topProductsSortField = ref('rank'); // 'rank' | 'revenue' | 'quantity' | 'name'
-    const topProductsSortAsc = ref(false); // false = descending
-
-    const toggleTopProductsSort = (field) => {
-      if (topProductsSortField.value === field) {
-        topProductsSortAsc.value = !topProductsSortAsc.value;
-      } else {
-        topProductsSortField.value = field;
-        topProductsSortAsc.value = (field === 'name'); // default ascending for name, descending for metrics/rank
-      }
-    };
-
-    const getSalesSharePct = (revenue) => {
-      const total = Number(analyticsData.kpi?.totalRevenue) || 0;
-      if (!total || total <= 0) return 0;
-      const pct = ((Number(revenue) || 0) / total) * 100;
-      return pct >= 10 ? Math.round(pct) : Number(pct.toFixed(1));
-    };
-
-    const sortedTopProducts = computed(() => {
-      const withRank = activeTopProducts.value.map((item, idx) => {
-        const found = products.value.find(p => (item.productId && p._id.toString() === item.productId.toString()) || p.name === item.name);
-        return {
-          ...item,
-          originalRank: idx + 1,
-          category: item.category || (found ? found.category : '')
-        };
-      });
-
-      return withRank.sort((a, b) => {
-        let comparison = 0;
-        if (topProductsSortField.value === 'name') {
-          comparison = (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' });
-        } else if (topProductsSortField.value === 'revenue') {
-          comparison = (a.revenue || 0) - (b.revenue || 0);
-        } else if (topProductsSortField.value === 'quantity') {
-          comparison = (a.quantity || 0) - (b.quantity || 0);
-        } else if (topProductsSortField.value === 'rank') {
-          comparison = (b.originalRank || 0) - (a.originalRank || 0);
-        }
-        return topProductsSortAsc.value ? comparison : -comparison;
-      });
-    });
-
-    const activeTopFavorites = computed(() => {
-      const disabledNameSet = new Set(
-        products.value.filter(isProdDisabled).map(p => p.name.trim().toLowerCase())
-      );
-      return analyticsData.topFavorites.filter(fav => {
-        if (fav.name && disabledNameSet.has(fav.name.trim().toLowerCase())) return false;
-        return true;
-      });
-    });
-
-
-
-    // SVG Line Chart coordinates math calculations
-    const hoveredTrendIndex = ref(null);
-    const trendMaxVal = computed(() => {
-      if (!analyticsData.revenueTrend.length) return 0;
-      return Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 0);
-    });
-
-    const trendCoordinates = computed(() => {
-      if (!analyticsData.revenueTrend.length) return [];
-      
-      const maxVal = Math.max(...analyticsData.revenueTrend.map(t => t.revenue), 10);
-      const pointsCount = analyticsData.revenueTrend.length;
-      
-      const startX = 45;
-      const endX = 855;
-      const width = endX - startX; // 810
-      const baseY = 170;
-      const topY = 35;
-      const height = baseY - topY; // 135
-      
-      return analyticsData.revenueTrend.map((t, idx) => {
-        const x = startX + (idx / (pointsCount - 1 || 1)) * width;
-        const y = baseY - (t.revenue / maxVal) * height;
-        return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, date: t.date, val: t.revenue };
-      });
-    });
-
-    const svgTrendLinePath = computed(() => {
-      const coords = trendCoordinates.value;
-      if (coords.length === 0) return '';
-      return coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
-    });
-
-    const svgTrendAreaPath = computed(() => {
-      const coords = trendCoordinates.value;
-      if (coords.length === 0) return '';
-      const lineStr = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
-      const startX = coords[0].x;
-      const endX = coords[coords.length - 1].x;
-      return `${lineStr} L ${endX} 170 L ${startX} 170 Z`;
-    });
-
-    const trendXLabels = computed(() => {
-      const trend = analyticsData.revenueTrend;
-      if (trend.length === 0) return [];
-      
-      const maxLabels = Math.min(trend.length, 6);
-      const labels = [];
-      const step = Math.floor(trend.length / maxLabels) || 1;
-      const startX = 45;
-      const endX = 855;
-      const width = endX - startX;
-      
-      for (let i = 0; i < trend.length; i += step) {
-        const x = startX + (i / (trend.length - 1 || 1)) * width;
-        const rawDate = trend[i].date;
-        const dateParts = rawDate.split('-');
-        const text = dateParts.length > 2 ? `${dateParts[2]}/${dateParts[1]}` : rawDate;
-        labels.push({ x: Math.round(x * 10) / 10, text });
-      }
-      return labels;
-    });
-
-    // Donut chart math for Bulk vs Regular sales split
-    const priceModePercentages = computed(() => {
-      const reg = analyticsData.priceModeSplit.regular.revenue;
-      const blk = analyticsData.priceModeSplit.bulk.revenue;
-      const total = reg + blk;
-      if (total === 0) return { regular: 50, bulk: 50 };
-      return {
-        regular: (reg / total) * 100,
-        bulk: (blk / total) * 100
-      };
-    });
-
-    const donutDashArray = computed(() => {
-      // 2 * PI * R where R = 45 => 282.74
-      return '282.74';
-    });
-
-    const donutDashOffset = computed(() => {
-      const regPercent = priceModePercentages.value.regular;
-      // dashoffset = circum - (percent * circum)
-      return (282.74 - (regPercent / 100) * 282.74).toFixed(2);
-    });
-
-    const getCategoryBarWidth = (revenue) => {
-      const maxRevenue = Math.max(...analyticsData.categorySales.map(c => c.revenue), 1);
-      return Math.max((revenue / maxRevenue) * 100, 4); // Minimal width of 4% for design aesthetics
-    };
-
-    const getPaymentMethodPct = (methodKey) => {
-      const pms = analyticsData.paymentMethodsSplit;
-      if (!pms) return 0;
-      const total = (pms.cash?.revenue || 0) + (pms.card?.revenue || 0) + (pms.bank_transfer?.revenue || 0);
-      if (total <= 0) return 0;
-      const rev = pms[methodKey]?.revenue || 0;
-      return Math.round((rev / total) * 100);
-    };
-
-    const getCustomerSharePct = (spent) => {
-      const topList = analyticsData.topCustomers;
-      if (!topList || topList.length === 0) return 0;
-      const maxSpent = topList[0]?.totalSpent || 0;
-      if (maxSpent <= 0) return 0;
-      return Math.min(100, Math.max(4, Math.round((spent / maxSpent) * 100)));
-    };
-
-    const getDevicePct = (deviceKey) => {
-      const devs = telemetryInsights.value?.devices;
-      if (!devs) return 0;
-      const total = (devs.mobile || 0) + (devs.desktop || 0) + (devs.tablet || 0);
-      if (total <= 0) return 0;
-      return Math.round(((devs[deviceKey] || 0) / total) * 100);
-    };
 
     onMounted(() => {
       fetchPublicAdminUsers();
@@ -13889,23 +11210,12 @@ const closeSuggestionsWithDelay = () => {
       analyticsStartDate,
       analyticsEndDate,
       analyticsLoading,
+      categoriesLoading,
+      tagsLoading,
+      buildCalendarMatrix,
       telemetryInsights,
       analyticsFromOpen,
       analyticsToOpen,
-      analyticsFromYear,
-      analyticsFromMonth,
-      analyticsToYear,
-      analyticsToMonth,
-      analyticsFromMonthYearLabel,
-      analyticsToMonthYearLabel,
-      analyticsFromPrevMonth,
-      analyticsFromNextMonth,
-      analyticsToPrevMonth,
-      analyticsToNextMonth,
-      analyticsFromCalendarDays,
-      analyticsToCalendarDays,
-      openAnalyticsFromPicker,
-      openAnalyticsToPicker,
       selectAnalyticsFrom,
       selectAnalyticsTo,
       setAnalyticsShortcut,
@@ -13929,9 +11239,7 @@ const closeSuggestionsWithDelay = () => {
       posCalendarDays,
       selectPosDateFromPicker,
       isPosDateRelative,
-      periods,
       analyticsData,
-      animatedKpi,
       products,
       categories,
       tags,
@@ -13957,7 +11265,6 @@ const closeSuggestionsWithDelay = () => {
       tagPlacements,
       tagIcons,
       getTagDetails,
-      getIconUrl,
       openTagModal,
       saveTag,
       deleteTag,
@@ -13973,8 +11280,6 @@ const closeSuggestionsWithDelay = () => {
       clearAllProductsForTag,
       filteredAssignProducts,
       saveTagAssignments,
-      getTagProducts,
-      mostUsedTag,
 
       formatCurrency,
       formatTotal,
@@ -14034,23 +11339,8 @@ const closeSuggestionsWithDelay = () => {
       tagsViewMode,
       filteredCategories,
       filteredTags,
-      totalSubcategoriesCount,
-      categorizedProductsCount,
-      taggedProductsCount,
-      getCategoryProductCount,
-      getTagProductCount,
-      getTagColorLabel,
       filterProductsByCategory,
       filterProductsByTag,
-      hoveredTrendIndex,
-      trendCoordinates,
-      svgTrendLinePath,
-      svgTrendAreaPath,
-      trendXLabels,
-      priceModePercentages,
-      donutDashArray,
-      donutDashOffset,
-      getCategoryBarWidth,
       orders,
       customers,
       orderFilters,
@@ -14093,41 +11383,6 @@ const closeSuggestionsWithDelay = () => {
       getTodayStr,
       filteredOrders,
       filteredCustomers,
-      activeLowPerformingProducts,
-      activeTopProducts,
-      topProductsSortField,
-      topProductsSortAsc,
-      toggleTopProductsSort,
-      getSalesSharePct,
-      sortedTopProducts,
-      activeTopFavorites,
-      isAnalyticsAnimated,
-      trendMaxVal,
-      kpiGridRef,
-      isKpiInView,
-      trendChartCardRef,
-      isTrendChartInView,
-      priceModeCardRef,
-      isPriceModeInView,
-      paymentMethodsCardRef,
-      isPaymentMethodsInView,
-      categorySalesCardRef,
-      isCategorySalesInView,
-      topFavoritesCardRef,
-      isTopFavoritesInView,
-      topProductsCardRef,
-      isTopProductsInView,
-      topCustomersCardRef,
-      isTopCustomersInView,
-      inactiveCustomersCardRef,
-      isInactiveCustomersInView,
-      lowProductsCardRef,
-      isLowProductsInView,
-      uxInsightsCardRef,
-      isUxInsightsInView,
-      getPaymentMethodPct,
-      getCustomerSharePct,
-      getDevicePct,
       userRole,
       userDisplayName,
       userShopAccess,
@@ -14141,6 +11396,7 @@ const closeSuggestionsWithDelay = () => {
       resetModalOpen,
       onOrdersReset,
       chefs,
+      chefsLoading,
       productionSubTab,
       chefModalOpen,
       editingChef,
@@ -14158,7 +11414,6 @@ const closeSuggestionsWithDelay = () => {
       openEditChefModal,
       saveChef,
       deleteChef,
-      getChefAssignedProducts,
       openAssignProductsModal,
       toggleProductAssignment,
       selectAllProductsForChef,
@@ -14167,6 +11422,7 @@ const closeSuggestionsWithDelay = () => {
       getOtherChefName,
       saveProductAssignments,
       loadProductionReport,
+      onProductionChefFilterChange,
       setProductionDateShortcut,
       printProductionReport,
       productCustomersModalOpen,
@@ -14182,16 +11438,6 @@ const closeSuggestionsWithDelay = () => {
       filteredProductOrdersList,
       prodDateFromOpen,
       prodDateToOpen,
-      openProdDateFromPicker,
-      openProdDateToPicker,
-      prodFromPrevMonth,
-      prodFromNextMonth,
-      prodToPrevMonth,
-      prodToNextMonth,
-      prodFromMonthYearLabel,
-      prodToMonthYearLabel,
-      prodFromCalendarDays,
-      prodToCalendarDays,
       selectProdDateFrom,
       selectProdDateTo,
       clearProdDateRange,
@@ -14346,9 +11592,6 @@ const closeSuggestionsWithDelay = () => {
 </script>
 
 <style scoped>
-/* ==========================================================================
-   TAGS MANAGEMENT: UPGRADED MODALS & MOCKUP STYLING
-   ========================================================================== */
 .tag-edit-modal-box {
   max-width: 880px !important;
   width: 95vw !important;
@@ -14436,20 +11679,22 @@ const closeSuggestionsWithDelay = () => {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+
   .tag-edit-body-scroll {
     padding: 16px;
   }
+
   .tag-edit-modal-box .modal-header,
-  .tag-edit-modal-box .modal-footer {
+.tag-edit-modal-box .modal-footer {
     padding: 14px 16px !important;
   }
+
   .tag-edit-modal-box .modal-footer .btn {
     flex: 1 1 0 !important;
     min-width: 0 !important;
   }
 }
 
-/* Styled Inputs for Tag Form */
 .tag-input-styled {
   width: 100%;
   padding: 10px 14px;
@@ -14480,9 +11725,6 @@ const closeSuggestionsWithDelay = () => {
   font-weight: 400;
 }
 
-
-
-/* SVG Icon Pool Grid for Tags */
 .tag-icon-pool-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
@@ -14518,12 +11760,10 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
 }
 
-.tag-icon-pool-grid .svg-pool-item.active .cat-svg-icon-wrapper,
 .tag-icon-pool-grid .svg-pool-item.active svg {
   color: #ffffff;
 }
 
-/* Live Realistic Card Mockup Preview Panel */
 .tag-mockup-sticky-panel {
   position: sticky;
   top: 0;
@@ -14592,15 +11832,6 @@ const closeSuggestionsWithDelay = () => {
   filter: drop-shadow(0 4px 8px rgba(180, 83, 9, 0.2));
 }
 
-/* Floating Tag Badge inside Mockup (Top Right in RTL) */
-.tag-mockup-floating-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 4;
-}
-
-/* Mock Favorite Heart Button (Top Left in RTL) */
 .tag-mockup-heart-btn {
   position: absolute;
   top: 10px;
@@ -14706,7 +11937,6 @@ const closeSuggestionsWithDelay = () => {
   line-height: 1.3;
 }
 
-/* Singular Tag Chip inside Tag Mockup Card */
 .tag-mockup-card .product-tag-chip {
   direction: rtl;
   display: inline-flex;
@@ -14741,9 +11971,6 @@ const closeSuggestionsWithDelay = () => {
   white-space: nowrap;
 }
 
-/* ==========================================================================
-   TAG BULK PRODUCT ASSIGNMENT MODAL
-   ========================================================================== */
 .tag-assign-modal {
   max-width: 780px !important;
   width: 95vw !important;
@@ -14905,7 +12132,6 @@ const closeSuggestionsWithDelay = () => {
   font-size: 0.9rem;
 }
 
-/* Glassmorphism dashboard styles using custom HSL/CSS tokens */
 .admin-layout {
   min-height: 100dvh;
   display: flex;
@@ -14914,18 +12140,17 @@ const closeSuggestionsWithDelay = () => {
   font-family: 'Cairo', sans-serif;
   direction: rtl;
   /* Elevation tokens for dashboard surfaces: hairline ring (replaces 1px borders),
-     a tight contact shadow, and a soft ambient shadow pulled in with negative spread. */
+  a tight contact shadow, and a soft ambient shadow pulled in with negative spread. */
   --admin-card-elevation:
-    0 0 0 1px rgba(15, 23, 42, 0.05),
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 8px 24px -16px rgba(15, 23, 42, 0.16);
+  0 0 0 1px rgba(15, 23, 42, 0.05),
+  0 1px 2px rgba(15, 23, 42, 0.04),
+  0 8px 24px -16px rgba(15, 23, 42, 0.16);
   --admin-card-elevation-hover:
-    0 0 0 1px rgba(15, 23, 42, 0.06),
-    0 2px 4px rgba(15, 23, 42, 0.05),
-    0 18px 36px -18px rgba(15, 23, 42, 0.24);
+  0 0 0 1px rgba(15, 23, 42, 0.06),
+  0 2px 4px rgba(15, 23, 42, 0.05),
+  0 18px 36px -18px rgba(15, 23, 42, 0.24);
 }
 
-/* Define chart/theme palettes based on selected shop context */
 .shop-theme-shop1 {
   --primary-color: #d97706;
   --primary-color-rgb: 217, 119, 6;
@@ -14964,7 +12189,6 @@ const closeSuggestionsWithDelay = () => {
   --shop-badge-color: #1d4ed8;
 }
 
-/* Spinner Overlay */
 .spinner-overlay {
   position: fixed;
   top: 0;
@@ -14996,7 +12220,6 @@ const closeSuggestionsWithDelay = () => {
   font-weight: 500;
 }
 
-/* Login Page styles */
 .login-container {
   display: flex;
   align-items: center;
@@ -15093,15 +12316,12 @@ const closeSuggestionsWithDelay = () => {
   font-size: 0.9rem;
 }
 
-/* Admin Dashboard layout Grid */
 .admin-container {
   display: grid;
   grid-template-columns: 280px 1fr;
   min-height: 100dvh;
 }
 
-/* High-Performance 60-120fps Admin Card & Panel Design (Eliminates GPU Blur Bottlenecks) */
-.admin-view .glass-panel,
 .admin-container .glass-panel {
   background: #ffffff !important;
   backdrop-filter: none !important;
@@ -15110,7 +12330,6 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: var(--admin-card-elevation) !important;
 }
 
-/* Sidebar Navigation */
 .admin-sidebar {
   background: #ffffff;
   border-left: 1px solid rgba(0, 0, 0, 0.06);
@@ -15231,24 +12450,6 @@ const closeSuggestionsWithDelay = () => {
   filter: grayscale(0.5);
 }
 
-/* Strictly lock sidebar tabs horizontally */
-.sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden !important;
-  overscroll-behavior-x: none !important;
-  overscroll-behavior-y: contain;
-  width: 100%;
-  box-sizing: border-box;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
 .menu-item {
   display: flex;
   align-items: center;
@@ -15320,10 +12521,21 @@ const closeSuggestionsWithDelay = () => {
   transform: scale(1.08);
 }
 
-/* Sliding active highlight: one shared surface glides to the active tab (transform-only).
-   It carries exactly the visuals `.menu-item.active` used to paint itself, so the static
-   look is unchanged — only the movement between tabs is new. */
 .sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: contain;
+  width: 100%;
+  box-sizing: border-box;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
   position: relative;
 }
 
@@ -15346,9 +12558,9 @@ const closeSuggestionsWithDelay = () => {
 .sidebar-menu.indicator-animated .menu-active-indicator {
   /* Critically damped feel: quick departure, soft settle, no overshoot. */
   transition:
-    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
-    height 0.38s cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 0.2s ease;
+  transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+  height 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+  opacity 0.2s ease;
 }
 
 .sidebar-menu .menu-item {
@@ -15374,7 +12586,6 @@ const closeSuggestionsWithDelay = () => {
   padding-top: 16px;
 }
 
-/* Mobile header styling */
 .admin-mobile-header {
   display: none;
   background: #fff;
@@ -15394,13 +12605,6 @@ const closeSuggestionsWithDelay = () => {
   margin: 0;
 }
 
-.menu-toggle-btn {
-  background: none;
-  border: none;
-  color: #1e3a5f;
-  cursor: pointer;
-}
-
 .mobile-logo {
   width: 35px;
   height: 35px;
@@ -15408,7 +12612,6 @@ const closeSuggestionsWithDelay = () => {
   object-fit: cover;
 }
 
-/* Main Content Area */
 .admin-main {
   position: relative !important;
   grid-column: 2;
@@ -15484,125 +12687,6 @@ const closeSuggestionsWithDelay = () => {
   transform: scale(0.9);
 }
 
-.segmented-control {
-  display: flex;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.02);
-  gap: 2px;
-}
-
-.control-pill {
-  background: transparent;
-  border: none;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #495057;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  font-family: inherit;
-}
-
-.control-pill:hover {
-  color: #212529;
-}
-
-.control-pill.active {
-  background: #ffffff;
-  color: var(--chart-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-/* ==========================================================================
-   MINIMAL CLEAN ANALYTICS DASHBOARD — APPLE / LINEAR REFINED STYLE
-   ========================================================================== */
-
-/* KPI Cards Layout */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-/* Six KPI columns need ~200px per card to fit "1,104,019 د.ل" next to its icon.
-   With the ~280px sidebar that only holds from ~1600px viewports; below that,
-   switch to 3 columns so large currency values never clip (mobile keeps its 2-col rule). */
-@media (max-width: 1599px) {
-  .kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.kpi-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px 16px;
-  background: #ffffff;
-  border-radius: 12px;
-  /* Depth from light, not lines: a transparent border keeps the box size identical while a
-     hairline ring + soft ambient shadow replaces the hard 1px outline. */
-  border: 1px solid transparent;
-  box-shadow: var(--admin-card-elevation);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  opacity: 0;
-  transform: translateY(12px);
-  will-change: opacity, transform;
-  min-width: 0;
-}
-
-.kpi-grid.in-view .kpi-card {
-  animation: kpiCardPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--kpi-delay, 0ms);
-}
-
-@keyframes kpiCardPopIn {
-  0% {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--admin-card-elevation-hover);
-}
-
-.kpi-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.kpi-title {
-  font-size: 0.82rem;
-  color: #64748b;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.kpi-value {
-  font-family: 'Cairo', sans-serif !important;
-  font-size: 1.22rem;
-  font-weight: 800;
-  color: #0f172a;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-  letter-spacing: -0.3px;
-  white-space: nowrap;
-}
-
 .kpi-icon-wrap {
   width: 36px;
   height: 36px;
@@ -15614,542 +12698,6 @@ const closeSuggestionsWithDelay = () => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-/* Charts Grid */
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 28px;
-}
-
-.chart-card {
-  position: relative;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid transparent;
-  box-shadow: var(--admin-card-elevation);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.chart-card:not(.skeleton-card) {
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.chart-card:not(.skeleton-card).in-view {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.chart-card:not(.skeleton-card).in-view:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--admin-card-elevation-hover);
-}
-
-/* Staggered entrance delays for chart cards */
-.trend-chart-card { transition-delay: 50ms; }
-.price-mode-card { transition-delay: 100ms; }
-.payment-methods-card { transition-delay: 150ms; }
-.top-favorites-card { transition-delay: 200ms; }
-.category-sales-card { transition-delay: 80ms; }
-.top-customers-card { transition-delay: 120ms; }
-.top-products-card { transition-delay: 80ms; }
-.inactive-customers-card { transition-delay: 120ms; }
-.low-products-card { transition-delay: 80ms; }
-.ux-insights-card { transition-delay: 120ms; }
-
-@media (prefers-reduced-motion: reduce) {
-  .chart-card:not(.skeleton-card) {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-}
-
-.chart-card.span-2 {
-  grid-column: span 2;
-}
-
-.chart-card.span-3,
-.chart-card.span-full {
-  grid-column: 1 / -1;
-}
-
-.chart-card-header {
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.chart-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-/* Defensive High-Contrast Typography for Chart Cards */
-.chart-card {
-  color: #0f172a;
-}
-
-.chart-card .text-muted,
-.chart-card .cat-rank-num,
-.chart-card .split-clean-pct,
-.chart-card .fav-clean-rank,
-.chart-card .fav-clean-count {
-  color: #64748b !important;
-}
-
-.chart-card .split-clean-name,
-.chart-card .split-clean-val,
-.chart-card .pm-clean-name,
-.chart-card .pm-clean-meta,
-.chart-card .cat-name,
-.chart-card .cat-val,
-.chart-card .fav-clean-name {
-  color: #0f172a;
-}
-
-:global(.dark-mode .chart-card) {
-  color: #f8fafc;
-}
-:global(.dark-mode .chart-card .text-muted),
-:global(.dark-mode .chart-card .cat-rank-num),
-:global(.dark-mode .chart-card .split-clean-pct),
-:global(.dark-mode .chart-card .fav-clean-rank),
-:global(.dark-mode .chart-card .fav-clean-count) {
-  color: #94a3b8 !important;
-}
-:global(.dark-mode .chart-card .split-clean-name),
-:global(.dark-mode .chart-card .split-clean-val),
-:global(.dark-mode .chart-card .pm-clean-name),
-:global(.dark-mode .chart-card .pm-clean-meta),
-:global(.dark-mode .chart-card .cat-name),
-:global(.dark-mode .chart-card .cat-val),
-:global(.dark-mode .chart-card .fav-clean-name) {
-  color: #f1f5f9;
-}
-
-/* SVG Line Chart Style */
-.svg-chart-container {
-  height: 230px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 100%;
-}
-
-.svg-line-chart {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.svg-trend-area {
-  opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
-  will-change: opacity;
-}
-.svg-trend-area.show-area {
-  opacity: 1;
-}
-
-.svg-trend-line {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  transition: stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: stroke-dashoffset;
-}
-.svg-trend-line.draw-line {
-  stroke-dashoffset: 0;
-}
-
-.chart-dot-group {
-  opacity: 0;
-  transform: scale(0);
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-  will-change: transform, opacity;
-}
-.chart-dot-group.show-dot {
-  opacity: 1;
-  transform: scale(1);
-  transition-delay: var(--dot-delay, 300ms);
-}
-
-.chart-dot-group:hover circle {
-  r: 6.5px;
-  stroke-width: 3px;
-}
-
-.chart-text {
-  font-size: 11px;
-  font-weight: 600;
-  fill: #64748b;
-  font-family: 'Cairo', sans-serif;
-}
-
-.chart-text.label-y {
-  font-size: 10px;
-  font-weight: 700;
-  fill: #94a3b8;
-  font-family: 'Cairo', monospace;
-}
-
-.dot-hover-trigger {
-  cursor: pointer;
-}
-
-.empty-chart {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Clean Dual Split Display */
-.split-display-clean {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  min-height: 180px;
-}
-
-.split-dual-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  display: flex;
-  overflow: hidden;
-}
-
-.split-dual-segment {
-  height: 100%;
-  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: width;
-}
-
-.segment-bulk { background: var(--chart-primary, #d97706); }
-.segment-regular { background: #94a3b8; }
-
-.split-clean-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.split-clean-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.88rem;
-}
-
-.split-clean-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.split-clean-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.dot-bulk { background: var(--chart-primary, #d97706); }
-.dot-regular { background: #94a3b8; }
-
-.split-clean-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Payment Methods Clean List */
-.pm-clean-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  justify-content: center;
-  min-height: 180px;
-}
-
-.pm-clean-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pm-clean-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.88rem;
-}
-
-.pm-clean-name {
-  color: #1e293b;
-}
-
-.pm-clean-meta {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-}
-
-.pm-clean-bar {
-  height: 4px;
-  background: #f1f5f9;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.pm-clean-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: width;
-}
-
-.fill-cash { background: #10b981; }
-.fill-card { background: #3b82f6; }
-.fill-bank { background: #8b5cf6; }
-
-/* Category bar gauges */
-.bar-chart-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.category-bar-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.bar-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.86rem;
-}
-
-.cat-rank-num {
-  font-size: 0.8rem;
-}
-
-.bar-gauge {
-  height: 4px;
-  background: #f1f5f9;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  background: var(--chart-primary, #d97706);
-  border-radius: 999px;
-  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: width;
-}
-
-/* Favorites Clean Rows */
-.list-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.fav-clean-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f8fafc;
-  font-size: 0.88rem;
-}
-
-.fav-clean-rank {
-  font-size: 0.82rem;
-  width: 20px;
-}
-
-.fav-clean-name {
-  color: #1e293b;
-  flex: 1;
-}
-
-.fav-clean-count {
-  font-size: 0.8rem;
-}
-
-/* Clean Tables & Cells */
-.share-mini-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.share-mini-bar {
-  flex: 1;
-  height: 4px;
-  background: #f1f5f9;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.share-mini-fill {
-  height: 100%;
-  background: var(--chart-primary, #d97706);
-  border-radius: 999px;
-  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: width;
-}
-
-.phone-clean-link {
-  color: #0f172a;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.phone-clean-link:hover {
-  color: var(--primary-color, #d97706);
-  text-decoration: underline;
-}
-
-.clickable-product-row {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.clickable-product-row:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-/* UX Clean Wrapper */
-.ux-clean-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.ux-funnel-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
-}
-
-.funnel-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.funnel-metric-label {
-  font-size: 0.78rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.funnel-metric-val {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.funnel-metric.highlight .funnel-metric-val {
-  color: #10b981;
-}
-
-.ux-rates-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  font-size: 0.85rem;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.ux-rate-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ux-rate-label {
-  color: #64748b;
-  font-weight: 500;
-}
-
-.device-clean-strip {
-  display: flex;
-  gap: 28px;
-  font-size: 0.85rem;
-  color: #475569;
-}
-
-.device-clean-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Mobile Clean Items */
-.mobile-analytics-cards-grid {
-  display: none;
-}
-
-.mob-clean-item {
-  padding: 12px 14px;
-  border-bottom: 1px solid #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  cursor: pointer;
-}
-
-.mob-clean-item:last-child {
-  border-bottom: none;
-}
-
-.mob-clean-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9rem;
-}
-
-.mob-clean-title {
-  color: #0f172a;
-}
-
-.mob-clean-rev {
-  color: #0f172a;
-  font-size: 0.9rem;
-}
-
-.mob-clean-sub {
-  display: flex;
-  gap: 8px;
-  font-size: 0.78rem;
-  color: #64748b;
-  align-items: center;
 }
 
 .table-container {
@@ -16218,34 +12766,6 @@ const closeSuggestionsWithDelay = () => {
   background-color: rgba(253, 181, 24, 0.06);
 }
 
-/* Category SVG Icon Badges in Table & Modal */
-.cat-icon-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--primary-glow);
-  color: var(--primary-color);
-  border: 1px solid rgba(253, 181, 24, 0.25);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.admin-table tbody tr:hover .cat-icon-badge {
-  transform: scale(1.1);
-  background: var(--primary-color);
-  color: #ffffff;
-  box-shadow: 0 4px 12px var(--primary-glow);
-}
-
-.category-icon-input-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .category-icon-preview-row {
   display: flex;
   align-items: center;
@@ -16256,20 +12776,6 @@ const closeSuggestionsWithDelay = () => {
   border-radius: 12px;
 }
 
-.category-icon-input-group .icon-preview-box {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: var(--primary-glow);
-  color: var(--primary-color);
-  border: 1px solid rgba(253, 181, 24, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* SVG Icon Pool Grid in Category Modal */
 .svg-icon-pool-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -16317,10 +12823,6 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: 0 3px 10px var(--primary-glow);
 }
 
-.svg-pool-item.active .cat-svg-icon-wrapper {
-  color: #ffffff;
-}
-
 .pool-item-label {
   font-size: 0.72rem;
   line-height: 1;
@@ -16330,41 +12832,15 @@ const closeSuggestionsWithDelay = () => {
   font-weight: 700;
 }
 
-.text-mono, .customer-info-cell .phone, .order-date {
+.text-mono,
+.customer-info-cell .phone {
   font-family: 'Cairo', -apple-system, sans-serif !important;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.2px;
 }
 
-.text-semibold { font-weight: 600; }
-.text-center { text-align: center; }
-
-/* Filters actions bar */
-.filter-actions-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 12px;
-  flex-wrap: wrap;
-}
-
-.filters-group {
-  display: flex;
-  gap: 12px;
-  flex: 1 1 300px;
-  flex-wrap: wrap;
-}
-
-.filters-group .form-control {
-  flex: 1 1 180px;
-}
-
-.filter-actions-bar .btn {
-  flex: 0 0 auto;
-  white-space: nowrap;
+.text-semibold {
+  font-weight: 600;
 }
 
 .form-control {
@@ -16383,7 +12859,6 @@ const closeSuggestionsWithDelay = () => {
   text-align: right;
 }
 
-/* Option 1: Split-Level Pill Bar Toolbar Styles */
 .table-card.glass-panel {
   padding: 0;
   overflow: visible !important;
@@ -16393,59 +12868,6 @@ const closeSuggestionsWithDelay = () => {
   box-shadow: var(--shadow-md);
   position: relative;
   z-index: 5;
-}
-
-.card-toolbar-split {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 24px;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(44, 37, 32, 0.08);
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  position: relative;
-  z-index: 100;
-}
-
-.card-toolbar-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.toolbar-title-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-title {
-  font-size: 1.3rem;
-  font-weight: 850;
-  color: #0f172a;
-  margin: 0;
-  letter-spacing: -0.2px;
-}
-
-.toolbar-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: var(--primary-glow);
-  color: var(--primary-color);
-  font-size: 0.85rem;
-  font-weight: 800;
-}
-
-.card-toolbar-bottom {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .orders-toolbar-container {
@@ -16525,15 +12947,6 @@ const closeSuggestionsWithDelay = () => {
 .order-status-select {
   height: 40px !important;
   min-width: 185px !important;
-}
-
-.search-input-wrapper {
-  position: relative;
-  flex: 1 1 240px;
-  min-width: 200px;
-  height: 40px;
-  display: flex;
-  align-items: center;
 }
 
 .search-input-wrapper .search-icon {
@@ -16622,7 +13035,6 @@ select.form-control:focus {
   outline: none !important;
 }
 
-/* Custom Date Filter Component & Popover Panel */
 .date-filter-group {
   position: relative;
   display: flex;
@@ -16780,35 +13192,13 @@ select.form-control:focus {
   color: #ffffff;
 }
 
-/* Position Relative Helper */
 .position-relative {
   position: relative !important;
 }
 
-/* DatePicker Modal Teleport Wrapper */
 .datepicker-modal-wrapper {
   display: contents;
 }
-
-/* DatePicker Popover Panel */
-.datepicker-popover {
-  position: absolute !important;
-  top: calc(100% + 6px) !important;
-  right: 0 !important;
-  z-index: 3000 !important;
-  width: 280px !important;
-  padding: 14px !important;
-  background: #ffffff !important;
-  border: 1.5px solid #cbd5e1 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22) !important;
-  display: block !important;
-}
-
-.edit-order-meta-card {
-  overflow: visible !important;
-}
-
 
 .datepicker-header {
   display: flex;
@@ -17026,12 +13416,6 @@ select.form-control:focus {
   border-color: #9ca3af;
 }
 
-.btn-danger {
-  background: #dc2626;
-  color: #fff;
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.08);
-}
-
 .btn-danger:hover {
   background: #b91c1c;
   box-shadow: 0 4px 8px rgba(220, 38, 38, 0.15);
@@ -17040,17 +13424,6 @@ select.form-control:focus {
 .btn-sm {
   padding: 8px 14px;
   font-size: 0.85rem;
-}
-
-.table-prod-img {
-  width: 108px;
-  height: 108px;
-  border-radius: 16px;
-  object-fit: cover;
-  cursor: zoom-in;
-  border: 2px solid #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
 }
 
 .table-prod-img:hover {
@@ -17067,26 +13440,7 @@ select.form-control:focus {
   margin-right: 6px;
 }
 
-.chips-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.sub-chip {
-  background: rgba(0, 0, 0, 0.04);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  color: #495057;
-  font-weight: 500;
-}
-
-/* ========================================================================= */
-/* POPUP MODALS MATERIALIZATION & BACKDROP ENTRANCE                          */
-/* ========================================================================= */
 .modal-overlay,
-.premium-cropper-overlay,
 .zoom-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -17103,7 +13457,6 @@ select.form-control:focus {
 
 .modal-box,
 .modal-content,
-.premium-cropper-content,
 .zoom-content {
   background: #ffffff !important;
   color: #0f172a !important;
@@ -17124,8 +13477,18 @@ select.form-control:focus {
   transform: translateZ(0);
 }
 
-/* Datepicker popover bloom */
 .datepicker-popover {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  z-index: 3000 !important;
+  width: 280px !important;
+  padding: 14px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22) !important;
+  display: block !important;
   animation: popoverMaterializeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
   will-change: transform, opacity;
   transform: translateZ(0);
@@ -17148,8 +13511,7 @@ select.form-control:focus {
 }
 
 .modal-box.max-w-lg,
-.modal-content.modal-lg,
-.modal-box.max-w-2xl {
+.modal-content.modal-lg {
   max-width: 720px;
 }
 
@@ -17246,7 +13608,6 @@ select.form-control:focus {
   line-height: 1.45;
 }
 
-/* Modal Form Labels & Inputs Clean Light Theme */
 .modal-box .form-group label,
 .modal-content .form-group label {
   font-size: 0.9rem !important;
@@ -17311,7 +13672,6 @@ select.form-control:focus {
   font-family: 'Cairo', sans-serif !important;
 }
 
-/* Modal Footer & Buttons Placement Fixes (RTL Order) */
 .modal-box .modal-footer,
 .modal-content .modal-footer {
   display: flex !important;
@@ -17327,10 +13687,7 @@ select.form-control:focus {
 .modal-content .btn-modal-save,
 .modal-box .btn-primary,
 .modal-content .btn-primary,
-.modal-footer .btn-primary,
-.modal-content .btn-save,
-.modal-box .btn-save,
-.btn-submit-payment {
+.modal-footer .btn-primary {
   background: linear-gradient(135deg, #f59e0b, #d97706) !important;
   color: #ffffff !important;
   border: 1px solid #d97706 !important;
@@ -17351,10 +13708,7 @@ select.form-control:focus {
 .modal-content .btn-modal-save:hover,
 .modal-box .btn-primary:hover,
 .modal-content .btn-primary:hover,
-.modal-footer .btn-primary:hover,
-.modal-content .btn-save:hover,
-.modal-box .btn-save:hover,
-.btn-submit-payment:hover {
+.modal-footer .btn-primary:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 18px rgba(217, 119, 6, 0.38) !important;
   background: linear-gradient(135deg, #fbbf24, #ea580c) !important;
@@ -17364,8 +13718,7 @@ select.form-control:focus {
 .modal-content .btn-modal-save:active,
 .modal-box .btn-primary:active,
 .modal-content .btn-primary:active,
-.modal-footer .btn-primary:active,
-.btn-submit-payment:active {
+.modal-footer .btn-primary:active {
   transform: scale(0.98) !important;
 }
 
@@ -17403,20 +13756,6 @@ select.form-control:focus {
   gap: 15px;
 }
 
-.purchase-type-radios {
-  display: flex;
-  gap: 15px;
-  padding: 8px 0;
-}
-
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
 .checkbox-group {
   flex-direction: row !important;
   align-items: center;
@@ -17424,7 +13763,6 @@ select.form-control:focus {
   cursor: pointer;
 }
 
-/* Polished Product Form Modal & Dropzone Styling */
 .product-form-modal {
   max-height: 90vh;
   overflow-y: auto;
@@ -17575,7 +13913,6 @@ select.form-control:focus {
   color: #64748b;
 }
 
-/* Polished Radio Label Pills */
 .purchase-type-radios {
   display: flex;
   gap: 10px;
@@ -17583,19 +13920,19 @@ select.form-control:focus {
 }
 
 .radio-label {
-  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex: 1;
+  justify-content: center;
   padding: 9px 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 0.85rem;
   font-weight: 600;
   color: #475569;
-  cursor: pointer;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
@@ -17611,60 +13948,10 @@ select.form-control:focus {
   font-weight: 700;
 }
 
-.cloud-icon {
-  width: 32px;
-  height: 32px;
-  color: #adb5bd;
-  margin-bottom: 8px;
-}
-
-.dropzone-prompt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 0.8rem;
-  color: #868e96;
-}
-
-.dropzone-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropzone-preview img {
-  max-height: 80px;
-  object-fit: contain;
-  border-radius: 6px;
-}
-
-.file-name {
-  font-size: 0.75rem;
-  color: #495057;
-  font-weight: 500;
-}
-
 .hidden-file-input {
   display: none;
 }
 
-
-
-/* Zoom screen view */
-.zoom-overlay {
-  background: rgba(0, 0, 0, 0.85);
-  cursor: zoom-out;
-}
-
-.zoom-box img {
-  max-width: 90vw;
-  max-height: 90vh;
-  border-radius: 12px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-}
-
-/* Toggle Switch check input */
 .toggle-switch {
   position: relative;
   width: 50px;
@@ -17706,7 +13993,6 @@ select.form-control:focus {
   transform: translateX(24px);
 }
 
-/* Animations */
 .animate-fade-in {
   animation: fadeIn 0.3s ease;
 }
@@ -17721,9 +14007,6 @@ select.form-control:focus {
   100% { transform: rotate(360deg); }
 }
 
-/* ========================================================================= */
-/* TAB CONTENT & COMPOSITOR OPTIMIZATIONS (Snappy 60-120fps CSS Transitions) */
-/* ========================================================================= */
 .tab-content-wrapper {
   position: relative;
   width: 100%;
@@ -17738,32 +14021,20 @@ select.form-control:focus {
   contain: content;
 }
 
-/* Responsive breakdowns */
 @media (max-width: 1024px) {
-  .charts-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .chart-card.span-2,
-  .chart-card.span-3,
-  .chart-card.span-full {
-    grid-column: 1 / -1;
-  }
   .main-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
     margin-bottom: 20px;
   }
-  .analytics-header-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
 }
 
 @media (max-width: 768px) {
-  html, body, .admin-layout, .admin-container {
+  html,
+body,
+.admin-layout,
+.admin-container {
     max-width: 100vw !important;
     overflow-x: hidden !important;
     overscroll-behavior-x: none !important;
@@ -17824,22 +14095,13 @@ select.form-control:focus {
     font-size: 0.76rem !important;
     white-space: nowrap !important;
   }
+
   .orders-tab-content,
-  .customers-tab-content,
-  .categories-tab-content,
-  .tags-tab-content,
-  .carousel-tab-content,
-  .users-tab-content,
-  .analytics-tab-content {
+.customers-tab-content {
     padding-bottom: 12px !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
-  }
-
-  .table-card {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
   }
 
   .table-container {
@@ -17878,15 +14140,6 @@ select.form-control:focus {
     animation: fadeIn 0.2s ease;
   }
 
-  .admin-mobile-header {
-    display: flex;
-    padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 12px;
-    height: calc(48px + env(safe-area-inset-top, 0px));
-    flex-shrink: 0;
-    align-items: center;
-    box-sizing: border-box;
-  }
-
   .admin-mobile-header h2 {
     font-size: 0.95rem;
   }
@@ -17895,57 +14148,8 @@ select.form-control:focus {
     width: 30px;
     height: 30px;
   }
-
-  .charts-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  .chart-card {
-    min-width: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-  }
-
-  .chart-card.span-2,
-  .chart-card.span-3,
-  .chart-card.span-full {
-    grid-column: span 1 !important;
-  }
-
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-    margin-bottom: 14px !important;
-  }
-
-  .kpi-card {
-    padding: 10px 10px !important;
-    border-radius: 12px !important;
-    gap: 8px !important;
-  }
-
-  .kpi-card .kpi-value {
-    font-size: 1.05rem !important;
-    white-space: nowrap !important;
-    letter-spacing: -0.3px !important;
-  }
-
-  .filter-actions-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filters-group {
-    flex-direction: column;
-  }
 }
 
-/* Orders & Customers Tab Specific Styles */
 .price-mode-badge {
   display: inline-block;
   padding: 4px 8px;
@@ -17953,10 +14157,12 @@ select.form-control:focus {
   font-weight: 700;
   border-radius: 6px;
 }
+
 .price-mode-badge.regular {
   background: #e7f5ff;
   color: #1d4ed8;
 }
+
 .price-mode-badge.bulk {
   background: #fff4e6;
   color: #fd7e14;
@@ -17976,55 +14182,6 @@ select.form-control:focus {
   letter-spacing: 0.3px;
 }
 
-.status-select {
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  appearance: none !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: left 10px center !important;
-  background-size: 13px 13px !important;
-  padding-left: 34px !important;
-  padding-right: 14px !important;
-  height: 38px !important;
-  min-width: 155px;
-  font-size: 0.86rem;
-  border-radius: 8px;
-  cursor: pointer;
-  outline: none;
-  font-weight: 800;
-  transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease, box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  display: inline-flex;
-  align-items: center;
-  font-family: inherit;
-  direction: rtl;
-  text-align: right;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-.status-select.status-pending {
-  background-color: rgba(253, 181, 24, 0.15);
-  color: #b45309;
-  border: 1px solid rgba(253, 181, 24, 0.4);
-}
-.status-select.status-ready {
-  background-color: rgba(59, 130, 246, 0.14);
-  color: #1d4ed8;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-}
-.status-select.status-received,
-.status-select.status-completed {
-  background-color: rgba(34, 197, 94, 0.14);
-  color: #15803d;
-  border: 1px solid rgba(34, 197, 94, 0.35);
-}
-.status-select.status-cancelled {
-  background-color: rgba(239, 68, 68, 0.14);
-  color: #b91c1c;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-/* Desktop Segmented Icon State Selector */
 .desktop-status-segmented {
   display: inline-flex;
   align-items: center;
@@ -18116,25 +14273,6 @@ select.form-control:focus {
   gap: 6px;
 }
 
-.btn-table-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  height: 34px;
-  border-radius: 8px;
-  font-size: 0.84rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #334155;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  touch-action: manipulation;
-  white-space: nowrap;
-}
-
 .btn-table-action:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
@@ -18156,6 +14294,7 @@ select.form-control:focus {
 .customer-info-cell .block {
   display: block;
 }
+
 .customer-info-cell .phone {
   font-size: 0.8rem;
   margin-top: 2px;
@@ -18164,6 +14303,7 @@ select.form-control:focus {
 .items-list-cell {
   max-width: 300px;
 }
+
 .item-line {
   font-size: 0.85rem;
   margin-bottom: 3px;
@@ -18173,6 +14313,7 @@ select.form-control:focus {
   flex-wrap: wrap;
   gap: 4px;
 }
+
 .item-qty-badge {
   display: inline-flex;
   align-items: center;
@@ -18183,6 +14324,7 @@ select.form-control:focus {
   font-weight: 700;
   color: #475569;
 }
+
 .item-note {
   font-size: 0.75rem;
   color: #64748b;
@@ -18194,37 +14336,13 @@ select.form-control:focus {
   font-size: 0.75rem;
   border-radius: 6px;
 }
-.ml-1 {
-  margin-left: 4px;
-}
 
-/* Order Edit Modal Styles */
-.order-items-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.section-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #1e3a5f;
-}
 .product-search-autocomplete-container {
   position: relative;
   flex: 1;
   max-width: 480px;
 }
-.product-search-input {
-  height: 40px;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  padding: 8px 16px;
-  border: 1px solid #ced4da;
-  width: 100%;
-}
+
 .autocomplete-suggestions-dropdown {
   position: absolute;
   top: 100%;
@@ -18239,6 +14357,7 @@ select.form-control:focus {
   overflow-y: auto;
   margin-top: 4px;
 }
+
 .suggestion-item {
   display: flex;
   align-items: center;
@@ -18248,12 +14367,16 @@ select.form-control:focus {
   transition: background 0.15s;
   border-bottom: 1px solid #f1f3f5;
 }
+
 .suggestion-item:last-child {
   border-bottom: none;
 }
-.suggestion-item:hover, .suggestion-item.highlighted {
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
   background: #e7f5ff;
 }
+
 .suggestion-img {
   width: 32px;
   height: 32px;
@@ -18261,33 +14384,39 @@ select.form-control:focus {
   object-fit: cover;
   border: 1px solid #dee2e6;
 }
+
 .suggestion-info {
   display: flex;
   flex-direction: column;
   flex: 1;
   text-align: right;
 }
+
 .suggestion-name {
   font-weight: 600;
   font-size: 0.85rem;
   color: #212529;
 }
+
 .suggestion-category {
   font-size: 0.7rem;
   color: #868e96;
 }
+
 .suggestion-price {
   font-weight: 700;
   color: #1d4ed8;
   font-size: 0.85rem;
   margin-right: auto;
 }
+
 .suggestion-no-results {
   padding: 12px;
   text-align: center;
   color: #868e96;
   font-size: 0.85rem;
 }
+
 .edit-order-table-container {
   max-height: 380px;
   overflow-y: auto;
@@ -18297,10 +14426,12 @@ select.form-control:focus {
   margin-bottom: 20px;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
+
 .edit-order-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .edit-order-table th {
   background-color: #f8f9fa;
   color: #495057;
@@ -18313,102 +14444,23 @@ select.form-control:focus {
   top: 0;
   z-index: 10;
 }
+
 .edit-order-table td {
   padding: 12px 16px;
   border-bottom: 1px solid #e9ecef;
   vertical-align: middle;
   font-size: 0.9rem;
 }
+
 .edit-item-name-cell {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.db-product-name {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: #e7f5ff;
-  color: #1c7ed6;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  border: 1px solid #a5d8ff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 250px;
-}
-.edit-custom-name-input {
-  max-width: 250px;
-  height: 36px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  border-radius: 8px;
-}
-.edit-qty-input-wrapper, .edit-price-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.edit-qty-input {
-  max-width: 90px;
-  height: 36px;
-  text-align: center;
-  padding: 6px;
-  font-size: 0.9rem;
-  border-radius: 8px;
-}
-.edit-price-input {
-  max-width: 100px;
-  height: 36px;
-  text-align: center;
-  padding: 6px;
-  font-size: 0.9rem;
-  border-radius: 8px;
-}
+
 .currency-label {
   font-size: 0.8rem;
   color: #868e96;
-}
-.btn-remove-item {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;
-  font-size: 0.9rem;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-.btn-remove-item:hover {
-  transform: scale(1.1);
-}
-.order-item-static-note {
-  font-size: 0.75rem;
-  color: #e03131;
-  font-style: italic;
-  margin-top: 4px;
-}
-.order-notes-static-display {
-  background: #fff9db;
-  border: 1px solid #ffe066;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  color: #f08c00;
-}
-.order-total-display {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(30, 58, 95, 0.06);
-  border-radius: 10px;
-  font-size: 1.05rem;
-  border: 1px solid rgba(30, 58, 95, 0.15);
-  color: #1e3a5f;
-  font-weight: 700;
 }
 
 .modal-footer {
@@ -18461,30 +14513,36 @@ select.form-control:focus {
   color: #334155;
   border-color: #94a3b8;
 }
+
 .btn-danger {
   background: #fa5252;
   color: #fff;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.08);
   border: none;
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .btn-danger:hover {
   background: #e03131;
 }
+
 .btn-danger:disabled {
   background: #dee2e6;
   cursor: not-allowed;
 }
+
 @media (max-width: 640px) {
-  .edit-order-table th, .edit-order-table td {
+  .edit-order-table th,
+.edit-order-table td {
     padding: 8px 10px;
   }
+
   .product-search-autocomplete-container {
     max-width: 100%;
   }
 }
 
-/* Favorites Grid Browser in Modal */
 .fav-grid-brows {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -18507,23 +14565,6 @@ select.form-control:focus {
 .fav-grid-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-}
-
-.fav-card-image-wrapper {
-  width: 100%;
-  padding-top: 75%;
-  position: relative;
-  background: #f8f9fa;
-}
-
-.fav-card-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-bottom: 1px solid #f1f3f5;
 }
 
 .fav-card-info {
@@ -18580,179 +14621,12 @@ select.form-control:focus {
   font-weight: 700;
 }
 
-/* Analytics Header Actions */
-.analytics-header-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  flex: 1;
-}
-
-.report-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.dropdown-export {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 100%;
-  background-color: #ffffff;
-  min-width: 140px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
-  z-index: 100;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #e9ecef;
-}
-
-.dropdown-content a {
-  color: #212529;
-  padding: 10px 14px;
-  text-decoration: none;
-  display: block;
-  font-size: 0.85rem;
-  text-align: right;
-  transition: background-color 0.2s;
-}
-
-.dropdown-content a:hover {
-  background-color: #f8f9fa;
-}
-
-.dropdown-export:hover .dropdown-content {
-  display: block;
-}
-
-/* Screen: hide print-only wrappers */
 .print-receipt-wrapper,
 .print-reconciliation-wrapper,
 .print-order-notes-wrapper,
 .print-debt-report-wrapper,
 .print-customer-orders-wrapper {
   display: none;
-}
-
-/* Custom Date Range Bar */
-.date-range-bar {
-  margin-bottom: 20px;
-}
-
-.date-range-inner {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  padding: 6px 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.date-field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.date-field-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #6c757d;
-  white-space: nowrap;
-}
-
-.date-field-input {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  color: #212529;
-  background: #fff;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.date-field-input:focus {
-  border-color: var(--primary-color, #1e3a5f);
-  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
-}
-
-.date-range-sep {
-  font-size: 0.9rem;
-  color: #adb5bd;
-  padding: 0 2px;
-  user-select: none;
-}
-
-.date-apply-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--primary-color, #1e3a5f);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
-  white-space: nowrap;
-}
-
-.date-apply-btn:hover:not(:disabled) {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-
-.date-apply-btn:active:not(:disabled) {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.date-apply-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.date-reset-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: 8px;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  padding: 0;
-}
-
-.date-reset-btn:hover:not(:disabled) {
-  background: #ef4444;
-  color: #fff;
-  transform: scale(1.05);
-}
-
-.date-reset-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .btn-spinner {
@@ -18772,14 +14646,6 @@ select.form-control:focus {
   width: 100%;
 }
 
-.customer-date-filter {
-  flex-shrink: 0;
-  box-shadow: none;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
-}
-
-/* Reconciliation print button styling */
 .reconciliation-print-btn {
   gap: 6px;
   border-color: rgba(30, 58, 95, 0.2);
@@ -18798,38 +14664,31 @@ select.form-control:focus {
     font-size: 100% !important;
   }
 
-  /* Hide all dashboard layout, modal pop-ups, backdrops, and web view elements */
   .admin-layout:not(.is-printing-analytics),
-  .modal-overlay,
-  .modal-box,
-  .modal-content,
-  .admin-header,
-  .admin-sidebar,
-  .toast-container,
-  .cmdk-backdrop,
-  .datepicker-modal-wrapper {
+.modal-overlay,
+.modal-box,
+.modal-content,
+.admin-sidebar,
+.datepicker-modal-wrapper {
     display: none !important;
   }
 
-  /* Default @page sizing is handled dynamically via setPrintPageSize() */
-
-  /* Suppress link URL text insertion when printing */
   a[href]:after {
     content: none !important;
   }
+
   a[href] {
     text-decoration: none !important;
     color: inherit !important;
   }
 
-  /* Shared unbreakable report end block (totals/signatures + watermark) */
   .a4-end-block {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  /* Order Receipt Print Styles (A5) */
-  .print-receipt-wrapper, .print-receipt-wrapper * {
+  .print-receipt-wrapper,
+.print-receipt-wrapper * {
     visibility: visible;
   }
 
@@ -18943,7 +14802,9 @@ select.form-control:focus {
     print-color-adjust: exact;
   }
 
-  .receipt-th-qty, .receipt-th-pieces, .receipt-th-price {
+  .receipt-th-qty,
+.receipt-th-pieces,
+.receipt-th-price {
     text-align: center !important;
     white-space: nowrap;
   }
@@ -18953,7 +14814,8 @@ select.form-control:focus {
     white-space: nowrap;
   }
 
-  .receipt-th-num, .receipt-td-num {
+  .receipt-th-num,
+.receipt-td-num {
     width: 22px;
     text-align: center;
     font-family: 'Fira Code', monospace;
@@ -18970,7 +14832,10 @@ select.form-control:focus {
     print-color-adjust: exact;
   }
 
-  .receipt-td-qty, .receipt-td-pieces, .receipt-td-price, .receipt-td-total {
+  .receipt-td-qty,
+.receipt-td-pieces,
+.receipt-td-price,
+.receipt-td-total {
     font-family: 'Fira Code', monospace;
     text-align: center;
     white-space: nowrap;
@@ -19110,10 +14975,8 @@ select.form-control:focus {
     margin-top: 2px;
   }
 
-
-
-/* === Sales Reconciliation Report Print Styles (Compact & Zero-Gap A4) === */
-  .print-reconciliation-wrapper, .print-reconciliation-wrapper * {
+  .print-reconciliation-wrapper,
+.print-reconciliation-wrapper * {
     visibility: visible;
   }
 
@@ -19312,7 +15175,6 @@ select.form-control:focus {
     color: #ffffff !important;
   }
 
-  /* Level 1: Main Category Block (Seamless Continuous Flow) */
   .recon-cat-block {
     margin-top: 4px;
     margin-bottom: 4px;
@@ -19353,7 +15215,6 @@ select.form-control:focus {
     font-weight: 700;
   }
 
-  /* Level 2: Sub-Category Block */
   .recon-subcat-block {
     padding: 2px 4px;
     border-bottom: 1px solid #e0e0e0;
@@ -19385,7 +15246,6 @@ select.form-control:focus {
     overflow-wrap: anywhere;
   }
 
-  /* Level 3: Products Table */
   .recon-detail-table {
     width: 100%;
     table-layout: fixed;
@@ -19526,179 +15386,299 @@ select.form-control:focus {
     margin-top: 1px;
   }
 
-  /* ==========================================================================
-     ADAPTIVE A4 DENSITY TIERS (Dynamically Scaled Based on Items & Category Count)
-     ========================================================================== */
-
-  /* Tier 1: Spacious (Small Catalogs <= 12 visual units -> Fills 1 A4 page beautifully) */
   .reconciliation-page.recon-density-spacious {
     padding: 10mm 12mm;
     font-size: 9.5pt;
     line-height: 1.45;
   }
-  .recon-density-spacious .recon-logo { width: 48px; height: 48px; }
-  .recon-density-spacious .recon-shop-name { font-size: 15pt; }
-  .recon-density-spacious .recon-subtitle { font-size: 9.5pt; }
-  .recon-density-spacious .recon-header-badge { font-size: 9pt; padding: 4px 10px; }
-  .recon-density-spacious .recon-meta { padding: 6px 12px; font-size: 9pt; gap: 6px 14px; margin-bottom: 6px; }
-  .recon-density-spacious .recon-kpi-grid { gap: 8px; margin: 6px 0 8px 0; }
-  .recon-density-spacious .recon-kpi-card { padding: 6px 8px; }
-  .recon-density-spacious .recon-kpi-label { font-size: 8.5pt; }
-  .recon-density-spacious .recon-kpi-value { font-size: 14pt; }
-  .recon-density-spacious .recon-section-header { padding: 6px 12px; font-size: 9.5pt; }
-  .recon-density-spacious .recon-cat-block { margin: 8px 0; border-width: 1.5px !important; }
-  .recon-density-spacious .recon-cat-header { padding: 5px 12px; font-size: 10.5pt; }
-  .recon-density-spacious .recon-cat-title { font-size: 10.5pt; }
-  .recon-density-spacious .recon-cat-stats { font-size: 8.5pt; }
-  .recon-density-spacious .recon-subcat-block { padding: 4px 8px; }
-  .recon-density-spacious .recon-subcat-title { font-size: 9pt; padding: 2px 8px; }
-  .recon-density-spacious .recon-detail-table { font-size: 9pt; }
-  .recon-density-spacious .recon-col-header-row th { padding: 6px 8px; font-size: 8.5pt; }
-  .recon-density-spacious .recon-detail-table td { padding: 5px 8px; }
-  .recon-density-spacious .recon-subtotal-row { font-size: 9pt; }
-  .recon-density-spacious .recon-subtotal-row td { padding: 5px 8px; }
-  .recon-density-spacious .recon-grand-total-card { margin-top: 10px; padding: 8px 14px; font-size: 11pt; }
-  .recon-density-spacious .recon-gt-metrics { font-size: 11pt; }
 
-  /* Tier 2: Balanced (Medium Catalogs 13-28 visual units -> Compact & Balanced) */
+  .recon-density-spacious .recon-logo {
+    width: 48px; height: 48px;
+  }
+
+  .recon-density-spacious .recon-shop-name {
+    font-size: 15pt;
+  }
+
+  .recon-density-spacious .recon-subtitle {
+    font-size: 9.5pt;
+  }
+
+  .recon-density-spacious .recon-header-badge {
+    font-size: 9pt; padding: 4px 10px;
+  }
+
+  .recon-density-spacious .recon-meta {
+    padding: 6px 12px; font-size: 9pt; gap: 6px 14px; margin-bottom: 6px;
+  }
+
+  .recon-density-spacious .recon-kpi-grid {
+    gap: 8px; margin: 6px 0 8px 0;
+  }
+
+  .recon-density-spacious .recon-kpi-card {
+    padding: 6px 8px;
+  }
+
+  .recon-density-spacious .recon-kpi-label {
+    font-size: 8.5pt;
+  }
+
+  .recon-density-spacious .recon-kpi-value {
+    font-size: 14pt;
+  }
+
+  .recon-density-spacious .recon-section-header {
+    padding: 6px 12px; font-size: 9.5pt;
+  }
+
+  .recon-density-spacious .recon-cat-block {
+    margin: 8px 0; border-width: 1.5px !important;
+  }
+
+  .recon-density-spacious .recon-cat-header {
+    padding: 5px 12px; font-size: 10.5pt;
+  }
+
+  .recon-density-spacious .recon-cat-title {
+    font-size: 10.5pt;
+  }
+
+  .recon-density-spacious .recon-cat-stats {
+    font-size: 8.5pt;
+  }
+
+  .recon-density-spacious .recon-subcat-block {
+    padding: 4px 8px;
+  }
+
+  .recon-density-spacious .recon-subcat-title {
+    font-size: 9pt; padding: 2px 8px;
+  }
+
+  .recon-density-spacious .recon-detail-table {
+    font-size: 9pt;
+  }
+
+  .recon-density-spacious .recon-col-header-row th {
+    padding: 6px 8px; font-size: 8.5pt;
+  }
+
+  .recon-density-spacious .recon-detail-table td {
+    padding: 5px 8px;
+  }
+
+  .recon-density-spacious .recon-subtotal-row {
+    font-size: 9pt;
+  }
+
+  .recon-density-spacious .recon-subtotal-row td {
+    padding: 5px 8px;
+  }
+
+  .recon-density-spacious .recon-grand-total-card {
+    margin-top: 10px; padding: 8px 14px; font-size: 11pt;
+  }
+
+  .recon-density-spacious .recon-gt-metrics {
+    font-size: 11pt;
+  }
+
   .reconciliation-page.recon-density-balanced {
     padding: 7mm 9mm;
     font-size: 8.5pt;
     line-height: 1.35;
   }
-  .recon-density-balanced .recon-logo { width: 38px; height: 38px; }
-  .recon-density-balanced .recon-shop-name { font-size: 13.5pt; }
-  .recon-density-balanced .recon-subtitle { font-size: 8.2pt; }
-  .recon-density-balanced .recon-header-badge { font-size: 8.2pt; padding: 3px 8px; }
-  .recon-density-balanced .recon-meta { padding: 4px 8px; font-size: 8.2pt; gap: 4px 10px; margin-bottom: 4px; }
-  .recon-density-balanced .recon-kpi-grid { gap: 6px; margin: 4px 0 6px 0; }
-  .recon-density-balanced .recon-kpi-card { padding: 4px 6px; }
-  .recon-density-balanced .recon-kpi-label { font-size: 7.8pt; }
-  .recon-density-balanced .recon-kpi-value { font-size: 12pt; }
-  .recon-density-balanced .recon-section-header { padding: 4px 10px; font-size: 8.8pt; }
-  .recon-density-balanced .recon-cat-block { margin: 5px 0; border-width: 1px !important; }
-  .recon-density-balanced .recon-cat-header { padding: 3.5px 8px; font-size: 9.5pt; }
-  .recon-density-balanced .recon-cat-title { font-size: 9.5pt; }
-  .recon-density-balanced .recon-cat-stats { font-size: 7.8pt; }
-  .recon-density-balanced .recon-subcat-block { padding: 3px 6px; }
-  .recon-density-balanced .recon-subcat-title { font-size: 8.2pt; padding: 1.5px 6px; }
-  .recon-density-balanced .recon-detail-table { font-size: 8.2pt; }
-  .recon-density-balanced .recon-col-header-row th { padding: 4.5px 6px; font-size: 7.8pt; }
-  .recon-density-balanced .recon-detail-table td { padding: 3.5px 6px; }
-  .recon-density-balanced .recon-subtotal-row { font-size: 8.2pt; }
-  .recon-density-balanced .recon-subtotal-row td { padding: 3.5px 6px; }
-  .recon-density-balanced .recon-grand-total-card { margin-top: 6px; padding: 6px 10px; }
-  .recon-density-balanced .recon-gt-metrics { font-size: 9.5pt; }
 
-  /* Tier 3: Dense (Large Catalogs 29-52 visual units -> High Space Compression) */
+  .recon-density-balanced .recon-logo {
+    width: 38px; height: 38px;
+  }
+
+  .recon-density-balanced .recon-shop-name {
+    font-size: 13.5pt;
+  }
+
+  .recon-density-balanced .recon-subtitle {
+    font-size: 8.2pt;
+  }
+
+  .recon-density-balanced .recon-header-badge {
+    font-size: 8.2pt; padding: 3px 8px;
+  }
+
+  .recon-density-balanced .recon-meta {
+    padding: 4px 8px; font-size: 8.2pt; gap: 4px 10px; margin-bottom: 4px;
+  }
+
+  .recon-density-balanced .recon-kpi-grid {
+    gap: 6px; margin: 4px 0 6px 0;
+  }
+
+  .recon-density-balanced .recon-kpi-card {
+    padding: 4px 6px;
+  }
+
+  .recon-density-balanced .recon-kpi-label {
+    font-size: 7.8pt;
+  }
+
+  .recon-density-balanced .recon-kpi-value {
+    font-size: 12pt;
+  }
+
+  .recon-density-balanced .recon-section-header {
+    padding: 4px 10px; font-size: 8.8pt;
+  }
+
+  .recon-density-balanced .recon-cat-block {
+    margin: 5px 0; border-width: 1px !important;
+  }
+
+  .recon-density-balanced .recon-cat-header {
+    padding: 3.5px 8px; font-size: 9.5pt;
+  }
+
+  .recon-density-balanced .recon-cat-title {
+    font-size: 9.5pt;
+  }
+
+  .recon-density-balanced .recon-cat-stats {
+    font-size: 7.8pt;
+  }
+
+  .recon-density-balanced .recon-subcat-block {
+    padding: 3px 6px;
+  }
+
+  .recon-density-balanced .recon-subcat-title {
+    font-size: 8.2pt; padding: 1.5px 6px;
+  }
+
+  .recon-density-balanced .recon-detail-table {
+    font-size: 8.2pt;
+  }
+
+  .recon-density-balanced .recon-col-header-row th {
+    padding: 4.5px 6px; font-size: 7.8pt;
+  }
+
+  .recon-density-balanced .recon-detail-table td {
+    padding: 3.5px 6px;
+  }
+
+  .recon-density-balanced .recon-subtotal-row {
+    font-size: 8.2pt;
+  }
+
+  .recon-density-balanced .recon-subtotal-row td {
+    padding: 3.5px 6px;
+  }
+
+  .recon-density-balanced .recon-grand-total-card {
+    margin-top: 6px; padding: 6px 10px;
+  }
+
+  .recon-density-balanced .recon-gt-metrics {
+    font-size: 9.5pt;
+  }
+
   .reconciliation-page.recon-density-dense {
     padding: 6mm 7mm;
     font-size: 7.8pt;
     line-height: 1.25;
   }
-  .recon-density-dense .recon-logo { width: 32px; height: 32px; }
-  .recon-density-dense .recon-shop-name { font-size: 12pt; }
-  .recon-density-dense .recon-subtitle { font-size: 7.5pt; }
-  .recon-density-dense .recon-header-badge { font-size: 7.5pt; padding: 2px 6px; }
-  .recon-density-dense .recon-meta { padding: 3px 6px; font-size: 7.5pt; gap: 3px 8px; margin-bottom: 3px; }
-  .recon-density-dense .recon-kpi-grid { gap: 5px; margin: 3px 0 5px 0; }
-  .recon-density-dense .recon-kpi-card { padding: 3px 5px; }
-  .recon-density-dense .recon-kpi-label { font-size: 7.2pt; }
-  .recon-density-dense .recon-kpi-value { font-size: 10.5pt; }
-  .recon-density-dense .recon-section-header { padding: 3px 8px; font-size: 8pt; }
-  .recon-density-dense .recon-cat-block { margin: 3.5px 0; }
-  .recon-density-dense .recon-cat-header { padding: 2.5px 6px; font-size: 8.5pt; }
-  .recon-density-dense .recon-cat-title { font-size: 8.5pt; }
-  .recon-density-dense .recon-cat-stats { font-size: 7.2pt; }
-  .recon-density-dense .recon-subcat-block { padding: 2px 4px; }
-  .recon-density-dense .recon-subcat-title { font-size: 7.5pt; padding: 1px 5px; }
-  .recon-density-dense .recon-detail-table { font-size: 7.5pt; }
-  .recon-density-dense .recon-col-header-row th { padding: 3px 5px; font-size: 7.2pt; }
-  .recon-density-dense .recon-detail-table td { padding: 2.5px 5px; }
-  .recon-density-dense .recon-subtotal-row td { padding: 2.5px 5px; font-size: 7.5pt; }
-  .recon-density-dense .recon-grand-total-card { margin-top: 5px; padding: 5px 8px; }
-  .recon-density-dense .recon-gt-metrics { font-size: 8.8pt; }
 
-  /* Tier 4: Ultra-Dense (Massive Catalogs > 52 visual units -> Ultra Compact Multi-Page) */
-  .reconciliation-page.recon-density-ultra-dense {
-    padding: 5.5mm 6mm;
-    font-size: 7.2pt;
-    line-height: 1.2;
+  .recon-density-dense .recon-logo {
+    width: 32px; height: 32px;
   }
-  .recon-density-ultra-dense .recon-logo { width: 26px; height: 26px; }
-  .recon-density-ultra-dense .recon-shop-name { font-size: 11pt; }
-  .recon-density-ultra-dense .recon-subtitle { font-size: 7pt; }
-  .recon-density-ultra-dense .recon-header-badge { font-size: 7pt; padding: 1.5px 5px; }
-  .recon-density-ultra-dense .recon-meta { padding: 2px 5px; font-size: 7pt; gap: 2px 6px; margin-bottom: 2px; }
-  .recon-density-ultra-dense .recon-kpi-grid { gap: 4px; margin: 2px 0 4px 0; }
-  .recon-density-ultra-dense .recon-kpi-card { padding: 2px 4px; }
-  .recon-density-ultra-dense .recon-kpi-label { font-size: 6.8pt; }
-  .recon-density-ultra-dense .recon-kpi-value { font-size: 9.5pt; }
-  .recon-density-ultra-dense .recon-section-header { padding: 2px 6px; font-size: 7.5pt; }
-  .recon-density-ultra-dense .recon-cat-block { margin: 2.5px 0; }
-  .recon-density-ultra-dense .recon-cat-header { padding: 2px 5px; font-size: 7.8pt; }
-  .recon-density-ultra-dense .recon-cat-title { font-size: 7.8pt; }
-  .recon-density-ultra-dense .recon-cat-stats { font-size: 6.8pt; }
-  .recon-density-ultra-dense .recon-subcat-block { padding: 1.5px 3px; }
-  .recon-density-ultra-dense .recon-subcat-title { font-size: 7pt; padding: 1px 4px; }
-  .recon-density-ultra-dense .recon-detail-table { font-size: 7pt; }
-  .recon-density-ultra-dense .recon-col-header-row th { padding: 2.5px 4px; font-size: 6.8pt; }
-  .recon-density-ultra-dense .recon-detail-table td { padding: 2px 4px; }
-  .recon-density-ultra-dense .recon-subtotal-row td { padding: 2px 4px; font-size: 7pt; }
-  .recon-density-ultra-dense .recon-grand-total-card { margin-top: 4px; padding: 4px 6px; }
-  .recon-density-ultra-dense .recon-gt-metrics { font-size: 8.2pt; }
+
+  .recon-density-dense .recon-shop-name {
+    font-size: 12pt;
+  }
+
+  .recon-density-dense .recon-subtitle {
+    font-size: 7.5pt;
+  }
+
+  .recon-density-dense .recon-header-badge {
+    font-size: 7.5pt; padding: 2px 6px;
+  }
+
+  .recon-density-dense .recon-meta {
+    padding: 3px 6px; font-size: 7.5pt; gap: 3px 8px; margin-bottom: 3px;
+  }
+
+  .recon-density-dense .recon-kpi-grid {
+    gap: 5px; margin: 3px 0 5px 0;
+  }
+
+  .recon-density-dense .recon-kpi-card {
+    padding: 3px 5px;
+  }
+
+  .recon-density-dense .recon-kpi-label {
+    font-size: 7.2pt;
+  }
+
+  .recon-density-dense .recon-kpi-value {
+    font-size: 10.5pt;
+  }
+
+  .recon-density-dense .recon-section-header {
+    padding: 3px 8px; font-size: 8pt;
+  }
+
+  .recon-density-dense .recon-cat-block {
+    margin: 3.5px 0;
+  }
+
+  .recon-density-dense .recon-cat-header {
+    padding: 2.5px 6px; font-size: 8.5pt;
+  }
+
+  .recon-density-dense .recon-cat-title {
+    font-size: 8.5pt;
+  }
+
+  .recon-density-dense .recon-cat-stats {
+    font-size: 7.2pt;
+  }
+
+  .recon-density-dense .recon-subcat-block {
+    padding: 2px 4px;
+  }
+
+  .recon-density-dense .recon-subcat-title {
+    font-size: 7.5pt; padding: 1px 5px;
+  }
+
+  .recon-density-dense .recon-detail-table {
+    font-size: 7.5pt;
+  }
+
+  .recon-density-dense .recon-col-header-row th {
+    padding: 3px 5px; font-size: 7.2pt;
+  }
+
+  .recon-density-dense .recon-detail-table td {
+    padding: 2.5px 5px;
+  }
+
+  .recon-density-dense .recon-subtotal-row td {
+    padding: 2.5px 5px; font-size: 7.5pt;
+  }
+
+  .recon-density-dense .recon-grand-total-card {
+    margin-top: 5px; padding: 5px 8px;
+  }
+
+  .recon-density-dense .recon-gt-metrics {
+    font-size: 8.8pt;
+  }
 }
 
 .text-center {
   text-align: center !important;
-}
-
-.text-left {
-  text-align: left !important;
-}
-
-/* Carousel Admin Grid Layout */
-.carousel-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-.carousel-admin-card {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  height: 100%;
-}
-
-.card-image-wrapper {
-  width: 100%;
-  padding-top: 33.33%; /* 3:1 aspect ratio */
-  position: relative;
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.card-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.card-info-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.card-date {
-  font-size: 0.78rem;
-  color: var(--text-muted);
 }
 
 .flex-center {
@@ -19708,16 +15688,6 @@ select.form-control:focus {
   gap: 4px;
 }
 
-/* Tags Styles */
-.tags-input-wrapper {
-  display: flex;
-  flex-direction: column;
-}
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 .tag-pill {
   background: var(--primary-color);
   color: #fff;
@@ -19729,87 +15699,79 @@ select.form-control:focus {
   align-items: center;
   gap: 6px;
 }
-.tag-remove-btn {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-}
+
 .tags-container-small {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
-.badge-tag-small {
-  background: rgba(var(--primary-color-rgb), 0.15);
-  color: #d98000;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
 
-/* Tag Theme Palettes (11 Luxury Themes) */
 .tag-gold {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
   color: #ffffff !important;
   border-color: rgba(253, 230, 138, 0.5) !important;
 }
+
 .tag-fire {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
   color: #ffffff !important;
   border-color: rgba(254, 215, 170, 0.5) !important;
 }
+
 .tag-rose {
   background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
   color: #ffffff !important;
   border-color: rgba(254, 205, 211, 0.5) !important;
 }
+
 .tag-leaf {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   color: #ffffff !important;
   border-color: rgba(167, 243, 208, 0.5) !important;
 }
+
 .tag-sky {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
   color: #ffffff !important;
   border-color: rgba(186, 230, 253, 0.5) !important;
 }
+
 .tag-royal {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
   color: #ffffff !important;
   border-color: rgba(221, 214, 254, 0.5) !important;
 }
+
 .tag-teal {
   background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%) !important;
   color: #ffffff !important;
   border-color: rgba(153, 246, 228, 0.5) !important;
 }
+
 .tag-amber {
   background: linear-gradient(135deg, #d97706 0%, #92400e 100%) !important;
   color: #ffffff !important;
   border-color: rgba(254, 243, 199, 0.45) !important;
 }
+
 .tag-berry {
   background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%) !important;
   color: #ffffff !important;
   border-color: rgba(245, 208, 254, 0.5) !important;
 }
+
 .tag-dark {
   background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important;
   color: #ffffff !important;
   border-color: rgba(148, 163, 184, 0.4) !important;
 }
+
 .tag-default {
   background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
   color: #ffffff !important;
   border-color: rgba(203, 213, 225, 0.4) !important;
 }
 
-/* Tag Style Variants */
 .tag-style-glass {
   background: rgba(15, 23, 42, 0.55) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
@@ -19817,40 +15779,47 @@ select.form-control:focus {
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.25) inset !important;
 }
-.tag-style-glass.tag-gold   { border-color: rgba(245, 158, 11, 0.7) !important; color: #fef08a !important; }
-.tag-style-glass.tag-fire   { border-color: rgba(249, 115, 22, 0.7) !important; color: #fed7aa !important; }
-.tag-style-glass.tag-rose   { border-color: rgba(244, 63, 94, 0.7) !important; color: #fecdd3 !important; }
-.tag-style-glass.tag-leaf   { border-color: rgba(16, 185, 129, 0.7) !important; color: #a7f3d0 !important; }
-.tag-style-glass.tag-sky    { border-color: rgba(14, 165, 233, 0.7) !important; color: #bae6fd !important; }
-.tag-style-glass.tag-royal  { border-color: rgba(139, 92, 246, 0.7) !important; color: #ddd6fe !important; }
-.tag-style-glass.tag-teal   { border-color: rgba(20, 184, 166, 0.7) !important; color: #99f6e4 !important; }
-.tag-style-glass.tag-amber  { border-color: rgba(217, 119, 6, 0.7) !important; color: #fde68a !important; }
-.tag-style-glass.tag-berry  { border-color: rgba(217, 70, 239, 0.7) !important; color: #f5d0fe !important; }
-.tag-style-glass.tag-dark   { border-color: rgba(148, 163, 184, 0.5) !important; color: #f1f5f9 !important; }
 
-.tag-style-minimal {
-  background: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-}
-.tag-style-minimal.tag-gold   { border-color: #d97706 !important; color: #b45309 !important; }
-.tag-style-minimal.tag-fire   { border-color: #ea580c !important; color: #c2410c !important; }
-.tag-style-minimal.tag-rose   { border-color: #e11d48 !important; color: #be123c !important; }
-.tag-style-minimal.tag-leaf   { border-color: #059669 !important; color: #047857 !important; }
-.tag-style-minimal.tag-sky    { border-color: #0284c7 !important; color: #0369a1 !important; }
-.tag-style-minimal.tag-royal  { border-color: #7c3aed !important; color: #6d28d9 !important; }
-.tag-style-minimal.tag-teal   { border-color: #0d9488 !important; color: #115e59 !important; }
-.tag-style-minimal.tag-amber  { border-color: #b45309 !important; color: #78350f !important; }
-.tag-style-minimal.tag-berry  { border-color: #c026d3 !important; color: #86198f !important; }
-.tag-style-minimal.tag-dark   { border-color: #334155 !important; color: #0f172a !important; }
-
-.tag-custom-icon-admin {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-  margin-right: 4px;
+.tag-style-glass.tag-gold {
+  border-color: rgba(245, 158, 11, 0.7) !important; color: #fef08a !important;
 }
 
-/* Tag Selection Picker in Product Modal */
+.tag-style-glass.tag-fire {
+  border-color: rgba(249, 115, 22, 0.7) !important; color: #fed7aa !important;
+}
+
+.tag-style-glass.tag-rose {
+  border-color: rgba(244, 63, 94, 0.7) !important; color: #fecdd3 !important;
+}
+
+.tag-style-glass.tag-leaf {
+  border-color: rgba(16, 185, 129, 0.7) !important; color: #a7f3d0 !important;
+}
+
+.tag-style-glass.tag-sky {
+  border-color: rgba(14, 165, 233, 0.7) !important; color: #bae6fd !important;
+}
+
+.tag-style-glass.tag-royal {
+  border-color: rgba(139, 92, 246, 0.7) !important; color: #ddd6fe !important;
+}
+
+.tag-style-glass.tag-teal {
+  border-color: rgba(20, 184, 166, 0.7) !important; color: #99f6e4 !important;
+}
+
+.tag-style-glass.tag-amber {
+  border-color: rgba(217, 119, 6, 0.7) !important; color: #fde68a !important;
+}
+
+.tag-style-glass.tag-berry {
+  border-color: rgba(217, 70, 239, 0.7) !important; color: #f5d0fe !important;
+}
+
+.tag-style-glass.tag-dark {
+  border-color: rgba(148, 163, 184, 0.5) !important; color: #f1f5f9 !important;
+}
+
 .tags-picker-grid {
   display: flex;
   flex-wrap: wrap;
@@ -19916,40 +15885,8 @@ select.form-control:focus {
   stroke: #ffffff;
 }
 
-.tag-chip-icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-}
-
 .tag-chip-name {
   line-height: 1;
-}
-
-/* Icon Select Preview Box in Tag Modal */
-.icon-select-preview-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.selected-icon-preview-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
-}
-
-.selected-icon-preview-img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
 }
 
 .tag-pill-table {
@@ -19958,29 +15895,28 @@ select.form-control:focus {
   border-radius: 12px;
 }
 
-/* Restore and style scrollbars for AdminView on Laptop & Desktop screens */
 @media (min-width: 769px) {
   .admin-main::-webkit-scrollbar,
-  .table-container::-webkit-scrollbar,
-  .edit-order-table-container::-webkit-scrollbar,
-  .modal-box::-webkit-scrollbar {
+.table-container::-webkit-scrollbar,
+.edit-order-table-container::-webkit-scrollbar,
+.modal-box::-webkit-scrollbar {
     display: block !important;
     width: 8px !important;
     height: 8px !important;
   }
 
   .admin-main::-webkit-scrollbar-track,
-  .table-container::-webkit-scrollbar-track,
-  .edit-order-table-container::-webkit-scrollbar-track,
-  .modal-box::-webkit-scrollbar-track {
+.table-container::-webkit-scrollbar-track,
+.edit-order-table-container::-webkit-scrollbar-track,
+.modal-box::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.04) !important;
     border-radius: 6px !important;
   }
 
   .admin-main::-webkit-scrollbar-thumb,
-  .table-container::-webkit-scrollbar-thumb,
-  .edit-order-table-container::-webkit-scrollbar-thumb,
-  .modal-box::-webkit-scrollbar-thumb {
+.table-container::-webkit-scrollbar-thumb,
+.edit-order-table-container::-webkit-scrollbar-thumb,
+.modal-box::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.22) !important;
     border-radius: 6px !important;
     border: 2px solid transparent !important;
@@ -19989,28 +15925,27 @@ select.form-control:focus {
   }
 
   .admin-main::-webkit-scrollbar-thumb:hover,
-  .table-container::-webkit-scrollbar-thumb:hover,
-  .edit-order-table-container::-webkit-scrollbar-thumb:hover,
-  .modal-box::-webkit-scrollbar-thumb:hover {
+.table-container::-webkit-scrollbar-thumb:hover,
+.edit-order-table-container::-webkit-scrollbar-thumb:hover,
+.modal-box::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.4) !important;
     background-clip: content-box !important;
   }
 
   .admin-main::-webkit-scrollbar-corner,
-  .table-container::-webkit-scrollbar-corner {
+.table-container::-webkit-scrollbar-corner {
     background: transparent !important;
   }
 
   .admin-main,
-  .admin-main *,
-  .table-container {
+.admin-main *,
+.table-container {
     -ms-overflow-style: auto !important;
     scrollbar-width: thin !important;
     scrollbar-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.04) !important;
   }
 }
 
-/* Strictly hide scrollbar for admin sidebar and all its children across all viewports */
 .admin-sidebar::-webkit-scrollbar,
 .admin-sidebar *::-webkit-scrollbar {
   display: none !important;
@@ -20023,10 +15958,6 @@ select.form-control:focus {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
-
-/* ==========================================================================
-   MODERN IMAGE LOADERS & SHIMMER PLACEHOLDERS (Admin View)
-   ========================================================================== */
 
 .admin-table-img-wrapper {
   position: relative;
@@ -20047,7 +15978,6 @@ select.form-control:focus {
 }
 
 .admin-table-img-shimmer,
-.admin-banner-shimmer,
 .admin-fav-shimmer,
 .admin-preview-shimmer {
   position: absolute;
@@ -20079,49 +16009,39 @@ select.form-control:focus {
 }
 
 .table-prod-img {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: cover;
-  z-index: 2;
-  transition: opacity 0.3s ease;
-}
-
-.card-image-wrapper {
-  position: relative;
   width: 100%;
-  aspect-ratio: 3 / 1;
-  overflow: hidden;
-  background: rgba(15, 23, 42, 0.1);
-  border-radius: 12px 12px 0 0;
-}
-
-.card-image {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  height: 100%;
+  border-radius: 16px;
   object-fit: cover;
+  cursor: zoom-in;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: opacity 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 2;
-  transition: transform 0.4s ease;
-  cursor: pointer;
-}
-
-.card-image-wrapper:hover .card-image {
-  transform: scale(1.04);
 }
 
 .fav-card-image-wrapper {
-  position: relative;
   width: 100%;
+  padding-top: 75%;
+  position: relative;
+  background: rgba(15, 23, 42, 0.1);
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.1);
   border-radius: 12px 12px 0 0;
   cursor: pointer;
 }
 
 .fav-card-image {
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  border-bottom: 1px solid #f1f3f5;
   z-index: 2;
   transition: transform 0.4s ease;
 }
@@ -20130,7 +16050,6 @@ select.form-control:focus {
   transform: scale(1.05);
 }
 
-/* Admin Full-Screen Image Zoom Modal */
 .zoom-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -20238,10 +16157,6 @@ select.form-control:focus {
 .zoom-close-btn:active {
   transform: scale(0.9);
 }
-
-/* ==========================================================================
-   MODERN NUMBERED PAGINATION TABS BAR
-   ========================================================================== */
 
 .admin-pagination-bar {
   display: flex;
@@ -20356,7 +16271,6 @@ select.form-control:focus {
   box-shadow: none;
 }
 
-/* Mobile Responsive Adjustments for Numbered Pagination Engine */
 @media (max-width: 640px) {
   .admin-pagination-bar {
     flex-direction: column;
@@ -20459,32 +16373,6 @@ select.form-control:focus {
   }
 }
 
-/* ==========================================================================
-   CUSTOMER BALANCES & PAYMENTS STYLES
-   ========================================================================== */
-
-/* Payment Status Badges */
-.payment-status-badge {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  min-height: 32px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  font-family: 'Cairo', sans-serif;
-  line-height: 1.2;
-  white-space: nowrap !important;
-  word-break: keep-all !important;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  border: none;
-  outline: none;
-  user-select: none;
-}
-
 .payment-status-badge::before {
   content: '';
   position: absolute;
@@ -20543,7 +16431,6 @@ select.form-control:focus {
   font-size: 0.9rem;
 }
 
-/* Balance Summary Cards */
 .payment-balance-summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -20597,7 +16484,6 @@ select.form-control:focus {
   font-variant-numeric: tabular-nums;
 }
 
-/* Section Title */
 .payment-section-title {
   font-size: 0.92rem;
   font-weight: 700;
@@ -20605,7 +16491,6 @@ select.form-control:focus {
   color: #1e3a5f !important;
 }
 
-/* Clean Minimal Unpaid Orders Container */
 .payment-unpaid-orders {
   margin-bottom: 20px;
 }
@@ -20675,7 +16560,6 @@ select.form-control:focus {
   font-weight: 600;
 }
 
-/* Payment Form Grid */
 .payment-input-section {
   background: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
@@ -20700,7 +16584,6 @@ select.form-control:focus {
   color: #047857 !important;
 }
 
-/* Mode Selector Pills */
 .payment-mode-selector {
   margin-bottom: 14px;
 }
@@ -20740,7 +16623,6 @@ select.form-control:focus {
   box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);
 }
 
-/* Allocation Preview Table */
 .fifo-preview {
   margin-top: 16px;
   padding-top: 14px;
@@ -20816,7 +16698,6 @@ select.form-control:focus {
   border: 1px solid #fde68a;
 }
 
-/* Payment History */
 .payment-history-list {
   display: flex;
   flex-direction: column;
@@ -20855,277 +16736,6 @@ select.form-control:focus {
   border-radius: 4px;
   color: #334155 !important;
   font-weight: 600;
-}
-
-/* ==========================================================================
-   ANALYTICS PAYMENT METHODS BREAKDOWN STYLES
-   ========================================================================== */
-
-.chart-rec-badge {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: #475569;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 3px 8px;
-  border-radius: 6px;
-  letter-spacing: normal;
-}
-
-.payment-methods-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.pm-breakdown-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-  opacity: 0;
-  transform: translateY(12px);
-  will-change: opacity, transform;
-}
-
-.pm-breakdown-row.in-view {
-  animation: rowFadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--pm-delay, 0ms);
-}
-
-.pm-breakdown-row:hover {
-  transform: translateY(-2px);
-  background: #ffffff;
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
-}
-
-.pm-row-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.pm-icon-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pm-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  flex-shrink: 0;
-}
-
-.pm-badge.cash-badge {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.pm-badge.card-badge {
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.pm-badge.bank-badge {
-  background: #f5f3ff;
-  color: #7c3aed;
-}
-
-.pm-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.pm-name {
-  font-family: 'Cairo', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.pm-count {
-  font-family: 'Cairo', sans-serif;
-  font-size: 0.74rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.pm-val-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pm-pct-tag {
-  font-size: 0.74rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: #e2e8f0;
-  color: #475569;
-}
-
-.pm-amount {
-  font-family: 'Cairo', sans-serif;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.pm-progress-track {
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-}
-
-.pm-progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  width: 0%;
-  will-change: width;
-}
-
-.pm-progress-fill.animate-pm-bar {
-  animation: progressGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  --target-width: var(--pm-target-width, 0%);
-}
-
-.fill-cash { background: linear-gradient(90deg, #10b981, #34d399); }
-.fill-card { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.fill-bank { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
-
-/* Top Customers Interactive Table Deluxe Styles */
-.top-customers-interactive-table .top-cust-row {
-  opacity: 1;
-  will-change: opacity, transform;
-}
-
-.top-customers-interactive-table .top-cust-row.in-view {
-  animation: rowFadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--row-delay, 0ms);
-}
-
-.cust-name-cell, .cust-phone-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cust-avatar-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(139, 92, 246, 0.12);
-  color: #7c3aed;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.cust-phone-cell {
-  color: #475569;
-}
-
-.cust-phone-cell svg {
-  color: #94a3b8;
-  flex-shrink: 0;
-}
-
-/* Device Breakdown Progress Bars in UX Insights */
-.device-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.device-info-left, .device-info-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.device-icon-svg {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #475569;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.device-name {
-  font-size: 0.84rem;
-  color: #1e293b;
-}
-
-.device-pct-tag {
-  font-size: 0.72rem;
-  color: #64748b;
-  font-weight: 800;
-  background: #e2e8f0;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.device-count {
-  font-size: 0.88rem;
-  color: #0f172a;
-}
-
-.device-track {
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.device-fill {
-  height: 100%;
-  border-radius: 999px;
-  width: 0%;
-  will-change: width;
-}
-
-.device-fill.animate-pm-bar {
-  animation: progressGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  --target-width: var(--pm-target-width, 0%);
-}
-
-.fill-mobile { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.fill-desktop { background: linear-gradient(90deg, #10b981, #34d399); }
-.fill-tablet { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-
-.funnel-step {
-  opacity: 0;
-  transform: translateY(12px);
-  will-change: opacity, transform;
-}
-
-.funnel-step.in-view {
-  animation: rowFadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--step-delay, 0ms);
 }
 
 .payment-history-date {
@@ -21182,10 +16792,6 @@ select.form-control:focus {
   border-color: #0284c7 !important;
   color: #0284c7 !important;
 }
-
-/* ==========================================================================
-   STREAMLINED CUSTOMER TABLE & PROFILE DETAILS MODAL
-   ========================================================================== */
 
 .customer-profile-cell {
   display: flex;
@@ -21302,7 +16908,6 @@ select.form-control:focus {
   color: #1e293b !important;
 }
 
-/* Customer Profile Modal Elements */
 .customer-profile-modal {
   width: 95%;
   max-width: 520px;
@@ -21642,21 +17247,20 @@ select.form-control:focus {
   cursor: not-allowed;
 }
 
-/* Print Payment Receipt Styles */
 .print-payment-receipt-wrapper {
   display: none;
 }
 
 @media print {
-  /* Ensure modal overlays and admin layout remain hidden unless printing analytics */
   .modal-overlay,
-  .modal-box,
-  .modal-content,
-  .admin-layout:not(.is-printing-analytics) {
+.modal-box,
+.modal-content,
+.admin-layout:not(.is-printing-analytics) {
     display: none !important;
   }
 
-  .print-payment-receipt-wrapper, .print-payment-receipt-wrapper * {
+  .print-payment-receipt-wrapper,
+.print-payment-receipt-wrapper * {
     visibility: visible;
   }
 
@@ -21672,12 +17276,10 @@ select.form-control:focus {
     background: transparent;
   }
 
-  /* Payment receipt @page sizing is handled dynamically via setPrintPageSize() */
-
-  /* Suppress link URL text insertion */
   a[href]:after {
     content: none !important;
   }
+
   a[href] {
     text-decoration: none !important;
     color: inherit !important;
@@ -21742,9 +17344,6 @@ select.form-control:focus {
   }
 }
 
-/* ==========================================================================
-   FAST ORDER CREATION (POS MODE) STYLES - EXPANDED ROOMY LAYOUT
-   ========================================================================== */
 .btn-make-order {
   display: inline-flex;
   align-items: center;
@@ -21867,12 +17466,6 @@ select.form-control:focus {
   letter-spacing: -0.02em;
 }
 
-.fast-order-subtitle {
-  margin: 3px 0 0 0;
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
 .shop-badge-indicator {
   font-size: 0.74rem;
   font-weight: 700;
@@ -21937,7 +17530,6 @@ select.form-control:focus {
   align-items: start;
 }
 
-/* Side Column Cards */
 .fast-order-side-col {
   display: flex;
   flex-direction: column;
@@ -21957,21 +17549,6 @@ select.form-control:focus {
 }
 
 .fast-order-side-col > .pos-section-card:nth-child(3) {
-  position: relative;
-  z-index: 10;
-}
-
-.fast-order-main-col {
-  position: relative;
-  z-index: 20;
-}
-
-.pos-catalog-card {
-  position: relative;
-  z-index: 40;
-}
-
-.pos-items-card {
   position: relative;
   z-index: 10;
 }
@@ -22072,20 +17649,6 @@ select.pos-control {
   box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12) !important;
 }
 
-.btn-clear-search {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
 .customer-suggestions-dropdown {
   position: absolute;
   top: calc(100% + 6px);
@@ -22167,68 +17730,17 @@ select.pos-control {
   font-weight: 700;
 }
 
-.pos-field-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-.date-quick-shortcuts-inline {
-  display: inline-flex;
-  gap: 4px;
-}
-.date-quick-btn-mini {
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-family: inherit;
-  color: #475569;
-  padding: 1px 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  line-height: 1.3;
-}
-.date-quick-btn-mini:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-  border-color: #94a3b8;
-}
-.date-quick-shortcuts {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.date-quick-btn {
-  flex: 1;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  font-size: 0.76rem;
-  font-weight: 700;
-  font-family: inherit;
-  color: #475569;
-  padding: 5px 0;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.date-quick-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-/* Main Column: Catalog & Cart */
 .fast-order-main-col {
+  position: relative;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .pos-catalog-card {
+  position: relative;
+  z-index: 40;
   padding-bottom: 16px;
 }
 
@@ -22326,6 +17838,7 @@ select.pos-control {
   align-items: center;
   gap: 6px;
 }
+
 .pos-scroll-loader-hint {
   grid-column: 1 / -1;
   display: flex;
@@ -22343,16 +17856,12 @@ select.pos-control {
   border: 1px dashed #cbd5e1;
   margin-top: 4px;
 }
-.pos-scroll-loader-dots {
-  letter-spacing: 4px;
-  color: #3b82f6;
-  font-size: 1rem;
-  animation: pulseDots 1.5s infinite ease-in-out;
-}
+
 @keyframes pulseDots {
   0%, 100% { opacity: 0.4; transform: scale(0.95); }
   50% { opacity: 1; transform: scale(1.05); }
 }
+
 .pos-catalog-empty {
   padding: 24px;
   text-align: center;
@@ -22362,10 +17871,12 @@ select.pos-control {
   border-radius: 10px;
   border: 1px dashed #cbd5e1;
 }
+
 .quick-prod-card.is-in-cart {
   background: #f0fdf4;
   border-color: #86efac;
 }
+
 .quick-prod-name {
   font-size: 0.82rem;
   font-weight: 700;
@@ -22420,8 +17931,9 @@ select.pos-control {
   box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
 }
 
-/* Cart Items Table */
 .pos-items-card {
+  position: relative;
+  z-index: 10;
   flex: 1;
   min-height: 260px;
   display: flex;
@@ -22440,17 +17952,6 @@ select.pos-control {
   align-items: center;
   gap: 10px;
   font-size: 0.88rem;
-}
-
-.qty-stepper-control {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #fff;
-  overflow: hidden;
-  height: 36px;
-  width: 100%;
 }
 
 .stepper-btn {
@@ -22487,14 +17988,6 @@ select.pos-control {
   font-weight: 700 !important;
 }
 
-.item-note-input {
-  font-size: 0.76rem !important;
-  padding: 4px 8px !important;
-  height: 28px !important;
-  border-radius: 6px !important;
-  margin-top: 5px;
-}
-
 .btn-item-delete {
   background: transparent;
   border: none;
@@ -22514,7 +18007,6 @@ select.pos-control {
   color: #ef4444;
 }
 
-/* Modal Footer */
 .fast-order-modal-footer {
   display: flex;
   align-items: center;
@@ -22550,12 +18042,6 @@ select.pos-control {
 
 .total-summary-count {
   font-size: 0.82rem;
-}
-
-.fast-order-footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
 }
 
 .fast-order-footer-actions {
@@ -22618,24 +18104,6 @@ select.pos-control {
   font-family: 'Cairo', sans-serif !important;
   white-space: nowrap !important;
   line-height: 1.2 !important;
-}
-
-.pos-btn-cancel {
-  padding: 11px 22px !important;
-  font-size: 0.9rem !important;
-  font-weight: 700 !important;
-  border-radius: 12px !important;
-  background: #ffffff !important;
-  border: 1.5px solid #cbd5e1 !important;
-  color: #475569 !important;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
-  cursor: pointer !important;
-}
-
-.pos-btn-cancel:hover:not(:disabled) {
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
-  border-color: #94a3b8 !important;
 }
 
 .pos-btn-submit {
@@ -22755,6 +18223,7 @@ select.pos-control {
     height: 96vh !important;
     padding: 18px !important;
   }
+
   .fast-order-grid-layout {
     grid-template-columns: 360px 1fr !important;
   }
@@ -22780,7 +18249,7 @@ select.pos-control {
   }
 
   .sheet-grab-handle,
-  .mobile-modal-drag-pill {
+.mobile-modal-drag-pill {
     display: block !important;
     width: 38px;
     height: 4px;
@@ -22815,10 +18284,6 @@ select.pos-control {
     font-size: 1rem !important;
   }
 
-  .fast-order-subtitle {
-    display: none !important;
-  }
-
   .fast-order-price-mode-switch {
     order: 3 !important;
     width: 100% !important;
@@ -22835,7 +18300,6 @@ select.pos-control {
     min-height: 38px !important;
   }
 
-  /* Mobile Segmented Nav Pills */
   .pos-mobile-nav-pills {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -22912,7 +18376,7 @@ select.pos-control {
   }
 
   .fast-order-side-col,
-  .fast-order-main-col {
+.fast-order-main-col {
     width: 100% !important;
     gap: 10px !important;
   }
@@ -22928,8 +18392,8 @@ select.pos-control {
   }
 
   .pos-control,
-  .search-input,
-  .btn-standard-datepicker-trigger {
+.search-input,
+.btn-standard-datepicker-trigger {
     min-height: 38px !important;
     font-size: 16px !important;
   }
@@ -23129,7 +18593,6 @@ select.pos-control {
     white-space: nowrap;
   }
 
-  /* Sticky Bottom Action Dock */
   .fast-order-modal-footer {
     position: sticky !important;
     bottom: 0 !important;
@@ -23191,13 +18654,6 @@ select.pos-control {
     font-size: 0.8rem !important;
   }
 
-  .pos-btn-cancel {
-    min-height: 36px !important;
-    font-size: 0.82rem !important;
-    font-weight: 700 !important;
-    border-radius: 8px !important;
-  }
-
   .pos-btn-submit {
     min-height: 42px !important;
     font-size: 0.95rem !important;
@@ -23209,108 +18665,12 @@ select.pos-control {
   }
 }
 
-.cust-date-range-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.btn-range-trigger {
-  padding: 6px 12px !important;
-  height: 38px !important;
-  font-size: 0.84rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  white-space: nowrap !important;
-}
-
-.range-label-prefix {
-  color: #64748b;
-  font-weight: 700;
-}
-
-.range-date-val {
-  color: #0f172a;
-}
-
-.range-arrow-separator {
-  color: #94a3b8;
-  font-weight: 800;
-  font-size: 0.9rem;
-  user-select: none;
-}
-
 .pos-field-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
   margin-bottom: 4px;
-}
-
-.date-quick-shortcuts-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.date-quick-btn-mini {
-  padding: 3px 10px;
-  font-size: 0.78rem;
-  font-weight: 800;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.date-quick-btn-mini:hover {
-  background: var(--primary-glow, rgba(253, 181, 24, 0.15));
-  color: #0f172a;
-  border-color: var(--primary-color, #fdb518);
-}
-
-.date-quick-btn-mini.active {
-  background: var(--primary-color, #fdb518) !important;
-  color: #111827 !important;
-  border-color: var(--primary-color, #fdb518) !important;
-  font-weight: 900 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
-.pos-date-shortcuts-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  width: 100%;
-  margin-top: 6px;
-}
-
-.pos-date-shortcut-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  color: #475569;
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 800;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  box-sizing: border-box;
-  user-select: none;
 }
 
 .pos-date-shortcut-btn:hover {
@@ -23331,25 +18691,6 @@ select.pos-control {
   stroke: currentColor;
 }
 
-.btn-standard-datepicker-trigger {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: #ffffff !important;
-  cursor: pointer !important;
-  padding: 8px 14px !important;
-  color: #0f172a !important;
-  height: 40px !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 10px !important;
-  font-family: inherit !important;
-  font-size: 0.88rem !important;
-  text-align: center !important;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
-  box-sizing: border-box !important;
-}
-
 .btn-standard-datepicker-trigger:hover {
   border-color: var(--primary-color, #1e3a5f) !important;
   color: var(--primary-color, #1e3a5f) !important;
@@ -23361,9 +18702,6 @@ select.pos-control {
   box-shadow: 0 0 0 3px var(--primary-glow, rgba(30, 58, 95, 0.15)) !important;
 }
 
-/* ==========================================================================
-   FAST ORDER (POS) DATE PICKER & 50/50 SHORTCUT BUTTONS STYLING (BRAND ORANGE)
-   ========================================================================== */
 .pos-date-shortcuts-split {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
@@ -23379,7 +18717,6 @@ select.pos-control {
   justify-content: center !important;
   gap: 6px !important;
   height: 38px !important;
-  width: 100% !important;
   padding: 0 10px !important;
   background: #ffffff !important;
   border: 1.5px solid #e2e8f0 !important;
@@ -23393,6 +18730,7 @@ select.pos-control {
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
   user-select: none !important;
+  width: 100% !important;
 }
 
 .pos-date-shortcut-btn svg {
@@ -23433,7 +18771,6 @@ select.pos-control {
   padding: 8px 14px !important;
   color: #0f172a !important;
   height: 40px !important;
-  width: 100% !important;
   border: 1.5px solid #e2e8f0 !important;
   border-radius: 10px !important;
   font-family: 'Cairo', sans-serif !important;
@@ -23441,6 +18778,7 @@ select.pos-control {
   text-align: center !important;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
   box-sizing: border-box !important;
+  width: 100% !important;
 }
 
 .btn-standard-datepicker-trigger:hover {
@@ -23475,10 +18813,6 @@ select.pos-control {
   color: #d97706 !important;
 }
 
-/* ==========================================================================
-   MOBILE ADAPTIVE CARD-VIEW & POS ERGONOMICS (HABIT 15)
-   ========================================================================== */
-
 .mobile-orders-cards-grid,
 .mobile-products-cards-grid,
 .mobile-customers-cards-grid {
@@ -23486,17 +18820,15 @@ select.pos-control {
 }
 
 @media (max-width: 768px) {
-  /* Hide heavy desktop multi-column tables on phone screens */
   .desktop-orders-table,
-  .desktop-products-table,
-  .desktop-customers-table {
+.desktop-products-table,
+.desktop-customers-table {
     display: none !important;
   }
 
-  /* Show touch-first mobile cards */
   .mobile-orders-cards-grid,
-  .mobile-products-cards-grid,
-  .mobile-customers-cards-grid {
+.mobile-products-cards-grid,
+.mobile-customers-cards-grid {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -23513,7 +18845,6 @@ select.pos-control {
     font-weight: 700;
   }
 
-  /* --- Mobile Order Card --- */
   .mobile-order-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -23526,10 +18857,21 @@ select.pos-control {
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-right-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .mobile-order-card.border-status-pending { border-right: 4px solid #f59e0b; }
-  .mobile-order-card.border-status-ready { border-right: 4px solid #3b82f6; }
-  .mobile-order-card.border-status-received { border-right: 4px solid #10b981; }
-  .mobile-order-card.border-status-cancelled { border-right: 4px solid #ef4444; }
+  .mobile-order-card.border-status-pending {
+    border-right: 4px solid #f59e0b;
+  }
+
+  .mobile-order-card.border-status-ready {
+    border-right: 4px solid #3b82f6;
+  }
+
+  .mobile-order-card.border-status-received {
+    border-right: 4px solid #10b981;
+  }
+
+  .mobile-order-card.border-status-cancelled {
+    border-right: 4px solid #ef4444;
+  }
 
   .mob-card-header {
     display: flex;
@@ -23687,7 +19029,6 @@ select.pos-control {
     color: var(--primary-color, #d97706);
   }
 
-  /* Cancelled Order Banner inside Mobile Card */
   .mob-card-cancelled-banner {
     display: flex;
     align-items: center;
@@ -23710,46 +19051,6 @@ select.pos-control {
     border-color: #fca5a5;
     color: #b91c1c;
     animation: pulseWarning 2s infinite ease-in-out;
-  }
-
-  .mob-card-footer-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 10px;
-    margin-top: 8px;
-    box-sizing: border-box;
-  }
-
-  .mob-status-segmented {
-    display: inline-flex;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 2px;
-    border-radius: 9px;
-    gap: 2px;
-    border: 1px solid #e2e8f0;
-    flex-shrink: 0;
-  }
-
-  .mob-status-btn {
-    width: 36px;
-    height: 38px;
-    min-width: 36px;
-    min-height: 38px;
-    border-radius: 7px;
-    border: none;
-    background: transparent;
-    color: #475569;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-    padding: 0;
-    position: relative;
   }
 
   .mob-status-btn::before {
@@ -23820,13 +19121,6 @@ select.pos-control {
     box-shadow: 0 1px 4px rgba(239, 68, 68, 0.4);
   }
 
-  .mob-action-buttons-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
   .mob-action-buttons-group .btn-table-action {
     position: relative;
     height: 40px;
@@ -23855,6 +19149,7 @@ select.pos-control {
     .mob-action-buttons-group .btn-table-action span {
       display: none;
     }
+
     .mob-action-buttons-group .btn-table-action {
       width: 40px;
       min-width: 40px;
@@ -23863,7 +19158,6 @@ select.pos-control {
     }
   }
 
-  /* --- Mobile Product Card --- */
   .mobile-product-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -23958,7 +19252,6 @@ select.pos-control {
     color: #64748b;
   }
 
-  /* --- Mobile Customer Card --- */
   .mobile-customer-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -24056,7 +19349,7 @@ select.pos-control {
   }
 
   .card-toolbar-top .customer-toolbar-actions .cust-add-btn,
-  .card-toolbar-top .customer-toolbar-actions .cust-debt-print-btn {
+.card-toolbar-top .customer-toolbar-actions .cust-debt-print-btn {
     flex: 1 1 calc(50% - 4px) !important;
     width: auto !important;
     justify-content: center !important;
@@ -24065,14 +19358,13 @@ select.pos-control {
     padding: 0 10px !important;
   }
 
-  /* Adaptive Bottom-Sheet Modals on Mobile */
   .modal-overlay {
     align-items: flex-end !important;
     padding: 0 !important;
   }
 
   .modal-box,
-  .modal-content {
+.modal-content {
     width: 100% !important;
     max-width: 100% !important;
     max-height: 92vh !important;
@@ -24082,24 +19374,16 @@ select.pos-control {
   }
 }
 
-/* ==========================================================================
-   MOBILE CONTROLS & DATEPICKER OVERFLOW FIX
-   ========================================================================== */
-
 @media (max-width: 768px) {
-  /* Prevent any toolbar or filter container from overflowing horizontally */
   .card-toolbar,
-  .card-toolbar-split,
-  .orders-toolbar-container,
-  .card-toolbar-top,
-  .card-toolbar-bottom,
-  .orders-search-print-row,
-  .orders-filters-row,
-  .card-toolbar-split .card-toolbar-bottom,
-  .filters-inline,
-  .date-range-bar,
-  .analytics-header-actions,
-  .cust-date-range-group {
+.card-toolbar-split,
+.orders-toolbar-container,
+.card-toolbar-top,
+.card-toolbar-bottom,
+.orders-search-print-row,
+.orders-filters-row,
+.card-toolbar-split .card-toolbar-bottom,
+.filters-inline {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -24107,13 +19391,6 @@ select.pos-control {
     max-width: 100% !important;
     gap: 8px !important;
     box-sizing: border-box !important;
-  }
-
-  .card-toolbar-top {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    flex-wrap: wrap !important;
   }
 
   .toolbar-title-group {
@@ -24129,7 +19406,7 @@ select.pos-control {
   }
 
   .search-input-wrapper .search-input,
-  .search-input-wrapper input.form-control {
+.search-input-wrapper input.form-control {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -24139,8 +19416,8 @@ select.pos-control {
   }
 
   .order-status-select,
-  .select-pill,
-  select.form-control {
+.select-pill,
+select.form-control {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
@@ -24152,8 +19429,7 @@ select.pos-control {
   }
 
   .btn-datepicker-trigger,
-  .btn-standard-datepicker-trigger,
-  .btn-range-trigger {
+.btn-standard-datepicker-trigger {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -24182,7 +19458,7 @@ select.pos-control {
   }
 
   .btn-make-order,
-  .card-toolbar-top .btn-primary {
+.card-toolbar-top .btn-primary {
     width: 100% !important;
     height: 36px !important;
     font-size: 0.84rem !important;
@@ -24190,7 +19466,6 @@ select.pos-control {
     box-sizing: border-box !important;
   }
 
-  /* Responsive 2-column grid for order action reports (notes & reconciliation) */
   .orders-toolbar-actions-group {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -24201,8 +19476,8 @@ select.pos-control {
   }
 
   .orders-toolbar-actions-group .btn,
-  .orders-search-print-row .reconciliation-print-btn,
-  .orders-search-print-row .order-notes-print-btn {
+.orders-search-print-row .reconciliation-print-btn,
+.orders-search-print-row .order-notes-print-btn {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -24260,17 +19535,17 @@ select.pos-control {
   }
 
   .table-card {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
     padding: 10px 8px !important;
     border-radius: 12px !important;
     box-sizing: border-box !important;
     width: 100% !important;
-    max-width: 100% !important;
     overflow: hidden !important;
   }
 }
 
 @media (max-width: 768px) {
-  /* Modal Overlay Backdrop for Teleported Datepickers */
   .datepicker-modal-wrapper.is-mobile {
     display: flex !important;
     position: fixed !important;
@@ -24289,9 +19564,8 @@ select.pos-control {
     animation: datePickerBackdropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
-  /* Center DatePicker Popover Card within Teleported Modal Overlay */
   .datepicker-modal-wrapper.is-mobile .datepicker-popover,
-  .datepicker-popover {
+.datepicker-popover {
     position: relative !important;
     top: auto !important;
     left: auto !important;
@@ -24309,12 +19583,12 @@ select.pos-control {
     animation: datePickerModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
-  @keyframes datePickerModalPop {
+@keyframes datePickerModalPop {
     0% { transform: scale(0.92); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  @keyframes datePickerBackdropFade {
+@keyframes datePickerBackdropFade {
     0% { opacity: 0; }
     100% { opacity: 1; }
   }
@@ -24327,11 +19601,6 @@ select.pos-control {
     box-sizing: border-box !important;
   }
 }
-
-
-/* ==========================================================================
-   CUSTOMER PASSWORD & SECURITY CARD STYLES
-   ========================================================================== */
 
 .profile-security-card {
   background: #f8fafc;
@@ -24506,11 +19775,6 @@ select.pos-control {
   color: #4f46e5;
 }
 
-
-/* ==========================================================================
-   CUSTOMER DEBT REPORT PRINT STYLES (HABIT 17)
-   ========================================================================== */
-
 .customer-toolbar-actions {
   display: flex;
   align-items: center;
@@ -24554,10 +19818,9 @@ select.pos-control {
   background: rgba(245, 158, 11, 0.05) !important;
 }
 
-/* === ORDER NOTES PRINT REPORT === */
-
 @media print {
-  .print-order-notes-wrapper, .print-order-notes-wrapper * {
+  .print-order-notes-wrapper,
+.print-order-notes-wrapper * {
     visibility: visible;
   }
 
@@ -24630,8 +19893,8 @@ select.pos-control {
   }
 
   .notes-product-cell,
-  .notes-customer-cell,
-  .cust-name-line {
+.notes-customer-cell,
+.cust-name-line {
     overflow-wrap: anywhere;
     word-break: break-word;
   }
@@ -24705,10 +19968,9 @@ select.pos-control {
   display: none;
 }
 
-/* debtReport @page sizing is handled dynamically via setPrintPageSize() */
-
 @media print {
-  .print-debt-report-wrapper, .print-debt-report-wrapper * {
+  .print-debt-report-wrapper,
+.print-debt-report-wrapper * {
     visibility: visible;
   }
 
@@ -24838,7 +20100,7 @@ select.pos-control {
   }
 
   .debt-kpi-card.highlight-green,
-  .debt-kpi-card.highlight-debt {
+.debt-kpi-card.highlight-debt {
     background: #ffffff !important;
     border-color: #000000 !important;
   }
@@ -24908,8 +20170,8 @@ select.pos-control {
   }
 
   .debt-report-table tbody tr,
-  .debt-report-table tbody tr:nth-child(even),
-  .debt-report-table tr.has-debt-row {
+.debt-report-table tbody tr:nth-child(even),
+.debt-report-table tr.has-debt-row {
     background: #ffffff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -24987,7 +20249,8 @@ select.pos-control {
     page-break-inside: avoid;
   }
 
-  .debt-signature-block, .debt-stamp-block {
+  .debt-signature-block,
+.debt-stamp-block {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -25007,16 +20270,13 @@ select.pos-control {
   }
 }
 
-/* ==========================================================================
-   CUSTOMER ORDERS A5 STATEMENT PRINT STYLES
-   ========================================================================== */
-
 .print-customer-orders-wrapper {
   display: none;
 }
 
 @media print {
-  .print-customer-orders-wrapper, .print-customer-orders-wrapper * {
+  .print-customer-orders-wrapper,
+.print-customer-orders-wrapper * {
     visibility: visible;
   }
 
@@ -25277,321 +20537,6 @@ select.pos-control {
   }
 }
 
-/* ==========================================================================
-   PRODUCTION MANAGEMENT & CHEFS TAB STYLES
-   ========================================================================== */
-
-.production-nav-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-radius: 14px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.production-tabs-pills {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  background: rgba(15, 23, 42, 0.05);
-  padding: 4px;
-  border-radius: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.prod-tab-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 14px;
-  min-height: 48px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.prod-tab-pill svg {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.prod-tab-pill.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.prod-tab-pill .pill-badge {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 10px;
-}
-
-.chefs-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.chef-card {
-  border-radius: 16px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.chef-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-}
-
-.chef-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-}
-
-.chef-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 850;
-}
-
-.chef-avatar.sm {
-  width: 38px;
-  height: 38px;
-  font-size: 1rem;
-  border-radius: 10px;
-}
-
-.chef-details {
-  flex: 1;
-}
-
-.chef-name {
-  font-size: 1.05rem;
-  margin: 0 0 4px 0;
-  color: #0f172a;
-}
-
-.chef-phone-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chef-phone {
-  font-size: 0.82rem;
-  color: #64748b;
-}
-
-.chef-quick-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.chef-icon-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.chef-icon-btn.whatsapp {
-  background: rgba(37, 211, 102, 0.15);
-  color: #25d366;
-}
-
-.chef-icon-btn.call {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-}
-
-.chef-status-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.chef-status-badge.active {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-}
-
-.chef-status-badge.inactive {
-  background: rgba(100, 116, 139, 0.12);
-  color: #64748b;
-}
-
-.chef-assigned-products-box {
-  background: rgba(248, 250, 252, 0.8);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.assigned-box-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.assigned-title {
-  font-size: 0.84rem;
-  color: #334155;
-}
-
-.assigned-count-pill {
-  font-size: 0.75rem;
-  font-weight: 800;
-  background: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
-  padding: 2px 8px;
-  border-radius: 8px;
-}
-
-.assigned-chips-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-height: 100px;
-  overflow-y: auto;
-}
-
-.assigned-chip {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.chef-card-footer {
-  display: flex;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-.btn-chef-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 9px;
-  border: 1.5px solid #cbd5e1;
-  background: #ffffff;
-  font-family: 'Cairo', sans-serif !important;
-  font-size: 0.84rem;
-  font-weight: 750;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  touch-action: manipulation;
-}
-
-.btn-chef-action:active {
-  transform: scale(0.96);
-  transition: transform 60ms ease-out;
-}
-
-.btn-chef-action.btn-chef-assign {
-  flex: 1;
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
-  color: #d97706;
-}
-
-.btn-chef-action.btn-chef-assign:hover {
-  background: #f59e0b;
-  color: #ffffff;
-  border-color: #f59e0b;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-}
-
-.btn-chef-action.btn-chef-edit {
-  background: #f8fafc;
-  color: #334155;
-  border-color: #e2e8f0;
-}
-
-.btn-chef-action.btn-chef-edit:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-}
-
-.btn-chef-action.btn-chef-delete {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.btn-chef-action.btn-chef-delete:hover {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #f87171;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
-}
-
-/* Assign Products Modal Grid */
-.assign-products-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding: 4px;
-}
-
-.assign-product-card {
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  position: relative;
-}
-
 .assign-product-card:hover {
   border-color: #f59e0b;
   background: rgba(245, 158, 11, 0.04);
@@ -25602,95 +20547,13 @@ select.pos-control {
   background: rgba(245, 158, 11, 0.1);
 }
 
-.assign-prod-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.assign-prod-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.assign-prod-title {
-  font-size: 0.86rem;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.assign-prod-cat {
-  font-size: 0.74rem;
-}
-
-.assign-prod-price {
-  font-size: 0.8rem;
-}
-
-/* Chef Report Section */
-.chef-report-card {
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.chef-report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.chef-header-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chef-header-stats {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.stat-pill {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 0.82rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.stat-pill .label {
-  color: #64748b;
-}
-
-.sub-table {
-  font-size: 0.88rem;
-}
-
-.sub-table th {
-  background: #f8fafc;
-  font-size: 0.82rem;
-}
-
 .print-production-report-wrapper {
   display: none;
 }
 
-/* productionReport @page sizing is handled dynamically via setPrintPageSize() */
-
 @media print {
-  .print-production-report-wrapper, .print-production-report-wrapper * {
+  .print-production-report-wrapper,
+.print-production-report-wrapper * {
     visibility: visible;
   }
 
@@ -25742,7 +20605,6 @@ select.pos-control {
     print-color-adjust: exact;
   }
 
-  /* Analytics & Sales Dashboard A4 Print Mode (Command Palette printReport) */
   .admin-layout.is-printing-analytics {
     display: block !important;
     min-height: 0 !important;
@@ -25755,20 +20617,18 @@ select.pos-control {
   }
 
   .admin-layout.is-printing-analytics .admin-sidebar,
-  .admin-layout.is-printing-analytics .admin-mobile-header,
-  .admin-layout.is-printing-analytics .sidebar-backdrop,
-  .admin-layout.is-printing-analytics .main-header,
-  .admin-layout.is-printing-analytics .date-range-bar,
-  .admin-layout.is-printing-analytics .no-print,
-  .admin-layout.is-printing-analytics .mobile-analytics-cards-grid,
-  .admin-layout.is-printing-analytics .spinner-overlay {
+.admin-layout.is-printing-analytics .admin-mobile-header,
+.admin-layout.is-printing-analytics .sidebar-backdrop,
+.admin-layout.is-printing-analytics .main-header,
+.admin-layout.is-printing-analytics .no-print,
+.admin-layout.is-printing-analytics .spinner-overlay {
     display: none !important;
   }
 
   .admin-layout.is-printing-analytics .admin-container,
-  .admin-layout.is-printing-analytics .admin-main,
-  .admin-layout.is-printing-analytics .tab-content-wrapper,
-  .admin-layout.is-printing-analytics .active-tab-container {
+.admin-layout.is-printing-analytics .admin-main,
+.admin-layout.is-printing-analytics .tab-content-wrapper,
+.admin-layout.is-printing-analytics .active-tab-container {
     display: block !important;
     width: 100% !important;
     max-width: 210mm !important;
@@ -25779,128 +20639,7 @@ select.pos-control {
     overflow: visible !important;
     background: #ffffff !important;
   }
-
-  .admin-layout.is-printing-analytics .analytics-tab-content {
-    display: block !important;
-    width: 210mm !important;
-    max-width: 210mm !important;
-    margin: 0 auto !important;
-    padding: 8mm 10mm !important;
-    box-sizing: border-box !important;
-    direction: rtl;
-    background: #ffffff !important;
-    overflow-x: hidden !important;
-    -webkit-box-decoration-break: clone;
-    box-decoration-break: clone;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .admin-layout.is-printing-analytics .kpi-grid {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
-    margin-bottom: 12px !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .admin-layout.is-printing-analytics .charts-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-  }
-
-  .admin-layout.is-printing-analytics .chart-card.span-3,
-  .admin-layout.is-printing-analytics .chart-card.span-2,
-  .admin-layout.is-printing-analytics .chart-card.span-full,
-  .admin-layout.is-printing-analytics .chart-card:has(table) {
-    grid-column: 1 / -1 !important;
-  }
-
-  .admin-layout.is-printing-analytics .kpi-card,
-  .admin-layout.is-printing-analytics .chart-card {
-    opacity: 1 !important;
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
-    box-shadow: none !important;
-    /* On screen depth comes from shadows; paper has none, so restore a hairline outline. */
-    border-color: rgba(15, 23, 42, 0.14) !important;
-    min-width: 0 !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .admin-layout.is-printing-analytics .chart-card:has(table) {
-    break-inside: auto !important;
-    page-break-inside: auto !important;
-  }
-
-  .admin-layout.is-printing-analytics .chart-card-header {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  .admin-layout.is-printing-analytics .table-container {
-    overflow: visible !important;
-    max-height: none !important;
-    mask-image: none !important;
-    -webkit-mask-image: none !important;
-  }
-
-  .admin-layout.is-printing-analytics .top-cust-row,
-  .admin-layout.is-printing-analytics .clickable-product-row,
-  .admin-layout.is-printing-analytics .analytics-tab-content tr,
-  .admin-layout.is-printing-analytics .category-bar-fill,
-  .admin-layout.is-printing-analytics .pm-bar-fill {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-    animation: none !important;
-  }
-
-  .admin-layout.is-printing-analytics .svg-trend-line {
-    stroke-dashoffset: 0 !important;
-    animation: none !important;
-  }
-
-  .admin-layout.is-printing-analytics .svg-trend-area {
-    opacity: 1 !important;
-    animation: none !important;
-  }
-
-  .admin-layout.is-printing-analytics div.desktop-analytics-table {
-    display: block !important;
-    overflow: visible !important;
-  }
-
-  .admin-layout.is-printing-analytics table.desktop-analytics-table {
-    display: table !important;
-    width: 100% !important;
-    table-layout: auto !important;
-  }
-
-  .admin-layout.is-printing-analytics table thead {
-    display: table-header-group;
-  }
-
-  .admin-layout.is-printing-analytics table tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .admin-layout.is-printing-analytics th,
-  .admin-layout.is-printing-analytics td {
-    overflow-wrap: break-word;
-    word-break: normal;
-  }
 }
-
-
-/* ==========================================================================
-   REFINED MODAL SPACING & CRAMMING ADJUSTMENTS (HABIT 15)
-   ========================================================================== */
 
 .modal-title-icon-chef {
   width: 44px;
@@ -26022,7 +20761,6 @@ select.pos-control {
 }
 
 .assign-product-card {
-  background: #ffffff;
   border: 1.5px solid #e2e8f0;
   border-radius: 14px;
   padding: 10px 12px;
@@ -26031,6 +20769,8 @@ select.pos-control {
   gap: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
+  position: relative;
+  background: #ffffff;
   user-select: none;
 }
 
@@ -26079,15 +20819,16 @@ select.pos-control {
 
 .assign-prod-info {
   flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 2px;
 }
 
 .assign-prod-title {
   font-size: 0.9rem;
   color: #0f172a;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -26217,649 +20958,6 @@ select.pos-control {
   }
 }
 
-/* ==========================================================================
-   PRODUCTION MANAGEMENT & CHEFS TAB STYLES (ORGANIZED CONTAINER LAYOUT)
-   ========================================================================== */
-
-.production-subnav-bar {
-  padding: 8px 12px;
-  border-radius: 14px;
-}
-
-.production-tabs-pills {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  background: rgba(15, 23, 42, 0.05);
-  padding: 4px;
-  border-radius: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.prod-tab-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 14px;
-  min-height: 48px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.prod-tab-pill svg {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.prod-tab-pill.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.prod-tab-pill .pill-badge {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 10px;
-}
-
-.chefs-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.chef-card {
-  border-radius: 16px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-}
-
-.chef-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-  border-color: #cbd5e1;
-}
-
-.chef-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-}
-
-.chef-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 850;
-  flex-shrink: 0;
-}
-
-.chef-avatar.sm {
-  width: 40px;
-  height: 40px;
-  font-size: 1.05rem;
-  border-radius: 10px;
-}
-
-.chef-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.chef-name {
-  font-size: 1.05rem;
-  margin: 0 0 4px 0;
-  color: #0f172a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chef-phone-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chef-phone {
-  font-size: 0.82rem;
-  color: #64748b;
-}
-
-.chef-quick-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.chef-icon-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.chef-icon-btn.whatsapp {
-  background: rgba(37, 211, 102, 0.15);
-  color: #25d366;
-}
-
-.chef-icon-btn.call {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-}
-
-.chef-status-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.chef-status-badge.active {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-}
-
-.chef-status-badge.inactive {
-  background: rgba(100, 116, 139, 0.12);
-  color: #64748b;
-}
-
-.chef-assigned-products-box {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.assigned-box-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.assigned-title {
-  font-size: 0.84rem;
-  color: #334155;
-}
-
-.btn-edit-assign-inline {
-  background: transparent;
-  border: none;
-  color: #d97706;
-  font-size: 0.78rem;
-  font-weight: 750;
-  cursor: pointer;
-  padding: 0 4px;
-  text-decoration: underline;
-}
-
-.assigned-chips-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-height: 100px;
-  overflow-y: auto;
-}
-
-.assigned-chip {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.chef-card-footer {
-  display: flex;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-/* Reorganized Sales Report Styles */
-.report-filter-bar {
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-top: 1px solid #f1f5f9;
-}
-
-.report-filters-grid {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-field-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-field-label {
-  font-size: 0.84rem;
-  font-weight: 750;
-  color: #475569;
-  white-space: nowrap;
-  margin: 0;
-}
-
-.filter-shortcuts-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: auto;
-}
-
-.btn-filter-shortcut {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 5px 12px;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 750;
-  color: #475569;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.btn-filter-shortcut:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #94a3b8;
-}
-
-.report-kpi-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.report-kpi-box {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 16px 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.report-kpi-box:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-}
-
-.kpi-box-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.report-kpi-box.primary .kpi-box-icon {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
-}
-
-.report-kpi-box.success .kpi-box-icon {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-}
-
-.report-kpi-box.danger .kpi-box-icon {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-}
-
-.report-kpi-box.info .kpi-box-icon {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-}
-
-.kpi-box-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.kpi-box-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.kpi-box-number {
-  font-size: 1.25rem;
-  font-weight: 900;
-}
-
-.chef-breakdown-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.chef-breakdown-header {
-  padding: 14px 18px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.chef-header-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.chef-header-pills {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.header-stat-tag {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 5px 12px;
-  font-size: 0.82rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.header-stat-tag.highlight {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.header-stat-tag .lbl {
-  color: #64748b;
-  font-weight: 700;
-}
-
-.unassigned-breakdown-card {
-  background: #ffffff;
-  border: 1px solid #fed7aa;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.unassigned-header-box {
-  padding: 14px 18px;
-  background: #fffaf5;
-  border-bottom: 1px solid #fed7aa;
-}
-
-
-/* ==========================================================================
-   PRODUCTION REPORT MATCHED BUTTONS & SKELETON LOADER (HABIT 6 & HABIT 17)
-   ========================================================================== */
-
-.report-header-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-report-action {
-  height: 38px !important;
-  padding: 0 16px !important;
-  border-radius: 10px !important;
-  font-size: 0.88rem !important;
-  font-weight: 750 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-  white-space: nowrap !important;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease !important;
-}
-
-.report-standard-filters-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.report-chef-select-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.select-chef-control {
-  min-width: 170px;
-  height: 38px !important;
-  border-radius: 10px !important;
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-  border: 1.5px solid #cbd5e1 !important;
-  background: #ffffff !important;
-}
-
-/* Skeleton Loading Shimmer Animation */
-.report-skeleton-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.skeleton-box {
-  position: relative;
-  overflow: hidden;
-  background: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-}
-
-.skeleton-shimmer-circle {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #e2e8f0;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.skeleton-shimmer-circle.sm {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-}
-
-.skeleton-shimmer-line {
-  background: #e2e8f0;
-  border-radius: 6px;
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton-shimmer-line.sm {
-  height: 12px;
-}
-
-.skeleton-shimmer-line.md {
-  height: 16px;
-}
-
-.skeleton-shimmer-line.lg {
-  height: 22px;
-}
-
-.skeleton-shimmer-pill {
-  height: 28px;
-  background: #e2e8f0;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton-shimmer-circle::after,
-.skeleton-shimmer-line::after,
-.skeleton-shimmer-pill::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.55) 20%,
-    rgba(255, 255, 255, 0.7) 60%,
-    rgba(255, 255, 255, 0)
-  );
-  animation: skeletonShimmer 1.5s infinite;
-}
-
-@keyframes skeletonShimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-
-/* ==========================================================================
-   LOCKED ASSIGNED PRODUCTS & ENHANCED CONTAINER MARGINS (HABIT 15)
-   ========================================================================== */
-
-/* Spacing and Layout Margins */
-.production-tab-content {
-  margin-bottom: 36px;
-}
-
-.production-subnav-bar {
-  margin-bottom: 24px !important;
-  padding: 10px 14px;
-}
-
-.production-tab-content .table-card {
-  margin-bottom: 32px;
-  border-radius: 18px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-}
-
-.production-tab-content .card-toolbar {
-  padding: 18px 24px;
-  margin-bottom: 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.production-tab-content .card-toolbar-bottom.report-filter-bar {
-  padding: 16px 24px;
-  margin-top: 0;
-  background: #f8fafc;
-  border-top: 1px solid #f1f5f9;
-}
-
-.production-tab-content .p-4 {
-  padding: 28px !important;
-}
-
-.chefs-cards-grid {
-  gap: 20px !important;
-}
-
-.chef-card {
-  padding: 22px !important;
-  border-radius: 18px !important;
-  border: 1.5px solid #e2e8f0 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-}
-
-.chef-card:hover {
-  transform: translateY(-2px);
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-}
-
-.report-kpi-cards-grid {
-  gap: 20px !important;
-  margin-bottom: 32px !important;
-}
-
-.report-kpi-box {
-  padding: 20px 22px !important;
-  border-radius: 16px !important;
-  border: 1.5px solid #e2e8f0 !important;
-}
-
-.chef-breakdown-card {
-  margin-bottom: 32px !important;
-  border: 1.5px solid #e2e8f0 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
-}
-
-.chef-breakdown-header {
-  padding: 18px 24px !important;
-}
-
-.unassigned-breakdown-card {
-  margin-top: 36px !important;
-  margin-bottom: 32px !important;
-  border: 1.5px solid #fed7aa !important;
-  border-radius: 18px !important;
-}
-
-.unassigned-header-box {
-  padding: 18px 24px !important;
-}
-
-/* Locked Product Card Styling in Picker Modal */
 .assign-product-card.is-locked {
   opacity: 0.7;
   background: #f8fafc !important;
@@ -26892,8 +20990,6 @@ select.pos-control {
   gap: 4px;
 }
 
-
-/* ================= P3 KEYBOARD POWER-USER STYLES ================= */
 .keyboard-selected-row {
   background: rgba(245, 158, 11, 0.12) !important;
   outline: 2px solid #f59e0b !important;
@@ -26942,7 +21038,6 @@ select.pos-control {
   margin: 0 2px;
 }
 
-/* Command Palette Spotlight Box */
 .command-palette-backdrop {
   position: fixed;
   inset: 0;
@@ -27017,7 +21112,8 @@ select.pos-control {
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
 
-.palette-item.highlighted, .palette-item:hover {
+.palette-item.highlighted,
+.palette-item:hover {
   background: rgba(245, 158, 11, 0.12);
   transform: translateX(-2px);
 }
@@ -27072,97 +21168,6 @@ select.pos-control {
   color: #64748b;
 }
 
-/* ================= ORDER EDIT META & RE-DATE STYLES ================= */
-.edit-order-meta-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 14px 16px;
-}
-
-.edit-order-meta-grid .edit-meta-col.full-width {
-  grid-column: 1 / -1;
-}
-
-.edit-date-input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-
-.edit-order-date-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 175px;
-  height: 38px;
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 0.88rem;
-  color: #1e293b;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.edit-order-date-trigger:hover,
-.edit-order-date-trigger.active {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
-}
-
-.edit-order-date-input {
-  max-width: 170px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-family: 'Cairo', sans-serif;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.88rem;
-  border: 1px solid #cbd5e1;
-}
-
-.edit-date-shortcuts {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn-date-chip {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-}
-
-.btn-date-chip:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-}
-
-.btn-date-chip.active {
-  background: #d97706;
-  border-color: #b45309;
-  color: #ffffff;
-}
-
-.btn-clear-chip {
-  color: #ef4444;
-  font-weight: 800;
-  padding: 2px 6px;
-}
-
 .fast-order-price-mode-switch.compact {
   padding: 3px;
   background: #e2e8f0;
@@ -27177,53 +21182,12 @@ select.pos-control {
   border-radius: 6px;
 }
 
-/* ================= ORDER EDIT META CARD (LEGACY) ================= */
-.edit-order-meta-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-}
-
-.edit-order-meta-grid .edit-meta-col.notes-col {
-  grid-column: 1 / -1;
-}
-
-/* Authoritative edit-meta-label */
-.edit-meta-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.86rem;
-  font-weight: 750;
-  color: #334155;
-  margin-bottom: 8px;
-}
-
-.edit-meta-label svg {
-  stroke: var(--primary-color, #d97706);
-}
-
-/* Authoritative edit-order-notes-input */
-.edit-order-notes-input {
-  width: 100%;
-  padding: 9px 14px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  font-size: 0.9rem;
-  background: #ffffff;
-  color: #0f172a;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
 .edit-order-notes-input:focus {
   border-color: #f59e0b;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
   outline: none;
 }
 
-/* ================= PAYMENT CANCELLATION STYLES ================= */
 .payment-history-item.is-cancelled {
   background: #fef2f2 !important;
   border-color: #fecaca !important;
@@ -27236,13 +21200,24 @@ select.pos-control {
 }
 
 .payment-status-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 3px 8px;
+  min-height: 32px;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 6px;
+  font-family: 'Cairo', sans-serif;
+  line-height: 1.2;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  border: none;
+  outline: none;
+  user-select: none;
 }
 
 .payment-status-badge.is-cancelled {
@@ -27279,19 +21254,9 @@ select.pos-control {
   cursor: not-allowed;
 }
 
-/* ==========================================================================
-   SHOP 2 (قسم النواشف - BLUE THEME) COMPREHENSIVE OVERRIDES & CONSISTENCY
-   ========================================================================== */
-
-/* 1. Modal Submit & Primary Action Buttons */
 .shop-theme-shop2 .btn-primary,
 .shop-theme-shop2 .btn-modal-save,
-.shop-theme-shop2 .pos-btn-submit,
-.shop-theme-shop2 .btn-submit-payment,
-.shop-theme-shop2 .btn-save-order,
-.shop-theme-shop2 .btn-shortcuts-done,
-.shop-theme-shop2 .btn-confirm-save,
-.shop-theme-shop2 .btn-modal-primary {
+.shop-theme-shop2 .pos-btn-submit {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   border-color: #1d4ed8 !important;
   color: #ffffff !important;
@@ -27300,33 +21265,23 @@ select.pos-control {
 
 .shop-theme-shop2 .btn-primary:hover,
 .shop-theme-shop2 .btn-modal-save:hover,
-.shop-theme-shop2 .pos-btn-submit:hover,
-.shop-theme-shop2 .btn-submit-payment:hover,
-.shop-theme-shop2 .btn-save-order:hover,
-.shop-theme-shop2 .btn-shortcuts-done:hover,
-.shop-theme-shop2 .btn-confirm-save:hover,
-.shop-theme-shop2 .btn-modal-primary:hover {
+.shop-theme-shop2 .pos-btn-submit:hover {
   background: linear-gradient(135deg, #2563eb, #1e40af) !important;
   border-color: #1e40af !important;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
 }
 
-/* 2. Navigation Tabs & Active Indicators */
-.shop-theme-shop2 .admin-tab-btn.active,
-.shop-theme-shop2 .tab-pill.active,
-.shop-theme-shop2 .nav-pill.active {
+.shop-theme-shop2 .tab-pill.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28) !important;
 }
 
-.shop-theme-shop2 .admin-tab-btn.active svg,
 .shop-theme-shop2 .tab-pill.active svg {
   stroke: #ffffff !important;
 }
 
-/* 3. Shop Switcher Pill */
 .shop-theme-shop2 .shop-pill.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
@@ -27334,7 +21289,6 @@ select.pos-control {
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
 }
 
-/* 4. Segmented Control Pills (Price Mode, Date Shortcuts, Filters) */
 .shop-theme-shop2 .price-mode-pill.active,
 .shop-theme-shop2 .fast-order-price-mode-switch .price-mode-pill.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
@@ -27346,8 +21300,7 @@ select.pos-control {
   stroke: #ffffff !important;
 }
 
-.shop-theme-shop2 .pos-date-shortcut-btn.active,
-.shop-theme-shop2 .btn-date-chip.active {
+.shop-theme-shop2 .pos-date-shortcut-btn.active {
   background: #2563eb !important;
   border-color: #1d4ed8 !important;
   color: #ffffff !important;
@@ -27357,7 +21310,6 @@ select.pos-control {
   stroke: #ffffff !important;
 }
 
-/* 5. Datepickers & Calendar in Shop 2 */
 .shop-theme-shop2 .dp-day-cell.is-selected {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
@@ -27393,7 +21345,6 @@ select.pos-control {
   border-color: #2563eb !important;
 }
 
-/* 6. Form Inputs & Select Focus States */
 .shop-theme-shop2 input:focus,
 .shop-theme-shop2 select:focus,
 .shop-theme-shop2 textarea:focus,
@@ -27405,52 +21356,6 @@ select.pos-control {
   outline: none !important;
 }
 
-/* 7. POS Fast Order Modal Elements */
-.shop-theme-shop2 .pos-search-input:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
-}
-
-.shop-theme-shop2 .pos-product-card:hover {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.16) !important;
-}
-
-.shop-theme-shop2 .pos-product-card.active,
-.shop-theme-shop2 .pos-product-card.is-in-cart {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px #2563eb !important;
-}
-
-.shop-theme-shop2 .pos-item-qty-badge,
-.shop-theme-shop2 .pos-cart-badge {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-  color: #ffffff !important;
-}
-
-.shop-theme-shop2 .pos-quick-add-btn:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-  color: #ffffff !important;
-  border-color: #1d4ed8 !important;
-}
-
-.shop-theme-shop2 .pos-btn-barcode.active {
-  background: #2563eb !important;
-  border-color: #1d4ed8 !important;
-  color: #ffffff !important;
-}
-
-.shop-theme-shop2 .pos-cart-summary-card {
-  border-color: rgba(37, 99, 235, 0.25) !important;
-  background: rgba(37, 99, 235, 0.03) !important;
-}
-
-.shop-theme-shop2 .pos-cart-total-badge {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-  color: #ffffff !important;
-}
-
-/* 8. Table Active Row & Keyboard Selection */
 .shop-theme-shop2 .keyboard-selected-row,
 .shop-theme-shop2 tr.keyboard-selected-row td {
   background: rgba(37, 99, 235, 0.07) !important;
@@ -27467,27 +21372,10 @@ select.pos-control {
   background: rgba(37, 99, 235, 0.06) !important;
 }
 
-/* 9. Badges, Icons & Accents */
-.shop-theme-shop2 .badge-shop-current,
 .shop-theme-shop2 .shop2-badge {
   background: rgba(37, 99, 235, 0.14) !important;
   color: #1d4ed8 !important;
   border: 1px solid rgba(37, 99, 235, 0.3) !important;
-}
-
-.shop-theme-shop2 .edit-meta-label svg,
-.shop-theme-shop2 .shortcuts-header-icon svg,
-.shop-theme-shop2 .cat-header svg {
-  stroke: #2563eb !important;
-}
-
-.shop-theme-shop2 .shortcuts-header-icon {
-  background: rgba(37, 99, 235, 0.12) !important;
-  color: #2563eb !important;
-}
-
-.shop-theme-shop2 .shortcut-category-card .cat-header {
-  color: #2563eb !important;
 }
 
 .shop-theme-shop2 .cust-btn.btn-pay {
@@ -27508,30 +21396,18 @@ select.pos-control {
   border-color: #1d4ed8 !important;
 }
 
-/* 10. Command Palette & Autocomplete Selection */
 .shop-theme-shop2 .palette-item.active,
 .shop-theme-shop2 .suggestion-item.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
 }
 
-.shop-theme-shop2 .palette-item.active .palette-item-icon,
-.shop-theme-shop2 .palette-item.active .palette-item-shortcut kbd {
-  background: rgba(255, 255, 255, 0.22) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-}
-
-/* 11. Pagination & Active Page Pill */
-.shop-theme-shop2 .pagination-btn.active,
-.shop-theme-shop2 .page-number-btn.active {
+.shop-theme-shop2 .pagination-btn.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
   border-color: #1d4ed8 !important;
 }
 
-
-/* ================= SKELETON LOADER STYLES ================= */
 @keyframes skeletonPulse {
   0% {
     background-position: 200% 0;
@@ -27558,52 +21434,6 @@ select.pos-control {
   user-select: none;
 }
 
-.skeleton-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  flex-shrink: 0;
-}
-
-.skeleton-line {
-  border-radius: 6px;
-}
-
-.skeleton-title-line {
-  width: 45%;
-  height: 12px;
-  margin-bottom: 8px;
-}
-
-.skeleton-val-line {
-  width: 70%;
-  height: 20px;
-}
-
-.skeleton-chart-box {
-  width: 100%;
-  height: 230px;
-  border-radius: 12px;
-}
-
-.skeleton-row-bar {
-  width: 100%;
-  height: 38px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-
-.skeleton-table-row {
-  width: 100%;
-  height: 36px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-}
-
-
-
-
-/* ============ ORDER PRINT STATUS STYLES ============ */
 .order-id-cell-wrapper {
   display: flex;
   flex-direction: column;
@@ -27685,8 +21515,6 @@ select.pos-control {
   border-radius: 20px;
 }
 
-
-/* ============ EDIT ORDER REFACTORED UI/UX STYLES ============ */
 .edit-order-id-badge {
   background: rgba(15, 23, 42, 0.08);
   color: #1e293b;
@@ -27696,7 +21524,6 @@ select.pos-control {
   letter-spacing: -0.3px;
 }
 
-/* Status Badges Styling */
 .pos-cust-status-badge.status-ready {
   background: rgba(59, 130, 246, 0.12) !important;
   color: #1d4ed8 !important;
@@ -27721,7 +21548,6 @@ select.pos-control {
   border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
-/* Customer Card Layout */
 .edit-selected-customer-box {
   display: flex;
   flex-direction: column;
@@ -27871,10 +21697,16 @@ select.pos-control {
 }
 
 .edit-order-notes-input {
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
   font-size: 0.88rem !important;
+  background: #ffffff;
+  color: #0f172a;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Verified Item Badge in Cell */
 .db-item-title-row {
   display: flex;
   align-items: center;
@@ -27882,14 +21714,19 @@ select.pos-control {
 }
 
 .db-product-name {
-  font-size: 0.94rem !important;
-  font-weight: 750 !important;
-  color: #0f172a !important;
-  background: transparent !important;
+  display: inline-block;
   padding: 0 !important;
+  background-color: #e7f5ff;
+  color: #0f172a !important;
+  border-radius: 6px;
+  font-weight: 750 !important;
+  font-size: 0.94rem !important;
   border: none !important;
-  max-width: 100% !important;
   white-space: normal !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100% !important;
+  background: transparent !important;
 }
 
 .db-verified-badge {
@@ -27906,10 +21743,11 @@ select.pos-control {
 .edit-custom-name-input {
   max-width: 100% !important;
   height: 34px !important;
+  padding: 6px 12px;
   font-size: 0.88rem !important;
+  border-radius: 8px;
 }
 
-/* Stepper Input Number Arrow Suppression */
 .stepper-input::-webkit-outer-spin-button,
 .stepper-input::-webkit-inner-spin-button,
 .edit-price-input::-webkit-outer-spin-button,
@@ -27923,12 +21761,11 @@ select.pos-control {
   -moz-appearance: textfield !important;
 }
 
-/* Edit Price Wrapper Centering */
 .edit-price-input-wrapper {
   display: inline-flex !important;
   align-items: center !important;
-  justify-content: center !important;
   gap: 4px !important;
+  justify-content: center !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 9px !important;
   padding: 0 8px !important;
@@ -27939,17 +21776,27 @@ select.pos-control {
 }
 
 .edit-price-input {
-  width: 55px !important;
+  max-width: 100px;
   height: 34px !important;
+  text-align: center !important;
+  padding: 0 !important;
+  font-size: 0.9rem !important;
+  border-radius: 8px;
+  width: 55px !important;
   border: none !important;
   box-shadow: none !important;
-  text-align: center !important;
   font-weight: 800 !important;
-  font-size: 0.9rem !important;
-  padding: 0 !important;
 }
 
 .qty-stepper-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  height: 36px;
+  width: 100%;
   max-width: 125px !important;
   margin: 0 auto !important;
 }
@@ -27963,7 +21810,9 @@ select.pos-control {
 .item-note-input {
   font-size: 0.78rem !important;
   padding: 3px 8px !important;
+  height: 28px !important;
   border-radius: 6px !important;
+  margin-top: 5px;
   border: 1px dashed #cbd5e1 !important;
   background: #f8fafc !important;
   color: #475569 !important;
@@ -27992,8 +21841,6 @@ select.pos-control {
   color: #0f172a;
 }
 
-
-/* ============ CANCELLED ORDERS 24H AUTO-DELETION STYLES ============ */
 .cancelled-timer-pill {
   display: inline-flex;
   align-items: center;
@@ -28038,46 +21885,6 @@ select.pos-control {
 
 .cancelled-warning-banner svg {
   flex-shrink: 0;
-}
-
-
-/* ==========================================================================
-   PRODUCTION REPORT: PRODUCT CUSTOMER BREAKDOWN MODAL STYLING
-   ========================================================================== */
-.clickable-product-row {
-  cursor: pointer !important;
-  transition: background-color 0.18s ease;
-}
-
-.clickable-product-row:hover {
-  background: rgba(253, 181, 24, 0.08) !important;
-}
-
-.shop-theme-shop2 .clickable-product-row:hover {
-  background: rgba(30, 58, 95, 0.08) !important;
-}
-
-.product-cell-interactive {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.row-hover-icon {
-  opacity: 0;
-  color: #f59e0b;
-  transform: translateX(4px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.shop-theme-shop2 .row-hover-icon {
-  color: #1e3a5f;
-}
-
-.clickable-product-row:hover .row-hover-icon {
-  opacity: 1;
-  transform: translateX(0);
 }
 
 .product-customers-modal {
@@ -28458,12 +22265,6 @@ select.pos-control {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.cust-icon-btn.xs {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-}
-
 .table-cust-identity-row {
   display: inline-flex;
   align-items: center;
@@ -28636,641 +22437,17 @@ select.pos-control {
   border-radius: 10px;
 }
 
-/* ============ UX INSIGHTS & CONVERSION FUNNEL ============ */
-.ux-insights-card {
-  margin-top: 1.5rem;
-  background: #ffffff;
-}
-
-.ux-funnel-grid {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  overflow-x: auto;
-}
-
-.funnel-step {
-  flex: 1;
-  min-width: 130px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.funnel-step.highlight {
-  border-color: #10b981;
-  background: #f0fdf4;
-}
-
-.funnel-step-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.step-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 0.75rem;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.funnel-step.highlight .step-num {
-  background: #10b981;
-  color: #ffffff;
-}
-
-.step-title {
-  font-size: 0.82rem;
-  font-weight: 750;
-  color: #1e293b;
-}
-
-.step-value {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.step-desc {
-  font-size: 0.7rem;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.funnel-connector {
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.ux-kpi-subgrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.ux-stat-box {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ux-stat-label {
-  font-size: 0.78rem;
-  font-weight: 750;
-  color: #475569;
-}
-
-.ux-stat-value {
-  font-size: 1.4rem;
-  font-weight: 900;
-}
-
-.ux-stat-sub {
-  font-size: 0.7rem;
-  color: #64748b;
-}
-
-.ux-details-split {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.ux-subpanel {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px;
-}
-
-.subpanel-title {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.device-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.device-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.cat-engagement-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.cat-engage-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.82rem;
-}
-
-.cat-name {
-  font-weight: 750;
-  color: #0f172a;
-}
-
-.cat-interactions {
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: var(--primary-color, #d97706);
-}
-
-/* ==========================================================================
-   ANALYTICS: TOP PRODUCTS MULTI-SORT & INTERACTIVE TABLE STYLING
-   ========================================================================== */
-
-/* Table Header Sorting */
-.top-products-interactive-table th.th-sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.18s ease, color 0.18s ease;
-}
-
-.top-products-interactive-table th.th-sortable:hover {
-  background-color: rgba(245, 158, 11, 0.08);
-  color: #0f172a;
-}
-
-.top-products-interactive-table th.th-sortable.active {
-  color: #d97706;
-}
-
-.shop-theme-shop2 .top-products-interactive-table th.th-sortable:hover {
-  background-color: rgba(30, 58, 95, 0.08);
-}
-
-.shop-theme-shop2 .top-products-interactive-table th.th-sortable.active {
-  color: #1e3a5f;
-}
-
-.th-content-sort {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.th-sort-arrow {
-  display: inline-block;
-  font-size: 0.76rem;
-  line-height: 1;
-  color: #94a3b8;
-  opacity: 0.45;
-  transition: opacity 0.15s ease, color 0.15s ease;
-}
-
-.th-sort-arrow.visible {
-  opacity: 1;
-  color: #d97706;
-  font-weight: 900;
-}
-
-.shop-theme-shop2 .th-sort-arrow.visible {
-  color: #1e3a5f;
-}
-
-/* Rank Badges */
-.top-prod-rank-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 0.82rem;
-  font-weight: 800;
-  border: 1px solid #e2e8f0;
-}
-
-.top-prod-rank-pill.rank-gold {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  border-color: #fcd34d;
-}
-
-.top-prod-rank-pill.rank-silver {
-  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-  color: #334155;
-  border-color: #cbd5e1;
-}
-
-.top-prod-rank-pill.rank-bronze {
-  background: linear-gradient(135deg, #ffedd5, #fed7aa);
-  color: #9a3412;
-  border-color: #fdba74;
-}
-
-/* ==========================================================================
-   ANIMATION ON SCROLL: KEYFRAMES & FLUID EASINGS
-   ========================================================================== */
-@keyframes progressGrow {
-  0% {
-    width: 0% !important;
-  }
-  100% {
-    width: var(--target-width) !important;
-  }
-}
-
-@keyframes catBarGrow {
-  0% {
-    width: 0% !important;
-  }
-  100% {
-    width: var(--cat-target-width) !important;
-  }
-}
-
-@keyframes rowFadeSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pillPopIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Deluxe Animated Sales Share Bar */
-.sales-share-deluxe-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 260px;
-  margin: 0 auto;
-}
-
-.sales-share-pct-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  font-size: 0.78rem;
-  font-weight: 800;
-  line-height: 1.2;
-  flex-shrink: 0;
-  opacity: 0;
-}
-
-.sales-share-pct-pill.pill-revealed {
-  animation: pillPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--pill-delay, 0ms);
-}
-
-.shop-theme-shop2 .sales-share-pct-pill {
-  background: rgba(30, 58, 95, 0.12);
-  color: #1e3a5f;
-}
-
-.sales-share-track-deluxe {
-  flex: 1;
-  height: 8px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-
-.sales-share-fill-deluxe {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  position: relative;
-  overflow: hidden;
-  width: 0%;
-  will-change: width;
-}
-
-.sales-share-fill-deluxe.animate-fill {
-  animation: progressGrow 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--fill-delay, 0ms);
-}
-
-.shop-theme-shop2 .sales-share-fill-deluxe {
-  background: linear-gradient(90deg, #1e3a5f, #3b82f6);
-}
-
-.sales-share-shimmer-wave {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.5) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: salesWaveShimmer 2.2s infinite ease-in-out;
-  will-change: transform;
-}
-
-@keyframes salesWaveShimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Top Products Table Row Entrance on Scroll */
-.top-products-interactive-table .clickable-product-row {
-  opacity: 1;
-  will-change: opacity, transform;
-}
-
-.top-products-interactive-table .clickable-product-row.in-view {
-  animation: rowFadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--row-delay, 0ms);
-}
-
-/* Mobile Top Products Card Entrance on Scroll */
-.mobile-analytics-cards-grid .mob-analytics-rank-card {
-  opacity: 0;
-  will-change: opacity, transform;
-}
-
-.mobile-analytics-cards-grid .mob-analytics-rank-card.in-view {
-  animation: rowFadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--row-delay, 0ms);
-}
-
-.mob-share-bar-wrap {
-  width: 100%;
-}
-
-.mob-share-lbl {
-  font-size: 0.74rem;
-  color: #64748b;
-}
-
-.mob-share-val {
-  font-size: 0.78rem;
-  color: #d97706;
-  opacity: 0;
-  display: inline-block;
-  will-change: opacity, transform;
-}
-
-.mob-share-val.pill-revealed {
-  animation: pillPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--pill-delay, 0ms);
-}
-
-.shop-theme-shop2 .mob-share-val {
-  color: #1e3a5f;
-}
-
-/* Category Sales Bar Growth on Scroll */
-.bar-fill.animate-cat-bar {
-  animation: catBarGrow 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--cat-delay, 0ms);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sales-share-shimmer-wave {
-    animation: none !important;
-    display: none !important;
-  }
-  .sales-share-fill-deluxe,
-  .bar-fill,
-  .pm-progress-fill,
-  .split-mini-fill,
-  .device-fill,
-  .top-products-interactive-table .clickable-product-row,
-  .top-customers-interactive-table .top-cust-row,
-  .mobile-analytics-cards-grid .mob-analytics-rank-card,
-  .kpi-grid .kpi-card,
-  .list-item-row,
-  .funnel-step,
-  .sales-share-pct-pill,
-  .mob-share-val,
-  .donut-center,
-  .svg-trend-area,
-  .svg-trend-line,
-  .chart-dot-group {
-    animation: none !important;
-    transition: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-    stroke-dashoffset: 0 !important;
-    width: var(--target-width, auto) !important;
-  }
-}
-
-/* ==========================================================================
-   DESKTOP VS MOBILE CARDS DISPLAY TOGGLE
-   ========================================================================== */
-.desktop-categories-table,
-.desktop-tags-table,
-.desktop-production-table,
-.desktop-users-table,
-.desktop-analytics-table {
-  display: table;
-  width: 100%;
-}
-
-.mobile-categories-cards-grid,
-.mobile-tags-cards-grid,
-.mobile-production-cards-grid,
-.mobile-users-cards-grid,
-.mobile-analytics-cards-grid {
-  display: none;
-}
-
-/* ==========================================================================
-   CATEGORIES & TAGS REDESIGN (EXECUTIVE KPIS, SHOWCASE CARDS, TOOLBAR)
-   ========================================================================== */
-
-/* 1. Executive KPI Summary Cards */
-.cat-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.tag-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.cat-kpi-card,
-.tag-kpi-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid transparent;
-  box-shadow: var(--admin-card-elevation);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-}
-
-.cat-kpi-card:hover,
-.tag-kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--admin-card-elevation-hover) !important;
-}
-
-.cat-kpi-icon,
-.tag-kpi-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.cat-kpi-card:hover .cat-kpi-icon,
-.tag-kpi-card:hover .tag-kpi-icon {
-  transform: scale(1.05);
-}
-
-.cat-kpi-gold,
-.tag-kpi-gold {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-}
-
-.cat-kpi-amber,
-.tag-kpi-amber {
-  background: rgba(217, 119, 6, 0.12);
-  color: #b45309;
-}
-
-.cat-kpi-emerald {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-}
-
-.cat-kpi-blue {
-  background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
-}
-
-.tag-kpi-rose {
-  background: rgba(244, 63, 94, 0.12);
-  color: #e11d48;
-}
-
-.cat-kpi-info,
-.tag-kpi-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.cat-kpi-label,
-.tag-kpi-label {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #64748b;
-  margin-bottom: 2px;
-}
-
-.cat-kpi-value,
-.tag-kpi-value {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.cat-kpi-desc,
-.tag-kpi-desc {
-  font-size: 0.74rem;
-  color: #94a3b8;
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-/* 2. Card Toolbar */
 .card-toolbar-split {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   background: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  position: relative;
+  z-index: 100;
 }
 
 .card-toolbar-unified {
@@ -29312,7 +22489,6 @@ select.pos-control {
     gap: 8px !important;
   }
 
-  .card-toolbar-unified .toolbar-actions-group .btn-add-highlight,
   .card-toolbar-unified .toolbar-actions-group .btn-primary {
     flex: 1 !important;
     justify-content: center !important;
@@ -29337,8 +22513,8 @@ select.pos-control {
 
 .card-toolbar-top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -29354,15 +22530,18 @@ select.pos-control {
   font-weight: 800;
   color: #0f172a;
   margin: 0;
+  letter-spacing: -0.2px;
 }
 
 .toolbar-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
   background: rgba(241, 245, 249, 0.9);
   color: #475569;
   font-size: 0.78rem;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 9999px;
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
@@ -29372,65 +22551,22 @@ select.pos-control {
   gap: 12px;
 }
 
-/* View Mode Segmented Control */
-.view-mode-toggle {
-  display: inline-flex;
-  align-items: center;
-  background: #f1f5f9;
-  padding: 3px;
-  border-radius: 10px;
-  gap: 2px;
-  border: 1px solid #e2e8f0;
-}
-
-.btn-toggle-mode {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #64748b;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.btn-toggle-mode:hover {
-  color: #0f172a;
-}
-
-.btn-toggle-mode.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.btn-add-highlight {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.88rem;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
-}
-
 .card-toolbar-bottom {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   width: 100%;
 }
 
 .search-input-wrapper {
   position: relative;
-  width: 100%;
+  flex: 1 1 240px;
+  min-width: 200px;
+  height: 40px;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .search-icon {
@@ -29462,20 +22598,22 @@ select.pos-control {
 .btn-clear-search {
   position: absolute;
   left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2e8f0;
+  border: none;
+  font-size: 16px;
+  color: #475569;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
   width: 26px;
   height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e2e8f0;
-  color: #475569;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
   transition: background 0.15s;
-  padding: 0;
-  line-height: 1;
 }
 
 .btn-clear-search:hover {
@@ -29483,427 +22621,6 @@ select.pos-control {
   color: #0f172a;
 }
 
-/* 3. Skeleton Loading States */
-.categories-skeleton-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-  padding: 20px;
-}
-
-.cat-skeleton-card,
-.tag-skeleton-card {
-  padding: 20px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-}
-
-.cat-skel-top {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.cat-skel-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: #e2e8f0;
-}
-
-.cat-skel-meta {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cat-skel-title {
-  height: 18px;
-  width: 60%;
-  border-radius: 6px;
-  background: #e2e8f0;
-}
-
-.cat-skel-badge {
-  height: 14px;
-  width: 35%;
-  border-radius: 6px;
-  background: #e2e8f0;
-}
-
-.cat-skel-chips {
-  display: flex;
-  gap: 8px;
-}
-
-.cat-skel-chip {
-  height: 24px;
-  width: 64px;
-  border-radius: 8px;
-  background: #e2e8f0;
-}
-
-.tags-skeleton-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  padding: 20px;
-}
-
-.tag-skel-pill {
-  height: 36px;
-  width: 120px;
-  border-radius: 20px;
-  background: #e2e8f0;
-  margin-bottom: 14px;
-}
-
-.tag-skel-line {
-  height: 16px;
-  width: 75%;
-  border-radius: 6px;
-  background: #e2e8f0;
-}
-
-/* 4. Empty State */
-.mgmt-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 48px 24px;
-  border-radius: 16px;
-  margin: 24px;
-  background: rgba(248, 250, 252, 0.6);
-  border: 1.5px dashed #cbd5e1;
-}
-
-.mgmt-empty-state .empty-icon-wrap {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  background: rgba(241, 245, 249, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  margin-bottom: 16px;
-}
-
-.mgmt-empty-state .empty-title {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin: 0 0 8px 0;
-}
-
-.mgmt-empty-state .empty-desc {
-  font-size: 0.88rem;
-  color: #64748b;
-  max-width: 380px;
-  margin: 0 0 16px 0;
-  line-height: 1.5;
-}
-
-/* 5. Categories Showcase Grid & Cards */
-.categories-showcase-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 18px;
-  padding: 20px;
-}
-
-.category-showcase-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.category-showcase-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
-  border-color: #cbd5e1;
-}
-
-.cat-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cat-card-visual {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  flex: 1;
-}
-
-.cat-icon-container {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(254, 243, 199, 0.85) 0%, rgba(253, 230, 138, 0.6) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.cat-icon-table {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  margin: 0 auto;
-}
-
-.cat-title-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.cat-card-title {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cat-product-count-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f8fafc;
-  color: #0284c7;
-  border: 1px solid #e0f2fe;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  width: fit-content;
-  white-space: nowrap !important;
-  line-height: 1;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.cat-product-count-badge:hover {
-  background: #e0f2fe;
-  color: #0369a1;
-  border-color: #bae6fd;
-}
-
-.cat-actions-cluster {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.btn-cat-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px 12px;
-  border-radius: 9px;
-  font-size: 0.8rem;
-  font-weight: 750;
-  border: 1.5px solid transparent;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
-  font-family: 'Cairo', sans-serif !important;
-  touch-action: manipulation;
-}
-
-.btn-cat-action:active {
-  transform: scale(0.96);
-  transition: transform 60ms ease-out;
-}
-
-.btn-cat-edit {
-  background: #f8fafc;
-  color: #334155;
-  border-color: #e2e8f0;
-}
-
-.btn-cat-edit:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-}
-
-.btn-cat-delete {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.btn-cat-delete:hover {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #f87171;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
-}
-
-.cat-card-subcats {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 12px;
-  border: 1px solid #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.subcats-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.subcats-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.subcats-count-badge {
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 1px 7px;
-  border-radius: 9999px;
-}
-
-.subcats-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.subcat-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  color: #334155;
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.subcat-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #d97706;
-  flex-shrink: 0;
-}
-
-.subcats-empty {
-  padding: 4px 0;
-}
-
-.subcats-empty-text {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  font-style: italic;
-}
-
-.cat-card-footer {
-  margin-top: auto;
-  padding-top: 4px;
-}
-
-.btn-cat-view-products {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  color: #475569;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.btn-cat-view-products:hover {
-  background: #f1f5f9;
-  color: var(--primary-color, #d97706);
-  border-color: var(--primary-color, #d97706);
-  border-style: solid;
-}
-
-/* 6. Tags Showcase Grid & Cards */
-.tags-showcase-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 18px;
-  padding: 20px;
-}
-
-.tag-showcase-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-}
-
-.tag-showcase-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
-  border-color: #cbd5e1;
-}
-
-.tag-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-/* Singular Unified Product Tag Chip in Admin Panel */
 .product-tag-chip {
   direction: rtl;
   display: inline-flex;
@@ -29924,6 +22641,7 @@ select.pos-control {
 .tag-chip-icon {
   width: 18px;
   height: 18px;
+  object-fit: contain;
   border-radius: 50%;
   background: rgba(245, 158, 11, 0.18);
   color: #b45309;
@@ -29940,237 +22658,24 @@ select.pos-control {
   white-space: nowrap;
 }
 
-.tag-showcase-chip {
-  padding: 5px 12px 5px 8px;
-  font-size: 0.88rem;
-}
-
-.tag-showcase-chip .tag-chip-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.tag-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 14px;
-  border: 1px solid #f1f5f9;
-}
-
-.tag-desc-text {
-  font-size: 0.82rem;
-  color: #64748b;
-  margin: 0;
-  line-height: 1.4;
-  font-style: italic;
-}
-
-/* Products Preview Box & Avatar Stack */
-.tag-products-preview-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 4px;
-}
-
-.tag-products-preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.btn-quick-manage-prod {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #0284c7;
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-size: 0.74rem;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.btn-quick-manage-prod:hover {
-  background: #e0f2fe;
-  border-color: #7dd3fc;
-  color: #0369a1;
-}
-
-.tag-product-avatar-stack {
-  display: flex;
-  align-items: center;
-  direction: ltr;
-}
-
-.tag-avatar-item {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  overflow: hidden;
-  background: #f1f5f9;
-  margin-right: -8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}
-
-.tag-avatar-item:hover {
-  transform: translateY(-2px) scale(1.1);
-  z-index: 5;
-}
-
-.tag-avatar-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.tag-avatar-placeholder {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #475569;
-}
-
-.tag-avatar-overflow {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  background: #0284c7;
-  color: #ffffff;
-  font-size: 0.72rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: -8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-}
-
-.tag-product-avatar-stack.mini .tag-avatar-item,
-.tag-product-avatar-stack.mini .tag-avatar-overflow {
-  width: 26px;
-  height: 26px;
-  font-size: 0.68rem;
-  margin-right: -6px;
-}
-
-.tag-no-products-hint {
-  font-size: 0.76rem;
-  color: #94a3b8;
-  font-style: italic;
-}
-
-/* Card Action Buttons */
-.tag-card-footer {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-tag-action-primary {
-  flex-grow: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #1e293b;
-  border: 1px solid #cbd5e1;
-  font-size: 0.82rem;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-  min-height: 40px;
-}
-
-.btn-tag-action-primary:hover {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #1d4ed8;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-}
-
-.btn-tag-action-secondary {
-  width: 40px;
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.btn-tag-action-secondary:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #94a3b8;
-}
-
-.btn-action-assign {
-  background: #f0fdf4;
-  color: #15803d;
-  border-color: #bbf7d0;
-}
-
-.btn-action-assign:hover {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
-  box-shadow: 0 2px 8px rgba(22, 101, 52, 0.15);
-}
-
-/* 7. Table View Enhancements */
-.desktop-categories-table th,
-.desktop-tags-table th {
-  padding: 12px 14px;
-  font-weight: 700;
-  color: #475569;
-  background: #f8fafc;
-}
-
-.desktop-categories-table td,
-.desktop-tags-table td {
-  padding: 12px 14px;
-  vertical-align: middle;
-}
-
 .btn-table-action {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 5px;
   padding: 6px 12px;
+  height: 34px;
   border-radius: 9px;
   font-size: 0.8rem;
   font-weight: 750;
-  border: 1.5px solid transparent;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   font-family: 'Cairo', sans-serif !important;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  background: #ffffff;
+  color: #334155;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   touch-action: manipulation;
+  white-space: nowrap;
+  justify-content: center;
   line-height: 1.3;
 }
 
@@ -30192,12 +22697,6 @@ select.pos-control {
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
-.btn-action-delete {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
 .btn-action-delete:hover {
   background: #fee2e2;
   color: #b91c1c;
@@ -30206,73 +22705,6 @@ select.pos-control {
 }
 
 @media (max-width: 768px) {
-  /* Categories & Tags Mobile Ergonomics */
-  .cat-kpi-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-    margin-bottom: 14px !important;
-  }
-
-  .tag-kpi-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-    margin-bottom: 14px !important;
-  }
-
-  .cat-kpi-card,
-  .tag-kpi-card {
-    padding: 12px 14px !important;
-    gap: 10px !important;
-    border-radius: 12px !important;
-  }
-
-  .cat-kpi-icon,
-  .tag-kpi-icon {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 10px !important;
-  }
-
-  .cat-kpi-icon svg,
-  .tag-kpi-icon svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-
-  .cat-kpi-value,
-  .tag-kpi-value {
-    font-size: 1.25rem !important;
-  }
-
-  .cat-kpi-label,
-  .tag-kpi-label {
-    font-size: 0.74rem !important;
-  }
-
-  .cat-kpi-desc,
-  .tag-kpi-desc {
-    display: none !important;
-  }
-
-  .categories-showcase-grid,
-  .tags-showcase-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-    padding: 12px !important;
-  }
-
-  .category-showcase-card,
-  .tag-showcase-card {
-    padding: 14px !important;
-    border-radius: 14px !important;
-    gap: 12px !important;
-  }
-
-  .cat-icon-container {
-    width: 46px !important;
-    height: 46px !important;
-  }
-
   .card-toolbar-split {
     padding: 14px !important;
     gap: 12px !important;
@@ -30280,7 +22712,9 @@ select.pos-control {
 
   .card-toolbar-top {
     flex-direction: column !important;
+    justify-content: space-between !important;
     align-items: stretch !important;
+    flex-wrap: wrap !important;
     gap: 10px !important;
   }
 
@@ -30289,508 +22723,19 @@ select.pos-control {
     justify-content: stretch !important;
   }
 
-  .btn-add-highlight {
-    width: 100% !important;
-    justify-content: center !important;
-    min-height: 48px !important;
-  }
-
-  .btn-cat-action {
-    min-height: 40px !important;
-    padding: 8px 12px !important;
-  }
-
-  .btn-cat-view-products {
-    min-height: 44px !important;
-    padding: 10px 14px !important;
-  }
-
   .card-toolbar-bottom .search-input {
     font-size: 16px !important;
     min-height: 48px !important;
   }
 
-  /* ==========================================================================
-     MOBILE VIEWPORT (<= 768px): TABLE TO TOUCH-FIRST CARDS CONVERSION
-     ========================================================================== */
-  .desktop-categories-table,
-  .desktop-tags-table,
-  .desktop-production-table,
-  .desktop-users-table,
-  .desktop-analytics-table {
-    display: none !important;
-  }
-
-  .mobile-categories-cards-grid,
-  .mobile-tags-cards-grid,
-  .mobile-production-cards-grid,
-  .mobile-users-cards-grid,
-  .mobile-analytics-cards-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Category Mobile Cards */
-  .mobile-category-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
-    padding: 14px 16px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    box-sizing: border-box !important;
-  }
-
-  .mob-cat-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 12px !important;
-  }
-
-  .mob-cat-title-group {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-    flex: 1 !important;
-  }
-
-  .mob-cat-icon {
-    font-size: 1.4rem !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mob-cat-name {
-    font-weight: 800 !important;
-    font-size: 1rem !important;
-    color: #0f172a !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  .mob-cat-badge {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    font-size: 0.8rem !important;
-    padding: 4px 10px !important;
-    border-radius: 20px !important;
-    white-space: nowrap !important;
-    font-weight: 700 !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mob-cat-subs-list {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-    padding-top: 2px !important;
-    border-top: 1px dashed #f1f5f9 !important;
-  }
-
-  .mob-cat-sub-chip {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    padding: 4px 8px !important;
-    font-size: 0.78rem !important;
-    color: #334155 !important;
-  }
-
-  .mob-cat-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-    padding-top: 8px !important;
-    border-top: 1px solid #f1f5f9 !important;
-  }
-
-  /* Tag Mobile Cards */
-  .mobile-tag-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
-    padding: 14px 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 12px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    box-sizing: border-box !important;
-  }
-
-  .mob-tag-info {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-    flex: 1 !important;
-  }
-
-  .mob-tag-badge-preview {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    padding: 6px 12px !important;
-    border-radius: 8px !important;
-    font-size: 0.88rem !important;
-    font-weight: 800 !important;
-  }
-
-  .mob-tag-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    flex-shrink: 0 !important;
-  }
-
-  /* Production Mobile Cards */
-  .mobile-production-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
-    padding: 14px 16px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    cursor: pointer !important;
-    touch-action: manipulation !important;
-    transition: transform 0.12s ease, box-shadow 0.12s ease !important;
-    box-sizing: border-box !important;
-  }
-
-  .mobile-production-card:active {
-    transform: scale(0.99) !important;
-    background: #f8fafc !important;
-  }
-
-  .mob-prod-rep-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 10px !important;
-  }
-
-  .mob-prod-rep-title {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    min-width: 0 !important;
-    flex: 1 !important;
-    flex-wrap: wrap !important;
-  }
-
-  .mob-qty-badge {
-    background: #f1f5f9 !important;
-    color: #1e293b !important;
-    font-size: 0.82rem !important;
-    font-weight: 800 !important;
-    padding: 3px 10px !important;
-    border-radius: 20px !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mob-prod-rep-metrics {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
-    gap: 8px !important;
-    background: #f8fafc !important;
-    padding: 10px 12px !important;
-    border-radius: 10px !important;
-    border: 1px solid #edf2f7 !important;
-  }
-
-  .mob-metric-item {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2px !important;
-  }
-
-  .mob-metric-item .lbl {
-    font-size: 0.72rem !important;
-    color: #64748b !important;
-    font-weight: 700 !important;
-  }
-
-  .mob-metric-item .val {
-    font-size: 0.88rem !important;
-    font-weight: 800 !important;
-  }
-
-  .mob-metric-item.highlight .val {
-    font-size: 0.95rem !important;
-  }
-
-  .mob-prod-rep-hint {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    font-size: 0.76rem !important;
-    color: #64748b !important;
-    padding-top: 6px !important;
-    border-top: 1px dashed #f1f5f9 !important;
-  }
-
-  /* User Mobile Cards */
-  .mobile-user-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
-    padding: 14px 16px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    box-sizing: border-box !important;
-  }
-
-  .mob-user-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 10px !important;
-  }
-
-  .mob-user-avatar-wrap {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-    flex: 1 !important;
-  }
-
-  .mob-user-avatar {
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mob-user-avatar.admin {
-    background: #eff6ff !important;
-    color: #2563eb !important;
-  }
-
-  .mob-user-avatar.staff {
-    background: #f0fdf4 !important;
-    color: #16a34a !important;
-  }
-
-  .mob-user-meta {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2px !important;
-    min-width: 0 !important;
-  }
-
-  .mob-user-name {
-    font-size: 0.95rem !important;
-    color: #0f172a !important;
-    font-weight: 800 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  .mob-user-date {
-    font-size: 0.75rem !important;
-  }
-
-  .mob-user-body {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    padding-top: 8px !important;
-    border-top: 1px solid #f1f5f9 !important;
-  }
-
-  .mob-user-scope {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    font-size: 0.82rem !important;
-  }
-
-  .mob-user-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-  }
-
-  /* Generic Mobile Card Action Buttons */
-  .btn-card-action {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    min-height: 44px !important;
-    padding: 8px 14px !important;
-    border-radius: 10px !important;
-    font-size: 0.88rem !important;
-    font-weight: 750 !important;
-    font-family: 'Cairo', sans-serif !important;
-    cursor: pointer !important;
-    touch-action: manipulation !important;
-    border: 1px solid #e2e8f0 !important;
-    background: #ffffff !important;
-    transition: all 0.12s ease !important;
-  }
-
-  .btn-card-action.btn-action-edit {
-    color: #2563eb !important;
-    border-color: #bfdbfe !important;
-    background: #eff6ff !important;
-  }
-
-  .btn-card-action.btn-action-delete {
-    color: #ef4444 !important;
-    border-color: #fca5a5 !important;
-    background: #fef2f2 !important;
-  }
-
-  /* Analytics Rank Cards */
-  .mob-analytics-rank-card {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 12px 14px !important;
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    box-sizing: border-box !important;
-    cursor: pointer !important;
-    touch-action: manipulation !important;
-    transition: transform 0.12s ease, background-color 0.12s ease !important;
-  }
-
-  .mob-analytics-rank-card:active {
-    transform: scale(0.99) !important;
-    background: #fdfaf6 !important;
-  }
-
-  .mob-rank-badge {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 8px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 0.85rem !important;
-    font-weight: 900 !important;
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mob-rank-badge.top-1 {
-    background: #fef3c7 !important;
-    color: #b45309 !important;
-  }
-
-  .mob-rank-badge.top-2 {
-    background: #f1f5f9 !important;
-    color: #334155 !important;
-  }
-
-  .mob-rank-badge.top-3 {
-    background: #ffedd5 !important;
-    color: #c2410c !important;
-  }
-
-  .mob-rank-icon-wrap {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 8px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mob-rank-icon-wrap.warning {
-    background: #fef3c7 !important;
-    color: #d97706 !important;
-  }
-
-  .mob-rank-icon-wrap.danger {
-    background: #fee2e2 !important;
-    color: #b91c1c !important;
-  }
-
-  .mob-rank-details {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-    min-width: 0 !important;
-    flex: 1 !important;
-  }
-
-  .mob-rank-title {
-    font-size: 0.92rem !important;
-    color: #0f172a !important;
-    font-weight: 800 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  .mob-rank-metrics {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    flex-wrap: wrap !important;
-  }
-
-  .mob-metric-tag {
-    font-size: 0.8rem !important;
-    border-radius: 6px !important;
-  }
-
-  .mob-metric-tag.badge-category {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    padding: 2px 8px !important;
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-  }
-
-  .mob-rank-footer {
-    width: 100% !important;
-    margin-top: 6px !important;
-    padding-top: 6px !important;
-    border-top: 1px dashed #f1f5f9 !important;
-  }
-
-  .mob-open-hint {
-    font-size: 0.72rem !important;
-    color: #64748b !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    font-weight: 700 !important;
-  }
-
-  /* ==========================================================================
-     MOBILE VIEWPORT (<= 768px): KEYBOARD SELECTION HIGHLIGHT SUPPRESSION
-     ========================================================================== */
   .keyboard-selected-row,
-  .shop-theme-shop2 .keyboard-selected-row,
-  tr.keyboard-selected-row,
-  .shop-theme-shop2 tr.keyboard-selected-row,
-  tr.keyboard-selected-row td,
-  .shop-theme-shop2 tr.keyboard-selected-row td,
-  tbody tr.keyboard-selected-row,
-  tbody tr.keyboard-selected-row td {
+.shop-theme-shop2 .keyboard-selected-row,
+tr.keyboard-selected-row,
+.shop-theme-shop2 tr.keyboard-selected-row,
+tr.keyboard-selected-row td,
+.shop-theme-shop2 tr.keyboard-selected-row td,
+tbody tr.keyboard-selected-row,
+tbody tr.keyboard-selected-row td {
     background: transparent !important;
     background-color: transparent !important;
     outline: none !important;
@@ -30799,182 +22744,20 @@ select.pos-control {
   }
 
   .keyboard-selected-pagination,
-  .shop-theme-shop2 .keyboard-selected-pagination,
-  .admin-pagination-bar.keyboard-selected-pagination {
+.shop-theme-shop2 .keyboard-selected-pagination,
+.admin-pagination-bar.keyboard-selected-pagination {
     outline: none !important;
     box-shadow: none !important;
     background: transparent !important;
     border-color: inherit !important;
   }
 
-  /* ==========================================================================
-     MOBILE VIEWPORT (<= 768px): MINIMAL ANALYTICS TAB
-     ========================================================================== */
-  .analytics-tab-content,
-  .analytics-real-content {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    overflow-x: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-
-  .kpi-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-    width: 100% !important;
-    margin-bottom: 8px !important;
-  }
-
-  .kpi-card {
-    padding: 12px 14px !important;
-    border-radius: 12px !important;
-    gap: 8px !important;
-  }
-
-  .kpi-title {
-    font-size: 0.76rem !important;
-  }
-
-  .kpi-value {
-    font-size: 1.18rem !important;
-  }
-
   .kpi-icon-wrap {
     width: 34px !important;
     height: 34px !important;
   }
-
-  .charts-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 14px !important;
-    width: 100% !important;
-    margin-bottom: 16px !important;
-  }
-
-  .chart-card {
-    padding: 16px 14px !important;
-    border-radius: 14px !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-  }
-
-  .chart-card.span-2,
-  .chart-card.span-3,
-  .chart-card.span-full {
-    grid-column: span 1 !important;
-  }
-
-  .svg-chart-container {
-    height: 160px !important;
-  }
-
-  .desktop-analytics-table {
-    display: none !important;
-  }
-
-  .mobile-analytics-cards-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0 !important;
-    margin-top: 4px !important;
-    width: 100% !important;
-  }
-
-  .mob-clean-item {
-    padding: 12px 6px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-    box-sizing: border-box !important;
-  }
-
-  .mob-clean-item:last-child {
-    border-bottom: none !important;
-  }
-
-  .mob-clean-line {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    font-size: 0.88rem !important;
-  }
-
-  .mob-clean-title {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-  }
-
-  .mob-clean-rev {
-    color: #0f172a !important;
-    font-weight: 800 !important;
-    font-size: 0.88rem !important;
-  }
-
-  .mob-clean-sub {
-    display: flex !important;
-    gap: 6px !important;
-    font-size: 0.76rem !important;
-    color: #64748b !important;
-    align-items: center !important;
-  }
-
-  /* Funnel Metrics Strip */
-  .ux-funnel-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px !important;
-    padding: 12px !important;
-  }
-
-  .funnel-metric-val {
-    font-size: 1.15rem !important;
-  }
-
-  .ux-rates-row {
-    flex-direction: column !important;
-    gap: 8px !important;
-    padding-bottom: 8px !important;
-  }
-
-  .device-clean-strip {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-  }
-
-  /* Segmented Period Control */
-  .segmented-control {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-  }
-
-  .segmented-control .control-pill {
-    flex: 1 1 0 !important;
-    min-height: 40px !important;
-    min-width: 0 !important;
-    padding: 6px 2px !important;
-    font-size: 0.78rem !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-  }
 }
 
-/* ============================================================
-   POS FAST ORDER ENHANCEMENTS (CUSTOMER INTEL & STOCK PILLS)
-   ============================================================ */
 .pos-customer-intel-strip {
   display: flex;
   align-items: center;
@@ -31105,7 +22888,6 @@ select.pos-control {
   color: #ffffff;
 }
 
-/* Order Stock Indicators (Table & Mobile Cards) */
 .order-stock-pill {
   display: inline-flex;
   align-items: center;
@@ -31152,19 +22934,6 @@ select.pos-control {
   align-items: center;
 }
 
-/* Product Modal Inventory Linking Section */
-.inventory-link-section {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-}
-
-.inventory-link-section .linked-item-box {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-}
-
 .btn-edit-cust-statement {
   margin-right: auto;
   padding: 2px 8px;
@@ -31184,36 +22953,10 @@ select.pos-control {
   color: #ffffff;
 }
 
-/* Argon 4 Fluid Spring Admin Tab Transition & Tactile Row Elevation */
-/* Argon 4 Interactive Chart Header Pills */
-.chart-live-hover-pill,
-.chart-peak-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(217, 119, 6, 0.28);
-  color: #92400e;
-  font-weight: 700;
-}
-
-.chart-peak-pill {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-  color: #475569;
-}
-
-.hover-pill-sep {
-  opacity: 0.5;
-}
-
 .admin-tab-fade-enter-active {
   transition:
-    opacity 0.21s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  opacity 0.21s cubic-bezier(0.32, 0.72, 0, 1),
+  transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
   will-change: opacity, transform;
 }
 
@@ -31231,47 +22974,26 @@ select.pos-control {
   opacity: 0;
 }
 
-.kpi-card {
-  transition:
-    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.25s ease !important;
-}
-
-.kpi-card:hover {
-  transform: translate3d(0, -3px, 0) scale(1.01) !important;
-  box-shadow: var(--admin-card-elevation-hover) !important;
-}
-
-/* ==========================================================================
-   Wave 1, 2 & 4: WCAG 2.1 AA Contrast (>= 4.5:1), Mobile Touch Targets (>= 44x44px)
-   & Accessible Reduced-Motion Guards
-   ========================================================================== */
-
-/* 1. Contrast Calibration across Shop 1 & Shop 2 (preserving vibrant brand gold/amber) */
 .shop-theme-shop2 .header-count-badge {
   color: #1d4ed8 !important;
 }
 
 .page-num-pill.ellipsis,
-.subcats-empty-text,
-.tag-no-products-hint,
 .pos-catalog-empty,
 .pos-empty-cart-msg {
   color: #526072 !important;
 }
 
 .price-mode-pill:not(.active),
-.chef-status-badge.inactive,
-.chef-phone,
-.mob-price-label,
-.subcats-label,
-.tag-desc-text {
+.mob-price-label {
   color: #475569;
 }
 
 .pos-scroll-loader-dots {
+  letter-spacing: 4px;
   color: #1d4ed8 !important;
+  font-size: 1rem;
+  animation: pulseDots 1.5s infinite ease-in-out;
 }
 
 .pos-btn-submit:disabled {
@@ -31286,18 +23008,14 @@ select.pos-control {
   color: #1d4ed8 !important;
 }
 
-.chef-status-badge.active,
 .order-print-badge.is-printed {
   color: #047857 !important;
 }
 
-.shop-theme-shop2 .selected-counter-badge,
-.shop-theme-shop2 .prod-tab-pill .pill-badge,
-.shop-theme-shop2 .btn-chef-action.btn-chef-assign {
+.shop-theme-shop2 .selected-counter-badge {
   color: #1d4ed8 !important;
 }
 
-.shop-theme-shop2 .chef-avatar,
 .shop-theme-shop2 .btn-quick-add,
 .shop-theme-shop2 .assign-cat-pill.active {
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
@@ -31305,13 +23023,11 @@ select.pos-control {
   border-color: #1d4ed8 !important;
 }
 
-.chef-icon-btn.whatsapp,
 .mob-action-circle.whatsapp-circle,
 .edit-whatsapp-circle {
   color: #15803d !important;
 }
 
-.chef-icon-btn.call,
 .mob-action-circle.call-circle,
 .edit-call-circle {
   color: #1d4ed8 !important;
@@ -31332,14 +23048,17 @@ select.pos-control {
   color: #ffffff !important;
 }
 
-.btn-cat-delete,
-.btn-action-delete,
-.btn-chef-action.btn-chef-delete {
+.btn-action-delete {
+  background: #fef2f2;
   color: #b91c1c !important;
+  border-color: #fecaca;
 }
 
-/* 2. Touch Target Geometry (>= 44x44px, 48x48px primary/nav, >= 8px clearance) */
 .menu-toggle-btn {
+  background: none;
+  border: none;
+  color: #1e3a5f;
+  cursor: pointer;
   min-width: 48px !important;
   min-height: 48px !important;
   width: 48px;
@@ -31350,23 +23069,15 @@ select.pos-control {
   padding: 0;
 }
 
-.chef-phone-row {
-  flex-wrap: wrap;
-}
-
-.chef-quick-actions,
 .mob-cust-quick-actions,
 .edit-cust-quick-actions {
   gap: 8px !important;
 }
 
-.chef-icon-btn,
 .mob-action-circle,
 .edit-action-circle,
 .modal-close-btn,
-.btn-item-delete,
-.btn-tag-action-secondary,
-.btn-tag-action-primary {
+.btn-item-delete {
   min-width: 44px !important;
   min-height: 44px !important;
   display: inline-flex;
@@ -31376,70 +23087,97 @@ select.pos-control {
 
 @media (max-width: 768px) {
   .admin-mobile-header {
-    min-height: calc(52px + env(safe-area-inset-top, 0px)) !important;
+    display: flex;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 12px;
     height: auto !important;
+    flex-shrink: 0;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: calc(52px + env(safe-area-inset-top, 0px)) !important;
     padding-top: env(safe-area-inset-top, 0px) !important;
     padding-bottom: 0 !important;
   }
 
   .btn-datepicker-trigger,
-  .btn-standard-datepicker-trigger,
-  .btn-range-trigger,
-  .btn-today-shortcut,
-  .selected-date-badge,
-  .orders-toolbar-actions-group .btn,
-  .orders-search-print-row .reconciliation-print-btn,
-  .orders-search-print-row .order-notes-print-btn,
-  .btn-cat-action,
-  .btn-table-action,
-  .btn-chef-action,
-  .btn-bulk-pick,
-  .control-pill,
-  .segmented-control .control-pill,
-  .assign-cat-pill,
-  .pagination-btn,
-  .page-num-pill:not(.ellipsis) {
+.btn-standard-datepicker-trigger,
+.btn-today-shortcut,
+.selected-date-badge,
+.orders-toolbar-actions-group .btn,
+.orders-search-print-row .reconciliation-print-btn,
+.orders-search-print-row .order-notes-print-btn,
+.btn-table-action,
+.btn-bulk-pick,
+.assign-cat-pill,
+.pagination-btn,
+.page-num-pill:not(.ellipsis) {
     min-height: 44px !important;
     height: auto !important;
   }
 
   .pagination-btn,
-  .page-num-pill:not(.ellipsis) {
+.page-num-pill:not(.ellipsis) {
     min-width: 44px !important;
   }
 
   .btn-make-order,
-  .card-toolbar-top .btn-primary {
+.card-toolbar-top .btn-primary {
     min-height: 48px !important;
     height: auto !important;
   }
 
   .mob-card-footer-actions {
-    flex-wrap: wrap !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px !important;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    flex-wrap: wrap !important;
   }
 
   .mob-status-segmented {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 4px !important;
+    border-radius: 9px;
+    gap: 8px !important;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
     flex: 1 1 100% !important;
     width: 100% !important;
     justify-content: space-between !important;
-    gap: 8px !important;
-    padding: 4px !important;
   }
 
   .mob-status-btn {
+    width: 36px;
+    height: 44px !important;
     min-width: 44px !important;
     min-height: 44px !important;
-    height: 44px !important;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+    padding: 0;
+    position: relative;
     flex: 1 1 44px !important;
   }
 
   .mob-action-buttons-group {
+    display: grid !important;
+    align-items: center;
+    gap: 8px !important;
+    flex-shrink: 0;
     flex: 1 1 100% !important;
     width: 100% !important;
-    display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
   }
 
   .mob-action-buttons-group .btn-table-action {
@@ -31450,26 +23188,23 @@ select.pos-control {
   }
 
   .admin-layout input:not([type="checkbox"]):not([type="radio"]),
-  .admin-layout select,
-  .admin-layout textarea {
+.admin-layout select,
+.admin-layout textarea {
     font-size: 16px !important;
   }
 }
 
-/* 3. Accessible Motion Guard (prefers-reduced-motion) */
 @media (prefers-reduced-motion: reduce) {
   .unprinted-pulse-dot,
-  .pos-scroll-loader-dots,
-  .skeleton-shimmer,
-  .datepicker-popover {
+.pos-scroll-loader-dots,
+.skeleton-shimmer,
+.datepicker-popover {
     animation: none !important;
     transition: none !important;
   }
 
   .admin-tab-fade-enter-active,
-  .admin-tab-fade-leave-active,
-  .kpi-card,
-  .kpi-card:hover {
+.admin-tab-fade-leave-active {
     transition: none !important;
     transform: none !important;
   }
