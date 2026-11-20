@@ -9,156 +9,75 @@ const multerS3 = require("multer-s3");
 const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const path = require("path");
 const fs = require("fs");
-const os = require("os");
 const crypto = require("crypto");
 
-const LOCAL_BACKUP_DIR = process.env.BACKUP_DIR || path.join(os.homedir(), "Documents", "EmenuBackup");
+const { validateRuntimeConfig } = require("./src/config/env");
+const {
+  AppError,
+  ValidationError,
+  NotFoundError,
+  UpstreamError,
+  requestIdMiddleware,
+  sendSafeError,
+  errorHandlerMiddleware,
+} = require("./src/errors/AppError");
+const {
+  fetchWithTimeout,
+  retryTransient,
+  CircuitBreaker,
+} = require("./src/infra/resilience");
+const {
+  STAFF_SESSION_TTL_MS,
+  MAX_IMAGE_UPLOAD_BYTES,
+  safeCompareStrings: safeCompareStringsWithSecret,
+  safeCompareHex,
+  normalizeArabicUsername,
+  convertArabicDigits,
+  hashPasswordAsync,
+  verifyPasswordAsync,
+  isLegacyPasswordHash,
+  generateCustomerToken: generateCustomerTokenWithOptions,
+  verifyCustomerToken: verifyCustomerTokenWithOptions,
+  generateStaffSessionToken: generateStaffSessionTokenWithSecret,
+  verifyStaffSessionTokenCrypto: verifyStaffSessionTokenWithSecret,
+  generateBulkAccessToken: generateBulkAccessTokenWithSecret,
+  buildSafeS3ImageKey,
+  imageUploadFileFilter,
+} = require("./src/security/authHelpers");
 
-const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'emenu-admin-secret-key-2026';
-const STAFF_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const { config } = validateRuntimeConfig(process.env);
+const LOCAL_BACKUP_DIR = config.backupDir;
+const ADMIN_SESSION_SECRET = config.adminSessionSecret;
 
-// Constant-time string & hex digest comparisons to prevent timing side-channel attacks
-function safeCompareStrings(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const hashA = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(a).digest();
-  const hashB = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(b).digest();
-  return crypto.timingSafeEqual(hashA, hashB);
-}
-
-function safeCompareHex(hexA, hexB) {
-  if (typeof hexA !== 'string' || typeof hexB !== 'string' || hexA.length !== hexB.length || hexA.length % 2 !== 0) {
-    return false;
+const activeIntervals = [];
+const trackInterval = (handle) => {
+  if (handle && typeof handle.unref === "function") {
+    handle.unref();
   }
-  try {
-    const bufA = Buffer.from(hexA, 'hex');
-    const bufB = Buffer.from(hexB, 'hex');
-    if (bufA.length !== bufB.length || bufA.length === 0) return false;
-    return crypto.timingSafeEqual(bufA, bufB);
-  } catch {
-    return false;
-  }
-}
-
-// Normalize Arabic hamza/alef & spacing variants for forgiving username matching
-function normalizeArabicUsername(str) {
-  if (!str || typeof str !== 'string') return '';
-  return str
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/[أإآٱ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
-    .toLowerCase();
-}
-
-// Signed, revocable per-user staff session tokens (emu1.<base64urlPayload>.<hmacHex>)
-function generateStaffSessionToken(user) {
-  const now = Date.now();
-  const payloadObj = {
-    sub: String(user.id || user._id || 'env:admin'),
-    u: String(user.username || user.name || 'admin'),
-    name: String(user.name || user.username || 'المدير العام'),
-    role: user.role === 'order_manager' ? 'order_manager' : 'admin',
-    shopAccess: ['shop1', 'shop2', 'all'].includes(user.shopAccess) ? user.shopAccess : 'all',
-    tv: Number.isInteger(user.tokenVersion) && user.tokenVersion > 0 ? user.tokenVersion : 1,
-    iat: now,
-    exp: now + STAFF_SESSION_TTL_MS
-  };
-  const encodedPayload = Buffer.from(JSON.stringify(payloadObj), 'utf8').toString('base64url');
-  const sig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
-    .update(`emu1.${encodedPayload}`)
-    .digest('hex');
-  return `emu1.${encodedPayload}.${sig}`;
-}
-
-function verifyStaffSessionTokenCrypto(token) {
-  if (!token || typeof token !== 'string') return null;
-  const trimmed = token.trim();
-  if (!trimmed.startsWith('emu1.')) return null;
-  const parts = trimmed.split('.');
-  if (parts.length !== 3) return null;
-  const [, encodedPayload, providedSig] = parts;
-  const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
-    .update(`emu1.${encodedPayload}`)
-    .digest('hex');
-  if (!safeCompareHex(providedSig, expectedSig)) return null;
-
-  try {
-    const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
-    if (!payload || !payload.sub || typeof payload.exp !== 'number' || payload.exp <= Date.now()) {
-      return null;
-    }
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-function generateBulkAccessToken() {
-  const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-  const nonce = crypto.randomBytes(12).toString('hex');
-  const data = `bulk1.${exp}.${nonce}`;
-  const sig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(data).digest('hex');
-  return `${data}.${sig}`;
-}
-
-// ============ PASSWORD & CUSTOMER AUTH HELPERS ============
-function hashCustomerPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-  return `${salt}:${hash}`;
-}
-
-function verifyCustomerPassword(password, storedHash, storedPlain) {
-  if (storedPlain && safeCompareStrings(String(storedPlain).trim(), String(password).trim())) return true;
-  if (!storedHash || !storedHash.includes(':')) return false;
-  const [salt, originalHash] = storedHash.split(':');
-  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-  return safeCompareHex(hash, originalHash);
-}
-
-function generateCustomerToken(phone) {
-  const payload = `${phone}:${Date.now()}:${crypto.randomBytes(16).toString('hex')}`;
-  const signature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
-    .update(payload)
-    .digest('hex');
-  return Buffer.from(`${payload}:${signature}`).toString('base64');
-}
-
-function verifyCustomerToken(token, expectedPhone) {
-  if (!token || typeof token !== 'string') return false;
-  try {
-    const cleanToken = token.trim();
-    const decoded = Buffer.from(cleanToken, 'base64').toString('utf8');
-    const parts = decoded.split(':');
-    if (parts.length < 4) return false;
-    const [tokenPhone, timestamp, rand, signature] = parts;
-    const payload = `${tokenPhone}:${timestamp}:${rand}`;
-    const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET)
-      .update(payload)
-      .digest('hex');
-    if (!safeCompareHex(signature, expectedSig)) return false;
-
-    if (expectedPhone) {
-      const cleanExpected = convertArabicDigits(expectedPhone).toString().replace(/[^0-9]/g, '');
-      const cleanTokenPhone = convertArabicDigits(tokenPhone).toString().replace(/[^0-9]/g, '');
-      if (cleanExpected.slice(-9) !== cleanTokenPhone.slice(-9)) {
-        return false;
-      }
-    }
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
-
-// Convert Arabic-Indic (٠-٩) and Eastern Arabic (۰-۹) numerals to standard ASCII digits (0-9)
-const convertArabicDigits = (str) => {
-  if (str === null || str === undefined) return '';
-  return str.toString()
-    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
-    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  activeIntervals.push(handle);
+  return handle;
 };
+
+const safeCompareStrings = (a, b) =>
+  safeCompareStringsWithSecret(a, b, ADMIN_SESSION_SECRET);
+
+const generateStaffSessionToken = (user) =>
+  generateStaffSessionTokenWithSecret(user, ADMIN_SESSION_SECRET);
+
+const verifyStaffSessionTokenCrypto = (token) =>
+  verifyStaffSessionTokenWithSecret(token, ADMIN_SESSION_SECRET);
+
+const generateBulkAccessToken = () =>
+  generateBulkAccessTokenWithSecret(ADMIN_SESSION_SECRET);
+
+const generateCustomerToken = (phone) =>
+  generateCustomerTokenWithOptions(phone, { secret: ADMIN_SESSION_SECRET });
+
+const verifyCustomerToken = (token, expectedPhone) =>
+  verifyCustomerTokenWithOptions(token, expectedPhone, {
+    secret: ADMIN_SESSION_SECRET,
+    ttlDays: config.customerTokenTtlDays,
+  });
 
 // Canonical unified Libyan phone display structure: 09x-xxxxxxx
 const formatCanonicalLibyanPhone = (phone) => {
@@ -221,6 +140,42 @@ const getLibyanPhoneVariants = (phone) => {
   return [...variants].filter(Boolean);
 };
 
+const cascadePhoneUpdateAcrossCollections = async (variants, canonicalPhone, contextLabel = 'phone-cascade') => {
+  if (!Array.isArray(variants) || variants.length === 0 || !canonicalPhone) return;
+  const operations = [
+    {
+      collection: 'favorites',
+      op: 'updateMany',
+      run: () => favoritesCollection.updateMany({ phone: { $in: variants } }, { $set: { phone: canonicalPhone } }),
+    },
+    {
+      collection: 'shop1.orders',
+      op: 'updateMany',
+      run: () => ordersCollection.updateMany({ "customerInfo.phone": { $in: variants } }, { $set: { "customerInfo.phone": canonicalPhone } }),
+    },
+    {
+      collection: 'shop2.orders',
+      op: 'updateMany',
+      run: () => ordersCollection2.updateMany({ "customerInfo.phone": { $in: variants } }, { $set: { "customerInfo.phone": canonicalPhone } }),
+    },
+    {
+      collection: 'payments',
+      op: 'updateMany',
+      run: () => paymentsCollection.updateMany({ customerPhone: { $in: variants } }, { $set: { customerPhone: canonicalPhone } }),
+    },
+  ];
+  const results = await Promise.allSettled(operations.map((item) => item.run()));
+  results.forEach((result, idx) => {
+    if (result.status === 'rejected') {
+      const meta = operations[idx];
+      console.warn(
+        `[PHONE CASCADE WARN] context=${contextLabel} collection=${meta.collection} op=${meta.op}:`,
+        result.reason?.message || result.reason
+      );
+    }
+  });
+};
+
 // Helper to look up customer by phone with flexible Libyan formatting (any representation)
 const findCustomerByPhone = async (phone) => {
   if (!phone) return null;
@@ -268,10 +223,7 @@ const findCustomerByPhone = async (phone) => {
   if (duplicateIds.length > 0) {
     await customersCollection.deleteMany({ _id: { $in: duplicateIds } });
   }
-  await favoritesCollection.updateMany({ phone: { $in: uniqueVariants } }, { $set: { phone: canonicalPhone } }).catch(() => {});
-  await ordersCollection.updateMany({ "customerInfo.phone": { $in: uniqueVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
-  await ordersCollection2.updateMany({ "customerInfo.phone": { $in: uniqueVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
-  await paymentsCollection.updateMany({ customerPhone: { $in: uniqueVariants } }, { $set: { customerPhone: canonicalPhone } }).catch(() => {});
+  await cascadePhoneUpdateAcrossCollections(uniqueVariants, canonicalPhone, 'findCustomerByPhone');
 
   primary.name = combinedName;
   primary.phone = canonicalPhone;
@@ -283,20 +235,26 @@ const findCustomerByPhone = async (phone) => {
 
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.set("trust proxy", 1);
+const PORT = config.port;
 
 // AWS S3 Configuration
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+  region: config.awsRegion,
+  maxAttempts: 3,
+  ...(config.awsAccessKeyId && config.awsSecretAccessKey
+    ? {
+        credentials: {
+          accessKeyId: config.awsAccessKeyId,
+          secretAccessKey: config.awsSecretAccessKey,
+        },
+      }
+    : {}),
 });
 
 const storage = multerS3({
   s3: s3Client,
-  bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
+  bucket: config.awsS3Bucket,
   // Ensure proper content type and long-term caching for faster repeat loads
   contentType: multerS3.AUTO_CONTENT_TYPE,
   cacheControl: 'public, max-age=31536000',
@@ -305,31 +263,77 @@ const storage = multerS3({
     cb(null, { fieldName: file.fieldname });
   },
   key: (req, file, cb) => {
-    const filename = Date.now() + '-' + file.originalname;
-    cb(null, 'products/' + filename);
+    try {
+      cb(null, buildSafeS3ImageKey(file));
+    } catch (err) {
+      cb(err);
+    }
   },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+  fileFilter: imageUploadFileFilter,
+  limits: { fileSize: MAX_IMAGE_UPLOAD_BYTES }, // 15MB limit
 });
 
 // Error handler for multer/S3 upload errors
 const uploadErrorHandler = (err, req, res, next) => {
-  if (err && err.code === 'NoSuchBucket') {
-    return res.status(503).json({ 
-      error: "S3 bucket not found. Please run 'node create-s3-bucket.js' to set it up.",
-      details: err.message
-    });
+  if (!err) return next();
+
+  if (err.code === 'NoSuchBucket') {
+    return sendSafeError(
+      res,
+      req,
+      new UpstreamError('S3 bucket unavailable', {
+        statusCode: 503,
+        code: 'S3_BUCKET_UNAVAILABLE',
+        retryable: false,
+        cause: err,
+      }),
+      { fallbackMessage: 'خدمة رفع الصور غير مهيأة حالياً، يرجى التواصل مع الإدارة' }
+    );
   }
-  if (err) {
-    return res.status(400).json({ 
-      error: `Upload error: ${err.message}`,
-      code: err.code
-    });
+
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return sendSafeError(
+      res,
+      req,
+      new ValidationError('حجم الصورة يتجاوز الحد الأقصى المسموح به (15 ميجابايت)', {
+        code: 'LIMIT_FILE_SIZE',
+        cause: err,
+      })
+    );
   }
-  next();
+
+  if (err instanceof AppError) {
+    return sendSafeError(res, req, err);
+  }
+
+  if (err.name === 'MulterError') {
+    return sendSafeError(
+      res,
+      req,
+      new ValidationError('تعذر معالجة الملف المرفوع، يرجى التأكد من صيغة وحجم الصورة', {
+        code: err.code || 'UPLOAD_VALIDATION_ERROR',
+        cause: err,
+      })
+    );
+  }
+
+  return sendSafeError(res, req, err, {
+    statusCode: 502,
+    code: 'UPLOAD_FAILED',
+    fallbackMessage: 'فشل رفع الصورة، يرجى المحاولة مرة أخرى لاحقاً',
+  });
+};
+
+const buildUploadedImageUrl = (fileKey) => {
+  if (!fileKey) return '/res/logo.jpg';
+  if (config.awsCloudfrontDomain) {
+    return `https://${config.awsCloudfrontDomain}/${fileKey}`;
+  }
+  return `https://${config.awsS3Bucket}.s3.${config.awsRegion}.amazonaws.com/${fileKey}`;
 };
 
 // S3 files use public-read ACL - no signed URLs needed
@@ -397,7 +401,7 @@ const deleteProductImageFromS3 = async (product) => {
   if (!product || !product.img) return;
   
   let s3Key = null;
-  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
+  const cloudfrontDomain = config.awsCloudfrontDomain;
   
   if (product.img.includes('amazonaws.com') || (cloudfrontDomain && product.img.includes(cloudfrontDomain))) {
     const index = product.img.indexOf('products/');
@@ -410,7 +414,7 @@ const deleteProductImageFromS3 = async (product) => {
     try {
       console.log("[S3 DELETE] Attempting to delete S3 object:", s3Key);
       await s3Client.send(new DeleteObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET || "e-menu-products",
+        Bucket: config.awsS3Bucket,
         Key: s3Key
       }));
       console.log("[S3 DELETE] Successfully deleted image:", s3Key);
@@ -420,9 +424,9 @@ const deleteProductImageFromS3 = async (product) => {
   }
 };
 
-const ADMIN_USER = process.env.ADMIN_USER || "admin";
-const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
-const MONGO_URI = process.env.MONGO_URI;
+const ADMIN_USER = config.adminUser;
+const ADMIN_PASS = config.adminPass;
+const MONGO_URI = config.mongoUri;
 
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -431,6 +435,7 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser(ADMIN_SESSION_SECRET));
+app.use(requestIdMiddleware);
 
 // ============ SPA SHELL HANDLER WITH SERVER-SIDE MANIFEST INJECTION ============
 // Serves /app and /admin with dynamic manifest, title, and touch-icon injection BEFORE express.static
@@ -528,7 +533,9 @@ const invalidateAnalyticsCache = (targetShop = null) => {
 };
 
 // ============ POCKETBASE INVENTORY INTEGRATION ============
-const POCKETBASE_URL = process.env.POCKETBASE_URL || 'https://crystal-crocodile.pikapod.net';
+const POCKETBASE_URL = config.pocketbaseUrl;
+const pbCircuitBreaker = new CircuitBreaker({ failureThreshold: 5, cooldownMs: 30000 });
+const IDEMPOTENT_PB_METHODS = new Set(['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS']);
 
 // Arabic string normalizer for intelligent matching (removes tashkeel, tatweel, normalizes alifs/ta-marbuta/etc.)
 const normalizeArabicText = (text) => {
@@ -545,21 +552,79 @@ const normalizeArabicText = (text) => {
     .trim();
 };
 
-// Lightweight fetch wrapper for PocketBase REST API (no SDK dependency)
-const pbFetch = async (path, options = {}) => {
-  const url = `${POCKETBASE_URL}/api${path}`;
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`PocketBase ${options.method || 'GET'} ${path} → ${res.status}: ${body}`);
-  }
-  return res.json();
+// Resilient fetch wrapper for PocketBase REST API (circuit breaker + transient retry + 8s timeout)
+const pbFetch = async (apiPath, options = {}) => {
+  const method = String(options.method || 'GET').toUpperCase();
+  const isIdempotent = IDEMPOTENT_PB_METHODS.has(method) || options.idempotent === true;
+  const url = `${POCKETBASE_URL}/api${apiPath}`;
+
+  const runAttempt = async () => {
+    let res;
+    try {
+      res = await fetchWithTimeout(
+        url,
+        {
+          ...options,
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
+        },
+        8000
+      );
+    } catch (networkErr) {
+      throw new UpstreamError(`PocketBase ${method} ${apiPath} network error`, {
+        statusCode: 503,
+        code: 'POCKETBASE_UNREACHABLE',
+        retryable: true,
+        details: networkErr?.message,
+        cause: networkErr,
+      });
+    }
+
+    if (!res.ok) {
+      const body = await res.text().catch((readErr) => {
+        console.warn('[PocketBase] Failed reading error body:', readErr?.message);
+        return '';
+      });
+      const status = res.status;
+      const isTransientStatus = status === 408 || status === 429 || status >= 500;
+      if (!isTransientStatus) {
+        throw new AppError(`PocketBase ${method} ${apiPath} -> ${status}`, {
+          statusCode: status,
+          code: `POCKETBASE_HTTP_${status}`,
+          retryable: false,
+          isUpstream: true,
+          details: body,
+        });
+      }
+      throw new UpstreamError(`PocketBase ${method} ${apiPath} -> ${status}`, {
+        statusCode: status >= 500 ? 502 : status,
+        code: `POCKETBASE_HTTP_${status}`,
+        retryable: true,
+        details: body,
+      });
+    }
+
+    return res.json();
+  };
+
+  return pbCircuitBreaker.exec(() =>
+    retryTransient(runAttempt, {
+      maxAttempts: isIdempotent ? 3 : 1,
+      baseDelayMs: 250,
+      isRetryable: (err) => {
+        if (!isIdempotent) return false;
+        if (!err || err.retryable === false) return false;
+        const st = err.statusCode ?? err.status;
+        if (typeof st === 'number' && st >= 400 && st < 500 && st !== 408 && st !== 429) {
+          return false;
+        }
+        return true;
+      },
+    })
+  );
 };
 
 // Read current inventory level for a PocketBase record
@@ -568,7 +633,7 @@ const getInventoryStock = async (recordId) => {
   try {
     return await pbFetch(`/collections/inventory/records/${recordId}`);
   } catch (err) {
-    if (err.message && (err.message.includes('404') || err.message.includes("wasn't found"))) {
+    if (err?.statusCode === 404 || (err?.message && (err.message.includes('404') || err.message.includes("wasn't found")))) {
       return null;
     }
     throw err;
@@ -917,7 +982,10 @@ const cascadeProductToPocketBase = async (productDoc, hasStorage) => {
     }
 
     // Product hasStorage is true, but no inventoryLink exists: create or find one
-    const pbList = await pbFetch("/collections/inventory/records?perPage=500").catch(() => ({ items: [] }));
+    const pbList = await pbFetch("/collections/inventory/records?perPage=500").catch((pbErr) => {
+      console.warn('[Inventory Cascade] Failed listing PocketBase records:', pbErr?.message);
+      return { items: [] };
+    });
     const records = Array.isArray(pbList.items) ? pbList.items : [];
     let maxId = 0;
     for (const r of records) {
@@ -996,7 +1064,12 @@ const invalidateStaffSessionCache = (userId = null) => {
 
 const checkMongoDB = (req, res, next) => {
   if (!mongoConnected) {
-    return res.status(503).json({ error: "Database not ready" });
+    return res.status(503).json({
+      error: "Database not ready",
+      code: "DB_NOT_READY",
+      message: "Database not ready",
+      requestId: req.id,
+    });
   }
   next();
 };
@@ -1129,12 +1202,27 @@ const verifyShopScopeForUser = (req, res, fixedShop = null) => {
       code: 'SHOP_FORBIDDEN',
       allowedShop: allowed,
       error: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`,
-      message: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`
+      message: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`,
+      requestId: req.id
     });
     return false;
   }
 
   return true;
+};
+
+const requireAuthenticatedStaff = (req, res, next) => {
+  if (!req.staffUser) {
+    return res.status(401).json({
+      success: false,
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      requestId: req.id
+    });
+  }
+  next();
 };
 
 // Allows any authenticated staff role ('admin' or 'order_manager') within their shopAccess scope
@@ -1145,7 +1233,8 @@ const checkStaffShop = (fixedShop = null) => (req, res, next) => {
       ok: false,
       code: 'UNAUTHENTICATED',
       error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
-      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً'
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      requestId: req.id
     });
   }
   if (!verifyShopScopeForUser(req, res, fixedShop)) return;
@@ -1160,7 +1249,8 @@ const requireAdminShop = (fixedShop = null) => (req, res, next) => {
       ok: false,
       code: 'UNAUTHENTICATED',
       error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
-      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً'
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      requestId: req.id
     });
   }
   if (req.staffUser.role !== 'admin') {
@@ -1169,7 +1259,8 @@ const requireAdminShop = (fixedShop = null) => (req, res, next) => {
       ok: false,
       code: 'ROLE_FORBIDDEN',
       error: 'هذه العملية متاحة لمدير النظام فقط',
-      message: 'هذه العملية متاحة لمدير النظام فقط'
+      message: 'هذه العملية متاحة لمدير النظام فقط',
+      requestId: req.id
     });
   }
   if (!verifyShopScopeForUser(req, res, fixedShop)) return;
@@ -1184,7 +1275,8 @@ const requireGlobalAdmin = (req, res, next) => {
       ok: false,
       code: 'UNAUTHENTICATED',
       error: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
-      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً'
+      message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+      requestId: req.id
     });
   }
   if (req.staffUser.role !== 'admin' || req.staffUser.shopAccess !== 'all') {
@@ -1193,7 +1285,8 @@ const requireGlobalAdmin = (req, res, next) => {
       ok: false,
       code: 'ROLE_FORBIDDEN',
       error: 'هذه العملية متاحة للمدير العام للنظام فقط',
-      message: 'هذه العملية متاحة للمدير العام للنظام فقط'
+      message: 'هذه العملية متاحة للمدير العام للنظام فقط',
+      requestId: req.id
     });
   }
   next();
@@ -1209,7 +1302,9 @@ const enforceParsedBodyShopScope = (req, res, next) => {
       success: false,
       code: 'SHOP_FORBIDDEN',
       allowedShop: req.staffUser.shopAccess,
-      error: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`
+      error: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`,
+      message: `حسابك مخوّل للوصول إلى ${shopLabel} فقط`,
+      requestId: req.id
     });
   }
   next();
@@ -1233,7 +1328,12 @@ const checkCustomerAuth = (req, res, next) => {
   if (verifyCustomerToken(customerToken, phone)) {
     return next();
   }
-  return res.status(401).json({ error: "غير مصرح - يرجى تسجيل الدخول للوصول إلى بيانات الطلبات" });
+  return res.status(401).json({
+    error: "غير مصرح - يرجى تسجيل الدخول للوصول إلى بيانات الطلبات",
+    code: "UNAUTHORIZED",
+    message: "غير مصرح - يرجى تسجيل الدخول للوصول إلى بيانات الطلبات",
+    requestId: req.id
+  });
 };
 
 // ============ UNIVERSAL RECEIVING/EFFECTIVE DATE HELPER ============
@@ -1261,10 +1361,10 @@ const getOrderEffectiveDateStr = (order) => {
 
 // Mount per-request staff session resolution across all /api routes
 app.use("/api", attachStaffSession);
+app.use("/api/admin", requireAuthenticatedStaff);
 
-// ============ HEALTH CHECK ============
+// ============ HEALTH & READINESS CHECK ============
 app.get("/api/health", (req, res) => {
-  console.log("[ROUTE] GET /api/health called");
   res.json({ 
     status: "ok", 
     message: "Server is running",
@@ -1272,7 +1372,59 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.get("/api/ready", async (req, res) => {
+  if (!mongoConnected || !db) {
+    return res.status(503).json({
+      status: "not_ready",
+      ready: false,
+      mongoConnected: false,
+      requestId: req.id
+    });
+  }
+
+  let pingTimer = null;
+  try {
+    await Promise.race([
+      db.admin().ping(),
+      new Promise((_, reject) => {
+        pingTimer = setTimeout(() => reject(new Error("MongoDB readiness ping timed out")), 3000);
+      })
+    ]);
+    return res.status(200).json({
+      status: "ready",
+      ready: true,
+      mongoConnected: true,
+      requestId: req.id
+    });
+  } catch (err) {
+    console.error("[READINESS CHECK FAILED]", { requestId: req.id, error: err?.message });
+    return res.status(503).json({
+      status: "not_ready",
+      ready: false,
+      mongoConnected: false,
+      requestId: req.id
+    });
+  } finally {
+    if (pingTimer) clearTimeout(pingTimer);
+  }
+});
+
 // ============ DEBUG ENDPOINTS ============
+const requireDebugRoutesEnabled = (req, res, next) => {
+  if (!config.enableDebugRoutes) {
+    return sendSafeError(
+      res,
+      req,
+      new NotFoundError("نقطة النهاية غير متاحة في بيئة التشغيل الحالية", {
+        code: "DEBUG_ROUTES_DISABLED"
+      })
+    );
+  }
+  next();
+};
+
+app.use("/api/debug", requireDebugRoutesEnabled);
+
 app.get("/api/debug/products-by-category", checkMongoDB, requireGlobalAdmin, async (req, res) => {
   try {
     const categories = await categoriesCollection.find({}).toArray();
@@ -1290,8 +1442,7 @@ app.get("/api/debug/products-by-category", checkMongoDB, requireGlobalAdmin, asy
       totalProducts: await productsCollection.countDocuments({})
     });
   } catch (err) {
-    console.error("Debug endpoint error:", err);
-    res.status(500).json({ error: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر جلب إحصائيات التصنيفات" });
   }
 });
 
@@ -1312,8 +1463,7 @@ app.get("/api/debug/purchase-types", checkMongoDB, requireGlobalAdmin, async (re
       total: await productsCollection.countDocuments({})
     });
   } catch (err) {
-    console.error("Debug endpoint error:", err);
-    res.status(500).json({ error: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر جلب توزيع أنواع الشراء" });
   }
 });
 
@@ -1342,8 +1492,7 @@ app.get("/api/debug/subcategories", checkMongoDB, requireGlobalAdmin, async (req
       total: await productsCollection.countDocuments(query)
     });
   } catch (err) {
-    console.error("Debug endpoint error:", err);
-    res.status(500).json({ error: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر جلب التصنيفات الفرعية" });
   }
 });
 
@@ -1354,7 +1503,7 @@ const createRateLimiter = (windowMs, maxRequests, options = {}) => {
   const skipFn = typeof options.skip === 'function' ? options.skip : null;
   
   // Cleanup interval to prevent memory leak
-  setInterval(() => {
+  trackInterval(setInterval(() => {
     const now = Date.now();
     for (const [ip, timestamps] of ipCache.entries()) {
       const valid = timestamps.filter(t => now - t < windowMs);
@@ -1364,15 +1513,14 @@ const createRateLimiter = (windowMs, maxRequests, options = {}) => {
         ipCache.set(ip, valid);
       }
     }
-  }, Math.min(windowMs, 5 * 60 * 1000)).unref();
+  }, Math.min(windowMs, 5 * 60 * 1000)));
 
   return (req, res, next) => {
     if (skipFn && skipFn(req)) {
       return next();
     }
 
-    const forwarded = req.headers["x-forwarded-for"];
-    const rawIp = (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : null) || req.ip || req.socket?.remoteAddress || 'unknown';
+    const rawIp = req.ip || req.socket?.remoteAddress || 'unknown';
     const now = Date.now();
     
     const timestamps = (ipCache.get(rawIp) || []).filter(t => now - t < windowMs);
@@ -1473,18 +1621,21 @@ const handleStaffLogin = async (req, res, requestedShop = "shop1") => {
       }
 
       if (user) {
-        const isMatch = verifyCustomerPassword(cleanPass, user.passwordHash, user.password);
+        const isMatch = await verifyPasswordAsync(cleanPass, user.passwordHash, user.password, ADMIN_SESSION_SECRET);
         if (isMatch) {
           const currentTv = Number.isInteger(user.tokenVersion) && user.tokenVersion > 0 ? user.tokenVersion : 1;
-          if (!user.passwordHash || !user.tokenVersion) {
+          if (isLegacyPasswordHash(user.passwordHash) || !user.tokenVersion) {
+            const nextHash = isLegacyPasswordHash(user.passwordHash)
+              ? await hashPasswordAsync(cleanPass)
+              : user.passwordHash;
             await adminUsersCollection.updateOne(
               { _id: user._id },
               {
                 $set: {
-                  passwordHash: user.passwordHash || hashCustomerPassword(cleanPass),
+                  passwordHash: nextHash,
                   tokenVersion: currentTv
                 },
-                ...(user.password ? { $unset: { password: "" } } : {})
+                ...(user.password !== undefined ? { $unset: { password: "" } } : {})
               }
             ).catch(err => console.error("Password migration error:", err));
             invalidateStaffSessionCache(user._id);
@@ -1546,7 +1697,7 @@ app.post("/api/logout", (req, res) => {
 // Rate-limited login selector directory (strips internal _id and privilege roles from unauthenticated responses)
 app.get("/api/public/admin-users", publicDirectoryLimiter, async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
-  if (process.env.PUBLIC_STAFF_SELECTOR === "false") {
+  if (!config.publicStaffSelector) {
     return res.json({ success: true, users: [], manualOnly: true });
   }
   try {
@@ -1632,7 +1783,7 @@ app.get("/api/products", checkMongoDB, async (req, res) => {
 
 app.post("/api/verify-bulk-code", bulkCodeLimiter, (req, res) => {
   const rawCode = req.body && req.body.code !== undefined ? String(req.body.code).trim() : "";
-  const BULK_CODE = String(process.env.BULK_CODE || "1234").trim();
+  const BULK_CODE = config.bulkCode;
   if (rawCode && safeCompareStrings(rawCode, BULK_CODE)) {
     const bulkToken = generateBulkAccessToken();
     const isSecure = Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https');
@@ -1666,13 +1817,11 @@ app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploa
   }
   
   // Always compute stable public URL using bucket + region + key, prefer CloudFront if configured
-  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
   let img = "/res/logo.jpg"; // Default placeholder
   let uploadWarning = null;
   
   if (req.file) {
-    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+    img = buildUploadedImageUrl(req.file.key);
     console.log("[UPLOAD SUCCESS] POST /api/products - File uploaded:", req.file.key);
   } else {
     uploadWarning = "Image upload failed - using placeholder. Check S3 configuration or file size/type.";
@@ -1721,8 +1870,7 @@ app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploa
     console.log("[UPLOAD SUCCESS] Product saved with image:", img);
     res.json({ success: true });
   } catch (err) {
-    console.error("[UPLOAD ERROR] Database error:", err.message);
-    res.status(500).json({ error: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "فشل حفظ المنتج في قاعدة البيانات" });
   }
 });
 
@@ -1763,10 +1911,7 @@ app.put("/api/products/:id", requireAdminShop("shop1"), upload.single('img'), up
   let uploadWarning = null;
   
   if (req.file) {
-      // Compute deterministic public URL for updated image, prefer CloudFront if configured
-      const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-      const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-      updateData.img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+      updateData.img = buildUploadedImageUrl(req.file.key);
     } else {
       // Use existing image, or placeholder if null/invalid
       if (existingImg && existingImg !== 'null' && existingImg !== 'undefined') {
@@ -2273,13 +2418,11 @@ app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.
   }
   
   // Prefer CloudFront domain for image delivery if configured
-  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
   let img = "/res/logo.jpg"; // Default placeholder
   let uploadWarning = null;
   
   if (req.file) {
-    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+    img = buildUploadedImageUrl(req.file.key);
   } else {
     uploadWarning = "Image upload failed - using placeholder. Check S3 configuration or file size/type.";
   }
@@ -2340,8 +2483,7 @@ app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.
     }
     res.json(response);
   } catch (err) {
-    console.error("[UPLOAD ERROR] Shop2 database error:", err.message);
-    res.status(500).json({ error: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "فشل حفظ المنتج في قاعدة البيانات" });
   }
 });
 
@@ -2361,14 +2503,11 @@ app.put("/api/shop2/products/:id", checkMongoDB, requireAdminShop("shop2"), uplo
       console.error("Failed to parse tags:", tags);
     }
 
-    // Prefer CloudFront domain for image delivery if configured
-    const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
     let img;
     let uploadWarning = null;
     
     if (req.file) {
-      const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-      img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+      img = buildUploadedImageUrl(req.file.key);
     } else {
       // Use existing image from request or product, or placeholder if null/invalid
       const existingImage = existingImg || product.img;
@@ -2509,7 +2648,7 @@ app.post("/api/admin/users", checkMongoDB, requireGlobalAdmin, async (req, res) 
     const newUser = {
       name: cleanName,
       username: cleanName,
-      passwordHash: hashCustomerPassword(cleanPass),
+      passwordHash: await hashPasswordAsync(cleanPass),
       role: role === 'order_manager' ? 'order_manager' : 'admin',
       shopAccess: validShopAccess,
       tokenVersion: 1,
@@ -2587,7 +2726,7 @@ app.put("/api/admin/users/:id", checkMongoDB, requireGlobalAdmin, async (req, re
         return res.status(400).json({ error: "يجب أن تتكون كلمة المرور من 4 أحرف أو أرقام على الأقل" });
       }
       nextTv = currentTv + 1;
-      updateData.passwordHash = hashCustomerPassword(cleanPass);
+      updateData.passwordHash = await hashPasswordAsync(cleanPass);
       updateData.tokenVersion = nextTv;
       updateFields.$unset = { password: "" };
     }
@@ -3193,7 +3332,8 @@ app.post("/api/telemetry/batch", telemetryLimiter, async (req, res) => {
     res.status(200).json({ success: true, count: docs.length });
   } catch (err) {
     // Non-blocking response for client telemetry
-    res.status(200).json({ success: false, error: err.message });
+    console.warn("[Telemetry Batch] Failed inserting telemetry batch:", err?.message);
+    res.status(200).json({ success: false, error: "تعذر حفظ بيانات القياس" });
   }
 });
 
@@ -3577,11 +3717,11 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkStaffShop("shop2"), asy
 
     res.json({ success: true, items: enriched });
   } catch (err) {
-    console.error("Fetch inventory items error:", err.message);
-    res.status(502).json({
-      error: "تعذر الاتصال بخادم المخزون PocketBase",
-      details: err.message,
-      unreachable: true
+    return sendSafeError(res, req, err, {
+      statusCode: 502,
+      code: "POCKETBASE_UNAVAILABLE",
+      fallbackMessage: "تعذر الاتصال بخادم المخزون PocketBase",
+      extra: { unreachable: true },
     });
   }
 });
@@ -3590,6 +3730,9 @@ app.get("/api/admin/inventory/items", checkMongoDB, checkStaffShop("shop2"), asy
 app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkStaffShop("shop2"), async (req, res) => {
   try {
     const item = await getInventoryStock(req.params.recordId);
+    if (!item) {
+      return sendSafeError(res, req, new NotFoundError("الصنف غير موجود في المخزون"));
+    }
     let reserved = 0;
     if (stockReservationsCollection) {
       const resDocs = await stockReservationsCollection.aggregate([
@@ -3608,8 +3751,11 @@ app.get("/api/admin/inventory/stock/:recordId", checkMongoDB, checkStaffShop("sh
       availableQuantity: Math.max(0, (item.quantity || 0) - reserved)
     });
   } catch (err) {
-    console.error("Get inventory stock error:", err.message);
-    res.status(502).json({ error: "Failed to get stock from PocketBase", details: err.message });
+    return sendSafeError(res, req, err, {
+      statusCode: 502,
+      code: "POCKETBASE_UNAVAILABLE",
+      fallbackMessage: "تعذر جلب رصيد الصنف من خادم المخزون",
+    });
   }
 });
 
@@ -3624,6 +3770,9 @@ app.patch("/api/admin/inventory/items/:id/quantity", checkMongoDB, requireAdminS
       newQty = Math.max(0, Math.round(quantity));
     } else if (typeof delta === 'number') {
       const current = await getInventoryStock(id);
+      if (!current) {
+        return sendSafeError(res, req, new NotFoundError("الصنف غير موجود في المخزون"));
+      }
       const currentQty = typeof current.quantity === 'number' ? current.quantity : 0;
       newQty = Math.max(0, currentQty + Math.round(delta));
     } else {
@@ -3640,8 +3789,9 @@ app.patch("/api/admin/inventory/items/:id/quantity", checkMongoDB, requireAdminS
 
     res.json({ success: true, item: updated, quantity: newQty });
   } catch (err) {
-    console.error("Update inventory quantity error:", err.message);
-    res.status(500).json({ error: "Failed to update quantity in PocketBase", details: err.message });
+    return sendSafeError(res, req, err, {
+      fallbackMessage: "تعذر تحديث كمية الصنف في خادم المخزون",
+    });
   }
 });
 
@@ -3666,8 +3816,9 @@ app.put("/api/admin/inventory/items/:id", checkMongoDB, requireAdminShop("shop2"
 
     res.json({ success: true, item: updated });
   } catch (err) {
-    console.error("Update inventory item error:", err.message);
-    res.status(500).json({ error: "Failed to update item in PocketBase", details: err.message });
+    return sendSafeError(res, req, err, {
+      fallbackMessage: "تعذر تحديث بيانات الصنف في خادم المخزون",
+    });
   }
 });
 
@@ -3704,8 +3855,9 @@ app.post("/api/admin/inventory/items", checkMongoDB, requireAdminShop("shop2"), 
 
     res.json({ success: true, item: created });
   } catch (err) {
-    console.error("Create inventory item error:", err.message);
-    res.status(500).json({ error: "Failed to create item in PocketBase", details: err.message });
+    return sendSafeError(res, req, err, {
+      fallbackMessage: "تعذر إنشاء الصنف في خادم المخزون",
+    });
   }
 });
 
@@ -3718,8 +3870,9 @@ app.delete("/api/admin/inventory/items/:id", checkMongoDB, requireAdminShop("sho
     });
     res.json({ success: true, deleted: true });
   } catch (err) {
-    console.error("Delete inventory item error:", err.message);
-    res.status(500).json({ error: "Failed to delete item from PocketBase", details: err.message });
+    return sendSafeError(res, req, err, {
+      fallbackMessage: "تعذر حذف الصنف من خادم المخزون",
+    });
   }
 });
 
@@ -3891,8 +4044,7 @@ app.post("/api/admin/inventory/auto-match", checkMongoDB, requireAdminShop("shop
       matches: matches.sort((a, b) => b.confidence - a.confidence)
     });
   } catch (err) {
-    console.error("Auto match inventory error:", err.message);
-    res.status(500).json({ error: "Failed to auto-match inventory", details: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر المطابقة التلقائية للمخزون" });
   }
 });
 
@@ -3934,8 +4086,7 @@ app.post("/api/admin/inventory/batch-link", checkMongoDB, requireAdminShop("shop
       totalSubmitted: validLinks.length
     });
   } catch (err) {
-    console.error("Batch inventory link error:", err.message);
-    res.status(500).json({ error: "Failed to batch link products", details: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر ربط الأصناف بالمخزون" });
   }
 });
 
@@ -4031,8 +4182,7 @@ app.post("/api/admin/inventory/sync-all-products", checkMongoDB, requireAdminSho
       newlyCreated: newlyCreatedCount
     });
   } catch (err) {
-    console.error("Sync all products to PB error:", err.message);
-    res.status(500).json({ error: "Failed to sync products to PocketBase", details: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر مزامنة المنتجات مع خادم المخزون" });
   }
 });
 
@@ -4104,8 +4254,7 @@ app.put("/api/admin/inventory/link-item", checkMongoDB, requireAdminShop("shop2"
       }
     });
   } catch (err) {
-    console.error("Link item error:", err.message);
-    res.status(500).json({ error: "Failed to link item", details: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر ربط الصنف بالمخزون" });
   }
 });
 
@@ -4162,8 +4311,7 @@ app.post("/api/admin/inventory/reconcile", checkMongoDB, requireAdminShop("shop2
     await reconcileInventoryStock();
     res.json({ success: true, message: "تمت مواءمة ومطابقة المخزون بنجاح" });
   } catch (err) {
-    console.error("Manual reconciliation error:", err.message);
-    res.status(500).json({ error: "Failed to reconcile inventory", details: err.message });
+    return sendSafeError(res, req, err, { fallbackMessage: "تعذر مطابقة ومواءمة أرصدة المخزون" });
   }
 });
 
@@ -4179,7 +4327,8 @@ app.get("/api/admin/inventory/status", checkMongoDB, checkStaffShop("shop2"), as
       pbConnected = true;
       totalItems = pbRes.totalItems || (Array.isArray(pbRes.items) ? pbRes.items.length : 0);
     } catch (e) {
-      pbError = e.message;
+      console.warn("[Inventory Status] PocketBase check failed:", e?.message);
+      pbError = "تعذر الاتصال بخادم المخزون";
     }
 
     let activeReservationsCount = 0;
@@ -4356,7 +4505,7 @@ app.post("/api/admin/customers", checkMongoDB, checkStaff, async (req, res) => {
       name: trimmedName,
       phone: canonicalPhone,
       password: cleanPass,
-      passwordHash: cleanPass ? hashCustomerPassword(cleanPass) : "",
+      passwordHash: cleanPass ? await hashPasswordAsync(cleanPass) : "",
       createdAt: now,
       lastActive: now
     };
@@ -4422,7 +4571,7 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkStaff, async (req, res) =
       const cleanPass = String(password).trim();
       if (cleanPass.length > 0) {
         updateDoc.password = cleanPass;
-        updateDoc.passwordHash = hashCustomerPassword(cleanPass);
+        updateDoc.passwordHash = await hashPasswordAsync(cleanPass);
       } else {
         updateDoc.password = '';
         updateDoc.passwordHash = '';
@@ -4435,10 +4584,7 @@ app.put("/api/admin/customers/:id", checkMongoDB, checkStaff, async (req, res) =
     );
 
     // Cascade phone change across all historical variants to canonicalPhone
-    await favoritesCollection.updateMany({ phone: { $in: allVariants } }, { $set: { phone: canonicalPhone } }).catch(() => {});
-    await ordersCollection.updateMany({ "customerInfo.phone": { $in: allVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
-    await ordersCollection2.updateMany({ "customerInfo.phone": { $in: allVariants } }, { $set: { "customerInfo.phone": canonicalPhone } }).catch(() => {});
-    await paymentsCollection.updateMany({ customerPhone: { $in: allVariants } }, { $set: { customerPhone: canonicalPhone } }).catch(() => {});
+    await cascadePhoneUpdateAcrossCollections(allVariants, canonicalPhone, 'admin-update-customer');
 
     res.json({ success: true, name: updateDoc.name, phone: canonicalPhone });
   } catch (err) {
@@ -4465,7 +4611,15 @@ app.delete("/api/admin/customers/:id", checkMongoDB, checkStaff, async (req, res
     // Clean up customer preferences (favorites), but preserve historical orders and payments for financial auditability
     if (phone) {
       const phoneVariants = getLibyanPhoneVariants(phone);
-      await favoritesCollection.deleteMany({ phone: { $in: phoneVariants } }).catch(() => {});
+      const [favDeleteResult] = await Promise.allSettled([
+        favoritesCollection.deleteMany({ phone: { $in: phoneVariants } })
+      ]);
+      if (favDeleteResult.status === 'rejected') {
+        console.warn(
+          '[CUSTOMER DELETE WARN] collection=favorites op=deleteMany:',
+          favDeleteResult.reason?.message || favDeleteResult.reason
+        );
+      }
     }
 
     res.json({ success: true, message: "تم حذف ملف العميل بنجاح مع الحفاظ على سجل الطلبات والمدفوعات." });
@@ -5170,7 +5324,7 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
         return res.status(409).json({ error: "رقم الهاتف مسجل مسبقاً، يرجى تسجيل الدخول بدلاً من ذلك" });
       } else {
         // Legacy customer without password: set password and activate account
-        const passwordHash = hashCustomerPassword(password);
+        const passwordHash = await hashPasswordAsync(password);
         await customersCollection.updateOne(
           { _id: existing._id },
           { 
@@ -5197,7 +5351,7 @@ app.post("/api/customer/register", checkMongoDB, customerLimiter, async (req, re
     }
 
     // New customer registration
-    const passwordHash = hashCustomerPassword(password);
+    const passwordHash = await hashPasswordAsync(password);
     const newCustomerDoc = {
       name: normalizedName,
       phone: canonicalPhone,
@@ -5262,21 +5416,40 @@ app.post("/api/customer/login", checkMongoDB, customerLimiter, async (req, res) 
       return res.status(400).json({ error: "يرجى إدخال كلمة المرور" });
     }
 
-    const isValid = verifyCustomerPassword(password, customer.passwordHash, customer.password);
+    const isValid = await verifyPasswordAsync(password, customer.passwordHash, customer.password, ADMIN_SESSION_SECRET);
     if (!isValid) {
       return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
     }
 
-    // Optionally update customer phone to canonical format
+    // Update lastActive, canonicalize phone if needed, and transparently upgrade legacy PBKDF2/plaintext hashes to scrypt
+    const loginSetOps = { lastActive: new Date() };
+    if (isLegacyPasswordHash(customer.passwordHash)) {
+      loginSetOps.passwordHash = await hashPasswordAsync(password);
+    }
     if (customer.phone !== canonicalPhone) {
-      await customersCollection.updateOne(
-        { _id: customer._id },
-        { $set: { phone: canonicalPhone, lastActive: new Date() } }
-      ).catch(() => {});
+      const [canonRes] = await Promise.allSettled([
+        customersCollection.updateOne(
+          { _id: customer._id },
+          { $set: { ...loginSetOps, phone: canonicalPhone } }
+        )
+      ]);
+      if (canonRes.status === 'rejected') {
+        console.warn(
+          '[CUSTOMER LOGIN WARN] collection=customers op=updateOne(canonicalize):',
+          canonRes.reason?.message || canonRes.reason
+        );
+        // Ensure lastActive / passwordHash upgrade still persists if canonical phone collided on unique index
+        await customersCollection.updateOne(
+          { _id: customer._id },
+          { $set: loginSetOps }
+        ).catch((fallbackErr) => {
+          console.warn('[CUSTOMER LOGIN WARN] collection=customers op=updateOne(fallback):', fallbackErr?.message);
+        });
+      }
     } else {
       await customersCollection.updateOne(
         { _id: customer._id },
-        { $set: { lastActive: new Date() } }
+        { $set: loginSetOps }
       );
     }
 
@@ -5316,14 +5489,14 @@ app.post("/api/customer/set-password", checkMongoDB, customerLimiter, async (req
 
     // If already has password, verify old password first
     if ((customer.passwordHash || customer.password) && oldPassword) {
-      const isOldValid = verifyCustomerPassword(oldPassword, customer.passwordHash, customer.password);
+      const isOldValid = await verifyPasswordAsync(oldPassword, customer.passwordHash, customer.password, ADMIN_SESSION_SECRET);
       if (!isOldValid) {
         return res.status(401).json({ error: "كلمة المرور الحالية غير صحيحة" });
       }
     }
 
     const canonicalPhone = formatCanonicalLibyanPhone(customer.phone || phone);
-    const newHash = hashCustomerPassword(password);
+    const newHash = await hashPasswordAsync(password);
     await customersCollection.updateOne(
       { _id: customer._id },
       { 
@@ -5393,7 +5566,7 @@ app.put("/api/admin/customers/:id/reset-password", checkMongoDB, checkStaff, asy
     }
 
     const cleanNewPass = newPassword.trim();
-    const passwordHash = hashCustomerPassword(cleanNewPass);
+    const passwordHash = await hashPasswordAsync(cleanNewPass);
     await customersCollection.updateOne(
       { _id: new ObjectId(id) },
       { $set: { password: cleanNewPass, passwordHash, lastActive: new Date() } }
@@ -5740,9 +5913,7 @@ const areOrderItemsEqual = (itemsA, itemsB) => {
 // Server-Side Price Recalculation & Privilege Segregation Helper
 const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl, isStaffPOS, body = {}) => {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
-    const emptyErr = new Error("يجب أن يحتوي الطلب على صنف واحد على الأقل");
-    emptyErr.statusCode = 400;
-    throw emptyErr;
+    throw new ValidationError("يجب أن يحتوي الطلب على صنف واحد على الأقل");
   }
 
   // Pre-fetch all products referenced in items
@@ -5763,9 +5934,7 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
     const dbProd = dbProductsMap.get(prodIdStr);
 
     if (!dbProd && !isStaffPOS) {
-      const invalidItemErr = new Error("أحد الأصناف المطلوبة غير موجود أو لم يعد متاحاً");
-      invalidItemErr.statusCode = 400;
-      throw invalidItemErr;
+      throw new ValidationError("أحد الأصناف المطلوبة غير موجود أو لم يعد متاحاً");
     }
 
     const canFloat = isStaffPOS ? Boolean(item.allowFloat || dbProd?.allowFloat) : Boolean(dbProd?.allowFloat);
@@ -5959,11 +6128,7 @@ app.post("/api/orders", checkMongoDB, publicOrderLimiter, async (req, res) => {
       order: { ...orderDoc, _id: result.insertedId }
     });
   } catch (err) {
-    if (err && err.statusCode === 400) {
-      return res.status(400).json({ error: err.message });
-    }
-    console.error("Save order error:", err);
-    res.status(500).json({ error: "Failed to save order" });
+    return sendSafeError(res, req, err, { fallbackMessage: "فشل حفظ الطلب، يرجى المحاولة مرة أخرى" });
   }
 });
 
@@ -6091,11 +6256,7 @@ app.post("/api/shop2/orders", checkMongoDB, publicOrderLimiter, async (req, res)
       order: { ...orderDoc, _id: result.insertedId }
     });
   } catch (err) {
-    if (err && err.statusCode === 400) {
-      return res.status(400).json({ error: err.message });
-    }
-    console.error("Save shop2 order error:", err);
-    res.status(500).json({ error: "Failed to save order" });
+    return sendSafeError(res, req, err, { fallbackMessage: "فشل حفظ الطلب، يرجى المحاولة مرة أخرى" });
   }
 });
 
@@ -6188,11 +6349,9 @@ app.post("/api/admin/marketing-carousel", checkMongoDB, requireAdmin, upload.sin
     return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}` });
   }
   
-  const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
   let img = "/res/logo.jpg";
   if (req.file) {
-    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-    img = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+    img = buildUploadedImageUrl(req.file.key);
   }
   
   try {
@@ -6240,9 +6399,7 @@ app.put("/api/admin/marketing-carousel/:id", checkMongoDB, requireAdmin, upload.
     };
 
     if (req.file) {
-      const cloudfrontDomain = process.env.AWS_CLOUDFRONT_DOMAIN;
-      const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
-      updateFields.image = cloudfrontDomain ? `https://${cloudfrontDomain}/${req.file.key}` : s3Url;
+      updateFields.image = buildUploadedImageUrl(req.file.key);
     }
 
     await carouselCollection.updateOne(
@@ -7280,12 +7437,6 @@ app.delete("/api/admin/employees/transactions/:id", checkMongoDB, checkAdmin, as
   }
 });
 
-// ============ ERROR HANDLER ============
-app.use((err, req, res, next) => {
-  console.error("Server error:", err);
-  res.status(500).json({ error: "Internal server error" });
-});
-
 // ============ CHEF MANAGEMENT & PRODUCTION REPORT ============
 
 // Get all chefs for active shop
@@ -7978,9 +8129,28 @@ app.post("/api/admin/reset/orders", checkMongoDB, requireGlobalAdmin, async (req
 });
 
 // ============ CONNECT TO MONGODB ============
+let mongoClient = null;
+let mongoRetryTimer = null;
+let mongoConnectAttempts = 0;
+let isShuttingDown = false;
+
 const connectWithRetry = async () => {
+  if (isShuttingDown) return;
   try {
-    const client = await MongoClient.connect(MONGO_URI);
+    const client = await MongoClient.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 20,
+    });
+    if (isShuttingDown) {
+      await client.close().catch((closeErr) => {
+        console.warn("[SHUTDOWN] Failed closing late MongoClient:", closeErr?.message);
+      });
+      return;
+    }
+    mongoClient = client;
+    mongoConnectAttempts = 0;
     console.log("✓ MongoDB connected successfully");
     db = client.db("emenu");
     db2 = client.db("emenu2");
@@ -8008,7 +8178,12 @@ const connectWithRetry = async () => {
     stockReservationsCollection = db2.collection("stock_reservations");
     mongoConnected = true;
     
-    const safeIndex = (coll, spec, opts) => coll.createIndex(spec, opts).catch(() => {});
+    const safeIndex = (coll, spec, opts) => {
+      const collName = coll?.collectionName || "unknown";
+      return coll.createIndex(spec, opts).catch((err) => {
+        console.warn(`[DB INDEX WARN] collection=${collName} spec=${JSON.stringify(spec)}:`, err?.message || err);
+      });
+    };
 
     // Product, category & tag indexes (compound category+subCategory covers single-field category queries)
     safeIndex(productsCollection, { category: 1, subCategory: 1 });
@@ -8156,20 +8331,20 @@ const connectWithRetry = async () => {
       console.warn("Default employee jobs seed warning:", jobErr.message);
     }
 
-    // Seed default admin user with PBKDF2 passwordHash if empty, and migrate any legacy plaintext passwords
+    // Seed default admin user with scrypt passwordHash if empty, and migrate any legacy plaintext passwords
     const userCount = await adminUsersCollection.countDocuments();
     if (userCount === 0) {
       console.log("Initializing default admin user...");
       await adminUsersCollection.insertOne({
         name: "المدير العام",
         username: ADMIN_USER,
-        passwordHash: hashCustomerPassword(ADMIN_PASS),
+        passwordHash: await hashPasswordAsync(ADMIN_PASS),
         role: "admin",
         shopAccess: "all",
         tokenVersion: 1,
         createdAt: new Date()
       });
-      console.log("✓ Default admin user initialized (PBKDF2 hashed)");
+      console.log("✓ Default admin user initialized (scrypt hashed)");
     } else {
       const legacyUsers = await adminUsersCollection.find({
         $or: [
@@ -8182,7 +8357,7 @@ const connectWithRetry = async () => {
           tokenVersion: Number.isInteger(lu.tokenVersion) && lu.tokenVersion > 0 ? lu.tokenVersion : 1
         };
         if (!lu.passwordHash && lu.password) {
-          setOps.passwordHash = hashCustomerPassword(String(lu.password).trim());
+          setOps.passwordHash = await hashPasswordAsync(String(lu.password).trim());
         }
         await adminUsersCollection.updateOne(
           { _id: lu._id },
@@ -8194,7 +8369,7 @@ const connectWithRetry = async () => {
       }
       if (legacyUsers.length > 0) {
         invalidateStaffSessionCache();
-        console.log(`✓ Migrated ${legacyUsers.length} staff account(s) to PBKDF2 + tokenVersion`);
+        console.log(`✓ Migrated ${legacyUsers.length} staff account(s) to scrypt + tokenVersion`);
       }
     }
 
@@ -8238,9 +8413,21 @@ const connectWithRetry = async () => {
       console.warn("Initial cancelled orders cleanup warning:", cleanErr.message);
     }
   } catch (err) {
-    console.error('✗ MongoDB connection failed:', err.message, '- Retrying in 5s...');
     mongoConnected = false;
-    setTimeout(connectWithRetry, 5000);
+    if (isShuttingDown) return;
+    mongoConnectAttempts += 1;
+    const expDelayMs = Math.min(60000, 2000 * Math.pow(2, Math.min(mongoConnectAttempts - 1, 5)));
+    const jitterMs = Math.floor(Math.random() * Math.min(3000, expDelayMs * 0.25));
+    const retryDelayMs = expDelayMs + jitterMs;
+    console.error(
+      `✗ MongoDB connection failed (attempt ${mongoConnectAttempts}):`,
+      err.message,
+      `- Retrying in ${retryDelayMs}ms...`
+    );
+    mongoRetryTimer = setTimeout(connectWithRetry, retryDelayMs);
+    if (typeof mongoRetryTimer.unref === "function") {
+      mongoRetryTimer.unref();
+    }
   }
 };
 
@@ -8347,7 +8534,7 @@ const cleanupExpiredCancelledOrders = async () => {
     };
   } catch (cleanErr) {
     console.error("✗ [Auto-Cleanup] Error during cancelled orders cleanup:", cleanErr);
-    return { success: false, error: cleanErr.message };
+    return { success: false, error: "فشل في تنظيف الطلبات الملغاة" };
   }
 };
 
@@ -8360,23 +8547,85 @@ app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, requireGlobalAdmin
   res.json(result);
 });
 
-// Process Crash Protection & Logging
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[UNHANDLED REJECTION]', reason);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('[UNCAUGHT EXCEPTION]', err);
-});
+// Final Express Error Handler Middleware (must be mounted after all routes)
+app.use(errorHandlerMiddleware);
 
 connectWithRetry();
 
 // Schedule periodic cleanup of cancelled orders every 30 minutes
-setInterval(cleanupExpiredCancelledOrders, 30 * 60 * 1000).unref();
+trackInterval(setInterval(cleanupExpiredCancelledOrders, 30 * 60 * 1000));
 
 // Schedule periodic inventory reconciliation sweep every 6 hours
-setInterval(reconcileInventoryStock, 6 * 60 * 60 * 1000).unref();
+trackInterval(setInterval(reconcileInventoryStock, 6 * 60 * 60 * 1000));
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
 });
+
+let shutdownPromise = null;
+const gracefulShutdown = (signal, exitCode = 0) => {
+  if (shutdownPromise) return shutdownPromise;
+  isShuttingDown = true;
+  mongoConnected = false;
+  console.log(`[SHUTDOWN] Received ${signal}; closing server and connections...`);
+
+  if (mongoRetryTimer) {
+    clearTimeout(mongoRetryTimer);
+    mongoRetryTimer = null;
+  }
+
+  for (const handle of activeIntervals) {
+    clearInterval(handle);
+  }
+  activeIntervals.length = 0;
+
+  const forceExitTimer = setTimeout(() => {
+    console.error("[SHUTDOWN] Forced exit after 10s shutdown timeout");
+    process.exit(exitCode || 1);
+  }, 10000);
+  if (typeof forceExitTimer.unref === "function") {
+    forceExitTimer.unref();
+  }
+
+  shutdownPromise = (async () => {
+    try {
+      await new Promise((resolve) => {
+        if (!httpServer) return resolve();
+        httpServer.close((closeErr) => {
+          if (closeErr) {
+            console.error("[SHUTDOWN] HTTP server close error:", closeErr.message);
+          }
+          resolve();
+        });
+        if (typeof httpServer.closeIdleConnections === "function") {
+          httpServer.closeIdleConnections();
+        }
+      });
+
+      if (mongoClient) {
+        await mongoClient.close().catch((mongoCloseErr) => {
+          console.error("[SHUTDOWN] MongoClient close error:", mongoCloseErr?.message);
+        });
+        mongoClient = null;
+      }
+    } finally {
+      clearTimeout(forceExitTimer);
+      process.exit(exitCode);
+    }
+  })();
+
+  return shutdownPromise;
+};
+
+// Process Crash Protection & Lifecycle Signals
+process.on("unhandledRejection", (reason) => {
+  console.error("[UNHANDLED REJECTION]", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[FATAL UNCAUGHT EXCEPTION]", err);
+  gracefulShutdown("uncaughtException", 1);
+});
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM", 0));
+process.on("SIGINT", () => gracefulShutdown("SIGINT", 0));
