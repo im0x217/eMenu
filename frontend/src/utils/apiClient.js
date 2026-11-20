@@ -143,8 +143,8 @@ export async function parseApiError(res, fallbackMessage = DEFAULT_API_ERROR_MES
   }
 
   if (payload && typeof payload === 'object') {
-    const candidate = payload.message ?? payload.error;
-    const safeCandidate = sanitizeUserMessage(candidate);
+    const candidate = payload.message || payload.error;
+    const safeCandidate = sanitizeUserMessage(candidate) || sanitizeUserMessage(payload.error);
     if (safeCandidate && status < 500) {
       return safeCandidate;
     }
