@@ -3937,7 +3937,7 @@
       <div class="debt-kpi-grid">
         <div class="debt-kpi-card">
           <span class="debt-kpi-label">إجمالي القطع المباعة</span>
-          <span class="debt-kpi-val text-mono text-primary">{{ productionReportData.grandTotalQty || 0 }}</span>
+          <span class="debt-kpi-val text-mono text-primary">{{ formatQty(productionReportData.grandTotalQty) }}</span>
         </div>
         <div class="debt-kpi-card highlight-green">
           <span class="debt-kpi-label">إجمالي الإيرادات</span>
@@ -3964,7 +3964,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
             <span>الشيف: {{ cReport.chefName }}</span>
           </h3>
-          <span class="text-mono font-bold chef-print-stats" style="font-size: 9pt;">إجمالي القطع: {{ cReport.totalQty }} | الإيراد: {{ formatCurrency(cReport.totalRevenue) }} | التكلفة: {{ formatCurrency(cReport.totalCost) }}</span>
+          <span class="text-mono font-bold chef-print-stats" style="font-size: 9pt;">إجمالي القطع: {{ formatQty(cReport.totalQty) }} | الإيراد: {{ formatCurrency(cReport.totalRevenue) }} | التكلفة: {{ formatCurrency(cReport.totalCost) }}</span>
         </div>
 
         <table class="debt-report-table">
@@ -3981,7 +3981,7 @@
             <tr v-for="(p, pIdx) in cReport.products" :key="p.name">
               <td class="text-center text-mono text-muted">{{ pIdx + 1 }}</td>
               <td class="font-bold">{{ p.name }}</td>
-              <td class="text-mono text-bold">{{ p.qty }}</td>
+              <td class="text-mono text-bold">{{ formatQty(p.qty) }}</td>
               <td class="text-mono text-danger">{{ formatCurrency(p.cost) }}</td>
               <td class="text-mono text-success text-bold">{{ formatCurrency(p.revenue) }}</td>
             </tr>
@@ -4010,7 +4010,7 @@
             <tr v-for="(u, uIdx) in productionReportData.unassigned" :key="u.name">
               <td class="text-center text-mono text-muted">{{ uIdx + 1 }}</td>
               <td class="font-bold">{{ u.name }}</td>
-              <td class="text-mono text-bold">{{ u.qty }}</td>
+              <td class="text-mono text-bold">{{ formatQty(u.qty) }}</td>
               <td class="text-mono text-success text-bold">{{ formatCurrency(u.revenue) }}</td>
             </tr>
           </tbody>
@@ -4425,7 +4425,7 @@
           <div class="recon-cat-header">
             <span class="recon-cat-title">{{ mainCat.name }}</span>
             <span class="recon-cat-stats">
-              (إجمالي القطع: <strong class="recon-mono">{{ mainCat.totalQty }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>)
+              (إجمالي القطع: <strong class="recon-mono">{{ formatQty(mainCat.totalQty) }}</strong> | الإيراد: <strong class="recon-mono">{{ mainCat.totalRevenueFormatted }}</strong>)
             </span>
           </div>
 
@@ -4447,7 +4447,7 @@
               <tbody>
                 <tr v-for="prod in subCat.products" :key="prod.name">
                   <td style="width: 36%; text-align: right;" class="recon-bold recon-prod-name-cell">{{ prod.name }}</td>
-                  <td style="width: 14%; text-align: center;" class="recon-mono recon-bold">{{ prod.quantity }}</td>
+                  <td style="width: 14%; text-align: center;" class="recon-mono recon-bold">{{ formatQty(prod.quantity) }}</td>
                   <td style="width: 22%; text-align: center;" class="recon-mono">{{ prod.unitPriceFormatted }}</td>
                   <td style="width: 28%; text-align: left;" class="recon-mono recon-bold">{{ prod.totalRevenueFormatted }}</td>
                 </tr>
@@ -4455,7 +4455,7 @@
               <tfoot v-if="mainCat.subCategories.length > 1 && subCat.products.length > 1">
                 <tr class="recon-subtotal-row">
                   <td style="width: 36%; text-align: right;" class="recon-prod-name-cell">مجموع فرعي ({{ subCat.name }})</td>
-                  <td style="width: 14%; text-align: center;" class="recon-mono recon-bold">{{ subCat.totalQty }}</td>
+                  <td style="width: 14%; text-align: center;" class="recon-mono recon-bold">{{ formatQty(subCat.totalQty) }}</td>
                   <td style="width: 22%; text-align: center;" class="recon-mono">—</td>
                   <td style="width: 28%; text-align: left;" class="recon-mono recon-bold">{{ subCat.totalRevenueFormatted }}</td>
                 </tr>
@@ -4653,7 +4653,7 @@
           </div>
           <div class="kpi-text-wrap">
             <span class="kpi-lbl">إجمالي الكمية المطلوبة</span>
-            <strong class="kpi-val text-mono">{{ productCustomersData.totalQty }} قطعة</strong>
+            <strong class="kpi-val text-mono">{{ formatQty(productCustomersData.totalQty) }} قطعة</strong>
           </div>
         </div>
 
@@ -4802,7 +4802,7 @@
 
               <div class="cust-qty-summary-side">
                 <span class="cust-qty-badge text-mono font-bold">
-                  {{ cust.totalQty }} قطعة
+                  {{ formatQty(cust.totalQty) }} قطعة
                 </span>
                 <span class="cust-total-sales text-mono text-small text-muted mt-1">
                   {{ formatCurrency(cust.totalAmount) }}
@@ -4890,7 +4890,7 @@
       <!-- Modal Footer -->
       <div class="modal-footer pt-4 mt-4 border-top d-flex justify-content-between align-items-center">
         <span class="text-muted text-small">
-          إجمالي المسجل: <strong class="text-mono text-dark">{{ productCustomersData.totalQty }} قطعة</strong> في <strong class="text-mono text-dark">{{ productCustomersData.ordersCount }} طلب</strong>
+          إجمالي المسجل: <strong class="text-mono text-dark">{{ formatQty(productCustomersData.totalQty) }} قطعة</strong> في <strong class="text-mono text-dark">{{ productCustomersData.ordersCount }} طلب</strong>
         </span>
         <button 
           type="button" 
@@ -7087,6 +7087,11 @@ export default {
       return formatTotal(val);
     };
 
+    const formatQty = (val) => {
+      const num = Math.round((Number(val) || 0) * 100) / 100;
+      return num.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 2 });
+    };
+
     const clearClientAuthSession = () => {
       isAuthenticated.value = false;
       localStorage.removeItem('admin_token');
@@ -8338,20 +8343,20 @@ export default {
         .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
         .map(c => ({
           name: c.name,
-          totalQty: c.totalQty,
+          totalQty: Math.round(c.totalQty * 100) / 100,
           totalRevenueFormatted: formatCurrency(c.totalRevenue),
           subCategories: Object.values(c.subCats)
             .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
             .map(sub => ({
               name: sub.name,
-              totalQty: sub.totalQty,
+              totalQty: Math.round(sub.totalQty * 100) / 100,
               totalRevenueFormatted: formatCurrency(sub.totalRevenue),
               products: Object.values(sub.products)
                 .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar', { sensitivity: 'base' }))
                 .map(p => ({
                   name: p.name,
                   unitPriceFormatted: formatPrice(p.unitPrice),
-                  quantity: p.quantity,
+                  quantity: Math.round(p.quantity * 100) / 100,
                   totalRevenueFormatted: formatCurrency(p.totalRevenue)
                 }))
             }))
@@ -11282,6 +11287,7 @@ const closeSuggestionsWithDelay = () => {
       saveTagAssignments,
 
       formatCurrency,
+      formatQty,
       formatTotal,
       formatPrice,
       handleSearchEnter,

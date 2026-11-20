@@ -6615,25 +6615,45 @@ app.get("/api/admin/production/report", checkMongoDB, checkStaff, async (req, re
       }
     }
     
-    // Convert to arrays for response
+    // Convert to arrays for response with clean 2-decimal IEEE-754 rounding
     const chefReport = Object.values(chefAgg).map(c => ({
       ...c,
-      products: Object.values(c.products).sort((a, b) => b.qty - a.qty)
+      totalQty: round2(c.totalQty),
+      totalRevenue: round2(c.totalRevenue),
+      totalCost: round2(c.totalCost),
+      products: Object.values(c.products)
+        .map(p => ({
+          ...p,
+          qty: round2(p.qty),
+          revenue: round2(p.revenue),
+          cost: round2(p.cost)
+        }))
+        .sort((a, b) => b.qty - a.qty)
     })).sort((a, b) => b.totalRevenue - a.totalRevenue);
-    
-    const unassigned = Object.values(unassignedProducts).sort((a, b) => b.qty - a.qty);
-    
-    const grandTotalQty = chefReport.reduce((s, c) => s + c.totalQty, 0) + unassigned.reduce((s, p) => s + p.qty, 0);
-    const grandTotalRevenue = chefReport.reduce((s, c) => s + c.totalRevenue, 0) + unassigned.reduce((s, p) => s + p.revenue, 0);
-    const grandTotalCost = chefReport.reduce((s, c) => s + c.totalCost, 0);
-    
+
+    const unassigned = Object.values(unassignedProducts)
+      .map(p => ({
+        ...p,
+        qty: round2(p.qty),
+        revenue: round2(p.revenue)
+      }))
+      .sort((a, b) => b.qty - a.qty);
+
+    const grandTotalQty = round2(
+      chefReport.reduce((s, c) => s + c.totalQty, 0) + unassigned.reduce((s, p) => s + p.qty, 0)
+    );
+    const grandTotalRevenue = round2(
+      chefReport.reduce((s, c) => s + c.totalRevenue, 0) + unassigned.reduce((s, p) => s + p.revenue, 0)
+    );
+    const grandTotalCost = round2(chefReport.reduce((s, c) => s + c.totalCost, 0));
+
     res.json({
       chefReport,
       unassigned,
       totalOrders: orders.length,
       grandTotalQty,
-      grandTotalRevenue: Math.round(grandTotalRevenue * 100) / 100,
-      grandTotalCost: Math.round(grandTotalCost * 100) / 100
+      grandTotalRevenue,
+      grandTotalCost
     });
   } catch (err) {
     console.error("Production report error:", err);

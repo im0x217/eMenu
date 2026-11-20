@@ -393,7 +393,7 @@
               </div>
               <div class="kpi-box-content">
                 <span class="kpi-box-title">إجمالي القطع المباعة</span>
-                <span class="kpi-box-number text-mono text-primary">{{ reportData.grandTotalQty || 0 }}</span>
+                <span class="kpi-box-number text-mono text-primary">{{ formatQty(reportData.grandTotalQty) }}</span>
               </div>
             </div>
 
@@ -443,7 +443,7 @@
                 <div class="chef-header-pills">
                   <div class="header-stat-tag">
                     <span class="lbl">القطع:</span>
-                    <strong class="val text-mono">{{ cReport.totalQty }}</strong>
+                    <strong class="val text-mono">{{ formatQty(cReport.totalQty) }}</strong>
                   </div>
                   <div class="header-stat-tag">
                     <span class="lbl">المبيعات:</span>
@@ -486,7 +486,7 @@
                         <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                       </td>
                       <td><span class="category-pill">{{ p.category || '-' }}</span></td>
-                      <td class="text-mono text-bold">{{ p.qty }}</td>
+                      <td class="text-mono text-bold">{{ formatQty(p.qty) }}</td>
                       <td class="text-mono text-danger">{{ formatCurrency(p.cost) }}</td>
                       <td class="text-mono text-success text-bold">{{ formatCurrency(p.revenue) }}</td>
                       <td class="text-mono text-primary text-bold">{{ formatCurrency(Math.max(0, p.revenue - p.cost)) }}</td>
@@ -507,7 +507,7 @@
                         <span class="font-bold">{{ p.name }}</span>
                         <span class="category-pill">{{ p.category || '-' }}</span>
                       </div>
-                      <span class="mob-qty-badge text-mono">{{ p.qty }} مبيع</span>
+                      <span class="mob-qty-badge text-mono">{{ formatQty(p.qty) }} مبيع</span>
                     </div>
                     <div class="mob-prod-rep-metrics">
                       <div class="mob-metric-item">
@@ -566,7 +566,7 @@
                       <span class="product-name-text">{{ u.name }}</span>
                       <svg class="row-hover-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     </td>
-                    <td class="text-mono text-bold">{{ u.qty }}</td>
+                    <td class="text-mono text-bold">{{ formatQty(u.qty) }}</td>
                     <td class="text-mono text-success text-bold">{{ formatCurrency(u.revenue) }}</td>
                   </tr>
                 </tbody>
@@ -585,7 +585,7 @@
                       <span class="font-bold">{{ u.name }}</span>
                       <span class="badge badge-warning text-small">غير مخصص لشيف</span>
                     </div>
-                    <span class="mob-qty-badge text-mono">{{ u.qty }} مبيع</span>
+                    <span class="mob-qty-badge text-mono">{{ formatQty(u.qty) }} مبيع</span>
                   </div>
                   <div class="mob-prod-rep-metrics">
                     <div class="mob-metric-item highlight">
@@ -660,6 +660,10 @@ export default {
   ],
   setup(props, { emit }) {
     const getTodayStr = () => new Date().toLocaleDateString('en-CA');
+    const formatQty = (val) => {
+      const num = Math.round((Number(val) || 0) * 100) / 100;
+      return num.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 2 });
+    };
 
     const prodFromYear = ref(new Date().getFullYear());
     const prodFromMonth = ref(new Date().getMonth());
@@ -779,6 +783,7 @@ export default {
       formatLibyanPhone,
       getLibyanWhatsAppUrl,
       getTodayStr,
+      formatQty,
       switchToReportTab,
       onChefFilterChange,
       getChefAssignedProducts,
