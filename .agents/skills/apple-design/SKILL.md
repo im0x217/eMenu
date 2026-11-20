@@ -1,6 +1,6 @@
 ---
 name: apple-design
-description: Apple's approach to interface design and fluid, physical motion, translated for the web. Use when building or reviewing gesture-driven UI, spring animations, drag/swipe/sheet interactions, momentum and interruptible transitions, translucent materials and depth, typography (optical sizing, tracking, leading), reduced-motion, or the design foundations (feedback, spatial consistency, restraint) behind Apple-style interfaces.
+description: Applies Apple's interface design and fluid, physical motion principles to web interfaces. Use when building or reviewing gesture-driven UI, spring animations, drag/swipe/sheet interactions, momentum and interruptible transitions, translucent materials and depth, typography (optical sizing, tracking, leading), reduced-motion, or the design foundations (feedback, spatial consistency, restraint) behind Apple-style interfaces.
 ---
 
 # Apple Design
@@ -280,3 +280,12 @@ Tactical rules that serve these:
 | Translucent chrome | `backdrop-filter` layer | content scrolls under |
 | Type tracking | Size-specific, never fixed | tighten large text (`-0.02em`), body near `0` |
 | Reduced motion | Cross-fade, not slide/spring | `@media (prefers-reduced-motion)` |
+
+## e-Menu Vue Integration Checklist
+
+Verify against e-Menu's actual motion utilities when adding or modifying sheets, modals, or product transitions:
+
+- [ ] **Bottom-sheet drag (`frontend/src/utils/sheetGesture.js`):** Bind `v-sheet-gesture` (`vSheetGesture`) or `bindSheetGesture(sheetEl, onDismiss)` instead of writing custom touch handlers; verify `DRAG_HYSTERESIS_PX` (`6px`), trailing `VELOCITY_WINDOW_MS` (`80ms`), upward `rubberband`, exponential `project()` dismissal, and desktop mouse guard (`window.innerWidth <= 768` for mouse pointers) remain intact.
+- [ ] **Interruptible GSAP handoff (`frontend/src/utils/sheetGesture.js`):** Call `gsap.killTweensOf` and read live `gsap.getProperty(sheetEl, 'y')` on grab so interrupted sheets resume from presentation value with zero jump; never suppress input inside interactive controls (`input`, `textarea`, `button`, `select`, `label`, dropzones) or scrolled inner containers.
+- [ ] **Shared-element morph (`frontend/src/utils/viewTransition.js`):** Use `createQuickViewMorph()` / `runProductMorph()` (`PRODUCT_HERO_VT_NAME = 'product-hero'`) with CSS curves in `frontend/src/styles/premium.css` (`420ms cubic-bezier(0.32, 0.72, 0, 1)`). Keep guards: decoded image check (`imageReady`), `isMorphableElement(el)`, `activeTransition.skipTransition()` interruption, and skipping close morph when `payload.via === 'gesture'`.
+- [ ] **Reduced-motion & transparency accessibility:** Honor `prefers-reduced-motion: reduce`, `prefers-reduced-transparency: reduce`, and `prefers-contrast: more` in `frontend/src/styles/premium.css` and `frontend/src/style.css`, plus JS guards (`prefersReducedMotion()` in `viewTransition.js`, `flyToCart.js`, `BottomCartBar.vue`, `ShopView.vue`, `CartView.vue`, `AdminView.vue`). Note: `:where(:lang(ar))` headings intentionally keep `letter-spacing: normal` so connected Arabic glyphs never break.
