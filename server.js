@@ -12,6 +12,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 
 const { validateRuntimeConfig } = require("./src/config/env");
+const logger = require("./src/infra/logger");
 const {
   AppError,
   ValidationError,
@@ -27,12 +28,33 @@ const {
   CircuitBreaker,
 } = require("./src/infra/resilience");
 const {
+  withOptionalTransaction,
+  createIdempotencyGuard,
+} = require("./src/infra/transactions");
+const {
+  convertArabicDigits,
+  formatCanonicalLibyanPhone,
+  getLibyanPhoneVariants,
+  normalizeArabicUsername,
+  normalizeArabicText,
+} = require("./src/domain/phone");
+const {
+  round2,
+  parsePiecesPerUnit,
+  resolveEffectiveUnitPrice,
+  normalizeOrderQuantity,
+} = require("./src/domain/pricing");
+const { createRateLimiter } = require("./src/middleware/rateLimit");
+const { registerDebugRoutes } = require("./src/domains/debug/routes");
+const {
+  registerEmployeeRoutes,
+  resolveBoundedLimit,
+} = require("./src/domains/employees/routes");
+const {
   STAFF_SESSION_TTL_MS,
   MAX_IMAGE_UPLOAD_BYTES,
   safeCompareStrings: safeCompareStringsWithSecret,
   safeCompareHex,
-  normalizeArabicUsername,
-  convertArabicDigits,
   hashPasswordAsync,
   verifyPasswordAsync,
   isLegacyPasswordHash,
@@ -58,6 +80,8 @@ const trackInterval = (handle) => {
   return handle;
 };
 
+const idempotencyGuard = createIdempotencyGuard();
+
 const safeCompareStrings = (a, b) =>
   safeCompareStringsWithSecret(a, b, ADMIN_SESSION_SECRET);
 
@@ -79,110 +103,64 @@ const verifyCustomerToken = (token, expectedPhone) =>
     ttlDays: config.customerTokenTtlDays,
   });
 
-// Canonical unified Libyan phone display structure: 09x-xxxxxxx
-const formatCanonicalLibyanPhone = (phone) => {
-  if (!phone) return '';
-  const converted = convertArabicDigits(phone).trim();
-  let digits = converted.replace(/[^0-9]/g, '');
-  if (!digits) return converted;
-
-  if (digits.startsWith('00218')) digits = digits.slice(5);
-  else if (digits.startsWith('218')) digits = digits.slice(3);
-
-  if (digits.startsWith('9') && digits.length === 9) {
-    digits = '0' + digits;
-  }
-
-  if (digits.startsWith('09') && digits.length >= 4) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 10)}`;
-  }
-  return converted;
-};
-
-// Generate all possible database variants for a given phone number (for backwards compatibility & flexible search)
-const getLibyanPhoneVariants = (phone) => {
-  if (!phone) return [];
-  const raw = phone.toString().trim();
-  const converted = convertArabicDigits(raw).trim();
-  const digits = converted.replace(/[^0-9]/g, '');
-  const variants = new Set();
-  
-  if (raw) variants.add(raw);
-  if (converted) variants.add(converted);
-  if (digits) variants.add(digits);
-
-  let d = digits;
-  if (d.startsWith('00218')) d = d.slice(5);
-  else if (d.startsWith('218')) d = d.slice(3);
-  if (d.startsWith('9') && d.length === 9) d = '0' + d;
-
-  if (d.startsWith('09') && d.length === 10) {
-    const formatted = `${d.slice(0, 3)}-${d.slice(3)}`; // 09x-xxxxxxx
-    const plain10 = d;                                   // 09xxxxxxxx
-    const plain9 = d.slice(1);                          // 9xxxxxxxx
-    const intl218 = '218' + plain9;                     // 2189xxxxxxxx
-    const intlPlus = '+218' + plain9;                   // +2189xxxxxxxx
-    const intl00 = '00218' + plain9;                    // 002189xxxxxxxx
-    
-    variants.add(formatted);
-    variants.add(plain10);
-    variants.add(plain9);
-    variants.add(intl218);
-    variants.add(intlPlus);
-    variants.add(intl00);
-  } else if (d.length >= 7) {
-    variants.add(d);
-    if (d.startsWith('09') && d.length >= 4) {
-      variants.add(`${d.slice(0, 3)}-${d.slice(3)}`);
-    }
-  }
-
-  return [...variants].filter(Boolean);
-};
-
-const cascadePhoneUpdateAcrossCollections = async (variants, canonicalPhone, contextLabel = 'phone-cascade') => {
+const cascadePhoneUpdateAcrossCollections = async (
+  variants,
+  canonicalPhone,
+  contextLabel = 'phone-cascade',
+  session = null
+) => {
   if (!Array.isArray(variants) || variants.length === 0 || !canonicalPhone) return;
+  const opts = session ? { session } : {};
   const operations = [
     {
       collection: 'favorites',
       op: 'updateMany',
-      run: () => favoritesCollection.updateMany({ phone: { $in: variants } }, { $set: { phone: canonicalPhone } }),
+      run: () => favoritesCollection.updateMany({ phone: { $in: variants } }, { $set: { phone: canonicalPhone } }, opts),
     },
     {
       collection: 'shop1.orders',
       op: 'updateMany',
-      run: () => ordersCollection.updateMany({ "customerInfo.phone": { $in: variants } }, { $set: { "customerInfo.phone": canonicalPhone } }),
+      run: () => ordersCollection.updateMany({ "customerInfo.phone": { $in: variants } }, { $set: { "customerInfo.phone": canonicalPhone } }, opts),
     },
     {
       collection: 'shop2.orders',
       op: 'updateMany',
-      run: () => ordersCollection2.updateMany({ "customerInfo.phone": { $in: variants } }, { $set: { "customerInfo.phone": canonicalPhone } }),
+      run: () => ordersCollection2.updateMany({ "customerInfo.phone": { $in: variants } }, { $set: { "customerInfo.phone": canonicalPhone } }, opts),
     },
     {
       collection: 'payments',
       op: 'updateMany',
-      run: () => paymentsCollection.updateMany({ customerPhone: { $in: variants } }, { $set: { customerPhone: canonicalPhone } }),
+      run: () => paymentsCollection.updateMany({ customerPhone: { $in: variants } }, { $set: { customerPhone: canonicalPhone } }, opts),
     },
   ];
+  if (session) {
+    for (const item of operations) {
+      await item.run();
+    }
+    return;
+  }
   const results = await Promise.allSettled(operations.map((item) => item.run()));
   results.forEach((result, idx) => {
     if (result.status === 'rejected') {
       const meta = operations[idx];
-      console.warn(
-        `[PHONE CASCADE WARN] context=${contextLabel} collection=${meta.collection} op=${meta.op}:`,
-        result.reason?.message || result.reason
-      );
+      logger.warn('[PHONE CASCADE WARN]', {
+        context: contextLabel,
+        collection: meta.collection,
+        op: meta.op,
+        reason: result.reason?.message || String(result.reason),
+      });
     }
   });
 };
 
 // Helper to look up customer by phone with flexible Libyan formatting (any representation)
-const findCustomerByPhone = async (phone) => {
+const findCustomerByPhone = async (phone, session = null) => {
   if (!phone) return null;
   const uniqueVariants = getLibyanPhoneVariants(phone);
   if (uniqueVariants.length === 0) return null;
 
-  const matches = await customersCollection.find({ phone: { $in: uniqueVariants } }).toArray();
+  const opts = session ? { session } : {};
+  const matches = await customersCollection.find({ phone: { $in: uniqueVariants } }, opts).toArray();
   if (matches.length === 0) return null;
   if (matches.length === 1) return matches[0];
 
@@ -217,13 +195,14 @@ const findCustomerByPhone = async (phone) => {
         ...(combinedPasswordHash ? { passwordHash: combinedPasswordHash } : {}),
         lastActive: new Date()
       } 
-    }
+    },
+    opts
   );
 
   if (duplicateIds.length > 0) {
-    await customersCollection.deleteMany({ _id: { $in: duplicateIds } });
+    await customersCollection.deleteMany({ _id: { $in: duplicateIds } }, opts);
   }
-  await cascadePhoneUpdateAcrossCollections(uniqueVariants, canonicalPhone, 'findCustomerByPhone');
+  await cascadePhoneUpdateAcrossCollections(uniqueVariants, canonicalPhone, 'findCustomerByPhone', session);
 
   primary.name = combinedName;
   primary.phone = canonicalPhone;
@@ -347,13 +326,6 @@ const parsePrice = (val, allowFloat) => {
   if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") return null;
   const parsed = allowFloat ? parseFloat(val) : parseInt(val, 10);
   return isNaN(parsed) ? null : parsed;
-};
-
-const parsePiecesPerUnit = (val) => {
-  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined" || val === "none") return null;
-  const parsed = Number(val);
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return Math.round(parsed * 100) / 100;
 };
 
 // Get display image (with fallback for missing or old images)
@@ -503,7 +475,7 @@ app.use(express.static(path.join(__dirname, "public"), {
   }
 }));
 
-console.log("[INIT] Registering API routes...");
+logger.info("[INIT] Registering API routes...");
 
 // ============ STATE ============
 let db, productsCollection, categoriesCollection, tagsCollection;
@@ -536,21 +508,6 @@ const invalidateAnalyticsCache = (targetShop = null) => {
 const POCKETBASE_URL = config.pocketbaseUrl;
 const pbCircuitBreaker = new CircuitBreaker({ failureThreshold: 5, cooldownMs: 30000 });
 const IDEMPOTENT_PB_METHODS = new Set(['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS']);
-
-// Arabic string normalizer for intelligent matching (removes tashkeel, tatweel, normalizes alifs/ta-marbuta/etc.)
-const normalizeArabicText = (text) => {
-  if (!text) return '';
-  return text
-    .toString()
-    .toLowerCase()
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '') // remove tashkeel & tatweel
-    .replace(/[أإآٱ]/g, 'ا') // normalize alifs
-    .replace(/ة/g, 'ه')     // normalize ta marbuta
-    .replace(/ى/g, 'ي')     // normalize alif maqsura
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ') // remove symbols/emojis/punctuation
-    .replace(/\s+/g, ' ')   // collapse spaces
-    .trim();
-};
 
 // Resilient fetch wrapper for PocketBase REST API (circuit breaker + transient retry + 8s timeout)
 const pbFetch = async (apiPath, options = {}) => {
@@ -1044,21 +1001,25 @@ const cascadeProductToPocketBase = async (productDoc, hasStorage) => {
 };
 
 // Helper: Atomic Sequential Order Number Generator
-const getNextOrderNumber = async () => {
+const getNextOrderNumber = async (session = null) => {
+  const opts = { upsert: true, returnDocument: "after" };
+  if (session) opts.session = session;
   const result = await countersCollection.findOneAndUpdate(
     { _id: "orderNumber" },
     { $inc: { seq: 1 } },
-    { upsert: true, returnDocument: "after" }
+    opts
   );
   return result.seq;
 };
 
 // Helper: Atomic Sequential Employee Transaction Receipt Number Generator
-const getNextEmpTxNumber = async () => {
+const getNextEmpTxNumber = async (session = null) => {
+  const opts = { upsert: true, returnDocument: "after" };
+  if (session) opts.session = session;
   const result = await countersCollection.findOneAndUpdate(
     { _id: "empTxNumber" },
     { $inc: { seq: 1 } },
-    { upsert: true, returnDocument: "after" }
+    opts
   );
   return 1000 + (Number(result?.seq) || 1);
 };
@@ -1410,7 +1371,7 @@ app.get("/api/ready", async (req, res) => {
       requestId: req.id
     });
   } catch (err) {
-    console.error("[READINESS CHECK FAILED]", { requestId: req.id, error: err?.message });
+    logger.error("[READINESS CHECK FAILED]", { requestId: req.id, error: err?.message });
     return res.status(503).json({
       status: "not_ready",
       ready: false,
@@ -1423,152 +1384,38 @@ app.get("/api/ready", async (req, res) => {
 });
 
 // ============ DEBUG ENDPOINTS ============
-const requireDebugRoutesEnabled = (req, res, next) => {
-  if (!config.enableDebugRoutes) {
-    return sendSafeError(
-      res,
-      req,
-      new NotFoundError("نقطة النهاية غير متاحة في بيئة التشغيل الحالية", {
-        code: "DEBUG_ROUTES_DISABLED"
-      })
-    );
-  }
-  next();
-};
-
-app.use("/api/debug", requireDebugRoutesEnabled);
-
-app.get("/api/debug/products-by-category", checkMongoDB, requireGlobalAdmin, async (req, res) => {
-  try {
-    const categories = await categoriesCollection.find({}).toArray();
-    const result = {};
-    
-    for (const cat of categories) {
-      const count = await productsCollection.countDocuments({ category: cat.name });
-      result[cat.name] = count;
-    }
-    
-    res.json({
-      shop: "shop1",
-      categories: result,
-      totalCategories: categories.length,
-      totalProducts: await productsCollection.countDocuments({})
-    });
-  } catch (err) {
-    return sendSafeError(res, req, err, { fallbackMessage: "تعذر جلب إحصائيات التصنيفات" });
-  }
-});
-
-app.get("/api/debug/purchase-types", checkMongoDB, requireGlobalAdmin, async (req, res) => {
-  try {
-    const results = await productsCollection.aggregate([
-      {
-        $group: {
-          _id: "$purchaseType",
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]).toArray();
-    
-    res.json({
-      purchaseTypeDistribution: results,
-      total: await productsCollection.countDocuments({})
-    });
-  } catch (err) {
-    return sendSafeError(res, req, err, { fallbackMessage: "تعذر جلب توزيع أنواع الشراء" });
-  }
-});
-
-app.get("/api/debug/subcategories", checkMongoDB, requireGlobalAdmin, async (req, res) => {
-  try {
-    const category = req.query.category;
-    let query = {};
-    if (category) {
-      query = { category };
-    }
-    
-    const results = await productsCollection.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: "$subCategory",
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]).toArray();
-    
-    res.json({
-      category: category || "all",
-      subCategories: results,
-      total: await productsCollection.countDocuments(query)
-    });
-  } catch (err) {
-    return sendSafeError(res, req, err, { fallbackMessage: "تعذر جلب التصنيفات الفرعية" });
-  }
+registerDebugRoutes(app, {
+  isDebugEnabled: () => Boolean(config.enableDebugRoutes),
+  getCollections: () => ({
+    categoriesCollection,
+    productsCollection,
+  }),
+  middlewares: {
+    checkMongoDB,
+    requireGlobalAdmin,
+  },
+  sendSafeError,
+  NotFoundError,
 });
 
 // ============ RATE LIMITING ============
-const createRateLimiter = (windowMs, maxRequests, options = {}) => {
-  const ipCache = new Map();
-  const customMessage = options.message || "طلبات كثيرة جداً، يرجى المحاولة مرة أخرى لاحقاً.";
-  const skipFn = typeof options.skip === 'function' ? options.skip : null;
-  
-  // Cleanup interval to prevent memory leak
-  trackInterval(setInterval(() => {
-    const now = Date.now();
-    for (const [ip, timestamps] of ipCache.entries()) {
-      const valid = timestamps.filter(t => now - t < windowMs);
-      if (valid.length === 0) {
-        ipCache.delete(ip);
-      } else {
-        ipCache.set(ip, valid);
-      }
-    }
-  }, Math.min(windowMs, 5 * 60 * 1000)));
+const buildRateLimiter = (windowMs, maxRequests, options = {}) =>
+  createRateLimiter(windowMs, maxRequests, { activeIntervals, logger, ...options });
 
-  return (req, res, next) => {
-    if (skipFn && skipFn(req)) {
-      return next();
-    }
-
-    const rawIp = req.ip || req.socket?.remoteAddress || 'unknown';
-    const now = Date.now();
-    
-    const timestamps = (ipCache.get(rawIp) || []).filter(t => now - t < windowMs);
-    timestamps.push(now);
-    ipCache.set(rawIp, timestamps);
-    
-    if (timestamps.length > maxRequests) {
-      const retryAfterSec = Math.max(1, Math.ceil(windowMs / 1000));
-      res.setHeader('Retry-After', String(retryAfterSec));
-      console.log(`[RATE LIMIT EXCEEDED] IP: ${rawIp} on ${req.method} ${req.originalUrl}`);
-      return res.status(429).json({
-        success: false,
-        error: customMessage,
-        message: customMessage,
-        retryAfterSeconds: retryAfterSec
-      });
-    }
-    next();
-  };
-};
-
-const loginLimiter = createRateLimiter(15 * 60 * 1000, 10, {
+const loginLimiter = buildRateLimiter(15 * 60 * 1000, 10, {
   message: "محاولات تسجيل دخول كثيرة جداً. يرجى الانتظار 15 دقيقة."
 });
-const customerLimiter = createRateLimiter(5 * 60 * 1000, 60);
-const bulkCodeLimiter = createRateLimiter(15 * 60 * 1000, 10, {
+const customerLimiter = buildRateLimiter(5 * 60 * 1000, 60);
+const bulkCodeLimiter = buildRateLimiter(15 * 60 * 1000, 10, {
   message: "محاولات كثيرة للتحقق من رمز الجملة. يرجى المحاولة لاحقاً."
 });
-const publicDirectoryLimiter = createRateLimiter(15 * 60 * 1000, 30);
-const publicOrderLimiter = createRateLimiter(10 * 60 * 1000, 20, {
+const publicDirectoryLimiter = buildRateLimiter(15 * 60 * 1000, 30);
+const publicOrderLimiter = buildRateLimiter(10 * 60 * 1000, 20, {
   // Never throttle authenticated in-store POS cashiers during peak rush hours
   skip: (req) => isStaffSession(req),
   message: "تم تجاوز الحد المسموح لإرسال الطلبات خلال فترة قصيرة. يرجى الانتظار قليلاً."
 });
-const telemetryLimiter = createRateLimiter(60 * 1000, 30, {
+const telemetryLimiter = buildRateLimiter(60 * 1000, 30, {
   message: "Too many telemetry batches"
 });
 
@@ -2811,7 +2658,7 @@ app.get("/api/shop2/admin-check", checkStaffShop("shop2"), (req, res) => {
 });
 
 // ============ REUSABLE TELEMETRY INSIGHTS COMPUTATION ============
-async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
+async function computeTelemetryInsights(shop, startDateObj, endDateObj, options = {}) {
   const defaultInsights = {
     success: true,
     funnel: { totalSessions: 0, cartSessions: 0, checkoutSessions: 0, orderSessions: 0, conversionRate: 0, cartConversionRate: 0, cartAbandonmentRate: 0 },
@@ -2822,6 +2669,7 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
   if (!mongoConnected || !telemetryCollection) return defaultInsights;
 
   try {
+    const topCategoriesLimit = resolveBoundedLimit(options.limit, 6, 50);
     const matchFilter = {};
     if (startDateObj && endDateObj) {
       matchFilter.timestamp = { $gte: startDateObj, $lte: endDateObj };
@@ -2840,6 +2688,8 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
             event: { $in: ["page_view", "cart_add", "checkout_step", "order_complete"] }
           }
         },
+        { $sort: { timestamp: -1 } },
+        { $limit: 50000 },
         {
           $group: {
             _id: "$sessionId",
@@ -2872,6 +2722,8 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
             "metadata.categoryName": { $exists: true, $ne: "" }
           }
         },
+        { $sort: { timestamp: -1 } },
+        { $limit: 50000 },
         {
           $group: {
             _id: "$metadata.categoryName",
@@ -2879,7 +2731,7 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
           }
         },
         { $sort: { interactions: -1 } },
-        { $limit: 6 }
+        { $limit: topCategoriesLimit }
       ]).toArray(),
       telemetryCollection.aggregate([
         {
@@ -2889,6 +2741,8 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
             "metadata.dwellMs": { $exists: true, $gt: 0 }
           }
         },
+        { $sort: { timestamp: -1 } },
+        { $limit: 50000 },
         {
           $group: {
             _id: null,
@@ -2933,7 +2787,7 @@ async function computeTelemetryInsights(shop, startDateObj, endDateObj) {
       avgDwellSeconds
     };
   } catch (telErr) {
-    console.warn("[Telemetry Insights] Warning:", telErr.message);
+    logger.warn("[Telemetry Insights] Warning", { error: telErr.message });
     return defaultInsights;
   }
 }
@@ -3344,20 +3198,20 @@ app.post("/api/telemetry/batch", telemetryLimiter, async (req, res) => {
 app.get("/api/admin/telemetry/insights", checkMongoDB, checkAdmin, async (req, res) => {
   try {
     const shop = req.query.shop;
-    const days = parseInt(req.query.days, 10) || 7;
+    const days = Math.min(Math.max(1, parseInt(req.query.days, 10) || 7), 90);
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const insights = await computeTelemetryInsights(shop, cutoff, new Date());
+    const insights = await computeTelemetryInsights(shop, cutoff, new Date(), { limit: req.query.limit });
     insights.periodDays = days;
     res.json(insights);
   } catch (err) {
-    console.error("Telemetry insights aggregation error:", err);
+    logger.error("Telemetry insights aggregation error", { requestId: req.id, err });
     res.status(500).json({ success: false, error: "Failed to generate UX insights" });
   }
 });
 
 // ============ ADMIN ORDERS & CUSTOMERS APIs ============
 
-// Get all orders for the admin panel (returns complete order history by default)
+// Get all orders for the admin panel (bounded at maxLimit=5000)
 app.get("/api/admin/orders", checkMongoDB, checkStaff, async (req, res) => {
   const shop = req.query.shop === "shop2" ? "shop2" : "shop1";
   const { status, deliveryDate, phone, limit: limitParam } = req.query;
@@ -3375,15 +3229,15 @@ app.get("/api/admin/orders", checkMongoDB, checkStaff, async (req, res) => {
       query["customerInfo.phone"] = { $in: getLibyanPhoneVariants(phone) };
     }
 
-    let cursor = ordColl.find(query).sort({ createdAt: -1 });
-    const parsedLimit = Number(limitParam);
-    if (limitParam && Number.isFinite(parsedLimit) && parsedLimit > 0) {
-      cursor = cursor.limit(parsedLimit);
-    }
-    const orders = await cursor.toArray();
+    const effectiveLimit = resolveBoundedLimit(limitParam, 5000, 5000);
+    const orders = await ordColl
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(effectiveLimit)
+      .toArray();
     res.json(orders);
   } catch (err) {
-    console.error("Fetch admin orders error:", err);
+    logger.error("Fetch admin orders error", { requestId: req.id, err });
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
@@ -4387,10 +4241,42 @@ app.get("/api/admin/customers", checkMongoDB, checkStaff, async (req, res) => {
   }
 
   try {
-    const customers = await customersCollection.find().toArray();
+    const effectiveLimit = resolveBoundedLimit(req.query.limit, 5000, 5000);
+    const customers = await customersCollection
+      .find({}, {
+        projection: {
+          _id: 1,
+          name: 1,
+          phone: 1,
+          password: 1,
+          plainPassword: 1,
+          passwordHash: 1,
+          lastActive: 1,
+          createdAt: 1,
+        },
+      })
+      .sort({ lastActive: -1, createdAt: -1 })
+      .limit(effectiveLimit)
+      .toArray();
     
-    // Fetch all non-cancelled orders for the active shop
-    const allActiveOrders = await ordColl.find({ status: { $ne: "cancelled" } }).toArray();
+    // Fetch active orders for the active shop (projected to balance/date fields only)
+    const allActiveOrders = await ordColl
+      .find(
+        { status: { $ne: "cancelled" } },
+        {
+          projection: {
+            _id: 1,
+            customerInfo: 1,
+            totalPrice: 1,
+            paidAmount: 1,
+            paymentStatus: 1,
+            deliveryDate: 1,
+            receivedAt: 1,
+            createdAt: 1,
+          },
+        }
+      )
+      .toArray();
 
     // Filter orders by effective receiving date (rec_date: deliveryDate -> receivedAt -> createdAt)
     const filteredOrders = allActiveOrders.filter(order => {
@@ -4433,7 +4319,9 @@ app.get("/api/admin/customers", checkMongoDB, checkStaff, async (req, res) => {
     }
 
     // Batch fetch all favorites by phone for the active shop
-    const allFavs = await favoritesCollection.find({ shop }).toArray();
+    const allFavs = await favoritesCollection
+      .find({ shop }, { projection: { _id: 0, phone: 1, productId: 1 } })
+      .toArray();
     const favsMap = {};
     for (const fav of allFavs) {
       const phone = formatCanonicalLibyanPhone(fav.phone);
@@ -4776,7 +4664,7 @@ app.get("/api/admin/customers/:phone/orders", checkMongoDB, checkStaff, async (r
 
 
 // Record a payment (FIFO distribution)
-app.post("/api/admin/payments", checkMongoDB, checkStaff, async (req, res) => {
+app.post("/api/admin/payments", checkMongoDB, checkStaff, idempotencyGuard, async (req, res) => {
   const { customerPhone, customerName, amount, shop: reqShop, note, method, targetOrderId } = req.body;
   const shop = reqShop === "shop2" ? "shop2" : "shop1";
   const ordColl = shop === "shop2" ? ordersCollection2 : ordersCollection;
@@ -4793,115 +4681,137 @@ app.post("/api/admin/payments", checkMongoDB, checkStaff, async (req, res) => {
   }
 
   try {
-    // Fetch unpaid/partial orders sorted oldest first (FIFO) across all phone variants
     const phoneVariants = getLibyanPhoneVariants(customerPhone);
-    let unpaidOrders = await ordColl.find({
-      $and: [
-        {
-          $or: [
-            { "customerInfo.phone": { $in: phoneVariants } },
-            { customerPhone: { $in: phoneVariants } }
+
+    const outcome = await withOptionalTransaction(
+      () => mongoClient,
+      async (session) => {
+        const sessionOpt = session ? { session } : {};
+        // Fetch unpaid/partial orders sorted oldest first (FIFO) across all phone variants
+        let unpaidOrders = await ordColl.find({
+          $and: [
+            {
+              $or: [
+                { "customerInfo.phone": { $in: phoneVariants } },
+                { customerPhone: { $in: phoneVariants } }
+              ]
+            },
+            { status: { $ne: "cancelled" } },
+            {
+              $or: [
+                { paymentStatus: { $in: ["unpaid", "partial"] } },
+                { paymentStatus: { $exists: false } }
+              ]
+            }
           ]
-        },
-        { status: { $ne: "cancelled" } },
-        {
-          $or: [
-            { paymentStatus: { $in: ["unpaid", "partial"] } },
-            { paymentStatus: { $exists: false } }
-          ]
+        }, sessionOpt).sort({ createdAt: 1 }).toArray();
+
+        // If targetOrderId is specified, move target order to the front of the allocation list
+        if (targetOrderId && ObjectId.isValid(targetOrderId)) {
+          const targetIdx = unpaidOrders.findIndex(o => o._id.toString() === targetOrderId.toString());
+          if (targetIdx > 0) {
+            const targetOrder = unpaidOrders.splice(targetIdx, 1)[0];
+            unpaidOrders.unshift(targetOrder);
+          }
         }
-      ]
-    }).sort({ createdAt: 1 }).toArray();
 
-    // If targetOrderId is specified, move target order to the front of the allocation list
-    if (targetOrderId && ObjectId.isValid(targetOrderId)) {
-      const targetIdx = unpaidOrders.findIndex(o => o._id.toString() === targetOrderId.toString());
-      if (targetIdx > 0) {
-        const targetOrder = unpaidOrders.splice(targetIdx, 1)[0];
-        unpaidOrders.unshift(targetOrder);
-      }
+        // Prevent paying for cancelled orders
+        const activeUnpaidOrders = unpaidOrders.filter(o => o.status !== 'cancelled');
+
+        // Calculate total outstanding from active orders only
+        const totalOutstanding = round2(activeUnpaidOrders.reduce((sum, o) => {
+          return sum + ((o.totalPrice || 0) - (o.paidAmount || 0));
+        }, 0));
+
+        if (paymentAmount > totalOutstanding + 0.01) {
+          return {
+            status: 400,
+            body: {
+              error: "Payment exceeds outstanding balance",
+              outstanding: totalOutstanding
+            }
+          };
+        }
+
+        if (activeUnpaidOrders.length === 0 && paymentAmount > 0) {
+          return {
+            status: 400,
+            body: { error: "No active unpaid orders found for this customer" }
+          };
+        }
+
+        // FIFO distribution (only against active orders)
+        let remaining = paymentAmount;
+        const distributedTo = [];
+
+        for (const order of activeUnpaidOrders) {
+          if (remaining <= 0) break;
+
+          const orderRemaining = (order.totalPrice || 0) - (order.paidAmount || 0);
+          if (orderRemaining <= 0) continue;
+
+          const applied = round2(Math.min(remaining, orderRemaining));
+          const newPaidAmount = round2((order.paidAmount || 0) + applied);
+          const newStatus = (order.totalPrice - newPaidAmount) <= 0.009 ? 'paid' : 'partial';
+
+          await ordColl.updateOne(
+            { _id: order._id },
+            { $set: { paidAmount: newPaidAmount, paymentStatus: newStatus, paymentMethod: method || 'cash' } },
+            sessionOpt
+          );
+
+          distributedTo.push({
+            orderId: order._id,
+            orderNumber: order.orderNumber || null,
+            applied: applied,
+            orderTotal: order.totalPrice,
+            previousPaid: order.paidAmount || 0,
+            newPaidAmount: newPaidAmount,
+            newStatus: newStatus
+          });
+
+          remaining = round2(remaining - applied);
+        }
+
+        const remainingBalanceAfter = round2(Math.max(0, totalOutstanding - paymentAmount));
+
+        // Record payment transaction
+        const paymentDoc = {
+          customerPhone: customerPhone.trim(),
+          customerName: (customerName || '').trim(),
+          amount: paymentAmount,
+          method: method || 'cash',
+          shop,
+          note: (note || '').trim(),
+          distributedTo,
+          remainingBalanceAfter: Math.max(0, remainingBalanceAfter),
+          balanceBefore: totalOutstanding,
+          createdAt: new Date()
+        };
+
+        const result = await paymentsCollection.insertOne(paymentDoc, sessionOpt);
+
+        return {
+          status: 201,
+          body: {
+            success: true,
+            paymentId: result.insertedId,
+            amount: paymentAmount,
+            distributedTo,
+            remainingBalanceAfter: Math.max(0, remainingBalanceAfter)
+          }
+        };
+      },
+      logger
+    );
+
+    if (outcome.status === 201) {
+      invalidateAnalyticsCache(shop);
     }
 
-    // Prevent paying for cancelled orders
-    const activeUnpaidOrders = unpaidOrders.filter(o => o.status !== 'cancelled');
-
-    // Calculate total outstanding from active orders only
-    const totalOutstanding = Math.round(activeUnpaidOrders.reduce((sum, o) => {
-      return sum + ((o.totalPrice || 0) - (o.paidAmount || 0));
-    }, 0) * 100) / 100;
-
-    if (paymentAmount > totalOutstanding + 0.01) {
-      return res.status(400).json({ 
-        error: "Payment exceeds outstanding balance",
-        outstanding: totalOutstanding
-      });
-    }
-
-    if (activeUnpaidOrders.length === 0 && paymentAmount > 0) {
-      return res.status(400).json({ error: "No active unpaid orders found for this customer" });
-    }
-
-    // FIFO distribution (only against active orders)
-    let remaining = paymentAmount;
-    const distributedTo = [];
-
-    for (const order of activeUnpaidOrders) {
-      if (remaining <= 0) break;
-
-      const orderRemaining = (order.totalPrice || 0) - (order.paidAmount || 0);
-      if (orderRemaining <= 0) continue;
-
-      const applied = Math.round(Math.min(remaining, orderRemaining) * 100) / 100;
-      const newPaidAmount = Math.round(((order.paidAmount || 0) + applied) * 100) / 100;
-      const newStatus = (order.totalPrice - newPaidAmount) <= 0.009 ? 'paid' : 'partial';
-
-      await ordColl.updateOne(
-        { _id: order._id },
-        { $set: { paidAmount: newPaidAmount, paymentStatus: newStatus, paymentMethod: method || 'cash' } }
-      );
-
-      distributedTo.push({
-        orderId: order._id,
-        orderNumber: order.orderNumber || null,
-        applied: applied,
-        orderTotal: order.totalPrice,
-        previousPaid: order.paidAmount || 0,
-        newPaidAmount: newPaidAmount,
-        newStatus: newStatus
-      });
-
-      remaining = Math.round((remaining - applied) * 100) / 100;
-    }
-
-    const remainingBalanceAfter = Math.round(Math.max(0, totalOutstanding - paymentAmount) * 100) / 100;
-
-    // Record payment transaction
-    const paymentDoc = {
-      customerPhone: customerPhone.trim(),
-      customerName: (customerName || '').trim(),
-      amount: paymentAmount,
-      method: method || 'cash',
-      shop,
-      note: (note || '').trim(),
-      distributedTo,
-      remainingBalanceAfter: Math.max(0, remainingBalanceAfter),
-      balanceBefore: totalOutstanding,
-      createdAt: new Date()
-    };
-
-    const result = await paymentsCollection.insertOne(paymentDoc);
-
-    invalidateAnalyticsCache(shop);
-
-    res.status(201).json({
-      success: true,
-      paymentId: result.insertedId,
-      amount: paymentAmount,
-      distributedTo,
-      remainingBalanceAfter: Math.max(0, remainingBalanceAfter)
-    });
+    return res.status(outcome.status).json(outcome.body);
   } catch (err) {
-    console.error("Record payment error:", err);
+    logger.error("Record payment error", { requestId: req.id, err });
     res.status(500).json({ error: "Failed to record payment" });
   }
 });
@@ -4928,12 +4838,12 @@ app.post("/api/admin/migrate-unpaid-orders", checkMongoDB, requireGlobalAdmin, a
       message: `Migrated ${res1.modifiedCount + res2.modifiedCount} unpaid orders successfully.`
     });
   } catch (err) {
-    console.error("Migration error:", err);
+    logger.error("Migration error", { requestId: req.id, err });
     res.status(500).json({ error: "Failed to migrate unpaid orders" });
   }
 });
 
-// Get payment history for a customer
+// Get payment history for a customer (bounded at maxLimit=5000)
 app.get("/api/admin/payments", checkMongoDB, checkStaff, async (req, res) => {
   const { phone, shop: reqShop, limit: reqLimit } = req.query;
   const shop = reqShop === "shop2" ? "shop2" : "shop1";
@@ -4943,15 +4853,15 @@ app.get("/api/admin/payments", checkMongoDB, checkStaff, async (req, res) => {
     if (phone && typeof phone === "string") {
       query.customerPhone = { $in: getLibyanPhoneVariants(phone) };
     }
-    let cursor = paymentsCollection.find(query).sort({ createdAt: -1 });
-    const parsedLimit = Number(reqLimit);
-    if (reqLimit && Number.isFinite(parsedLimit) && parsedLimit > 0) {
-      cursor = cursor.limit(parsedLimit);
-    }
-    const payments = await cursor.toArray();
+    const effectiveLimit = resolveBoundedLimit(reqLimit, 5000, 5000);
+    const payments = await paymentsCollection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(effectiveLimit)
+      .toArray();
     res.json(payments);
   } catch (err) {
-    console.error("Fetch payments error:", err);
+    logger.error("Fetch payments error", { requestId: req.id, err });
     res.status(500).json({ error: "Failed to fetch payments" });
   }
 });
@@ -5914,7 +5824,7 @@ const areOrderItemsEqual = (itemsA, itemsB) => {
 };
 
 // Server-Side Price Recalculation & Privilege Segregation Helper
-const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl, isStaffPOS, body = {}) => {
+const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl, isStaffPOS, body = {}, session = null) => {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     throw new ValidationError("يجب أن يحتوي الطلب على صنف واحد على الأقل");
   }
@@ -5927,7 +5837,8 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
 
   let dbProductsMap = new Map();
   if (productIds.length > 0) {
-    const dbProducts = await targetProductsColl.find({ _id: { $in: productIds } }).toArray();
+    const sessionOpt = session ? { session } : {};
+    const dbProducts = await targetProductsColl.find({ _id: { $in: productIds } }, sessionOpt).toArray();
     dbProducts.forEach(p => dbProductsMap.set(p._id.toString(), p));
   }
 
@@ -5941,35 +5852,23 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
     }
 
     const canFloat = isStaffPOS ? Boolean(item.allowFloat || dbProd?.allowFloat) : Boolean(dbProd?.allowFloat);
-    const rawNumericQty = Number(item.quantity);
-    const normalizedQty = Number.isFinite(rawNumericQty) && rawNumericQty > 0
-      ? (canFloat ? rawNumericQty : Math.round(rawNumericQty))
-      : 1;
-    const qty = Math.max(canFloat ? 0.05 : 1, normalizedQty);
+    const qty = normalizeOrderQuantity(item.quantity, canFloat);
     let unitPrice = 0;
 
     if (dbProd) {
       if (isStaffPOS && typeof item.price === 'number' && !isNaN(item.price) && item.price >= 0) {
         // Staff POS can manually override prices or give line-item discounts
-        unitPrice = Math.round(Number(item.price) * 100) / 100;
+        unitPrice = round2(item.price);
       } else {
         // Public orders strictly derive unit price from database catalog
-        if (priceMode === 'bulk' && dbProd.price_bulk !== null && dbProd.price_bulk !== undefined && dbProd.price_bulk !== '') {
-          unitPrice = Number(dbProd.price_bulk);
-        } else if (dbProd.price_regular !== null && dbProd.price_regular !== undefined && dbProd.price_regular !== '') {
-          unitPrice = Number(dbProd.price_regular);
-        } else if (dbProd.price_bulk !== null && dbProd.price_bulk !== undefined && dbProd.price_bulk !== '') {
-          unitPrice = Number(dbProd.price_bulk);
-        } else {
-          unitPrice = Number(dbProd.price || 0);
-        }
+        unitPrice = resolveEffectiveUnitPrice(dbProd, priceMode);
       }
     } else {
       // Staff POS can enter custom off-menu items
-      unitPrice = Math.max(0, Math.round(Number(item.price || 0) * 100) / 100);
+      unitPrice = Math.max(0, round2(item.price || 0));
     }
 
-    unitPrice = Math.round(unitPrice * 100) / 100;
+    unitPrice = round2(unitPrice);
     computedTotal += unitPrice * qty;
     const resolvedPiecesPerUnit = dbProd ? parsePiecesPerUnit(dbProd.piecesPerUnit) : parsePiecesPerUnit(item.piecesPerUnit);
 
@@ -5977,14 +5876,14 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
       productId: item.productId && ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : null,
       name: dbProd ? dbProd.name : (item.name || 'صنف غير محدد'),
       price: unitPrice,
-      quantity: Math.round(qty * 100) / 100,
+      quantity: qty,
       allowFloat: canFloat,
       piecesPerUnit: resolvedPiecesPerUnit,
       notes: typeof item.notes === 'string' ? item.notes.slice(0, 500) : ''
     };
   });
 
-  computedTotal = Math.round(computedTotal * 100) / 100;
+  computedTotal = round2(computedTotal);
 
   // Strict Privilege Segregation for financial fields
   let paidAmount = 0;
@@ -5993,8 +5892,7 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
   let status = 'pending';
 
   if (isStaffPOS) {
-    const rawPaid = Number(body.paidAmount) || 0;
-    paidAmount = Math.round(rawPaid * 100) / 100;
+    paidAmount = round2(body.paidAmount);
     if (body.paymentStatus && ['paid', 'partial', 'unpaid'].includes(body.paymentStatus)) {
       paymentStatus = body.paymentStatus;
     } else {
@@ -6018,7 +5916,7 @@ const sanitizeAndCalculateOrder = async (rawItems, priceMode, targetProductsColl
 
 // ============ ORDER SUBMISSION APIs ============
 
-app.post("/api/orders", checkMongoDB, publicOrderLimiter, async (req, res) => {
+app.post("/api/orders", checkMongoDB, publicOrderLimiter, idempotencyGuard, async (req, res) => {
   try {
     const { customer, items, deliveryDate, notes, priceMode, force, bypassDuplicateCheck } = req.body || {};
     if (!customer || !customer.name || !customer.phone || !items || !Array.isArray(items)) {
@@ -6031,105 +5929,124 @@ app.post("/api/orders", checkMongoDB, publicOrderLimiter, async (req, res) => {
 
     // Only grant staff POS privileges on Shop 1 if the staff member has access to Shop 1
     const isStaff = Boolean(req.staffUser && (req.staffUser.shopAccess === 'all' || req.staffUser.shopAccess === 'shop1'));
-    const {
-      items: sanitizedItems,
-      totalPrice: parsedTotal,
-      paidAmount: parsedPaid,
-      paymentStatus: parsedPaymentStatus,
-      paymentMethod: parsedPaymentMethod,
-      status: parsedStatus
-    } = await sanitizeAndCalculateOrder(items, priceMode, productsCollection, isStaff, req.body);
-
-    // 5-Minute Duplicate Order Prevention (Cooldown) — only authenticated POS staff may force-bypass
     const canBypassCooldown = isStaff && Boolean(force || bypassDuplicateCheck);
-    if (!canBypassCooldown) {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      const recentOrders = await ordersCollection.find({
-        "customerInfo.phone": { $in: phoneVariants },
-        status: { $ne: "cancelled" },
-        createdAt: { $gte: fiveMinutesAgo }
-      }).sort({ createdAt: -1 }).toArray();
 
-      for (const recent of recentOrders) {
-        if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(sanitizedItems, recent.items)) {
-          const elapsedMs = Date.now() - new Date(recent.createdAt).getTime();
-          const remainingSeconds = Math.max(1, Math.ceil((5 * 60 * 1000 - elapsedMs) / 1000));
-          const remainingMinutes = Math.ceil(remainingSeconds / 60);
-          const existingNum = recent.orderNumber || (recent._id ? recent._id.toString().slice(-6) : '');
-          
-          return res.status(409).json({
-            error: `تم إرسال نفس هذا الطلب بالفعل برقم #${existingNum} منذ ${Math.round(elapsedMs / 60000) || 1} دقيقة. يرجى الانتظار ${remainingMinutes} دقيقة لتجنب التكرار.`,
-            isDuplicate: true,
-            existingOrderNumber: existingNum,
-            existingOrderId: recent._id,
-            remainingSeconds,
-            remainingMinutes
-          });
-        }
-      }
-    }
+    const outcome = await withOptionalTransaction(
+      () => mongoClient,
+      async (session) => {
+        const sessionOpt = session ? { session } : {};
+        const {
+          items: sanitizedItems,
+          totalPrice: parsedTotal,
+          paidAmount: parsedPaid,
+          paymentStatus: parsedPaymentStatus,
+          paymentMethod: parsedPaymentMethod,
+          status: parsedStatus
+        } = await sanitizeAndCalculateOrder(items, priceMode, productsCollection, isStaff, req.body, session);
 
-    // Upsert customer profile (preserve registered name, handle all phone formats)
-    const existingCust = await findCustomerByPhone(customer.phone);
-    const finalCustName = (existingCust && existingCust.name) ? existingCust.name : normalizedName;
+        // 5-Minute Duplicate Order Prevention (Cooldown) — only authenticated POS staff may force-bypass
+        if (!canBypassCooldown) {
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+          const recentOrders = await ordersCollection.find({
+            "customerInfo.phone": { $in: phoneVariants },
+            status: { $ne: "cancelled" },
+            createdAt: { $gte: fiveMinutesAgo }
+          }, sessionOpt).sort({ createdAt: -1 }).toArray();
 
-    if (existingCust) {
-      await customersCollection.updateOne(
-        { _id: existingCust._id },
-        { 
-          $set: { 
-            name: finalCustName, 
-            phone: canonicalPhone,
-            lastActive: new Date() 
-          } 
-        }
-      );
-    } else {
-      await customersCollection.updateOne(
-        { phone: canonicalPhone },
-        { 
-          $set: { 
-            name: finalCustName, 
-            lastActive: new Date() 
-          },
-          $setOnInsert: {
-            createdAt: new Date()
+          for (const recent of recentOrders) {
+            if (Math.abs((recent.totalPrice || 0) - parsedTotal) < 0.05 && areOrderItemsEqual(sanitizedItems, recent.items)) {
+              const elapsedMs = Date.now() - new Date(recent.createdAt).getTime();
+              const remainingSeconds = Math.max(1, Math.ceil((5 * 60 * 1000 - elapsedMs) / 1000));
+              const remainingMinutes = Math.ceil(remainingSeconds / 60);
+              const existingNum = recent.orderNumber || (recent._id ? recent._id.toString().slice(-6) : '');
+
+              return {
+                status: 409,
+                body: {
+                  error: `تم إرسال نفس هذا الطلب بالفعل برقم #${existingNum} منذ ${Math.round(elapsedMs / 60000) || 1} دقيقة. يرجى الانتظار ${remainingMinutes} دقيقة لتجنب التكرار.`,
+                  isDuplicate: true,
+                  existingOrderNumber: existingNum,
+                  existingOrderId: recent._id,
+                  remainingSeconds,
+                  remainingMinutes
+                }
+              };
+            }
           }
-        },
-        { upsert: true }
-      );
-    }
+        }
 
-    const nextOrderNumber = await getNextOrderNumber();
-    const orderDoc = {
-      orderNumber: nextOrderNumber,
-      customerInfo: {
-        name: normalizedName,
-        phone: canonicalPhone
+        // Upsert customer profile (preserve registered name, handle all phone formats)
+        const existingCust = await findCustomerByPhone(customer.phone, session);
+        const finalCustName = (existingCust && existingCust.name) ? existingCust.name : normalizedName;
+
+        if (existingCust) {
+          await customersCollection.updateOne(
+            { _id: existingCust._id },
+            { 
+              $set: { 
+                name: finalCustName, 
+                phone: canonicalPhone,
+                lastActive: new Date() 
+              } 
+            },
+            sessionOpt
+          );
+        } else {
+          await customersCollection.updateOne(
+            { phone: canonicalPhone },
+            { 
+              $set: { 
+                name: finalCustName, 
+                lastActive: new Date() 
+              },
+              $setOnInsert: {
+                createdAt: new Date()
+              }
+            },
+            { upsert: true, ...(session ? { session } : {}) }
+          );
+        }
+
+        const nextOrderNumber = await getNextOrderNumber(session);
+        const orderDoc = {
+          orderNumber: nextOrderNumber,
+          customerInfo: {
+            name: normalizedName,
+            phone: canonicalPhone
+          },
+          items: sanitizedItems,
+          totalPrice: parsedTotal,
+          paidAmount: parsedPaid,
+          paymentStatus: parsedPaymentStatus,
+          paymentMethod: parsedPaymentMethod,
+          deliveryDate: deliveryDate || '',
+          notes: notes || '',
+          priceMode: priceMode || 'regular',
+          status: parsedStatus,
+          ...(parsedStatus === 'cancelled' ? { cancelledAt: new Date() } : {}),
+          printed: false,
+          whatsappSent: true,
+          createdAt: new Date()
+        };
+
+        const result = await ordersCollection.insertOne(orderDoc, sessionOpt);
+        return {
+          status: 201,
+          body: {
+            success: true,
+            orderId: result.insertedId,
+            orderNumber: nextOrderNumber,
+            order: { ...orderDoc, _id: result.insertedId }
+          }
+        };
       },
-      items: sanitizedItems,
-      totalPrice: parsedTotal,
-      paidAmount: parsedPaid,
-      paymentStatus: parsedPaymentStatus,
-      paymentMethod: parsedPaymentMethod,
-      deliveryDate: deliveryDate || '',
-      notes: notes || '',
-      priceMode: priceMode || 'regular',
-      status: parsedStatus,
-      ...(parsedStatus === 'cancelled' ? { cancelledAt: new Date() } : {}),
-      printed: false,
-      whatsappSent: true,
-      createdAt: new Date()
-    };
-    
-    const result = await ordersCollection.insertOne(orderDoc);
-    invalidateAnalyticsCache("shop1");
-    res.status(201).json({ 
-      success: true, 
-      orderId: result.insertedId, 
-      orderNumber: nextOrderNumber,
-      order: { ...orderDoc, _id: result.insertedId }
-    });
+      logger
+    );
+
+    if (outcome.status === 201) {
+      invalidateAnalyticsCache("shop1");
+    }
+    return res.status(outcome.status).json(outcome.body);
   } catch (err) {
     return sendSafeError(res, req, err, { fallbackMessage: "فشل حفظ الطلب، يرجى المحاولة مرة أخرى" });
   }
@@ -6434,1002 +6351,30 @@ app.delete("/api/admin/marketing-carousel/:id", checkMongoDB, requireAdmin, asyn
 
 
 // ============ EMPLOYEES, JOBS, CHEF COEFFICIENTS & HR PAYROLL TRANSACTIONS ============
-
-const buildEmployeeBranchScopeQuery = (req, explicitBranch = null) => {
-  const userAccess = req.staffUser?.shopAccess || 'all';
-  if (userAccess === 'shop1' || userAccess === 'shop2') {
-    return { branch: { $in: [userAccess, 'all'] } };
-  }
-  if (explicitBranch === 'shop1' || explicitBranch === 'shop2') {
-    return { branch: { $in: [explicitBranch, 'all'] } };
-  }
-  return {};
-};
-
-const isEmployeeInUserScope = (emp, req) => {
-  if (!emp) return false;
-  const userAccess = req.staffUser?.shopAccess || 'all';
-  if (userAccess === 'all') return true;
-  return emp.branch === userAccess || emp.branch === 'all';
-};
-
-const normalizeOptionalIsoDate = (val) => {
-  if (typeof val !== 'string') return '';
-  const s = val.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
-  const [y, m, d] = s.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  if (isNaN(dt.getTime()) || dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) {
-    return '';
-  }
-  return s;
-};
-
-// 1. Jobs CRUD
-app.get("/api/admin/employee-jobs", checkMongoDB, checkStaff, async (req, res) => {
-  try {
-    const [jobs, empList] = await Promise.all([
-      employeeJobsCollection.find().sort({ name: 1 }).toArray(),
-      employeesCollection.find({}, { projection: { jobId: 1 } }).toArray()
-    ]);
-    const countMap = {};
-    for (const e of empList) {
-      if (e.jobId) {
-        const k = String(e.jobId);
-        countMap[k] = (countMap[k] || 0) + 1;
-      }
-    }
-    const enriched = jobs.map(j => ({
-      ...j,
-      employeeCount: countMap[String(j._id)] || 0
-    }));
-    res.json(enriched);
-  } catch (err) {
-    console.error("Fetch employee jobs error:", err);
-    res.status(500).json({ error: "فشل في جلب قائمة الوظائف" });
-  }
-});
-
-app.post("/api/admin/employee-jobs", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { name, payType, description } = req.body || {};
-    const cleanName = typeof name === 'string' ? name.trim() : '';
-    if (!cleanName) {
-      return res.status(400).json({ error: "اسم الوظيفة مطلوب" });
-    }
-    if (!['fixed', 'production'].includes(payType)) {
-      return res.status(400).json({ error: "نوع احتساب الراتب غير صالح" });
-    }
-    const existing = await employeeJobsCollection.findOne({ name: cleanName });
-    if (existing) {
-      return res.status(400).json({ error: "يوجد وظيفة بنفس هذا الاسم مسبقاً" });
-    }
-    const now = new Date();
-    const doc = {
-      name: cleanName,
-      payType,
-      description: typeof description === 'string' ? description.trim() : '',
-      createdAt: now,
-      updatedAt: now
-    };
-    const result = await employeeJobsCollection.insertOne(doc);
-    res.status(201).json({ success: true, job: { _id: result.insertedId, ...doc, employeeCount: 0 } });
-  } catch (err) {
-    console.error("Create employee job error:", err);
-    res.status(500).json({ error: "فشل في إضافة الوظيفة" });
-  }
-});
-
-app.put("/api/admin/employee-jobs/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "معرف الوظيفة غير صالح" });
-    }
-    const { name, payType, description } = req.body || {};
-    const cleanName = typeof name === 'string' ? name.trim() : '';
-    if (!cleanName) {
-      return res.status(400).json({ error: "اسم الوظيفة مطلوب" });
-    }
-    if (!['fixed', 'production'].includes(payType)) {
-      return res.status(400).json({ error: "نوع احتساب الراتب غير صالح" });
-    }
-    const jobObjId = new ObjectId(id);
-    const conflict = await employeeJobsCollection.findOne({ name: cleanName, _id: { $ne: jobObjId } });
-    if (conflict) {
-      return res.status(400).json({ error: "يوجد وظيفة أخرى بنفس هذا الاسم" });
-    }
-    const now = new Date();
-    const upd = await employeeJobsCollection.updateOne(
-      { _id: jobObjId },
-      {
-        $set: {
-          name: cleanName,
-          payType,
-          description: typeof description === 'string' ? description.trim() : '',
-          updatedAt: now
-        }
-      }
-    );
-    if (upd.matchedCount === 0) {
-      return res.status(404).json({ error: "الوظيفة غير موجودة" });
-    }
-
-    // Cascade job metadata changes to assigned employees safely
-    const empCascadeSet = { jobName: cleanName, payType, updatedAt: now };
-    if (payType === 'production') {
-      empCascadeSet.salary = null;
-    } else {
-      empCascadeSet.linkedChefs = [];
-    }
-    await employeesCollection.updateMany(
-      { jobId: jobObjId },
-      { $set: empCascadeSet }
-    );
-    await employeeTransactionsCollection.updateMany(
-      { jobId: jobObjId },
-      { $set: { employeeJobName: cleanName } }
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Update employee job error:", err);
-    res.status(500).json({ error: "فشل في تحديث بيانات الوظيفة" });
-  }
-});
-
-app.delete("/api/admin/employee-jobs/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "معرف الوظيفة غير صالح" });
-    }
-    const jobObjId = new ObjectId(id);
-    const assignedCount = await employeesCollection.countDocuments({ jobId: jobObjId });
-    if (assignedCount > 0) {
-      return res.status(400).json({
-        error: `لا يمكن حذف هذه الوظيفة لوجود ${assignedCount} موظف مسجل عليها حالياً`
-      });
-    }
-    const del = await employeeJobsCollection.deleteOne({ _id: jobObjId });
-    if (del.deletedCount === 0) {
-      return res.status(404).json({ error: "الوظيفة غير موجودة" });
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Delete employee job error:", err);
-    res.status(500).json({ error: "فشل في حذف الوظيفة" });
-  }
-});
-
-// 2. Available Production Chefs for Linking to Producer Employees (Admin Only)
-app.get("/api/admin/employees/chefs-options", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const access = req.staffUser?.shopAccess || 'all';
-    const [s1, s2] = await Promise.all([
-      (access === 'all' || access === 'shop1') ? chefsCollection.find().sort({ name: 1 }).toArray() : Promise.resolve([]),
-      (access === 'all' || access === 'shop2') ? chefsCollection2.find().sort({ name: 1 }).toArray() : Promise.resolve([])
-    ]);
-    res.json({
-      shop1: s1.map(c => ({ shop: 'shop1', chefId: String(c._id), chefName: c.name, phone: c.phone || '' })),
-      shop2: s2.map(c => ({ shop: 'shop2', chefId: String(c._id), chefName: c.name, phone: c.phone || '' }))
-    });
-  } catch (err) {
-    console.error("Fetch chef link options error:", err);
-    res.status(500).json({ error: "فشل في جلب قائمة الشيفات" });
-  }
-});
-
-// 3. Batch Update Per-Product Chef Coefficients (Admin Only)
-app.put("/api/admin/employees/chef-coefficients", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { updates } = req.body || {};
-    if (!Array.isArray(updates) || updates.length === 0) {
-      return res.status(400).json({ error: "لم يتم إرسال أي تعديلات للمعاملات" });
-    }
-    const userAccess = req.staffUser?.shopAccess || 'all';
-    const opsShop1 = [];
-    const opsShop2 = [];
-
-    for (const u of updates) {
-      if (!u || !u.productId || !ObjectId.isValid(u.productId)) continue;
-      const targetShop = u.shop === 'shop2' ? 'shop2' : 'shop1';
-      if (userAccess !== 'all' && userAccess !== targetShop) {
-        return res.status(403).json({ error: "ليس لديك صلاحية لتعديل معاملات أصناف هذا الفرع" });
-      }
-      const numVal = Number(u.chefCoefficient);
-      const cleanCoeff = (Number.isFinite(numVal) && numVal > 0)
-        ? Math.round(numVal * 10000) / 10000
-        : 0;
-      const op = {
-        updateOne: {
-          filter: { _id: new ObjectId(u.productId) },
-          update: { $set: { chefCoefficient: cleanCoeff } }
-        }
-      };
-      if (targetShop === 'shop2') opsShop2.push(op);
-      else opsShop1.push(op);
-    }
-
-    if (opsShop1.length > 0) await productsCollection.bulkWrite(opsShop1);
-    if (opsShop2.length > 0) await productsCollection2.bulkWrite(opsShop2);
-
-    res.json({ success: true, updatedCount: opsShop1.length + opsShop2.length });
-  } catch (err) {
-    console.error("Update chef coefficients error:", err);
-    res.status(500).json({ error: "فشل في حفظ معاملات الأصناف" });
-  }
-});
-
-// Reusable helper: aggregate monthly sales & per-unit chef earnings across both shops
-const computeChefProductMetricsForMonth = async (monthKey) => {
-  const monthStart = `${monthKey}-01`;
-  const monthEnd = `${monthKey}-31`;
-  const chefProductMetrics = {}; // key "shop:chefId" -> Map(productId -> { shop, productId, productName, category, soldQty, totalSales, chefCoefficient, chefEarnings })
-
-  const [prods1, prods2, ords1, ords2] = await Promise.all([
-    productsCollection.find().toArray(),
-    productsCollection2.find().toArray(),
-    ordersCollection.find({ status: { $ne: "cancelled" } }).toArray(),
-    ordersCollection2.find({ status: { $ne: "cancelled" } }).toArray()
-  ]);
-
-  const initShopCatalog = (shopKey, prodsList) => {
-    const prodMap = new Map();
-    for (const p of prodsList) {
-      const pid = String(p._id);
-      const coeff = Number(p.chefCoefficient) || 0;
-      const chefIdStr = p.chefId ? String(p.chefId) : '';
-      prodMap.set(pid, {
-        productId: pid,
-        name: p.name || '',
-        category: p.category || '',
-        chefId: chefIdStr,
-        chefName: p.chefName || '',
-        chefCoefficient: coeff
-      });
-      if (chefIdStr) {
-        const cKey = `${shopKey}:${chefIdStr}`;
-        if (!chefProductMetrics[cKey]) chefProductMetrics[cKey] = new Map();
-        chefProductMetrics[cKey].set(pid, {
-          shop: shopKey,
-          productId: pid,
-          productName: p.name || '',
-          category: p.category || '',
-          chefId: chefIdStr,
-          chefName: p.chefName || '',
-          soldQty: 0,
-          totalSales: 0,
-          chefCoefficient: coeff,
-          chefEarnings: 0
-        });
-      }
-    }
-    return prodMap;
-  };
-
-  const prodMap1 = initShopCatalog('shop1', prods1);
-  const prodMap2 = initShopCatalog('shop2', prods2);
-
-  const processOrders = (shopKey, ordList, prodMap) => {
-    for (const order of ordList) {
-      const effDate = getOrderEffectiveDateStr(order);
-      if (!effDate || effDate < monthStart || effDate > monthEnd) continue;
-      const items = Array.isArray(order.items) ? order.items : [];
-      for (const item of items) {
-        if (!item) continue;
-        const pid = (item.productId || item._id || '').toString();
-        const pInfo = prodMap.get(pid);
-        if (!pInfo || !pInfo.chefId) continue;
-        const qty = Number(item.quantity) || 0;
-        const itemRev = (Number(item.price) || 0) * qty;
-        const cKey = `${shopKey}:${pInfo.chefId}`;
-        const targetMap = chefProductMetrics[cKey];
-        if (targetMap && targetMap.has(pid)) {
-          const rec = targetMap.get(pid);
-          rec.soldQty += qty;
-          rec.totalSales += itemRev;
-        }
-      }
-    }
-  };
-
-  processOrders('shop1', ords1, prodMap1);
-  processOrders('shop2', ords2, prodMap2);
-  return chefProductMetrics;
-};
-
-const summarizeEmployeeProduction = (emp, chefProductMetrics) => {
-  const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-  let productionTotalQty = 0;
-  let productionTotalSales = 0;
-  let productionGrossPay = 0;
-  const productBreakdown = [];
-
-  if (emp.payType === 'production') {
-    const seenProds = new Set();
-    const links = Array.isArray(emp.linkedChefs) ? emp.linkedChefs : [];
-    for (const link of links) {
-      if (!link || !link.chefId) continue;
-      const shopKey = link.shop === 'shop2' ? 'shop2' : 'shop1';
-      const cKey = `${shopKey}:${String(link.chefId)}`;
-      const metricMap = chefProductMetrics[cKey];
-      if (!metricMap) continue;
-      for (const rec of metricMap.values()) {
-        const uniqueKey = `${rec.shop}:${rec.productId}`;
-        if (seenProds.has(uniqueKey)) continue;
-        seenProds.add(uniqueKey);
-        const qtyRounded = r2(rec.soldQty);
-        const salesRounded = r2(rec.totalSales);
-        const unitRate = Math.max(0, Number(rec.chefCoefficient) || 0);
-        const earningsRounded = r2(qtyRounded * unitRate);
-        productionTotalQty += qtyRounded;
-        productionTotalSales += salesRounded;
-        productionGrossPay += earningsRounded;
-        productBreakdown.push({
-          ...rec,
-          soldQty: qtyRounded,
-          totalSales: salesRounded,
-          chefEarnings: earningsRounded
-        });
-      }
-    }
-    productBreakdown.sort((a, b) => b.soldQty - a.soldQty || b.totalSales - a.totalSales || a.productName.localeCompare(b.productName, 'ar'));
-  }
-
-  return {
-    productionTotalQty: r2(productionTotalQty),
-    productionTotalSales: r2(productionTotalSales),
-    productionGrossPay: r2(productionGrossPay),
-    productBreakdown
-  };
-};
-
-// 4. Monthly Employee & Payroll Summary (Admin sees full financial payroll; Cashier sees branch list + unsettled adjustments only)
-app.get("/api/admin/employees/summary", checkMongoDB, checkStaff, async (req, res) => {
-  try {
-    const rawMonth = typeof req.query.month === 'string' ? req.query.month.trim() : '';
-    const defaultMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
-    const monthKey = /^\d{4}-\d{2}$/.test(rawMonth) ? rawMonth : defaultMonth;
-    const requestedBranch = req.query.branch === 'shop1' ? 'shop1' : (req.query.branch === 'shop2' ? 'shop2' : 'all');
-    const isAdmin = req.staffUser?.role === 'admin';
-
-    const empFilter = buildEmployeeBranchScopeQuery(req, requestedBranch);
-    const txScopeFilter = buildEmployeeBranchScopeQuery(req, requestedBranch);
-
-    const [employees, monthTxs] = await Promise.all([
-      employeesCollection.find(empFilter).sort({ name: 1 }).toArray(),
-      employeeTransactionsCollection.find({ ...txScopeFilter, monthKey }).sort({ date: -1, createdAt: -1 }).toArray()
-    ]);
-
-    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-
-    // Aggregate unsettled monthly bonuses / borrowings / penalties and settled payout totals by employeeId
-    const txByEmp = {};
-    for (const tx of monthTxs) {
-      const eid = String(tx.employeeId);
-      if (!txByEmp[eid]) {
-        txByEmp[eid] = {
-          bonusesTotal: 0,
-          borrowingsTotal: 0,
-          penaltiesTotal: 0,
-          nonPayoutTxCount: 0,
-          totalTxCount: 0,
-          unsettledItems: [],
-          payoutCount: 0,
-          paidTotalThisMonth: 0,
-          settledGrossTotal: 0,
-          hasBaseSalarySettled: false,
-          latestPayout: null
-        };
-      }
-      const bucket = txByEmp[eid];
-      const amt = Number(tx.amount) || 0;
-      bucket.totalTxCount += 1;
-
-      if (tx.type === 'payout') {
-        bucket.payoutCount += 1;
-        bucket.paidTotalThisMonth += amt;
-        bucket.settledGrossTotal += Number(tx.payoutDetails?.grossPaySettled) || 0;
-        if (tx.payoutDetails?.settledBaseSalary) bucket.hasBaseSalarySettled = true;
-        if (!bucket.latestPayout) bucket.latestPayout = tx;
-      } else {
-        bucket.nonPayoutTxCount += 1;
-        if (!tx.settledByPayoutId) {
-          if (tx.type === 'bonus') bucket.bonusesTotal += amt;
-          else if (tx.type === 'borrowing') bucket.borrowingsTotal += amt;
-          else if (tx.type === 'penalty') bucket.penaltiesTotal += amt;
-          bucket.unsettledItems.push({
-            _id: tx._id,
-            txNumber: tx.txNumber,
-            type: tx.type,
-            amount: round2(amt),
-            reason: tx.reason || '',
-            date: tx.date || ''
-          });
-        }
-      }
-    }
-
-    for (const eid of Object.keys(txByEmp)) {
-      txByEmp[eid].unsettledItems.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (Number(a.txNumber) || 0) - (Number(b.txNumber) || 0));
-    }
-
-    // For Cashiers: strip all sensitive salary / production earnings / payout details
-    if (!isAdmin) {
-      const safeEmployees = employees.map(e => {
-        const eid = String(e._id);
-        const agg = txByEmp[eid] || { bonusesTotal: 0, borrowingsTotal: 0, penaltiesTotal: 0, nonPayoutTxCount: 0 };
-        return {
-          _id: e._id,
-          name: e.name,
-          phone: e.phone || '',
-          branch: e.branch || 'shop1',
-          jobId: e.jobId,
-          jobName: e.jobName || '',
-          payType: e.payType || 'fixed',
-          active: e.active !== false,
-          startDate: e.startDate || '',
-          healthCertExpiry: e.healthCertExpiry || '',
-          notes: e.notes || '',
-          bonusesTotal: round2(agg.bonusesTotal),
-          borrowingsTotal: round2(agg.borrowingsTotal),
-          penaltiesTotal: round2(agg.penaltiesTotal),
-          txCount: agg.nonPayoutTxCount
-        };
-      });
-      return res.json({ success: true, monthKey, isAdmin: false, employees: safeEmployees });
-    }
-
-    // Admin payroll calculation: aggregate monthly production sales per chef per product
-    const hasProductionStaff = employees.some(e => e.payType === 'production');
-    const chefProductMetrics = hasProductionStaff ? await computeChefProductMetricsForMonth(monthKey) : {};
-
-    let totalFixedSalaries = 0;
-    let totalProductionPay = 0;
-    let totalBonuses = 0;
-    let totalBorrowings = 0;
-    let totalPenalties = 0;
-    let totalNetPay = 0;
-    let totalPaidOut = 0;
-    let activeCount = 0;
-
-    const fullEmployees = employees.map(e => {
-      const eid = String(e._id);
-      const agg = txByEmp[eid] || {
-        bonusesTotal: 0,
-        borrowingsTotal: 0,
-        penaltiesTotal: 0,
-        totalTxCount: 0,
-        unsettledItems: [],
-        payoutCount: 0,
-        paidTotalThisMonth: 0,
-        settledGrossTotal: 0,
-        hasBaseSalarySettled: false,
-        latestPayout: null
-      };
-      const bonusesTotal = round2(agg.bonusesTotal);
-      const borrowingsTotal = round2(agg.borrowingsTotal);
-      const penaltiesTotal = round2(agg.penaltiesTotal);
-      const isProduction = e.payType === 'production';
-
-      // Preserve configured permanent salary on fixed staff so Modal 1 editing never zeros it out
-      const configuredBaseSalary = isProduction ? null : round2(e.salary);
-      const prod = isProduction
-        ? summarizeEmployeeProduction(e, chefProductMetrics)
-        : { productionTotalQty: 0, productionTotalSales: 0, productionGrossPay: 0, productBreakdown: [] };
-
-      const rawProductionGrossPay = prod.productionGrossPay;
-      const unpaidProductionPay = isProduction
-        ? Math.max(0, round2(rawProductionGrossPay - agg.settledGrossTotal))
-        : 0;
-      const effectiveBaseSalary = isProduction ? 0 : (agg.hasBaseSalarySettled ? 0 : (configuredBaseSalary || 0));
-      const effectiveGrossPay = isProduction ? unpaidProductionPay : effectiveBaseSalary;
-      const netPay = round2(effectiveGrossPay + bonusesTotal - borrowingsTotal - penaltiesTotal);
-      const paidTotalThisMonth = round2(agg.paidTotalThisMonth);
-      const isMonthSettled = agg.payoutCount > 0 && effectiveGrossPay === 0 && agg.unsettledItems.length === 0;
-
-      if (e.active !== false) {
-        activeCount += 1;
-        if (isProduction) totalProductionPay += unpaidProductionPay;
-        else totalFixedSalaries += effectiveBaseSalary;
-        totalBonuses += bonusesTotal;
-        totalBorrowings += borrowingsTotal;
-        totalPenalties += penaltiesTotal;
-        totalNetPay += netPay;
-        totalPaidOut += paidTotalThisMonth;
-      }
-
-      return {
-        _id: e._id,
-        name: e.name,
-        phone: e.phone || '',
-        branch: e.branch || 'shop1',
-        jobId: e.jobId,
-        jobName: e.jobName || '',
-        payType: e.payType || 'fixed',
-        salary: configuredBaseSalary,
-        effectiveGrossPay,
-        rawProductionGrossPay,
-        linkedChefs: isProduction ? (e.linkedChefs || []) : [],
-        active: e.active !== false,
-        startDate: e.startDate || '',
-        healthCertExpiry: e.healthCertExpiry || '',
-        notes: e.notes || '',
-        productionTotalQty: prod.productionTotalQty,
-        productionTotalSales: prod.productionTotalSales,
-        productionGrossPay: unpaidProductionPay,
-        productBreakdown: prod.productBreakdown,
-        bonusesTotal,
-        borrowingsTotal,
-        penaltiesTotal,
-        deductionsTotal: round2(borrowingsTotal + penaltiesTotal),
-        unsettledItems: agg.unsettledItems,
-        paidTotalThisMonth,
-        payoutCountThisMonth: agg.payoutCount,
-        hasBaseSalarySettled: agg.hasBaseSalarySettled,
-        isMonthSettled,
-        latestPayout: agg.latestPayout || null,
-        txCount: agg.totalTxCount,
-        netPay
-      };
-    });
-
-    res.json({
-      success: true,
-      monthKey,
-      isAdmin: true,
-      employees: fullEmployees,
-      kpis: {
-        totalEmployees: fullEmployees.length,
-        activeCount,
-        totalFixedSalaries: round2(totalFixedSalaries),
-        totalProductionPay: round2(totalProductionPay),
-        totalBonuses: round2(totalBonuses),
-        totalBorrowings: round2(totalBorrowings),
-        totalPenalties: round2(totalPenalties),
-        totalDeductions: round2(totalBorrowings + totalPenalties),
-        totalPaidOut: round2(totalPaidOut),
-        totalNetPay: round2(totalNetPay)
-      }
-    });
-  } catch (err) {
-    console.error("Fetch employees summary error:", err);
-    res.status(500).json({ error: "فشل في تحميل بيانات مسير الموظفين" });
-  }
-});
-
-// 5. Employees CRUD (Admin Only)
-app.post("/api/admin/employees", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { name, phone, branch, jobId, salary, linkedChefs, active, notes, startDate, healthCertExpiry } = req.body || {};
-    const cleanName = typeof name === 'string' ? name.trim() : '';
-    if (!cleanName) {
-      return res.status(400).json({ error: "اسم الموظف مطلوب" });
-    }
-    if (!jobId || !ObjectId.isValid(jobId)) {
-      return res.status(400).json({ error: "يرجى اختيار الوظيفة" });
-    }
-    const job = await employeeJobsCollection.findOne({ _id: new ObjectId(jobId) });
-    if (!job) {
-      return res.status(404).json({ error: "الوظيفة المختارة غير موجودة" });
-    }
-
-    const userAccess = req.staffUser?.shopAccess || 'all';
-    let resolvedBranch = ['shop1', 'shop2', 'all'].includes(branch) ? branch : 'shop1';
-    if (userAccess !== 'all') {
-      resolvedBranch = userAccess;
-    }
-
-    const cleanPhone = phone ? formatCanonicalLibyanPhone(phone) : '';
-    const isProduction = job.payType === 'production';
-    const resolvedSalary = isProduction ? null : Math.max(0, Math.round((Number(salary) || 0) * 100) / 100);
-    const resolvedLinks = isProduction && Array.isArray(linkedChefs)
-      ? linkedChefs
-          .filter(c => c && c.chefId && (userAccess === 'all' || c.shop === userAccess))
-          .map(c => ({
-            shop: c.shop === 'shop2' ? 'shop2' : 'shop1',
-            chefId: String(c.chefId),
-            chefName: String(c.chefName || '').trim()
-          }))
-      : [];
-
-    const now = new Date();
-    const doc = {
-      name: cleanName,
-      phone: cleanPhone,
-      branch: resolvedBranch,
-      jobId: job._id,
-      jobName: job.name,
-      payType: job.payType,
-      salary: resolvedSalary,
-      linkedChefs: resolvedLinks,
-      active: active !== false,
-      startDate: normalizeOptionalIsoDate(startDate),
-      healthCertExpiry: normalizeOptionalIsoDate(healthCertExpiry),
-      notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
-      createdAt: now,
-      updatedAt: now
-    };
-    const result = await employeesCollection.insertOne(doc);
-    res.status(201).json({ success: true, employee: { _id: result.insertedId, ...doc } });
-  } catch (err) {
-    console.error("Create employee error:", err);
-    res.status(500).json({ error: "فشل في إضافة الموظف" });
-  }
-});
-
-app.put("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "معرف الموظف غير صالح" });
-    }
-    const existing = await employeesCollection.findOne({ _id: new ObjectId(id) });
-    if (!existing) {
-      return res.status(404).json({ error: "الموظف غير موجود" });
-    }
-    if (!isEmployeeInUserScope(existing, req)) {
-      return res.status(403).json({ error: "ليس لديك صلاحية لتعديل موظف في فرع آخر" });
-    }
-
-    const { name, phone, branch, jobId, salary, linkedChefs, active, notes, startDate, healthCertExpiry } = req.body || {};
-    const cleanName = typeof name === 'string' ? name.trim() : '';
-    if (!cleanName) {
-      return res.status(400).json({ error: "اسم الموظف مطلوب" });
-    }
-    if (!jobId || !ObjectId.isValid(jobId)) {
-      return res.status(400).json({ error: "يرجى اختيار الوظيفة" });
-    }
-    const job = await employeeJobsCollection.findOne({ _id: new ObjectId(jobId) });
-    if (!job) {
-      return res.status(404).json({ error: "الوظيفة المختارة غير موجودة" });
-    }
-
-    const userAccess = req.staffUser?.shopAccess || 'all';
-    let resolvedBranch = ['shop1', 'shop2', 'all'].includes(branch) ? branch : (existing.branch || 'shop1');
-    if (userAccess !== 'all') {
-      resolvedBranch = userAccess;
-    }
-
-    const cleanPhone = phone ? formatCanonicalLibyanPhone(phone) : '';
-    const isProduction = job.payType === 'production';
-    const resolvedSalary = isProduction ? null : Math.max(0, Math.round((Number(salary) || 0) * 100) / 100);
-    const resolvedLinks = isProduction && Array.isArray(linkedChefs)
-      ? linkedChefs
-          .filter(c => c && c.chefId && (userAccess === 'all' || c.shop === userAccess))
-          .map(c => ({
-            shop: c.shop === 'shop2' ? 'shop2' : 'shop1',
-            chefId: String(c.chefId),
-            chefName: String(c.chefName || '').trim()
-          }))
-      : [];
-
-    const now = new Date();
-    const updateSet = {
-      name: cleanName,
-      phone: cleanPhone,
-      branch: resolvedBranch,
-      jobId: job._id,
-      jobName: job.name,
-      payType: job.payType,
-      salary: resolvedSalary,
-      linkedChefs: resolvedLinks,
-      active: active !== false,
-      startDate: startDate !== undefined ? normalizeOptionalIsoDate(startDate) : (existing.startDate || ''),
-      healthCertExpiry: healthCertExpiry !== undefined ? normalizeOptionalIsoDate(healthCertExpiry) : (existing.healthCertExpiry || ''),
-      notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
-      updatedAt: now
-    };
-    await employeesCollection.updateOne({ _id: new ObjectId(id) }, { $set: updateSet });
-
-    // Keep cached employee labels aligned in transaction ledger
-    await employeeTransactionsCollection.updateMany(
-      { employeeId: new ObjectId(id) },
-      { $set: { employeeName: cleanName, employeePhone: cleanPhone, employeeJobName: job.name, branch: resolvedBranch } }
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Update employee error:", err);
-    res.status(500).json({ error: "فشل في تحديث بيانات الموظف" });
-  }
-});
-
-app.delete("/api/admin/employees/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "معرف الموظف غير صالح" });
-    }
-    const existing = await employeesCollection.findOne({ _id: new ObjectId(id) });
-    if (!existing) {
-      return res.status(404).json({ error: "الموظف غير موجود" });
-    }
-    if (!isEmployeeInUserScope(existing, req)) {
-      return res.status(403).json({ error: "ليس لديك صلاحية لحذف موظف في فرع آخر" });
-    }
-    await employeesCollection.deleteOne({ _id: new ObjectId(id) });
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Delete employee error:", err);
-    res.status(500).json({ error: "فشل في حذف الموظف" });
-  }
-});
-
-// 5b. Settle & Pay Employee Monthly Dues (Admin Only) — Resets month due to 0 and records payout invoice
-app.post("/api/admin/employees/:id/payout", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "معرف الموظف غير صالح" });
-    }
-    const emp = await employeesCollection.findOne({ _id: new ObjectId(id) });
-    if (!emp) {
-      return res.status(404).json({ error: "الموظف غير موجود" });
-    }
-    if (!isEmployeeInUserScope(emp, req)) {
-      return res.status(403).json({ error: "ليس لديك صلاحية لصرف مستحقات موظف في فرع آخر" });
-    }
-
-    const { monthKey: rawMonth, date: rawDate, note } = req.body || {};
-    const defaultMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
-    const monthKey = (typeof rawMonth === 'string' && /^\d{4}-\d{2}$/.test(rawMonth.trim()))
-      ? rawMonth.trim()
-      : defaultMonth;
-
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    const cleanDate = (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawDate.trim()))
-      ? rawDate.trim()
-      : todayStr;
-    const cleanNote = typeof note === 'string' ? note.trim().slice(0, 600) : '';
-
-    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-
-    const monthTxs = await employeeTransactionsCollection
-      .find({ employeeId: emp._id, monthKey })
-      .sort({ date: 1, createdAt: 1, txNumber: 1 })
-      .toArray();
-
-    const unsettledAdjustments = monthTxs.filter(
-      tx => ['bonus', 'borrowing', 'penalty'].includes(tx.type) && !tx.settledByPayoutId
-    );
-    const priorPayouts = monthTxs.filter(tx => tx.type === 'payout');
-
-    let bonusesTotal = 0;
-    let borrowingsTotal = 0;
-    let penaltiesTotal = 0;
-    const settledTransactions = [];
-
-    for (const t of unsettledAdjustments) {
-      const amt = round2(t.amount);
-      if (t.type === 'bonus') bonusesTotal += amt;
-      else if (t.type === 'borrowing') borrowingsTotal += amt;
-      else if (t.type === 'penalty') penaltiesTotal += amt;
-      settledTransactions.push({
-        _id: t._id,
-        txNumber: t.txNumber,
-        date: t.date || '',
-        type: t.type,
-        amount: amt,
-        reason: t.reason || ''
-      });
-    }
-    bonusesTotal = round2(bonusesTotal);
-    borrowingsTotal = round2(borrowingsTotal);
-    penaltiesTotal = round2(penaltiesTotal);
-
-    const alreadySettledBase = priorPayouts.some(p => Boolean(p.payoutDetails?.settledBaseSalary));
-    const alreadySettledProdGross = round2(
-      priorPayouts.reduce((s, p) => s + (Number(p.payoutDetails?.grossPaySettled) || 0), 0)
-    );
-
-    const isProduction = emp.payType === 'production';
-    let grossPayToSettle = 0;
-    let productionTotalQty = 0;
-    const configuredBaseSalary = isProduction ? 0 : round2(emp.salary);
-
-    if (isProduction) {
-      const chefMetrics = await computeChefProductMetricsForMonth(monthKey);
-      const prodSummary = summarizeEmployeeProduction(emp, chefMetrics);
-      grossPayToSettle = Math.max(0, round2(prodSummary.productionGrossPay - alreadySettledProdGross));
-      productionTotalQty = prodSummary.productionTotalQty;
-    } else {
-      grossPayToSettle = alreadySettledBase ? 0 : round2(emp.salary);
-    }
-
-    if (grossPayToSettle <= 0 && unsettledAdjustments.length === 0) {
-      return res.status(400).json({ error: "تم صرف وتصفية مستحقات هذا الموظف لهذا الشهر مسبقاً ولا توجد مبالغ جديدة" });
-    }
-
-    const deductionsTotal = round2(borrowingsTotal + penaltiesTotal);
-    const totalPayReceived = round2(grossPayToSettle + bonusesTotal - deductionsTotal);
-    if (totalPayReceived < 0) {
-      return res.status(400).json({ error: "إجمالي السلف والخصومات يتجاوز المستحق؛ يرجى مراجعة الحساب قبل الصرف" });
-    }
-
-    const txNumber = await getNextEmpTxNumber();
-    const now = new Date();
-    const settledBaseSalaryFlag = !isProduction && !alreadySettledBase;
-
-    const payoutDoc = {
-      txNumber,
-      employeeId: emp._id,
-      jobId: emp.jobId || null,
-      employeeName: emp.name,
-      employeePhone: emp.phone || '',
-      employeeJobName: emp.jobName || '',
-      branch: emp.branch || 'shop1',
-      type: 'payout',
-      amount: totalPayReceived,
-      reason: cleanNote || `تصفية وصرف مستحقات شهر ${monthKey}`,
-      date: cleanDate,
-      monthKey,
-      payoutDetails: {
-        payType: emp.payType || 'fixed',
-        configuredBaseSalary,
-        settledBaseSalary: settledBaseSalaryFlag,
-        grossPaySettled: grossPayToSettle,
-        productionTotalQty,
-        bonusesTotal,
-        borrowingsTotal,
-        penaltiesTotal,
-        deductionsTotal,
-        totalPayReceived,
-        settledTxIds: unsettledAdjustments.map(t => t._id),
-        settledTransactions
-      },
-      recordedBy: {
-        username: req.staffUser?.username || 'admin',
-        name: req.staffUser?.name || req.staffUser?.username || 'المدير العام',
-        role: 'admin'
-      },
-      createdAt: now
-    };
-
-    const insertRes = await employeeTransactionsCollection.insertOne(payoutDoc);
-    if (unsettledAdjustments.length > 0) {
-      await employeeTransactionsCollection.updateMany(
-        { _id: { $in: unsettledAdjustments.map(t => t._id) } },
-        { $set: { settledByPayoutId: insertRes.insertedId, settledAt: now } }
-      );
-    }
-
-    res.status(201).json({ success: true, payout: { _id: insertRes.insertedId, ...payoutDoc } });
-  } catch (err) {
-    console.error("Employee monthly payout error:", err);
-    res.status(500).json({ error: "فشل في اعتماد وصرف مستحقات الموظف" });
-  }
-});
-
-// 6. Employee Transactions (Bonuses, Borrowings, Penalties & Admin Payouts with Receipt Re-access)
-app.get("/api/admin/employees/transactions", checkMongoDB, checkStaff, async (req, res) => {
-  try {
-    const { month, employeeId, type, branch, q } = req.query;
-    const requestedBranch = branch === 'shop1' ? 'shop1' : (branch === 'shop2' ? 'shop2' : 'all');
-    const query = { ...buildEmployeeBranchScopeQuery(req, requestedBranch) };
-
-    if (month && month !== 'all' && /^\d{4}-\d{2}$/.test(month)) {
-      query.monthKey = month;
-    }
-    const isAdmin = req.staffUser?.role === 'admin';
-    if (employeeId && ObjectId.isValid(employeeId)) {
-      query.employeeId = new ObjectId(employeeId);
-    }
-    if (isAdmin) {
-      if (type && ['bonus', 'borrowing', 'penalty', 'payout'].includes(type)) {
-        query.type = type;
-      }
-    } else {
-      query.type = (type && ['bonus', 'borrowing', 'penalty'].includes(type))
-        ? type
-        : { $in: ['bonus', 'borrowing', 'penalty'] };
-    }
-
-    let list = await employeeTransactionsCollection.find(query).sort({ date: -1, createdAt: -1 }).toArray();
-    if (q && typeof q === 'string' && q.trim()) {
-      const term = q.trim().toLowerCase().replace(/^#?emp-?/i, '');
-      list = list.filter(tx => {
-        const txNumStr = String(tx.txNumber || '');
-        const eName = (tx.employeeName || '').toLowerCase();
-        const reasonStr = (tx.reason || '').toLowerCase();
-        const recName = (tx.recordedBy?.name || '').toLowerCase();
-        return txNumStr.includes(term) || eName.includes(term) || reasonStr.includes(term) || recName.includes(term);
-      });
-    }
-
-    res.json({ success: true, transactions: list });
-  } catch (err) {
-    console.error("Fetch employee transactions error:", err);
-    res.status(500).json({ error: "فشل في جلب سجل عمليات الموظفين" });
-  }
-});
-
-app.post("/api/admin/employees/transactions", checkMongoDB, checkStaff, async (req, res) => {
-  try {
-    const { employeeId, type, amount, reason, date } = req.body || {};
-    if (!employeeId || !ObjectId.isValid(employeeId)) {
-      return res.status(400).json({ error: "يرجى اختيار الموظف" });
-    }
-    if (!['bonus', 'borrowing', 'penalty'].includes(type)) {
-      return res.status(400).json({ error: "نوع العملية غير صالح" });
-    }
-    const cleanAmount = Math.round((Number(amount) || 0) * 100) / 100;
-    if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
-      return res.status(400).json({ error: "المبلغ يجب أن يكون أكبر من صفر" });
-    }
-    const cleanReason = typeof reason === 'string' ? reason.trim() : '';
-    if (!cleanReason) {
-      return res.status(400).json({ error: "يرجى إدخال السبب / البيان الخاص بالعملية" });
-    }
-
-    const emp = await employeesCollection.findOne({ _id: new ObjectId(employeeId) });
-    if (!emp) {
-      return res.status(404).json({ error: "الموظف غير موجود" });
-    }
-    if (!isEmployeeInUserScope(emp, req)) {
-      return res.status(403).json({ error: "ليس لديك صلاحية لتسجيل عملية لموظف في فرع آخر" });
-    }
-
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    const cleanDate = (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim()))
-      ? date.trim()
-      : todayStr;
-    const monthKey = cleanDate.slice(0, 7);
-    const txNumber = await getNextEmpTxNumber();
-    const now = new Date();
-
-    const txDoc = {
-      txNumber,
-      employeeId: emp._id,
-      jobId: emp.jobId || null,
-      employeeName: emp.name,
-      employeePhone: emp.phone || '',
-      employeeJobName: emp.jobName || '',
-      branch: emp.branch || 'shop1',
-      type,
-      amount: cleanAmount,
-      reason: cleanReason.slice(0, 600),
-      date: cleanDate,
-      monthKey,
-      recordedBy: {
-        username: req.staffUser?.username || 'staff',
-        name: req.staffUser?.name || req.staffUser?.username || 'موظف',
-        role: req.staffUser?.role === 'admin' ? 'admin' : 'order_manager'
-      },
-      createdAt: now
-    };
-
-    const result = await employeeTransactionsCollection.insertOne(txDoc);
-    res.status(201).json({ success: true, transaction: { _id: result.insertedId, ...txDoc } });
-  } catch (err) {
-    console.error("Create employee transaction error:", err);
-    res.status(500).json({ error: "فشل في تسجيل العملية المالية للموظف" });
-  }
-});
-
-app.delete("/api/admin/employees/transactions/:id", checkMongoDB, checkAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "معرف العملية غير صالح" });
-    }
-    const existingTx = await employeeTransactionsCollection.findOne({ _id: new ObjectId(id) });
-    if (!existingTx) {
-      return res.status(404).json({ error: "العملية غير موجودة" });
-    }
-    await employeeTransactionsCollection.deleteOne({ _id: existingTx._id });
-    if (existingTx.type === 'payout') {
-      await employeeTransactionsCollection.updateMany(
-        { settledByPayoutId: existingTx._id },
-        { $unset: { settledByPayoutId: "", settledAt: "" } }
-      );
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Delete employee transaction error:", err);
-    res.status(500).json({ error: "فشل في حذف العملية" });
-  }
+registerEmployeeRoutes(app, {
+  getCollections: () => ({
+    productsCollection,
+    productsCollection2,
+    ordersCollection,
+    ordersCollection2,
+    chefsCollection,
+    chefsCollection2,
+    employeesCollection,
+    employeeJobsCollection,
+    employeeTransactionsCollection,
+    countersCollection,
+  }),
+  getMongoClient: () => mongoClient,
+  getNextEmpTxNumber,
+  getOrderEffectiveDateStr,
+  ObjectId,
+  idempotencyGuard,
+  middlewares: {
+    checkMongoDB,
+    checkStaff,
+    checkAdmin,
+  },
+  logger,
 });
 
 // ============ CHEF MANAGEMENT & PRODUCTION REPORT ============
@@ -8140,13 +7085,13 @@ const connectWithRetry = async () => {
     });
     if (isShuttingDown) {
       await client.close().catch((closeErr) => {
-        console.warn("[SHUTDOWN] Failed closing late MongoClient:", closeErr?.message);
+        logger.warn("[SHUTDOWN] Failed closing late MongoClient", { error: closeErr?.message });
       });
       return;
     }
     mongoClient = client;
     mongoConnectAttempts = 0;
-    console.log("✓ MongoDB connected successfully");
+    logger.info("✓ MongoDB connected successfully");
     db = client.db("emenu");
     db2 = client.db("emenu2");
     productsCollection = db.collection("products");
@@ -8176,7 +7121,21 @@ const connectWithRetry = async () => {
     const safeIndex = (coll, spec, opts) => {
       const collName = coll?.collectionName || "unknown";
       return coll.createIndex(spec, opts).catch((err) => {
-        console.warn(`[DB INDEX WARN] collection=${collName} spec=${JSON.stringify(spec)}:`, err?.message || err);
+        if (
+          err?.code === 85 ||
+          err?.code === 86 ||
+          err?.codeName === "IndexOptionsConflict" ||
+          err?.codeName === "IndexKeySpecsConflict"
+        ) {
+          logger.info("[DB INDEX EXISTS]", { coll: collName, spec, code: err.code });
+          return;
+        }
+        logger.warn("[DB INDEX WARN]", {
+          coll: collName,
+          spec,
+          code: err?.code,
+          error: err?.message || String(err),
+        });
       });
     };
 
@@ -8414,11 +7373,11 @@ const connectWithRetry = async () => {
     const expDelayMs = Math.min(60000, 2000 * Math.pow(2, Math.min(mongoConnectAttempts - 1, 5)));
     const jitterMs = Math.floor(Math.random() * Math.min(3000, expDelayMs * 0.25));
     const retryDelayMs = expDelayMs + jitterMs;
-    console.error(
-      `✗ MongoDB connection failed (attempt ${mongoConnectAttempts}):`,
-      err.message,
-      `- Retrying in ${retryDelayMs}ms...`
-    );
+    logger.error("MongoDB connection failed", {
+      attempt: mongoConnectAttempts,
+      error: err.message,
+      retryDelayMs,
+    });
     mongoRetryTimer = setTimeout(connectWithRetry, retryDelayMs);
     if (typeof mongoRetryTimer.unref === "function") {
       mongoRetryTimer.unref();
@@ -8543,7 +7502,22 @@ app.post("/api/admin/orders/cleanup-cancelled", checkMongoDB, requireGlobalAdmin
 });
 
 // Final Express Error Handler Middleware (must be mounted after all routes)
-app.use(errorHandlerMiddleware);
+app.use((err, req, res, next) => {
+  if (res && res.headersSent) {
+    return next(err);
+  }
+  const status = err?.statusCode ?? err?.status ?? 500;
+  if (status >= 500) {
+    logger.error("[HTTP ERROR BOUNDARY]", {
+      requestId: req?.id,
+      method: req?.method,
+      path: req?.originalUrl || req?.url,
+      statusCode: status,
+      err,
+    });
+  }
+  return errorHandlerMiddleware(err, req, res, next);
+});
 
 connectWithRetry();
 
@@ -8554,7 +7528,7 @@ trackInterval(setInterval(cleanupExpiredCancelledOrders, 30 * 60 * 1000));
 trackInterval(setInterval(reconcileInventoryStock, 6 * 60 * 60 * 1000));
 
 const httpServer = app.listen(PORT, () => {
-  console.log(`✓ Server running on port ${PORT}`);
+  logger.info(`✓ Server running on port ${PORT}`, { port: PORT, env: config.nodeEnv });
 });
 
 let shutdownPromise = null;
@@ -8562,12 +7536,17 @@ const gracefulShutdown = (signal, exitCode = 0) => {
   if (shutdownPromise) return shutdownPromise;
   isShuttingDown = true;
   mongoConnected = false;
-  console.log(`[SHUTDOWN] Received ${signal}; closing server and connections...`);
+  logger.info(`[SHUTDOWN] Received ${signal}; closing server and connections...`, {
+    signal,
+    exitCode,
+  });
 
   if (mongoRetryTimer) {
     clearTimeout(mongoRetryTimer);
     mongoRetryTimer = null;
   }
+
+  idempotencyGuard.stop();
 
   for (const handle of activeIntervals) {
     clearInterval(handle);
@@ -8575,7 +7554,7 @@ const gracefulShutdown = (signal, exitCode = 0) => {
   activeIntervals.length = 0;
 
   const forceExitTimer = setTimeout(() => {
-    console.error("[SHUTDOWN] Forced exit after 10s shutdown timeout");
+    logger.error("[SHUTDOWN] Forced exit after 10s shutdown timeout");
     process.exit(exitCode || 1);
   }, 10000);
   if (typeof forceExitTimer.unref === "function") {
@@ -8588,7 +7567,7 @@ const gracefulShutdown = (signal, exitCode = 0) => {
         if (!httpServer) return resolve();
         httpServer.close((closeErr) => {
           if (closeErr) {
-            console.error("[SHUTDOWN] HTTP server close error:", closeErr.message);
+            logger.error("[SHUTDOWN] HTTP server close error", { error: closeErr.message });
           }
           resolve();
         });
@@ -8599,7 +7578,7 @@ const gracefulShutdown = (signal, exitCode = 0) => {
 
       if (mongoClient) {
         await mongoClient.close().catch((mongoCloseErr) => {
-          console.error("[SHUTDOWN] MongoClient close error:", mongoCloseErr?.message);
+          logger.error("[SHUTDOWN] MongoClient close error", { error: mongoCloseErr?.message });
         });
         mongoClient = null;
       }
@@ -8614,11 +7593,11 @@ const gracefulShutdown = (signal, exitCode = 0) => {
 
 // Process Crash Protection & Lifecycle Signals
 process.on("unhandledRejection", (reason) => {
-  console.error("[UNHANDLED REJECTION]", reason);
+  logger.error("[UNHANDLED REJECTION]", { reason });
 });
 
 process.on("uncaughtException", (err) => {
-  console.error("[FATAL UNCAUGHT EXCEPTION]", err);
+  logger.error("[FATAL UNCAUGHT EXCEPTION]", { err });
   gracefulShutdown("uncaughtException", 1);
 });
 
