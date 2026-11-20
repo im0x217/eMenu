@@ -20,19 +20,35 @@
 
 Your brand supports dynamic multi-shop theme branding synchronized with `frontend/src/tokens/tokens.json`:
 
-| Role | Hex | Token / CSS Variable | Usage |
-|------|-----|----------------------|-------|
+| Role | Hex / Value | Token / CSS Variable | Usage |
+|------|-------------|----------------------|-------|
 | **Shop 1 Primary (Gold)** | `#fdb518` | `--color-gold` / `--primary-color` | Warm Gold accent & CTAs for Shop 1 (luxury pastries & sweets) |
+| **Shop 1 On-Primary** | `#0c0603` | `--primary-on-color` (`.shop-theme-shop1`) | High-contrast dark foreground on Shop 1 gold surfaces |
 | **Shop 2 Primary (Navy)** | `#1e3a5f` | `--color-blue` / `--primary-color` | Deep Navy Blue accent & CTAs for Shop 2 (dry pastries & Nawashef) |
-| **Warm Backdrop** | `#f7f3ec` | `--color-warm-bg` / `--bg-dark` | Global warm cream background canvas |
-| **Card Surface** | `#fffdf9` | `--color-warm-card` / `--bg-card` | Warm elevated card & panel surface |
-| **Foreground / Text** | `#2c2520` | `--color-warm-text` | Rich dark espresso primary typography |
-| **Muted Text** | `#685f58` | `--color-warm-muted` / `--text-muted` | Secondary details & metadata (WCAG AA >= 5.4:1 on warm surfaces) |
+| **Shop 2 On-Primary** | `#ffffff` | `--primary-on-color` (`.shop-theme-shop2`) | High-contrast white foreground on Shop 2 navy surfaces |
+| **Surface Canvas** | `#f7f3ec` | `--surface-canvas` (`--color-warm-bg`, `--bg-dark`) | Global warm cream background canvas |
+| **Surface Card** | `#fffdf9` | `--surface-card` (`--color-warm-card`, `--bg-card`) | Warm elevated card & panel surface |
+| **Surface Subtle** | `#f1ece4` | `--surface-subtle` | Subtle warm inset surface for pills, bars, and muted containers |
+| **Surface Elevated** | `#ffffff` | `--surface-elevated` | Crisp white surface for modals, popovers, and admin cards |
+| **Text Primary** | `#2c2520` | `--text-primary` (`--color-warm-text`) | Rich dark espresso primary typography |
+| **Text Muted** | `#685f58` | `--text-muted` (`--color-warm-muted`) | Secondary details & metadata (WCAG AA >= 5.4:1 on warm surfaces) |
+| **Text Inverse** | `#ffffff` | `--text-inverse` | Inverse white text on dark or saturated fills |
+| **Border Subtle** | `rgba(44, 37, 32, 0.08)` | `--border-subtle` | Hairline warm divider and subtle border |
+| **Border Default** | `#e5dfd5` | `--border-default` | Default warm border for cards, tables, and containers |
+| **Border Strong** | `#cbd5e1` | `--border-strong` | Strong control border for inputs, outline buttons, and interactive dividers |
 | **Danger / Alert Badge** | `#dc2626` | `--color-danger-badge` | WCAG AA accessible notification & error badge with `#ffffff` text (4.83:1) |
 | **Card Media Wrapper** | `#0f172a` | `--color-slate-900` / `--product-card-image-bg` | Dark slate foundation for 4:3 product image wrappers |
 | **Card Border** | `rgba(44, 37, 32, 0.06)` | `--border-card` | Warm subtle card outline (`frontend/src/style.css`) |
 
-**Color Notes:** Preserved original e-Menu multi-tenant brand identities: Shop 1 (Warm Gold `#fdb518` with `#0c0603` button text) and Shop 2 (Deep Navy `#1e3a5f` with `#ffffff` button text), set on the canonical warm cream canvas `#f7f3ec`, `#fffdf9` card surfaces, and `#685f58` muted copy from `frontend/src/tokens/tokens.json`.
+### Status Tokens (`semantic.status`)
+
+| State | Background (`--*-bg`) | Foreground (`--*-fg`) | Border (`--*-border`) | Usage |
+|-------|-----------------------|-----------------------|-----------------------|-------|
+| **Valid** | `#dcfce7` (`--status-valid-bg`) | `#166534` (`--status-valid-fg`) | `#86efac` (`--status-valid-border`) | Valid health certificates, bonuses, positive net pay, settled payouts |
+| **Approaching** | `#fef3c7` (`--status-approaching-bg`) | `#92400e` (`--status-approaching-fg`) | `#fcd34d` (`--status-approaching-border`) | Expiring-soon health certificates (`0..30` days), production badges, borrowings |
+| **Expired** | `#fee2e2` (`--status-expired-bg`) | `#991b1b` (`--status-expired-fg`) | `#fca5a5` (`--status-expired-border`) | Expired health certificates, penalties, negative balance, delete hover |
+
+**Color Notes:** Preserved original e-Menu multi-tenant brand identities: Shop 1 (Warm Gold `#fdb518` with `--primary-on-color: #0c0603`) and Shop 2 (Deep Navy `#1e3a5f` with `--primary-on-color: #ffffff`), set on `--surface-canvas: #f7f3ec`, `--surface-card: #fffdf9`, `--surface-subtle: #f1ece4`, `--surface-elevated: #ffffff`, and `--text-muted: #685f58` from `frontend/src/tokens/tokens.json`.
 
 ### Typography
 
@@ -77,10 +93,10 @@ Your brand supports dynamic multi-shop theme branding synchronized with `fronten
 ### Buttons
 
 ```css
-/* Primary Button — uses dynamic --primary-color per shop theme */
+/* Primary Button — uses dynamic --primary-color and --primary-on-color per shop theme */
 .btn-primary {
   background: var(--primary-color);
-  color: #ffffff;
+  color: var(--primary-on-color, var(--text-inverse));
   padding: 0.85rem 1.5rem;
   border-radius: 12px;
   font-family: var(--typography-font-family);
@@ -90,16 +106,16 @@ Your brand supports dynamic multi-shop theme branding synchronized with `fronten
   cursor: pointer;
 }
 
-/* Shop-specific contrast overrides */
-.shop-theme-shop1 .btn-primary { color: #0c0603; } /* Dark text on Gold */
-.shop-theme-shop2 .btn-primary { color: #ffffff; } /* White text on Navy */
+/* Shop-specific contrast tokens emitted by tokens.css */
+.shop-theme-shop1 .btn-primary { color: var(--primary-on-color); } /* #0c0603 on Gold */
+.shop-theme-shop2 .btn-primary { color: var(--primary-on-color); } /* #ffffff on Navy */
 ```
 
 ### Cards
 
 ```css
 .glass-panel {
-  background: var(--color-warm-card); /* #fffdf9 — warm white */
+  background: var(--surface-card); /* #fffdf9 — warm white */
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg); /* 16px */
   box-shadow: var(--box-shadow-md);
@@ -116,7 +132,7 @@ Your brand supports dynamic multi-shop theme branding synchronized with `fronten
 ```css
 .input {
   padding: 12px 16px;
-  border: 1px solid var(--border-card);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   font-size: var(--typography-font-size-input-mobile);
   transition: border-color 200ms ease, box-shadow 200ms ease;
@@ -142,7 +158,7 @@ Your brand supports dynamic multi-shop theme branding synchronized with `fronten
 }
 
 .modal {
-  background: var(--color-warm-card); /* #fffdf9 */
+  background: var(--surface-card); /* #fffdf9 */
   border-radius: var(--bottom-sheet-radius); /* 20px on mobile sheets */
   padding: var(--space-xl);
   box-shadow: var(--box-shadow-xl);
@@ -188,7 +204,7 @@ Your brand supports dynamic multi-shop theme branding synchronized with `fronten
 Before delivering any UI code, verify:
 
 - [ ] Token source of truth (`frontend/src/tokens/tokens.json`) compiled via `npm run tokens:build` (`scripts/build-tokens.js`) with zero manual edits to `tokens.css` / `tokens.js`
-- [ ] `npm run ux:audit` passes with 0 Errors and 0 Warnings
+- [ ] `npm run ux:audit` passes with 0 Errors and 0 Warnings (including Guard A acyclic `tokens.css` check and Guard B Habit 19 Arabic placeholder check)
 - [ ] No emojis used as interactive UI icons; decorative `<svg>` elements declare `aria-hidden="true"`
 - [ ] Consistent icon set (`@hugeicons/vue`, `@phosphor-icons/vue`, or inline SVG)
 - [ ] Interactive touch targets meet `>= 44px` (`--touch-target-min: 48px`) with `8px` clearance

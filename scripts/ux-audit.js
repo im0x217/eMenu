@@ -18,6 +18,7 @@ const TARGET_DIRS = [
   path.resolve(__dirname, '../frontend/src/components'),
   path.resolve(__dirname, '../frontend/src/views')
 ];
+const TOKENS_CSS_PATH = path.resolve(__dirname, '../frontend/src/tokens/tokens.css');
 
 let totalFilesChecked = 0;
 let totalPasses = 0;
@@ -27,6 +28,66 @@ let totalErrors = 0;
 console.log('\n============================================================');
 console.log('   e-Menu Automated UI/UX & WCAG 2.1 Empirical Audit');
 console.log('============================================================\n');
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractRootTemplate(content) {
+  const start = content.indexOf('<template>');
+  if (start === -1) return null;
+  const re = /<\/?template\b[^>]*>/gi;
+  re.lastIndex = start;
+  let depth = 0;
+  let match;
+  while ((match = re.exec(content)) !== null) {
+    if (match[0].startsWith('</')) {
+      depth--;
+      if (depth === 0) {
+        return content.slice(start + '<template>'.length, match.index);
+      }
+    } else if (!match[0].endsWith('/>')) {
+      depth++;
+    }
+  }
+  return null;
+}
+
+// Guard A: Verify tokens.css has zero cyclic CSS custom property self-references
+function auditTokensCss() {
+  const relativePath = path.relative(path.resolve(__dirname, '..'), TOKENS_CSS_PATH);
+  totalFilesChecked++;
+  console.log(`Auditing: ${relativePath}`);
+
+  if (!fs.existsSync(TOKENS_CSS_PATH)) {
+    console.log(`  [FAIL] Tokens Integrity (DTCG): ${relativePath} not found.\n`);
+    totalErrors++;
+    return;
+  }
+
+  const rawCss = fs.readFileSync(TOKENS_CSS_PATH, 'utf-8');
+  const strippedCss = rawCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const declarations = [...strippedCss.matchAll(/(--[a-zA-Z0-9_-]+)\s*:\s*([^;{}]+)/g)];
+  const cyclicIssues = [];
+
+  for (const [, propName, propValue] of declarations) {
+    const selfRefPattern = new RegExp(`var\\(\\s*${escapeRegExp(propName)}\\s*(?:,|\\))`);
+    if (selfRefPattern.test(propValue)) {
+      cyclicIssues.push(`${propName}: ${propValue.trim()}`);
+    }
+  }
+
+  if (cyclicIssues.length === 0) {
+    console.log('  [PASS] Zero cyclic CSS custom property self-references.\n');
+    totalPasses++;
+  } else {
+    cyclicIssues.forEach(entry => {
+      console.log(`  [FAIL] Tokens Integrity (DTCG): Cyclic CSS variable self-reference detected (${entry}).`);
+      totalErrors++;
+    });
+    console.log('');
+  }
+}
 
 function auditFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf-8');
@@ -122,6 +183,36 @@ function auditFile(filePath) {
     }
   });
 
+  // 5b. Guard B: Audit <input|textarea> placeholders for Habit 19 Arabic copy standards
+  const fullTemplate = extractRootTemplate(content) || template;
+  const placeholderControls = fullTemplate.match(/<(input|textarea)\b(?:[^"'>]|"[^"]*"|'[^']*')*>/gi) || [];
+  placeholderControls.forEach((tag, idx) => {
+    const phMatch = tag.match(/(?:^|\s)((?:v-bind)?:?placeholder)\s*=\s*("([^"]*)"|'([^']*)')/i);
+    if (!phMatch) return;
+    const isDynamic = phMatch[1].startsWith(':') || phMatch[1].startsWith('v-bind:');
+    const rawVal = phMatch[3] ?? phMatch[4] ?? '';
+    const candidates = isDynamic
+      ? [...rawVal.matchAll(/(?:'([^']*)'|"([^"]*)"|`([^`]*)`)/g)].map(m => m[1] ?? m[2] ?? m[3] ?? '')
+      : [rawVal];
+
+    for (const val of candidates) {
+      if (/\.\.\./.test(val)) {
+        issues.push({
+          type: 'WARNING',
+          rule: 'Habit 19 (Arabic Placeholder Copy)',
+          msg: `Control #${idx + 1} placeholder uses ASCII '...' instead of typographic ellipsis '…': "${val}".`
+        });
+      }
+      if (/^\s*(?:اكتب|أدخل|ادخل)(?=[\s…\u2026:.!؟-]|$)/.test(val)) {
+        issues.push({
+          type: 'WARNING',
+          rule: 'Habit 19 (Arabic Placeholder Copy)',
+          msg: `Control #${idx + 1} placeholder begins with an imperative verb ('اكتب'/'أدخل'): "${val}".`
+        });
+      }
+    }
+  });
+
   // 6. Audit Small Interactive Hit Targets (WCAG 2.5.5 / RICO Mobile Bounding Box)
   // Scoped to mobile & customer-facing views; desktop back-office dashboards use dense pointer metrics
   const isDesktopBackOffice = filePath.endsWith('AdminView.vue');
@@ -180,6 +271,8 @@ function scanDir(dir) {
     }
   }
 }
+
+auditTokensCss();
 
 for (const d of TARGET_DIRS) {
   scanDir(d);

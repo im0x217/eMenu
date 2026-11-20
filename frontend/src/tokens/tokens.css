@@ -59,6 +59,27 @@
   --radius-xl: var(--border-radius-xl);
   --radius-pill: var(--border-radius-pill);
 
+  /* Semantic Tokens: Surface, Text, Border, Status */
+  --surface-canvas: #f7f3ec;
+  --surface-card: #fffdf9;
+  --surface-subtle: #f1ece4;
+  --surface-elevated: #ffffff;
+  --text-primary: #2c2520;
+  --text-muted: #685f58;
+  --text-inverse: #ffffff;
+  --border-subtle: rgba(44, 37, 32, 0.08);
+  --border-default: #e5dfd5;
+  --border-strong: #cbd5e1;
+  --status-valid-bg: #dcfce7;
+  --status-valid-fg: #166534;
+  --status-valid-border: #86efac;
+  --status-approaching-bg: #fef3c7;
+  --status-approaching-fg: #92400e;
+  --status-approaching-border: #fcd34d;
+  --status-expired-bg: #fee2e2;
+  --status-expired-fg: #991b1b;
+  --status-expired-border: #fca5a5;
+
   /* Component-Scoped Tokens */
   --product-card-aspect-ratio: 4 / 3;
   --product-card-radius: 16px;
@@ -72,10 +93,12 @@
 .shop-theme-shop1 {
   --primary-color: #fdb518;
   --primary-glow: rgba(253, 181, 24, 0.15);
+  --primary-on-color: #0c0603;
 }
 
 /* Shop 2 Theme (Navy Dry Pastries) */
 .shop-theme-shop2 {
   --primary-color: #1e3a5f;
   --primary-glow: rgba(30, 58, 95, 0.15);
+  --primary-on-color: #ffffff;
 }

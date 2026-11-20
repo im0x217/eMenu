@@ -17,10 +17,15 @@ const TOKENS_JSON_PATH = path.join(ROOT_DIR, 'frontend', 'src', 'tokens', 'token
 const TOKENS_CSS_PATH = path.join(ROOT_DIR, 'frontend', 'src', 'tokens', 'tokens.css');
 const TOKENS_JS_PATH = path.join(ROOT_DIR, 'frontend', 'src', 'tokens', 'tokens.js');
 
-function resolveValue(tokenSet, ref) {
+function resolveValue(tokenSet, ref, seen = new Set()) {
   if (typeof ref !== 'string' || !ref.startsWith('{') || !ref.endsWith('}')) {
     return ref;
   }
+  if (seen.has(ref)) {
+    throw new Error(`[build-tokens] Cyclic token reference detected in tokens.json: ${ref}`);
+  }
+  const nextSeen = new Set(seen);
+  nextSeen.add(ref);
   const refPath = ref.slice(1, -1).split('.');
   let current = tokenSet;
   for (const part of refPath) {
@@ -32,9 +37,9 @@ function resolveValue(tokenSet, ref) {
     }
   }
   if (current && typeof current === 'object' && 'value' in current) {
-    return resolveValue(tokenSet, current.value);
+    return resolveValue(tokenSet, current.value, nextSeen);
   }
-  return typeof current === 'string' ? resolveValue(tokenSet, current) : current;
+  return typeof current === 'string' ? resolveValue(tokenSet, current, nextSeen) : current;
 }
 
 function kebabCase(str) {
@@ -74,6 +79,20 @@ export function buildTokens() {
   const globalTokens = tokens.global ? flattenTokens(tokens.global, tokens) : {};
   const componentTokens = tokens.component ? flattenTokens(tokens.component, tokens) : {};
 
+  // Separate non-shop semantic groups (surface, text, border, status) from shop themes
+  const semanticGroups = {};
+  const semanticRootTokens = {};
+  if (tokens.semantic) {
+    for (const [groupKey, groupVal] of Object.entries(tokens.semantic)) {
+      if (groupKey.startsWith('$') || !groupVal || typeof groupVal !== 'object') continue;
+      const flattened = flattenTokens(groupVal, tokens);
+      semanticGroups[groupKey] = flattened;
+      if (groupKey !== 'shop1' && groupKey !== 'shop2') {
+        Object.assign(semanticRootTokens, flattenTokens(groupVal, tokens, kebabCase(groupKey)));
+      }
+    }
+  }
+
   // Construct CSS output
   const lines = [
     '/**',
@@ -105,6 +124,14 @@ export function buildTokens() {
   if (globalTokens['border-radius-xl']) lines.push(`  --radius-xl: var(--border-radius-xl);`);
   if (globalTokens['border-radius-pill']) lines.push(`  --radius-pill: var(--border-radius-pill);`);
 
+  if (Object.keys(semanticRootTokens).length > 0) {
+    lines.push('');
+    lines.push('  /* Semantic Tokens: Surface, Text, Border, Status */');
+    for (const [key, val] of Object.entries(semanticRootTokens)) {
+      lines.push(`  --${key}: ${val};`);
+    }
+  }
+
   lines.push('');
   lines.push('  /* Component-Scoped Tokens */');
   for (const [key, val] of Object.entries(componentTokens)) {
@@ -114,37 +141,46 @@ export function buildTokens() {
   lines.push('');
 
   // Semantic Shop Themes
-  if (tokens.semantic?.shop1) {
+  if (semanticGroups.shop1) {
     lines.push('/* Shop 1 Theme (Gold Luxury) */');
     lines.push('.shop-theme-shop1 {');
-    const shop1 = flattenTokens(tokens.semantic.shop1, tokens);
+    const shop1 = semanticGroups.shop1;
     if (shop1['primary']) lines.push(`  --primary-color: ${shop1['primary']};`);
     if (shop1['glow']) lines.push(`  --primary-glow: ${shop1['glow']};`);
+    if (shop1['on-primary']) lines.push(`  --primary-on-color: ${shop1['on-primary']};`);
     lines.push('}');
     lines.push('');
   }
 
-  if (tokens.semantic?.shop2) {
+  if (semanticGroups.shop2) {
     lines.push('/* Shop 2 Theme (Navy Dry Pastries) */');
     lines.push('.shop-theme-shop2 {');
-    const shop2 = flattenTokens(tokens.semantic.shop2, tokens);
+    const shop2 = semanticGroups.shop2;
     if (shop2['primary']) lines.push(`  --primary-color: ${shop2['primary']};`);
     if (shop2['glow']) lines.push(`  --primary-glow: ${shop2['glow']};`);
+    if (shop2['on-primary']) lines.push(`  --primary-on-color: ${shop2['on-primary']};`);
     lines.push('}');
     lines.push('');
   }
 
-  fs.writeFileSync(TOKENS_CSS_PATH, lines.join('\n'), 'utf-8');
+  const cssOutput = lines.join('\n');
+  // Fail fast if any cyclic CSS custom property self-reference is emitted
+  const decls = [...cssOutput.matchAll(/(--[a-zA-Z0-9_-]+)\s*:\s*([^;{}]+)/g)];
+  for (const [, prop, val] of decls) {
+    const escaped = prop.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`var\\(\\s*${escaped}\\s*(?:,|\\))`).test(val)) {
+      throw new Error(`[build-tokens] Cyclic CSS variable self-reference emitted: ${prop}: ${val.trim()}`);
+    }
+  }
+
+  fs.writeFileSync(TOKENS_CSS_PATH, cssOutput, 'utf-8');
   console.log(`[build-tokens] Generated ${TOKENS_CSS_PATH}`);
 
   // Construct JS output
   const resolvedTokens = {
     global: globalTokens,
     component: componentTokens,
-    semantic: {
-      shop1: tokens.semantic?.shop1 ? flattenTokens(tokens.semantic.shop1, tokens) : {},
-      shop2: tokens.semantic?.shop2 ? flattenTokens(tokens.semantic.shop2, tokens) : {}
-    }
+    semantic: semanticGroups
   };
 
   const jsContent = [
