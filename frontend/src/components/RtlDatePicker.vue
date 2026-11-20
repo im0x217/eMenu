@@ -620,6 +620,7 @@ onUnmounted(() => {
 }
 
 .dp-footer-btn {
+  position: relative;
   min-height: 38px;
   padding: 4px 12px;
   border-radius: 8px;
@@ -631,6 +632,17 @@ onUnmounted(() => {
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.dp-footer-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .dp-footer-btn:hover {

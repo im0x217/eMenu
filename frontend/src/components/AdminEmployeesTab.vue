@@ -174,7 +174,7 @@
             <span class="emp-kpi-val text-mono">{{ kpis.activeCount }} <small>/ {{ kpis.totalEmployees }}</small></span>
           </div>
           <div class="emp-kpi-icon icon-slate" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
           </div>
         </div>
 
@@ -184,7 +184,7 @@
             <span class="emp-kpi-val text-mono">{{ formatCurrency(kpis.totalFixedSalaries) }}</span>
           </div>
           <div class="emp-kpi-icon icon-blue" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
           </div>
         </div>
 
@@ -194,7 +194,7 @@
             <span class="emp-kpi-val text-mono text-primary">{{ formatCurrency(kpis.totalProductionPay) }}</span>
           </div>
           <div class="emp-kpi-icon icon-gold" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
           </div>
         </div>
 
@@ -208,7 +208,7 @@
             </span>
           </div>
           <div class="emp-kpi-icon icon-green" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
         </div>
 
@@ -221,7 +221,7 @@
             </small>
           </div>
           <div class="emp-kpi-icon icon-emerald" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
         </div>
       </div>
@@ -821,7 +821,7 @@
           <div class="modal-header">
             <div class="modal-title-group">
               <div class="modal-title-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <h3 id="emp-modal-title">{{ empForm._id ? 'تعديل بيانات الموظف' : 'إضافة موظف جديد' }}</h3>
             </div>
@@ -920,7 +920,7 @@
                       class="chef-link-pill"
                       :class="{ selected: isChefLinked('shop1', ch.chefId) }"
                     >
-                      <input type="checkbox" :checked="isChefLinked('shop1', ch.chefId)" @change="toggleLinkedChef(ch)" />
+                      <input type="checkbox" :checked="isChefLinked('shop1', ch.chefId)" :aria-label="'ربط الشيف ' + (ch.chefName || ch.name || '')" @change="toggleLinkedChef(ch)" />
                       <span>{{ ch.chefName }}</span>
                     </label>
                   </div>
@@ -935,7 +935,7 @@
                       class="chef-link-pill"
                       :class="{ selected: isChefLinked('shop2', ch.chefId) }"
                     >
-                      <input type="checkbox" :checked="isChefLinked('shop2', ch.chefId)" @change="toggleLinkedChef(ch)" />
+                      <input type="checkbox" :checked="isChefLinked('shop2', ch.chefId)" :aria-label="'ربط الشيف ' + (ch.chefName || ch.name || '')" @change="toggleLinkedChef(ch)" />
                       <span>{{ ch.chefName }}</span>
                     </label>
                   </div>
@@ -986,7 +986,7 @@
           <div class="modal-header">
             <div class="modal-title-group">
               <div class="modal-title-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               </div>
               <h3 id="emp-tx-modal-title">تسجيل مكافأة أو سلفة أو خصم</h3>
             </div>
@@ -1091,7 +1091,7 @@
           <div class="modal-header">
             <div class="modal-title-group">
               <div class="modal-title-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
               </div>
               <div>
                 <h3 id="chef-coeff-modal-title">قيمة الوحدة وأرباح إنتاج الشيف: {{ selectedChefEmp.name }}</h3>
@@ -1208,7 +1208,7 @@
           <div class="modal-header">
             <div class="modal-title-group">
               <div class="modal-title-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
               </div>
               <h3 id="job-modal-title">{{ jobForm._id ? 'تعديل الوظيفة' : 'إضافة وظيفة جديدة' }}</h3>
             </div>
@@ -1264,7 +1264,7 @@
           <div class="modal-header">
             <div class="modal-title-group">
               <div class="modal-title-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </div>
               <div>
                 <h3 id="emp-ledger-modal-title">سجل وإيصالات الموظف: {{ ledgerEmp.name }}</h3>
@@ -1346,7 +1346,7 @@
           <div class="modal-header">
             <div class="modal-title-group">
               <div class="modal-title-icon payout" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </div>
               <div>
                 <h3 id="emp-payout-modal-title">صرف وتصفية مستحقات: {{ payoutEmp.name }}</h3>
@@ -2845,6 +2845,7 @@ export default {
 }
 
 .emp-month-arrow {
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 8px;
@@ -2856,6 +2857,16 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.emp-month-arrow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .emp-month-arrow:hover {
@@ -2899,6 +2910,7 @@ export default {
 }
 
 .emp-filter-pill {
+  position: relative;
   padding: 6px 12px;
   min-height: 36px;
   border-radius: 8px;
@@ -2910,6 +2922,17 @@ export default {
   font-size: 0.82rem;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.emp-filter-pill::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .emp-filter-pill.active {

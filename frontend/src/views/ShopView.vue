@@ -486,7 +486,9 @@ const cachedHasBulk = ref((() => {
   try {
     const val = localStorage.getItem(`emenu_has_bulk_${shopStore.activeShop || 'shop1'}`);
     if (val !== null) return val === 'true';
-  } catch (e) {}
+  } catch (e) {
+    console.warn('[ShopView] Failed to read cached has_bulk flag from localStorage:', e);
+  }
   return true; // Default to true so space is preserved without header height pop
 })());
 
@@ -498,7 +500,9 @@ const hasBulkProducts = computed(() => {
     );
     try {
       localStorage.setItem(`emenu_has_bulk_${shopStore.activeShop || 'shop1'}`, String(has));
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[ShopView] Failed to cache has_bulk flag in localStorage:', e);
+    }
     return has;
   }
   // While loading products, use the cached knowledge to prevent layout shift

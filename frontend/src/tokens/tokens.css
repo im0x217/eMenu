@@ -58,8 +58,6 @@
   --radius-lg: var(--border-radius-lg);
   --radius-xl: var(--border-radius-xl);
   --radius-pill: var(--border-radius-pill);
-  --touch-target-min: var(--touch-target-min);
-  --touch-target-clearance: var(--touch-target-clearance);
 
   /* Component-Scoped Tokens */
   --product-card-aspect-ratio: 4 / 3;

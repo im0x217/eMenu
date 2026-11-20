@@ -193,6 +193,7 @@ const vSheetGestureDirective = vSheetGesture;
 .text-small { font-size: 0.82rem; }
 
 .modal-close-btn {
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 10px;
@@ -204,6 +205,16 @@ const vSheetGestureDirective = vSheetGesture;
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.modal-close-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .modal-close-btn:hover {

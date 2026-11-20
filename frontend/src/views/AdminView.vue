@@ -7389,7 +7389,7 @@
 <script>
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick, defineAsyncComponent } from 'vue';
 import { gsap } from 'gsap';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, isNavigationFailure, NavigationFailureType } from 'vue-router';
 import { useToastStore } from '../stores/toast';
 import CategoryIcon from '../components/CategoryIcon.vue';
 import JsBarcode from 'jsbarcode';
@@ -7482,7 +7482,9 @@ export default {
         if (VALID_TABS.includes(queryTab)) return queryTab;
         const saved = localStorage.getItem('emenu_admin_active_tab');
         if (VALID_TABS.includes(saved)) return saved;
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[AdminView] Failed to read saved active tab from localStorage:', e);
+      }
       return 'analytics';
     };
 
@@ -7492,7 +7494,9 @@ export default {
         if (access === 'shop1' || access === 'shop2') return access;
         const savedShop = localStorage.getItem('admin_active_shop');
         if (savedShop === 'shop1' || savedShop === 'shop2') return savedShop;
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[AdminView] Failed to read saved active shop from localStorage:', e);
+      }
       return 'shop1';
     };
 
@@ -7794,9 +7798,15 @@ export default {
         try {
           localStorage.setItem('emenu_admin_active_tab', newTab);
           if (route.query?.tab !== newTab) {
-            router.replace({ query: { ...route.query, tab: newTab } }).catch(() => {});
+            router.replace({ query: { ...route.query, tab: newTab } }).catch((err) => {
+              if (!isNavigationFailure(err, NavigationFailureType.duplicated)) {
+                console.warn('[AdminView] Failed to sync active tab query param:', err);
+              }
+            });
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn('[AdminView] Failed to persist active tab state:', e);
+        }
         scrollActiveTabIntoView();
         if (adminMainRef.value) {
           adminMainRef.value.scrollTop = 0;
@@ -9682,7 +9692,9 @@ export default {
           method: 'POST',
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[AdminView] Logout API notification failed:', e);
+      }
       clearClientAuthSession();
       localStorage.removeItem('admin_active_shop');
       userRole.value = 'admin';
@@ -10119,7 +10131,9 @@ export default {
           ),
           new Promise(resolve => setTimeout(resolve, 250))
         ]);
-      } catch {}
+      } catch (e) {
+        console.warn('[AdminView] Failed while waiting for print images:', e);
+      }
     };
 
     const printingAnalytics = ref(false);

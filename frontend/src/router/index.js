@@ -8,6 +8,15 @@ const CartView = () => import('../views/CartView.vue');
 const AccountView = () => import('../views/AccountView.vue');
 const AdminView = () => import('../views/AdminView.vue');
 
+function readSavedView(context) {
+  try {
+    return window.sessionStorage?.getItem('emenu_view') || null;
+  } catch (e) {
+    console.warn(`[Router] Failed to read sessionStorage emenu_view (${context}):`, e);
+    return null;
+  }
+}
+
 const routes = [
   {
     path: '/',
@@ -25,12 +34,10 @@ const routes = [
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') return '/shop/shop2';
       if (shopParam === 'shop1') return '/shop/shop1';
-      try {
-        const saved = window.sessionStorage?.getItem('emenu_view');
-        if (saved === 'admin') return '/admin';
-        if (saved === 'shop2') return '/shop/shop2';
-        if (saved === 'shop1') return '/shop/shop1';
-      } catch (e) {}
+      const saved = readSavedView('root redirect');
+      if (saved === 'admin') return '/admin';
+      if (saved === 'shop2') return '/shop/shop2';
+      if (saved === 'shop1') return '/shop/shop1';
       return '/shop/shop1'; // Default
     }
   },
@@ -56,12 +63,7 @@ const routes = [
         shopStore.setShop(targetId);
         next();
       } else {
-        let target = shopParam;
-        if (!target) {
-          try {
-            target = window.sessionStorage?.getItem('emenu_view');
-          } catch (e) {}
-        }
+        const target = shopParam || readSavedView('shop guard');
         const resolved = target === 'shop2' ? 'shop2' : 'shop1';
         shopStore.setShop(resolved);
         next(`/shop/${resolved}`);
@@ -98,12 +100,10 @@ const routes = [
       const shopParam = urlParams.get('shop');
       if (shopParam === 'shop2') return '/shop/shop2';
       if (shopParam === 'shop1') return '/shop/shop1';
-      try {
-        const saved = window.sessionStorage?.getItem('emenu_view');
-        if (saved === 'admin') return '/admin';
-        if (saved === 'shop2') return '/shop/shop2';
-        if (saved === 'shop1') return '/shop/shop1';
-      } catch (e) {}
+      const saved = readSavedView('catchAll redirect');
+      if (saved === 'admin') return '/admin';
+      if (saved === 'shop2') return '/shop/shop2';
+      if (saved === 'shop1') return '/shop/shop1';
       return '/shop/shop1';
     }
   }
@@ -153,10 +153,8 @@ router.beforeEach((to, from, next) => {
     if (shopParam === 'shop1' || shopParam === 'shop2') {
       fallback = shopParam;
     } else {
-      try {
-        const saved = window.sessionStorage?.getItem('emenu_view');
-        if (saved === 'shop2' || saved === 'shop1') fallback = saved;
-      } catch (e) {}
+      const saved = readSavedView('beforeEach');
+      if (saved === 'shop2' || saved === 'shop1') fallback = saved;
     }
     shopStore.setShop(fallback);
   }
