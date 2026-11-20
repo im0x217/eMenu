@@ -607,7 +607,20 @@ const pbFetch = async (apiPath, options = {}) => {
       });
     }
 
-    return res.json();
+    if (res.status === 204 || res.status === 205) return null;
+    const bodyText = await res.text();
+    if (!bodyText) return null;
+    try {
+      return JSON.parse(bodyText);
+    } catch (parseErr) {
+      throw new UpstreamError(`PocketBase ${method} ${apiPath} returned invalid JSON`, {
+        statusCode: 502,
+        code: 'POCKETBASE_INVALID_JSON',
+        retryable: false,
+        details: bodyText.slice(0, 500),
+        cause: parseErr,
+      });
+    }
   };
 
   return pbCircuitBreaker.exec(() =>
@@ -1810,12 +1823,7 @@ app.post("/api/products", requireAdminShop("shop1"), upload.single('img'), uploa
   } catch (e) {
     console.error("Failed to parse tags:", tags);
   }
-  
-  // Check for file validation errors first
-  if (req.fileValidationError) {
-    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}`, warning: "Product will use placeholder image." });
-  }
-  
+
   // Always compute stable public URL using bucket + region + key, prefer CloudFront if configured
   let img = "/res/logo.jpg"; // Default placeholder
   let uploadWarning = null;
@@ -2411,12 +2419,7 @@ app.post("/api/shop2/products", checkMongoDB, requireAdminShop("shop2"), upload.
   } catch (e) {
     console.error("Failed to parse tags:", tags);
   }
-  
-  // Check for file validation errors first
-  if (req.fileValidationError) {
-    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}`, warning: "Product will use placeholder image." });
-  }
-  
+
   // Prefer CloudFront domain for image delivery if configured
   let img = "/res/logo.jpg"; // Default placeholder
   let uploadWarning = null;
@@ -6344,11 +6347,7 @@ app.post("/api/admin/marketing-carousel", checkMongoDB, requireAdmin, upload.sin
   if (!shop) {
     return res.status(400).json({ error: "Missing required shop field" });
   }
-  
-  if (req.fileValidationError) {
-    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}` });
-  }
-  
+
   let img = "/res/logo.jpg";
   if (req.file) {
     img = buildUploadedImageUrl(req.file.key);
@@ -6375,10 +6374,6 @@ app.post("/api/admin/marketing-carousel", checkMongoDB, requireAdmin, upload.sin
 app.put("/api/admin/marketing-carousel/:id", checkMongoDB, requireAdmin, upload.single('img'), uploadErrorHandler, async (req, res) => {
   const { id } = req.params;
   const { title, subtitle, link } = req.body;
-  
-  if (req.fileValidationError) {
-    return res.status(400).json({ error: `Image upload failed: ${req.fileValidationError}` });
-  }
 
   try {
     if (!ObjectId.isValid(id)) {
